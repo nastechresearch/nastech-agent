@@ -29,7 +29,7 @@ class TestGatewayLifecyclePattern:
         "nastech gateway restart",
         "nastech gateway stop",
         "nastech  gateway  restart",         # double spaces
-        "Hermez Gateway Restart".lower().replace("z", "s"),  # case handled
+        "nAsTeCh GaTeWaY ReStArT",                            # case handled
         "NASTECH GATEWAY RESTART",           # uppercase
     ])
     def test_nastech_gateway_commands(self, text):

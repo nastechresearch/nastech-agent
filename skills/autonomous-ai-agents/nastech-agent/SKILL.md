@@ -1,6 +1,6 @@
 ---
 name: nastech-agent
-description: "Use, configure, theme, extend, and orchestrate Nastech Agent."
+description: "Configure, theme, extend, and orchestrate Nastech Agent."
 version: 3.1.0
 author: Nastech Agent + Teknium
 license: MIT
