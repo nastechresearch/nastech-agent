@@ -1,3 +1,4 @@
+import { useStore } from '@nanostores/react'
 import {
   forceRedraw,
   type ScrollBoxHandle,
@@ -8,7 +9,6 @@ import {
   useStdout,
   useTerminalTitle
 } from '@nastech/ink'
-import { useStore } from '@nanostores/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DASHBOARD_TUI_MODE, STARTUP_RESUME_ID } from '../config/env.js'
