@@ -1,5 +1,6 @@
 .DS_Store
 /venv/
+/build/
 /venv.old/
 /venv.stale.runtime-*/
 /.nastech-runtime/
