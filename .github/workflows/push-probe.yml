@@ -1,0 +1,15 @@
+name: Push Probe
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push trigger works
+        run: echo "push-triggered-run-created"
