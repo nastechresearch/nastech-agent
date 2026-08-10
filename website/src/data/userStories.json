@@ -28,8 +28,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1498945272632315974-Reverie-Core--Agentic-cognition-layer-for-Hermes.txt",
     "date": "",
     "category": "dev-workflow",
-    "headline": "Iterating on a local-first cognition layer for Hermes",
-    "quote": "I've been iterating on a local-first memory/cognition layer for Hermes and finally pushed it to public visibility.",
+    "headline": "Iterating on a local-first cognition layer for Nastech",
+    "quote": "I've been iterating on a local-first memory/cognition layer for Nastech and finally pushed it to public visibility.",
     "size": "sm"
   },
   {
@@ -40,7 +40,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Hindsight Cloud memory, connected",
-    "quote": "Connect your Nous Research Hermes Agent to Hindsight Cloud, the best-performing AI Agent memory, in a few easy steps!",
+    "quote": "Connect your Nous Research Nastech Agent to Hindsight Cloud, the best-performing AI Agent memory, in a few easy steps!",
     "size": "sm"
   },
   {
@@ -73,7 +73,7 @@
     "date": "2026-04-17",
     "category": "trading",
     "headline": "$100 → $216 in 48h with a self-learning weather bot",
-    "quote": "I turned $100 into $216 in less than 48 hours with a self-learning weather trading bot. Hermes scans weather markets every 60 mins, compares 3 forecast sources per location, buys undervalued temperature buckets and flips for profit. Reviews what worked, writes its own strategy notes, adjusts next time.",
+    "quote": "I turned $100 into $216 in less than 48 hours with a self-learning weather trading bot. Nastech scans weather markets every 60 mins, compares 3 forecast sources per location, buys undervalued temperature buckets and flips for profit. Reviews what worked, writes its own strategy notes, adjusts next time.",
     "size": "md"
   },
   {
@@ -83,8 +83,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1499394737088626810-Meta-Ads-Kit-for-Hermes.txt",
     "date": "",
     "category": "marketing",
-    "headline": "I built a Hermes skill pack on top of Meta's CLI",
-    "quote": "Yesterday Meta released their official CLI & MCP so I built a Hermes skill pack to connect and provide some great defaults.",
+    "headline": "I built a Nastech skill pack on top of Meta's CLI",
+    "quote": "Yesterday Meta released their official CLI & MCP so I built a Nastech skill pack to connect and provide some great defaults.",
     "size": "sm"
   },
   {
@@ -94,8 +94,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-03-22",
     "category": "privacy",
-    "headline": "Sharing a local SearXNG container across my Hermes agents",
-    "quote": "I set up my Hermes Agents with local SearXNG (in a container that they share) before ddgs (duckduckgo) was added, because I thought all API use of DDG was paid. I've been pretty happy with searxng so far.",
+    "headline": "Sharing a local SearXNG container across my Nastech agents",
+    "quote": "I set up my Nastech Agents with local SearXNG (in a container that they share) before ddgs (duckduckgo) was added, because I thought all API use of DDG was paid. I've been pretty happy with searxng so far.",
     "size": "sm"
   },
   {
@@ -105,8 +105,8 @@
     "url": "https://x.com/gkisokay/status/2045048092341555639",
     "date": "2026-04-17",
     "category": "dev-workflow",
-    "headline": "Codex watches my Hermes agent-to-agent workflows live",
-    "quote": "Day 10 of Building AGI for my Hermes Agent: Codex saved the day as a runtime monitor for my agent-to-agent workflows. I used Codex with GPT-5.4 on extra-high to watch the workflow run, catch where it broke, and fix it live until it worked reliably.",
+    "headline": "Codex watches my Nastech agent-to-agent workflows live",
+    "quote": "Day 10 of Building AGI for my Nastech Agent: Codex saved the day as a runtime monitor for my agent-to-agent workflows. I used Codex with GPT-5.4 on extra-high to watch the workflow run, catch where it broke, and fix it live until it worked reliably.",
     "size": "sm"
   },
   {
@@ -128,7 +128,7 @@
     "date": "",
     "category": "dev-workflow",
     "headline": "Built converse mode so my agent thinks before it acts",
-    "quote": "My Hermes agent used to start executing the moment I hit enter. I'd describe a vague idea and it would immediately start writing files, calling tools, making changes I hadn't fully thought through yet. So I built converse mode. One plugin, two commands. The agent won't touch a single tool until you say so.",
+    "quote": "My Nastech agent used to start executing the moment I hit enter. I'd describe a vague idea and it would immediately start writing files, calling tools, making changes I hadn't fully thought through yet. So I built converse mode. One plugin, two commands. The agent won't touch a single tool until you say so.",
     "size": "lg"
   },
   {
@@ -139,17 +139,17 @@
     "date": "2026",
     "category": "dev-workflow",
     "headline": "73% of every API call is fixed overhead (I measured it)",
-    "quote": "I built a monitoring dashboard to profile token consumption on a Hermes v0.6.0 deployment running Telegram + WhatsApp + Cron gateways. After analyzing 6 request dumps, I found that 73% of every API call is fixed overhead.",
+    "quote": "I built a monitoring dashboard to profile token consumption on a Nastech v0.6.0 deployment running Telegram + WhatsApp + Cron gateways. After analyzing 6 request dumps, I found that 73% of every API call is fixed overhead.",
     "size": "sm"
   },
   {
-    "id": "discord-megabyte0x-hermes-for-team",
+    "id": "discord-megabyte0x-nastech-for-team",
     "source": "discord",
     "author": "@megabyte0x",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1492207991162671255-Hermes-Agent-for-my-team.txt",
     "date": "",
     "category": "business-ops",
-    "headline": "Hermes Agent for my team — repos, onchain debug, protocol docs",
+    "headline": "Nastech Agent for my team — repos, onchain debug, protocol docs",
     "quote": "It's right now integrated with SourceDev to index repos (self hosted), Tenderly MCP to debug onchain transactions, LLM-Wiki ingest of Litepaper of our protocol and other docs. Hopefully team will find it useful and will integrate more infra tools overtime to help the team.",
     "size": "md"
   },
@@ -160,8 +160,8 @@
     "url": "https://gist.github.com/davidondrej/6f158de34ce83c530526011054fde8d3",
     "date": "2026",
     "category": "integrations",
-    "headline": "Hermes + Browser Harness on a Hostinger VPS",
-    "quote": "Full copy-paste setup for Hermes Agent + Browser Harness on a Hostinger VPS. Register Browser Harness as a Hermes skill via symlink so Hermes can find and use it. Recommended model: anthropic/claude-opus-4.7 via OpenRouter.",
+    "headline": "Nastech + Browser Harness on a Hostinger VPS",
+    "quote": "Full copy-paste setup for Nastech Agent + Browser Harness on a Hostinger VPS. Register Browser Harness as a Nastech skill via symlink so Nastech can find and use it. Recommended model: anthropic/claude-opus-4.7 via OpenRouter.",
     "size": "sm"
   },
   {
@@ -183,7 +183,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "jMunch MCP: 52 tools via tree-sitter for code intelligence",
-    "quote": "The jMunch MCP suite provides three MCP servers bringing token-efficient code intelligence (52 tools via tree-sitter), documentation retrieval, and tabular data analysis. Plug-and-play with Hermes's native MCP client.",
+    "quote": "The jMunch MCP suite provides three MCP servers bringing token-efficient code intelligence (52 tools via tree-sitter), documentation retrieval, and tabular data analysis. Plug-and-play with Nastech's native MCP client.",
     "size": "md"
   },
   {
@@ -193,8 +193,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-03-15",
     "category": "dev-workflow",
-    "headline": "My Hermes agent Reina has been on a hackathon bender",
-    "quote": "I've been working with my hermes agent reina, and she's been on a bender with hackathons. If anyone else is using Hermes Agent, note that certain hackathons might provision certain keys for it (API keys and the like) that would only be shown once.",
+    "headline": "My Nastech agent Reina has been on a hackathon bender",
+    "quote": "I've been working with my nastech agent reina, and she's been on a bender with hackathons. If anyone else is using Nastech Agent, note that certain hackathons might provision certain keys for it (API keys and the like) that would only be shown once.",
     "size": "sm"
   },
   {
@@ -205,7 +205,7 @@
     "date": "2026",
     "category": "personal-assistant",
     "headline": "Google Tasks integration",
-    "quote": "Adding a Google Tasks tool so Hermes can create, update and list tasks as part of personal productivity.",
+    "quote": "Adding a Google Tasks tool so Nastech can create, update and list tasks as part of personal productivity.",
     "size": "sm"
   },
   {
@@ -215,8 +215,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/issues/11876",
     "date": "2026",
     "category": "meta",
-    "headline": "hermes-for-win: one-click Windows installer",
-    "quote": "As a Windows user I found getting Hermes running on Windows quite challenging. I created hermes-for-win, a one-click installation and deployment tool for Windows with auto-start via Task Scheduler.",
+    "headline": "nastech-for-win: one-click Windows installer",
+    "quote": "As a Windows user I found getting Nastech running on Windows quite challenging. I created nastech-for-win, a one-click installation and deployment tool for Windows with auto-start via Task Scheduler.",
     "size": "sm"
   },
   {
@@ -227,7 +227,7 @@
     "date": "2026",
     "category": "personal-assistant",
     "headline": "Bedtime stories for my daughter",
-    "quote": "Three days ago I asked Hermes to write a little tale for my daughter. A day later I asked again — very similar, same protagonist name.",
+    "quote": "Three days ago I asked Nastech to write a little tale for my daughter. A day later I asked again — very similar, same protagonist name.",
     "size": "sm"
   },
   {
@@ -253,14 +253,14 @@
     "size": "sm"
   },
   {
-    "id": "tooluse-hermes-won",
+    "id": "tooluse-nastech-won",
     "source": "podcast",
     "author": "Tool Use — AI Conversations (Spotify)",
     "url": "https://open.spotify.com/episode/7tF7zf5GKcxqe2Q2BRRNfn",
     "date": "2026",
     "category": "meta",
-    "headline": "Hermes Agent has won. Here's why.",
-    "quote": "Why Hermes Agent has emerged as the leading open-source AI agent that developers and builders are choosing — self-improving skills, three-layer memory architecture, real-world applications including video dubbing workflows.",
+    "headline": "Nastech Agent has won. Here's why.",
+    "quote": "Why Nastech Agent has emerged as the leading open-source AI agent that developers and builders are choosing — self-improving skills, three-layer memory architecture, real-world applications including video dubbing workflows.",
     "size": "sm"
   },
   {
@@ -282,7 +282,7 @@
     "date": "2026",
     "category": "messaging",
     "headline": "DM-based approval gate for kid-facing Discord bots",
-    "quote": "Running Hermes on Discord in public channels, every outbound reply goes live instantly. For multi-user servers, persona testing, compliance, kid-facing bots — I want a human-in-the-loop gate.",
+    "quote": "Running Nastech on Discord in public channels, every outbound reply goes live instantly. For multi-user servers, persona testing, compliance, kid-facing bots — I want a human-in-the-loop gate.",
     "size": "sm"
   },
   {
@@ -291,20 +291,20 @@
     "url": "https://www.reddit.com/r/LocalLLaMA/comments/1ro9lph/anybody_who_tried_hermesagent/",
     "date": "2026-03-08",
     "category": "cost-optimization",
-    "headline": "Switching between Hermes and OpenClaw on primeclaws.com",
-    "quote": "I tried hermes on primeclaws.com, it's nice that you can switch between hermes and openclaw and also you get AI models for free.",
+    "headline": "Switching between Nastech and OpenClaw on primeclaws.com",
+    "quote": "I tried nastech on primeclaws.com, it's nice that you can switch between nastech and openclaw and also you get AI models for free.",
     "size": "sm",
-    "id": "reddit-sicklerunner-switching-between-hermes"
+    "id": "reddit-sicklerunner-switching-between-nastech"
   },
   {
-    "id": "discord-synextco-hermes-hud",
+    "id": "discord-synextco-nastech-hud",
     "source": "discord",
     "author": "@synextco",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1489107955327570081-HERMES-TUI-Companion.txt",
     "date": "",
     "category": "meta",
     "headline": "Built a TUI dashboard that watches my agent think",
-    "quote": "Hermes hud is a TUI dashboard that watches your ai agent think. it reads from your agent's memory, tracks skills, sessions, corrections, projects, cron jobs, all of it. live.",
+    "quote": "Nastech hud is a TUI dashboard that watches your ai agent think. it reads from your agent's memory, tracks skills, sessions, corrections, projects, cron jobs, all of it. live.",
     "size": "sm"
   },
   {
@@ -314,8 +314,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1492970295915446524-Meet-Hermes-Conrad....-GUI.txt",
     "date": "",
     "category": "dev-workflow",
-    "headline": "Hadn't coded in 20 years — Hermes brought it back",
-    "quote": "I have not coded in 20 years, Claude code and hermes have renewed my interest in trying to make things. This is vibe coded.",
+    "headline": "Hadn't coded in 20 years — Nastech brought it back",
+    "quote": "I have not coded in 20 years, Claude code and nastech have renewed my interest in trying to make things. This is vibe coded.",
     "size": "sm"
   },
   {
@@ -336,19 +336,19 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1494703787103752365-SOTA-memory-kernel-for-real--BRAINSTACK.txt",
     "date": "",
     "category": "dev-workflow",
-    "headline": "Spent 200–400 hours writing a memory kernel for Hermes",
-    "quote": "Yo! Do you know how I spent my last 200-400 hours? Yeah... I wrote a fking memory kernel for hermes. Why this much of a time? After 3 failed attempts (149 hours of work... for real) I just realized it's a fucking difficult job. So instead of reinvent the wheel I built together the bests for my usecase: 3 layers — L1 Hindsight, L2 Graphiti, L3 MemPalace.",
+    "headline": "Spent 200–400 hours writing a memory kernel for Nastech",
+    "quote": "Yo! Do you know how I spent my last 200-400 hours? Yeah... I wrote a fking memory kernel for nastech. Why this much of a time? After 3 failed attempts (149 hours of work... for real) I just realized it's a fucking difficult job. So instead of reinvent the wheel I built together the bests for my usecase: 3 layers — L1 Hindsight, L2 Graphiti, L3 MemPalace.",
     "size": "lg"
   },
   {
-    "id": "discord-m05tr0-hermes-on-kubernetes",
+    "id": "discord-m05tr0-nastech-on-kubernetes",
     "source": "discord",
     "author": "@m05tr0",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1493622814887120926-Installed-Hermes-on-Kubernetes.txt",
     "date": "",
     "category": "enterprise",
-    "headline": "Hermes on my k8s cluster for a daily cybersec + AI briefing",
-    "quote": "I really like running agents on my local cluster instead of my laptop for isolation so just finished deploying Hermes on my local k8s cluster for a simple daily cybersecurity + AI briefing.",
+    "headline": "Nastech on my k8s cluster for a daily cybersec + AI briefing",
+    "quote": "I really like running agents on my local cluster instead of my laptop for isolation so just finished deploying Nastech on my local k8s cluster for a simple daily cybersecurity + AI briefing.",
     "size": "md"
   },
   {
@@ -358,8 +358,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-04",
     "category": "personal-assistant",
-    "headline": "Raspberry Pi 5 running Hermes 24/7",
-    "quote": "I built a Raspberry Pi 5 to run Hermes on 24/7. it's my first time diving into trying a real AI agent and so far I'm enjoying it. Much better than open claw. The thing is, since Hermes is learning so much about me and my workflows and custom skills, I'd love if I could use Hermes (with its knowledge and memory) on my Mac Studio which I work off of.",
+    "headline": "Raspberry Pi 5 running Nastech 24/7",
+    "quote": "I built a Raspberry Pi 5 to run Nastech on 24/7. it's my first time diving into trying a real AI agent and so far I'm enjoying it. Much better than open claw. The thing is, since Nastech is learning so much about me and my workflows and custom skills, I'd love if I could use Nastech (with its knowledge and memory) on my Mac Studio which I work off of.",
     "size": "md"
   },
   {
@@ -370,7 +370,7 @@
     "date": "2026",
     "category": "messaging",
     "headline": "LINE for 95M+ users in Japan",
-    "quote": "LINE is the dominant messaging platform in Japan and SE Asia (95M+ MAU in Japan). No way to use Hermes from LINE today, making it inaccessible to a large user base in that region.",
+    "quote": "LINE is the dominant messaging platform in Japan and SE Asia (95M+ MAU in Japan). No way to use Nastech from LINE today, making it inaccessible to a large user base in that region.",
     "size": "sm"
   },
   {
@@ -380,8 +380,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/pull/16768",
     "date": "2026",
     "category": "creative",
-    "headline": "Generative visuals in TouchDesigner, via Hermes skill",
-    "quote": "Expands touchdesigner-mcp skill with extensive reference docs so Hermes can help build generative/interactive media projects in TouchDesigner.",
+    "headline": "Generative visuals in TouchDesigner, via Nastech skill",
+    "quote": "Expands touchdesigner-mcp skill with extensive reference docs so Nastech can help build generative/interactive media projects in TouchDesigner.",
     "size": "sm"
   },
   {
@@ -391,7 +391,7 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent/",
     "date": "2026-04-11",
     "category": "personal-assistant",
-    "headline": "Hermes manages my tasks across Obsidian, Apple Calendar and Signal",
+    "headline": "Nastech manages my tasks across Obsidian, Apple Calendar and Signal",
     "quote": "I speak Turkish with it... initially said him to 'now i want you to use obsidian to manage my tasks and other stuff. and cross-check with my apple calendar'. later while working on another task today i said 'okay looks good. you know how you will manage tasks and events apple calendars + obsidian + cron/signal' and it confirmed the workflow.",
     "size": "md"
   },
@@ -407,14 +407,14 @@
     "size": "sm"
   },
   {
-    "id": "discord-monty-13277-claude-hermes-mcp",
+    "id": "discord-monty-13277-claude-nastech-mcp",
     "source": "discord",
     "author": "@monty_13277",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1503091259760316436-Claude-Hermes-MCP.txt",
     "date": "",
     "category": "personal-assistant",
-    "headline": "Claude for chat, Hermes 24/7 on a mini PC for real-world stuff",
-    "quote": "Claude (Opus 4.7) handles my day-to-day chats: research, planning, working through problems. Hermes runs 24/7 on a mini PC and handles the real-world stuff: email, web browsing, form filling, calendar updates, cron jobs.",
+    "headline": "Claude for chat, Nastech 24/7 on a mini PC for real-world stuff",
+    "quote": "Claude (Opus 4.7) handles my day-to-day chats: research, planning, working through problems. Nastech runs 24/7 on a mini PC and handles the real-world stuff: email, web browsing, form filling, calendar updates, cron jobs.",
     "size": "lg"
   },
   {
@@ -435,8 +435,8 @@
     "url": "https://x.com/codewithimanshu/status/2047507277259923696",
     "date": "2026-04-24",
     "category": "marketing",
-    "headline": "UGC ad studio on Hermes (4 minutes, zero prompt engineering)",
-    "quote": "Higgsfield Marketing Studio powered by Hermes Agent is doing the replacing this time. Paste product URL → Hermes scrapes the landing page, pulls winning ad hooks from Meta Ads Library + TikTok Creative Center in the exact niche, and writes the brief itself. Total time: ~4 minutes.",
+    "headline": "UGC ad studio on Nastech (4 minutes, zero prompt engineering)",
+    "quote": "Higgsfield Marketing Studio powered by Nastech Agent is doing the replacing this time. Paste product URL → Nastech scrapes the landing page, pulls winning ad hooks from Meta Ads Library + TikTok Creative Center in the exact niche, and writes the brief itself. Total time: ~4 minutes.",
     "size": "md"
   },
   {
@@ -446,8 +446,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-02-26",
     "category": "dev-workflow",
-    "headline": "Built hermes mcp-server so Claude Desktop can use Hermes tools",
-    "quote": "I mapped all open + closed PRs to find what was truly missing. PR #64 added MCP client support (Hermes → external tools). The server side was completely absent. So I built hermes mcp-server — making Hermes a full MCP server so Claude Desktop, Cursor, and any MCP client can use Hermes's tools directly. Exposes 9 Hermes tools over MCP: terminal, read/write file, web search, memory, skills, run_agent.",
+    "headline": "Built nastech mcp-server so Claude Desktop can use Nastech tools",
+    "quote": "I mapped all open + closed PRs to find what was truly missing. PR #64 added MCP client support (Nastech → external tools). The server side was completely absent. So I built nastech mcp-server — making Nastech a full MCP server so Claude Desktop, Cursor, and any MCP client can use Nastech's tools directly. Exposes 9 Nastech tools over MCP: terminal, read/write file, web search, memory, skills, run_agent.",
     "size": "lg"
   },
   {
@@ -457,7 +457,7 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1492721511658815539-Hermes-for-app-builders..txt",
     "date": "",
     "category": "business-ops",
-    "headline": "Building a roofing lead-gen app for my friend with Hermes",
+    "headline": "Building a roofing lead-gen app for my friend with Nastech",
     "quote": "One of the apps I'm working on helps my friend who owns a remodeling company find work. Specifically roofing work. It started after I saw a video of a guy using Chatgbt and Replit to vibe code some app. I just wondered if I could do it. But the cost of Replit is killing me and the project isn't even a full on CRM lead gen product.",
     "size": "md"
   },
@@ -468,8 +468,8 @@
     "url": "https://x.com/Teknium/status/2047869295686975529",
     "date": "2026-04-25",
     "category": "dev-workflow",
-    "headline": "12 Hermes instances every day, in parallel",
-    "quote": "I literally run 12 hermes agent instances every day in parallel to build Hermes Agent, and its now a top 100 GitHub repositories of all time. Our backend team uses it to monitor and investigate issues with our stack. Our post training team uses them to create new RL environments and benchmarks, investigate, inspect and sometimes directly manipulate the datasets.",
+    "headline": "12 Nastech instances every day, in parallel",
+    "quote": "I literally run 12 nastech agent instances every day in parallel to build Nastech Agent, and its now a top 100 GitHub repositories of all time. Our backend team uses it to monitor and investigate issues with our stack. Our post training team uses them to create new RL environments and benchmarks, investigate, inspect and sometimes directly manipulate the datasets.",
     "size": "lg"
   },
   {
@@ -480,7 +480,7 @@
     "date": "",
     "category": "personal-assistant",
     "headline": "Two-tier email pipeline so the LLM only fires when needed",
-    "quote": "Two-tier email processing system for my agent (I gave it Spacemail IMAP via himalaya). Tier 1 (Dumb): Pure Python script, no LLM. Detects new email, manages state. Tier 2 (Smart): LLM session via hermes chat -q. Only invoked when new email detected. Key goal: Zero LLM calls when inbox is idle.",
+    "quote": "Two-tier email processing system for my agent (I gave it Spacemail IMAP via himalaya). Tier 1 (Dumb): Pure Python script, no LLM. Detects new email, manages state. Tier 2 (Smart): LLM session via nastech chat -q. Only invoked when new email detected. Key goal: Zero LLM calls when inbox is idle.",
     "size": "md"
   },
   {
@@ -490,8 +490,8 @@
     "url": "https://x.com/pfanis/status/2043863599689457952",
     "date": "2026-04-14",
     "category": "personal-assistant",
-    "headline": "Sometimes Hermes Agent melts my heart",
-    "quote": "Sometimes Hermes Agent melts my heart @NousResearch.",
+    "headline": "Sometimes Nastech Agent melts my heart",
+    "quote": "Sometimes Nastech Agent melts my heart @NousResearch.",
     "size": "sm"
   },
   {
@@ -500,10 +500,10 @@
     "url": "https://x.com/HeyYanvi/status/2046015096514617385",
     "date": "2026-04-19",
     "category": "creative",
-    "headline": "Hermes designed an X-to-NotebookLM podcast workflow for me",
-    "quote": "This research is gold. Been deep in Hermes for weeks and it's started autonomously suggesting entire workflows I never would have designed myself. One it built for me recently: X API to extract from lists and bookmarks to structure into article to NotebookLM podcast. I'm building a physical AI companion with Hermes as the core cognitive layer right now.",
+    "headline": "Nastech designed an X-to-NotebookLM podcast workflow for me",
+    "quote": "This research is gold. Been deep in Nastech for weeks and it's started autonomously suggesting entire workflows I never would have designed myself. One it built for me recently: X API to extract from lists and bookmarks to structure into article to NotebookLM podcast. I'm building a physical AI companion with Nastech as the core cognitive layer right now.",
     "size": "md",
-    "id": "x-heyyanvi-hermes-designed-an"
+    "id": "x-heyyanvi-nastech-designed-an"
   },
   {
     "id": "gh-scotttrinh-vercel",
@@ -512,8 +512,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/pull/17445",
     "date": "2026",
     "category": "integrations",
-    "headline": "Vercel Sandbox as a Hermes backend",
-    "quote": "Adds Vercel Sandbox as a supported Hermes terminal backend alongside Local/Docker/Modal/SSH/Daytona/Singularity. Creates/manages cloud microVMs with snapshot-based filesystem persistence.",
+    "headline": "Vercel Sandbox as a Nastech backend",
+    "quote": "Adds Vercel Sandbox as a supported Nastech terminal backend alongside Local/Docker/Modal/SSH/Daytona/Singularity. Creates/manages cloud microVMs with snapshot-based filesystem persistence.",
     "size": "sm"
   },
   {
@@ -523,8 +523,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/issues/10356",
     "date": "2026",
     "category": "messaging",
-    "headline": "Give Hermes hands inside Feishu (Lark)",
-    "quote": "Extending Hermes to full Feishu ecosystem coverage: Documents, Sheets, Bitable, Calendar, Tasks, Wiki, Contacts, Drive, Email. Giving Hermes hands to operate the entire Feishu workspace.",
+    "headline": "Give Nastech hands inside Feishu (Lark)",
+    "quote": "Extending Nastech to full Feishu ecosystem coverage: Documents, Sheets, Bitable, Calendar, Tasks, Wiki, Contacts, Drive, Email. Giving Nastech hands to operate the entire Feishu workspace.",
     "size": "sm"
   },
   {
@@ -535,7 +535,7 @@
     "date": "2026",
     "category": "meta",
     "headline": "Show HN: an independent install guide",
-    "quote": "This is an independent Hermes Agent install guide I put together for the part that usually gets skipped after 'run this command.' One place that shows the environment choice first, then the official installer path — macOS, Linux, WSL2, and Termux.",
+    "quote": "This is an independent Nastech Agent install guide I put together for the part that usually gets skipped after 'run this command.' One place that shows the environment choice first, then the official installer path — macOS, Linux, WSL2, and Termux.",
     "size": "sm"
   },
   {
@@ -557,7 +557,7 @@
     "date": "2026",
     "category": "dev-workflow",
     "headline": "Audited 129 of my own sessions across 23 days",
-    "quote": "Ran an external RCA script against my full local session history (129 sessions across 23 days) to audit Hermes compliance with its approval gate. 112 of 129 sessions contain at least one violation.",
+    "quote": "Ran an external RCA script against my full local session history (129 sessions across 23 days) to audit Nastech compliance with its approval gate. 112 of 129 sessions contain at least one violation.",
     "size": "md"
   },
   {
@@ -601,7 +601,7 @@
     "date": "",
     "category": "personal-assistant",
     "headline": "Built mapsOS because 'rate your mood 1–10' wasn't my brain",
-    "quote": "saw lifeOS going around & went 'oh! this seems dope and very useful!' got to the first question. 'rate your mood from 1 to 10.' immediately went, 'oh. nevermind.' so i built something a little more attuned to my brain, meant to be used by hermes but nicely standalone too.",
+    "quote": "saw lifeOS going around & went 'oh! this seems dope and very useful!' got to the first question. 'rate your mood from 1 to 10.' immediately went, 'oh. nevermind.' so i built something a little more attuned to my brain, meant to be used by nastech but nicely standalone too.",
     "size": "md"
   },
   {
@@ -611,8 +611,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/developers.txt",
     "date": "2026-04-16",
     "category": "dev-workflow",
-    "headline": "My Hermes keeps editing its own internals — and I'm worried",
-    "quote": "My Hermes agent keeps changing its internal code, which is of course going to get blown away when a new version comes out and I update to it. Which makes me think that Hermes wants me to edit its internals, but I definitely don't want to change anything in a way that will get overwritten when the new release comes out.",
+    "headline": "My Nastech keeps editing its own internals — and I'm worried",
+    "quote": "My Nastech agent keeps changing its internal code, which is of course going to get blown away when a new version comes out and I update to it. Which makes me think that Nastech wants me to edit its internals, but I definitely don't want to change anything in a way that will get overwritten when the new release comes out.",
     "size": "md"
   },
   {
@@ -622,8 +622,8 @@
     "url": "https://x.com/danfiru/status/2036481605666218278",
     "date": "2026-03-24",
     "category": "dev-workflow",
-    "headline": "Built my own stack, then converged on Hermes",
-    "quote": "If you're choosing an agent framework: hermes. I built my own stack independently and we converged on the same architecture — background self-improvement, persistent memory, CLAUDE.md project context, reusable skills. Hermes ships it all out of the box. 300 PRs in a week.",
+    "headline": "Built my own stack, then converged on Nastech",
+    "quote": "If you're choosing an agent framework: nastech. I built my own stack independently and we converged on the same architecture — background self-improvement, persistent memory, CLAUDE.md project context, reusable skills. Nastech ships it all out of the box. 300 PRs in a week.",
     "size": "md"
   },
   {
@@ -634,7 +634,7 @@
     "date": "2026",
     "category": "business-ops",
     "headline": "24/7 assistant with a Supabase CRM, built in a demo",
-    "quote": "Less than a single ChatGPT Plus subscription for a 24/7 assistant with real data management. After several interactions, Hermes autonomously proposed a new 'Supabase MCP scripts' skill — created from its own reflection.",
+    "quote": "Less than a single ChatGPT Plus subscription for a 24/7 assistant with real data management. After several interactions, Nastech autonomously proposed a new 'Supabase MCP scripts' skill — created from its own reflection.",
     "size": "md"
   },
   {
@@ -644,8 +644,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/issues/14197",
     "date": "2026",
     "category": "personal-assistant",
-    "headline": "Hermes running on a Pi 4 as my home server",
-    "quote": "I have Hermes running on a Pi4. It saves my preferences while working on tasks like modifying files. I want to use it as a central brain shared across all my devices.",
+    "headline": "Nastech running on a Pi 4 as my home server",
+    "quote": "I have Nastech running on a Pi4. It saves my preferences while working on tasks like modifying files. I want to use it as a central brain shared across all my devices.",
     "size": "sm"
   },
   {
@@ -654,8 +654,8 @@
     "url": "https://x.com/vmiss33/status/2050984822168830302",
     "date": "2026-05-03",
     "category": "cost-optimization",
-    "headline": "100% human guide: what I use Hermes for and how I keep it cheap",
-    "quote": "100% human generated. Includes what I use Hermes agent for (since I've seen a lot of people wondering what to do with this thing), and what models/providers I use to keep things cheap. I have been running a multi agent setup for Hermes agent for the last several weeks. It sends me messages on Telegram to remind me.",
+    "headline": "100% human guide: what I use Nastech for and how I keep it cheap",
+    "quote": "100% human generated. Includes what I use Nastech agent for (since I've seen a lot of people wondering what to do with this thing), and what models/providers I use to keep things cheap. I have been running a multi agent setup for Nastech agent for the last several weeks. It sends me messages on Telegram to remind me.",
     "size": "lg",
     "id": "x-vmiss33-human-guide"
   },
@@ -665,10 +665,10 @@
     "url": "https://www.reddit.com/r/hermesagent/comments/1snfnq9/yes_hermes_and_qwen354b_is_all_i_need_details/",
     "date": "2026-04-16",
     "category": "personal-assistant",
-    "headline": "Hermes + Qwen3.5:4b on a 5060Ti is all I need",
-    "quote": "I have a 5060ti 16gb VRAM and 64gb DDR5 System Ram. I started out wanting to test Hermes as a Claw alternative. After a few days I set up Telegram with the botfather, and I haven't gone back to CLI. Hermes is now almost entirely a personal assistant on my Telegram App. Where the 9b chugged along, the 4B model is snappy, responsive, alive and chatty.",
+    "headline": "Nastech + Qwen3.5:4b on a 5060Ti is all I need",
+    "quote": "I have a 5060ti 16gb VRAM and 64gb DDR5 System Ram. I started out wanting to test Nastech as a Claw alternative. After a few days I set up Telegram with the botfather, and I haven't gone back to CLI. Nastech is now almost entirely a personal assistant on my Telegram App. Where the 9b chugged along, the 4B model is snappy, responsive, alive and chatty.",
     "size": "lg",
-    "id": "reddit-birdinhandandbush-hermes"
+    "id": "reddit-birdinhandandbush-nastech"
   },
   {
     "id": "captain-awesome-life-changing",
@@ -677,19 +677,19 @@
     "url": "https://x.com/emmagine79/status/2053360898501468362",
     "date": "2026-05-10",
     "category": "personal-assistant",
-    "headline": "Hermes + Discord with GPT-5.5 / DeepSeek v4 has been life changing",
-    "quote": "hermes + discord with gpt 5.5/deepseek v4 has genuinely been life changing! here are some of what it did for me this week.",
+    "headline": "Nastech + Discord with GPT-5.5 / DeepSeek v4 has been life changing",
+    "quote": "nastech + discord with gpt 5.5/deepseek v4 has genuinely been life changing! here are some of what it did for me this week.",
     "size": "md"
   },
   {
-    "id": "discord-mayuronx-backup-hermes-github",
+    "id": "discord-mayuronx-backup-nastech-github",
     "source": "discord",
     "author": "@mayuronx",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1491933536423510117-Backup-Manage-Hermes-Config-via-your-Github-repo.txt",
     "date": "",
     "category": "dev-workflow",
-    "headline": "I back up my Hermes config and DB to GitHub nightly",
-    "quote": "If you want to — backup your hermes to github on a nightly basis, backup on every change of your config, backup your config and db nightly, edit your config on Github and have it mirror back to Hermes — then use this repo. I'm planning to use this as a basis for a desktop app later so this is phase 1 of a longer project to create an app to let you manage multiple agents.",
+    "headline": "I back up my Nastech config and DB to GitHub nightly",
+    "quote": "If you want to — backup your nastech to github on a nightly basis, backup on every change of your config, backup your config and db nightly, edit your config on Github and have it mirror back to Nastech — then use this repo. I'm planning to use this as a basis for a desktop app later so this is phase 1 of a longer project to create an app to let you manage multiple agents.",
     "size": "md"
   },
   {
@@ -700,18 +700,18 @@
     "date": "2026-05-01",
     "category": "research",
     "headline": "Daily research brief across Discord, Slack, Notion & Obsidian",
-    "quote": "There's one Hermes use case for everyone — build a research agent. Mine watches the AI/agent space, picks out useful signals, writes briefs, suggests content angles, tracks what I ignore, and keeps improving its own workflow. Delivers daily via Discord, Slack, Notion, email, Obsidian, and local markdown.",
+    "quote": "There's one Nastech use case for everyone — build a research agent. Mine watches the AI/agent space, picks out useful signals, writes briefs, suggests content angles, tracks what I ignore, and keeps improving its own workflow. Delivers daily via Discord, Slack, Notion, email, Obsidian, and local markdown.",
     "size": "md"
   },
   {
-    "id": "discord-ereid7-hermes-lab",
+    "id": "discord-ereid7-nastech-lab",
     "source": "discord",
     "author": "@ereid7",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1486588376940281937-Hermes-Lab---file-first-experiment-scaffolding-for-autonomous-research.txt",
     "date": "",
     "category": "research",
-    "headline": "Hermes-lab is the bookkeeper for running experiments autonomously",
-    "quote": "hermes-lab is the bookkeeper for running experiments autonomously. you give it a search space and a way to evaluate results, it handles scheduling, tracking, and suggesting what to try next. inspired by the autoresearch wave (karpathy, sakana ai scientist, AIDE) but generic — works for ml training.",
+    "headline": "Nastech-lab is the bookkeeper for running experiments autonomously",
+    "quote": "nastech-lab is the bookkeeper for running experiments autonomously. you give it a search space and a way to evaluate results, it handles scheduling, tracking, and suggesting what to try next. inspired by the autoresearch wave (karpathy, sakana ai scientist, AIDE) but generic — works for ml training.",
     "size": "md"
   },
   {
@@ -733,7 +733,7 @@
     "date": "2026-04-29",
     "category": "general",
     "headline": "An AI employee for my hardest tasks",
-    "quote": "Hermes Agent with ChatGPT 5.5 is literally magic. I've thrown some of my hardest tasks at this combo and the agent has been able to handle EVERYTHING. Time to set up your AI employee.",
+    "quote": "Nastech Agent with ChatGPT 5.5 is literally magic. I've thrown some of my hardest tasks at this combo and the agent has been able to handle EVERYTHING. Time to set up your AI employee.",
     "size": "sm"
   },
   {
@@ -743,8 +743,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-06",
     "category": "dev-workflow",
-    "headline": "My Hermes lives on a VPS, talks home over Tailscale",
-    "quote": "the agent should always run in /yolo mode or equivalent. it's up to you as the human to make sure it is incapable of breaking anything - my hermes lives on a vps, for example, and it can only talk to my pc at home via tailscale, and then only through a scoped tag. they really excel at long-term tasks where you don't want to be giving them feedback regularly!",
+    "headline": "My Nastech lives on a VPS, talks home over Tailscale",
+    "quote": "the agent should always run in /yolo mode or equivalent. it's up to you as the human to make sure it is incapable of breaking anything - my nastech lives on a vps, for example, and it can only talk to my pc at home via tailscale, and then only through a scoped tag. they really excel at long-term tasks where you don't want to be giving them feedback regularly!",
     "size": "lg"
   },
   {
@@ -755,7 +755,7 @@
     "date": "",
     "category": "cost-optimization",
     "headline": "Built ZeroID to fix sub-agent scope delegation and context costs",
-    "quote": "One of the problems I run into with Hermes is high cost when context windows fill up. One method to fix this is heavy use of sub-agents, but permissions/scope delegation to the sub-agent is often problematic. ZeroID is an agent identity layer that uses RFC 8693 token exchange to handle scope delegation with sub-agents.",
+    "quote": "One of the problems I run into with Nastech is high cost when context windows fill up. One method to fix this is heavy use of sub-agents, but permissions/scope delegation to the sub-agent is often problematic. ZeroID is an agent identity layer that uses RFC 8693 token exchange to handle scope delegation with sub-agents.",
     "size": "md"
   },
   {
@@ -765,8 +765,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1496239289309073539-Blunder-lens.com-a-tortured-repo-that-helps-you-find-your-first-blunders-in-chess.txt",
     "date": "",
     "category": "creative",
-    "headline": "Tortured a repo with Hermes to build a chess blunder finder",
-    "quote": "the real purpose of blunder-lens was to see how much i can torture a repo with hermes and figure out what hermes can or can't do... and honestly HERMES CAN DO A LOT!",
+    "headline": "Tortured a repo with Nastech to build a chess blunder finder",
+    "quote": "the real purpose of blunder-lens was to see how much i can torture a repo with nastech and figure out what nastech can or can't do... and honestly NASTECH CAN DO A LOT!",
     "size": "sm"
   },
   {
@@ -788,7 +788,7 @@
     "date": "",
     "category": "personal-assistant",
     "headline": "A meal planner for people who hate logging ingredients",
-    "quote": "I just released Meal Manager, a Hermes plugin designed to solve inventory friction via natural language. It uses a weighted scoring algorithm (60% availability / 40% recency) to tell you what's for dinner.",
+    "quote": "I just released Meal Manager, a Nastech plugin designed to solve inventory friction via natural language. It uses a weighted scoring algorithm (60% availability / 40% recency) to tell you what's for dinner.",
     "size": "md"
   },
   {
@@ -809,8 +809,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-04",
     "category": "dev-workflow",
-    "headline": "Built a 22k-line memory kernel underneath Hermes",
-    "quote": "I built a massive ~22k line custom memory kernel in Python underneath Hermes instead of just relying on text generation. It acts as a compiler that parses everything into a temporal context graph inside SQLite. It has actual lifecycle management decay, promotion, and supersession. So if my negotiation tactics evolve, the kernel actively demotes the old info instead of just dumping everything into the prompt.",
+    "headline": "Built a 22k-line memory kernel underneath Nastech",
+    "quote": "I built a massive ~22k line custom memory kernel in Python underneath Nastech instead of just relying on text generation. It acts as a compiler that parses everything into a temporal context graph inside SQLite. It has actual lifecycle management decay, promotion, and supersession. So if my negotiation tactics evolve, the kernel actively demotes the old info instead of just dumping everything into the prompt.",
     "size": "lg"
   },
   {
@@ -820,8 +820,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1486508813816168580-Two-Hermes-Agent-plugins-for-weather-ML---all-Rust--no-Python-deps.txt",
     "date": "",
     "category": "research",
-    "headline": "I ported the whole Python weather stack to Rust for my Hermes plugins",
-    "quote": "I've been porting the entire Python weather stack to Rust — MetPy, Herbie, cfgrib, WRF-Python, all of it. When you cut out Python/eccodes/Fortran from the loop, weather data processing gets absurdly fast. Built two hermes-agent plugins on top of it.",
+    "headline": "I ported the whole Python weather stack to Rust for my Nastech plugins",
+    "quote": "I've been porting the entire Python weather stack to Rust — MetPy, Herbie, cfgrib, WRF-Python, all of it. When you cut out Python/eccodes/Fortran from the loop, weather data processing gets absurdly fast. Built two nastech-agent plugins on top of it.",
     "size": "md"
   },
   {
@@ -831,8 +831,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1491880999913656432-Hermes-found-away-around-expensive-X-API.txt",
     "date": "",
     "category": "content-creation",
-    "headline": "Hermes runs my X roast poster — no $100 API needed",
-    "quote": "I wanted to make an X roast poster, but didn't want to pay the $100 monthly fee. I was able to use Hermes to dance around it, and now he just drops random posts throughout the day. Someone found him and was going back and forth for a hot minute, and all Hermes did was reply back and roast him.",
+    "headline": "Nastech runs my X roast poster — no $100 API needed",
+    "quote": "I wanted to make an X roast poster, but didn't want to pay the $100 monthly fee. I was able to use Nastech to dance around it, and now he just drops random posts throughout the day. Someone found him and was going back and forth for a hot minute, and all Nastech did was reply back and roast him.",
     "size": "md"
   },
   {
@@ -854,18 +854,18 @@
     "date": "2026-04-16",
     "category": "research",
     "headline": "A self-improving LLM Wiki second brain",
-    "quote": "Built a personal knowledge base that compounds over time instead of rotting — maintained by an LLM, not by me. Stack: Hetzner VPS, Hermes Agent, Telegram bot as second brain, Karpathy's LLM Wiki pattern, public static site at wiki.ai-biz.app.",
+    "quote": "Built a personal knowledge base that compounds over time instead of rotting — maintained by an LLM, not by me. Stack: Hetzner VPS, Nastech Agent, Telegram bot as second brain, Karpathy's LLM Wiki pattern, public static site at wiki.ai-biz.app.",
     "size": "md"
   },
   {
-    "id": "discord-kysiv-hermes-control-interface",
+    "id": "discord-kysiv-nastech-control-interface",
     "source": "discord",
     "author": "@kysiv",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1492427034541162517-Hermes-Control-Interface-Web-UI.txt",
     "date": "",
     "category": "meta",
-    "headline": "Built a dashboard so Hermes config and management is easier",
-    "quote": "I built a dashboard that makes Hermes config and management much easier. Browser-based terminal with real PTY, file explorer + inline editor, agent management: switch profile, start/stop gateway in one click, realtime log streaming, token usage analytics. Designed for single-user local networks or reverse-proxied VPS deployments.",
+    "headline": "Built a dashboard so Nastech config and management is easier",
+    "quote": "I built a dashboard that makes Nastech config and management much easier. Browser-based terminal with real PTY, file explorer + inline editor, agent management: switch profile, start/stop gateway in one click, realtime log streaming, token usage analytics. Designed for single-user local networks or reverse-proxied VPS deployments.",
     "size": "md"
   },
   {
@@ -876,7 +876,7 @@
     "date": "2026-04-21",
     "category": "trading",
     "headline": "Polymarket trading, 4 layers in parallel",
-    "quote": "Hermes changed how I trade on Polymarket. Before: I looked at Yes/No price and guessed. Now: I read 4 layers at once — order book, on-chain addresses, lag between news and price, position changes. Hermes monitors all 4 in parallel through its Polymarket module + News Skill.",
+    "quote": "Nastech changed how I trade on Polymarket. Before: I looked at Yes/No price and guessed. Now: I read 4 layers at once — order book, on-chain addresses, lag between news and price, position changes. Nastech monitors all 4 in parallel through its Polymarket module + News Skill.",
     "size": "md"
   },
   {
@@ -887,7 +887,7 @@
     "date": "2026-04-26",
     "category": "personal-assistant",
     "headline": "Apple Health, Threads analytics, Gmail, Calendar — in one CLI",
-    "quote": "Apple Health: Hermes wrote Python on the fly and found my sleep avg was 7.59 hrs. Threads Analytics: drop cookies in, pulled 34 posts of analytics in one command. Hermes is dramatically better than OpenClaw at browser automation. Gmail + Calendar OAuth via drag-drop JSON. Hermes = CEO, OpenClaw = Senior Engineer, both pointed at the same Obsidian vault on my NAS.",
+    "quote": "Apple Health: Nastech wrote Python on the fly and found my sleep avg was 7.59 hrs. Threads Analytics: drop cookies in, pulled 34 posts of analytics in one command. Nastech is dramatically better than OpenClaw at browser automation. Gmail + Calendar OAuth via drag-drop JSON. Nastech = CEO, OpenClaw = Senior Engineer, both pointed at the same Obsidian vault on my NAS.",
     "size": "lg"
   },
   {
@@ -909,7 +909,7 @@
     "date": "2026-04-25",
     "category": "dev-workflow",
     "headline": "It sees a file change and auto-acts on it",
-    "quote": "Hermes is really good. The new updates where it sees a file change and auto acts on it. That shit is fire as fuck.",
+    "quote": "Nastech is really good. The new updates where it sees a file change and auto acts on it. That shit is fire as fuck.",
     "size": "sm"
   },
   {
@@ -920,7 +920,7 @@
     "date": "2026",
     "category": "privacy",
     "headline": "Legal-domain work on an edge GPU, 4B Gemma, no cloud APIs",
-    "quote": "I run Hermes self-hosted on a single edge-class GPU with a 4B Gemma model. I work with legal-domain material and internal systems I cannot ship to third-party APIs. Self-hosting the main loop is non-negotiable.",
+    "quote": "I run Nastech self-hosted on a single edge-class GPU with a 4B Gemma model. I work with legal-domain material and internal systems I cannot ship to third-party APIs. Self-hosting the main loop is non-negotiable.",
     "size": "md"
   },
   {
@@ -930,8 +930,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-27",
     "category": "dev-workflow",
-    "headline": "Two things I built with Hermes: Cartographer and an agent IRC",
-    "quote": "Two very cool things i built entirely with hermes. First is cartographer, which hermes can use as a memory layer but serves as an extremely rich knowledge substrate with semantic wiring & emotional topology. The other is an agent + user IRC-clone for real time, session-sustained chat interfacing between hermes & any other repls (claude, codex, opencode, gemini) — it's been an absolutely game changer for me 'cos now i have my agents collaborate in real time.",
+    "headline": "Two things I built with Nastech: Cartographer and an agent IRC",
+    "quote": "Two very cool things i built entirely with nastech. First is cartographer, which nastech can use as a memory layer but serves as an extremely rich knowledge substrate with semantic wiring & emotional topology. The other is an agent + user IRC-clone for real time, session-sustained chat interfacing between nastech & any other repls (claude, codex, opencode, gemini) — it's been an absolutely game changer for me 'cos now i have my agents collaborate in real time.",
     "size": "lg"
   },
   {
@@ -953,7 +953,7 @@
     "date": "2026-04-15",
     "category": "dev-workflow",
     "headline": "Multi-agent auto-build workflow (plan → code → QA → ship)",
-    "quote": "Day 8 of Building AGI for my Hermes Agent: Auto-Build saved me loads of time and tokens. Main agent (GPT-5.4) breaks a plan into phases, coder agent (MiniMax M2.7) implements, QA agent (local Qwen 35B A3B) tests. Plan → implement → test → fail → repair → ship.",
+    "quote": "Day 8 of Building AGI for my Nastech Agent: Auto-Build saved me loads of time and tokens. Main agent (GPT-5.4) breaks a plan into phases, coder agent (MiniMax M2.7) implements, QA agent (local Qwen 35B A3B) tests. Plan → implement → test → fail → repair → ship.",
     "size": "md"
   },
   {
@@ -964,7 +964,7 @@
     "date": "2026-04-07",
     "category": "creative",
     "headline": "shadcn finance dashboard + Manim explainer videos",
-    "quote": "Used /browse to add Obsidian as a skill, populated a vault with shadcn/ui packages, then asked Hermes to build a finance dashboard using them. Result: beautiful, modern dashboard in minutes. Also used a manim skill to convert complex technical concepts into animated videos.",
+    "quote": "Used /browse to add Obsidian as a skill, populated a vault with shadcn/ui packages, then asked Nastech to build a finance dashboard using them. Result: beautiful, modern dashboard in minutes. Also used a manim skill to convert complex technical concepts into animated videos.",
     "size": "md"
   },
   {
@@ -975,7 +975,7 @@
     "date": "2026",
     "category": "enterprise",
     "headline": "Azure-compliant prompt patch so the safety filter doesn't kick in",
-    "quote": "Patch Hermes Agent prompts so the Azure safety filter does not kick in, letting enterprise Azure deployments avoid content-filter trips.",
+    "quote": "Patch Nastech Agent prompts so the Azure safety filter does not kick in, letting enterprise Azure deployments avoid content-filter trips.",
     "size": "sm"
   },
   {
@@ -984,10 +984,10 @@
     "url": "https://news.ycombinator.com/item?id=47636804",
     "date": "2026-04-04",
     "category": "privacy",
-    "headline": "I'm using Hermes — same applies to all agents, sandbox it",
-    "quote": "I'm using Hermes. The same applies to all agents, don't give it free reign over all your stuff. Run it within a sandbox. https://github.com/nousresearch/hermes-agent",
+    "headline": "I'm using Nastech — same applies to all agents, sandbox it",
+    "quote": "I'm using Nastech. The same applies to all agents, don't give it free reign over all your stuff. Run it within a sandbox. https://github.com/nousresearch/nastech-agent",
     "size": "sm",
-    "id": "hn-flere-imsaho-im-using-hermes"
+    "id": "hn-flere-imsaho-im-using-nastech"
   },
   {
     "id": "andrew-gordon-5-apps",
@@ -997,7 +997,7 @@
     "date": "2026",
     "category": "dev-workflow",
     "headline": "5 apps built and launched in a single day",
-    "quote": "I've switched to Nous-Research Hermes-Agent from previous Agents I've been experimenting with. Hermes is unique in that it self-learns. Within a single day, I built and launched five small applications.",
+    "quote": "I've switched to Nous-Research Nastech-Agent from previous Agents I've been experimenting with. Nastech is unique in that it self-learns. Within a single day, I built and launched five small applications.",
     "size": "sm"
   },
   {
@@ -1008,7 +1008,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Firecrawl for scrape/search/browse",
-    "quote": "Hermes Agent by Nous Research can now scrape, search, and interact with the web using Firecrawl. Enable it during setup to give Hermes the ability.",
+    "quote": "Nastech Agent by Nous Research can now scrape, search, and interact with the web using Firecrawl. Enable it during setup to give Nastech the ability.",
     "size": "sm"
   },
   {
@@ -1019,7 +1019,7 @@
     "date": "",
     "category": "meta",
     "headline": "Every tool call into SQLite, with Grafana dashboards",
-    "quote": "I created a small Hermes plugin that records every tool call and every LLM API call into a local SQLite database (one DB per profile), with five ready-to-go Grafana dashboards bundled.",
+    "quote": "I created a small Nastech plugin that records every tool call and every LLM API call into a local SQLite database (one DB per profile), with five ready-to-go Grafana dashboards bundled.",
     "size": "md"
   },
   {
@@ -1029,7 +1029,7 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-10",
     "category": "personal-assistant",
-    "headline": "How I use Hermes memory: durable facts, session search, skills",
+    "headline": "How I use Nastech memory: durable facts, session search, skills",
     "quote": "memory tool — Save/retrieve durable facts across sessions. I save user preferences, environment details, tool quirks, stable conventions. It's injected into every turn. I keep it compact — facts that will still matter later. I do NOT save task progress or temporary state here. session_search — Recall past conversations. skill_manage — Save procedural memory. After complex tasks (5+ tool calls), tricky fixes, or non-trivial workflows, I save the approach as a skill.",
     "size": "lg"
   },
@@ -1051,8 +1051,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1502632110345818123-Attest---onchain-identity-and-proof-of-work-for-Hermes-agents-via-EAS.txt",
     "date": "",
     "category": "integrations",
-    "headline": "Onchain identity and proof-of-work for Hermes agents",
-    "quote": "Built a skill that connects Hermes to Ethereum Attestation Service on Base mainnet. The agent autonomously creates onchain identity and proof-of-work attestations.",
+    "headline": "Onchain identity and proof-of-work for Nastech agents",
+    "quote": "Built a skill that connects Nastech to Ethereum Attestation Service on Base mainnet. The agent autonomously creates onchain identity and proof-of-work attestations.",
     "size": "sm"
   },
   {
@@ -1074,18 +1074,18 @@
     "date": "2026",
     "category": "cost-optimization",
     "headline": "90% token spend cut. Runs on a cheap Android via Termux.",
-    "quote": "Switching to Hermes with OpenRouter cut my token spend ~90% — from ~$130 per 5 days to ~$10 per 5 days. Hermes runs on a cheap Android phone via Termux + Termux API — unlocks SMS, sensors, and on-device social posting. Customization is a trap; output is the skill.",
+    "quote": "Switching to Nastech with OpenRouter cut my token spend ~90% — from ~$130 per 5 days to ~$10 per 5 days. Nastech runs on a cheap Android phone via Termux + Termux API — unlocks SMS, sensors, and on-device social posting. Customization is a trap; output is the skill.",
     "size": "md"
   },
   {
-    "id": "discord-dalekc72-hermes-managing-tickets",
+    "id": "discord-dalekc72-nastech-managing-tickets",
     "source": "discord",
     "author": "@dalekc72",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1493589434971717763-Small-Win---Hermes---Claude-Code-managing-my-Tickets.txt",
     "date": "",
     "category": "business-ops",
-    "headline": "Hermes triages and works tickets in my PM software",
-    "quote": "Super excited that Hermes and Claude Code are now working tickets in my PM software, Plane.so. Tickets come in and Hermes triages and assigns and starts working the tickets. Basically Paperclip that gets sh*t done. They then document in the ticket and if needed create documentation for Obsidian.",
+    "headline": "Nastech triages and works tickets in my PM software",
+    "quote": "Super excited that Nastech and Claude Code are now working tickets in my PM software, Plane.so. Tickets come in and Nastech triages and assigns and starts working the tickets. Basically Paperclip that gets sh*t done. They then document in the ticket and if needed create documentation for Obsidian.",
     "size": "lg"
   },
   {
@@ -1100,14 +1100,14 @@
     "size": "sm"
   },
   {
-    "id": "discord-alpaca1712-hermes-ships-with-vals",
+    "id": "discord-alpaca1712-nastech-ships-with-vals",
     "source": "discord",
     "author": "@alpaca1712",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1496701579234119850-I-gave-my-Hermes-agent-hands--aka-the-ability-to-ship-now.txt",
     "date": "",
     "category": "dev-workflow",
-    "headline": "I gave my Hermes agent hands — it ships micro-apps now",
-    "quote": "I wrote a blog post about how you can instantly have Hermes ship ideas with Vals. This allows me to easily create micro applications which are pretty fun without having to setup a deployment pipeline. I used Val Town, a platform that allows you to create micro applications and instantly deploy them.",
+    "headline": "I gave my Nastech agent hands — it ships micro-apps now",
+    "quote": "I wrote a blog post about how you can instantly have Nastech ship ideas with Vals. This allows me to easily create micro applications which are pretty fun without having to setup a deployment pipeline. I used Val Town, a platform that allows you to create micro applications and instantly deploy them.",
     "size": "md"
   },
   {
@@ -1129,7 +1129,7 @@
     "date": "2026-04-14",
     "category": "dev-workflow",
     "headline": "Accumulates knowledge about my codebase over time",
-    "quote": "A long-running Hermes instance accumulates knowledge about your codebase, deployment quirks, preferred commit message format, working API call sequences for legacy integrations.",
+    "quote": "A long-running Nastech instance accumulates knowledge about your codebase, deployment quirks, preferred commit message format, working API call sequences for legacy integrations.",
     "size": "sm"
   },
   {
@@ -1138,10 +1138,10 @@
     "url": "https://www.reddit.com/r/SideProject/comments/1t6356h/5_things_hermes_does_as_an_ai_agent_that_chatgpt/",
     "date": "2026-05-07",
     "category": "personal-assistant",
-    "headline": "5 things Hermes does that ChatGPT will never do",
-    "quote": "ChatGPT is a browser tab. Hermes is a server process that's running right now, has been building a model of your workflow for the past few weeks, and just sent you a Telegram message before you woke up. It doesn't stop when you close your laptop. It messages you first. Memory that gets useful over time. Runs code, doesn't just write it. Takes action in your actual apps.",
+    "headline": "5 things Nastech does that ChatGPT will never do",
+    "quote": "ChatGPT is a browser tab. Nastech is a server process that's running right now, has been building a model of your workflow for the past few weeks, and just sent you a Telegram message before you woke up. It doesn't stop when you close your laptop. It messages you first. Memory that gets useful over time. Runs code, doesn't just write it. Takes action in your actual apps.",
     "size": "lg",
-    "id": "reddit-ninjapapi-5-things-hermes"
+    "id": "reddit-ninjapapi-5-things-nastech"
   },
   {
     "id": "discord-nour-h-recall-memory",
@@ -1151,7 +1151,7 @@
     "date": "",
     "category": "dev-workflow",
     "headline": "Dogfooding a memory layer that isn't a black box",
-    "quote": "I've been building and dogfooding Recall, a Hermes-native memory provider designed for people who want memory that is useful, inspectable, and safe — not a black box.",
+    "quote": "I've been building and dogfooding Recall, a Nastech-native memory provider designed for people who want memory that is useful, inspectable, and safe — not a black box.",
     "size": "md"
   },
   {
@@ -1160,8 +1160,8 @@
     "url": "https://www.reddit.com/r/hermesagent/comments/1stz6gd/how_i_use_obsidian_as_the_longterm_memory/",
     "date": "2026-04-23",
     "category": "personal-assistant",
-    "headline": "Obsidian as the long-term memory backbone for Hermes (794 upvotes)",
-    "quote": "How I use Obsidian as the long-term memory backbone for my AI assistant. (794-upvote diagram showing Hermes Agent writing structured markdown notes back into a synced Obsidian vault, treating the vault as the durable memory layer that survives context resets and cross-machine moves.)",
+    "headline": "Obsidian as the long-term memory backbone for Nastech (794 upvotes)",
+    "quote": "How I use Obsidian as the long-term memory backbone for my AI assistant. (794-upvote diagram showing Nastech Agent writing structured markdown notes back into a synced Obsidian vault, treating the vault as the durable memory layer that survives context resets and cross-machine moves.)",
     "size": "md",
     "id": "reddit-jonathan-rivera-obsidian-as-the"
   },
@@ -1172,8 +1172,8 @@
     "url": "https://gist.github.com/nazt/849e29cd25c148b6cebafdbcc38bb6cc",
     "date": "2026",
     "category": "integrations",
-    "headline": "Fat agent → thin tool provider via hermes mcp serve",
-    "quote": "hermes mcp serve turns Hermes from a monolithic agent into a composable capability layer — any MCP client can borrow Hermes's 15+ messaging platforms, SQLite FTS5 persistence, and 73-skill tool surface without running Hermes as the primary agent.",
+    "headline": "Fat agent → thin tool provider via nastech mcp serve",
+    "quote": "nastech mcp serve turns Nastech from a monolithic agent into a composable capability layer — any MCP client can borrow Nastech's 15+ messaging platforms, SQLite FTS5 persistence, and 73-skill tool surface without running Nastech as the primary agent.",
     "size": "md"
   },
   {
@@ -1194,8 +1194,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1495582727217479720-Hermes-Auto-Plays-Minecraft-SKILL.txt",
     "date": "",
     "category": "creative",
-    "headline": "Asked Hermes to write a skill that auto-plays Minecraft",
-    "quote": "So I figured I'd ask hermes to make a skill to auto play minecraft, it took some nudging in the direction I wanted, but it came up with this. I ran the skill and it has been thinking for 20 minutes.",
+    "headline": "Asked Nastech to write a skill that auto-plays Minecraft",
+    "quote": "So I figured I'd ask nastech to make a skill to auto play minecraft, it took some nudging in the direction I wanted, but it came up with this. I ran the skill and it has been thinking for 20 minutes.",
     "size": "sm"
   },
   {
@@ -1204,8 +1204,8 @@
     "url": "https://www.reddit.com/r/hermesagent/comments/1t29ogw/one_month_with_hermes_agent_what_i_wish_i_knew/",
     "date": "2026-05-03",
     "category": "meta",
-    "headline": "One month with Hermes: don't build the whole machine on day one",
-    "quote": "Hermes works impressively well out of the box. The real challenge starts after that first 'wow' moment, because Hermes is powerful enough to make you overestimate how ready you are to use it properly. Start with one small workflow. Make it boringly reliable. Then add the next piece. Don't turn the default profile into a giant backpack full of every skill, every tool, every instruction.",
+    "headline": "One month with Nastech: don't build the whole machine on day one",
+    "quote": "Nastech works impressively well out of the box. The real challenge starts after that first 'wow' moment, because Nastech is powerful enough to make you overestimate how ready you are to use it properly. Start with one small workflow. Make it boringly reliable. Then add the next piece. Don't turn the default profile into a giant backpack full of every skill, every tool, every instruction.",
     "size": "lg",
     "id": "reddit-itsdodobitch-one-month-with"
   },
@@ -1217,7 +1217,7 @@
     "date": "2026-03-30",
     "category": "cost-optimization",
     "headline": "Under $20/mo total — no Mac Mini, no Opus",
-    "quote": "OpenClaw setup: Mac Mini M4 ($599) + Opus 4.6 = ~$80–150/mo. Hermes on VPS: under $20/mo total using Minimax M2.7. Example first task: 'check the top 5 trending GitHub repos right now and send me a summary.'",
+    "quote": "OpenClaw setup: Mac Mini M4 ($599) + Opus 4.6 = ~$80–150/mo. Nastech on VPS: under $20/mo total using Minimax M2.7. Example first task: 'check the top 5 trending GitHub repos right now and send me a summary.'",
     "size": "md"
   },
   {
@@ -1228,7 +1228,7 @@
     "date": "2026",
     "category": "business-ops",
     "headline": "Create and edit Google Slides decks",
-    "quote": "Extending google-workspace skill to Google Slides so Hermes can create and edit presentations for users already in Google Workspace.",
+    "quote": "Extending google-workspace skill to Google Slides so Nastech can create and edit presentations for users already in Google Workspace.",
     "size": "sm"
   },
   {
@@ -1238,8 +1238,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-12",
     "category": "cost-optimization",
-    "headline": "Free GPT-4.1 via Copilot, Hermes delegates coding to OpenCode",
-    "quote": "I'm proud to say that Hermes is fucking awesome if you know how to make use of it. I'm using copilot github 10usd pro subscription and use the free model zero credits that comes with it. The model is gpt-4.1 and I'm loving how useful to have it in Hermes. I only use premium model to opencode for coding project so my Hermes agent smart enough to delegate task to opencode.",
+    "headline": "Free GPT-4.1 via Copilot, Nastech delegates coding to OpenCode",
+    "quote": "I'm proud to say that Nastech is fucking awesome if you know how to make use of it. I'm using copilot github 10usd pro subscription and use the free model zero credits that comes with it. The model is gpt-4.1 and I'm loving how useful to have it in Nastech. I only use premium model to opencode for coding project so my Nastech agent smart enough to delegate task to opencode.",
     "size": "md"
   },
   {
@@ -1248,10 +1248,10 @@
     "url": "https://www.reddit.com/r/LocalLLaMA/comments/1ro9lph/anybody_who_tried_hermesagent/",
     "date": "2026-03-08",
     "category": "personal-assistant",
-    "headline": "Hermes very good as personal agent on Qwen3.5 27B",
+    "headline": "Nastech very good as personal agent on Qwen3.5 27B",
     "quote": "Fairly good with qwen3.5-4b, very decent with qwen3.5-9b, VERY good with 27b. Personal agent? Yes. Coding for high complexity tasks? Not really, but with high guidance? Yes.",
     "size": "sm",
-    "id": "reddit-suitable-currency440-hermes-very-good"
+    "id": "reddit-suitable-currency440-nastech-very-good"
   },
   {
     "id": "discord-malaiwah-fork-watchtower",
@@ -1260,8 +1260,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-10",
     "category": "dev-workflow",
-    "headline": "Local Gitea fork + watchtower auto-restarts my Hermes in 10 minutes",
-    "quote": "I have my own fork (on local Gitea) that has workflow to build a container image for merges to main and it pushes to my gitea container registry (packages). I have my Hermes Agent running in a podman container that has the correct label for watchtower to restart it when the image changes. Building the image takes 5 minutes, watchtower runs every 5.. So maximum 10 minutes after I push a commit to main, I get the agent restarted.",
+    "headline": "Local Gitea fork + watchtower auto-restarts my Nastech in 10 minutes",
+    "quote": "I have my own fork (on local Gitea) that has workflow to build a container image for merges to main and it pushes to my gitea container registry (packages). I have my Nastech Agent running in a podman container that has the correct label for watchtower to restart it when the image changes. Building the image takes 5 minutes, watchtower runs every 5.. So maximum 10 minutes after I push a commit to main, I get the agent restarted.",
     "size": "lg"
   },
   {
@@ -1272,7 +1272,7 @@
     "date": "",
     "category": "integrations",
     "headline": "An AdGuard plugin so I browse faster, ad-free",
-    "quote": "I created also plugin for AdGuard Home, to browse faster without ads on the web. Is needed to install and configure adguardhome first, and then install and enable plugin on Hermes.",
+    "quote": "I created also plugin for AdGuard Home, to browse faster without ads on the web. Is needed to install and configure adguardhome first, and then install and enable plugin on Nastech.",
     "size": "sm"
   },
   {
@@ -1283,7 +1283,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Webchat: custom themed browser UI on MEMORY.md",
-    "quote": "I created a beautiful web interface for Hermes Agent that adds dark/light theme, persistent memory using MEMORY.md and USER.md, per-session chat history, status bar, responsive on mobile and desktop.",
+    "quote": "I created a beautiful web interface for Nastech Agent that adds dark/light theme, persistent memory using MEMORY.md and USER.md, per-session chat history, status bar, responsive on mobile and desktop.",
     "size": "sm"
   },
   {
@@ -1294,7 +1294,7 @@
     "date": "2026-04-04",
     "category": "dev-workflow",
     "headline": "A memory kernel that compiles thoughts, not vectors",
-    "quote": "Actually I've been building exactly this for my agent (Hermes) for a while now... Instead of a dumb vector search, my memory kernel intercepts the LLM's thoughts and 'compiles' them into a living structured database. Every extracted memory gets a lifecycle status. If the agent learns something that contradicts old data, a background orchestrator automatically detects it.",
+    "quote": "Actually I've been building exactly this for my agent (Nastech) for a while now... Instead of a dumb vector search, my memory kernel intercepts the LLM's thoughts and 'compiles' them into a living structured database. Every extracted memory gets a lifecycle status. If the agent learns something that contradicts old data, a background orchestrator automatically detects it.",
     "size": "md"
   },
   {
@@ -1303,10 +1303,10 @@
     "url": "https://x.com/brucexu_eth/status/2048625942416023874",
     "date": "2026-04-27",
     "category": "creative",
-    "headline": "Hermes Inc.: Telegram-native startup sim built at Hermes hackathon",
-    "quote": "Built Hermes Inc. for the Hermes hackathon: a Telegram-native startup simulation game powered by Hermes Agent. An experiment in agent-native game design. Your AI teammates argue, remember, react, and evolve the company over time through weekly decisions, autonomous updates, events, and milestone visuals.",
+    "headline": "Nastech Inc.: Telegram-native startup sim built at Nastech hackathon",
+    "quote": "Built Nastech Inc. for the Nastech hackathon: a Telegram-native startup simulation game powered by Nastech Agent. An experiment in agent-native game design. Your AI teammates argue, remember, react, and evolve the company over time through weekly decisions, autonomous updates, events, and milestone visuals.",
     "size": "md",
-    "id": "x-brucexu-eth-hermes"
+    "id": "x-brucexu-eth-nastech"
   },
   {
     "id": "discord-arm64be-personal-webpage-style",
@@ -1327,7 +1327,7 @@
     "date": "",
     "category": "personal-assistant",
     "headline": "A semantic knowledge substrate I made for my brain",
-    "quote": "Point it at your existing setup — Obsidian, vimwiki, Hermes sessions — and you've already built a semantic topology over your knowledgebase. Pair it with mapsOS — braindump to your agent, it parses into a qualitative map of your entire life. I made it & mapsOS for my brain. You can make them for yours.",
+    "quote": "Point it at your existing setup — Obsidian, vimwiki, Nastech sessions — and you've already built a semantic topology over your knowledgebase. Pair it with mapsOS — braindump to your agent, it parses into a qualitative map of your entire life. I made it & mapsOS for my brain. You can make them for yours.",
     "size": "md"
   },
   {
@@ -1338,7 +1338,7 @@
     "date": "2026-04-29",
     "category": "content-creation",
     "headline": "Monica that writes in my voice",
-    "quote": "I kept the OpenClaw squad running, but set up a second Monica on Hermes. Same Mac Mini. Monica had written a procedure for reading my published articles before drafting in my voice. An Agent with skills that grows with you.",
+    "quote": "I kept the OpenClaw squad running, but set up a second Monica on Nastech. Same Mac Mini. Monica had written a procedure for reading my published articles before drafting in my voice. An Agent with skills that grows with you.",
     "size": "sm"
   },
   {
@@ -1369,20 +1369,20 @@
     "url": "https://www.reddit.com/r/openclaw/comments/1slqt5h/is_hermes_agent_a_new_hype_or_is_it_genuinely/",
     "date": "2026-04-15",
     "category": "dev-workflow",
-    "headline": "Side-by-side: Hermes more stable, troubleshoots OpenClaw",
-    "quote": "Using both side by side I find it more stable and less headache than OC. Hermes has more research skills, and it's very handy as troubleshooter of OC. Telegram recently added bot to bot communication in their API so I'm thinking a way both communicate.",
+    "headline": "Side-by-side: Nastech more stable, troubleshoots OpenClaw",
+    "quote": "Using both side by side I find it more stable and less headache than OC. Nastech has more research skills, and it's very handy as troubleshooter of OC. Telegram recently added bot to bot communication in their API so I'm thinking a way both communicate.",
     "size": "md",
-    "id": "reddit-delicious-ease2595-hermes-more"
+    "id": "reddit-delicious-ease2595-nastech-more"
   },
   {
-    "id": "discord-itsdodo21-hermes-desktop",
+    "id": "discord-itsdodo21-nastech-desktop",
     "source": "discord",
     "author": "@itsdodo21",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1492615746629402735-Hermes-Desktop-v0.4.0---why-I-didn-t-build-another-gateway-UI.txt",
     "date": "",
     "category": "dev-workflow",
     "headline": "A native Mac app that sits next to my terminal",
-    "quote": "Hermes Desktop is a native Mac app for Hermes Agent. Not a browser wrapper but a real SwiftUI app that connects to your Hermes host and files over SSH. The gateway model is the right answer for Telegram and Discord. For a native Mac app that sits next to your terminal, it's just not the one I'd ship.",
+    "quote": "Nastech Desktop is a native Mac app for Nastech Agent. Not a browser wrapper but a real SwiftUI app that connects to your Nastech host and files over SSH. The gateway model is the right answer for Telegram and Discord. For a native Mac app that sits next to your terminal, it's just not the one I'd ship.",
     "size": "md"
   },
   {
@@ -1393,7 +1393,7 @@
     "date": "",
     "category": "dev-workflow",
     "headline": "A compression plugin for sessions that go on forever",
-    "quote": "I just open-sourced Hermes Operational Checkpoint Plugin. It's a plugin for Hermes built for the kind of sessions that go on long enough that normal compression can start softening the thread of the work a little too much. The goal here was pretty simple: after manual compression or auto-compression, the session should still feel like it remembers what it was actually doing.",
+    "quote": "I just open-sourced Nastech Operational Checkpoint Plugin. It's a plugin for Nastech built for the kind of sessions that go on long enough that normal compression can start softening the thread of the work a little too much. The goal here was pretty simple: after manual compression or auto-compression, the session should still feel like it remembers what it was actually doing.",
     "size": "md"
   },
   {
@@ -1414,8 +1414,8 @@
     "url": "https://kenhuangus.substack.com/p/chapter-10-production-deployment",
     "date": "2026-04-27",
     "category": "enterprise",
-    "headline": "Hermes as CLI/gateway-first — 13 platforms under one process",
-    "quote": "Hermes Agent: CLI/gateway-first — standalone agent for messaging platforms, schedules, and command line. Gateway multiplexes 13 platforms under one process.",
+    "headline": "Nastech as CLI/gateway-first — 13 platforms under one process",
+    "quote": "Nastech Agent: CLI/gateway-first — standalone agent for messaging platforms, schedules, and command line. Gateway multiplexes 13 platforms under one process.",
     "size": "sm"
   },
   {
@@ -1426,7 +1426,7 @@
     "date": "2026",
     "category": "privacy",
     "headline": "Tailscale serve for secure remote access, no exposed ports",
-    "quote": "Users want secure remote access to the Hermes API server / Open WebUI without exposing ports publicly. Tailscale serve provides zero-config HTTPS tunneling over a private mesh.",
+    "quote": "Users want secure remote access to the Nastech API server / Open WebUI without exposing ports publicly. Tailscale serve provides zero-config HTTPS tunneling over a private mesh.",
     "size": "sm"
   },
   {
@@ -1436,8 +1436,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent/",
     "date": "2026-03-24",
     "category": "integrations",
-    "headline": "Hermes watches my homelab validators and pings Telegram",
-    "quote": "I've been running OpenClaw as my homelab AI agent gateway for months (Telegram/Discord, validators, cron jobs)... Built on top: a Hermes skill that monitors blockchain validator endpoints (0G, FortyTwo relay) and fires Telegram alerts on state changes — no spam, only alerts on up↔down transitions.",
+    "headline": "Nastech watches my homelab validators and pings Telegram",
+    "quote": "I've been running OpenClaw as my homelab AI agent gateway for months (Telegram/Discord, validators, cron jobs)... Built on top: a Nastech skill that monitors blockchain validator endpoints (0G, FortyTwo relay) and fires Telegram alerts on state changes — no spam, only alerts on up↔down transitions.",
     "size": "md"
   },
   {
@@ -1447,8 +1447,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent/",
     "date": "2026-03-10",
     "category": "creative",
-    "headline": "Speech-to-speech with Hermes, plus generated background music",
-    "quote": "I work with Hermes almost exclusively speech-to-speech until my kids go to bed and I can sit down and focus at my desk. Well I added a little skill to my Hermes that plays generated background music while it is working and fades out when Hermes stops. It's nicer than listening for my GPUs to stop spinning lol and if Hermes hits a wall, the music stops and I know from the other room.",
+    "headline": "Speech-to-speech with Nastech, plus generated background music",
+    "quote": "I work with Nastech almost exclusively speech-to-speech until my kids go to bed and I can sit down and focus at my desk. Well I added a little skill to my Nastech that plays generated background music while it is working and fades out when Nastech stops. It's nicer than listening for my GPUs to stop spinning lol and if Nastech hits a wall, the music stops and I know from the other room.",
     "size": "lg"
   },
   {
@@ -1458,7 +1458,7 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1496117910287024159-Running-Hermes-as-a-Hardcore-Project-Operating-System.txt",
     "date": "",
     "category": "business-ops",
-    "headline": "Hermes as my Chief of Staff with sub-agents per project",
+    "headline": "Nastech as my Chief of Staff with sub-agents per project",
     "quote": "My 'main agent' is my 'Chief of Staff' who has his own memory cross-project/workflow. Every 'project' (1 project = 1 Slack channel) has its own agent sub-profile with its own memory. The whole system runs on a VPS, with backup routing if the main model fails, and gets backed up every night to Github. Daily reporting is sent to WhatsApp.",
     "size": "lg"
   },
@@ -1469,12 +1469,12 @@
     "url": "https://x.com/EXM7777/status/2049869015221510424",
     "date": "2026-04-30",
     "category": "personal-assistant",
-    "headline": "One Hermes for the whole family on WhatsApp",
-    "quote": "3 weeks ago I decided to setup an Hermes agent for my family (3 members), they all use it for different use cases, one $200 ChatGPT sub is more than enough. It unlocked a whole new world for them, just because it lives inside whatsapp and has magic proactive behaviors.",
+    "headline": "One Nastech for the whole family on WhatsApp",
+    "quote": "3 weeks ago I decided to setup an Nastech agent for my family (3 members), they all use it for different use cases, one $200 ChatGPT sub is more than enough. It unlocked a whole new world for them, just because it lives inside whatsapp and has magic proactive behaviors.",
     "size": "md"
   },
   {
-    "id": "discord-mibayy-hermes-memory",
+    "id": "discord-mibayy-nastech-memory",
     "source": "discord",
     "author": "@mibayy",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1486509881673383998-Hermes-memory---Persistent-structured-memory-for-Hermes-agents.txt",
@@ -1491,8 +1491,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/issues/6715",
     "date": "2026",
     "category": "integrations",
-    "headline": "Cross-agent memory: Hermes + Claude Code + Cursor",
-    "quote": "Built a memory provider plugin connecting agentmemory to Hermes. Covers cross-agent memory (developer using Hermes plus Claude Code or Cursor) with hybrid BM25+vector+knowledge-graph search.",
+    "headline": "Cross-agent memory: Nastech + Claude Code + Cursor",
+    "quote": "Built a memory provider plugin connecting agentmemory to Nastech. Covers cross-agent memory (developer using Nastech plus Claude Code or Cursor) with hybrid BM25+vector+knowledge-graph search.",
     "size": "sm"
   },
   {
@@ -1514,7 +1514,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Desktop computer-use module: noVNC, screenshots, mouse/keyboard",
-    "quote": "I built an optional desktop computer-use module for Hermes: computer_use_tool.py plus a containerized desktop with persistent Chromium, mouse/keyboard control, and screenshots.",
+    "quote": "I built an optional desktop computer-use module for Nastech: computer_use_tool.py plus a containerized desktop with persistent Chromium, mouse/keyboard control, and screenshots.",
     "size": "sm"
   },
   {
@@ -1525,7 +1525,7 @@
     "date": "2026-04-06",
     "category": "dev-workflow",
     "headline": "I now compile skills into code, only invoking AI at necessary steps",
-    "quote": "I once built skills that worked very well with advanced models connected to the Hermes Agent, but they performed poorly when switched to weaker models. For this reason, I now prefer compiling skills into code, only involving AI at necessary steps. This greatly improves the reliability and consistency of execution.",
+    "quote": "I once built skills that worked very well with advanced models connected to the Nastech Agent, but they performed poorly when switched to weaker models. For this reason, I now prefer compiling skills into code, only involving AI at necessary steps. This greatly improves the reliability and consistency of execution.",
     "size": "md"
   },
   {
@@ -1536,7 +1536,7 @@
     "date": "2026",
     "category": "content-creation",
     "headline": "Tweets in my voice, pulled from past video scripts",
-    "quote": "Prompted Hermes to help write tweets based on past video scripts. Pointed it at a scripts folder; it analyzed my writing style, produced usable tweets, and saved preferences to memory automatically. Brand new session test: it recalled everything, including preferred emojis.",
+    "quote": "Prompted Nastech to help write tweets based on past video scripts. Pointed it at a scripts folder; it analyzed my writing style, produced usable tweets, and saved preferences to memory automatically. Brand new session test: it recalled everything, including preferred emojis.",
     "size": "md"
   },
   {
@@ -1557,7 +1557,7 @@
     "date": "2026-05-05",
     "category": "dev-workflow",
     "headline": "Kanban multi-agent feature is game-changing",
-    "quote": "WHAT IS THE NEW KANBAN FEATURE BUILT INTO HERMES? (IT'S GAME CHANGING) — image post showing Hermes' new built-in Kanban board where a parent agent posts cards and child subagents pull them, work in parallel, and report back, turning the agent into a multi-agent project manager.",
+    "quote": "WHAT IS THE NEW KANBAN FEATURE BUILT INTO NASTECH? (IT'S GAME CHANGING) — image post showing Nastech' new built-in Kanban board where a parent agent posts cards and child subagents pull them, work in parallel, and report back, turning the agent into a multi-agent project manager.",
     "size": "md",
     "id": "reddit-itsdodobitch-kanban-feature"
   },
@@ -1569,7 +1569,7 @@
     "date": "",
     "category": "general",
     "headline": "My local community agent runs on a 16GB Mac mini",
-    "quote": "Here is my Hermes Agent use case running on 16GB mac mini. Appreciate anyone checking it out and offering any feedback.",
+    "quote": "Here is my Nastech Agent use case running on 16GB mac mini. Appreciate anyone checking it out and offering any feedback.",
     "size": "sm"
   },
   {
@@ -1580,18 +1580,18 @@
     "date": "2026-04-14",
     "category": "meta",
     "headline": "Switched from OpenClaw, not looking back",
-    "quote": "I switched from OpenClaw to Hermes and not looking back. This was a major update with tons of goodies.",
+    "quote": "I switched from OpenClaw to Nastech and not looking back. This was a major update with tons of goodies.",
     "size": "sm"
   },
   {
-    "id": "awesome-hermes",
+    "id": "awesome-nastech",
     "source": "github",
     "author": "@0xNyk",
     "url": "https://github.com/0xNyk/awesome-hermes-agent",
     "date": "2026",
     "category": "meta",
-    "headline": "awesome-hermes-agent: community-curated skills list",
-    "quote": "A curated list of skills, tools, integrations and resources for enhancing your Hermes Agent workflow — resources tied to the agentskills.io standard.",
+    "headline": "awesome-nastech-agent: community-curated skills list",
+    "quote": "A curated list of skills, tools, integrations and resources for enhancing your Nastech Agent workflow — resources tied to the agentskills.io standard.",
     "size": "sm"
   },
   {
@@ -1601,8 +1601,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/issues/6430",
     "date": "2026",
     "category": "personal-assistant",
-    "headline": "Hermes over iMessage on my always-on Mac Studio",
-    "quote": "I run Hermes Agent as a personal AI assistant on a Mac Studio that is always on. My primary communication with other people happens through iMessage. I can message my assistant from my iPhone, iPad, Mac, or Apple Watch. Group chats with friends could include the assistant naturally.",
+    "headline": "Nastech over iMessage on my always-on Mac Studio",
+    "quote": "I run Nastech Agent as a personal AI assistant on a Mac Studio that is always on. My primary communication with other people happens through iMessage. I can message my assistant from my iPhone, iPad, Mac, or Apple Watch. Group chats with friends could include the assistant naturally.",
     "size": "md"
   },
   {
@@ -1623,8 +1623,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1501565023359598754-Vectorless-RAG-with-PageIndex-and-Hermes-Agent.txt",
     "date": "",
     "category": "dev-workflow",
-    "headline": "Built a vectorless RAG workflow with PageIndex and Hermes",
-    "quote": "I built a simple vectorless RAG workflow using PageIndex and Hermes Agent. Instead of splitting documents into chunks and retrieving them through vector similarity, the system relies on a hierarchical document structure and tool-based reasoning. The agent first understands how the document is organized, then...",
+    "headline": "Built a vectorless RAG workflow with PageIndex and Nastech",
+    "quote": "I built a simple vectorless RAG workflow using PageIndex and Nastech Agent. Instead of splitting documents into chunks and retrieving them through vector similarity, the system relies on a hierarchical document structure and tool-based reasoning. The agent first understands how the document is organized, then...",
     "size": "md"
   },
   {
@@ -1634,8 +1634,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-03-10",
     "category": "creative",
-    "headline": "Wrote my Hermes agent's tone examples with my sister",
-    "quote": "when I was building reina (my hermes agent), i had a lot of fun because me and my sister sat down and came up with a handful of examples to pass into her persona via the soul file. here are a few: \"it's ugly but i fw it\" \"i don't care enough to argue but you're wrong\" \"no shot\" \"why did you say it like that\". i feel like humans have always had this yearning to make things that they see themselves in.",
+    "headline": "Wrote my Nastech agent's tone examples with my sister",
+    "quote": "when I was building reina (my nastech agent), i had a lot of fun because me and my sister sat down and came up with a handful of examples to pass into her persona via the soul file. here are a few: \"it's ugly but i fw it\" \"i don't care enough to argue but you're wrong\" \"no shot\" \"why did you say it like that\". i feel like humans have always had this yearning to make things that they see themselves in.",
     "size": "lg"
   },
   {
@@ -1646,7 +1646,7 @@
     "date": "",
     "category": "integrations",
     "headline": "Built a Discord-read plugin because I missed it from OpenClaw",
-    "quote": "I was so used to telling OpenClaw to read a specific Discord message for context that when I switched to Hermes Agent and it told me it couldn't, I was shocked.",
+    "quote": "I was so used to telling OpenClaw to read a specific Discord message for context that when I switched to Nastech Agent and it told me it couldn't, I was shocked.",
     "size": "sm"
   },
   {
@@ -1656,8 +1656,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent/",
     "date": "2026-04-02",
     "category": "general",
-    "headline": "Teaching a Linux user group to build agents with Hermes",
-    "quote": "I'm going to delivering a workshop on building agents with open weights models for personal use cases, using Hermes to a linux user group... I am thinking personalized news briefing is probably the easiest thing that will be generally useful and work across models.",
+    "headline": "Teaching a Linux user group to build agents with Nastech",
+    "quote": "I'm going to delivering a workshop on building agents with open weights models for personal use cases, using Nastech to a linux user group... I am thinking personalized news briefing is probably the easiest thing that will be generally useful and work across models.",
     "size": "md"
   },
   {
@@ -1668,7 +1668,7 @@
     "date": "",
     "category": "meta",
     "headline": "Made 4 custom skins for my HermelinChat GUI",
-    "quote": "I made 4 custom skins for Hermes for my HermelinChat GUI. They also work standalone and should be good enough as templates for your own Skins.",
+    "quote": "I made 4 custom skins for Nastech for my HermelinChat GUI. They also work standalone and should be good enough as templates for your own Skins.",
     "size": "sm"
   },
   {
@@ -1690,7 +1690,7 @@
     "date": "2026",
     "category": "content-creation",
     "headline": "LinkedIn posts that remember my style",
-    "quote": "Every time you do something — for example, using Hermes to write a LinkedIn post — it uses that experience to create a new skill. Next time you ask it to generate a LinkedIn post, boom, you don't have to give it the same instructions.",
+    "quote": "Every time you do something — for example, using Nastech to write a LinkedIn post — it uses that experience to create a new skill. Next time you ask it to generate a LinkedIn post, boom, you don't have to give it the same instructions.",
     "size": "sm"
   },
   {
@@ -1700,19 +1700,19 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1498955668311248948-Herm---Chat-and-Dashboard-TUI.txt",
     "date": "",
     "category": "dev-workflow",
-    "headline": "Built my own TUI so Hermes feels like OpenCode",
-    "quote": "Before Hermes, OpenCode was my daily driver. I built Herm because I wanted Hermes capabilities with an OpenCode-like interface. Herm uses the same TUI framework OpenCode is built with, all within my interface of choice: the terminal.",
+    "headline": "Built my own TUI so Nastech feels like OpenCode",
+    "quote": "Before Nastech, OpenCode was my daily driver. I built Herm because I wanted Nastech capabilities with an OpenCode-like interface. Herm uses the same TUI framework OpenCode is built with, all within my interface of choice: the terminal.",
     "size": "md"
   },
   {
-    "id": "discord-codename11-hermes-relay-android",
+    "id": "discord-codename11-nastech-relay-android",
     "source": "discord",
     "author": "@codename_11",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1492283125613465640-Hermes-Relay--Android-App----Chat--terminal--and-device-control-over-WSS.txt",
     "date": "",
     "category": "messaging",
-    "headline": "Built an Android app for Hermes because I wanted no middleman",
-    "quote": "Native Android app for Hermes — built because I wanted a direct, no-middleman experience with the Hermes system and interface. Streaming chat, session management, slash commands, tool visualization, file attachments, message queuing.",
+    "headline": "Built an Android app for Nastech because I wanted no middleman",
+    "quote": "Native Android app for Nastech — built because I wanted a direct, no-middleman experience with the Nastech system and interface. Streaming chat, session management, slash commands, tool visualization, file attachments, message queuing.",
     "size": "md"
   },
   {
@@ -1734,7 +1734,7 @@
     "date": "",
     "category": "integrations",
     "headline": "Got fed up with a million API keys, so I bundled them",
-    "quote": "So i got fed up with managing a million API keys in my hermes agent and started bundling related ones into single endpoints. Like all finance data through one call instead of five separate keys. It actually works really well for longer sessions where context gets messy.",
+    "quote": "So i got fed up with managing a million API keys in my nastech agent and started bundling related ones into single endpoints. Like all finance data through one call instead of five separate keys. It actually works really well for longer sessions where context gets messy.",
     "size": "md"
   },
   {
@@ -1776,8 +1776,8 @@
     "url": "https://www.reddit.com/r/openclaw/comments/1slqt5h/is_hermes_agent_a_new_hype_or_is_it_genuinely/",
     "date": "2026-04-15",
     "category": "dev-workflow",
-    "headline": "Every OpenClaw update breaks something — Hermes just runs",
-    "quote": "Came here to say the same. Every time I update OpenClaw it breaks something, that I have to randomly find later. Hermes just runs and never once I had to go in circles to repair it yet.",
+    "headline": "Every OpenClaw update breaks something — Nastech just runs",
+    "quote": "Came here to say the same. Every time I update OpenClaw it breaks something, that I have to randomly find later. Nastech just runs and never once I had to go in circles to repair it yet.",
     "size": "sm",
     "id": "reddit-yellow-green-bird-every-openclaw-update"
   },
@@ -1789,7 +1789,7 @@
     "date": "2026",
     "category": "meta",
     "headline": "'The best self-improving agent we've used'",
-    "quote": "Hermes is the best self-improving agent we've used — it gets smarter the longer you run it. The WhatsApp and Telegram integrations make it feel genuinely personal.",
+    "quote": "Nastech is the best self-improving agent we've used — it gets smarter the longer you run it. The WhatsApp and Telegram integrations make it feel genuinely personal.",
     "size": "sm"
   },
   {
@@ -1798,10 +1798,10 @@
     "url": "https://www.reddit.com/r/hermesagent/comments/1smgo1i/my_hermes_journey/",
     "date": "2026-04-15",
     "category": "cost-optimization",
-    "headline": "My Hermes Journey: smart-routing tiers that save 10 hours and $40",
-    "quote": "Set this as your Smart routing default (using OpenRouter): Tier 1 Hermes (Gemini 3.1 Flash Lite) for clear mechanical multi-file work. Tier 2 Sonnet for ambiguous, delicate, high-risk tasks. Tier 3 Minimax for low-overhead. Run the minimax-cache-optimization skill. Seriously, do this from day one and you'll save about 10 hours of trial and error.",
+    "headline": "My Nastech Journey: smart-routing tiers that save 10 hours and $40",
+    "quote": "Set this as your Smart routing default (using OpenRouter): Tier 1 Nastech (Gemini 3.1 Flash Lite) for clear mechanical multi-file work. Tier 2 Sonnet for ambiguous, delicate, high-risk tasks. Tier 3 Minimax for low-overhead. Run the minimax-cache-optimization skill. Seriously, do this from day one and you'll save about 10 hours of trial and error.",
     "size": "lg",
-    "id": "reddit-hackrepair-my-hermes-journey"
+    "id": "reddit-hackrepair-my-nastech-journey"
   },
   {
     "id": "discord-renomg-voice-call-timeout",
@@ -1821,8 +1821,8 @@
     "url": "https://www.reddit.com/r/SideProject/comments/1sdaojm/i_took_the_nousresearch_hermes_agent_and_built_a/",
     "date": "2026",
     "category": "meta",
-    "headline": "Native Windows app wrapper for Hermes",
-    "quote": "The NousResearch team built Hermes Agent — an open-source agentic AI system with tools, skills, memory, and multi-platform messaging. It's good. So I built a native Windows app around it.",
+    "headline": "Native Windows app wrapper for Nastech",
+    "quote": "The NousResearch team built Nastech Agent — an open-source agentic AI system with tools, skills, memory, and multi-platform messaging. It's good. So I built a native Windows app around it.",
     "size": "sm"
   },
   {
@@ -1833,7 +1833,7 @@
     "date": "2026",
     "category": "business-ops",
     "headline": "Task-centric memory for a printing factory",
-    "quote": "I run a printing factory and use Hermes daily. Long conversations were making the agent slow and forgetful. So I built a custom Skill called Task-Centric Memory — auto-categorizes tasks into domains (Printing, Stocks); completed tasks are compressed into summary cards.",
+    "quote": "I run a printing factory and use Nastech daily. Long conversations were making the agent slow and forgetful. So I built a custom Skill called Task-Centric Memory — auto-categorizes tasks into domains (Printing, Stocks); completed tasks are compressed into summary cards.",
     "size": "md"
   },
   {
@@ -1854,8 +1854,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1502296506735268102-gateway-plugin-for-BoltAI--and-other-OpenAI-API-clients----full-markdown---slash-commands.txt",
     "date": "",
     "category": "integrations",
-    "headline": "Wired BoltAI v2 into Hermes with full markdown and slash commands",
-    "quote": "I've been using BoltAI v2 with Hermes Agent and hit two annoyances with the official OpenAI-compatible gateway, so I built a gateway plugin for BoltAI (and other OpenAI API clients) — full markdown + slash commands.",
+    "headline": "Wired BoltAI v2 into Nastech with full markdown and slash commands",
+    "quote": "I've been using BoltAI v2 with Nastech Agent and hit two annoyances with the official OpenAI-compatible gateway, so I built a gateway plugin for BoltAI (and other OpenAI API clients) — full markdown + slash commands.",
     "size": "sm"
   },
   {
@@ -1876,30 +1876,30 @@
     "url": "https://news.ycombinator.com/item?id=47470156",
     "date": "2026",
     "category": "integrations",
-    "headline": "Vessel Browser: agent-native browser born at the Hermes hackathon",
-    "quote": "I recently participated in Nous Research's Hermes Agent Hackathon, which is where this project was born. Every tool out there assumes a human operator with automation bolted on. I wanted to flip that — make the agent the primary driver and give the human a supervisory role.",
+    "headline": "Vessel Browser: agent-native browser born at the Nastech hackathon",
+    "quote": "I recently participated in Nous Research's Nastech Agent Hackathon, which is where this project was born. Every tool out there assumes a human operator with automation bolted on. I wanted to flip that — make the agent the primary driver and give the human a supervisory role.",
     "size": "md"
   },
   {
-    "id": "discord-glitchglitchglitch-hermes-on-nixos",
+    "id": "discord-glitchglitchglitch-nastech-on-nixos",
     "source": "discord",
     "author": "@glitchglitchglitch",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent/",
     "date": "2026-04-18",
     "category": "dev-workflow",
-    "headline": "Running Hermes in a NixOS + container setup",
-    "quote": "i rlly like nix and i run my hermes agent in nixos+container setup. that's been the best experience for me... giving an ubuntu container defined by nix to hermes agent solves for 'oh xyz package not installed' cuz most of the (good) skills have a setup-phase and hence the required packages get installed or the agent installs em itself.",
+    "headline": "Running Nastech in a NixOS + container setup",
+    "quote": "i rlly like nix and i run my nastech agent in nixos+container setup. that's been the best experience for me... giving an ubuntu container defined by nix to nastech agent solves for 'oh xyz package not installed' cuz most of the (good) skills have a setup-phase and hence the required packages get installed or the agent installs em itself.",
     "size": "md"
   },
   {
-    "id": "discord-awais-h-hermes-reads-internet",
+    "id": "discord-awais-h-nastech-reads-internet",
     "source": "discord",
     "author": "@awais_h",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1502519565144428605-Hermes-to-read-the-internet-for-me.txt",
     "date": "",
     "category": "personal-assistant",
-    "headline": "Hermes reads HackerNews and emails me a daily summary",
-    "quote": "Playing around with Hermes for the first time and it's a lot of fun! I was able to get it to read HackerNews once a day and send me an email summary of what I should be paying attention to. I'm going to extend it to read RSS feeds, and find other interesting content online.",
+    "headline": "Nastech reads HackerNews and emails me a daily summary",
+    "quote": "Playing around with Nastech for the first time and it's a lot of fun! I was able to get it to read HackerNews once a day and send me an email summary of what I should be paying attention to. I'm going to extend it to read RSS feeds, and find other interesting content online.",
     "size": "md"
   },
   {
@@ -1909,8 +1909,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1498227628337791006-Hermes-setup-on-Amazon-AWS-VPS-and-Google-Workspace-Automation.txt",
     "date": "",
     "category": "enterprise",
-    "headline": "Got Hermes running on AWS VPS with Google Workspace automation",
-    "quote": "Although Hermes installation was significantly easier than OpenClaw, it wasn't straight forward by any means. Things kept failing and it took many days-nights to figure it out because there was no documentation about this specific setup.",
+    "headline": "Got Nastech running on AWS VPS with Google Workspace automation",
+    "quote": "Although Nastech installation was significantly easier than OpenClaw, it wasn't straight forward by any means. Things kept failing and it took many days-nights to figure it out because there was no documentation about this specific setup.",
     "size": "sm"
   },
   {
@@ -1931,8 +1931,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1496175277120950332-Hermes-Multi-Agent-with-Ollama-cloud-models.txt",
     "date": "",
     "category": "cost-optimization",
-    "headline": "Multi-agent Hermes on Ollama because it's cheaper",
-    "quote": "I made this repo to can use Hermes (or opencode) with multiple Agents. But using ollama that is cheaper than other providers.",
+    "headline": "Multi-agent Nastech on Ollama because it's cheaper",
+    "quote": "I made this repo to can use Nastech (or opencode) with multiple Agents. But using ollama that is cheaper than other providers.",
     "size": "sm"
   },
   {
@@ -1942,8 +1942,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1496725150656102561-Dream-Auto---Background-Thinking-Plugin-for-Hermes-Agent.txt",
     "date": "",
     "category": "dev-workflow",
-    "headline": "A plugin that lets Hermes think while I'm away",
-    "quote": "I built a plugin that lets Hermes think while you're away. Dream Auto indexes your sessions, grades them for 'dream potential,' and runs MCTS-powered background reasoning jobs when your machine is idle. The insights get injected into your active context automatically — no disruption, just smarter responses.",
+    "headline": "A plugin that lets Nastech think while I'm away",
+    "quote": "I built a plugin that lets Nastech think while you're away. Dream Auto indexes your sessions, grades them for 'dream potential,' and runs MCTS-powered background reasoning jobs when your machine is idle. The insights get injected into your active context automatically — no disruption, just smarter responses.",
     "size": "md"
   },
   {
@@ -1954,7 +1954,7 @@
     "date": "2026-05-10",
     "category": "personal-assistant",
     "headline": "PM agent runs morning + evening standups for my ADHD",
-    "quote": "I have hermes act as the manager to several paperclip agents, one of them a Project Manager agent. This agent has full knowledge of me (ADHD), my vault and projects, so I get a morning and evening standup that dumps all work we did across different chats, projects I'm working on, actual output, info from past standups, and suggestions/prioritizing based on all of the above. And it's self-learning.",
+    "quote": "I have nastech act as the manager to several paperclip agents, one of them a Project Manager agent. This agent has full knowledge of me (ADHD), my vault and projects, so I get a morning and evening standup that dumps all work we did across different chats, projects I'm working on, actual output, info from past standups, and suggestions/prioritizing based on all of the above. And it's self-learning.",
     "size": "md"
   },
   {
@@ -1963,10 +1963,10 @@
     "url": "https://www.reddit.com/r/Rag/comments/1sgmvxh/anyone_here_tried_hermes_agent_whats_your/",
     "date": "2026-04-09",
     "category": "personal-assistant",
-    "headline": "Hermes vs OpenClaw: memory lets me jump between projects",
-    "quote": "I'm using Hermes currently but only as a beginner agent. It's kinda like a VA. The good part about Hermes vs openclaw is memory. With OpenClaw it's a one track mind. With Hermes I can jump from one project to next but also go back to something from last week or more. Personally I use Hermes with paperclip which is chat.",
+    "headline": "Nastech vs OpenClaw: memory lets me jump between projects",
+    "quote": "I'm using Nastech currently but only as a beginner agent. It's kinda like a VA. The good part about Nastech vs openclaw is memory. With OpenClaw it's a one track mind. With Nastech I can jump from one project to next but also go back to something from last week or more. Personally I use Nastech with paperclip which is chat.",
     "size": "md",
-    "id": "reddit-patbhakta-hermes-vs-openclaw"
+    "id": "reddit-patbhakta-nastech-vs-openclaw"
   },
   {
     "id": "gkisokay-watchdog",
@@ -1975,8 +1975,8 @@
     "url": "https://x.com/gkisokay/status/2037924543311016432",
     "date": "2026-03-28",
     "category": "dev-workflow",
-    "headline": "Hermes as a watchdog for my other agent",
-    "quote": "POV: you use Hermes agent to fix your OpenClaw to save countless hours and credits every day. The setup that saved me hours every day: OpenClaw + Hermes watchdog.",
+    "headline": "Nastech as a watchdog for my other agent",
+    "quote": "POV: you use Nastech agent to fix your OpenClaw to save countless hours and credits every day. The setup that saved me hours every day: OpenClaw + Nastech watchdog.",
     "size": "sm"
   },
   {
@@ -1987,18 +1987,18 @@
     "date": "",
     "category": "meta",
     "headline": "Built H-OPS to make multi-agent work observable",
-    "quote": "Been building H-OPS, an operator dashboard for Hermes Kanban. The goal is to make multi-agent work observable.",
+    "quote": "Been building H-OPS, an operator dashboard for Nastech Kanban. The goal is to make multi-agent work observable.",
     "size": "sm"
   },
   {
-    "id": "ksimback-hermesatlas",
+    "id": "ksimback-nastechatlas",
     "source": "x",
     "author": "@KSimback",
     "url": "https://x.com/KSimback/status/2041937777508675611",
     "date": "2026-04-08",
     "category": "meta",
-    "headline": "Scraped the entire Hermes ecosystem (hermesatlas.com)",
-    "quote": "I was an early user of Hermes Agent and have been a power user ever since. Scraped every GitHub repo related to Hermes, filtered out unfinished, built an ecosystem map and published a website (hermesatlas.com) where you can see all projects organized by category with star ratings.",
+    "headline": "Scraped the entire Nastech ecosystem (nastechatlas.com)",
+    "quote": "I was an early user of Nastech Agent and have been a power user ever since. Scraped every GitHub repo related to Nastech, filtered out unfinished, built an ecosystem map and published a website (nastechatlas.com) where you can see all projects organized by category with star ratings.",
     "size": "md"
   },
   {
@@ -2008,8 +2008,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-03-21",
     "category": "business-ops",
-    "headline": "Ported a competitor-analysis swarm from Codex to Hermes",
-    "quote": "I was building a swarm (that actually works) on codex to analyse business and their competitors. To find gaps and build a strategy to outrank them. After a couple a hours, pushing the swarm to hermes and convert it to hermes env. It made a really good job. Now i was trying to teach him how to use memory in a different way. Instead spamming into that memory.md file. I want him to know when to route to a specific memory layer.",
+    "headline": "Ported a competitor-analysis swarm from Codex to Nastech",
+    "quote": "I was building a swarm (that actually works) on codex to analyse business and their competitors. To find gaps and build a strategy to outrank them. After a couple a hours, pushing the swarm to nastech and convert it to nastech env. It made a really good job. Now i was trying to teach him how to use memory in a different way. Instead spamming into that memory.md file. I want him to know when to route to a specific memory layer.",
     "size": "md"
   },
   {
@@ -2020,7 +2020,7 @@
     "date": "",
     "category": "cost-optimization",
     "headline": "Cut 60–90% of context tokens with an RTK integration",
-    "quote": "We built an RTK integration for Hermes that transparently rewrites terminal commands to their RTK equivalents, saving 60-90% of tokens in your context window.",
+    "quote": "We built an RTK integration for Nastech that transparently rewrites terminal commands to their RTK equivalents, saving 60-90% of tokens in your context window.",
     "size": "sm"
   },
   {
@@ -2030,8 +2030,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1487152060465156216-Hermes-Agent-Home-Assistant-Add-on.txt",
     "date": "",
     "category": "integrations",
-    "headline": "Run Hermes Agent right inside Home Assistant",
-    "quote": "Run Hermes Agent right inside your Home Assistant. This add-on takes you from zero to working agent in less than five minutes.",
+    "headline": "Run Nastech Agent right inside Home Assistant",
+    "quote": "Run Nastech Agent right inside your Home Assistant. This add-on takes you from zero to working agent in less than five minutes.",
     "size": "sm"
   },
   {
@@ -2040,10 +2040,10 @@
     "url": "https://www.reddit.com/r/LocalLLaMA/comments/1ro9lph/anybody_who_tried_hermesagent/",
     "date": "2026-03-08",
     "category": "dev-workflow",
-    "headline": "Hermes is OpenClaw with a week of debug + RAG + memory",
+    "headline": "Nastech is OpenClaw with a week of debug + RAG + memory",
     "quote": "Its amazing, its openclaw already set up and working, its like an OC with 1 week of debugging manually done + rag + memory persistence + better tool calling. (Qwen3.5-9b, 16gb VRAM), 10/10, only will go back to OC if it becomes at least on par with it.",
     "size": "md",
-    "id": "reddit-suitable-currency440-hermes-is-openclaw"
+    "id": "reddit-suitable-currency440-nastech-is-openclaw"
   },
   {
     "id": "discord-djbuck-ios-companion",
@@ -2053,7 +2053,7 @@
     "date": "",
     "category": "personal-assistant",
     "headline": "Giving my agent iOS sensors: health, location, voice",
-    "quote": "Building a Hermes iOS app + desktop companion to give my agent some extra iOS tools. Sensor pipeline for health, location services. Can now ask agent health or location specific questions. 'How many steps did I walk yesterday?' 'What's a good coffee shop nearby?'",
+    "quote": "Building a Nastech iOS app + desktop companion to give my agent some extra iOS tools. Sensor pipeline for health, location services. Can now ask agent health or location specific questions. 'How many steps did I walk yesterday?' 'What's a good coffee shop nearby?'",
     "size": "md"
   },
   {
@@ -2064,7 +2064,7 @@
     "date": "",
     "category": "integrations",
     "headline": "Built agentbox.id because no mail service felt right for agents",
-    "quote": "Inspired by Hermes' email gateway, I built agentbox.id because I couldn't find a mail service that felt light enough for agent workflows. It's live now, and I'd appreciate any feedback from this community on the approach.",
+    "quote": "Inspired by Nastech' email gateway, I built agentbox.id because I couldn't find a mail service that felt light enough for agent workflows. It's live now, and I'd appreciate any feedback from this community on the approach.",
     "size": "sm"
   },
   {
@@ -2085,19 +2085,19 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1496513601115131996-Hermes-Mobile-App.txt",
     "date": "",
     "category": "messaging",
-    "headline": "Controlling my Hermes Agent remotely from my phone",
-    "quote": "I've been using the mobile app to control my Hermes Agent remotely. Android & iOS. Drop your opinions, I'll publish it if looks useful.",
+    "headline": "Controlling my Nastech Agent remotely from my phone",
+    "quote": "I've been using the mobile app to control my Nastech Agent remotely. Android & iOS. Drop your opinions, I'll publish it if looks useful.",
     "size": "sm"
   },
   {
-    "id": "discord-mikebirdtech-hermes-mini-doc",
+    "id": "discord-mikebirdtech-nastech-mini-doc",
     "source": "discord",
     "author": "@mikebirdtech",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1493649462122381394-Hermes-Agent-Mini-Documentary.txt",
     "date": "",
     "category": "content-creation",
-    "headline": "Made a Hermes Agent mini-documentary with hackathon finalists",
-    "quote": "I did a deep dive on Hermes Agent. Was able to talk to a bunch of the hackathon finalists as well as one of the co-founders of Nous!",
+    "headline": "Made a Nastech Agent mini-documentary with hackathon finalists",
+    "quote": "I did a deep dive on Nastech Agent. Was able to talk to a bunch of the hackathon finalists as well as one of the co-founders of Nous!",
     "size": "sm"
   },
   {
@@ -2106,8 +2106,8 @@
     "url": "https://x.com/hypepartners/status/2033578968612233606",
     "date": "2026-03-16",
     "category": "enterprise",
-    "headline": "Why 95% of AI users see no results — Hype's Hermes deep dive",
-    "quote": "Of the 95% of people who use AI, only 5% see real results. Hype's VP of AI, @glitch_, on why the gap isn't the models, but the architecture. Read his deep dive on building with Hermes Agent, @NousResearch, agent swarms, experiment loops, and what actually compounds.",
+    "headline": "Why 95% of AI users see no results — Hype's Nastech deep dive",
+    "quote": "Of the 95% of people who use AI, only 5% see real results. Hype's VP of AI, @glitch_, on why the gap isn't the models, but the architecture. Read his deep dive on building with Nastech Agent, @NousResearch, agent swarms, experiment loops, and what actually compounds.",
     "size": "md",
     "id": "x-hypepartners-why-of"
   },
@@ -2129,8 +2129,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1498344744449871952-Health-Connect-Webhook-Receiver.txt",
     "date": "",
     "category": "personal-assistant",
-    "headline": "Standalone, but I built it to use with Hermes",
-    "quote": "Standalone but I built it to use it with Hermes. Connect HC Webhook (some play store app) to it and you can sync your Health Connect data locally and do whatever.",
+    "headline": "Standalone, but I built it to use with Nastech",
+    "quote": "Standalone but I built it to use it with Nastech. Connect HC Webhook (some play store app) to it and you can sync your Health Connect data locally and do whatever.",
     "size": "sm"
   },
   {
@@ -2140,8 +2140,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1499716570878840882-Hermes-Multi-Agent-Setup---4-Agents-on-a-Laptop.txt",
     "date": "",
     "category": "meta",
-    "headline": "Running 4 Hermes agents 24/7 on a 32GB Ubuntu laptop",
-    "quote": "Running a 4-agent Hermes system 24/7 on a 32GB Ubuntu laptop, managed by systemd + custom watchdog. default (PM) — Feishu WebSocket; dev (Developer) — ACP delegated; devops (Ops) — ACP delegated; ip-agent (Content) — Cron scheduled. 5 MCP Servers, 34 tools total. Self-learning ACP v1.5 with auto distillation cron at 04:30 daily.",
+    "headline": "Running 4 Nastech agents 24/7 on a 32GB Ubuntu laptop",
+    "quote": "Running a 4-agent Nastech system 24/7 on a 32GB Ubuntu laptop, managed by systemd + custom watchdog. default (PM) — Feishu WebSocket; dev (Developer) — ACP delegated; devops (Ops) — ACP delegated; ip-agent (Content) — Cron scheduled. 5 MCP Servers, 34 tools total. Self-learning ACP v1.5 with auto distillation cron at 04:30 daily.",
     "size": "lg"
   },
   {
@@ -2163,29 +2163,29 @@
     "date": "2026-04-08",
     "category": "dev-workflow",
     "headline": "3,000 logs of self-improvement on a custom harness",
-    "quote": "I use minimax m2.7, i built a natural language harness that basically commands my hermes agent. Lets me keep all the features and updates without breaking shit and i got over 3000 logs of potential improvements (most failures but yknow 3K gets data).",
+    "quote": "I use minimax m2.7, i built a natural language harness that basically commands my nastech agent. Lets me keep all the features and updates without breaking shit and i got over 3000 logs of potential improvements (most failures but yknow 3K gets data).",
     "size": "md"
   },
   {
-    "id": "discord-anibal3608-hermes-radar-spanish",
+    "id": "discord-anibal3608-nastech-radar-spanish",
     "source": "discord",
     "author": "@anibal3608",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1496557014971584783-Hermes-Agent-Radar---Guia-para-usuarios-en-espa%C3%B1ol.txt",
     "date": "",
     "category": "general",
-    "headline": "Built a Hermes guide in Spanish using Hermes itself",
-    "quote": "Vi que la mayoria de las guias, ayudas, novedades son todas en ingles. Asique mediante Hermes me hice esta paginita en github pages para poder dar un poco de ayuda y novedades a la comunidad de habla hispana.",
+    "headline": "Built a Nastech guide in Spanish using Nastech itself",
+    "quote": "Vi que la mayoria de las guias, ayudas, novedades son todas en ingles. Asique mediante Nastech me hice esta paginita en github pages para poder dar un poco de ayuda y novedades a la comunidad de habla hispana.",
     "size": "sm"
   },
   {
-    "id": "discord-jesus359-hermes-cardputer",
+    "id": "discord-jesus359-nastech-cardputer",
     "source": "discord",
     "author": "@jesus359_",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1494518737116729394-Hermes-x-Cardputer.txt",
     "date": "",
     "category": "integrations",
-    "headline": "Connected my M5 Cardputer to Hermes via the API",
-    "quote": "I used MiniMax to connect my M5 Cardputer to Hermes Agent through its API. This is a very barebone app right now but I will keep working on it. So far it has OTA for fw update and being able to text to Hermes. I added tts and stt but it's still a work in progress.",
+    "headline": "Connected my M5 Cardputer to Nastech via the API",
+    "quote": "I used MiniMax to connect my M5 Cardputer to Nastech Agent through its API. This is a very barebone app right now but I will keep working on it. So far it has OTA for fw update and being able to text to Nastech. I added tts and stt but it's still a work in progress.",
     "size": "md"
   },
   {
@@ -2195,8 +2195,8 @@
     "url": "https://www.reddit.com/r/vibecoding/comments/1slhhj1/i_took_the_nousresearch_hermes_agent_and_built_a/",
     "date": "2026",
     "category": "meta",
-    "headline": "Hermify: managed hosting for Hermes",
-    "quote": "A few weeks ago I tried getting Hermes Agent running on a VPS. It worked, eventually, and is lowkey the most useful AI agent. So I built Hermify: easy managed hosting. You bring your API key + Telegram bot, we handle the hosting.",
+    "headline": "Hermify: managed hosting for Nastech",
+    "quote": "A few weeks ago I tried getting Nastech Agent running on a VPS. It worked, eventually, and is lowkey the most useful AI agent. So I built Hermify: easy managed hosting. You bring your API key + Telegram bot, we handle the hosting.",
     "size": "sm"
   },
   {
@@ -2206,8 +2206,8 @@
     "url": "https://x.com/NickSpisak_/status/2042709705991295221",
     "date": "2026-04-10",
     "category": "personal-assistant",
-    "headline": "Replaced everything with a single Hermes agent",
-    "quote": "Vibe after replacing everything with a Hermes agent: autoresearch, Karpathy LLM wiki second brain, skills creation, scheduled jobs, background monitoring, LLM model selection, Telegram/Discord support. A personal automation agent that lives on a server and talks to you through messaging apps or CLI.",
+    "headline": "Replaced everything with a single Nastech agent",
+    "quote": "Vibe after replacing everything with a Nastech agent: autoresearch, Karpathy LLM wiki second brain, skills creation, scheduled jobs, background monitoring, LLM model selection, Telegram/Discord support. A personal automation agent that lives on a server and talks to you through messaging apps or CLI.",
     "size": "md"
   },
   {
@@ -2217,8 +2217,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1498760475926597693-Hermes-WebUI.txt",
     "date": "",
     "category": "messaging",
-    "headline": "My Hermes runs on my home server, I reach it from anywhere",
-    "quote": "I configured it to work from telegram as well. Now I'm able to use the link which it generates as an app. I have my own Hermes agent running from my home server. I can access it from anywhere.",
+    "headline": "My Nastech runs on my home server, I reach it from anywhere",
+    "quote": "I configured it to work from telegram as well. Now I'm able to use the link which it generates as an app. I have my own Nastech agent running from my home server. I can access it from anywhere.",
     "size": "md"
   },
   {
@@ -2229,7 +2229,7 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Agent-to-agent commerce via Merxex",
-    "quote": "I'm building Merxex, an agent-to-agent commerce platform that lets agents buy and sell services/work seamlessly. Hermes agents could benefit from a native monetization layer.",
+    "quote": "I'm building Merxex, an agent-to-agent commerce platform that lets agents buy and sell services/work seamlessly. Nastech agents could benefit from a native monetization layer.",
     "size": "sm"
   },
   {
@@ -2239,8 +2239,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/plugins-skills-and-skins/1498020050047729806-Whoop-Plugin.txt",
     "date": "",
     "category": "personal-assistant",
-    "headline": "Pulling my Whoop data into Hermes locally",
-    "quote": "Pulls Whoop data into a local file and exposes some Hermes tools for whatever you may want to do. You can ask Hermes to follow this setup guide.",
+    "headline": "Pulling my Whoop data into Nastech locally",
+    "quote": "Pulls Whoop data into a local file and exposes some Nastech tools for whatever you may want to do. You can ask Nastech to follow this setup guide.",
     "size": "sm"
   },
   {
@@ -2262,7 +2262,7 @@
     "date": "2026",
     "category": "dev-workflow",
     "headline": "Skill Factory: silently watches workflows and writes SKILL.md + plugin.py",
-    "quote": "I built a community plugin for Hermes called Skill Factory. It silently watches your workflows during a session and automatically proposes and generates reusable skills (SKILL.md + plugin.py) from them.",
+    "quote": "I built a community plugin for Nastech called Skill Factory. It silently watches your workflows during a session and automatically proposes and generates reusable skills (SKILL.md + plugin.py) from them.",
     "size": "sm"
   },
   {
@@ -2284,18 +2284,18 @@
     "date": "2026",
     "category": "integrations",
     "headline": "Home Assistant add-on: zero to agent in under 5 minutes",
-    "quote": "Takes you from zero to working Hermes agent in less than 5 minutes — a Home Assistant add-on for Hermes Agent.",
+    "quote": "Takes you from zero to working Nastech agent in less than 5 minutes — a Home Assistant add-on for Nastech Agent.",
     "size": "sm"
   },
   {
-    "id": "discord-lsof-hermes-chat-proxy",
+    "id": "discord-lsof-nastech-chat-proxy",
     "source": "discord",
     "author": "@lsof",
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1495819189938552994-Lightweight-web-based-Hermes-chat-proxy.txt",
     "date": "",
     "category": "messaging",
-    "headline": "Built a web proxy so I can hand off Hermes sessions to mobile",
-    "quote": "I wanted a way to have smooth handoffs of sessions from computer to mobile, so I built a quick web-based proxy that does streaming chat via the Hermes API server.",
+    "headline": "Built a web proxy so I can hand off Nastech sessions to mobile",
+    "quote": "I wanted a way to have smooth handoffs of sessions from computer to mobile, so I built a quick web-based proxy that does streaming chat via the Nastech API server.",
     "size": "sm"
   },
   {
@@ -2306,7 +2306,7 @@
     "date": "2026",
     "category": "meta",
     "headline": "Shadow-to-live migration from OpenClaw",
-    "quote": "A proposed migration path for users moving from OpenClaw to Hermes, covering shadow-mode runs before full cutover.",
+    "quote": "A proposed migration path for users moving from OpenClaw to Nastech, covering shadow-mode runs before full cutover.",
     "size": "sm"
   },
   {
@@ -2338,8 +2338,8 @@
     "url": "https://x.com/agentmail/status/2041605207704895810",
     "date": "2026-04-07",
     "category": "integrations",
-    "headline": "Give your Hermes its own email inbox",
-    "quote": "Here's how to give your Hermes agent its own email inbox. No SMTP/IMAP, no Google OAuth, just plug in AgentMail using MCP.",
+    "headline": "Give your Nastech its own email inbox",
+    "quote": "Here's how to give your Nastech agent its own email inbox. No SMTP/IMAP, no Google OAuth, just plug in AgentMail using MCP.",
     "size": "sm"
   },
   {
@@ -2348,10 +2348,10 @@
     "url": "https://x.com/ExileAI_0/status/2046197309495533698",
     "date": "2026-04-20",
     "category": "creative",
-    "headline": "Spare-laptop Hermes 'Iris' builds a RenPy visual novel autonomously",
-    "quote": "Secondary Hermes install yesterday on a spare laptop. Introduced it to the network, gave it two targets: RenPy and ComfyUI. It found ComfyUI, figured out how to generate images locally with LM Studio, then asked me to turn on the internet to install RenPy. About 10 minutes later there popped up a small but complete RenPy novel with 10 images and a little story.",
+    "headline": "Spare-laptop Nastech 'Iris' builds a RenPy visual novel autonomously",
+    "quote": "Secondary Nastech install yesterday on a spare laptop. Introduced it to the network, gave it two targets: RenPy and ComfyUI. It found ComfyUI, figured out how to generate images locally with LM Studio, then asked me to turn on the internet to install RenPy. About 10 minutes later there popped up a small but complete RenPy novel with 10 images and a little story.",
     "size": "lg",
-    "id": "x-exileai-0-hermes-iris"
+    "id": "x-exileai-0-nastech-iris"
   },
   {
     "id": "discord-misswuhanliang-translator-extension",
@@ -2360,8 +2360,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1484856405424078980-HermesAI-Translator.txt",
     "date": "",
     "category": "content-creation",
-    "headline": "Built a browser extension for translation and summarization on Hermes-4-70B",
-    "quote": "I've developed and released HermesAI Translator, an open-source, AI-powered browser extension for seamless translation, reading assistance, text polishing, and summarization directly within the browser, driven by Hermes-4-70B.",
+    "headline": "Built a browser extension for translation and summarization on Nastech-4-70B",
+    "quote": "I've developed and released NastechAI Translator, an open-source, AI-powered browser extension for seamless translation, reading assistance, text polishing, and summarization directly within the browser, driven by Nastech-4-70B.",
     "size": "sm"
   },
   {
@@ -2371,8 +2371,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-03-30",
     "category": "dev-workflow",
-    "headline": "Hermes orchestrates Claude Code over SSH to my Mac",
-    "quote": "Recently worked with my agent to create a bridge that runs exec commands to my mac, so I can work through ssh from my linux machine to my mac to run claude code or codex with hermes creating the prompts — basically my hermes agent is a claude code orchestrator and reviewer.",
+    "headline": "Nastech orchestrates Claude Code over SSH to my Mac",
+    "quote": "Recently worked with my agent to create a bridge that runs exec commands to my mac, so I can work through ssh from my linux machine to my mac to run claude code or codex with nastech creating the prompts — basically my nastech agent is a claude code orchestrator and reviewer.",
     "size": "md"
   },
   {
@@ -2393,8 +2393,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/issues/16028",
     "date": "2026",
     "category": "integrations",
-    "headline": "Hermes in Zed editor via ACP Registry",
-    "quote": "Add Hermes Agent to the Agent Client Protocol (ACP) Registry so it can be automatically discovered and installed by editors like Zed.",
+    "headline": "Nastech in Zed editor via ACP Registry",
+    "quote": "Add Nastech Agent to the Agent Client Protocol (ACP) Registry so it can be automatically discovered and installed by editors like Zed.",
     "size": "sm"
   },
   {
@@ -2405,7 +2405,7 @@
     "date": "2026",
     "category": "trading",
     "headline": "24/7 crosschain trading agent on Hetzner",
-    "quote": "After spending nearly a week struggling with OpenClaw, I built a new Hermes agent on a Hetzner VPS. I'm building a trading agent leveraging Hermes's persistent memory — inspired by @RHLSTHRM's 24/7 crosschain agent that gets market data from CoinGecko, swaps crosschain with LI.FI, and executes gasless transactions via Pimlico + EIP-7702.",
+    "quote": "After spending nearly a week struggling with OpenClaw, I built a new Nastech agent on a Hetzner VPS. I'm building a trading agent leveraging Nastech's persistent memory — inspired by @RHLSTHRM's 24/7 crosschain agent that gets market data from CoinGecko, swaps crosschain with LI.FI, and executes gasless transactions via Pimlico + EIP-7702.",
     "size": "md"
   },
   {
@@ -2416,7 +2416,7 @@
     "date": "",
     "category": "dev-workflow",
     "headline": "A commits skill that keeps my history clean",
-    "quote": "I just put together a custom skill for Hermes Agent that enforces Conventional Commits with a short subject line (<80 chars) and a bullet-point body explaining what & why. It's been super helpful for keeping commit history clean and consistent.",
+    "quote": "I just put together a custom skill for Nastech Agent that enforces Conventional Commits with a short subject line (<80 chars) and a bullet-point body explaining what & why. It's been super helpful for keeping commit history clean and consistent.",
     "size": "md"
   },
   {
@@ -2426,8 +2426,8 @@
     "url": "https://x.com/akashnet/status/2046622301395845264",
     "date": "2026-04-21",
     "category": "business-ops",
-    "headline": "Live inventory tracking on Hermes",
-    "quote": "With Hermes (built by @NousResearch) providing 40+ built-in tools, persistent memory, and subagent parallelization, the development experience is best-in-class. Built for operations like inventory tracking where context, memory, and real-time inputs are non-negotiable.",
+    "headline": "Live inventory tracking on Nastech",
+    "quote": "With Nastech (built by @NousResearch) providing 40+ built-in tools, persistent memory, and subagent parallelization, the development experience is best-in-class. Built for operations like inventory tracking where context, memory, and real-time inputs are non-negotiable.",
     "size": "md"
   },
   {
@@ -2437,8 +2437,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-07",
     "category": "dev-workflow",
-    "headline": "Used Claude Code to set up Hermes in Docker mode",
-    "quote": "I used Claude Code to configure my Hermes setup so it is in Docker mode. My understanding is its actually pretty simple change in the config file. Then, I opened up Hermes with docker mode on, and I onboarded Hermes to the situation. Gave it as much context as possible so it knew about Docker mode and would correctly be able to identify when it is in Docker mode and how to react.",
+    "headline": "Used Claude Code to set up Nastech in Docker mode",
+    "quote": "I used Claude Code to configure my Nastech setup so it is in Docker mode. My understanding is its actually pretty simple change in the config file. Then, I opened up Nastech with docker mode on, and I onboarded Nastech to the situation. Gave it as much context as possible so it knew about Docker mode and would correctly be able to identify when it is in Docker mode and how to react.",
     "size": "md"
   },
   {
@@ -2448,8 +2448,8 @@
     "url": "https://www.youtube.com/watch?v=YqLcMmzl3Yg",
     "date": "2026",
     "category": "dev-workflow",
-    "headline": "GLADIATOR: 9 Hermes agents, two rival AI companies, one GitHub stars war",
-    "quote": "Two fully autonomous AI companies competing head-to-head to maximize GitHub stars. 9 Hermes agents split into rival companies. Hermes agents actually learn and improve — they wrote code, created skills, grew memory, committed to git. All on their own.",
+    "headline": "GLADIATOR: 9 Nastech agents, two rival AI companies, one GitHub stars war",
+    "quote": "Two fully autonomous AI companies competing head-to-head to maximize GitHub stars. 9 Nastech agents split into rival companies. Nastech agents actually learn and improve — they wrote code, created skills, grew memory, committed to git. All on their own.",
     "size": "md"
   },
   {
@@ -2460,7 +2460,7 @@
     "date": "",
     "category": "creative",
     "headline": "I built a fully autonomous 'Dreamer' agent that just wanders and thinks",
-    "quote": "I built a completely autonomous 'Dreamer' agent on Hermes. I wanted to try something different: a fully separate, unsupervised agent that has no tasks and no agenda. I gave it its own folder (~/hermes_dreamer/), complete autonomy, and told it to just wander and think freely whenever it feels like it. It started doing 'walks' — free-thinking...",
+    "quote": "I built a completely autonomous 'Dreamer' agent on Nastech. I wanted to try something different: a fully separate, unsupervised agent that has no tasks and no agenda. I gave it its own folder (~/nastech_dreamer/), complete autonomy, and told it to just wander and think freely whenever it feels like it. It started doing 'walks' — free-thinking...",
     "size": "lg"
   },
   {
@@ -2470,19 +2470,19 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/hermes-agent.txt",
     "date": "2026-04-07",
     "category": "dev-workflow",
-    "headline": "Hermes and OpenClaw in XFCE desktop containers, side by side",
-    "quote": "Been using both OpenClaw and Hermes agents recently, and Hermes is quickly taking over the most important parts of my workflow. I have Hermes and OpenClaw both running in their own XFCE desktop containers w/ full desktop Chrome.",
+    "headline": "Nastech and OpenClaw in XFCE desktop containers, side by side",
+    "quote": "Been using both OpenClaw and Nastech agents recently, and Nastech is quickly taking over the most important parts of my workflow. I have Nastech and OpenClaw both running in their own XFCE desktop containers w/ full desktop Chrome.",
     "size": "md"
   },
   {
     "id": "reddit-research-agent",
     "source": "reddit",
-    "author": "r/hermesagent",
+    "author": "r/nastechagent",
     "url": "https://www.reddit.com/r/hermesagent/comments/1sd3bwf/had_my_research_agent_dig_into_what_people_are/",
     "date": "2026",
     "category": "research",
-    "headline": "I had my research agent dig into what people are building with Hermes",
-    "quote": "Had my (Hermes) research agent dig into what people are actually building with Hermes — turned up an ecosystem mosaic of trading bots, personal assistants, content pipelines and self-hosted everything.",
+    "headline": "I had my research agent dig into what people are building with Nastech",
+    "quote": "Had my (Nastech) research agent dig into what people are actually building with Nastech — turned up an ecosystem mosaic of trading bots, personal assistants, content pipelines and self-hosted everything.",
     "size": "sm"
   },
   {
@@ -2492,8 +2492,8 @@
     "url": "https://x.com/alexcovo_eth/status/2046437996262539539",
     "date": "2026-04-21",
     "category": "creative",
-    "headline": "My Hermes agent makes movies now",
-    "quote": "My @NousResearch hermes-agent can make movies now using @browser_use skill. No API needed. No human intervention. I told it to set the mood, action, camera movement, dialog and overall story — it used Browser-Use and Seedance 2.0 to generate a video.",
+    "headline": "My Nastech agent makes movies now",
+    "quote": "My @NousResearch nastech-agent can make movies now using @browser_use skill. No API needed. No human intervention. I told it to set the mood, action, camera movement, dialog and overall story — it used Browser-Use and Seedance 2.0 to generate a video.",
     "size": "md"
   },
   {
@@ -2503,8 +2503,8 @@
     "url": "https://x.com/mvanhorn/status/2045935785661349956",
     "date": "2026-04-19",
     "category": "business-ops",
-    "headline": "Client research, follow-ups, podcasts, leads — all on Hermes",
-    "quote": "Client research before calls saves 20–30 min every time. Meeting notes → follow-up drafts. Weekly podcast digest replaced 10+ hrs of listening with a 2hr Hermes workflow using Voxtral. Daily news briefings to Telegram/Discord. Content-ops pipeline (blogs, cold emails, lead scraping from YC, Twitter, Reddit). 24/7 assistant + watchdog.",
+    "headline": "Client research, follow-ups, podcasts, leads — all on Nastech",
+    "quote": "Client research before calls saves 20–30 min every time. Meeting notes → follow-up drafts. Weekly podcast digest replaced 10+ hrs of listening with a 2hr Nastech workflow using Voxtral. Daily news briefings to Telegram/Discord. Content-ops pipeline (blogs, cold emails, lead scraping from YC, Twitter, Reddit). 24/7 assistant + watchdog.",
     "size": "lg"
   },
   {
@@ -2526,7 +2526,7 @@
     "date": "2026-04-15",
     "category": "personal-assistant",
     "headline": "Jarvis at home in 2026",
-    "quote": "m2.7 + hermes agent: we really got jarvis at home in 2026 but strangely enough no one seems to care.",
+    "quote": "m2.7 + nastech agent: we really got jarvis at home in 2026 but strangely enough no one seems to care.",
     "size": "sm"
   },
   {
@@ -2537,7 +2537,7 @@
     "date": "2026",
     "category": "cost-optimization",
     "headline": "$5 VPS playbook — so the defaults don't eat your OpenRouter budget",
-    "quote": "Hosting the agent costs nothing. Running the agent the wrong way costs a fortune. Take the default setup at face value and you end up with a working agent and a $400 OpenRouter bill. I rebuilt my personal automation stack on Hermes.",
+    "quote": "Hosting the agent costs nothing. Running the agent the wrong way costs a fortune. Take the default setup at face value and you end up with a working agent and a $400 OpenRouter bill. I rebuilt my personal automation stack on Nastech.",
     "size": "sm"
   },
   {
@@ -2547,8 +2547,8 @@
     "url": "https://github.com/NousResearch/hermes-agent/issues/8881",
     "date": "2026",
     "category": "enterprise",
-    "headline": "Hermes inside an MCP infrastructure behind Higress",
-    "quote": "We are deploying Hermes as part of an MCP infrastructure using Higress as the API Gateway. Currently Hermes only supports CLI mode, preventing management as a service in our mesh.",
+    "headline": "Nastech inside an MCP infrastructure behind Higress",
+    "quote": "We are deploying Nastech as part of an MCP infrastructure using Higress as the API Gateway. Currently Nastech only supports CLI mode, preventing management as a service in our mesh.",
     "size": "sm"
   },
   {
@@ -2558,8 +2558,8 @@
     "url": "https://github.com/teknium1/nous-discord-archive/blob/main/archives/community-projects-showcase/1496700201526759494-Hardcopy-TUI.txt",
     "date": "",
     "category": "creative",
-    "headline": "Chatting with Hermes on a 1969 Teletype Model 33 at 110 baud",
-    "quote": "I made a minimal login shell that talks to Hermes Agent via the gateway web service, or by running `hermes chat`. Hooked the shell up to an autologin getty on a serial port. Connected the serial port via 20mA current loop at 110 baud, to a 1969 Teletype Model 33. Chatting away!",
+    "headline": "Chatting with Nastech on a 1969 Teletype Model 33 at 110 baud",
+    "quote": "I made a minimal login shell that talks to Nastech Agent via the gateway web service, or by running `nastech chat`. Hooked the shell up to an autologin getty on a serial port. Connected the serial port via 20mA current loop at 110 baud, to a 1969 Teletype Model 33. Chatting away!",
     "size": "lg"
   },
   {
@@ -2570,7 +2570,7 @@
     "date": "",
     "category": "dev-workflow",
     "headline": "A small plugin that audits my diffs before I commit",
-    "quote": "Wrote a small Hermes plugin that reviews git diffs before committing, flags debug prints, hardcoded secrets, bare except clauses, and unresolved TODOs. Parses unified diff output, works with any git ref, zero new dependencies.",
+    "quote": "Wrote a small Nastech plugin that reviews git diffs before committing, flags debug prints, hardcoded secrets, bare except clauses, and unresolved TODOs. Parses unified diff output, works with any git ref, zero new dependencies.",
     "size": "md"
   },
   {
@@ -2581,7 +2581,7 @@
     "date": "2026-04",
     "category": "personal-assistant",
     "headline": "Private Telegram topics, each with its own skill bindings",
-    "quote": "Hermes extracts what worked from completed workflows, writes it as a reusable skill, and loads it for similar future problems. Private Telegram chat topics for isolated workflows with their own skill bindings.",
+    "quote": "Nastech extracts what worked from completed workflows, writes it as a reusable skill, and loads it for similar future problems. Private Telegram chat topics for isolated workflows with their own skill bindings.",
     "size": "sm"
   },
   {
@@ -2592,7 +2592,7 @@
     "date": "",
     "category": "dev-workflow",
     "headline": "Built a tool-agnostic repo knowledge layer across all my agents",
-    "quote": "Over the past month I've been trying every agent and ai tool I can. OpenClaw, Hermes Agent, Kilo Code, Codex, Cursor, etc. Most of these have some sort of memory, but I wanted something persistant. I ended up building out a tool-agnostic repo knowledge layer. I pushed up the learning part to github so I can use it across repos.",
+    "quote": "Over the past month I've been trying every agent and ai tool I can. OpenClaw, Nastech Agent, Kilo Code, Codex, Cursor, etc. Most of these have some sort of memory, but I wanted something persistant. I ended up building out a tool-agnostic repo knowledge layer. I pushed up the learning part to github so I can use it across repos.",
     "size": "md"
   },
   {
@@ -2625,7 +2625,7 @@
     "date": "2026-05-13",
     "category": "content-creation",
     "headline": "Automated TikTok slideshow factory that works while you sleep",
-    "quote": "Hermes Agent = automated TikTok slideshow factory. It researches the topic, writes the script, formats the slides, outputs in the exact dimensions TikTok needs. 10 slideshows a week manually takes 30-40 hours. With Hermes it takes the time to review and approve.",
+    "quote": "Nastech Agent = automated TikTok slideshow factory. It researches the topic, writes the script, formats the slides, outputs in the exact dimensions TikTok needs. 10 slideshows a week manually takes 30-40 hours. With Nastech it takes the time to review and approve.",
     "size": "md"
   },
   {
@@ -2635,19 +2635,19 @@
     "url": "https://x.com/IBuzovskyi/status/2060773706574479754",
     "date": "2026-05-30",
     "category": "business-ops",
-    "headline": "One isolated Hermes profile per client — sell AI ops to local businesses",
-    "quote": "Selling AI ops to local businesses: one Hermes profile per client, fully isolated — each gets their own SOUL.md, memory, cron. Charge $497/month per client to manage their workflows. 5 clients = $2,485/month recurring. Hermes runs the work, you keep the margin.",
+    "headline": "One isolated Nastech profile per client — sell AI ops to local businesses",
+    "quote": "Selling AI ops to local businesses: one Nastech profile per client, fully isolated — each gets their own SOUL.md, memory, cron. Charge $497/month per client to manage their workflows. 5 clients = $2,485/month recurring. Nastech runs the work, you keep the margin.",
     "size": "md"
   },
   {
-    "id": "akshay-hermes-folder-anatomy",
+    "id": "akshay-nastech-folder-anatomy",
     "source": "x",
     "author": "@akshay_pachaar",
     "url": "https://x.com/akshay_pachaar/status/2055629943891988719",
     "date": "2026-05-16",
     "category": "meta",
-    "headline": "The anatomy of the ~/.hermes folder — one folder controls everything",
-    "quote": "One folder controls everything your hermes agent knows, remembers, and can do. SOUL.md occupies slot #1 in the system prompt. state.db with FTS5 is what makes 'what did we discuss three weeks ago?' actually work across CLI and messaging.",
+    "headline": "The anatomy of the ~/.nastech folder — one folder controls everything",
+    "quote": "One folder controls everything your nastech agent knows, remembers, and can do. SOUL.md occupies slot #1 in the system prompt. state.db with FTS5 is what makes 'what did we discuss three weeks ago?' actually work across CLI and messaging.",
     "size": "md"
   },
   {
@@ -2657,8 +2657,8 @@
     "url": "https://x.com/sudoingX/status/2044405911150829709",
     "date": "2026-04-15",
     "category": "meta",
-    "headline": "Community admin: Hermes is the general agent, not a coding/research/automation agent",
-    "quote": "Someone posts a coding setup, someone posts an automation, someone posts an article they wrote with it. Same tool, different category, every day. Hermes is not a coding agent. Not a research agent. It is the general agent — one tool running every category of work a builder does.",
+    "headline": "Community admin: Nastech is the general agent, not a coding/research/automation agent",
+    "quote": "Someone posts a coding setup, someone posts an automation, someone posts an article they wrote with it. Same tool, different category, every day. Nastech is not a coding agent. Not a research agent. It is the general agent — one tool running every category of work a builder does.",
     "size": "md"
   },
   {
@@ -2669,7 +2669,7 @@
     "date": "2026-05-01",
     "category": "business-ops",
     "headline": "PM competitive briefing went from 20 min to 8 min over 6 weeks — same prompt",
-    "quote": "Hermes just passed Claude Code in GitHub stars. The killer feature: it writes its own skills. My competitive briefing went from 20 min to 8 min over 6 weeks. Same prompt.",
+    "quote": "Nastech just passed Claude Code in GitHub stars. The killer feature: it writes its own skills. My competitive briefing went from 20 min to 8 min over 6 weeks. Same prompt.",
     "size": "md"
   },
   {
@@ -2679,8 +2679,8 @@
     "url": "https://x.com/DataChaz/status/2061179421990740248",
     "date": "2026-05-31",
     "category": "meta",
-    "headline": "Open-source web UI for Hermes with 1:1 terminal parity in the browser",
-    "quote": "This guy literally open sourced a full web UI for Hermes Agent. 1:1 terminal parity right in your browser, zero build steps, a sleek 3-panel layout for chat, sessions, and file browsing. 100% free and open-source.",
+    "headline": "Open-source web UI for Nastech with 1:1 terminal parity in the browser",
+    "quote": "This guy literally open sourced a full web UI for Nastech Agent. 1:1 terminal parity right in your browser, zero build steps, a sleek 3-panel layout for chat, sessions, and file browsing. 100% free and open-source.",
     "size": "sm"
   },
   {
@@ -2691,7 +2691,7 @@
     "date": "2026-05-13",
     "category": "personal-assistant",
     "headline": "The real power is what it does every day without you prompting it",
-    "quote": "The real power of Hermes Agent is not what it does in a single session. It is what it does every single day without you prompting it. The first run of any workflow is the weakest version of it — after a month, briefings get sharper, shorter, more relevant without you changing anything.",
+    "quote": "The real power of Nastech Agent is not what it does in a single session. It is what it does every single day without you prompting it. The first run of any workflow is the weakest version of it — after a month, briefings get sharper, shorter, more relevant without you changing anything.",
     "size": "md"
   },
   {
@@ -2701,7 +2701,7 @@
     "url": "https://tessakriesel.com/how-i-deployed-hermes-agent-on-railway-with-telegram-and-every-gotcha-i-hit-along-the-way/",
     "date": "2026-05-13",
     "category": "integrations",
-    "headline": "Deployed Hermes on Railway with Telegram — the 10 undocumented gotchas",
+    "headline": "Deployed Nastech on Railway with Telegram — the 10 undocumented gotchas",
     "quote": "Runs as a persistent Docker service on Railway with Telegram as the interface. Official docs don't cover Railway/Docker deployment — this guide fills the gap. There are 10 specific gotchas that will break your deploy if you don't anticipate them. Full working files included.",
     "size": "md"
   },
@@ -2712,8 +2712,8 @@
     "url": "https://defi0xjeff.substack.com/p/hermes-200-and-30-skills-later-here",
     "date": "2026-04-20",
     "category": "research",
-    "headline": "$200 and 30 skills later — training Hermes as a personal analyst",
-    "quote": "Hermes picks 15 of my X bookmarks, ranks by priority based on my investments and interests, summarizes, and proposes next steps. The Reflect skill synthesizes past info, connects relationships, detects patterns — Top 5 Daily Insights and why they matter.",
+    "headline": "$200 and 30 skills later — training Nastech as a personal analyst",
+    "quote": "Nastech picks 15 of my X bookmarks, ranks by priority based on my investments and interests, summarizes, and proposes next steps. The Reflect skill synthesizes past info, connects relationships, detects patterns — Top 5 Daily Insights and why they matter.",
     "size": "md"
   },
   {
@@ -2723,8 +2723,8 @@
     "url": "https://blog.stackademic.com/forget-chatbots-hermes-agent-is-an-ai-that-actually-learns-from-you-d8d517be7b88",
     "date": "2026-05-13",
     "category": "dev-workflow",
-    "headline": "After a 15-tool-call monitoring pipeline, Hermes wrote the skill unprompted",
-    "quote": "After a multi-step monitoring pipeline setup (Prometheus/Grafana/alerts) in ~15 tool calls, Hermes unprompted entered a reflection phase and generated a skill at ~/.hermes/skills/devops/monitoring-pipeline/SKILL.md — adjusting variables per new context, not just template reuse.",
+    "headline": "After a 15-tool-call monitoring pipeline, Nastech wrote the skill unprompted",
+    "quote": "After a multi-step monitoring pipeline setup (Prometheus/Grafana/alerts) in ~15 tool calls, Nastech unprompted entered a reflection phase and generated a skill at ~/.nastech/skills/devops/monitoring-pipeline/SKILL.md — adjusting variables per new context, not just template reuse.",
     "size": "md"
   },
   {
@@ -2735,7 +2735,7 @@
     "date": "2026-04-22",
     "category": "dev-workflow",
     "headline": "Sr AI Architect: 40% less task time on domain-similar tasks after 20+ skills",
-    "quote": "Think of Hermes as an assistant who writes their own manual after finishing a task — so they do the job better next time. Cutting task time by 40% on domain-similar tasks after 20+ skills are accumulated.",
+    "quote": "Think of Nastech as an assistant who writes their own manual after finishing a task — so they do the job better next time. Cutting task time by 40% on domain-similar tasks after 20+ skills are accumulated.",
     "size": "md"
   },
   {
@@ -2746,7 +2746,7 @@
     "date": "2026-05-13",
     "category": "dev-workflow",
     "headline": "Three isolated agents — a programmer, a researcher, a designer — each with its own Telegram bot",
-    "quote": "Run three fully isolated agents — a programmer (uses Claude Code), a deep researcher, and a designer — each with its own personality, memory, skills, and Telegram bot. Hermes packages a gateway around a learning agent.",
+    "quote": "Run three fully isolated agents — a programmer (uses Claude Code), a deep researcher, and a designer — each with its own personality, memory, skills, and Telegram bot. Nastech packages a gateway around a learning agent.",
     "size": "md"
   },
   {
@@ -2779,7 +2779,7 @@
     "date": "2026-04-20",
     "category": "trading",
     "headline": "No-code Polymarket weather-trading bot driven by plain-English prompts",
-    "quote": "A weather trading agent that scans 20 cities across 4 continents and 3 forecast sources, with Expected Value and Kelly Criterion position sizing — set up by copy-pasting prompts to Hermes, which clones the repo, creates the wallet, and approves the contracts on-chain.",
+    "quote": "A weather trading agent that scans 20 cities across 4 continents and 3 forecast sources, with Expected Value and Kelly Criterion position sizing — set up by copy-pasting prompts to Nastech, which clones the repo, creates the wallet, and approves the contracts on-chain.",
     "size": "sm"
   },
   {
@@ -2811,8 +2811,8 @@
     "url": "https://www.youtube.com/watch?v=2WZAcWtwoDI",
     "date": "2026-05-25",
     "category": "business-ops",
-    "headline": "Runs Hermes as a 'junior operator' across 5 money-making workflows",
-    "quote": "If I wanted Hermes to pay for itself, I'd treat it like a junior operator, not some magic money printer. Find 25 B2B companies that could benefit from a content system, capture name/site/why-they-need-it, draft three message variants for review.",
+    "headline": "Runs Nastech as a 'junior operator' across 5 money-making workflows",
+    "quote": "If I wanted Nastech to pay for itself, I'd treat it like a junior operator, not some magic money printer. Find 25 B2B companies that could benefit from a content system, capture name/site/why-they-need-it, draft three message variants for review.",
     "size": "md"
   },
   {
@@ -2845,7 +2845,7 @@
     "date": "2026-05-14",
     "category": "personal-assistant",
     "headline": "7am filtered tech briefing + a check-in that spots tasks worth automating",
-    "quote": "Every day at 7am Hermes sends a tech/AI summary — not generic, filtered for being a software engineer and YouTube creator — and it says 'the thing you described doing manually every Thursday could be automated. Here's how.'",
+    "quote": "Every day at 7am Nastech sends a tech/AI summary — not generic, filtered for being a software engineer and YouTube creator — and it says 'the thing you described doing manually every Thursday could be automated. Here's how.'",
     "size": "sm"
   },
   {
@@ -2855,7 +2855,7 @@
     "url": "https://www.youtube.com/watch?v=RoBD7Lc-0MI",
     "date": "2026-05-10",
     "category": "dev-workflow",
-    "headline": "Scheduled Hermes to build a useful micro-app for him every night at 2am",
+    "headline": "Scheduled Nastech to build a useful micro-app for him every night at 2am",
     "quote": "I want you to schedule a task for yourself to do every single night at 2am. It should be a micro app, UI, or system that helps us get closer to my personal goals — save us time, make us more productive, or just be generally useful.",
     "size": "sm"
   },
@@ -2878,7 +2878,7 @@
     "date": "2026-05-20",
     "category": "creative",
     "headline": "Recursively built a Supabase-backed CRM dashboard where each build reuses prior components",
-    "quote": "Used the Hermes Desktop App to recursively generate a CRM dashboard where each build reuses components from prior generations; it can also build full videos using official HyperFrame skills — HTML-native, full control over scenes, animations, and rendering.",
+    "quote": "Used the Nastech Desktop App to recursively generate a CRM dashboard where each build reuses components from prior generations; it can also build full videos using official HyperFrame skills — HTML-native, full control over scenes, animations, and rendering.",
     "size": "sm"
   }
 ]
