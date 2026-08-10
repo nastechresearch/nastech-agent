@@ -14,6 +14,7 @@ on:
     branches: [main]
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -70,7 +71,7 @@ jobs:
   # protected publish job after these tests pass.
   build:
     needs: [detect]
-    if: github.repository == 'NastechResearch/nastech-agent' && needs.detect.outputs.build == 'true'
+    if: github.repository == 'nastechresearch/nastech-agent' && needs.detect.outputs.build == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -176,7 +177,7 @@ jobs:
   # matrix passes. This job is the sole Docker Hub credential boundary.
   # ---------------------------------------------------------------------------
   publish:
-    if: github.repository == 'NastechResearch/nastech-agent' && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'release')
+    if: github.repository == 'nastechresearch/nastech-agent' && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     needs: [build]
     environment: container-publish
     strategy:
@@ -256,7 +257,7 @@ jobs:
   # On releases: tags :<release_tag_name>.
   # ---------------------------------------------------------------------------
   merge:
-    if: github.repository == 'NastechResearch/nastech-agent' && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'release')
+    if: github.repository == 'nastechresearch/nastech-agent' && (github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     needs: [publish]
     timeout-minutes: 10

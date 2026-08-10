@@ -18,7 +18,7 @@ permissions:
 jobs:
   build-index:
     # Only run on the upstream repository, not on forks
-    if: github.repository == 'NastechResearch/nastech-agent'
+    if: github.repository == 'nastechresearch/nastech-agent'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: trusted-automation
