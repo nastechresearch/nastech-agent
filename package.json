@@ -44,7 +44,8 @@
     "eslint-plugin-perfectionist": "5.10.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-unused-imports": "4.4.1",
-    "globals": "17.7.0"
+    "globals": "17.7.0",
+    "hermes-parser": "npm:nastech-parser@^0.25.1"
   },
   "overrides": {
     "lodash": "4.18.1",

@@ -25,23 +25,23 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { TextTab } from '@/components/ui/text-tab'
 import { Tip } from '@/components/ui/tooltip'
+import { type Translations, useI18n } from '@/i18n'
+import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
+import { countEnabledTools, isToolEnabled, toggleToolInServer } from '@/lib/mcp-tool-filter'
+import { cn } from '@/lib/utils'
 import {
   authMcpServer,
   getActionStatus,
   getLogs,
   getMcpCatalog,
   getMcpOAuthFlow,
-  type NastechGateway,
   installMcpCatalogEntry,
   type McpCatalogEntry,
   type McpTestResult,
+  type NastechGateway,
   saveMcpServers,
   testMcpServer
 } from '@/nastech'
-import { type Translations, useI18n } from '@/i18n'
-import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
-import { countEnabledTools, isToolEnabled, toggleToolInServer } from '@/lib/mcp-tool-filter'
-import { cn } from '@/lib/utils'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $activeSessionId } from '@/store/session'
