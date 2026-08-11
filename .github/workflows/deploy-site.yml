@@ -88,6 +88,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           SKILLS_INDEX_RUN_ID: ${{ github.event.inputs.skills_index_run_id || '' }}
           REBUILD_SKILLS_INDEX: ${{ github.event.inputs.rebuild_skills_index || 'false' }}
+          NASTECH_ENRICH_CLAWHUB_OWNERS: "false"
         run: |
           # The unified external catalog is expensive to crawl and can burn
           # through the repository installation's GitHub API quota when several

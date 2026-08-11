@@ -44,6 +44,7 @@ jobs:
       - name: Build skills index
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          NASTECH_ENRICH_CLAWHUB_OWNERS: "false"
         run: python scripts/build_skills_index.py
 
       - name: Upload index artifact
