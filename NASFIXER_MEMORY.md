@@ -60,10 +60,17 @@ release and must not drift backward into the hermes era.
   the newest tag, samples `["v2026.8.11","v2026.8.18","v2026.9.2"]`.
 - `--count 1` emits newest only; spread dedupes on rounding collisions.
 
-**Status:** change is on `Nasfixer` (uncommitted at last check). Next: commit,
-push, open PR. The PR itself is a chance to run CI against the picker — but
-note the pick-releases job runs on `workflow_dispatch`, so the empty matrix is
-the expected honest output until the next release.
+**Status (current):**
+- Branch `Nasfixer` created, change committed (`f4a9ccb86`), pushed.
+- **PR #10 open** → https://github.com/nastechresearch/nastech-agent/pull/10
+  (base `main`, head `Nasfixer`). CI running on it.
+- The pick-releases job runs on `workflow_dispatch`, so the empty matrix is the
+  expected honest output until the next release. Once CI is green, we review
+  together and merge. After merge, we can `workflow_dispatch` the
+  `install-e2e.yml` manually to watch it skip gracefully.
+- Current checkout has no qualifying update-FROM tag (v2026.8.11 == main), so
+  no E2E legs run today. After the NEXT release ships, the matrix will sample
+  real nastech→nastech upgrade paths.
 
 ## Project Map (quick orientation)
 
