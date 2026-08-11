@@ -311,8 +311,8 @@ The CLI uses argparse, so `--help` is a good first probe for "did my new flag re
 
 ## See also
 
-- User-facing setup + troubleshooting: [Egress proxy](https://nastech-agent.nastechresearch.com/docs/user-guide/egress/iron-proxy)
-- Docker backend internals: [Docker](https://nastech-agent.nastechresearch.com/docs/user-guide/docker)
-- Bitwarden Secrets Manager integration: [`nastech secrets bitwarden`](https://nastech-agent.nastechresearch.com/docs/user-guide/secrets/bitwarden)
-- CLI command reference: [`nastech egress`](https://nastech-agent.nastechresearch.com/docs/reference/cli-commands#nastech-egress)
-- Sandbox-injected environment variables: [Egress proxy (sandbox-injected)](https://nastech-agent.nastechresearch.com/docs/reference/environment-variables#egress-proxy-sandbox-injected)
+- User-facing setup + troubleshooting: [Egress proxy](https://nastechresearch.github.io/nastech-agent/docs/user-guide/egress/iron-proxy)
+- Docker backend internals: [Docker](https://nastechresearch.github.io/nastech-agent/docs/user-guide/docker)
+- Bitwarden Secrets Manager integration: [`nastech secrets bitwarden`](https://nastechresearch.github.io/nastech-agent/docs/user-guide/secrets/bitwarden)
+- CLI command reference: [`nastech egress`](https://nastechresearch.github.io/nastech-agent/docs/reference/cli-commands#nastech-egress)
+- Sandbox-injected environment variables: [Egress proxy (sandbox-injected)](https://nastechresearch.github.io/nastech-agent/docs/reference/environment-variables#egress-proxy-sandbox-injected)

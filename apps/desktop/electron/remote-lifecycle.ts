@@ -195,7 +195,7 @@ async function locateNastech(ssh, remoteNastechPath) {
 
   const err: any = new Error(
     'Nastech is not installed on the remote host (could not find a `nastech` executable). ' +
-      'Install it on the remote with:  curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | sh  ' +
+      'Install it on the remote with:  curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | sh  ' +
       '— or set the Nastech path explicitly in the SSH connection settings.'
   )
 

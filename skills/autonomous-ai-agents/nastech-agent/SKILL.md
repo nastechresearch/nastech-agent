@@ -28,7 +28,7 @@ What makes Nastech different:
 
 **This skill is a hub.** The body covers identity, quick start, spawning/orchestration, and hard invariants. Everything else lives in reference files — **load the matching reference (below) before answering**; do not answer detail questions from the body alone.
 
-**Docs:** https://nastech-agent.nastechresearch.com/docs/
+**Docs:** https://nastechresearch.github.io/nastech-agent/docs/
 
 ## Scope & Verification
 
@@ -37,14 +37,14 @@ This skill is a concise operating guide, not the complete source of truth for ev
 Good verification targets:
 
 - CLI commands: `nastech --help`, `nastech <command> --help`, and `nastech_cli/main.py`
-- User documentation: https://nastech-agent.nastechresearch.com/docs/
+- User documentation: https://nastechresearch.github.io/nastech-agent/docs/
 - Source tree: https://github.com/NastechResearch/nastech-agent
 
 ## Quick Start
 
 ```bash
 # Install (shell installer — sets up uv, Python, the venv, and the launcher)
-curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
+curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 
 # Interactive chat (default surface; set display.interface: tui to launch the Ink TUI instead)
 nastech

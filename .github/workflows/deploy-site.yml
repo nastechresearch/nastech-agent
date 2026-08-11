@@ -148,7 +148,7 @@ jobs:
 
           echo "Downloading currently live skills index"
           if curl -fsSL --retry 3 --retry-delay 5 \
-            "https://nastech-agent.nastechresearch.com/docs/api/skills-index.json" \
+            "https://nastechresearch.github.io/nastech-agent/docs/api/skills-index.json" \
             -o "$INDEX_PATH" && validate_index; then
             exit 0
           fi
@@ -178,8 +178,12 @@ jobs:
         run: |
           mkdir -p _site/docs
           cp -r website/build/* _site/docs/
+          cp scripts/install.sh _site/install.sh
+          cp scripts/install.ps1 _site/install.ps1
+          cp scripts/install.cmd _site/install.cmd
+          cp setup-nastech.sh _site/setup-nastech.sh
           # llms.txt / llms-full.txt are also published at the site root
-          # (https://nastech-agent.nastechresearch.com/llms.txt) because some
+          # (https://nastechresearch.github.io/nastech-agent/llms.txt) because some
           # agents and IDE plugins probe the classic root-level path rather
           # than /docs/llms.txt. Same file, two URLs, one source of truth.
           if [ -f website/build/llms.txt ]; then

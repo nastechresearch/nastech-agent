@@ -170,7 +170,7 @@ The app also surfaces the broader Nastech management surface so you don't have t
 
 The app checks for updates in the background and offers a one-click update when one is ready.
 
-The [manual update process](https://nastech-agent.nastechresearch.com/docs/getting-started/updating) also works with the GUI.
+The [manual update process](https://nastechresearch.github.io/nastech-agent/docs/getting-started/updating) also works with the GUI.
 
 ## Uninstalling
 

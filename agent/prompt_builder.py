@@ -155,7 +155,7 @@ NASTECH_AGENT_HELP_GUIDANCE = (
     "You run on Nastech Agent (by Nastech Research). When the user needs help with "
     "Nastech itself — configuring, setting up, using, extending, or troubleshooting "
     "it — or when you need to understand your own features, tools, or capabilities, "
-    "the documentation at https://nastech-agent.nastechresearch.com/docs is your "
+    "the documentation at https://nastechresearch.github.io/nastech-agent/docs is your "
     "authoritative reference and always holds the latest, most up-to-date "
     "information. Load the `nastech-agent` skill with skill_view(name='nastech-agent') "
     "for additional guidance and proven workflows, but treat the docs as the source "

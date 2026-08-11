@@ -1477,5 +1477,5 @@ def partial_update_hint(exc: BaseException) -> list[str]:
         "and a related one was not.",
         "Re-run the update to bring the whole tree to the same version:",
         "    nastech update",
-        "If that also fails, reinstall: https://nastech-agent.nastechresearch.com",
+        "If that also fails, reinstall: https://nastechresearch.github.io/nastech-agent",
     ]

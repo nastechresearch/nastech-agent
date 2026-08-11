@@ -957,7 +957,7 @@ _PROVIDERS_WITHOUT_VISION: frozenset = frozenset({
 # `X-Title` is the canonical attribution header OpenRouter's dashboard
 # reads; the previous `X-OpenRouter-Title` label was not recognized there.
 _OR_HEADERS_BASE = {
-    "HTTP-Referer": "https://nastech-agent.nastechresearch.com",
+    "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
     "X-Title": "Nastech Agent",
     "X-OpenRouter-Categories": "productivity,cli-agent",
 }
@@ -1078,7 +1078,7 @@ def build_nvidia_nim_headers(base_url: str | None) -> dict:
 from nastech_cli import __version__ as _NASTECH_VERSION
 
 _AI_GATEWAY_HEADERS = {
-    "HTTP-Referer": "https://nastech-agent.nastechresearch.com",
+    "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
     "X-Title": "Nastech Agent",
     "User-Agent": f"NastechAgent/{_NASTECH_VERSION}",
 }

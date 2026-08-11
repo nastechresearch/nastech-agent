@@ -49,7 +49,7 @@ development environment on the same layout the CLI, updater, lazy dependency
 installer, gateway, and docs assume.
 
 ```bash
-curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
+curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 cd "${NASTECH_HOME:-$HOME/.nastech}/nastech-agent"
 
 # Add dev/test extras on top of the standard install.

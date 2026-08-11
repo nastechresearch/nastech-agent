@@ -46,7 +46,7 @@ python -m pip install -e '.[termux]' -c constraints-termux.txt
 Nastech 现已内置 Termux 感知的安装路径：
 
 ```bash
-curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
+curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 ```
 
 在 Termux 上，安装程序会自动：

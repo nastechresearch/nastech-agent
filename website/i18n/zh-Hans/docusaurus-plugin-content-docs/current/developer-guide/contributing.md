@@ -43,7 +43,7 @@ description: "如何为 Nastech Agent 做贡献 — 开发环境配置、代码�
 对大多数贡献者来说，最好的开发启动方式和用户安装方式相同：运行标准安装器，然后在它克隆出的仓库里开发。安装器会创建 Nastech venv、配置 `nastech` 命令、为 `nastech update` 写入安装方式标记，并把完整 git 项目克隆到 `$NASTECH_HOME/nastech-agent`（通常是 `~/.nastech/nastech-agent`）。这样你的开发环境会和 CLI、updater、lazy dependency installer、gateway、docs 默认假设的布局一致。
 
 ```bash
-curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
+curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 cd "${NASTECH_HOME:-$HOME/.nastech}/nastech-agent"
 
 # 在标准安装基础上添加开发/测试 extras。

@@ -5,7 +5,7 @@ import { usePageHeader } from "@/contexts/usePageHeader";
 import { cn } from "@/lib/utils";
 import { PluginSlot } from "@/plugins";
 
-export const NASTECH_DOCS_URL = "https://nastech-agent.nastechresearch.com/docs/";
+export const NASTECH_DOCS_URL = "https://nastechresearch.github.io/nastech-agent/docs/";
 
 const DS_BUTTON_OUTLINED_LINK_CN = cn(
   "group relative inline-grid grid-cols-[auto_1fr_auto] items-center",

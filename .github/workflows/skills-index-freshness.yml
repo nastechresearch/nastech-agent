@@ -27,7 +27,7 @@ jobs:
         id: probe
         run: |
           set -e
-          URL="https://nastech-agent.nastechresearch.com/docs/api/skills-index.json"
+          URL="https://nastechresearch.github.io/nastech-agent/docs/api/skills-index.json"
           echo "Probing $URL"
           # -L follows redirects; -f fails on HTTP errors; -s suppresses progress
           if ! curl -fsSL --retry 3 --retry-delay 10 -o /tmp/skills-index.json "$URL"; then

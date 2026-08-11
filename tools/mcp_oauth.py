@@ -772,7 +772,7 @@ def _make_redirect_handler(port: int, redirect_uri: str | None = None):
                 f"         ssh -N -L {port}:127.0.0.1:{port} <user>@<this-host>\n"
                 f"       then open the URL above and let it redirect normally.\n"
                 f"\n"
-                f"  See: https://nastech-agent.nastechresearch.com/docs/guides/oauth-over-ssh\n",
+                f"  See: https://nastechresearch.github.io/nastech-agent/docs/guides/oauth-over-ssh\n",
                 file=sys.stderr,
             )
 
