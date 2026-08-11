@@ -28,7 +28,7 @@ fireworks = ProviderProfile(
     # generic profile.default_headers path, so they survive switch_model and
     # credential rotation.
     default_headers={
-        "HTTP-Referer": "https://nastech-agent.nastechresearch.com",
+        "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
         "X-Title": "Nastech Agent",
         "User-Agent": f"NastechAgent/{_NASTECH_VERSION}",
     },

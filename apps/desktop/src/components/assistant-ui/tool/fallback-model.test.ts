@@ -115,28 +115,28 @@ describe('buildToolView browser_navigate title', () => {
     const view = buildToolView(
       part({
         toolName: 'browser_navigate',
-        args: { url: 'https://nastech-agent.nastechresearch.com/docs' },
+        args: { url: 'https://nastechresearch.github.io/nastech-agent/docs' },
         result: { success: false, error: 'Command timed out after 60 seconds' }
       }),
       ''
     )
 
     expect(view.status).toBe('error')
-    expect(view.title).toBe('Failed to open nastech-agent.nastechresearch.com/docs')
+    expect(view.title).toBe('Failed to open nastechresearch.github.io/nastech-agent/docs')
   })
 
   it('shows opened title on success', () => {
     const view = buildToolView(
       part({
         toolName: 'browser_navigate',
-        args: { url: 'https://nastech-agent.nastechresearch.com/docs' },
-        result: { success: true, url: 'https://nastech-agent.nastechresearch.com/docs', title: 'Docs' }
+        args: { url: 'https://nastechresearch.github.io/nastech-agent/docs' },
+        result: { success: true, url: 'https://nastechresearch.github.io/nastech-agent/docs', title: 'Docs' }
       }),
       ''
     )
 
     expect(view.status).toBe('success')
-    expect(view.title).toBe('Opened nastech-agent.nastechresearch.com/docs')
+    expect(view.title).toBe('Opened nastechresearch.github.io/nastech-agent/docs')
   })
 })
 

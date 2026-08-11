@@ -805,7 +805,7 @@ export const ja = defineLocale({
       sshErrHostKey:
         '前回の接続以降、ホスト鍵が変更されています。想定どおりか確認し、ssh-keygen -R <host> を実行してから再接続してください。',
       sshErrNotInstalled:
-        'リモートホストに Nastech がインストールされていません。リモートでインストールする（curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | sh）か、Nastech パスを設定してください。',
+        'リモートホストに Nastech がインストールされていません。リモートでインストールする（curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | sh）か、Nastech パスを設定してください。',
       sshErrPlatform:
         'サポートされていないリモートプラットフォームです。Nastech Desktop の SSH モードは Linux、macOS、Windows のリモートホストに対応しています。',
       sshErrTimeout: 'SSH 接続がタイムアウトしました。ホストが到達不能、またはスリープ中の可能性があります。',

@@ -4153,7 +4153,7 @@ def check_for_skill_updates(
 # Nastech centralized index source
 # ---------------------------------------------------------------------------
 
-NASTECH_INDEX_URL = "https://nastech-agent.nastechresearch.com/docs/api/skills-index.json"
+NASTECH_INDEX_URL = "https://nastechresearch.github.io/nastech-agent/docs/api/skills-index.json"
 NASTECH_INDEX_TTL = 6 * 3600  # 6 hours
 
 

@@ -1,7 +1,7 @@
 # Nastech CLI Reference
 
 Live sources when anything looks stale: `nastech --help`, `nastech <command> --help`,
-https://nastech-agent.nastechresearch.com/docs/reference/cli-commands
+https://nastechresearch.github.io/nastech-agent/docs/reference/cli-commands
 
 ### Global Flags
 
@@ -79,7 +79,7 @@ nastech gateway run|install|start|stop|restart|status|setup
 ```
 
 20+ platforms: Telegram, Discord, Slack, WhatsApp (Baileys + Business Cloud API), iMessage (Photon — `nastech photon setup`), Signal, Email, SMS, Matrix, Mattermost, Teams, LINE, SimpleX, ntfy, Google Chat, Home Assistant, DingTalk, Feishu, WeCom, Weixin, API Server, Webhooks. Open WebUI connects via the API Server adapter. Most adapters ship under `plugins/platforms/`.
-Docs: https://nastech-agent.nastechresearch.com/docs/user-guide/messaging/
+Docs: https://nastechresearch.github.io/nastech-agent/docs/user-guide/messaging/
 
 ### Sessions
 
@@ -141,10 +141,10 @@ Plugin- and provider-supplied subcommands (e.g. `nastech photon setup`) only app
 
 | Looking for... | Location |
 |---|---|
-| Config options | `nastech config edit` · [Configuration docs](https://nastech-agent.nastechresearch.com/docs/user-guide/configuration) |
-| Tools / toolsets | `nastech tools list` · [Tools reference](https://nastech-agent.nastechresearch.com/docs/reference/tools-reference) |
-| Skills catalog | `nastech skills browse` · [Skills catalog](https://nastech-agent.nastechresearch.com/docs/reference/skills-catalog) |
-| Provider setup | `nastech model` · [Providers guide](https://nastech-agent.nastechresearch.com/docs/integrations/providers) |
-| Env variables | `nastech config env-path` · [Env vars reference](https://nastech-agent.nastechresearch.com/docs/reference/environment-variables) |
+| Config options | `nastech config edit` · [Configuration docs](https://nastechresearch.github.io/nastech-agent/docs/user-guide/configuration) |
+| Tools / toolsets | `nastech tools list` · [Tools reference](https://nastechresearch.github.io/nastech-agent/docs/reference/tools-reference) |
+| Skills catalog | `nastech skills browse` · [Skills catalog](https://nastechresearch.github.io/nastech-agent/docs/reference/skills-catalog) |
+| Provider setup | `nastech model` · [Providers guide](https://nastechresearch.github.io/nastech-agent/docs/integrations/providers) |
+| Env variables | `nastech config env-path` · [Env vars reference](https://nastechresearch.github.io/nastech-agent/docs/reference/environment-variables) |
 | Gateway logs | `~/.nastech/logs/gateway.log` (or `nastech logs`) |
 | Sessions | `nastech sessions browse` (reads state.db) |

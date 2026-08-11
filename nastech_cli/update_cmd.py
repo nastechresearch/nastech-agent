@@ -418,7 +418,7 @@ def _print_curator_first_run_notice() -> None:
     print("  Preview now:  nastech curator run --dry-run")
     print("  Pause it:     nastech curator pause")
     print(
-        "  Docs:         https://nastech-agent.nastechresearch.com/docs/user-guide/features/curator"
+        "  Docs:         https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/curator"
     )
 
 def _print_fts_optimize_available_notice() -> None:
@@ -927,7 +927,7 @@ def _update_via_zip(args):
         print("  Your existing install was left in place.")
         print(
             "  Re-run `nastech update` to retry; if the agent won't start, "
-            "reinstall from https://nastech-agent.nastechresearch.com"
+            "reinstall from https://nastechresearch.github.io/nastech-agent"
         )
         _m().sys.exit(1)
     finally:
@@ -3964,7 +3964,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         else:
             print("✗ Not a git repository. Please reinstall:")
             print(
-                "  curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash"
+                "  curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash"
             )
             sys.exit(1)
 
@@ -4486,7 +4486,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             print(f"  ⚠ {failing_module} still fails to import after updating:")
             print(f"      {import_error}")
             print("    Run `nastech update` again — if it persists, reinstall:")
-            print("    https://nastech-agent.nastechresearch.com")
+            print("    https://nastechresearch.github.io/nastech-agent")
 
         node_failures = _update_node_dependencies()
         _m()._build_web_ui(_m().PROJECT_ROOT / "web")
