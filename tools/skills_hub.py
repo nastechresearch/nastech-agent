@@ -388,9 +388,11 @@ class GitHubAuth:
             if self._cached_method != "github-app" or time.time() < self._app_token_expiry:
                 return self._cached_token
 
-        # 1. Environment variable (profile-scoped under a multiplexed gateway)
-        from agent.secret_scope import get_secret
-        token = get_secret("GITHUB_TOKEN") or get_secret("GH_TOKEN")
+        # 1. Standard process environment, then profile-scoped secret storage.
+        token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+        if not token:
+            from agent.secret_scope import get_secret
+            token = get_secret("GH_TOKEN") or get_secret("GITHUB_TOKEN")
         if token:
             self._cached_token = token
             self._cached_method = "pat"
