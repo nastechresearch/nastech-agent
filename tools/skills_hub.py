@@ -576,14 +576,24 @@ class GitHubSource(SkillSource):
         {"repo": "openai/skills", "path": "skills/.system/"},
         {"repo": "anthropics/skills", "path": "skills/"},
         {"repo": "huggingface/skills", "path": "skills/"},
-        # NVIDIA/skills: NVIDIA-verified skills for CUDA-X, AIQ, cuOpt,
-        # cuPyNumeric, DeepStream, NeMo, NemoClaw, etc. Each skill ships
-        # alongside a signed `skill.oms.sig`, an OMS-signed `skill-card.md`
-        # (governance card), and an `evals/` directory — synced daily from
-        # the NVIDIA product repos. Treated as `trusted` (see
-        # `tools/skills_guard.py::TRUSTED_REPOS`). Sample layout:
-        # https://github.com/NVIDIA/skills/tree/main/skills
+        # NVIDIA-verified skills ship signed governance metadata.
         {"repo": "NVIDIA/skills", "path": "skills/"},
+        # Verified vendor-maintained Agent Skills collections. Repositories
+        # with nested plugin/category layouts use the cached Git Trees API.
+        {"repo": "google/skills", "path": "skills/", "recursive": True},
+        {"repo": "google-gemini/gemini-skills", "path": "skills/"},
+        {"repo": "google/agents-cli", "path": "skills/"},
+        {"repo": "microsoft/skills", "path": "", "recursive": True},
+        {"repo": "aws/agent-toolkit-for-aws", "path": "", "recursive": True},
+        {"repo": "cloudflare/skills", "path": "skills/"},
+        {"repo": "vercel-labs/agent-skills", "path": "skills/"},
+        {"repo": "android/skills", "path": "", "recursive": True},
+        {"repo": "dart-lang/skills", "path": "skills/"},
+        {"repo": "firebase/agent-skills", "path": "skills/"},
+        {"repo": "flutter/skills", "path": "", "recursive": True},
+        {"repo": "genkit-ai/skills", "path": "skills/"},
+        # GitHub-owned catalog whose upstream content is community-contributed.
+        {"repo": "github/awesome-copilot", "path": "", "recursive": True},
         {"repo": "garrytan/gstack", "path": ""},
     ]
 
@@ -627,7 +637,10 @@ class GitHubSource(SkillSource):
 
         for tap in self.taps:
             try:
-                skills = self._list_skills_in_repo(tap["repo"], tap.get("path", ""))
+                if tap.get("recursive"):
+                    skills = self._list_skills_recursively(tap["repo"], tap.get("path", ""))
+                else:
+                    skills = self._list_skills_in_repo(tap["repo"], tap.get("path", ""))
                 for skill in skills:
                     searchable = f"{skill.name} {skill.description} {' '.join(skill.tags)}".lower()
                     if query_lower in searchable:
@@ -800,6 +813,41 @@ class GitHubSource(SkillSource):
 
         # Cache the results
         self._write_cache(cache_key, [self._meta_to_dict(s) for s in skills])
+        return skills
+
+    def _list_skills_recursively(self, repo: str, path: str) -> List[SkillMeta]:
+        """Discover every directory containing SKILL.md beneath a curated path."""
+        normalized_path = path.strip("/")
+        cache_key = f"{repo}_{normalized_path}_recursive".replace("/", "_").replace(" ", "_")
+        cached = self._read_cache(cache_key)
+        if cached is not None:
+            return [SkillMeta(**s) for s in cached]
+
+        tree = self._get_repo_tree(repo)
+        if tree is None:
+            return []
+        _branch, entries = tree
+        prefix = f"{normalized_path}/" if normalized_path else ""
+        skill_dirs = sorted({
+            item_path.rsplit("/", 1)[0]
+            for item in entries
+            if item.get("type") == "blob"
+            and (item_path := item.get("path", "")).startswith(prefix)
+            and item_path.endswith("/SKILL.md")
+        })
+
+        skills = []
+        groupings = self._get_skillsh_groupings(repo)
+        for skill_path in skill_dirs:
+            meta = self.inspect(f"{repo}/{skill_path}")
+            if meta:
+                if groupings:
+                    category = groupings.get(meta.name) or groupings.get(skill_path.split("/")[-1])
+                    if category:
+                        meta.extra["category"] = category
+                skills.append(meta)
+
+        self._write_cache(cache_key, [self._meta_to_dict(skill) for skill in skills])
         return skills
 
     # -- Repo tree cache (avoids redundant API calls) --
