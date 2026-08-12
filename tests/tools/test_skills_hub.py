@@ -32,6 +32,24 @@ from tools.skills_hub import (
 
 
 # ---------------------------------------------------------------------------
+# GitHubAuth environment resolution
+# ---------------------------------------------------------------------------
+
+
+class TestGitHubAuthEnvironmentResolution:
+    def test_prefers_gh_token_from_environment(self, monkeypatch):
+        monkeypatch.setenv("GH_TOKEN", "workflow-token")
+        monkeypatch.setenv("GITHUB_TOKEN", "fallback-token")
+        auth = GitHubAuth()
+
+        with patch.object(auth, "_try_gh_cli") as gh_cli:
+            assert auth._resolve_token() == "workflow-token"
+
+        assert auth.auth_method() == "pat"
+        gh_cli.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
 # GitHubSource._parse_frontmatter_quick
 # ---------------------------------------------------------------------------
 
