@@ -287,10 +287,14 @@ class TestBrowserUseSlashCommand:
         assert saved["browser"]["backend"] == "browser-use"
         assert stub.session_resets == 1
 
-    def test_use_off_removes_backend(self, monkeypatch):
+    def test_use_off_pins_backend_off(self, monkeypatch):
+        """`off` must be written explicitly (BACKEND_DISABLED), not removed:
+        with the key merely deleted, is_legacy_browser_use_cloud_config()
+        would re-activate CLI mode on the next start for anyone with
+        BROWSER_USE_API_KEY set, so /browser use off wouldn't stick."""
         config = {"browser": {"backend": "browser-use"}}
         stub, saved = self._run("/browser use off", config, monkeypatch)
-        assert "backend" not in saved["browser"]
+        assert saved["browser"]["backend"] == bu_cli.BACKEND_DISABLED
         assert stub.session_resets == 1
 
     def test_use_bad_arg_prints_usage_without_writing(self, monkeypatch):
