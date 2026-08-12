@@ -10,7 +10,7 @@ based on both the scan verdict and the source's trust level.
 
 Trust levels:
   - builtin:   Ships with Nastech. Never scanned, always trusted.
-  - trusted:   openai/skills and anthropics/skills only. Caution verdicts allowed.
+  - trusted:   Verified vendor-maintained skill collections. Caution verdicts allowed.
   - community: Everything else. Any findings = blocked unless --force.
 
 Usage:
@@ -50,6 +50,19 @@ TRUSTED_REPOS = {
     # missing the signature or card). Catalog details:
     # https://github.com/NVIDIA/skills
     "NVIDIA/skills",
+    # Verified vendor-maintained Agent Skills collections.
+    "google/skills",
+    "google-gemini/gemini-skills",
+    "google/agents-cli",
+    "microsoft/skills",
+    "aws/agent-toolkit-for-aws",
+    "cloudflare/skills",
+    "vercel-labs/agent-skills",
+    "android/skills",
+    "dart-lang/skills",
+    "firebase/agent-skills",
+    "flutter/skills",
+    "genkit-ai/skills",
 }
 
 INSTALL_POLICY = {
