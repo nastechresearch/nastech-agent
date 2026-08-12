@@ -301,7 +301,8 @@ def main():
     # https://clawhub.ai/{owner}/skills/{slug}. Without the owner segment the
     # URL leads to a 404.
     clawhub_skills = [s for s in all_skills if s["source"] == "clawhub"]
-    if clawhub_skills:
+    enrich_clawhub_owners = os.environ.get("NASTECH_ENRICH_CLAWHUB_OWNERS", "true").lower() not in {"0", "false", "no"}
+    if clawhub_skills and enrich_clawhub_owners:
         # Convert dicts back to SkillMeta for enrichment, then update in place.
         clawhub_metas = []
         for s in clawhub_skills:
@@ -331,6 +332,8 @@ def main():
         enrich_elapsed = time.time() - enrich_start
         print(f"  Enriched {enriched}/{len(clawhub_metas)} ClawHub owners "
               f"({enrich_elapsed:.1f}s)", flush=True)
+    elif clawhub_skills:
+        print("  Skipping optional ClawHub owner enrichment", flush=True)
 
     # Collect which sources hit a GitHub API rate limit during the crawl.
     # github / well-known both read api.github.com, so a rate-limited token
