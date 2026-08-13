@@ -2,11 +2,13 @@ from types import SimpleNamespace
 
 from agent.usage_pricing import (
     CanonicalUsage,
+    format_cost_label,
     estimate_usage_cost,
     get_pricing_entry,
     normalize_usage,
     resolve_billing_route,
 )
+from decimal import Decimal
 
 
 
@@ -312,3 +314,147 @@ def test_vertex_default_model_estimates_cached_usage(monkeypatch):
 
     assert result.status == "estimated"
     assert result.amount_usd is not None and result.amount_usd > 0
+
+
+def test_normalize_usage_minimax_logs_cache_observability(caplog):
+    """MiniMax providers on the Anthropic wire emit a debug-level
+    cache-observability line recording the observable fields
+    (input_tokens, output_tokens, cache_read_tokens, cache_write_tokens),
+    so an operator can see real cache behavior without trusting the
+    misleading cache_read number (constant +128 floor on MiniMax-M3).
+    Standard logging level gating applies — no separate opt-in flag.
+    """
+    usage = SimpleNamespace(
+        input_tokens=1,
+        output_tokens=11,
+        cache_read_input_tokens=8594,
+        cache_creation_input_tokens=0,
+    )
+
+    with caplog.at_level("DEBUG", logger="agent.usage_pricing"):
+        normalize_usage(
+            usage,
+            provider="minimax-cn",
+            api_mode="anthropic_messages",
+        )
+
+    cache_obs_records = [r for r in caplog.records if "cache_observability" in r.message]
+    assert len(cache_obs_records) == 1
+    record = cache_obs_records[0]
+    assert "input_tokens=1" in record.message
+    assert "output_tokens=11" in record.message
+    assert "cache_read_tokens=8594" in record.message
+    assert "cache_write_tokens=0" in record.message
+
+
+def test_normalize_usage_native_anthropic_no_cache_observability(caplog):
+    """The MiniMax cache-observability line must NOT fire for native
+    Anthropic: there cache_read_input_tokens is exact and billable, so
+    the MiniMax-specific "+128 floor / unreliable hit signal" note would
+    be false and misleading in the logs.
+    """
+    usage = SimpleNamespace(
+        input_tokens=100,
+        output_tokens=20,
+        cache_read_input_tokens=50,
+        cache_creation_input_tokens=10,
+    )
+
+    with caplog.at_level("DEBUG", logger="agent.usage_pricing"):
+        result = normalize_usage(
+            usage,
+            provider="anthropic",
+            api_mode="anthropic_messages",
+        )
+
+    assert all("cache_observability" not in rec.message for rec in caplog.records)
+    # Token normalization itself is unaffected.
+    assert result.input_tokens == 100
+    assert result.cache_read_tokens == 50
+    assert result.cache_write_tokens == 10
+
+
+# ---------------------------------------------------------------------------
+# Cost label formatting (#79220: sub-cent costs render as $0.00)
+# ---------------------------------------------------------------------------
+
+
+class TestFormatCostLabel:
+    """Tests for magnitude-scaled cost label formatting."""
+
+    def test_zero_renders_as_dollar_zero(self):
+        assert format_cost_label(Decimal("0")) == "$0.00"
+
+    def test_sub_cent_renders_4dp(self):
+        """Costs below $0.01 render at 4 decimal places (#79220)."""
+        label = format_cost_label(Decimal("0.004640"))
+        assert label == "~$0.0046"
+        # Must NOT be $0.00
+        assert "$0.00" != label
+
+    def test_exactly_one_cent_renders_2dp(self):
+        """$0.01 renders at 2dp."""
+        assert format_cost_label(Decimal("0.01")) == "~$0.01"
+
+    def test_normal_cost_renders_2dp(self):
+        assert format_cost_label(Decimal("1.23")) == "~$1.23"
+
+    def test_large_cost_renders_2dp(self):
+        assert format_cost_label(Decimal("42.50")) == "~$42.50"
+
+    def test_very_small_sub_cent(self):
+        """Even very small costs render non-zero."""
+        label = format_cost_label(Decimal("0.0001"))
+        assert label == "~$0.0001"
+        assert label != "$0.00"
+
+    def test_below_4dp_floor_never_reads_zero(self):
+        """Amounts below $0.00005 must not render as '~$0.0000' (#79220).
+
+        4dp truncation of a positive amount would produce a zero-looking
+        label — the exact dishonesty the formatter exists to fix.
+        """
+        label = format_cost_label(Decimal("0.00004"))
+        assert label == "~$<0.0001"
+        # Exact boundary: $0.00005 rounds to 0.0000 under ROUND_HALF_EVEN
+        # and must also take the fallback.
+        assert format_cost_label(Decimal("0.00005")) == "~$<0.0001"
+
+    def test_sub_cent_deepseek_scenario(self):
+        """Reproduce the #79220 reproduction: DeepSeek at $0.004640."""
+        # DeepSeek V4 Pro: 8K input + 1.2K output + 32K cache read
+        # = $0.004640 per turn
+        amount = Decimal("0.004640")
+        label = format_cost_label(amount)
+        assert "0.0046" in label
+        assert label != "$0.00"
+        assert label != "~$0.00"
+
+
+# ---------------------------------------------------------------------------
+# Subscription-included cost notes
+# ---------------------------------------------------------------------------
+
+
+class TestSubscriptionIncludedNotes:
+    """Subscription-included costs should carry a note clarifying no invoice."""
+
+    def test_included_cost_has_note(self):
+        """estimate_usage_cost for subscription-included route includes a note."""
+        # openai-codex is subscription_included
+        usage = CanonicalUsage(
+            input_tokens=1000,
+            output_tokens=500,
+            cache_read_tokens=0,
+            cache_write_tokens=0,
+            reasoning_tokens=0,
+        )
+        result = estimate_usage_cost(
+            "gpt-5.4-mini",
+            usage,
+            provider="openai-codex",
+        )
+        assert result.status == "included"
+        assert result.amount_usd == Decimal("0")
+        assert len(result.notes) > 0
+        assert any("subscription" in note.lower() for note in result.notes)

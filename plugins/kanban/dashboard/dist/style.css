@@ -175,6 +175,7 @@
 .nastech-kanban-dot-ready    { background: #d4b348; }  /* amber */
 .nastech-kanban-dot-running  { background: #3fb97d; }  /* green */
 .nastech-kanban-dot-blocked  { background: var(--color-destructive, #d14a4a); }
+.nastech-kanban-dot-review   { background: #48b0c4; }  /* cyan — awaiting review */
 .nastech-kanban-dot-done     { background: #4a8cd1; }  /* blue */
 .nastech-kanban-dot-archived { background: var(--color-border); }
 

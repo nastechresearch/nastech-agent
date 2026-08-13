@@ -20,6 +20,8 @@ function config(overrides: Partial<DesktopConnectionConfig> = {}): DesktopConnec
     remoteOauthConnected: false,
     remoteTokenPreview: null,
     remoteTokenSet: false,
+    secureTokenStorage: true,
+    remoteTokenPlainText: false,
     remoteUrl: 'https://box:9119',
     cloudOrg: '',
     sshHost: '',
@@ -135,9 +137,7 @@ describe('deriveProviderShape', () => {
   })
 
   it('OAuth shape when the provider is a redirect IDP', () => {
-    expect(
-      deriveProviderShape([{ name: 'nastech', displayName: 'Nastech Research', supportsPassword: false }])
-    ).toEqual({
+    expect(deriveProviderShape([{ name: 'nastech', displayName: 'Nastech Research', supportsPassword: false }])).toEqual({
       isPassword: false,
       providerLabel: 'Nastech Research'
     })

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
  * primitive (extracted from gateway-connecting-overlay.tsx; same mechanics):
  *
  *  - Even-weight mono ascii charset so cycling glyphs never jump width
- *    (matches the nastechnet-web download-button decode effect).
+ *    (matches the nousnet-web download-button decode effect).
  *  - Decode resolves half a character per 45ms tick; when fully resolved it
  *    holds for 16 ticks, then (in loop mode) replays.
  *  - The first `prefix` characters NEVER scramble — split at render level so

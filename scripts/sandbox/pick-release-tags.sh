@@ -12,19 +12,6 @@
 # upgrade jump anyone can still make, and the spread samples the migrations in
 # between (config-schema bumps, venv layout changes, dependency floors).
 #
-# Two filters are applied before that spread:
-#
-#   * NAStech-era tags only. Releases before v2026.8.11 (the hermes→nastech
-#     rebrand) installed an app called `hermes` into ~/.hermes/... — not a
-#     state any nastech user is in, so updating FROM them is meaningless (and
-#     the E2E harness is nastech-shaped). The floor is the first nastech-branded
-#     release; future releases are all newer, so this never needs bumping.
-#
-#   * The tag that equals the checkout being tested. "Updating from the
-#     current release to itself" is a no-op (base == target) and the harness
-#     rejects it; the newest release users are actually on is whatever is
-#     newest and different.
-#
 # Usage:
 #   scripts/sandbox/pick-release-tags.sh [--count N] [--repo DIR]
 #
@@ -85,55 +72,12 @@ mapfile -t tags < <(
     | sort -V
 )
 
-# ── nastech-era floor ─────────────────────────────────────────────────────────
-# Releases before the hermes→nastech rebrand installed an app called `hermes`
-# into ~/.hermes/..., so no nastech user is on them and the E2E harness (which
-# is nastech-shaped) cannot update from them. Drop everything before the first
-# nastech-branded release; the floor is a version comparison so future releases
-# pass through untouched.
-NASTECH_FLOOR="v2026.8.11"
-had_tags="${#tags[@]}"
-filtered=()
-for tag in "${tags[@]}"; do
-  # version sort: only keep tags >= floor (cmp says floor <= tag)
-  if [ "$(printf '%s\n%s\n' "$NASTECH_FLOOR" "$tag" | sort -V | head -n 1)" = "$NASTECH_FLOOR" ]; then
-    filtered+=("$tag")
-  fi
-done
-tags=("${filtered[@]}")
-
-# ── drop the tag equal to the checkout being tested ──────────────────────────
-# The harness installs the tag then requires the checkout to land on this
-# worktree's commit; when the tag IS that commit there is no update to perform
-# (base == target) and the harness rejects the state. A release still on the
-# testing branch is the newest tag users are NOT yet on, so it is meaningless
-# as an "update FROM" point.
-target_commit="$(git -C "$REPO" rev-parse HEAD 2>/dev/null || true)"
-if [ -n "$target_commit" ]; then
-  filtered=()
-  for tag in "${tags[@]}"; do
-    tag_commit="$(git -C "$REPO" rev-list -n 1 "$tag" 2>/dev/null || true)"
-    if [ "$tag_commit" != "$target_commit" ]; then
-      filtered+=("$tag")
-    fi
-  done
-  tags=("${filtered[@]}")
-fi
-
-# The pre-filter list is needed to distinguish "no tags at all" (shallow clone,
-# a real configuration error) from "tags exist but none qualify" (only the
-# nastech-era floor + the current release exist, so there is nothing to update
-# FROM yet -- a legitimate empty matrix, not a broken checkout).
-
 total="${#tags[@]}"
-if [ "$total" -eq 0 ] && [ "$had_tags" -eq 0 ]; then
+if [ "$total" -eq 0 ]; then
   echo "error: no release tags found in $REPO" >&2
   echo '       A shallow clone has no tags: fetch with tags (actions/checkout' >&2
   echo '       with fetch-depth: 0, or fetch-tags: true).' >&2
   exit 1
-fi
-if [ "$total" -eq 0 ]; then
-  echo "note: no release tags qualify (nastech-era floor $NASTECH_FLOOR and current-release exclusion); nothing to update FROM yet" >&2
 fi
 
 if [ "$total" -le "$COUNT" ]; then

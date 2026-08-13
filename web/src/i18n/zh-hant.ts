@@ -191,7 +191,7 @@ export const zhHant: Translations = {
     input: "輸入",
     output: "輸出",
     total: "總計",
-    nastechageData: "此時間範圍內無使用資料",
+    noUsageData: "此時間範圍內無使用資料",
     startSession: "開始工作階段後將於此處顯示分析資料",
     date: "日期",
     model: "模型",

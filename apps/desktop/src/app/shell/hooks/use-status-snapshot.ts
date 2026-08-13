@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
 import { getStatus } from '@/nastech'
+import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
 import type { StatusResponse } from '@/types/nastech'
 
 // Statusbar health is ambient chrome, not live data — nothing the user acts on

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -9,11 +10,53 @@ from typing import Any, Dict, Literal, Optional
 from agent.model_metadata import fetch_endpoint_model_metadata, fetch_model_metadata
 from utils import base_url_host_matches
 
+logger = logging.getLogger(__name__)
+
 DEFAULT_PRICING = {"input": 0.0, "output": 0.0}
 
 _ZERO = Decimal("0")
 _ONE_MILLION = Decimal("1000000")
 _NASTECH_DEFAULT_BASE_URL = "https://inference-api.nastechresearch.com/v1"
+
+# Sub-cent cost threshold: below $0.01, render at 4 decimal places so
+# the display is non-zero (e.g. $0.0046 instead of $0.00). See #79220.
+_SUBCENT_THRESHOLD = Decimal("0.01")
+
+# Attached to every CostResult with status="included" so consumers can
+# distinguish "free because subscription" from "free because $0 pricing".
+_INCLUDED_NOTE = "subscription-included; no provider invoice for usage"
+
+
+def format_cost_label(amount: Decimal) -> str:
+    """Format a cost amount as a display label.
+
+    Scales precision to magnitude:
+    - Zero → "$0.00"
+    - Sub-cent (< $0.01) → "~$0.0046" (4 dp; amounts that ROUND to
+      0.0000 at 4 dp — i.e. at or below $0.00005 under banker's
+      rounding — fall back to "~$<0.0001" so the label never reads
+      as zero)
+    - Normal → "~$1.23" (2 dp)
+
+    This fixes #79220 where sub-cent per-turn costs on cheap models
+    (DeepSeek, etc.) rendered as "$0.00" despite amount_usd carrying
+    full Decimal precision.
+
+    Shared by per-response cost labels (estimate_usage_cost) and the
+    insights cost-bucket formatters — keep both surfaces on this one
+    implementation so sub-cent honesty can't regress on one of them.
+    """
+    if amount == _ZERO:
+        return "$0.00"
+    if amount < _SUBCENT_THRESHOLD:
+        label = f"~${amount:.4f}"
+        # A positive amount that rounds to 0.0000 at 4 dp would render
+        # "~$0.0000" — a zero-looking label, the exact #79220 dishonesty.
+        # Comparing the rendered label checks the truth directly (a naive
+        # `< 0.00005` threshold misses the exact boundary under
+        # ROUND_HALF_EVEN).
+        return label if label != "~$0.0000" else "~$<0.0001"
+    return f"~${amount:.2f}"
 
 CostStatus = Literal["actual", "estimated", "included", "unknown"]
 CostSource = Literal[
@@ -1288,6 +1331,24 @@ def normalize_usage(
                 getattr(completion_details, "reasoning_tokens", 0)
             )
 
+    # Cache observability for MiniMax's Anthropic wire: on MiniMax-M3,
+    # usage.cache_read_input_tokens carries a constant +128 floor and
+    # cache_creation_input_tokens is always 0, so cache_read is NOT a
+    # reliable hit signal — the signal that survives is the input_tokens
+    # drop between consecutive calls. Standard level-gated logger.debug;
+    # enable via logging config to confirm cache behavior.
+    # Docs: https://platform.minimax.io/docs/api-reference/text-prompt-caching
+    if provider_name in {"minimax", "minimax-cn"} and mode == "anthropic_messages":
+        logger.debug(
+            "cache_observability provider=%s mode=%s input_tokens=%s "
+            "output_tokens=%s cache_read_tokens=%s cache_write_tokens=%s "
+            "(note: on MiniMax-M3 cache_read carries a +128 constant "
+            "floor and is not a reliable hit signal — track input_tokens "
+            "drops across calls instead)",
+            provider_name, mode, input_tokens, output_tokens,
+            cache_read_tokens, cache_write_tokens,
+        )
+
     return CanonicalUsage(
         input_tokens=input_tokens,
         output_tokens=output_tokens,
@@ -1313,6 +1374,7 @@ def estimate_usage_cost(
             source="none",
             label="included",
             pricing_version="included-route",
+            notes=(_INCLUDED_NOTE,),
         )
 
     entry = get_pricing_entry(model_name, provider=provider, base_url=base_url, api_key=api_key)
@@ -1357,10 +1419,11 @@ def estimate_usage_cost(
         amount += Decimal(usage.request_count) * entry.request_cost
 
     status: CostStatus = "estimated"
-    label = f"~${amount:.2f}"
+    label = format_cost_label(amount)
     if entry.source == "none" and amount == _ZERO:
         status = "included"
         label = "included"
+        notes.append(_INCLUDED_NOTE)
 
     if route.provider == "openrouter":
         notes.append("OpenRouter cost is estimated from the models API until reconciled.")

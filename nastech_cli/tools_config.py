@@ -271,9 +271,12 @@ def _get_effective_configurable_toolsets():
 def _get_plugin_toolset_keys() -> set:
     """Return the set of toolset keys provided by plugins."""
     try:
-        from nastech_cli.plugins import discover_plugins, get_plugin_toolsets
-        discover_plugins()  # idempotent — ensures plugins are loaded
-        return {ts_key for ts_key, _, _ in get_plugin_toolsets()}
+        from nastech_cli.plugins import get_plugin_toolset_keys_nowait
+        # Non-blocking on the CLI startup path: while background plugin
+        # discovery is still importing modules, this serves last launch's
+        # persisted key set (used only to exclude plugin toolsets from
+        # composite expansion) instead of joining the discovery thread.
+        return get_plugin_toolset_keys_nowait()
     except Exception:
         return set()
 
@@ -619,6 +622,7 @@ TOOL_CATEGORIES = {
         #     underlying backend but has a distinct setup UX.
         #   - "Camofox" — anti-detection local Firefox; short-circuits the
         #     cloud-provider dispatch path via _is_camofox_mode().
+        #   - "Browser Use" — the Browser Use CLI 3.0
         "providers": [
             {
                 "name": "Local Browser",
@@ -654,6 +658,14 @@ TOOL_CATEGORIES = {
                 ],
                 "browser_provider": "camofox",
                 "post_setup": "camofox",
+            },
+            {
+                "name": "Browser Use",
+                "badge": "free · local · cloud",
+                "tag": "New SOTA web harness (CLI 3.0)",
+                "env_vars": [],
+                "browser_backend": "browser-use",
+                "post_setup": "browser_use_cli",
             },
         ],
     },
@@ -1632,69 +1644,52 @@ def _run_cua_driver_installer(
 
 def _run_post_setup(post_setup_key: str):
     """Run post-setup hooks for tools that need extra installation steps."""
-    import shutil
     from nastech_constants import find_node_executable
 
     if post_setup_key in {"agent_browser", "browserbase"}:
-        node_modules = PROJECT_ROOT / "node_modules" / "agent-browser"
-        # Managed Node first — $NASTECH_HOME/node is not on PATH, so a bare
-        # which() reports "no npm" on installs whose only Node is the one
-        # Nastech installed for exactly this toolchain.
-        npm_bin = find_node_executable("npm")
-        npx_bin = find_node_executable("npx")
-        # Step 1: install the agent-browser npm package into node_modules/
-        if not node_modules.exists() and npm_bin:
-            _print_info("    Installing Node.js dependencies for browser tools...")
-            import subprocess
-            # Use the resolved npm_bin absolute path so subprocess.Popen can
-            # execute npm.cmd on Windows (CreateProcessW otherwise rejects
-            # batch shims).  On POSIX npm_bin is the plain path — same
-            # behaviour as before.
-            result = subprocess.run(
-                # --workspaces=false restricts the install to the repo root
-                # only, avoiding the apps/* glob which would pull in
-                # apps/desktop (Electron + node-pty) unnecessarily. See #38772.
-                [npm_bin, "install", "--silent", "--workspaces=false"],
-                capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=str(PROJECT_ROOT),
-                creationflags=_post_setup_no_window_flags(),
-            )
-            if result.returncode == 0:
-                _print_success("    Node.js dependencies installed")
-            else:
-                from nastech_constants import display_nastech_home
-                _print_warning(f"    npm install failed - run manually: cd {display_nastech_home()}/nastech-agent && npm install --workspaces=false")
-                if result.stderr:
-                    _print_info(f"      {result.stderr.strip()[:200]}")
-        elif node_modules.exists():
-            # Distinct message for the re-run case so the GUI action log tells
-            # the truth ("nothing to do") instead of implying a fresh install.
-            _print_success("    agent-browser already installed, nothing to do")
-        else:
-            _print_warning("    Node.js not found - browser tools require: npm install (in nastech-agent directory)")
-            return
-
-        # Step 2: only the local browser provider actually needs Chromium on
-        # disk. Cloud providers (Browserbase, Browser Use, Firecrawl) host
-        # their own Chromium and don't need the local install.
-        if post_setup_key != "agent_browser":
-            return
-
-        # Step 3: ensure the Chromium / headless-shell build agent-browser
-        # drives is actually installed. Without it the CLI hangs on first
-        # use until the command timeout fires. Skip inside Docker — the
-        # image bakes Chromium in at build time, and runtime users usually
-        # can't write to PLAYWRIGHT_BROWSERS_PATH anyway.
+        # agent-browser is no longer a root package.json dependency (#43564)
+        # — it resolves lazily via npx (or a global/Nastech-managed install)
+        # instead of a local `npm install`, so there's no node_modules/
+        # population step here anymore.
         try:
             # Import lazily so the tools_config UI doesn't pull in the full
             # browser_tool module at import time.
             from tools.browser_tool import (
                 _chromium_installed,
                 _running_in_docker,
+                _find_agent_browser,
+                _resolve_npx_bin,
+                _is_npx_agent_browser_sentinel,
+                AGENT_BROWSER_NPX_SPEC,
             )
         except Exception as exc:  # pragma: no cover — defensive
             _print_warning(f"    Could not check Chromium status: {exc}")
             return
 
+        # Reuse the same resolution cascade browser tools use at runtime
+        # (PATH -> Homebrew/Nastech-managed node -> npx) rather than a bare
+        # shutil.which — Nastech-managed-Node-only setups resolve agent-browser
+        # / npx only through the extended fallback path, which a bare
+        # shutil.which("npx") lookup misses.
+        try:
+            browser_cmd = _find_agent_browser(validate=False)
+        except FileNotFoundError:
+            _print_warning(
+                "    npx not found - browser tools require Node.js: https://nodejs.org"
+            )
+            return
+
+        # Step 1: only the local browser provider actually needs Chromium on
+        # disk. Cloud providers (Browserbase, Browser Use, Firecrawl) host
+        # their own Chromium and don't need the local install.
+        if post_setup_key != "agent_browser":
+            return
+
+        # Step 2: ensure the Chromium / headless-shell build agent-browser
+        # drives is actually installed. Without it the CLI hangs on first
+        # use until the command timeout fires. Skip inside Docker — the
+        # image bakes Chromium in at build time, and runtime users usually
+        # can't write to PLAYWRIGHT_BROWSERS_PATH anyway.
         if _chromium_installed():
             _print_success("    Chromium browser already installed, nothing to do")
             return
@@ -1711,27 +1706,27 @@ def _run_post_setup(post_setup_key: str):
             )
             return
 
-        if not npx_bin:
-            _print_warning(
-                "    npx not found - install Chromium manually: npx agent-browser install --with-deps"
-            )
-            return
+        # browser_cmd was already resolved above (same PATH -> Homebrew ->
+        # Nastech-managed-node -> npx cascade _find_agent_browser uses at
+        # runtime), so this can't diverge from what actually gets invoked.
+        if _is_npx_agent_browser_sentinel(browser_cmd):
+            # Re-resolve via the same PATH + extended-PATH cascade
+            # _find_agent_browser used, rather than a bare shutil.which("npx")
+            # — Nastech-managed-Node-only setups resolve npx only through the
+            # extended fallback path, and a bare lookup here would silently
+            # diverge and hand subprocess.run a None argument.
+            npx_bin = _resolve_npx_bin()
+            if not npx_bin:
+                _print_warning(
+                    "    npx not found - install Chromium manually: npx agent-browser install --with-deps"
+                )
+                return
+            install_cmd = [npx_bin, "--ignore-scripts", "-y", AGENT_BROWSER_NPX_SPEC, "install", "--with-deps"]
+        else:
+            install_cmd = [browser_cmd, "install", "--with-deps"]
 
         _print_info("    Installing Chromium (~170MB one-time download)...")
         import subprocess
-        # Prefer the bundled agent-browser install subcommand so the
-        # version of Chromium matches the CLI. Fall back to npx shim on
-        # setups where the local bin stub isn't present.
-        local_ab = PROJECT_ROOT / "node_modules" / ".bin" / "agent-browser"
-        if sys.platform == "win32":
-            local_ab_win = local_ab.with_suffix(".cmd")
-            if local_ab_win.exists():
-                local_ab = local_ab_win
-        install_cmd = (
-            [str(local_ab), "install", "--with-deps"]
-            if local_ab.exists()
-            else [npx_bin, "-y", "agent-browser", "install", "--with-deps"]
-        )
         try:
             result = subprocess.run(
                 install_cmd,
@@ -1756,6 +1751,29 @@ def _run_post_setup(post_setup_key: str):
         except Exception as exc:
             _print_warning(f"    Chromium install failed: {exc}")
             _print_info("    Run manually: npx agent-browser install --with-deps")
+
+    elif post_setup_key == "browser_use_cli":
+        if shutil.which("browser-use"):
+            _print_success("    browser-use CLI found on PATH")
+        else:
+            _print_info("    Installing browser-use CLI (uv tool install browser-use)...")
+            try:
+                from tools.browser_use_cli import install_cli
+
+                ok, message = install_cli()
+            except Exception as exc:  # pragma: no cover — defensive
+                ok, message = False, f"install failed: {exc}"
+            if ok:
+                _print_success(f"    {message}")
+            else:
+                for line in str(message).splitlines():
+                    _print_warning(f"    {line[:200]}")
+                if shutil.which("uvx"):
+                    _print_info("    Falling back to zero-install runs via `uvx browser-use`")
+                else:
+                    _print_info("    Install manually: uv tool install browser-use  (https://docs.astral.sh/uv/)")
+        _print_info("    Local Chrome needs remote debugging: chrome://inspect/#remote-debugging")
+        _print_info("    Cloud browsers: browser-use auth login  (or set BROWSER_USE_API_KEY)")
 
     elif post_setup_key == "camofox":
         camofox_dir = PROJECT_ROOT / "node_modules" / "@askjo" / "camofox-browser"
@@ -2146,10 +2164,12 @@ def enabled_mcp_server_names(config: dict) -> Set[str]:
         and _parse_enabled_flag(server_cfg.get("enabled", True), default=True)
     }
     try:
-        from nastech_cli.plugins import discover_plugins, get_plugin_manager
+        from nastech_cli.plugins import (
+            get_plugin_manager,
+            get_portable_mcp_server_names_nowait,
+        )
 
-        discover_plugins()
-        portable = set(get_plugin_manager().get_portable_mcp_servers())
+        portable = get_portable_mcp_server_names_nowait()
         # Native config wins on a name collision (mirrors _load_mcp_config).
         names |= portable - set(mcp_servers)
     except Exception:
@@ -2695,8 +2715,8 @@ def _prompt_choice(question: str, choices: list, default: int = 0) -> int:
 
 # ─── Token Estimation ────────────────────────────────────────────────────────
 
-# Module-level cache so discovery + tokenization runs at most once per process.
-_tool_token_cache: Optional[Dict[str, int]] = None
+# Profile-keyed cache so one process can serve distinct plugin tool catalogs.
+_tool_token_cache: Optional[Dict[tuple[str, int], Dict[str, int]]] = None
 
 
 def _estimate_tool_tokens() -> Dict[str, int]:
@@ -2709,25 +2729,33 @@ def _estimate_tool_tokens() -> Dict[str, int]:
     Returns an empty dict when tiktoken or the registry is unavailable.
     """
     global _tool_token_cache
-    if _tool_token_cache is not None:
-        return _tool_token_cache
+    from nastech_constants import nastech_home_key
+
+    scope = nastech_home_key()
+
+    try:
+        # Trigger full tool discovery (imports all tool modules).
+        import model_tools  # noqa: F401
+        from tools.registry import registry
+        cache_key = (scope, registry._generation)
+    except Exception:
+        logger.debug("Tool registry unavailable; skipping token estimation")
+        cache_key = (scope, -1)
+        _tool_token_cache = _tool_token_cache or {}
+        _tool_token_cache[cache_key] = {}
+        return _tool_token_cache[cache_key]
+
+    if _tool_token_cache is not None and cache_key in _tool_token_cache:
+        return _tool_token_cache[cache_key]
 
     try:
         import tiktoken
         enc = tiktoken.get_encoding("cl100k_base")
     except Exception:
         logger.debug("tiktoken unavailable; skipping tool token estimation")
-        _tool_token_cache = {}
-        return _tool_token_cache
-
-    try:
-        # Trigger full tool discovery (imports all tool modules).
-        import model_tools  # noqa: F401
-        from tools.registry import registry
-    except Exception:
-        logger.debug("Tool registry unavailable; skipping token estimation")
-        _tool_token_cache = {}
-        return _tool_token_cache
+        _tool_token_cache = _tool_token_cache or {}
+        _tool_token_cache[cache_key] = {}
+        return _tool_token_cache[cache_key]
 
     counts: Dict[str, int] = {}
     for name in registry.get_all_tool_names():
@@ -2737,8 +2765,9 @@ def _estimate_tool_tokens() -> Dict[str, int]:
             # {"type": "function", "function": <schema>}
             text = _json.dumps({"type": "function", "function": schema})
             counts[name] = len(enc.encode(text))
-    _tool_token_cache = counts
-    return _tool_token_cache
+    _tool_token_cache = _tool_token_cache or {}
+    _tool_token_cache[cache_key] = counts
+    return counts
 
 
 def _prompt_toolset_checklist(
@@ -3618,6 +3647,9 @@ def _is_provider_active(
                 and cfg_get(config, "stt", "provider") == provider["stt_provider"]
             )
         if "browser_provider" in provider:
+            # Browser Use mode is a driver on top of the provider (it attaches
+            # to the provider's CDP endpoint), so the provider row stays
+            # active alongside the Browser Use row.
             current = cfg_get(config, "browser", "cloud_provider")
             return feature.managed_by_nastech and provider["browser_provider"] == current
         if provider.get("web_backend"):
@@ -3632,8 +3664,42 @@ def _is_provider_active(
         current = cfg_get(config, "stt", "provider") or "local"
         return current == provider["stt_provider"]
     if "browser_provider" in provider:
+        # Browser Use mode composes with the provider (driver over the
+        # provider's CDP endpoint) — don't deactivate the provider row.
         current = cfg_get(config, "browser", "cloud_provider")
         return provider["browser_provider"] == current
+    if provider.get("browser_backend"):
+        backend = cfg_get(config, "browser", "backend")
+        if backend is False:
+            backend = "off"  # YAML 1.1: unquoted `off` parses as boolean False
+        if backend == provider["browser_backend"]:
+            return True
+        if backend:
+            return False  # explicit other choice ("off", …) wins
+        if provider["browser_backend"] != "browser-use":
+            return False
+        # Backend unset: Browser Use mode is the default — the row is active
+        # whenever the effective mode resolves on (legacy direct-API cloud
+        # config, or CLI runnable and no Camofox).
+        browser_cfg = config.get("browser") if isinstance(config, dict) else None
+        try:
+            from tools.browser_use_cli import (
+                _find_cli,
+                is_legacy_browser_use_cloud_config,
+            )
+
+            if is_legacy_browser_use_cloud_config(browser_cfg or {}):
+                return True
+            try:
+                from tools.browser_camofox import is_camofox_mode
+
+                if is_camofox_mode():
+                    return False
+            except Exception:
+                pass
+            return _find_cli() is not None
+        except Exception:
+            return False
     if provider.get("web_backend"):
         current = cfg_get(config, "web", "backend")
         return current == provider["web_backend"]
@@ -4079,7 +4145,13 @@ def _write_provider_config(provider: dict, config: dict, *, managed_feature) -> 
         browser_cfg = config.setdefault("browser", {})
         if bp:
             browser_cfg["cloud_provider"] = bp
+        # Browser Use mode (browser.backend) composes with the provider —
+        # switching providers keeps the driver choice intact.
         browser_cfg["use_gateway"] = bool(managed_feature)
+
+    if provider.get("browser_backend"):
+        browser_cfg = config.setdefault("browser", {})
+        browser_cfg["backend"] = provider["browser_backend"]
 
     # Set web search backend in config if applicable
     if provider.get("web_backend"):
@@ -4223,6 +4295,9 @@ def _configure_provider(
             _print_success("  Browser set to local mode")
         elif bp:
             _print_success(f"  Browser cloud provider set to: {bp}")
+
+    if provider.get("browser_backend"):
+        _print_success("  Browser set to Browser Use (browser_exec via CLI 3.0)")
 
     # Set web search backend in config if applicable
     if provider.get("web_backend"):
@@ -4736,7 +4811,14 @@ def _reconfigure_provider(
         elif bp:
             browser_cfg["cloud_provider"] = bp
             _print_success(f"  Browser cloud provider set to: {bp}")
+        # Browser Use mode (browser.backend) composes with the provider —
+        # switching providers keeps the driver choice intact.
         browser_cfg["use_gateway"] = bool(managed_feature)
+
+    if provider.get("browser_backend"):
+        browser_cfg = config.setdefault("browser", {})
+        browser_cfg["backend"] = provider["browser_backend"]
+        _print_success("  Browser set to Browser Use (browser_exec via CLI 3.0)")
 
     # Set web search backend in config if applicable
     if provider.get("web_backend"):
@@ -4885,7 +4967,7 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
     # Non-interactive summary mode for CLI usage
     if getattr(args, "summary", False):
         total = len(_get_effective_configurable_toolsets())
-        print(color("𓄃 Tool Summary", Colors.CYAN, Colors.BOLD))
+        print(color("⚕ Tool Summary", Colors.CYAN, Colors.BOLD))
         print()
         summary = _platform_toolset_summary(config, enabled_platforms)
         for pkey in enabled_platforms:
@@ -4901,10 +4983,10 @@ def tools_command(args=None, first_install: bool = False, config: dict = None):
                 print(color("    (none enabled)", Colors.DIM))
         print()
         return
-    print(color("𓄃 Nastech Tool Configuration", Colors.CYAN, Colors.BOLD))
+    print(color("⚕ Nastech Tool Configuration", Colors.CYAN, Colors.BOLD))
     print(color("  Enable or disable tools per platform.", Colors.DIM))
     print(color("  Tools that need API keys will be configured when enabled.", Colors.DIM))
-    print(color("  Guide: https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/tools", Colors.DIM))
+    print(color("  Guide: https://nastech-agent.nastechresearch.com/docs/user-guide/features/tools", Colors.DIM))
     print()
 
     # ── First-time install: linear flow, no platform menu ──

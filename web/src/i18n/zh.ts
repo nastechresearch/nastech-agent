@@ -189,7 +189,7 @@ export const zh: Translations = {
     input: "输入",
     output: "输出",
     total: "总计",
-    nastechageData: "该时间段暂无使用数据",
+    noUsageData: "该时间段暂无使用数据",
     startSession: "开始会话后将在此显示分析数据",
     date: "日期",
     model: "模型",

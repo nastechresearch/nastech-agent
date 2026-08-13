@@ -206,7 +206,7 @@ source ~/.bashrc
 # If you previously installed with sudo, clean up:
 sudo rm /usr/local/bin/nastech
 # Then re-run the standard installer
-curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
 ```
 
 ---
@@ -761,7 +761,7 @@ Skills with very long descriptions are truncated to 40 characters in the Telegra
 
 1. Install Nastech Agent on the new machine:
    ```bash
-   curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+   curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
    ```
 
 2. On the **source machine**, create a full backup:

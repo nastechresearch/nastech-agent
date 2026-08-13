@@ -109,7 +109,7 @@ Transform abstract concepts into concrete visuals:
 |-----------------|-----------------|
 | Neural network | Glowing nodes with connecting lines |
 | Gradient descent | Ball rolling down valley terrain |
-| Data flow | Luminastech particles flowing through pipes |
+| Data flow | Luminous particles flowing through pipes |
 | Algorithm iteration | Ascending spiral staircase |
 | Breakthrough moment | Shattering barrier, piercing light |
 | Logical proof | Building blocks assembling |

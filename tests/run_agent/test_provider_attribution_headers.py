@@ -24,7 +24,7 @@ def test_openrouter_base_url_applies_or_headers(mock_openai):
     agent._apply_client_headers_for_base_url("https://openrouter.ai/api/v1")
 
     headers = agent._client_kwargs["default_headers"]
-    assert headers["HTTP-Referer"] == "https://nastechresearch.github.io/nastech-agent"
+    assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.com"
     assert headers["X-Title"] == "Nastech Agent"
 
 
@@ -43,7 +43,7 @@ def test_ai_gateway_base_url_applies_attribution_headers(mock_openai):
     agent._apply_client_headers_for_base_url("https://ai-gateway.vercel.sh/v1")
 
     headers = agent._client_kwargs["default_headers"]
-    assert headers["HTTP-Referer"] == "https://nastechresearch.github.io/nastech-agent"
+    assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.com"
     assert headers["X-Title"] == "Nastech Agent"
     assert headers["User-Agent"].startswith("NastechAgent/")
 
@@ -106,7 +106,52 @@ def test_fireworks_applies_attribution_via_profile_fallback(mock_openai):
     agent._apply_client_headers_for_base_url("https://api.fireworks.ai/inference/v1")
 
     headers = agent._client_kwargs["default_headers"]
-    assert headers["HTTP-Referer"] == "https://nastechresearch.github.io/nastech-agent"
+    assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.com"
+    assert headers["X-Title"] == "Nastech Agent"
+    assert headers["User-Agent"].startswith("NastechAgent/")
+
+
+@patch("run_agent.OpenAI")
+def test_opencode_go_applies_attribution_via_profile_fallback(mock_openai):
+    """OpenCode (Zen/Go) attributes traffic by header like OpenRouter does.
+    Without profile.default_headers the relay only sees the OpenAI SDK's
+    generic User-Agent and Nastech Agent traffic shows up unattributed."""
+    mock_openai.return_value = MagicMock()
+    agent = AIAgent(
+        api_key="test-key",
+        base_url="https://opencode.ai/zen/go/v1",
+        model="glm-5",
+        provider="opencode-go",
+        quiet_mode=True,
+        skip_context_files=True,
+        skip_memory=True,
+    )
+
+    agent._apply_client_headers_for_base_url("https://opencode.ai/zen/go/v1")
+
+    headers = agent._client_kwargs["default_headers"]
+    assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.com"
+    assert headers["X-Title"] == "Nastech Agent"
+    assert headers["User-Agent"].startswith("NastechAgent/")
+
+
+@patch("run_agent.OpenAI")
+def test_opencode_zen_applies_attribution_via_profile_fallback(mock_openai):
+    mock_openai.return_value = MagicMock()
+    agent = AIAgent(
+        api_key="test-key",
+        base_url="https://opencode.ai/zen/v1",
+        model="claude-sonnet-4-5",
+        provider="opencode-zen",
+        quiet_mode=True,
+        skip_context_files=True,
+        skip_memory=True,
+    )
+
+    agent._apply_client_headers_for_base_url("https://opencode.ai/zen/v1")
+
+    headers = agent._client_kwargs["default_headers"]
+    assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.com"
     assert headers["X-Title"] == "Nastech Agent"
     assert headers["User-Agent"].startswith("NastechAgent/")
 
@@ -167,7 +212,7 @@ def test_openrouter_headers_include_response_cache_when_enabled(mock_openai):
         agent._apply_client_headers_for_base_url("https://openrouter.ai/api/v1")
 
     headers = agent._client_kwargs["default_headers"]
-    assert headers["HTTP-Referer"] == "https://nastechresearch.github.io/nastech-agent"
+    assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.com"
     assert headers["X-OpenRouter-Cache"] == "true"
     assert headers["X-OpenRouter-Cache-TTL"] == "600"
 
@@ -231,7 +276,7 @@ def test_openrouter_headers_no_cache_when_disabled(mock_openai):
         agent._apply_client_headers_for_base_url("https://openrouter.ai/api/v1")
 
     headers = agent._client_kwargs["default_headers"]
-    assert headers["HTTP-Referer"] == "https://nastechresearch.github.io/nastech-agent"
+    assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.com"
     assert "X-OpenRouter-Cache" not in headers
     assert "X-OpenRouter-Cache-TTL" not in headers
 

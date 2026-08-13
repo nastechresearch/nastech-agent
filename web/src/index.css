@@ -141,7 +141,7 @@ code, kbd, pre, samp, .font-mono, .font-mono-ui {
   }
 }
 
-/* Nastechnet's nastech-agent layout bumps `small` and `code` to readable
+/* Nousnet's nastech-agent layout bumps `small` and `code` to readable
    dashboard sizes. Keep in sync. */
 small { font-size: 1.0625rem; }
 code { font-size: 0.875rem; }

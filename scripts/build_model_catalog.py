@@ -17,7 +17,7 @@ Usage::
 Output: ``website/static/api/model-catalog.json``
 
 Live URL (after ``deploy-site.yml`` runs on merge to main):
-``https://nastechresearch.github.io/nastech-agent/docs/api/model-catalog.json``
+``https://nastech-agent.nastechresearch.com/docs/api/model-catalog.json``
 """
 
 from __future__ import annotations
@@ -64,7 +64,7 @@ def build_catalog() -> dict:
         "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "metadata": {
             "source": "nastech-agent repo",
-            "docs": "https://nastechresearch.github.io/nastech-agent/docs/reference/model-catalog",
+            "docs": "https://nastech-agent.nastechresearch.com/docs/reference/model-catalog",
         },
         "providers": {
             "openrouter": {

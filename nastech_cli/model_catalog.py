@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 DEFAULT_CATALOG_URL = (
-    "https://nastechresearch.github.io/nastech-agent/docs/api/model-catalog.json"
+    "https://nastech-agent.nastechresearch.com/docs/api/model-catalog.json"
 )
 # Fallback fetch chain. The Docusaurus site is served through Vercel, which
 # occasionally returns HTTP 403 + x-vercel-mitigated: challenge for non-

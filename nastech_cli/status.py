@@ -135,7 +135,7 @@ def show_status(args):
 
     print()
     print(color("┌─────────────────────────────────────────────────────────┐", Colors.CYAN))
-    print(color("│                 𓄃 Nastech Agent Status                  │", Colors.CYAN))
+    print(color("│                 ⚕ Nastech Agent Status                  │", Colors.CYAN))
     print(color("└─────────────────────────────────────────────────────────┘", Colors.CYAN))
 
     _paused_line = _estop_status_line()

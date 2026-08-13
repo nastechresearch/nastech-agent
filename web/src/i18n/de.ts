@@ -191,7 +191,7 @@ export const de: Translations = {
     input: "Eingabe",
     output: "Ausgabe",
     total: "Gesamt",
-    nastechageData: "Keine Nutzungsdaten für diesen Zeitraum",
+    noUsageData: "Keine Nutzungsdaten für diesen Zeitraum",
     startSession: "Starte eine Sitzung, um hier Analysen zu sehen",
     date: "Datum",
     model: "Modell",

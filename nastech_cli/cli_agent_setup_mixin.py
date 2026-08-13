@@ -231,7 +231,7 @@ class CLIAgentSetupMixin:
         from cli import _cprint, logger
 
         _cprint("")
-        _cprint("𓄃 No inference provider is configured yet — let's fix that.")
+        _cprint("⚕ No inference provider is configured yet — let's fix that.")
         _cprint("  You'll pick a provider (Nastech Portal OAuth is the fastest; "
                 "no API key needed) and a model.")
         try:
@@ -341,6 +341,11 @@ class CLIAgentSetupMixin:
         from cli import AIAgent, ChatConsole, _DIM, _RST, _accent_hex, _cprint, _prepare_deferred_agent_startup, logger
         if self.agent is not None:
             return True
+
+        # Join the background preloaded-skills load (cli.py cmd_chat starts
+        # it when --skills/-s is passed) BEFORE the agent snapshots
+        # self.system_prompt below. No-op when nothing was requested.
+        self.finalize_preloaded_skills()
 
         _prepare_deferred_agent_startup()
         self._install_tool_callbacks()
@@ -458,11 +463,7 @@ class CLIAgentSetupMixin:
                     )
             # Re-open the session (clear ended_at so it's active again)
             try:
-                self._session_db._conn.execute(
-                    "UPDATE sessions SET ended_at = NULL, end_reason = NULL WHERE id = ?",
-                    (self.session_id,),
-                )
-                self._session_db._conn.commit()
+                self._session_db.reopen_session(self.session_id)
             except Exception:
                 pass
         
@@ -726,12 +727,7 @@ class CLIAgentSetupMixin:
 
         # Re-open the session (clear ended_at so it's active again)
         try:
-            self._session_db._conn.execute(
-                "UPDATE sessions SET ended_at = NULL, end_reason = NULL "
-                "WHERE id = ?",
-                (self.session_id,),
-            )
-            self._session_db._conn.commit()
+            self._session_db.reopen_session(self.session_id)
         except Exception:
             pass
 

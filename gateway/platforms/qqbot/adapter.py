@@ -2761,7 +2761,7 @@ class QQAdapter(BasePlatformAdapter):
         del session_key, metadata  # present for contract parity only.
 
         default_hint = f" (default: {default})" if default else ""
-        content = f"𓄃 **Update Needs Your Input**\n\n{prompt}{default_hint}"
+        content = f"⚕ **Update Needs Your Input**\n\n{prompt}{default_hint}"
         msg_id = self._last_msg_id.get(chat_id)
         return await self.send_with_keyboard(
             chat_id,

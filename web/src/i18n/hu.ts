@@ -191,7 +191,7 @@ export const hu: Translations = {
     input: "Bemenet",
     output: "Kimenet",
     total: "Összesen",
-    nastechageData: "Nincs használati adat erre az időszakra",
+    noUsageData: "Nincs használati adat erre az időszakra",
     startSession: "Indítson munkamenetet az analitika megtekintéséhez",
     date: "Dátum",
     model: "Modell",
@@ -522,7 +522,7 @@ export const hu: Translations = {
       highest_tier: "Legmagasabb szint",
       highest_tier_hint: "Copper → Silver → Gold → Diamond → Olympian",
       latest: "Legutóbbi",
-      latest_hint_empty: "futtasd többet a Nastecht",
+      latest_hint_empty: "futtasd többet a Hermest",
       none_yet: "Még semmi",
     },
     state: {

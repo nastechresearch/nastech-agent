@@ -43,7 +43,7 @@ description: "如何为 Nastech Agent 做贡献 — 开发环境配置、代码�
 对大多数贡献者来说，最好的开发启动方式和用户安装方式相同：运行标准安装器，然后在它克隆出的仓库里开发。安装器会创建 Nastech venv、配置 `nastech` 命令、为 `nastech update` 写入安装方式标记，并把完整 git 项目克隆到 `$NASTECH_HOME/nastech-agent`（通常是 `~/.nastech/nastech-agent`）。这样你的开发环境会和 CLI、updater、lazy dependency installer、gateway、docs 默认假设的布局一致。
 
 ```bash
-curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
 cd "${NASTECH_HOME:-$HOME/.nastech}/nastech-agent"
 
 # 在标准安装基础上添加开发/测试 extras。
@@ -132,24 +132,7 @@ Nastech 官方支持 **Linux、macOS、WSL2 以及原生 Windows（通过 PowerS
 - **使用 `pathlib.Path` / `os.path.join`，不得手动用 `/` 拼接路径。** 这对我们构造后传给子进程的字符串尤为重要，而非 OS 返回给我们的字符串。
 
 关键模式：
-
-### 1. `termios` 和 `fcntl` 仅适用于 Unix
-
-始终同时捕获 `ImportError` 和 `NotImplementedError`：
-
-```python
-try:
-    from simple_term_menu import TerminalMenu
-    menu = TerminalMenu(options)
-    idx = menu.show()
-except (ImportError, NotImplementedError):
-    # 回退：编号菜单
-    for i, opt in enumerate(options):
-        print(f"  {i+1}. {opt}")
-    idx = int(input("Choice: ")) - 1
-```
-
-### 2. 文件编码
+### 1. 文件编码
 
 某些环境可能以非 UTF-8 编码保存 `.env` 文件：
 
@@ -160,7 +143,7 @@ except UnicodeDecodeError:
     load_dotenv(env_path, encoding="latin-1")
 ```
 
-### 3. 进程管理
+### 2. 进程管理
 
 `os.setsid()`、`os.killpg()` 以及信号处理在各平台间存在差异：
 
@@ -170,7 +153,7 @@ if platform.system() != "Windows":
     kwargs["preexec_fn"] = os.setsid
 ```
 
-### 4. 路径分隔符
+### 3. 路径分隔符
 
 使用 `pathlib.Path` 代替用 `/` 进行字符串拼接。
 
