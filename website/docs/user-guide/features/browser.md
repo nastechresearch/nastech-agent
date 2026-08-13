@@ -11,6 +11,7 @@ Nastech Agent includes a full browser automation toolset with multiple backend o
 
 - **Browserbase cloud mode** via [Browserbase](https://browserbase.com) for managed cloud browsers and anti-bot tooling
 - **Browser Use cloud mode** via [Browser Use](https://browser-use.com) as an alternative cloud browser provider
+- **Browser Use mode** via the [Browser Use CLI 3.0](https://github.com/browser-use/browser-use) — a new browser harness that is SOTA for web tasks; automates your local Chrome or Browser Use cloud browsers
 - **Firecrawl cloud mode** via [Firecrawl](https://firecrawl.dev) for cloud browsers with built-in scraping
 - **Camofox local mode** via [Camofox](https://github.com/jo-inc/camofox-browser) for local anti-detection browsing (Firefox-based fingerprint spoofing)
 - **Local Chromium-family CDP** — connect browser tools to your own Chrome, Brave, Chromium, or Edge instance using `/browser connect`
@@ -58,7 +59,30 @@ To use Browser Use as your cloud browser provider, add:
 BROWSER_USE_API_KEY=***
 ```
 
-Get your API key at [browser-use.com](https://browser-use.com). Browser Use provides a cloud browser via its REST API. If both Browserbase and Browser Use credentials are set, Browserbase takes priority.
+Get your API key at [browser-use.com](https://browser-use.com).
+
+### Browser Use mode
+
+Browser Use mode uses the [Browser Use CLI 3.0](https://github.com/browser-use/browser-use) — a new browser harness that is state-of-the-art at web tasks — instead of the default browser tools. The agent writes and executes Python in the browser to click, type, drag, scrape, and interact with webpages.
+
+The mode is a **driver** that composes with your configured browser backend: it drives your local Chrome, a Nous-subscription cloud browser, Browserbase, Firecrawl, or Browser Use cloud browsers — whichever browser source is selected in `nastech tools` → Browser Automation. The one exception is Camofox, which has no CDP endpoint for the harness to attach to; Camofox setups automatically keep the built-in browser tools even when Browser Use mode is enabled.
+
+Enable it with `nastech tools` → **Browser Automation → Browser Use** (free · local · cloud), or directly:
+
+```yaml
+# Add to ~/.nastech/config.yaml
+browser:
+  backend: "browser-use"
+```
+
+Browser Use's own cloud browsers need `browser-use auth login` or `BROWSER_USE_API_KEY`; other browser sources use their existing credentials unchanged.
+
+:::note
+Because Browser Use mode executes model-written Python on your machine, the
+`browser_exec` tool is only offered to sessions that also have terminal
+access. Platforms configured without the terminal toolset (e.g. a locked-down
+messaging surface) keep the default browser tools instead.
+:::
 
 ### Firecrawl cloud mode
 
