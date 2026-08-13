@@ -34,7 +34,7 @@ _IN_NIX_BUILD = os.environ.get("NASTECH_NIX_BUILD") == "1"
 _BLOCK_MESSAGE = (
     "Building wheels or sdists for nastech-agent is not supported.\n"
     "Nastech is distributed via the shell installer, Docker image, or Nix.\n"
-    "See: https://nastechresearch.github.io/nastech-agent/docs/getting-started/installation\n"
+    "See: https://nastech-agent.nastechresearch.com/docs/getting-started/installation\n"
     "\n"
     "If you are developing, use an editable install instead:\n"
     "  uv sync          # or: uv pip install -e .\n"

@@ -222,7 +222,7 @@ export interface Translations {
     input: string;
     output: string;
     total: string;
-    nastechageData: string;
+    noUsageData: string;
     startSession: string;
     date: string;
     model: string;

@@ -257,7 +257,7 @@
     ctx.fillStyle = "#8b95a8";
     ctx.font = "600 20px ui-monospace, 'SF Mono', Menlo, monospace";
     ctx.textBaseline = "bottom";
-    ctx.fillText("NASTECH AGENT  ·  nastechresearch.github.io/nastech-agent", 70, H - 40);
+    ctx.fillText("NASTECH AGENT  ·  nastech-agent.nastechresearch.com", 70, H - 40);
 
     // "UNLOCKED" stamp upper-right
     ctx.textBaseline = "top";
@@ -339,7 +339,7 @@
         tier_part: tierPart,
         name: achievement.name,
       });
-      return tmpl + "\n\n@NastechResearch · https://nastechresearch.github.io/nastech-agent";
+      return tmpl + "\n\n@NastechResearch · https://nastech-agent.nastechresearch.com";
     }
 
     function shareOnX() {

@@ -50,7 +50,7 @@ fallback_model:
 | AI Gateway | `ai-gateway` | `AI_GATEWAY_API_KEY` |
 | OpenRouter | `openrouter` | `OPENROUTER_API_KEY` |
 | Nastech Portal | `nastech` | `nastech setup --portal`（全新安装）或 `nastech auth add nastech`（OAuth） |
-| OpenAI Codex | `openai-codex` | `nastech model`（ChatGPT OAuth） |
+| OpenAI Codex | `openai-codex` | `nastech model` → **ChatGPT or Codex Subscription**（ChatGPT OAuth） |
 | GitHub Copilot | `copilot` | `COPILOT_GITHUB_TOKEN`、`GH_TOKEN` 或 `GITHUB_TOKEN` |
 | GitHub Copilot ACP | `copilot-acp` | 外部进程（编辑器集成） |
 | Anthropic | `anthropic` | `ANTHROPIC_API_KEY` 或 Claude Code 凭据 |
@@ -272,7 +272,7 @@ fallback_model:
 | `"auto"` | 按顺序尝试各提供商直到找到可用的（默认） | 至少配置一个提供商 |
 | `"openrouter"` | 强制使用 OpenRouter | `OPENROUTER_API_KEY` |
 | `"nastech"` | 强制使用 Nastech Portal | `nastech auth` |
-| `"codex"` | 强制使用 Codex OAuth | `nastech model` → Codex |
+| `"codex"` | 强制使用 Codex OAuth | `nastech model` → ChatGPT or Codex Subscription |
 | `"main"` | 使用主 Agent 当前的提供商（仅限辅助任务） | 已配置活跃的主提供商 |
 | `"anthropic"` | 强制使用 Anthropic 原生 | `ANTHROPIC_API_KEY` 或 Claude Code 凭据 |
 

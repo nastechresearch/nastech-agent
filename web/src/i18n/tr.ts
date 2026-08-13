@@ -191,7 +191,7 @@ export const tr: Translations = {
     input: "Giriş",
     output: "Çıkış",
     total: "Toplam",
-    nastechageData: "Bu dönem için kullanım verisi yok",
+    noUsageData: "Bu dönem için kullanım verisi yok",
     startSession: "Burada analizleri görmek için bir oturum başlatın",
     date: "Tarih",
     model: "Model",

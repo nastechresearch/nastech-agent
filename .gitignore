@@ -1,6 +1,5 @@
 .DS_Store
 /venv/
-/build/
 /venv.old/
 /venv.stale.runtime-*/
 /.nastech-runtime/
@@ -32,6 +31,10 @@ __pycache__/model_tools.cpython-310.pyc
 __pycache__/web_tools.cpython-310.pyc
 logs/
 data/
+# Bundled community plugin index seed (shipped as package data) — the bare
+# `data/` pattern above would otherwise swallow it.
+!nastech_cli/data/
+!nastech_cli/data/plugin_index.json
 .pytest_cache/
 test_durations.json
 .pytest-cache/
@@ -198,7 +201,3 @@ native/fts5_cjk/*.so
 # interrupted; consumed by launch-time recovery. Never commit it (was tracked
 # by accident via 3a69e34702, removed in the #72002 salvage).
 .lazy-refresh-incomplete
-
-# Nasfixer shared working memory — stays LOCAL ONLY, never committed.
-# Contains session-by-session chronicle of our collaboration and struggles.
-NASFIXER_MEMORY.md

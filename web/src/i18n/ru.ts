@@ -191,7 +191,7 @@ export const ru: Translations = {
     input: "Ввод",
     output: "Вывод",
     total: "Итого",
-    nastechageData: "Нет данных об использовании за этот период",
+    noUsageData: "Нет данных об использовании за этот период",
     startSession: "Начните сессию, чтобы увидеть аналитику",
     date: "Дата",
     model: "Модель",

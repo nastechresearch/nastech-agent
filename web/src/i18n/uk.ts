@@ -191,7 +191,7 @@ export const uk: Translations = {
     input: "Вхід",
     output: "Вихід",
     total: "Усього",
-    nastechageData: "Немає даних про використання за цей період",
+    noUsageData: "Немає даних про використання за цей період",
     startSession: "Почніть сесію, щоб побачити аналітику тут",
     date: "Дата",
     model: "Модель",

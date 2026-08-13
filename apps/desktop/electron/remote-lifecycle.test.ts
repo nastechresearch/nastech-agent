@@ -832,6 +832,12 @@ test('buildSpawnCommand always uses serve, never dashboard', () => {
   assert.doesNotMatch(cmd, /--no-open/)
 })
 
+test('buildSpawnCommand raises the SSH child file limit before execing Nastech', () => {
+  const cmd = buildSpawnCommand('/x/nastech', '', { logPath: spawnLogPath(OWNERSHIP_ID, SPAWN_NONCE) })
+  assert.match(cmd, /ulimit -n 65536 2>\/dev\/null \|\| true; exec env NASTECH_DESKTOP=1/)
+  assert.ok(cmd.indexOf('ulimit -n 65536') < cmd.indexOf('serve --isolated'))
+})
+
 test('spawnRemoteDashboard removes a token file when upload reporting fails', async () => {
   const failure = new Error('channel closed')
 
@@ -842,8 +848,7 @@ test('spawnRemoteDashboard removes a token file when upload reporting fails', as
   ])
 
   await assert.rejects(
-    () =>
-      spawnRemoteDashboard(ssh, { nastechPath: '/x/nastech', profile: '', token: 'tok', ownershipId: OWNERSHIP_ID }),
+    () => spawnRemoteDashboard(ssh, { nastechPath: '/x/nastech', profile: '', token: 'tok', ownershipId: OWNERSHIP_ID }),
     /channel closed/
   )
   assert.ok(ssh.calls.some(command => /rm -f .*\.token/.test(command)))

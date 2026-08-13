@@ -23,6 +23,8 @@ import type {
   DebugShareResponse,
   ElevenLabsVoicesResponse,
   EnvVarInfo,
+  NastechConfig,
+  NastechConfigRecord,
   LogsResponse,
   McpCatalogResponse,
   McpServerSummary,
@@ -37,8 +39,6 @@ import type {
   ModelAssignmentResponse,
   ModelInfoResponse,
   ModelOptionsResponse,
-  NastechConfig,
-  NastechConfigRecord,
   OAuthPollResponse,
   OAuthProvidersResponse,
   OAuthStartResponse,
@@ -161,6 +161,8 @@ export type {
   ElevenLabsVoicesResponse,
   EnvVarInfo,
   GatewayReadyPayload,
+  NastechConfig,
+  NastechConfigRecord,
   LogsResponse,
   McpCatalogEntry,
   McpCatalogResponse,
@@ -182,8 +184,6 @@ export type {
   ModelInfoResponse,
   ModelOptionProvider,
   ModelOptionsResponse,
-  NastechConfig,
-  NastechConfigRecord,
   PaginatedSessions,
   PairingResponse,
   PairingUser,
@@ -912,12 +912,14 @@ export function validateProviderCredential(
 
 export function getCustomEndpoints(): Promise<CustomEndpointsResponse> {
   return window.nastechDesktop.api<CustomEndpointsResponse>({
+    ...profileScoped(),
     path: '/api/providers/custom-endpoints'
   })
 }
 
 export function saveCustomEndpoint(endpoint: CustomEndpointUpdate): Promise<CustomEndpointsResponse> {
   return window.nastechDesktop.api<CustomEndpointsResponse>({
+    ...profileScoped(),
     path: '/api/providers/custom-endpoints',
     method: 'POST',
     body: endpoint
@@ -934,6 +936,7 @@ export function validateCustomEndpoint(endpoint: CustomEndpointUpdate): Promise<
 
 export function activateCustomEndpoint(id: string): Promise<{ ok: boolean; provider: string; model: string }> {
   return window.nastechDesktop.api<{ ok: boolean; provider: string; model: string }>({
+    ...profileScoped(),
     path: `/api/providers/custom-endpoints/${encodeURIComponent(id)}/activate`,
     method: 'POST'
   })
@@ -941,6 +944,7 @@ export function activateCustomEndpoint(id: string): Promise<{ ok: boolean; provi
 
 export function deleteCustomEndpoint(id: string): Promise<CustomEndpointsResponse> {
   return window.nastechDesktop.api<CustomEndpointsResponse>({
+    ...profileScoped(),
     path: `/api/providers/custom-endpoints/${encodeURIComponent(id)}`,
     method: 'DELETE'
   })
@@ -1144,6 +1148,16 @@ export function getMcpOAuthFlow(flowId: string): Promise<McpOAuthFlow> {
   return window.nastechDesktop.api<McpOAuthFlow>({
     ...profileScoped(),
     path: `/api/mcp/oauth/flows/${encodeURIComponent(flowId)}`
+  })
+}
+
+/** Cancel an in-flight MCP OAuth flow server-side, freeing the per-server
+ *  "already in progress" slot so a retry doesn't 409. */
+export function cancelMcpOAuthFlow(flowId: string): Promise<{ ok: boolean; status: string }> {
+  return window.nastechDesktop.api<{ ok: boolean; status: string }>({
+    ...profileScoped(),
+    path: `/api/mcp/oauth/flows/${encodeURIComponent(flowId)}`,
+    method: 'DELETE'
   })
 }
 
@@ -1822,6 +1836,34 @@ export function listMcpServers(): Promise<{ servers: McpServerSummary[] }> {
   })
 }
 
+/** Add one server to `mcp_servers` (validated + name-collision-checked
+ *  server-side — the same endpoint the dashboard's add form uses). */
+export function addMcpServer(body: {
+  name: string
+  url?: string
+  command?: string
+  args?: string[]
+  env?: Record<string, string>
+  auth?: string
+}): Promise<McpServerSummary> {
+  return window.nastechDesktop.api<McpServerSummary>({
+    ...profileScoped(),
+    path: '/api/mcp/servers',
+    method: 'POST',
+    body
+  })
+}
+
+/** Remove one server from `mcp_servers` (the inline setup card's rollback
+ *  when a directory install is cancelled after the config write). */
+export function removeMcpServer(name: string): Promise<{ ok: boolean }> {
+  return window.nastechDesktop.api<{ ok: boolean }>({
+    ...profileScoped(),
+    path: `/api/mcp/servers/${encodeURIComponent(name)}`,
+    method: 'DELETE'
+  })
+}
+
 export function setMcpServerEnabled(name: string, enabled: boolean): Promise<{ ok: boolean }> {
   return window.nastechDesktop.api<{ ok: boolean }>({
     ...profileScoped(),
@@ -1842,15 +1884,13 @@ export function installMcpCatalogEntry(
   name: string,
   env: Record<string, string> = {}
 ): Promise<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }> {
-  return window.nastechDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>(
-    {
-      ...profileScoped(),
-      path: '/api/mcp/catalog/install',
-      method: 'POST',
-      body: { name, env, enable: true },
-      timeoutMs: 60_000
-    }
-  )
+  return window.nastechDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>({
+    ...profileScoped(),
+    path: '/api/mcp/catalog/install',
+    method: 'POST',
+    body: { name, env, enable: true },
+    timeoutMs: 60_000
+  })
 }
 
 // ---------------------------------------------------------------------------

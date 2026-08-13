@@ -191,7 +191,7 @@ export const ko: Translations = {
     input: "입력",
     output: "출력",
     total: "합계",
-    nastechageData: "이 기간에 대한 사용 데이터가 없습니다",
+    noUsageData: "이 기간에 대한 사용 데이터가 없습니다",
     startSession: "세션을 시작하면 여기에 분석이 표시됩니다",
     date: "날짜",
     model: "모델",

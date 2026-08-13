@@ -47,7 +47,7 @@ jobs:
         run: curl -fsS --retry 3 --retry-delay 10 -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
 
   deploy-docs:
-    if: github.repository == 'nastechresearch/nastech-agent'
+    if: github.repository == 'NastechResearch/nastech-agent'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:
@@ -88,7 +88,6 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           SKILLS_INDEX_RUN_ID: ${{ github.event.inputs.skills_index_run_id || '' }}
           REBUILD_SKILLS_INDEX: ${{ github.event.inputs.rebuild_skills_index || 'false' }}
-          NASTECH_ENRICH_CLAWHUB_OWNERS: "false"
         run: |
           # The unified external catalog is expensive to crawl and can burn
           # through the repository installation's GitHub API quota when several
@@ -149,7 +148,7 @@ jobs:
 
           echo "Downloading currently live skills index"
           if curl -fsSL --retry 3 --retry-delay 5 \
-            "https://nastechresearch.github.io/nastech-agent/docs/api/skills-index.json" \
+            "https://nastech-agent.nastechresearch.com/docs/api/skills-index.json" \
             -o "$INDEX_PATH" && validate_index; then
             exit 0
           fi
@@ -179,12 +178,8 @@ jobs:
         run: |
           mkdir -p _site/docs
           cp -r website/build/* _site/docs/
-          cp scripts/install.sh _site/install.sh
-          cp scripts/install.ps1 _site/install.ps1
-          cp scripts/install.cmd _site/install.cmd
-          cp setup-nastech.sh _site/setup-nastech.sh
           # llms.txt / llms-full.txt are also published at the site root
-          # (https://nastechresearch.github.io/nastech-agent/llms.txt) because some
+          # (https://nastech-agent.nastechresearch.com/llms.txt) because some
           # agents and IDE plugins probe the classic root-level path rather
           # than /docs/llms.txt. Same file, two URLs, one source of truth.
           if [ -f website/build/llms.txt ]; then

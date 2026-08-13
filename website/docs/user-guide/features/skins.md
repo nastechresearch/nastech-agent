@@ -94,8 +94,8 @@ Text strings used throughout the CLI interface.
 |-----|-------------|---------|
 | `agent_name` | Name shown in banner title and status display | `Nastech Agent` |
 | `welcome` | Welcome message shown at CLI startup | `Welcome to Nastech Agent! Type your message or /help for commands.` |
-| `goodbye` | Message shown on exit | `Goodbye! 𓄃` |
-| `response_label` | Label on the response box header | ` 𓄃 Nastech ` |
+| `goodbye` | Message shown on exit | `Goodbye! ⚕` |
+| `response_label` | Label on the response box header | ` ⚕ Nastech ` |
 | `prompt_symbol` | Symbol before the user input prompt (bare token, renderers add a trailing space) | `❯` |
 | `help_header` | Header text for the `/help` command output | `(^_^)? Available Commands` |
 

@@ -206,7 +206,7 @@ export const en: Translations = {
     input: "Input",
     output: "Output",
     total: "Total",
-    nastechageData: "No usage data for this period",
+    noUsageData: "No usage data for this period",
     startSession: "Start a session to see analytics here",
     date: "Date",
     model: "Model",

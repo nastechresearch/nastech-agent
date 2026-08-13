@@ -87,7 +87,7 @@ describe('MessagingView setup-guide link', () => {
   })
 
   it('opens a real docs URL through the validated external opener', async () => {
-    const docsUrl = 'https://nastechresearch.github.io/nastech-agent/docs/user-guide/messaging/teams'
+    const docsUrl = 'https://nastech-agent.nastechresearch.com/docs/user-guide/messaging/teams'
     getMessagingPlatforms.mockResolvedValue({ platforms: [platform({ docs_url: docsUrl })] })
 
     await renderMessaging()

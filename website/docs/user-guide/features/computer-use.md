@@ -40,10 +40,18 @@ no-foreground invariant, click-dispatch internals — see
 
 ## Enabling
 
-Pick whichever path is most convenient — both run the same upstream
-installer:
+**Fresh installs already have the driver.** The Nastech installer
+(`install.sh` / `install.ps1`) pre-installs `cua-driver` (best-effort;
+pass `--skip-computer-use` / `-SkipComputerUse` to opt out), so enabling
+Computer Use is just a config flip:
 
-**Option 1: dedicated CLI command (most direct).**
+- **`nastech tools`** → pick `🖱️  Computer Use` — installs the driver
+  automatically if it's still missing.
+- **Dashboard / desktop app** → toggle the Computer Use toolset — if the
+  driver is missing, the toggle kicks off the install in the background
+  automatically (watch progress in the toolset panel).
+
+**Manual fallback (older installs, skipped installer step):**
 
 ```
 nastech computer-use install
@@ -52,11 +60,6 @@ nastech computer-use install
 This fetches and runs the upstream cua-driver installer — `install.sh`
 on macOS/Linux, `install.ps1` on Windows. Use `nastech computer-use
 status` to verify the install.
-
-**Option 2: enable the toolset interactively.**
-
-1. Run `nastech tools`, pick `🖱️  Computer Use (macOS/Windows/Linux)`.
-2. The setup runs the upstream installer (same as Option 1).
 
 After installing, regardless of which path you took, grant the
 platform-appropriate prereqs:

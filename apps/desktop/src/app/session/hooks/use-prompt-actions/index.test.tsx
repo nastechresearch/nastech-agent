@@ -3,9 +3,9 @@ import type { MutableRefObject } from 'react'
 import { useEffect, useRef } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { getSession } from '@/nastech'
 import { textPart } from '@/lib/chat-messages'
 import { createClientSessionState } from '@/lib/chat-runtime'
-import { getSession } from '@/nastech'
 import { $composerAttachments, $composerDraft, type ComposerAttachment, setComposerDraft } from '@/store/composer'
 import { $queuedPromptsBySession, getQueuedPrompts } from '@/store/composer-queue'
 import { $hudMode } from '@/store/hud'
@@ -2294,6 +2294,7 @@ describe('usePromptActions restoreToMessage', () => {
         text: 'first prompt',
         confirm_truncate: true,
         truncate_before_user_ordinal: 0,
+        truncate_before_message_id: 'u1',
         confirm_empty_truncate: true
       },
       1_800_000
@@ -2363,6 +2364,7 @@ describe('usePromptActions restoreToMessage', () => {
         text: 'first prompt',
         confirm_truncate: true,
         truncate_before_user_ordinal: 0,
+        truncate_before_message_id: 'u1',
         confirm_empty_truncate: true
       },
       1_800_000
@@ -2410,6 +2412,7 @@ describe('usePromptActions restoreToMessage', () => {
         text: 'first prompt',
         confirm_truncate: true,
         truncate_before_user_ordinal: 0,
+        truncate_before_message_id: 'u1',
         confirm_empty_truncate: true
       },
       1_800_000

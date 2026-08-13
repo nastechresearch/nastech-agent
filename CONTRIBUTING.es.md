@@ -194,7 +194,7 @@ nastech-agent/
 ├── skills/                   # Habilidades incluidas (copiadas a ~/.nastech/skills/ en la instalación)
 ├── optional-skills/          # Habilidades opcionales oficiales (descubribles vía hub, no activadas por defecto)
 ├── tests/                    # Suite de tests
-├── website/                  # Sitio de documentación (nastechresearch.github.io/nastech-agent)
+├── website/                  # Sitio de documentación (nastech-agent.nastechresearch.com)
 │
 ├── cli-config.yaml.example   # Configuración de ejemplo (copiada a ~/.nastech/config.yaml)
 └── AGENTS.md                 # Guía de desarrollo para asistentes de codificación IA

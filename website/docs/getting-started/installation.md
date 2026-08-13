@@ -15,21 +15,21 @@ platform-gated features are supported), see **[Platform Support](./platform-supp
 
 ## Quick Install
 ### With the Nastech Desktop installer on macOS or Windows (recommended)
-To easily install the command-line and desktop applications, [download the Nastech Desktop installer](https://nastechresearch.github.io/nastech-agent/) from our website and run it.
+To easily install the command-line and desktop applications, [download the Nastech Desktop installer](https://nastech-agent.nastechresearch.com/) from our website and run it.
 
 ### Without Nastech Desktop:
 For a command-line only install without Nastech Desktop, run:
 
 #### Linux / macOS / WSL2 / Android (Termux)
 ```bash
-curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
 ```
 
 #### Windows (native)
 
 Run in powershell:
 ```powershell
-iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1)
+iex (irm https://nastech-agent.nastechresearch.com/install.ps1) 
 ```
 
 If you want to install & run Nastech Desktop after a command-line only install, simply run
@@ -124,13 +124,15 @@ Running Nastech as a dedicated unprivileged user (e.g. a `nastech` systemd servi
 
 2. **As the unprivileged service user**, run the regular installer. It will detect the missing sudo, skip `--with-deps`, and install Chromium into the user's local Playwright cache:
    ```bash
-   curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+   curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash
    ```
 
    If you want to skip the Playwright step entirely — for example because you're running headless and don't need browser automation — pass `--skip-browser`:
    ```bash
-   curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash -s -- --skip-browser
+   curl -fsSL https://nastech-agent.nastechresearch.com/install.sh | bash -s -- --skip-browser
    ```
+
+   The installer also pre-installs [`cua-driver`](../user-guide/features/computer-use.md) so the Computer Use toolset works the moment you enable it; pass `--skip-computer-use` to opt out (it will then install on demand when you enable the tool).
 
 3. **Make `nastech` available to the service user's shells.** The installer writes the launcher to `~/.local/bin/nastech`. System service accounts often have a minimal PATH that doesn't include `~/.local/bin`. Either add it to the user's environment, or symlink the launcher into a system location:
    ```bash

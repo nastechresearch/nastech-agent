@@ -13,9 +13,9 @@ import type {
   DesktopUpdateStatus,
   DesktopVersionInfo
 } from '@/global'
+import { checkNastechUpdate, getActionStatus, updateNastech } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { persistString, storedString } from '@/lib/storage'
-import { checkNastechUpdate, getActionStatus, updateNastech } from '@/nastech'
 import { dismissNotification, notify } from '@/store/notifications'
 import { $connection } from '@/store/session'
 import type { BackendUpdateCheckResponse } from '@/types/nastech'
