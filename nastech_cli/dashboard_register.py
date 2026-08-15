@@ -87,7 +87,7 @@ def _resolve_portal_base_url(override: Optional[str] = None) -> str:
             return base.rstrip("/")
         return str(DEFAULT_NASTECH_PORTAL_URL).rstrip("/")
     except Exception:
-        return "https://portal.nastechresearch.com"
+        return "https://portal.nastechresearch.github.io"
 
 
 def _register_self_hosted_client(
@@ -352,7 +352,7 @@ def cmd_dashboard_register(args) -> None:
     #      don't clutter .env for the common production case and don't alter an
     #      existing entry unexpectedly.
     wrote_portal_url = False
-    default_portal = "https://portal.nastechresearch.com"
+    default_portal = "https://portal.nastechresearch.github.io"
     existing_portal = None
     try:
         existing_portal = get_env_value("NASTECH_DASHBOARD_PORTAL_URL")

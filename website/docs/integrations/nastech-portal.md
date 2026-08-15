@@ -6,7 +6,7 @@ description: "One subscription, 300+ frontier models, and the Tool Gateway — t
 
 # Nastech Portal
 
-[Nastech Portal](https://portal.nastechresearch.com) is Nastech Research's unified subscription gateway and **the recommended way to run Nastech Agent**. One OAuth login replaces the juggling act of separate accounts, API keys, and billing relationships across every model lab, search API, image generator, and browser provider you'd otherwise need to wire up by hand.
+[Nastech Portal](https://portal.nastechresearch.github.io) is Nastech Research's unified subscription gateway and **the recommended way to run Nastech Agent**. One OAuth login replaces the juggling act of separate accounts, API keys, and billing relationships across every model lab, search API, image generator, and browser provider you'd otherwise need to wire up by hand.
 
 If you only have time to set up one thing, set up this. The fastest path:
 
@@ -16,7 +16,7 @@ nastech setup --portal
 
 That single command runs the Portal OAuth, lets you pick a Nastech model, sets Nastech as your inference provider in `config.yaml`, and turns on the Tool Gateway. You're ready to `nastech chat` immediately after.
 
-Don't have a subscription yet? [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription) — sign up, then come back and run the command above.
+Don't have a subscription yet? [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription) — sign up, then come back and run the command above.
 
 ## What's in the subscription
 
@@ -85,7 +85,7 @@ They are **not recommended for use inside Nastech Agent**, however. Nastech 4 is
 /model deepseek/deepseek-v4-pro        # cost-effective coder
 ```
 
-The Portal's own [model info page](https://portal.nastechresearch.com/info) carries the same warning, so this isn't a Nastech-side opinion — it's the official guidance from Nastech Research.
+The Portal's own [model info page](https://portal.nastechresearch.github.io/info) carries the same warning, so this isn't a Nastech-side opinion — it's the official guidance from Nastech Research.
 
 ## Setup
 
@@ -97,14 +97,14 @@ nastech setup --portal
 
 This runs the full setup in one shot:
 
-1. Opens your browser to portal.nastechresearch.com for OAuth login
+1. Opens your browser to portal.nastechresearch.github.io for OAuth login
 2. Stores the refresh token at `~/.nastech/auth.json`
 3. Lets you pick a Nastech model from the curated list (or skip to keep your current one)
 4. Sets Nastech as your inference provider in `~/.nastech/config.yaml` (when you pick a model)
 5. Turns on the Tool Gateway (web, image, TTS, browser routing)
 6. Returns you to your terminal ready to `nastech chat`
 
-If you don't have a subscription yet, sign up at [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription) first.
+If you don't have a subscription yet, sign up at [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription) first.
 
 ### Existing install — add Portal alongside other providers
 
@@ -146,7 +146,7 @@ nastech portal open       # open the subscription management page in your browse
   Nastech Portal
   ───────────
   Auth:    ✓ logged in
-  Portal:  https://portal.nastechresearch.com
+  Portal:  https://portal.nastechresearch.github.io
   Model:   ✓ using Nastech as inference provider
 
   Tool Gateway
@@ -199,7 +199,7 @@ The Tool Gateway is opt-in per tool, not all-or-nothing. The managed backends sh
 
 Manage your plan, view usage, or upgrade/cancel at any time:
 
-- **Web:** [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription)
+- **Web:** [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription)
 - **CLI shortcut:** `nastech portal open` (opens the same page in your default browser)
 
 ## Configuration reference
@@ -210,7 +210,7 @@ After `nastech setup --portal`, `~/.nastech/config.yaml` will look like:
 model:
   provider: nastech
   default: anthropic/claude-sonnet-4.6     # or whatever model you picked
-  base_url: https://inference-api.nastechresearch.com/v1
+  base_url: https://inference-api.nastechresearch.github.io/v1
 ```
 
 The Tool Gateway settings live under their respective tool sections:

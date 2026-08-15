@@ -1,8 +1,8 @@
 // Importing the apps barrel registers the reference widget apps at startup.
 import '../sdk/apps/index.js'
 
-import { useStore } from '@nanostores/react'
 import { AlternateScreen, Box, NoSelect, ScrollBox, Text } from '@nastech/ink'
+import { useStore } from '@nanostores/react'
 import { Fragment, memo, useEffect, useMemo, useRef } from 'react'
 
 import { useGateway } from '../app/gatewayContext.js'
@@ -443,7 +443,7 @@ const ComposerPane = memo(function ComposerPane({
         )}
       </Box>
 
-      {!composer.empty && !ui.sid && <Text color={ui.theme.color.muted}>𓄃 {ui.status}</Text>}
+      {!composer.empty && !ui.sid && <Text color={ui.theme.color.muted}>⚕ {ui.status}</Text>}
 
       <AmbientDock placement="dock-bottom" />
       <StatusRulePane at="bottom" composer={composer} status={status} />

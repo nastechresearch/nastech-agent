@@ -74,7 +74,7 @@ def test_nastech_adapter_concurrent_refresh_serialized(tmp_path, monkeypatch):
             return {
                 "api_key": f"key-{idx}",
                 "expires_at": "2099-01-01T00:00:00Z",
-                "base_url": "https://inference-api.nastechresearch.com/v1",
+                "base_url": "https://inference-api.nastechresearch.github.io/v1",
             }
         finally:
             in_flight.clear()

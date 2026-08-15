@@ -1,0 +1,88 @@
+{
+  "number": 1,
+  "dir": "Nastech-Update#1",
+  "upstream_sha": "cb47f59ffa1056732c0a5194d2a1847dc64c2c37",
+  "hermes_url": "https://github.com/NousResearch/hermes-agent.git",
+  "gate": true,
+  "stages": [
+    "pull",
+    "census",
+    "plan",
+    "brand",
+    "reconcile",
+    "preserve",
+    "scan",
+    "compare",
+    "verify",
+    "forkcheck",
+    "report",
+    "package",
+    "manifest",
+    "record",
+    "notify",
+    "gate",
+    "summary",
+    "release"
+  ],
+  "verify": {
+    "total": 9052,
+    "passed": 9052,
+    "locked": 629,
+    "failed": [],
+    "pass_ratio": 1.0
+  },
+  "brand": {
+    "total": 9052,
+    "renamed": 1195,
+    "rewritten": 8402,
+    "locked_copied": 621,
+    "binary_copied": 8,
+    "errors": []
+  },
+  "diff": {
+    "renamed": 1129,
+    "rewritten": 0,
+    "identical": 7067,
+    "locked": 615,
+    "missing": 0
+  },
+  "scan": {
+    "total": 9099,
+    "by_category": {
+      "text": 8988,
+      "image": 81,
+      "binary": 7,
+      "audio": 5,
+      "font": 13,
+      "doc": 5
+    },
+    "by_format": {
+      "text": 8988,
+      "jpeg": 7,
+      "png": 66,
+      "icns": 4,
+      "ico": 8,
+      "wav": 5,
+      "woff2": 13,
+      "pdf": 5,
+      "onnx": 1,
+      "tflite": 1,
+      "mp4": 1
+    },
+    "unknown_binary": []
+  },
+  "fork": {
+    "statuses": {
+      "identical": 7691,
+      "updated": 1039,
+      "locked": 6,
+      "added": 363
+    },
+    "violations": 0,
+    "preserved": 47,
+    "features_fork": 50,
+    "features_branded": 51,
+    "added_lines": 0,
+    "deleted_lines": 0
+  }
+}

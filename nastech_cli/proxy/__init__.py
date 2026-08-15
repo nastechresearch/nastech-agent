@@ -10,7 +10,7 @@ upstream credential to the forwarded request. The credential is refreshed
 automatically when it approaches expiry.
 
 First-class adapter:
-  - ``nastech`` — Nastech Portal (https://inference-api.nastechresearch.com/v1)
+  - ``nastech`` — Nastech Portal (https://inference-api.nastechresearch.github.io/v1)
 
 Future adapters can plug in by implementing ``UpstreamAdapter``.
 """

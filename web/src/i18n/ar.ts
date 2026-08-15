@@ -172,7 +172,7 @@ export const ar = defineLocale({
     input: "إدخال",
     output: "إخراج",
     total: "الإجمالي",
-    nastechageData: "لا توجد بيانات استخدام لهذه الفترة",
+    noUsageData: "لا توجد بيانات استخدام لهذه الفترة",
     startSession: "ابدأ جلسة لرؤية التحليلات هنا",
     date: "التاريخ",
     model: "النموذج",

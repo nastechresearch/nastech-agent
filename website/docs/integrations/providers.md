@@ -15,7 +15,7 @@ You need at least one way to connect to an LLM. Use `nastech model` to switch pr
 | Provider | Setup |
 |----------|-------|
 | **Nastech Portal** | `nastech model` (OAuth, subscription-based) |
-| **OpenAI Codex** | `nastech model` (ChatGPT OAuth, uses Codex models) |
+| **OpenAI Codex** | `nastech model` → **ChatGPT or Codex Subscription** (ChatGPT OAuth, uses Codex models) |
 | **GitHub Copilot** | `nastech model` (OAuth device code flow, `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `gh auth token`) |
 | **GitHub Copilot ACP** | `nastech model` (spawns local `copilot --acp --stdio`) |
 | **Anthropic** | `nastech model` (Claude Max + extra usage credits via OAuth; also supports Anthropic API key or manual setup-token — see note below) |
@@ -64,7 +64,7 @@ In the `model:` config section, you can use either `default:` or `model:` as the
 
 ### Nastech Portal
 
-[Nastech Portal](https://portal.nastechresearch.com) is Nastech Research's unified subscription gateway and **the recommended way to run Nastech Agent**. One OAuth login covers 300+ frontier agentic models (Claude, GPT, Gemini, DeepSeek, Qwen, Kimi, GLM, MiniMax, Grok, ...) plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, browser automation) — billed against your Nastech subscription instead of separate per-provider accounts.
+[Nastech Portal](https://portal.nastechresearch.github.io) is Nastech Research's unified subscription gateway and **the recommended way to run Nastech Agent**. One OAuth login covers 300+ frontier agentic models (Claude, GPT, Gemini, DeepSeek, Qwen, Kimi, GLM, MiniMax, Grok, ...) plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, browser automation) — billed against your Nastech subscription instead of separate per-provider accounts.
 
 ```bash
 nastech setup --portal     # fresh install — OAuth + provider + gateway in one command
@@ -72,7 +72,7 @@ nastech model              # existing install — pick "Nastech Portal" from the
 nastech portal info        # inspect login + routing at any time
 ```
 
-Don't have a subscription yet? Get one at [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription).
+Don't have a subscription yet? Get one at [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription).
 
 **For full details:** see the dedicated [Nastech Portal integration page](/integrations/nastech-portal) (what's in the subscription, model catalog, troubleshooting) and the step-by-step [Run Nastech Agent with Nastech Portal guide](/guides/run-nastech-with-nastech-portal).
 
@@ -84,7 +84,7 @@ Don't have a subscription yet? Get one at [portal.nastechresearch.com/manage-sub
 :::info Codex Note
 The OpenAI Codex provider authenticates via device code (open a URL, enter a code). Nastech stores the resulting credentials in its own auth store under `~/.nastech/auth.json` and can import existing Codex CLI credentials from `~/.codex/auth.json` when present. No Codex CLI installation is required.
 
-If a token refresh fails with a terminal error (HTTP 4xx, `invalid_grant`, revoked grant, etc.), Nastech marks the refresh token as dead and stops replaying it so you don't see a flood of identical auth failures. The next request surfaces a typed re-auth message instead. Run `nastech auth add openai-codex` (or `nastech model` → OpenAI Codex) to start a fresh device-code login; the quarantine clears on the next successful exchange.
+If a token refresh fails with a terminal error (HTTP 4xx, `invalid_grant`, revoked grant, etc.), Nastech marks the refresh token as dead and stops replaying it so you don't see a flood of identical auth failures. The next request surfaces a typed re-auth message instead. Run `nastech auth add openai-codex` (or `nastech model` → **ChatGPT or Codex Subscription**) to start a fresh device-code login; the quarantine clears on the next successful exchange.
 :::
 
 :::warning
@@ -117,7 +117,7 @@ Several providers let you sign in to Nastech with a **consumer subscription** (C
 |---|---|---|---|---|
 | **Anthropic — Claude Max + OAuth** | ✅ Yes — `nastech model` → Anthropic OAuth. Requires Max **and** purchased extra usage credits | The **extra/overage credits** you've added on top of the Max plan | The **base Max plan allowance** (the usage included in Claude Code by default) | All Nastech usage bills as "extra usage" even while your included Max allowance sits untouched |
 | **Anthropic — Claude Pro** | ❌ No — Pro subscribers cannot use the OAuth path | Nothing (path unavailable) | Your Pro subscription | Pro looks like it should work; it doesn't. Use an `ANTHROPIC_API_KEY` instead (pay-per-token, independent of any Claude subscription) |
-| **OpenAI Codex — ChatGPT plan OAuth** | ✅ Yes — `nastech model` → OpenAI Codex (ChatGPT OAuth device-code login, uses Codex models) | *Not currently documented* | *Not currently documented* | Docs cover auth and token refresh only; plan-quota semantics are not yet documented |
+| **OpenAI Codex — ChatGPT plan OAuth** | ✅ Yes — `nastech model` → **ChatGPT or Codex Subscription** (ChatGPT OAuth device-code login, uses Codex models) | *Not currently documented* | *Not currently documented* | Docs cover auth and token refresh only; plan-quota semantics are not yet documented |
 | **xAI — SuperGrok / X Premium+ OAuth** | ✅ Yes — browser OAuth, no API key needed | Your **subscription quota** (documented explicitly for X Search: OAuth is preferred over an API key and "uses your subscription quota instead of API spend"). Inference quota semantics beyond that: *not currently documented* | `XAI_API_KEY` / pay-per-token API spend, when OAuth credentials are configured and preferred | `HTTP 403` after a successful login — xAI has restricted OAuth API access to specific SuperGrok tiers despite an active in-app subscription |
 | **Google — Gemini consumer plan (Google AI Pro / Ultra)** | ❌ No documented path — the `gemini` provider is API-key only (`GOOGLE_API_KEY` / `GEMINI_API_KEY`); Vertex AI uses GCP billing | Your **API key's quota** (free tier or billing-enabled Google Cloud project) — *consumer-plan consumption not currently documented* | *Not currently documented* | Free-tier keys can be exhausted after a handful of agent turns, because Nastech may make several model calls per user turn |
 

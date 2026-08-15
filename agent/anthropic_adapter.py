@@ -26,6 +26,13 @@ from typing import Any, Dict, List, Optional, Tuple
 from utils import base_url_host_matches, base_url_hostname, normalize_proxy_env_vars
 from agent.secret_scope import get_secret as _get_secret
 
+try:
+    import nastech_cli as _nastech_cli
+
+    _NASTECH_VERSION = str(_nastech_cli.__version__)
+except Exception:
+    _NASTECH_VERSION = "0.0.0"
+
 
 def _getenv(name: str, default: str = "") -> str:
     """Profile-scoped replacement for os.getenv on credential reads.
@@ -467,6 +474,11 @@ def _is_kimi_coding_endpoint(base_url: str | None) -> bool:
     return normalized.rstrip("/").lower().startswith("https://api.kimi.com/coding")
 
 
+def _is_opencode_endpoint(base_url: str | None) -> bool:
+    """Return True for OpenCode's Zen/Go relay (opencode.ai)."""
+    return base_url_host_matches(base_url or "", "opencode.ai")
+
+
 # Model-name prefixes that identify the Kimi / Moonshot family.  Covers
 # - official slugs: ``kimi-k2.5``, ``kimi_thinking``, ``moonshot-v1-8k``
 # - common release lines: ``k1.5-...``, ``k2-thinking``, ``k25-...``, ``k2.5-...``,
@@ -562,19 +574,19 @@ def _is_nastech_portal_endpoint(base_url: str | None) -> bool:
     """Return True for Nastech Portal's Anthropic Messages route.
 
     Portal serves its ``anthropic/*`` catalog natively at
-    ``https://inference-api.nastechresearch.com/v1/messages``.  Portal-specific
+    ``https://inference-api.nastechresearch.github.io/v1/messages``.  Portal-specific
     behaviours key off this: Bearer JWT auth, verbatim catalog model ids,
     and native thinking-signature replay.
 
     Trusted hosts only:
 
-    1. Prod hostname ``inference-api.nastechresearch.com``
+    1. Prod hostname ``inference-api.nastechresearch.github.io``
     2. The operator-set ``NASTECH_INFERENCE_BASE_URL`` hostname (staging/preview)
 
-    Lookalikes such as ``inference-api.nastechresearch.com.attacker.test`` are
+    Lookalikes such as ``inference-api.nastechresearch.github.io.attacker.test`` are
     rejected (hostname match, not substring).
     """
-    if base_url_host_matches(base_url or "", "inference-api.nastechresearch.com"):
+    if base_url_host_matches(base_url or "", "inference-api.nastechresearch.github.io"):
         return True
     try:
         from nastech_cli.auth import _nastech_inference_env_override
@@ -857,12 +869,18 @@ def build_anthropic_client(
     )
 
     if _is_kimi_coding_endpoint(base_url):
-        # Kimi's /coding endpoint requires User-Agent: claude-code/0.1.0
-        # to be recognized as a valid Coding Agent. Without it, returns 403.
-        # Check this BEFORE _requires_bearer_auth since both match api.kimi.com/coding.
+        # Kimi's /coding endpoint requires a non-empty User-Agent to be
+        # recognized as a valid Coding Agent. Originally we sent
+        # ``claude-code/0.1.0`` (the minimum that avoided a 403), but the Kimi
+        # team asked us to identify ourselves properly so they can attribute
+        # traffic correctly. Send the same attribution header set we send to
+        # OpenRouter, Vercel AI Gateway, and Fireworks:
+        # HTTP-Referer + X-Title + NastechAgent User-Agent.
         kwargs["api_key"] = api_key
         kwargs["default_headers"] = {
-            "User-Agent": "claude-code/0.1.0",
+            "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
+            "X-Title": "Nastech Agent",
+            "User-Agent": f"NastechAgent/{_NASTECH_VERSION}",
             **( {"anthropic-beta": ",".join(common_betas)} if common_betas else {} )
         }
     elif _requires_bearer_auth(normalized_base_url):
@@ -899,6 +917,18 @@ def build_anthropic_client(
         kwargs["api_key"] = api_key
         if common_betas:
             kwargs["default_headers"] = {"anthropic-beta": ",".join(common_betas)}
+
+    if _is_opencode_endpoint(base_url):
+        # OpenCode identifies clients by request headers, like OpenRouter does.
+        # The OpenAI-wire paths pick these up from profile.default_headers
+        # (plugins/model-providers/opencode-zen), but the Anthropic Messages
+        # route builds its client right here and never sees the profile. Merge
+        # the same set on top of whatever auth branch ran above.
+        headers = dict(kwargs.get("default_headers") or {})
+        headers.setdefault("HTTP-Referer", "https://nastechresearch.github.io/nastech-agent")
+        headers.setdefault("X-Title", "Nastech Agent")
+        headers.setdefault("User-Agent", f"NastechAgent/{_NASTECH_VERSION}")
+        kwargs["default_headers"] = headers
 
     client = _anthropic_sdk.Anthropic(**kwargs)
     # Bearer-only construction leaves ``api_key`` unset, so the SDK fills it

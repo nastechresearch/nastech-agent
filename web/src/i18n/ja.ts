@@ -191,7 +191,7 @@ export const ja: Translations = {
     input: "入力",
     output: "出力",
     total: "合計",
-    nastechageData: "この期間の使用データはありません",
+    noUsageData: "この期間の使用データはありません",
     startSession: "セッションを開始すると分析がここに表示されます",
     date: "日付",
     model: "モデル",

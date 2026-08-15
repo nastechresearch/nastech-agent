@@ -184,6 +184,8 @@ gateway:
       status_default:      "status changed"
       status_joiner:       ", "
       message:             "[kanban] Task {task_id} {status}.\nTitle: {title}\nAssignee: @{assignee}\nBoard: {board}\n\nCheck the result or decide the next step."
+      handoff:             "Result: {summary}"
+      guidance:            "This is an automatic task-status notification, not a request to decompose the task again. Inspect the current board before creating follow-up tasks; do not recreate tasks or graphs that already exist."
 
   personality:
     none_configured:       "No personalities configured in `{path}/config.yaml`"
@@ -378,7 +380,7 @@ gateway:
     not_git_repo:            "✗ Not a git repository — cannot update."
     nastech_cmd_not_found:    "✗ Could not locate the `nastech` command. Nastech is running, but the update command could not find the executable on PATH or via the current Python interpreter. Try running `nastech update` manually in your terminal."
     start_failed:            "✗ Failed to start update: {error}"
-    starting:                "𓄃 Starting Nastech update… I'll stream progress here."
+    starting:                "⚕ Starting Nastech update… I'll stream progress here."
 
   usage:
     rate_limits:              "⏱️ **Rate Limits:** {state}"

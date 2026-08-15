@@ -22,7 +22,7 @@ type Sys = (text: string) => void
  */
 function buildManageUrl(s: SubscriptionStateResponse, tierId?: string): string | null {
   // portal_url is already an absolute URL resolved by resolve_portal_base_url()
-  // on the Python side (e.g. https://portal.nastechresearch.com/billing). Strip any
+  // on the Python side (e.g. https://portal.nastechresearch.github.io/billing). Strip any
   // path so we can attach /manage-subscription cleanly.
   let base: string | null = null
 

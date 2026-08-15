@@ -23,7 +23,7 @@ def test_resolve_managed_tool_gateway_derives_vendor_origin_from_shared_domain()
     with patch.dict(
         os.environ,
         {
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.com",
+            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
         },
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
@@ -33,7 +33,7 @@ def test_resolve_managed_tool_gateway_derives_vendor_origin_from_shared_domain()
         )
 
     assert result is not None
-    assert result.gateway_origin == "https://firecrawl-gateway.nastechresearch.com"
+    assert result.gateway_origin == "https://firecrawl-gateway.nastechresearch.github.io"
     assert result.nastech_user_token == "nastech-token"
     assert result.managed_mode is True
 
@@ -59,7 +59,7 @@ def test_resolve_managed_tool_gateway_is_inactive_without_nastech_token():
     with patch.dict(
         os.environ,
         {
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.com",
+            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
         },
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
@@ -72,7 +72,7 @@ def test_resolve_managed_tool_gateway_is_inactive_without_nastech_token():
 
 
 def test_resolve_managed_tool_gateway_is_disabled_without_subscription():
-    with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastechresearch.com"}, clear=False), \
+    with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io"}, clear=False), \
          patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=False):
         result = resolve_managed_tool_gateway(
             "firecrawl",
@@ -112,15 +112,15 @@ def test_managed_vendor_endpoints_pin_the_deployed_gateway_url():
     """
     with patch.dict(
         os.environ,
-        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.com", "TOOL_GATEWAY_SCHEME": "https"},
+        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io", "TOOL_GATEWAY_SCHEME": "https"},
         clear=False,
     ):
         os.environ.pop("TOOL_GATEWAY_URL", None)
         endpoints = managed_tool_gateway.managed_vendor_endpoints("bfl")
 
     assert endpoints == {
-        "origin": "https://tool-gateway.nastechresearch.com",
-        "base_url": "https://tool-gateway.nastechresearch.com/api/bfl",
+        "origin": "https://tool-gateway.nastechresearch.github.io",
+        "base_url": "https://tool-gateway.nastechresearch.github.io/api/bfl",
         "upload_path": "/api/uploads/bfl",
     }
 
@@ -132,7 +132,7 @@ def test_managed_vendor_endpoints_do_not_consult_entitlement():
     Guessing at it here would hide the address from a caller the server would
     have served, so entitlement must not be read on this path at all.
     """
-    with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastechresearch.com"}, clear=False), \
+    with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io"}, clear=False), \
          patch.object(
              managed_tool_gateway,
              "managed_nastech_tools_enabled",
@@ -142,7 +142,7 @@ def test_managed_vendor_endpoints_do_not_consult_entitlement():
         endpoints = managed_tool_gateway.managed_vendor_endpoints("bfl")
 
     assert endpoints is not None
-    assert endpoints["base_url"] == "https://tool-gateway.nastechresearch.com/api/bfl"
+    assert endpoints["base_url"] == "https://tool-gateway.nastechresearch.github.io/api/bfl"
 
 
 def test_managed_vendor_endpoints_are_none_when_no_origin_resolves():
@@ -404,7 +404,7 @@ def test_is_managed_tool_gateway_ready_skips_refresh_for_expired_cached_token(tm
 
     with patch.dict(
         os.environ,
-        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.com"},
+        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io"},
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
         assert is_managed_tool_gateway_ready("modal") is True

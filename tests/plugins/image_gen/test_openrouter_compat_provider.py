@@ -249,7 +249,7 @@ class TestGenerate:
     def test_posts_to_resolved_base_url(self):
         """Nastech routes to its own base URL — proves the same code serves both."""
         nastech_runtime = _runtime_ok(
-            provider="nastech", base_url="https://inference.nastechresearch.com/v1", api_key="nastech-tok"
+            provider="nastech", base_url="https://inference.nastechresearch.github.io/v1", api_key="nastech-tok"
         )
         with patch(_RUNTIME, return_value=nastech_runtime), \
              patch("requests.post", return_value=_mock_chat_response([_PNG_DATA_URI])) as mock_post, \
@@ -262,7 +262,7 @@ class TestGenerate:
         assert result["success"] is True
         assert result["provider"] == "nastech"
         url = mock_post.call_args[0][0]
-        assert url == "https://inference.nastechresearch.com/v1/chat/completions"
+        assert url == "https://inference.nastechresearch.github.io/v1/chat/completions"
 
     def test_api_error(self):
         import requests as req_lib

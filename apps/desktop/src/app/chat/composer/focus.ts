@@ -19,7 +19,7 @@ import { RICH_INPUT_SLOT } from './rich-editor'
 /** Composer routing key. The main chat is `'main'`, the edit composer
  *  `'edit'`; scoped composers (session tiles) use `'tile:<id>'`. */
 export type ComposerTarget = 'edit' | 'main' | (string & {})
-export type ComposerInsertMode = 'block' | 'inline'
+export type ComposerInsertMode = 'block' | 'inline' | 'prefix'
 
 export interface FocusDetail {
   target: ComposerTarget
@@ -38,8 +38,14 @@ interface InsertRefsDetail {
   target: ComposerTarget
 }
 
+interface AttachImagesDetail {
+  blobs: Blob[]
+  target: ComposerTarget
+}
+
 const FOCUS_EVENT = 'nastech:composer-focus'
 const INSERT_EVENT = 'nastech:composer-insert'
+const ATTACH_IMAGES_EVENT = 'nastech:composer-attach-images'
 const INSERT_REFS_EVENT = 'nastech:composer-insert-refs'
 const SUBMIT_EVENT = 'nastech:composer-submit'
 const VOICE_TOGGLE_EVENT = 'nastech:composer-voice-toggle'
@@ -219,6 +225,22 @@ export const onComposerFocusRequest = (handler: (detail: FocusDetail) => void) =
 
 export const onComposerInsertRequest = (handler: (detail: InsertDetail) => void) =>
   subscribe<InsertDetail>(INSERT_EVENT, handler)
+
+/** Attach image blobs to a composer's attachment set — the unfocused-paste
+ *  path (paste-to-focus) hands clipboard images over here. The edit composer
+ *  takes no attachments (its own paste path ignores images), so a request
+ *  resolving to `'edit'` is dropped by that surface's target filter. */
+export const requestComposerAttachImages = (
+  blobs: Blob[],
+  { target = 'active' }: { target?: ComposerTarget | 'active' } = {}
+) => {
+  if (blobs.length) {
+    dispatch<AttachImagesDetail>(ATTACH_IMAGES_EVENT, { blobs, target: resolve(target) })
+  }
+}
+
+export const onComposerAttachImagesRequest = (handler: (detail: AttachImagesDetail) => void) =>
+  subscribe<AttachImagesDetail>(ATTACH_IMAGES_EVENT, handler)
 
 /** Insert typed ref chips (carrying a display label) into a composer — the
  * structured cousin of {@link requestComposerInsert}, used for session links. */

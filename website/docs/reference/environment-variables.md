@@ -223,7 +223,7 @@ These variables configure the [Tool Gateway](/user-guide/features/tool-gateway) 
 
 | Variable | Description |
 |----------|-------------|
-| `TOOL_GATEWAY_DOMAIN` | Base domain for Tool Gateway routing (default: `nastechresearch.com`) |
+| `TOOL_GATEWAY_DOMAIN` | Base domain for Tool Gateway routing (default: `nastechresearch.github.io`) |
 | `TOOL_GATEWAY_SCHEME` | HTTP or HTTPS scheme for gateway URLs (default: `https`) |
 | `TOOL_GATEWAY_USER_TOKEN` | Auth token for the Tool Gateway (normally auto-populated from Nastech auth) |
 | `FIRECRAWL_GATEWAY_URL` | Override URL for the Firecrawl gateway endpoint specifically |
@@ -813,7 +813,7 @@ Advanced per-platform knobs for throttling the outbound message batcher. Most us
 | `NASTECH_EXEC_ASK` | Enable execution approval prompts in gateway mode (`true`/`false`) |
 | `NASTECH_ENABLE_PROJECT_PLUGINS` | Enable auto-discovery of repo-local plugins from `./.nastech/plugins/` for both the agent loader and the dashboard web server. Accepts the standard truthy set: `1` / `true` / `yes` / `on` (case-insensitive). Everything else — including `0`, `false`, `no`, `off`, and the empty string — is treated as **disabled** (default). Note: as of GHSA-5qr3-c538-wm9j (#29156) the dashboard web server refuses to auto-import a project plugin's Python `api` file even when this var is enabled — project plugins may extend the UI via static JS/CSS but their backend routes are only loaded when moved under `~/.nastech/plugins/`. |
 | `NASTECH_PLUGINS_DEBUG` | `1`/`true` to surface verbose plugin-discovery logs on stderr — directories scanned, manifests parsed, skip reasons, and full tracebacks on parse or `register()` failure. Aimed at plugin authors. |
-| `NASTECH_BACKGROUND_NOTIFICATIONS` | Background process notification mode in gateway: `all` (default), `result`, `error`, `off` |
+| `NASTECH_BACKGROUND_NOTIFICATIONS` | Background process notification mode in gateway: `concise` (default), `all`, `result`, `error`, `off` |
 | `NASTECH_EPHEMERAL_SYSTEM_PROMPT` | Ephemeral system prompt injected at API-call time (never persisted to sessions) |
 | `NASTECH_PREFILL_MESSAGES_FILE` | Path to a JSON file of ephemeral prefill messages injected at API-call time. |
 | `NASTECH_ALLOW_PRIVATE_URLS` | `true`/`false` — allow tools to fetch localhost/private-network URLs. Off by default in gateway mode. |
@@ -864,6 +864,8 @@ Unset the variable or remove it from `.env` to restore normal writes (still subj
 | `SESSION_IDLE_MINUTES` | Reset sessions after N minutes of inactivity (default: 1440) |
 | `SESSION_RESET_HOUR` | Daily reset hour in 24h format (default: 4 = 4am) |
 | `NASTECH_SESSION_ID` | **Exported automatically into every tool subprocess** Nastech spawns (`terminal`, `execute_code`, persistent shell, Docker/Singularity backends, delegated subagent runs). Set by the agent to the current session ID; user scripts called from tools can read it to correlate their output, telemetry, or side effects with the originating Nastech session. **You should not set this manually** — overriding it from a parent shell only takes effect outside an agent run, and is overwritten the moment the agent starts a session. |
+| `AI_AGENT` | **Set to `nastech-agent` by the CLI and gateway entry points** (only when not already set by an outer harness), and exported into every terminal-tool shell — including remote backends (Docker, SSH, Modal, Daytona, Singularity, Vercel). The emerging cross-agent standard for child-process attribution — generic tooling (e.g. huggingface_hub's agent detection) reads it to know it runs under an AI agent. The value matches Nastech' id in the public agent-harness registry. Don't set manually. |
+| `NASTECH_AGENT` | **Set to `true` by the CLI and gateway entry points** and exported into every terminal-tool shell so child processes can detect they run inside Nastech specifically. Don't set manually. |
 
 ## Context Compression (config.yaml only)
 

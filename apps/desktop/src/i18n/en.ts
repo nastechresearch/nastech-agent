@@ -128,6 +128,7 @@ export const en: Translations = {
     updateNastech: 'Update Nastech',
     updateReadyTitle: 'Update ready',
     updateReadyMessage: count => `${count} new change${count === 1 ? '' : 's'} available.`,
+    updateReadyMessageUnknown: 'A new update is available.',
     seeWhatsNew: "See what's new",
     errors: {
       elevenLabsNeedsKey: 'ElevenLabs STT needs ELEVENLABS_API_KEY.',
@@ -553,6 +554,7 @@ export const en: Translations = {
       cantReach: "We couldn't reach the update server.",
       tapCheck: 'Tap "Check now" to look for updates.',
       updateReady: count => `A new update is ready (${count} change${count === 1 ? '' : 's'} included).`,
+      updateReadyUnknown: 'A new update is ready.',
       lastChecked: age => `Last checked ${age}`,
       justNowSuffix: ' · just now',
       automaticUpdates: 'Automatic updates',
@@ -693,6 +695,13 @@ export const en: Translations = {
       existingToken: value => `Existing token ${value}`,
       savedToken: 'saved',
       pasteSessionToken: 'Paste session token',
+      plainTextConfirmTitle: 'Store the gateway token in plain text?',
+      plainTextConfirmDesc:
+        'No OS keyring service was found on this machine, so the token would be saved unencrypted in the app’s connection settings file, readable by any process running as this user. Install or enable GNOME Keyring or KWallet for encrypted storage.',
+      plainTextConfirmAction: 'Save as plain text',
+      plainTextStoredTitle: 'Token stored in plain text',
+      plainTextStoredDesc:
+        'Secure storage is unavailable, so the saved token is stored unencrypted in the app’s connection settings file on this machine. Install or enable GNOME Keyring or KWallet to encrypt it.',
       testRemote: 'Test remote',
       saveForRestart: 'Save for next restart',
       saveAndReconnect: 'Save and reconnect',
@@ -949,8 +958,7 @@ export const en: Translations = {
       useBackend: 'Use this backend',
       nastechIncluded: 'Included with a Nastech subscription — sign in to Nastech Portal to activate.',
       nastechAuthNeededTitle: 'Sign in to Nastech Portal',
-      nastechAuthNeededMessage: provider =>
-        `${provider} is saved but won't activate until you sign in to Nastech Portal.`,
+      nastechAuthNeededMessage: provider => `${provider} is saved but won't activate until you sign in to Nastech Portal.`,
       nastechAuthSignIn: 'Sign in',
       nastechAuthDoneTitle: 'Nastech Portal connected',
       nastechAuthDoneMessage: 'Your subscription backends are now active.',
@@ -1006,6 +1014,7 @@ export const en: Translations = {
   skills: {
     tabSkills: 'Skills',
     tabToolsets: 'Tools',
+    configuringProfile: 'Configuring:',
     tabMcp: 'MCP',
     tabHub: 'Browse Hub',
     all: 'All',
@@ -1296,7 +1305,7 @@ export const en: Translations = {
     statCost: 'Est. cost',
     actualCost: cost => `actual ${cost}`,
     loadingUsage: 'Loading usage...',
-    nastechage: period => `No usage in the last ${period} days.`,
+    noUsage: period => `No usage in the last ${period} days.`,
     retry: 'Retry',
     dailyTokens: 'Daily tokens',
     input: 'input',
@@ -1660,6 +1669,14 @@ export const en: Translations = {
     close: 'Close cron',
     title: 'Scheduled jobs',
     count: count => `${count} ${count === 1 ? 'job' : 'jobs'}`,
+    modelImpact: {
+      title: 'Scheduled jobs need review',
+      message: count =>
+        `${count} scheduled ${count === 1 ? 'job' : 'jobs'} will be skipped until you review their model settings.`,
+      detailMore: (names, remaining) => `${names} and ${remaining} more`,
+      review: 'Review scheduled jobs',
+      saveFailed: 'Nastech did not save that model change.'
+    },
     search: 'Search cron jobs...',
     loading: 'Loading cron jobs...',
     states: {
@@ -1851,7 +1868,8 @@ export const en: Translations = {
       'new-session': 'New session',
       skills: 'Capabilities',
       messaging: 'Messaging',
-      artifacts: 'Artifacts'
+      artifacts: 'Artifacts',
+      cron: 'Scheduled jobs'
     },
     searchAria: 'Search sessions',
     searchPlaceholder: 'Search sessions…',
@@ -1960,6 +1978,7 @@ export const en: Translations = {
       rename: 'Rename',
       archive: 'Archive',
       newWindow: 'New window',
+      openInTerminal: 'Open in terminal',
       hideTabBar: 'Hide tab bar',
       openInNewTab: 'Open in new tab',
       openInSplit: 'Open in split',
@@ -1979,6 +1998,8 @@ export const en: Translations = {
       renameDesc: 'Leave empty to clear.',
       untitledPlaceholder: 'Untitled session',
       untitledChat: id => `Chat ${id}`,
+      messageCount: count => `${count} ${count === 1 ? 'message' : 'messages'}`,
+      todoProgress: 'Tasks completed',
       ageNow: 'now',
       ageDay: 'd',
       ageHour: 'h',
@@ -2085,6 +2106,7 @@ export const en: Translations = {
     editingQueuedInComposer: 'Editing queued turn in composer',
     queueEdit: 'Edit',
     queueSendNext: 'Next',
+    queueSteer: 'Steer — redirect the live turn now',
     queueSend: 'Send',
     queueDelete: 'Delete',
     queueResume: 'Resume',
@@ -2116,6 +2138,37 @@ export const en: Translations = {
     snippetsDesc: 'Pick a starter prompt to drop into the composer.',
     dropFiles: 'Drop files to attach',
     dropSession: 'Drop to link this chat',
+    mcpSuggestions: {
+      label: server => `Add ${server}`,
+      tip: keyword => `Suggested because you mentioned “${keyword}” — click to connect`,
+      connecting: server => `Connecting ${server}…`,
+      cancelTip: 'Click to cancel',
+      added: server => `Added ${server}`,
+      addedTip: 'Connected — its tools are ready in this chat',
+      connectFailed: server => `Could not connect ${server}`
+    },
+    skillSuggestions: {
+      label: skill => `Use skill: ${skill}`,
+      tip: skill => `You mentioned “${skill}” — click to lead with that skill`,
+      done: skill => `Added /${skill}`,
+      doneTip: 'The skill loads when you send'
+    },
+    repairSuggestions: {
+      label: server => `Reconnect ${server}`,
+      tip: server => `A ${server} call just failed with a connection error`,
+      working: server => `Reconnecting ${server}…`,
+      workingTip: 'Click to cancel',
+      done: server => `Reconnected ${server}`,
+      doneTip: 'Fresh credentials are live in this chat',
+      failed: server => `Could not reconnect ${server}`
+    },
+    cronSuggestions: {
+      label: 'Schedule this',
+      tip: phrase => `“${phrase}” sounds recurring — run it on a schedule instead`,
+      prefix: 'Set this up as a scheduled job:',
+      done: 'Marked for scheduling',
+      doneTip: 'Send it and the agent creates the job'
+    },
     snippets: {
       codeReview: {
         label: 'Code review',
@@ -2356,8 +2409,7 @@ export const en: Translations = {
       xai: { short: 'Grok models', description: 'Direct access to xAI Grok models.' },
       local: {
         short: 'self-hosted',
-        description:
-          'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
+        description: 'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
       }
     },
     backToSignIn: 'Back to sign in',
@@ -2513,6 +2565,7 @@ export const en: Translations = {
       gatewayTitle: 'Gateway',
       customizeTitle: 'Show in status bar',
       hideStatusbar: 'Hide status bar',
+      resetStatusbar: 'Reset to defaults',
       toggleApprovalMode: 'Approvals',
       toggleBackendVersion: 'Backend version',
       toggleCommandCenter: 'Command Center',
@@ -2807,6 +2860,28 @@ export const en: Translations = {
       lateAnswer: (question, choice) => `Re: "${question}" — my answer: ${choice}`,
       lateAnswerTip: 'Draft this answer as a follow-up message',
       lateAnswerHint: 'This prompt is no longer waiting. Pick an option to draft it as a follow-up message.'
+    },
+    mcpSetup: {
+      installTitle: server => `Add the ${server} MCP server?`,
+      enableTitle: server => `Enable the ${server} MCP server?`,
+      authorizeTitle: server => `Authorize the ${server} MCP server?`,
+      installAction: 'Install',
+      enableAction: 'Enable',
+      authorizeAction: 'Authorize',
+      decline: 'Not now',
+      declined: 'Declined',
+      installed: server => `Installed ${server}`,
+      enabled: server => `Enabled ${server}`,
+      authorized: server => `Authorized ${server}`,
+      failed: server => `Setup failed for ${server}`,
+      unanswered: 'No response',
+      toolCount: count => (count === 1 ? '1 tool' : `${count} tools`),
+      notInCatalog: server => `“${server}” is not in the MCP catalog`,
+      catalogSource: 'From the Nastech-approved catalog',
+      envRequired: 'Fill in the required credentials first',
+      sendFailed: 'Could not send MCP setup response',
+      reloadFailed: 'Server saved, but reloading MCP tools failed — they load next session',
+      gatewayDisconnected: 'Nastech gateway is not connected'
     },
     tool: {
       copyCode: 'Copy code',

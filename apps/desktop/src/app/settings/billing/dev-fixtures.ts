@@ -51,7 +51,7 @@ export const todayBillingState = {
   },
   ok: true,
   org_name: 'sid-5',
-  portal_url: 'https://portal.nastechresearch.com/billing',
+  portal_url: 'https://portal.nastechresearch.github.io/billing',
   role: 'OWNER',
   usage: {
     available: true,
@@ -75,7 +75,7 @@ export const todaySubscriptionState = {
   ok: true,
   org_id: 'sid-5',
   org_name: 'sid-5',
-  portal_url: 'https://portal.nastechresearch.com/billing',
+  portal_url: 'https://portal.nastechresearch.github.io/billing',
   role: 'OWNER',
   tiers: [
     {
@@ -188,7 +188,7 @@ export const loggedOutBillingState = {
   logged_in: false,
   monthly_cap: null,
   org_name: null,
-  portal_url: 'https://portal.nastechresearch.com/login',
+  portal_url: 'https://portal.nastechresearch.github.io/login',
   role: null,
   usage: undefined
 } satisfies BillingStateResponse
@@ -201,7 +201,7 @@ export const loggedOutSubscriptionState = {
   logged_in: false,
   org_id: null,
   org_name: null,
-  portal_url: 'https://portal.nastechresearch.com/login',
+  portal_url: 'https://portal.nastechresearch.github.io/login',
   role: null,
   tiers: [],
   usage: undefined

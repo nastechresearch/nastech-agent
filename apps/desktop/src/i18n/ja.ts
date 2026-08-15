@@ -129,6 +129,7 @@ export const ja = defineLocale({
     updateNastech: 'Nastech を更新',
     updateReadyTitle: '更新の準備ができました',
     updateReadyMessage: count => `${count} 件の新しい変更が利用可能です。`,
+    updateReadyMessageUnknown: '新しい更新が利用可能です。',
     seeWhatsNew: '新機能を見る',
     errors: {
       elevenLabsNeedsKey: 'ElevenLabs STT には ELEVENLABS_API_KEY が必要です。',
@@ -637,6 +638,7 @@ export const ja = defineLocale({
       cantReach: '更新サーバーに接続できませんでした。',
       tapCheck: '更新を探すには「今すぐ確認」を押してください。',
       updateReady: count => `新しい更新の準備ができました (${count} 件の変更を含みます)。`,
+      updateReadyUnknown: '新しい更新の準備ができました。',
       lastChecked: age => `前回確認: ${age}`,
       justNowSuffix: ' · たった今',
       automaticUpdates: '自動更新',
@@ -746,6 +748,13 @@ export const ja = defineLocale({
       existingToken: value => `既存のトークン ${value}`,
       savedToken: '保存済み',
       pasteSessionToken: 'セッショントークンを貼り付け',
+      plainTextConfirmTitle: 'ゲートウェイトークンを平文で保存しますか？',
+      plainTextConfirmDesc:
+        'このマシンで OS のキーリングサービスが見つからなかったため、トークンはアプリの接続設定ファイルに暗号化されずに保存され、このユーザーとして実行される任意のプロセスから読み取れる状態になります。暗号化して保存するには、GNOME Keyring または KWallet をインストールまたは有効化してください。',
+      plainTextConfirmAction: '平文で保存',
+      plainTextStoredTitle: 'トークンは平文で保存されています',
+      plainTextStoredDesc:
+        'セキュアストレージが利用できないため、保存済みのトークンはこのマシンのアプリの接続設定ファイルに暗号化されずに保存されています。暗号化するには GNOME Keyring または KWallet をインストールまたは有効化してください。',
       testRemote: 'リモートをテスト',
       saveForRestart: '次回起動時のために保存',
       saveAndReconnect: '保存して再接続',
@@ -967,8 +976,7 @@ export const ja = defineLocale({
       activeBackend: '使用中',
       activeBackendHint: 'これが現在アクティブなバックエンドです',
       useBackend: 'このバックエンドを使う',
-      nastechIncluded:
-        'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
+      nastechIncluded: 'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
       nastechAuthNeededTitle: 'Nastech Portal にサインイン',
       nastechAuthNeededMessage: provider =>
         `${provider} は保存されましたが、Nastech Portal にサインインするまで有効になりません。`,
@@ -1240,7 +1248,7 @@ export const ja = defineLocale({
     statCost: '推定コスト',
     actualCost: cost => `実際 ${cost}`,
     loadingUsage: '使用状況を読み込み中...',
-    nastechage: period => `過去 ${period} 日間に使用履歴がありません。`,
+    noUsage: period => `過去 ${period} 日間に使用履歴がありません。`,
     retry: '再試行',
     dailyTokens: '日別トークン',
     input: '入力',
@@ -1483,6 +1491,13 @@ export const ja = defineLocale({
     close: 'Cron を閉じる',
     title: 'スケジュール済みジョブ',
     count: count => `${count} 件のジョブ`,
+    modelImpact: {
+      title: 'スケジュール済みジョブの確認が必要です',
+      message: count => `モデル設定を確認するまで、${count} 件のスケジュール済みジョブがスキップされます。`,
+      detailMore: (names, remaining) => `${names}、ほか ${remaining} 件`,
+      review: 'スケジュール済みジョブを確認',
+      saveFailed: 'Nastech はモデルの変更を保存しませんでした。'
+    },
     search: 'Cron ジョブを検索...',
     loading: 'Cron ジョブを読み込み中...',
     states: {
@@ -1676,7 +1691,8 @@ export const ja = defineLocale({
       'new-session': '新しいセッション',
       skills: 'スキルとツール',
       messaging: 'メッセージング',
-      artifacts: 'アーティファクト'
+      artifacts: 'アーティファクト',
+      cron: 'スケジュール済みジョブ'
     },
     searchAria: 'セッションを検索',
     searchPlaceholder: 'セッションを検索…',
@@ -1778,6 +1794,7 @@ export const ja = defineLocale({
       rename: '名前を変更',
       archive: 'アーカイブ',
       newWindow: '新しいウィンドウ',
+      openInTerminal: 'ターミナルで開く',
       copyIdFailed: 'セッション ID をコピーできませんでした',
 
       sessionActions: 'セッションアクション',
@@ -1900,6 +1917,7 @@ export const ja = defineLocale({
     editingQueuedInComposer: 'コンポーザーでキュー済みターンを編集中',
     queueEdit: '編集',
     queueSendNext: '次に送信',
+    queueSteer: 'ステア — 現在のターンを今すぐ修正',
     queueSend: '送信',
     queueDelete: '削除',
     queueResume: '再開',
@@ -2056,8 +2074,7 @@ export const ja = defineLocale({
     done: '完了',
     applyingBody:
       'Nastech アップデーターが独自のウィンドウで引き継ぎ、完了後に自動的に Nastech を再度開きます。更新中はご自分で Nastech を開き直さないでください。',
-    applyingBodyBackend:
-      'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
+    applyingBodyBackend: 'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
     applyingClose: 'このウィンドウは更新中に閉じ、その後 Nastech が自動的に再度開きます。',
     errorTitle: '更新が完了しませんでした',
     errorBody: 'ご安心ください。何も失われていません。今すぐ再試行できます。',

@@ -76,7 +76,7 @@ _PERSISTENCE_PATTERN = re.compile(
 # ── Indicators of compromise: June 2026 nastech-0day campaign ──────────────────
 # Hardcoded so a pre-planted config.yaml (written by any vector) is refused at
 # both save and spawn time. These are exact attacker artifacts observed on
-# multiple compromised public instances (r/nastechagent, 854.media).
+# multiple compromised public instances (r/hermesagent, 854.media).
 _IOC_SUBSTRINGS = (
     # Attacker SSH public key (the "nastech-0day" persistence key).
     "AAAAC3NzaC1lZDI1NTE5AAAAICBoh1oDC4DnsO1m5mJ4yfEKrQebaFh",

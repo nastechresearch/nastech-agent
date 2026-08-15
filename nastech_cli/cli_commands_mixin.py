@@ -1139,6 +1139,11 @@ class CLICommandsMixin:
         # --resume.
         self._restore_session_yolo(session_meta)
 
+        # Restore the target session's model/provider so a mid-chat /resume
+        # doesn't silently revert to the config default. Same contract as a
+        # startup --resume (_preload_resumed_session / _init_agent path).
+        self._restore_session_model(session_meta)
+
     def _handle_sessions_command(self, cmd_original: str) -> None:
         """Handle /sessions [list|<id_or_title>] — browse or resume previous sessions.
 
@@ -2085,11 +2090,11 @@ class CLICommandsMixin:
                     try:
                         from nastech_cli.skin_engine import get_active_skin
                         _skin = get_active_skin()
-                        label = _skin.get_branding("response_label", "𓄃 Nastech")
+                        label = _skin.get_branding("response_label", "⚕ Nastech")
                         _resp_color = _maybe_remap_for_light_mode(_skin.get_color("response_border", "#CD7F32"))
                         _resp_text = _maybe_remap_for_light_mode(_skin.get_color("banner_text", "#FFF8DC"))
                     except Exception:
-                        label = "𓄃 Nastech"
+                        label = "⚕ Nastech"
                         _resp_color = "#CD7F32"
                         _resp_text = "#FFF8DC"
 
@@ -2186,6 +2191,44 @@ class CLICommandsMixin:
 
         _DEFAULT_CDP = DEFAULT_BROWSER_CDP_URL
         current = os.environ.get("BROWSER_CDP_URL", "").strip()
+
+        if sub == "use" or sub.startswith("use "):
+            # /browser use [off] — toggle Browser Use mode (browser.backend),
+            arg = sub.split(None, 1)[1].strip() if " " in sub else "on"
+            from nastech_cli.config import load_config, save_config
+            from tools.registry import invalidate_check_fn_cache
+
+            if arg not in {"on", "off"}:
+                print()
+                print("Usage: /browser use [off]")
+                print("   /browser use       — switch to Browser Use mode (browser_exec via CLI 3.0)")
+                print("   /browser use off   — revert to the built-in browser tools")
+                print()
+                return
+
+            config = load_config()
+            browser_cfg = config.setdefault("browser", {})
+            if arg == "on":
+                browser_cfg["backend"] = "browser-use"
+                save_config(config)
+                invalidate_check_fn_cache()
+                self.new_session()
+                print()
+                print("🌐 Browser Use mode enabled — browser_exec via the Browser Use CLI 3.0")
+                print("   Session reset. New tool configuration is active.")
+                print()
+            else:
+                from tools.browser_use_cli import BACKEND_DISABLED
+
+                browser_cfg["backend"] = BACKEND_DISABLED
+                save_config(config)
+                invalidate_check_fn_cache()
+                self.new_session()
+                print()
+                print("🌐 Browser Use mode disabled — built-in browser tools restored")
+                print("   Session reset. New tool configuration is active.")
+                print()
+            return
 
         if sub.startswith("connect"):
             # Optionally accept a custom CDP URL: /browser connect ws://host:port
@@ -2350,6 +2393,18 @@ class CLICommandsMixin:
 
         elif sub == "status":
             print()
+            try:
+                from tools.browser_use_cli import is_browser_use_cli_mode
+                _bu_mode = is_browser_use_cli_mode()
+            except Exception:
+                _bu_mode = False
+            if _bu_mode:
+                print("🌐 Browser: Browser Use mode (browser_exec via the Browser Use CLI 3.0)")
+                print("   Local Chrome via CDP, or Browser Use cloud browsers")
+                print()
+                print("   /browser use off      — revert to the built-in browser tools")
+                print()
+                return
             if current:
                 print("🌐 Browser: connected to live Chromium-family browser via CDP")
                 print(f"   Endpoint: {current}")
@@ -2399,11 +2454,12 @@ class CLICommandsMixin:
 
         else:
             print()
-            print("Usage: /browser connect|disconnect|status")
+            print("Usage: /browser connect|disconnect|status|use")
             print()
             print("   connect      Connect browser tools to your live Chromium-family browser session")
             print("   disconnect   Revert to default browser backend")
             print("   status       Show current browser mode")
+            print("   use [off]    Switch to Browser Use mode (CLI 3.0) / back to built-in tools")
             print()
 
     def _handle_heartbeat_command(self, cmd: str) -> None:
@@ -2750,6 +2806,39 @@ class CLICommandsMixin:
             self._pending_input.put(state.goal)
         except Exception:
             pass
+
+    def _handle_loop_command(self, cmd: str) -> None:
+        """Dispatch /loop — recurring in-session wakeups (Claude Code parity).
+
+        Forms:
+          /loop [interval] <prompt> [--times N] [--until <cond>]   start a loop
+          /loop status | pause | resume | stop                     controls
+        """
+        from cli import _DIM, _RST, _cprint
+        parts = (cmd or "").strip().split(None, 1)
+        arg = parts[1].strip() if len(parts) > 1 else ""
+
+        mgr = self._get_loop_manager()
+        if mgr is None:
+            _cprint(f"  {_DIM}Loops unavailable (no active session).{_RST}")
+            return
+
+        from nastech_cli.loops import dispatch_loop_command
+
+        result = dispatch_loop_command(mgr, arg)
+        for line in (result.get("output") or "").splitlines():
+            _cprint(f"  {line}")
+        if result.get("created"):
+            try:
+                from nastech_cli.loops import goal_blocks_loop_tick
+
+                if goal_blocks_loop_tick(mgr.session_id):
+                    _cprint(
+                        f"  {_DIM}Note: an active /goal is driving this session — "
+                        f"loop wakeups defer until the goal finishes, pauses, or parks.{_RST}"
+                    )
+            except Exception:
+                pass
 
     def _handle_subgoal_command(self, cmd: str) -> None:
         """Dispatch /subgoal subcommands.
@@ -3498,7 +3587,7 @@ class CLICommandsMixin:
             ("cancel", "Cancel", "keep the current session"),
         ]
         raw = self._prompt_text_input_modal(
-            title="𓄃  Update Nastech Agent",
+            title="⚕  Update Nastech Agent",
             detail="This will exit the current session and run `nastech update`.",
             choices=choices,
         )
@@ -3511,7 +3600,7 @@ class CLICommandsMixin:
             return False
 
         print()
-        print("  𓄃 Launching update...")
+        print("  ⚕ Launching update...")
         print()
 
         # Store the relaunch args so run() can exec them from the main thread

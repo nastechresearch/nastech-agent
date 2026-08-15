@@ -79,7 +79,7 @@ After every reveal, add `self.wait()`. The viewer needs time to:
 
 ### Tempo variation
 
-Monotonastech pacing feels like a lecture. Vary the tempo:
+Monotonous pacing feels like a lecture. Vary the tempo:
 - **Slow build** for core concepts (long run_time, long pauses)
 - **Quick succession** for supporting details (short run_time, minimal pauses)
 - **Dramatic pause** before the key reveal (extra `self.wait(2.0)` before the "aha")

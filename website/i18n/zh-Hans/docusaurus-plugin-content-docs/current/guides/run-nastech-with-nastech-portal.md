@@ -6,7 +6,7 @@ description: "完整操作指南：订阅、配置、切换模型、启用 gatew
 
 # 通过 Nastech Portal 运行 Nastech Agent
 
-本指南带你从头到尾完成在 [Nastech Portal](https://portal.nastechresearch.com) 订阅下运行 Nastech Agent 的全过程——从注册账号到验证每个工具的路由是否正确。如果你只想了解 Portal 的概述及订阅内容，请参阅 [Nastech Portal 集成页面](/integrations/nastech-portal)。本页是操作步骤脚本。
+本指南带你从头到尾完成在 [Nastech Portal](https://portal.nastechresearch.github.io) 订阅下运行 Nastech Agent 的全过程——从注册账号到验证每个工具的路由是否正确。如果你只想了解 Portal 的概述及订阅内容，请参阅 [Nastech Portal 集成页面](/integrations/nastech-portal)。本页是操作步骤脚本。
 
 ## 前提条件
 
@@ -18,7 +18,7 @@ description: "完整操作指南：订阅、配置、切换模型、启用 gatew
 
 ## 1. 获取订阅
 
-打开 [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription)，注册并选择一个套餐。
+打开 [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription)，注册并选择一个套餐。
 
 已订阅？跳至第 2 步。
 
@@ -30,7 +30,7 @@ nastech setup --portal
 
 这条命令会完成五件事：
 
-1. 打开浏览器跳转至 portal.nastechresearch.com 进行 OAuth 登录
+1. 打开浏览器跳转至 portal.nastechresearch.github.io 进行 OAuth 登录
 2. 将 refresh token 存储至 `~/.nastech/auth.json`
 3. 在 `~/.nastech/config.yaml` 中设置 `model.provider: nastech`
 4. 选择一个默认的 agentic 模型（`anthropic/claude-sonnet-4.6` 或类似模型）
@@ -66,7 +66,7 @@ nastech portal info
   Nastech Portal
   ───────────
   Auth:    ✓ logged in
-  Portal:  https://portal.nastechresearch.com
+  Portal:  https://portal.nastechresearch.github.io
   Model:   ✓ using Nastech as inference provider
 
   Tool Gateway
@@ -122,7 +122,7 @@ nastech config set model.default anthropic/claude-sonnet-4.6
 
 Nastech-4-70B 和 Nastech-4-405B 在 Portal 上以大幅折扣提供，但它们是**对话/推理模型**，并非针对工具调用优化的模型。它们在多步骤 agent 循环中表现不佳。请通过[订阅代理](/user-guide/features/subscription-proxy)从非 agent 工具中将它们用于对话或研究工作。对于 Nastech Agent 本身，请坚持使用上述前沿 agentic 模型。
 
-Portal 的[信息页面](https://portal.nastechresearch.com/info)也有此说明——这是 Nastech 官方指导，并非仅代表 Nastech 一方的意见。
+Portal 的[信息页面](https://portal.nastechresearch.github.io/info)也有此说明——这是 Nastech 官方指导，并非仅代表 Nastech 一方的意见。
 
 ## 6. （可选）自定义 Tool Gateway 路由
 

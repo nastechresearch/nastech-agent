@@ -8,7 +8,7 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   url: 'https://nastechresearch.github.io',
-  baseUrl: '/nastech-agent/docs/',
+  baseUrl: '/nastech-agent/',
 
   organizationName: 'NastechResearch',
   projectName: 'nastech-agent',
@@ -135,7 +135,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://nastechresearch.github.io/nastech-agent/docs/',
+          href: 'https://nastechresearch.github.io/nastech-agent/',
           label: 'Download',
           position: 'left',
         },
@@ -144,7 +144,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://nastechresearch.github.io/nastech-agent/docs/',
+          href: 'https://nastechresearch.github.io/nastech-agent',
           label: 'Home',
           position: 'right',
         },
@@ -183,13 +183,13 @@ const config: Config = {
         {
           title: 'More',
           items: [
-            { label: 'Desktop Download', href: 'https://nastechresearch.github.io/nastech-agent/docs/' },
+            { label: 'Desktop Download', href: 'https://nastechresearch.github.io/nastech-agent/' },
             { label: 'GitHub', href: 'https://github.com/NastechResearch/nastech-agent' },
-            { label: 'Nastech Research', href: 'https://nastechresearch.com' },
+            { label: 'Nastech Research', href: 'https://nastechresearch.github.io' },
           ],
         },
       ],
-      copyright: `Built by <a href="https://nastechresearch.com">Nastech Research</a> · MIT License · ${new Date().getFullYear()}`,
+      copyright: `Built by <a href="https://nastechresearch.github.io">Nastech Research</a> · MIT License · ${new Date().getFullYear()}`,
     },
     prism: {
       theme: prismThemes.github,

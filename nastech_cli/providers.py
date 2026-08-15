@@ -57,7 +57,7 @@ NASTECH_OVERLAYS: Dict[str, NastechOverlay] = {
     "nastech": NastechOverlay(
         transport="openai_chat",
         auth_type="oauth_device_code",
-        base_url_override="https://inference-api.nastechresearch.com/v1",
+        base_url_override="https://inference-api.nastechresearch.github.io/v1",
     ),
     "openai-codex": NastechOverlay(
         transport="codex_responses",
@@ -413,7 +413,7 @@ ALIASES: Dict[str, str] = {
 _LABEL_OVERRIDES: Dict[str, str] = {
     "moa": "Mixture of Agents",
     "nastech": "Nastech Portal",
-    "openai-codex": "OpenAI Codex",
+    "openai-codex": "ChatGPT or Codex Subscription",
     "copilot-acp": "GitHub Copilot ACP",
     "stepfun": "StepFun Step Plan",
     "xiaomi": "Xiaomi MiMo",

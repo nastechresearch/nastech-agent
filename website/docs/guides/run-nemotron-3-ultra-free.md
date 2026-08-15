@@ -6,7 +6,7 @@ description: "Try NVIDIA Nemotron 3 Ultra on Nastech Portal — free June 4–18
 
 # Run Nemotron 3 Ultra free in Nastech Agent
 
-Nastech Research has been inducted into the **Nemotron Coalition** of leading AI labs working with **NVIDIA** to advance open frontier foundation models. In honor of this, we've partnered with **Nebius** to provide **Nemotron 3 Ultra** free on [Nastech Portal](https://portal.nastechresearch.com) for two weeks (**June 4th – June 18th**). Follow the instructions below to try the model in your Nastech Agent today.
+Nastech Research has been inducted into the **Nemotron Coalition** of leading AI labs working with **NVIDIA** to advance open frontier foundation models. In honor of this, we've partnered with **Nebius** to provide **Nemotron 3 Ultra** free on [Nastech Portal](https://portal.nastechresearch.github.io) for two weeks (**June 4th – June 18th**). Follow the instructions below to try the model in your Nastech Agent today.
 
 :::info Limited-time offer
 The `nvidia/nemotron-3-ultra:free` tier is available from **June 4th to June 18th**. The `:free` tag is what keeps it on the no-cost plan — pick that exact variant.
@@ -24,7 +24,7 @@ The simplest path: a one-click installer with a guided, point-and-click setup. N
 
 ### 2. Connect Nastech Portal
 
-When the app opens, you'll see a "Let's get you set up" screen. Click **Nastech Portal** (marked **Recommended**). Your browser opens — create a [Nastech Portal](https://portal.nastechresearch.com) account (or sign in), choose the **Free** plan, and authorize Nastech. The app connects automatically.
+When the app opens, you'll see a "Let's get you set up" screen. Click **Nastech Portal** (marked **Recommended**). Your browser opens — create a [Nastech Portal](https://portal.nastechresearch.github.io) account (or sign in), choose the **Free** plan, and authorize Nastech. The app connects automatically.
 
 ### 3. Pick the free Nemotron 3 Ultra model
 
@@ -76,7 +76,7 @@ Select **Quick Setup**. Nastech opens a browser tab and waits for you to finish 
 
 ### 3. Create a Nastech Portal account
 
-In the browser, create a [Nastech Portal](https://portal.nastechresearch.com) account (or sign in) and choose the **Free** plan.
+In the browser, create a [Nastech Portal](https://portal.nastechresearch.github.io) account (or sign in) and choose the **Free** plan.
 
 ### 4. Connect your account
 

@@ -1,6 +1,6 @@
 name: nastech
 version: 1.0.0
-description: "Dashboard auth provider — OAuth 2.0 (authorization-code + PKCE) against Nastech Portal. Auto-activates when a client_id is configured via either dashboard.oauth.client_id in config.yaml (canonical surface) or NASTECH_DASHBOARD_OAUTH_CLIENT_ID env var (operator override; Portal injects this at Fly.io provisioning). dashboard.oauth.portal_url / NASTECH_DASHBOARD_PORTAL_URL are optional and default to https://portal.nastechresearch.com."
+description: "Dashboard auth provider — OAuth 2.0 (authorization-code + PKCE) against Nastech Portal. Auto-activates when a client_id is configured via either dashboard.oauth.client_id in config.yaml (canonical surface) or NASTECH_DASHBOARD_OAUTH_CLIENT_ID env var (operator override; Portal injects this at Fly.io provisioning). dashboard.oauth.portal_url / NASTECH_DASHBOARD_PORTAL_URL are optional and default to https://portal.nastechresearch.github.io."
 author: NastechResearch
 kind: backend
 requires_env:

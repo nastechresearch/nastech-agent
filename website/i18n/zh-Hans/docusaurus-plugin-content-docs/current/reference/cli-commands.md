@@ -292,7 +292,7 @@ nastech portal [status|open|tools]
 | 子命令 | 说明 |
 |------------|-------------|
 | `status`（默认） | Portal 认证状态 + 每个工具的 Tool Gateway 路由摘要。不带子命令时也会显示。 |
-| `open` | 在默认浏览器中打开 `portal.nastechresearch.com/manage-subscription`。 |
+| `open` | 在默认浏览器中打开 `portal.nastechresearch.github.io/manage-subscription`。 |
 | `tools` | 列出每个 Tool Gateway 合作伙伴（Firecrawl、FAL、OpenAI TTS、Browser Use、Modal）及哪些通过 Nastech 路由。 |
 
 关于 gateway 本身的配置，请参阅 [Tool Gateway](../user-guide/features/tool-gateway.md)。关于一键设置路径，请参阅上方的 `nastech setup --portal`。

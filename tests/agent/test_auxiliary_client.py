@@ -399,7 +399,7 @@ class TestBuildCallKwargsMaxTokens:
             ("zai", "glm-5.2", "https://api.z.ai/api/coding/paas/v4", "max_tokens"),
             ("openrouter", "deepseek/deepseek-v4-flash:nitro", "https://openrouter.ai/api/v1", "max_tokens"),
             ("copilot", "gpt-5.5", "https://api.githubcopilot.com", "max_completion_tokens"),
-            ("nastech", "nastech-4", "https://inference-api.nastechresearch.com/v1", "max_tokens"),
+            ("nastech", "nastech-4", "https://inference-api.nastechresearch.github.io/v1", "max_tokens"),
         ],
     )
     def test_moa_task_sends_max_tokens_on_openai_compatible(self, provider, model, base_url, expected_key):
@@ -1241,11 +1241,11 @@ class TestAuxiliaryPoolAwareness:
             status_code = 401
 
         stale_client = MagicMock()
-        stale_client.base_url = "https://inference-api.nastechresearch.com/v1"
+        stale_client.base_url = "https://inference-api.nastechresearch.github.io/v1"
         stale_client.chat.completions.create.side_effect = _Auth401("stale nastech key")
 
         fresh_client = MagicMock()
-        fresh_client.base_url = "https://inference-api.nastechresearch.com/v1"
+        fresh_client.base_url = "https://inference-api.nastechresearch.github.io/v1"
         fresh_client.chat.completions.create.return_value = {"ok": True}
 
         with (
@@ -1253,7 +1253,7 @@ class TestAuxiliaryPoolAwareness:
             patch("agent.auxiliary_client._get_cached_client", return_value=(stale_client, "nastech-model")),
             patch("agent.auxiliary_client.OpenAI", return_value=fresh_client),
             patch("agent.auxiliary_client._validate_llm_response", side_effect=lambda resp, _task, **_kw: resp),
-            patch("agent.auxiliary_client._resolve_nastech_runtime_api", return_value=("fresh-agent-key", "https://inference-api.nastechresearch.com/v1")),
+            patch("agent.auxiliary_client._resolve_nastech_runtime_api", return_value=("fresh-agent-key", "https://inference-api.nastechresearch.github.io/v1")),
         ):
             result = call_llm(
                 task="compression",
@@ -2734,7 +2734,8 @@ class TestAuxiliaryProviderProfileReasoning:
             base_url="https://api.moonshot.ai/v1",
         )
 
-        assert kwargs["reasoning_effort"] == "medium"
+        # K3 maps medium → high (ref: K3 model docs)
+        assert kwargs["reasoning_effort"] == "high"
         assert "reasoning" not in kwargs.get("extra_body", {})
         assert "thinking" not in kwargs.get("extra_body", {})
 
@@ -3753,9 +3754,9 @@ class TestOpenRouterExplicitApiKey:
 def test_pool_runtime_base_url_uses_nastech_env_override(monkeypatch):
     entry = SimpleNamespace(
         provider="nastech",
-        runtime_base_url="https://inference-api.nastechresearch.com/v1",
-        inference_base_url="https://inference-api.nastechresearch.com/v1",
-        base_url="https://inference-api.nastechresearch.com/v1",
+        runtime_base_url="https://inference-api.nastechresearch.github.io/v1",
+        inference_base_url="https://inference-api.nastechresearch.github.io/v1",
+        base_url="https://inference-api.nastechresearch.github.io/v1",
     )
     monkeypatch.setenv("NASTECH_INFERENCE_BASE_URL", "https://ai.wildebeest-newton.ts.net/v1")
 
@@ -4491,7 +4492,22 @@ class TestAutoRoutedProviderProfileHooks:
 
 
 class TestFastModelTier:
-    """The titling fast tier: rot-proof resolution, scoped to titling only."""
+    """The opt-in titling fast tier: rot-proof and scoped to titling only."""
+
+    def test_auto_client_cache_key_tracks_fast_model_preference(self):
+        """Changing the routing preference must not reuse the old auto client."""
+        from agent import auxiliary_client as ac
+
+        with patch.object(ac, "_task_prefers_fast_model", return_value=False):
+            main_key = ac._client_cache_key(
+                "auto", async_mode=False, task="title_generation"
+            )
+        with patch.object(ac, "_task_prefers_fast_model", return_value=True):
+            fast_key = ac._client_cache_key(
+                "auto", async_mode=False, task="title_generation"
+            )
+
+        assert main_key != fast_key
 
     def test_catalog_match_prefers_rolling_alias_over_pinned_id(self):
         """A "-latest" alias wins: it is the only id that cannot go stale."""

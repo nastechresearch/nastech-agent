@@ -29,7 +29,10 @@ from typing import Any, Dict, Optional
 
 from nastech_cli.timeouts import get_provider_request_timeout, get_provider_stale_timeout
 from nastech_constants import PARTIAL_STREAM_STUB_ID, FINISH_REASON_LENGTH
-from agent.error_classifier import FailoverReason
+from agent.error_classifier import (
+    FailoverReason,
+    PROVIDER_STREAM_NON_JSON_ERROR_CODE,
+)
 from agent.errors import EmptyStreamError
 from agent.turn_context import substitute_api_content
 from agent.gemini_native_adapter import is_native_gemini_base_url
@@ -46,6 +49,9 @@ from utils import base_url_host_matches, base_url_hostname, env_float, env_int
 
 logger = logging.getLogger(__name__)
 _OPENROUTER_PROVIDER_SORT_VALUES = {"throughput", "latency", "price"}
+_PROVIDER_STREAM_ERROR_FINISH_REASONS = {"error", "error_finish"}
+_PROVIDER_STREAM_SSE_FIELDS = {"event", "data", "id", "retry"}
+_PROVIDER_STREAM_ERROR_TEXT_LIMIT = 4096
 
 # When the fallback chain is fully exhausted on a non-rate-limit failure
 # (e.g. every provider returns a non-retryable client error like HTTP 400),
@@ -74,6 +80,353 @@ def _ra():
     """
     import run_agent
     return run_agent
+
+
+class ProviderStreamError(Exception):
+    """Provider encoded an API error as streaming content instead of an SDK error."""
+
+    def __init__(
+        self,
+        *,
+        status_code: Optional[int],
+        body: dict,
+        raw_text: str,
+        headers: Any = None,
+    ):
+        self.status_code = status_code
+        self.body = body
+        self.raw_text = raw_text
+        self.response = SimpleNamespace(headers=headers or {})
+        super().__init__(self._format_message())
+
+    def _format_message(self) -> str:
+        error_obj = self.body.get("error", {}) if isinstance(self.body, dict) else {}
+        code = error_obj.get("code") if isinstance(error_obj, dict) else None
+        message = error_obj.get("message") if isinstance(error_obj, dict) else None
+        parts = ["Provider stream returned an error event"]
+        if self.status_code:
+            parts.append(f"HTTP {self.status_code}")
+        if code:
+            parts.append(str(code))
+        text = " - ".join(parts)
+        if message:
+            text += f": {message}"
+        return text
+
+
+def _status_code_from_value(value: Any) -> Optional[int]:
+    if isinstance(value, int) and 100 <= value < 600:
+        return value
+    if not isinstance(value, str):
+        return None
+    match = re.search(r"(?:HTTP_STATUS/)?\b([1-5]\d\d)\b", value, re.IGNORECASE)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
+def _status_code_from_payload(payload: Any) -> Optional[int]:
+    if not isinstance(payload, dict):
+        return None
+
+    candidates = [
+        payload.get("status_code"),
+        payload.get("status"),
+        payload.get("http_status"),
+    ]
+    error_obj = payload.get("error")
+    if isinstance(error_obj, dict):
+        candidates.extend([
+            error_obj.get("status_code"),
+            error_obj.get("status"),
+            error_obj.get("http_status"),
+            error_obj.get("code"),
+        ])
+    candidates.append(payload.get("code"))
+
+    for candidate in candidates:
+        status_code = _status_code_from_value(candidate)
+        if status_code is not None:
+            return status_code
+    return None
+
+
+def _json_object_from_text(text: str) -> Optional[dict]:
+    stripped = (text or "").strip()
+    if not stripped.startswith("{"):
+        return None
+    try:
+        decoded = json.loads(stripped)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    return decoded if isinstance(decoded, dict) else None
+
+
+def _parse_provider_sse_events(text: str) -> list[dict]:
+    """Parse provider text that looks like Server-Sent Events."""
+    events: list[dict] = []
+    current = {"event": None, "data": [], "comments": [], "fields": {}}
+
+    def _has_event_data(event: dict) -> bool:
+        return bool(
+            event.get("event")
+            or event.get("data")
+            or event.get("comments")
+            or event.get("fields")
+        )
+
+    def _flush_current():
+        nonlocal current
+        if _has_event_data(current):
+            data_text = "\n".join(current["data"])
+            status_candidates = list(current["comments"])
+            for key in ("status", "status_code", "http_status"):
+                if key in current["fields"]:
+                    status_candidates.append(current["fields"][key])
+            events.append({
+                "event": current["event"],
+                "data": data_text,
+                "comments": list(current["comments"]),
+                "fields": dict(current["fields"]),
+                "status_code": next(
+                    (
+                        status
+                        for status in (
+                            _status_code_from_value(value)
+                            for value in status_candidates
+                        )
+                        if status is not None
+                    ),
+                    None,
+                ),
+            })
+        current = {"event": None, "data": [], "comments": [], "fields": {}}
+
+    for raw_line in (text or "").splitlines():
+        line = raw_line.rstrip("\r")
+        if line == "":
+            _flush_current()
+            continue
+        if line.startswith(":"):
+            current["comments"].append(line[1:].strip())
+            continue
+
+        field, sep, value = line.partition(":")
+        if not sep:
+            current["fields"][field.strip().lower()] = ""
+            continue
+        field = field.strip().lower()
+        if value.startswith(" "):
+            value = value[1:]
+        if field == "event":
+            current["event"] = value.strip()
+        elif field == "data":
+            current["data"].append(value)
+        else:
+            current["fields"][field] = value
+
+    _flush_current()
+    return events
+
+
+def _provider_error_body(payload: dict, status_code: Optional[int]) -> dict:
+    """Normalize common provider error payloads to OpenAI-style body.error."""
+    if isinstance(payload, dict):
+        error_obj = payload.get("error")
+        if isinstance(error_obj, dict):
+            return payload
+    else:
+        payload = {}
+
+    code = (
+        payload.get("code")
+        or payload.get("error_code")
+        or payload.get("type")
+        or (f"HTTP_{status_code}" if status_code else "provider_stream_error")
+    )
+    message = (
+        payload.get("message")
+        or payload.get("error_description")
+        or payload.get("error")
+        or "Provider stream returned an error event."
+    )
+    normalized_error = {"message": str(message)}
+    if code:
+        normalized_error["code"] = str(code)
+    for key in ("request_id", "param", "type"):
+        if payload.get(key):
+            normalized_error[key] = payload[key]
+    return {"error": normalized_error}
+
+
+def _provider_stream_error_from_json_decode_error(
+    error: json.JSONDecodeError,
+    *,
+    response: Any = None,
+) -> ProviderStreamError:
+    """Preserve plain-text SSE data rejected inside the OpenAI SDK.
+
+    OpenAI-compatible providers occasionally send ``event: error`` with a
+    non-JSON ``data:`` field.  The SDK raises from ``sse.json()`` before it can
+    yield a completion chunk, but ``JSONDecodeError.doc`` still contains the
+    provider's original message.
+    """
+    from agent.redact import redact_sensitive_text
+
+    raw_text = str(getattr(error, "doc", "") or "").strip()
+    safe_text = redact_sensitive_text(
+        _sanitize_surrogates(raw_text),
+        force=True,
+    )
+    safe_text = safe_text[:_PROVIDER_STREAM_ERROR_TEXT_LIMIT]
+    message = safe_text or "Provider stream returned non-JSON SSE data."
+    headers = getattr(response, "headers", None) if response is not None else None
+
+    return ProviderStreamError(
+        status_code=None,
+        body=_provider_error_body(
+            {
+                "code": PROVIDER_STREAM_NON_JSON_ERROR_CODE,
+                "message": message,
+            },
+            None,
+        ),
+        raw_text=safe_text,
+        headers=headers,
+    )
+
+
+def _iter_provider_stream_chunks(stream, *, response: Any = None):
+    """Yield SDK chunks while translating SDK-level SSE decode failures."""
+    try:
+        yield from stream
+    except json.JSONDecodeError as error:
+        stream_response = response() if callable(response) else response
+        if stream_response is None:
+            stream_response = getattr(stream, "response", None)
+        raise _provider_stream_error_from_json_decode_error(
+            error,
+            response=stream_response,
+        ) from error
+
+
+def _payload_has_error_shape(payload: Any) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    if isinstance(payload.get("error"), (dict, str)):
+        return True
+    if payload.get("message") and (
+        payload.get("code")
+        or payload.get("error_code")
+        or _status_code_from_payload(payload) is not None
+    ):
+        return True
+    return False
+
+
+def _provider_stream_text_may_be_sse(text: str) -> bool:
+    """Return True while pending text still looks like an SSE control block."""
+    stripped = (text or "").lstrip()
+    if not stripped:
+        return False
+
+    lines = stripped.splitlines()
+    trailing_newline = stripped.endswith(("\n", "\r"))
+    saw_sse_field = False
+
+    for index, raw_line in enumerate(lines):
+        line = raw_line.rstrip("\r")
+        if line == "":
+            continue
+        if line.startswith(":"):
+            saw_sse_field = True
+            continue
+
+        field, sep, _value = line.partition(":")
+        field_name = field.strip().lower()
+        if sep and field_name in _PROVIDER_STREAM_SSE_FIELDS:
+            saw_sse_field = True
+            continue
+
+        is_last_incomplete = index == len(lines) - 1 and not trailing_newline
+        if is_last_incomplete and any(
+            sse_field.startswith(field_name)
+            for sse_field in _PROVIDER_STREAM_SSE_FIELDS
+        ):
+            return True
+        return False
+
+    return saw_sse_field
+
+
+def _provider_stream_error_from_text(
+    text: str,
+    finish_reason: Optional[str],
+    *,
+    response: Any = None,
+) -> Optional[ProviderStreamError]:
+    """Convert provider-streamed error text into an exception for retry logic."""
+    if not text:
+        return None
+
+    finish_reason_text = str(finish_reason or "").lower()
+    has_error_finish = finish_reason_text in _PROVIDER_STREAM_ERROR_FINISH_REASONS
+    if not has_error_finish:
+        return None
+
+    for event in _parse_provider_sse_events(text):
+        event_name = str(event.get("event") or "").strip().lower()
+        payload = _json_object_from_text(event.get("data") or "") or {}
+        status_code = event.get("status_code") or _status_code_from_payload(payload)
+        is_error_event = event_name == "error"
+        is_http_error = status_code is not None and status_code >= 400
+        is_error_payload = _payload_has_error_shape(payload)
+        is_structured_error_event = is_error_event and (
+            has_error_finish or is_http_error or is_error_payload
+        )
+        is_bare_error_finish_payload = (
+            not is_error_event and has_error_finish and is_error_payload
+        )
+
+        if not (
+            is_http_error
+            or is_structured_error_event
+            or is_bare_error_finish_payload
+        ):
+            continue
+
+        headers = getattr(response, "headers", None) if response is not None else None
+        return ProviderStreamError(
+            status_code=status_code,
+            body=_provider_error_body(payload, status_code),
+            raw_text=text,
+            headers=headers,
+        )
+
+    payload = _json_object_from_text(text)
+    if payload is not None:
+        status_code = _status_code_from_payload(payload)
+        if has_error_finish or (status_code is not None and status_code >= 400):
+            headers = getattr(response, "headers", None) if response is not None else None
+            return ProviderStreamError(
+                status_code=status_code,
+                body=_provider_error_body(payload, status_code),
+                raw_text=text,
+                headers=headers,
+            )
+
+    if has_error_finish and text.strip():
+        headers = getattr(response, "headers", None) if response is not None else None
+        return ProviderStreamError(
+            status_code=None,
+            body=_provider_error_body({}, None),
+            raw_text=text,
+            headers=headers,
+        )
+    return None
 
 
 def estimate_request_context_tokens(api_payload: Any) -> int:
@@ -2034,6 +2387,32 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
 
         fb_base_url_hint = (fb.get("base_url") or "").strip() or None
         fb_api_key_hint = resolve_entry_api_key(fb)
+        # Determine api_mode from the ORIGINAL base_url (before URL transformation).
+        # resolve_provider_client() calls _to_openai_base_url() which can rewrite
+        # a dual-surface /anthropic base to /v1, losing the Anthropic wire signal
+        # from the client's post-rewrite base_url. Pre-compute here so detection
+        # sees the URL the user actually configured. (#79787)
+        #
+        # An explicit ``api_mode`` on the fallback entry always wins — including
+        # an explicit "chat_completions" — and suppresses all re-detection below.
+        fb_api_mode_explicit = bool(str(fb.get("api_mode") or "").strip())
+        fb_api_mode = "chat_completions"
+        if fb_api_mode_explicit:
+            fb_api_mode = str(fb.get("api_mode")).strip()
+        elif fb_provider == "anthropic":
+            # Provider-name check must not be gated on fb_base_url_hint:
+            # an entry that names provider: anthropic without an explicit
+            # base_url uses the provider's default endpoint and must still
+            # resolve to anthropic_messages, not chat_completions.
+            fb_api_mode = "anthropic_messages"
+        elif fb_base_url_hint:
+            _orig_url = fb_base_url_hint.rstrip("/").lower()
+            if (
+                _orig_url.endswith("/anthropic")
+                or base_url_hostname(fb_base_url_hint) == "api.anthropic.com"
+            ):
+                fb_api_mode = "anthropic_messages"
+        
         # For Ollama Cloud endpoints, pull OLLAMA_API_KEY from env
         # when no explicit key is in the fallback config. Host match
         # (not substring) — see GHSA-76xc-57q6-vm5m.
@@ -2044,7 +2423,8 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
         fb_client, _resolved_fb_model = resolve_provider_client(
             fb_provider, model=fb_model, raw_codex=True,
             explicit_base_url=fb_base_url_hint,
-            explicit_api_key=fb_api_key_hint)
+            explicit_api_key=fb_api_key_hint,
+            api_mode=fb_api_mode)
         if fb_client is None:
             logger.warning(
                 "Fallback to %s failed: provider not configured",
@@ -2061,51 +2441,53 @@ def try_activate_fallback(agent, reason: "FailoverReason | None" = None) -> bool
                 fb_model, fb_provider, _norm_err,
             )
 
-        # Determine api_mode from provider / base URL / model
-        fb_api_mode = "chat_completions"
+        # Re-determine api_mode from provider / resolved base URL / model when
+        # the pre-computed pass above landed on the default and the user did
+        # not pin api_mode explicitly. An explicit fb.api_mode (even
+        # "chat_completions") must never be overridden here.
         fb_base_url = str(fb_client.base_url)
         _fb_is_azure = agent._is_azure_openai_url(fb_base_url)
-        if fb_provider == "openai-codex":
-            fb_api_mode = "codex_responses"
-        elif fb_provider in {"nastech", "nastech-portal", "nastechresearch"}:
-            # Portal is dual-wire: anthropic/* must land on /v1/messages.
-            # resolve_provider_client still returns an OpenAI client for
-            # Nastech; the anthropic_messages branch below rebuilds the native
-            # client from that credential + base_url.
-            from nastech_cli.providers import nastech_api_mode
 
-            fb_api_mode = nastech_api_mode(fb_model)
-        elif (
-            fb_provider == "anthropic"
-            or fb_base_url.rstrip("/").lower().endswith("/anthropic")
-            or base_url_hostname(fb_base_url) == "api.anthropic.com"
-        ):
-            # Custom providers (e.g. cron-anthropic) point at the native
-            # api.anthropic.com host with no "/anthropic" path suffix, so the
-            # name/suffix checks above miss them and they default to
-            # chat_completions → POST /v1/chat/completions → 404. Match the
-            # host the same way determine_api_mode() and _detect_api_mode_for_url()
-            # do on the primary path. (#32243, #49247)
-            fb_api_mode = "anthropic_messages"
-        elif _fb_is_azure:
-            # Azure OpenAI serves gpt-5.x on /chat/completions — does NOT
-            # support the Responses API. Stay on chat_completions.
-            fb_api_mode = "chat_completions"
-        elif agent._is_direct_openai_url(fb_base_url):
-            fb_api_mode = "codex_responses"
-        elif agent._provider_model_requires_responses_api(
-            fb_model,
-            provider=fb_provider,
-        ):
-            # GPT-5.x models usually need Responses API, but keep
-            # provider-specific exceptions like Copilot gpt-5-mini on
-            # chat completions.
-            fb_api_mode = "codex_responses"
-        elif fb_provider == "bedrock" or (
-            base_url_hostname(fb_base_url).startswith("bedrock-runtime.")
-            and base_url_host_matches(fb_base_url, "amazonaws.com")
-        ):
-            fb_api_mode = "bedrock_converse"
+        if not fb_api_mode_explicit and fb_api_mode == "chat_completions":
+            if fb_provider == "openai-codex":
+                fb_api_mode = "codex_responses"
+            elif fb_provider in {"nastech", "nastech-portal", "nastechresearch"}:
+                # Portal is dual-wire: anthropic/* must land on /v1/messages.
+                # resolve_provider_client still returns an OpenAI client for
+                # Nastech; the anthropic_messages branch below rebuilds the native
+                # client from that credential + base_url.
+                from nastech_cli.providers import nastech_api_mode
+
+                fb_api_mode = nastech_api_mode(fb_model)
+            elif (
+                fb_base_url.rstrip("/").lower().endswith("/anthropic")
+                or base_url_hostname(fb_base_url) == "api.anthropic.com"
+            ):
+                # Named custom providers (e.g. cron-anthropic) resolve their
+                # base_url from config rather than the fallback entry, so the
+                # pre-resolve hint check above never sees it. Match the host
+                # the same way determine_api_mode() and _detect_api_mode_for_url()
+                # do on the primary path. (#32243, #49247)
+                fb_api_mode = "anthropic_messages"
+            elif _fb_is_azure:
+                # Azure OpenAI serves gpt-5.x on /chat/completions — does NOT
+                # support the Responses API. Stay on chat_completions.
+                fb_api_mode = "chat_completions"
+            elif agent._is_direct_openai_url(fb_base_url):
+                fb_api_mode = "codex_responses"
+            elif agent._provider_model_requires_responses_api(
+                fb_model,
+                provider=fb_provider,
+            ):
+                # GPT-5.x models usually need Responses API, but keep
+                # provider-specific exceptions like Copilot gpt-5-mini on
+                # chat completions.
+                fb_api_mode = "codex_responses"
+            elif fb_provider == "bedrock" or (
+                base_url_hostname(fb_base_url).startswith("bedrock-runtime.")
+                and base_url_host_matches(fb_base_url, "amazonaws.com")
+            ):
+                fb_api_mode = "bedrock_converse"
 
         old_model = agent.model
         old_provider = agent.provider
@@ -2748,6 +3130,41 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
     if agent._interrupt_requested:
         raise InterruptedError("Agent interrupted before streaming API call")
 
+    def _stream_final_text(response) -> str:
+        try:
+            choices = getattr(response, "choices", None)
+            first_choice = choices[0] if isinstance(choices, (list, tuple)) and choices else None
+            message = getattr(first_choice, "message", None)
+            content = getattr(message, "content", None)
+            if isinstance(content, str):
+                return content
+        except Exception:
+            pass
+        try:
+            content = getattr(response, "content", None)
+            if isinstance(content, str):
+                return content
+            if isinstance(content, list):
+                parts = []
+                for part in content:
+                    text = getattr(part, "text", None)
+                    if isinstance(text, str):
+                        parts.append(text)
+                return "".join(parts)
+        except Exception:
+            pass
+        return ""
+
+    def _emit_stream_start() -> None:
+        emit = getattr(agent, "_emit_stream_start", None)
+        if emit is not None:
+            emit()
+
+    def _emit_stream_end(*, final_text: str, finished: bool, error: str | None) -> None:
+        emit = getattr(agent, "_emit_stream_end", None)
+        if emit is not None:
+            emit(final_text=final_text, finished=finished, error=error)
+
     # Cron and other non-interactive, nested-pool contexts deadlock on the
     # spawned worker thread (#62151). They also have no stream consumer, so the
     # deltas this path produces go nowhere. Delegate to the non-streaming entry
@@ -2763,8 +3180,14 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         # ensure on_first_delta reaches it. Store it on the instance
         # temporarily so _run_codex_stream can pick it up.
         agent._codex_on_first_delta = on_first_delta
+        _emit_stream_start()
         try:
-            return agent._interruptible_api_call(api_kwargs)
+            response = agent._interruptible_api_call(api_kwargs)
+            _emit_stream_end(final_text=_stream_final_text(response), finished=True, error=None)
+            return response
+        except Exception as exc:
+            _emit_stream_end(final_text="", finished=False, error=str(exc))
+            raise
         finally:
             agent._codex_on_first_delta = None
 
@@ -2873,6 +3296,14 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                     token = writer_token["value"]
                     return token is None or stream_writer_is_current(agent, token)
 
+                try:
+                    from agent.plugin_stream_hooks import has_reasoning_stream_observer_hooks
+
+                    plugin_reasoning_observer = has_reasoning_stream_observer_hooks()
+                except Exception:
+                    logger.debug("plugin reasoning stream observer check failed", exc_info=True)
+                    plugin_reasoning_observer = False
+
                 stream = relay_llm.stream(
                     dict(api_kwargs),
                     _open_bedrock_stream,
@@ -2906,7 +3337,9 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                     {"stream": stream},
                     on_text_delta=_on_text if agent._has_stream_consumers() else None,
                     on_tool_start=_on_tool,
-                    on_reasoning_delta=_on_reasoning if agent.reasoning_callback or agent.stream_delta_callback else None,
+                    on_reasoning_delta=_on_reasoning
+                    if agent.reasoning_callback or agent.stream_delta_callback or plugin_reasoning_observer
+                    else None,
                     on_interrupt_check=lambda: agent._interrupt_requested,
                     on_event=lambda: _bedrock_last_event.__setitem__("t", time.time()),
                 )
@@ -2917,82 +3350,88 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                 if stream is not None:
                     stream.close()
 
-        t = threading.Thread(
-            target=_context_thread_target(_bedrock_call), daemon=True
-        )
-        t.start()
-        while t.is_alive():
-            t.join(timeout=0.3)
-            if agent._interrupt_requested:
-                raise InterruptedError("Agent interrupted during Bedrock API call")
-            # Liveness watchdog: no Bedrock event for longer than the stale
-            # timeout means the stream has wedged (open socket, keep-alives but
-            # no data, or a silently hung provider).  Without this the worker
-            # blocks in ``for event in event_stream`` indefinitely.
-            _stale_elapsed = time.time() - _bedrock_last_event["t"]
-            if _stale_elapsed > _bedrock_stale_timeout:
-                logger.warning(
-                    "Bedrock stream stale for %.0fs (threshold %.0fs) — no events "
-                    "received. region=%s model=%s. Aborting call.",
-                    _stale_elapsed, _bedrock_stale_timeout,
-                    _bedrock_region, api_kwargs.get("modelId", "unknown"),
-                )
-                agent._buffer_status(
-                    f"⚠️ No events from Bedrock for {int(_stale_elapsed)}s "
-                    f"(model: {api_kwargs.get('modelId', 'unknown')}). Aborting..."
-                )
-                # Count the stale kill in the SAME cross-turn breaker as the
-                # OpenAI/Anthropic path (#58962).
-                _bump_stale_streak(agent)
-                # Best-effort: evict the region's cached bedrock-runtime client
-                # so the NEXT call reconnects with a fresh pool.  NOTE: this does
-                # NOT abort the in-flight botocore EventStream the worker thread
-                # is blocked on — botocore exposes no external cancellation for
-                # it — so the daemon worker keeps reading until its socket read
-                # ultimately errors.  We therefore end THIS call by raising
-                # below and let the streak+give-up breaker escalate across turns.
-                try:
-                    from agent.bedrock_adapter import invalidate_runtime_client
-                    invalidate_runtime_client(_bedrock_region)
-                except Exception as _inval_exc:
-                    logger.debug(
-                        "bedrock: stale client eviction failed: %s", _inval_exc
+        _emit_stream_start()
+        try:
+            t = threading.Thread(
+                target=_context_thread_target(_bedrock_call), daemon=True
+            )
+            t.start()
+            while t.is_alive():
+                t.join(timeout=0.3)
+                if agent._interrupt_requested:
+                    raise InterruptedError("Agent interrupted during Bedrock API call")
+                # Liveness watchdog: no Bedrock event for longer than the stale
+                # timeout means the stream has wedged (open socket, keep-alives but
+                # no data, or a silently hung provider).  Without this the worker
+                # blocks in ``for event in event_stream`` indefinitely.
+                _stale_elapsed = time.time() - _bedrock_last_event["t"]
+                if _stale_elapsed > _bedrock_stale_timeout:
+                    logger.warning(
+                        "Bedrock stream stale for %.0fs (threshold %.0fs) — no events "
+                        "received. region=%s model=%s. Aborting call.",
+                        _stale_elapsed, _bedrock_stale_timeout,
+                        _bedrock_region, api_kwargs.get("modelId", "unknown"),
                     )
-                # Reset the timer so a repeated trip (should the worker somehow
-                # survive) waits a fresh interval rather than re-firing instantly.
-                _bedrock_last_event["t"] = time.time()
-                # Escalate across turns: raises RuntimeError once the streak
-                # crosses NASTECH_STREAM_STALE_GIVEUP, so a persistently wedged
-                # Bedrock provider aborts fast instead of re-waiting the timeout.
-                _check_stale_giveup(agent)
-                # Streak still under the give-up threshold: end THIS call with a
-                # TimeoutError so the outer retry loop / next turn re-evaluates
-                # and the streak carries forward.  Break rather than keep polling
-                # a worker we cannot abort.
-                result["error"] = TimeoutError(
-                    f"Bedrock stream produced no events for {int(_stale_elapsed)}s "
-                    f"(threshold {int(_bedrock_stale_timeout)}s) — aborting stalled "
-                    f"stream so the retry/fallback path can recover."
-                )
-                break
-        # Worker exited before the poll loop observed the interrupt flag. The
-        # Bedrock stream callback breaks out and returns a PARTIAL response
-        # without raising on interrupt (see bedrock_adapter.py
-        # stream_converse_with_callbacks / on_interrupt_check), so result[
-        # "response"] is populated with error=None and the in-loop raise above
-        # never fires. Re-check here so /stop is not silently swallowed on the
-        # Bedrock path — mirrors the post-worker guard on the main streaming
-        # loop. (#59999 area)
-        if agent._interrupt_requested:
-            raise InterruptedError("Agent interrupted during Bedrock API call (post-worker)")
-        if result["error"] is not None:
-            raise result["error"]
-        # Success — clear the cross-turn breaker (#58962): Bedrock proved
-        # responsive.  Mirrors the OpenAI/Anthropic success reset below so a
-        # recovered provider doesn't carry a stale streak into later turns.
-        if result["response"] is not None:
-            _reset_stale_streak(agent)
-        return result["response"]
+                    agent._buffer_status(
+                        f"⚠️ No events from Bedrock for {int(_stale_elapsed)}s "
+                        f"(model: {api_kwargs.get('modelId', 'unknown')}). Aborting..."
+                    )
+                    # Count the stale kill in the SAME cross-turn breaker as the
+                    # OpenAI/Anthropic path (#58962).
+                    _bump_stale_streak(agent)
+                    # Best-effort: evict the region's cached bedrock-runtime client
+                    # so the NEXT call reconnects with a fresh pool.  NOTE: this does
+                    # NOT abort the in-flight botocore EventStream the worker thread
+                    # is blocked on — botocore exposes no external cancellation for
+                    # it — so the daemon worker keeps reading until its socket read
+                    # ultimately errors.  We therefore end THIS call by raising
+                    # below and let the streak+give-up breaker escalate across turns.
+                    try:
+                        from agent.bedrock_adapter import invalidate_runtime_client
+                        invalidate_runtime_client(_bedrock_region)
+                    except Exception as _inval_exc:
+                        logger.debug(
+                            "bedrock: stale client eviction failed: %s", _inval_exc
+                        )
+                    # Reset the timer so a repeated trip (should the worker somehow
+                    # survive) waits a fresh interval rather than re-firing instantly.
+                    _bedrock_last_event["t"] = time.time()
+                    # Escalate across turns: raises RuntimeError once the streak
+                    # crosses NASTECH_STREAM_STALE_GIVEUP, so a persistently wedged
+                    # Bedrock provider aborts fast instead of re-waiting the timeout.
+                    _check_stale_giveup(agent)
+                    # Streak still under the give-up threshold: end THIS call with a
+                    # TimeoutError so the outer retry loop / next turn re-evaluates
+                    # and the streak carries forward.  Break rather than keep polling
+                    # a worker we cannot abort.
+                    result["error"] = TimeoutError(
+                        f"Bedrock stream produced no events for {int(_stale_elapsed)}s "
+                        f"(threshold {int(_bedrock_stale_timeout)}s) — aborting stalled "
+                        f"stream so the retry/fallback path can recover."
+                    )
+                    break
+            # Worker exited before the poll loop observed the interrupt flag. The
+            # Bedrock stream callback breaks out and returns a PARTIAL response
+            # without raising on interrupt (see bedrock_adapter.py
+            # stream_converse_with_callbacks / on_interrupt_check), so result[
+            # "response"] is populated with error=None and the in-loop raise above
+            # never fires. Re-check here so /stop is not silently swallowed on the
+            # Bedrock path — mirrors the post-worker guard on the main streaming
+            # loop. (#59999 area)
+            if agent._interrupt_requested:
+                raise InterruptedError("Agent interrupted during Bedrock API call (post-worker)")
+            if result["error"] is not None:
+                raise result["error"]
+            # Success — clear the cross-turn breaker (#58962): Bedrock proved
+            # responsive.  Mirrors the OpenAI/Anthropic success reset below so a
+            # recovered provider doesn't carry a stale streak into later turns.
+            if result["response"] is not None:
+                _reset_stale_streak(agent)
+            _emit_stream_end(final_text=_stream_final_text(result["response"]), finished=True, error=None)
+            return result["response"]
+        except Exception as exc:
+            _emit_stream_end(final_text="", finished=False, error=str(exc))
+            raise
 
     result = {"response": None, "error": None, "partial_tool_names": []}
 
@@ -3281,6 +3720,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         request_client_holder["diag"] = _diag
         _writer_token = {"value": None}
         attempt_request_client = {"value": None}
+        attempt_stream_response = {"value": None}
 
         def _open_stream(next_api_kwargs: dict[str, Any]):
             stream_kwargs = {
@@ -3309,6 +3749,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
 
         def _stream_created(raw_stream: Any) -> None:
             response = getattr(raw_stream, "response", None)
+            attempt_stream_response["value"] = response
             agent._capture_rate_limits(response)
             agent._capture_credits(response)
             agent._stream_diag_capture_response(_diag, response)
@@ -3395,7 +3836,31 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             # Nastech interrupts the managed stream; Relay retains sole
             # ownership of closing the underlying provider stream.
             _set_request_stream_handle(stream)
-        for chunk in stream:
+        pending_text_parts: list[str] = []
+
+        def _flush_pending_stream_text():
+            if not pending_text_parts:
+                return
+            pending_parts = list(pending_text_parts)
+            pending_text_parts.clear()
+            if not tool_calls_acc:
+                for text in pending_parts:
+                    _fire_first_delta()
+                    agent._fire_stream_delta(text)
+                    deltas_were_sent["yes"] = True
+                return
+            if agent.stream_delta_callback:
+                for text in pending_parts:
+                    try:
+                        agent.stream_delta_callback(text)
+                        agent._record_streamed_assistant_text(text)
+                    except Exception:
+                        pass
+
+        for chunk in _iter_provider_stream_chunks(
+            stream,
+            response=lambda: attempt_stream_response["value"],
+        ):
             last_chunk_time["t"] = time.time()
             agent._touch_activity("receiving stream response")
 
@@ -3476,6 +3941,13 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
             if delta and delta.content:
                 content_parts.append(delta.content)
                 if not tool_calls_acc:
+                    if pending_text_parts or _provider_stream_text_may_be_sse(delta.content):
+                        pending_text_parts.append(delta.content)
+                        pending_text = "".join(pending_text_parts)
+                        if _provider_stream_text_may_be_sse(pending_text):
+                            continue
+                        _flush_pending_stream_text()
+                        continue
                     _fire_first_delta()
                     agent._fire_stream_delta(delta.content)
                     deltas_were_sent["yes"] = True
@@ -3499,6 +3971,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
 
             # Accumulate tool call deltas — notify display on first name
             if delta and delta.tool_calls:
+                _flush_pending_stream_text()
                 for tc_delta in delta.tool_calls:
                     raw_idx = tc_delta.index if tc_delta.index is not None else 0
                     delta_id = tc_delta.id or ""
@@ -3749,6 +4222,15 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
         effective_finish_reason = finish_reason or "stop"
         if has_truncated_tool_args:
             effective_finish_reason = "length"
+
+        provider_stream_error = _provider_stream_error_from_text(
+            full_content or "",
+            effective_finish_reason,
+            response=getattr(stream, "response", None),
+        )
+        if provider_stream_error is not None:
+            raise provider_stream_error
+        _flush_pending_stream_text()
 
         full_reasoning = "".join(reasoning_parts) or None
         mock_message = SimpleNamespace(
@@ -4008,6 +4490,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                 if agent._interrupt_requested:
                     _cancel_current_stream_attempt("interrupt_before_stream_retry")
                     raise InterruptedError("Agent interrupted before stream retry")
+                _emit_stream_start()
                 try:
                     if agent.api_mode == "anthropic_messages":
                         # #67142: per-request client (credential refresh happens
@@ -4022,8 +4505,14 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                         result["response"] = _call_anthropic(request_client)
                     else:
                         result["response"] = _call_chat_completions(stream_attempt_id)
+                    _emit_stream_end(
+                        final_text=_stream_final_text(result["response"]),
+                        finished=True,
+                        error=None,
+                    )
                     return  # success
                 except Exception as e:
+                    _emit_stream_end(final_text="", finished=False, error=str(e))
                     _close_managed_stream()
                     # If the main poll loop force-closed this request because
                     # of an interrupt, the resulting transport error is the

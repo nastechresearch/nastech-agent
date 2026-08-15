@@ -302,7 +302,7 @@ def dev_gate_open() -> bool:
 # ---------------------------------------------------------------------------
 
 #: Production Skill Sync plane. Overridable per the resolution order below.
-DEFAULT_SYNC_BASE_URL = "https://gateway-gateway.nastechresearch.com"
+DEFAULT_SYNC_BASE_URL = "https://gateway-gateway.nastechresearch.github.io"
 
 def resolve_sync_base_url() -> Optional[str]:
     """Resolve the sync-plane base URL.

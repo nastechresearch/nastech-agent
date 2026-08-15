@@ -115,6 +115,14 @@ export interface Translations {
     managingProfile?: string;
     currentProfileOption?: string;
     managingProfileBanner?: string;
+    /** NS-656 memory-pressure banner — optional, English fallback. */
+    memoryOomRestartBanner?: string;
+    memoryCriticalBanner?: string;
+    memoryElevatedBanner?: string;
+    /** NS-656 disk-usage banner — optional, English fallback. */
+    diskCriticalBanner?: string;
+    diskElevatedBanner?: string;
+    dismiss?: string;
   };
 
   // ── Status page ──
@@ -222,7 +230,7 @@ export interface Translations {
     input: string;
     output: string;
     total: string;
-    nastechageData: string;
+    noUsageData: string;
     startSession: string;
     date: string;
     model: string;

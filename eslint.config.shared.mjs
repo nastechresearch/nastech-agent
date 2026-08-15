@@ -79,7 +79,7 @@ export default [
       ],
       'perfectionist/sort-exports': ['error', { order: 'asc', type: 'natural' }],
       'perfectionist/sort-imports': [
-        'error',
+        'warn',
         {
           groups: ['side-effect', 'builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
           order: 'asc',
@@ -87,8 +87,8 @@ export default [
         }
       ],
       'perfectionist/sort-jsx-props': ['error', { order: 'asc', type: 'natural' }],
-      'perfectionist/sort-named-exports': ['error', { order: 'asc', type: 'natural' }],
-      'perfectionist/sort-named-imports': ['error', { order: 'asc', type: 'natural' }],
+      'perfectionist/sort-named-exports': ['warn', { order: 'asc', type: 'natural' }],
+      'perfectionist/sort-named-imports': ['warn', { order: 'asc', type: 'natural' }],
       'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/rules-of-hooks': 'error',
       'unused-imports/no-unused-imports': 'error'

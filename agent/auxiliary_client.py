@@ -111,11 +111,60 @@ class _OpenAIProxy:
 
 OpenAI = _OpenAIProxy()  # module-level name, resolves lazily on call/isinstance
 
+
+# ── Availability probe mode ───────────────────────────────────────────────
+# check_fns (tool gating) only need to know whether a client is RESOLVABLE —
+# credentials present, provider routable. Building a real SDK client for that
+# answer forces the `openai` import (~0.3s) plus httpx/SSL-context setup on
+# the CLI startup path, twice (vision + browser_vision), for an object that
+# is immediately discarded. Inside `aux_probe_mode()` the client constructors
+# return a lightweight stub instead; resolution POLICY (which provider wins,
+# credential lookup, fallback order) is unchanged and stays single-owner.
+# Stubs are never cached (see _store_cached_client), so runtime callers can
+# never receive one.
+_aux_probe_state = threading.local()
+
+
+class _AuxProbeClientStub:
+    """Non-functional placeholder returned while `aux_probe_mode` is active."""
+
+    __slots__ = ("api_key", "base_url")
+
+    def __init__(self, api_key: str = "", base_url: str = "") -> None:
+        self.api_key = api_key
+        self.base_url = base_url
+
+    def __getattr__(self, name: str) -> Any:
+        # Loud failure if a probe stub ever leaks into a runtime call path
+        # (it must not — stubs are cache-excluded and probe-scoped).
+        raise RuntimeError(
+            f"_AuxProbeClientStub used as a real client (attribute {name!r}); "
+            "aux_probe_mode is for availability checks only"
+        )
+
+    def __repr__(self) -> str:
+        return "<aux availability-probe client stub>"
+
+
+def _aux_probe_active() -> bool:
+    return bool(getattr(_aux_probe_state, "active", False))
+
+
+@contextlib.contextmanager
+def aux_probe_mode():
+    """Resolve provider availability without constructing real SDK clients."""
+    prev = getattr(_aux_probe_state, "active", False)
+    _aux_probe_state.active = True
+    try:
+        yield
+    finally:
+        _aux_probe_state.active = prev
+
 from agent.credential_pool import load_pool
 from agent.model_metadata import MINIMUM_CONTEXT_LENGTH, get_model_context_length
 from nastech_cli.config import get_nastech_home
 from nastech_constants import OPENROUTER_BASE_URL
-from utils import base_url_host_matches, base_url_hostname, env_float, model_forces_max_completion_tokens, normalize_proxy_env_vars
+from utils import base_url_host_matches, base_url_hostname, env_float, is_truthy_value, model_forces_max_completion_tokens, normalize_proxy_env_vars
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +257,10 @@ def _openai_http_client_kwargs(
     return {"http_client": client}
 
 def _create_openai_client(*, api_key: str, base_url: str, **kwargs: Any) -> Any:
+    if _aux_probe_active():
+        # Availability probe: credentials/base_url resolved — that is the
+        # answer. Skip the openai import + httpx/SSL construction entirely.
+        return _AuxProbeClientStub(api_key=api_key, base_url=base_url)
     kwargs = {**_openai_http_client_kwargs(base_url), **kwargs}
     # Nastech owns auxiliary retry + provider/model fallback policy (the
     # same-provider transient retry in call_llm plus the except-chain
@@ -895,11 +948,19 @@ _API_KEY_PROVIDER_AUX_MODELS_FALLBACK: Dict[str, str] = {
 # can still use this dict directly. Kept in sync with _FALLBACK above.
 _API_KEY_PROVIDER_AUX_MODELS: Dict[str, str] = _API_KEY_PROVIDER_AUX_MODELS_FALLBACK
 
-# Auxiliary tasks that prefer the provider's fast/cheap model over the user's
-# main chat model when running in "auto" mode. Restricted to tasks where
-# latency is user-visible and the output is short enough that a small model
-# matches a frontier one. Every other task keeps "auto = my chat model".
+# Auxiliary tasks that may opt into the provider's fast/cheap model instead of
+# the user's main chat model. The opt-in lives in
+# ``auxiliary.<task>.prefer_fast_model`` so the default ``auto = main model``
+# contract remains true on every settings surface.
 _FAST_MODEL_TASKS: frozenset = frozenset({"title_generation"})
+
+
+def _task_prefers_fast_model(task: Optional[str]) -> bool:
+    """Return whether an eligible task explicitly opts into fast-model routing."""
+    if task not in _FAST_MODEL_TASKS:
+        return False
+    task_config = _get_auxiliary_task_config(task)
+    return is_truthy_value(task_config.get("prefer_fast_model"), default=False)
 
 
 # Vision-specific model overrides for direct providers.
@@ -1115,7 +1176,7 @@ auxiliary_is_nastech: bool = False
 # Default auxiliary models per provider
 _OPENROUTER_MODEL = "google/gemini-3.6-flash"
 _NASTECH_MODEL = "google/gemini-3.6-flash"
-_NASTECH_DEFAULT_BASE_URL = "https://inference-api.nastechresearch.com/v1"
+_NASTECH_DEFAULT_BASE_URL = "https://inference-api.nastechresearch.github.io/v1"
 _ANTHROPIC_DEFAULT_BASE_URL = "https://api.anthropic.com"
 _AUTH_JSON_PATH = get_nastech_home() / "auth.json"
 
@@ -1169,26 +1230,73 @@ def _codex_cloudflare_headers(access_token: str) -> Dict[str, str]:
     return headers
 
 
-def _to_openai_base_url(base_url: str) -> str:
-    """Normalize an Anthropic-style base URL to OpenAI-compatible format.
+# Hosts that expose BOTH an Anthropic-style ``…/anthropic`` path and a sibling
+# OpenAI-compatible ``…/v1`` (or vendor-specific OpenAI path). Unconditional
+# ``/anthropic`` → ``/v1`` rewrites break Anthropic-only gateways such as
+# Alibaba Bailian Token Plan (#83642).
+#
+# Matching is anchored to the URL *host* (exact domain or subdomain suffix /
+# ``api.minimax.*`` prefix) — never a substring of the whole URL, so a path
+# that merely contains ``api.minimax`` cannot false-positive.
+_DUAL_SURFACE_ANTHROPIC_HOST_SUFFIXES = (
+    "minimax.io",
+    "minimax.chat",
+    "minimaxi.com",
+)
+_DUAL_SURFACE_ANTHROPIC_HOST_PREFIXES = ("api.minimax.",)
 
-    Some providers (MiniMax, MiniMax-CN) expose an ``/anthropic`` endpoint for
-    the Anthropic Messages API and a separate ``/v1`` endpoint for OpenAI chat
-    completions.  The auxiliary client uses the OpenAI SDK, so it must hit the
-    ``/v1`` surface.  Passing the raw ``inference_base_url`` causes requests to
-    land on ``/anthropic/chat/completions`` — a 404.
+
+def _is_dual_surface_anthropic_host(url: str) -> bool:
+    """True when the URL's host is a known dual-surface (MiniMax-family) host."""
+    try:
+        host = (urlparse(url).hostname or "").lower()
+    except ValueError:
+        return False
+    if not host:
+        return False
+    for suffix in _DUAL_SURFACE_ANTHROPIC_HOST_SUFFIXES:
+        if host == suffix or host.endswith("." + suffix):
+            return True
+    return any(host.startswith(prefix) for prefix in _DUAL_SURFACE_ANTHROPIC_HOST_PREFIXES)
+
+
+def _to_openai_base_url(base_url: str) -> str:
+    """Normalize dual-surface Anthropic URLs to OpenAI-compatible format.
+
+    MiniMax (and MiniMax-CN) expose an ``/anthropic`` endpoint for the Anthropic
+    Messages API and a separate ``/v1`` endpoint for OpenAI chat completions.
+    The auxiliary client often uses the OpenAI SDK, so those dual-surface hosts
+    must hit ``/v1``.
+
+    Anthropic-**only** custom gateways (path ends in ``/anthropic`` but has no
+    sibling ``/v1``) must keep their path; rewriting them to ``/v1`` yields 404
+    on compression/vision/title_generation (#83642).
+
+    ZAI exposes its general API and Coding Plan on separate endpoints.  Its
+    Anthropic-compatible Coding Plan endpoint maps to ``/api/coding/paas/v4``
+    on the OpenAI wire, not the general ``/api/paas/v4`` endpoint.  Rewriting
+    to the general endpoint changes the billing pool and can return a false
+    insufficient-balance error for a valid Coding Plan key.
     """
     url = str(base_url or "").strip().rstrip("/")
     if url.endswith("/anthropic"):
-        # ZAI (open.bigmodel.cn) uses /api/anthropic for Anthropic wire
-        # but /api/paas/v4 for OpenAI wire — the generic /v1 rewrite is wrong.
-        if "open.bigmodel.cn" in url or "bigmodel" in url:
-            rewritten = url[: -len("/anthropic")] + "/paas/v4"
+        # ZAI uses /api/anthropic for the Coding Plan's Anthropic wire.  The
+        # matching OpenAI-wire endpoint is /api/coding/paas/v4; /api/paas/v4
+        # is the independently billed general API.
+        if "open.bigmodel.cn" in url or "bigmodel" in url or "api.z.ai" in url:
+            rewritten = url[: -len("/anthropic")] + "/coding/paas/v4"
             logger.debug("Auxiliary client: rewrote ZAI base URL %s → %s", url, rewritten)
             return rewritten
-        rewritten = url[: -len("/anthropic")] + "/v1"
-        logger.debug("Auxiliary client: rewrote base URL %s → %s", url, rewritten)
-        return rewritten
+        if _is_dual_surface_anthropic_host(url):
+            rewritten = url[: -len("/anthropic")] + "/v1"
+            logger.debug("Auxiliary client: rewrote dual-surface base URL %s → %s", url, rewritten)
+            return rewritten
+        # Anthropic-only gateway: leave the /anthropic path alone.
+        logger.debug(
+            "Auxiliary client: keeping Anthropic-only base URL %s (no dual-surface host match)",
+            url,
+        )
+        return url
     if "api.kimi.com" in url and url.endswith("/coding"):
         # Kimi Code uses /coding/v1/messages for Anthropic SDK (appends /v1/messages)
         # but /coding/v1/chat/completions for OpenAI SDK (appends /chat/completions)
@@ -1280,13 +1388,31 @@ _ANTHROPIC_COMPATIBLE_HOSTS = frozenset({
 
 
 def _is_anthropic_compatible_host(url: str) -> bool:
-    """Return True if ``url``'s hostname is an Anthropic endpoint we trust for aux calls."""
+    """Return True if ``url`` is an Anthropic endpoint we trust for aux calls.
+
+    Trust the native Anthropic hosts, plus Anthropic-compatible gateways that
+    expose the native Messages protocol under a ``/anthropic`` path suffix
+    (MiniMax, Zhipu GLM, LiteLLM-style relays, self-hosted proxies). That suffix
+    is the same convention ``runtime_provider._detect_api_mode_for_url`` uses to
+    route ``provider: anthropic`` on the primary path, and ``_wrap_if_needed``
+    uses to pick the Anthropic wire transport — without this, ``_try_anthropic``
+    discards a configured ``model.base_url`` for auxiliary and fallback calls and
+    forces ``https://api.anthropic.com``, so those calls diverge from the main
+    agent's endpoint (and fail when the gateway, not Anthropic, holds auth).
+
+    A bare non-Anthropic base_url (e.g. a stale ``openrouter.ai/api/v1`` left on
+    ``provider: anthropic``) still returns False — the guard #52608 added.
+    """
     if not url:
         return False
     try:
         from urllib.parse import urlparse
-        host = (urlparse(url).hostname or "").strip().lower().rstrip(".")
-        return host in _ANTHROPIC_COMPATIBLE_HOSTS
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").strip().lower().rstrip(".")
+        if host in _ANTHROPIC_COMPATIBLE_HOSTS:
+            return True
+        path = (parsed.path or "").rstrip("/").lower()
+        return path.endswith("/anthropic") or path.endswith("/anthropic/v1")
     except Exception:
         return False
 
@@ -1374,8 +1500,15 @@ class _CodexCompletionsAdapter:
         # build_kwargs, so they need the same guard applied independently.
         _host_for_input = str(getattr(self._client, "base_url", "") or "")
         _is_github_for_input = base_url_host_matches(_host_for_input, "githubcopilot.com")
+        # Auxiliary calls never send ``context_management`` (native
+        # compaction is a main-turn feature), so they must never replay a
+        # compaction checkpoint from the replayed history nor let one
+        # restructure this request — the summarizer/aggregator model is
+        # usually not even the one that minted the blob.
         input_items = _chat_messages_to_responses_input(
-            replay_messages, is_github_responses=_is_github_for_input,
+            replay_messages,
+            is_github_responses=_is_github_for_input,
+            native_compaction_eligible=False,
         )
 
         resp_kwargs: Dict[str, Any] = {
@@ -2179,6 +2312,11 @@ def _maybe_wrap_anthropic(
     - The ``anthropic`` SDK is not installed (falls back to OpenAI wire).
     """
     # Already wrapped — don't double-wrap.
+    if isinstance(client_obj, _AuxProbeClientStub):
+        # Availability probe: transport correction is irrelevant — the stub
+        # only signals resolvability. Skipping also avoids importing adapter
+        # modules (copilot_acp_client pulls in openai.types) on the probe path.
+        return client_obj
     if _safe_isinstance(client_obj, AnthropicAuxiliaryClient):
         return client_obj
     if _safe_isinstance(client_obj, BedrockAuxiliaryClient):
@@ -2731,26 +2869,30 @@ def _try_nastech(vision: bool = False) -> Tuple[Optional[OpenAI], Optional[str]]
     # _NASTECH_MODEL (google/gemini-3-flash-preview) when the Portal is unreachable
     # or returns a null recommendation for this task type.
     model = _NASTECH_MODEL
-    try:
-        from nastech_cli.models import get_nastech_recommended_aux_model
-        recommended = get_nastech_recommended_aux_model(vision=vision)
-        if recommended:
-            model = recommended
+    if not _aux_probe_active():
+        # Availability probes skip the recommended-model lookup: the exact
+        # model is irrelevant to "is Nastech resolvable?", and the Portal
+        # recommended-models fetch below can hit the network.
+        try:
+            from nastech_cli.models import get_nastech_recommended_aux_model
+            recommended = get_nastech_recommended_aux_model(vision=vision)
+            if recommended:
+                model = recommended
+                logger.debug(
+                    "Auxiliary/%s: using Portal-recommended model %s",
+                    "vision" if vision else "text", model,
+                )
+            else:
+                logger.debug(
+                    "Auxiliary/%s: no Portal recommendation, falling back to %s",
+                    "vision" if vision else "text", model,
+                )
+        except Exception as exc:
             logger.debug(
-                "Auxiliary/%s: using Portal-recommended model %s",
-                "vision" if vision else "text", model,
+                "Auxiliary/%s: recommended-models lookup failed (%s); "
+                "falling back to %s",
+                "vision" if vision else "text", exc, model,
             )
-        else:
-            logger.debug(
-                "Auxiliary/%s: no Portal recommendation, falling back to %s",
-                "vision" if vision else "text", model,
-            )
-    except Exception as exc:
-        logger.debug(
-            "Auxiliary/%s: recommended-models lookup failed (%s); "
-            "falling back to %s",
-            "vision" if vision else "text", exc, model,
-        )
 
     if runtime is not None:
         api_key, base_url = runtime
@@ -3077,6 +3219,17 @@ def _set_relay_auxiliary_route(
     context["model"] = str(model or "unknown")
     context["response_model"] = None
     context["api_mode"] = str(api_mode or "chat_completions")
+
+
+def _record_route_info(
+    route_info: Optional[Dict[str, str]],
+    provider: Optional[str],
+    model: Optional[str],
+) -> None:
+    """Expose the concrete route selected for one auxiliary call."""
+    if route_info is not None:
+        route_info["provider"] = provider or "auto"
+        route_info["model"] = model or "default"
 
 
 def _relay_auxiliary_metadata(
@@ -3696,6 +3849,10 @@ def _try_anthropic(explicit_api_key: str = None) -> Tuple[Optional[Any], Optiona
     from agent.anthropic_adapter import _is_oauth_token
     is_oauth = _is_oauth_token(token)
     model = _get_aux_model_for_provider("anthropic") or "claude-haiku-4-5-20251001"
+    if _aux_probe_active():
+        # Availability probe — token + SDK adapter import resolved; skip
+        # real client construction.
+        return _AuxProbeClientStub(api_key="", base_url=base_url), model
     logger.debug("Auxiliary client: Anthropic native (%s) at %s (oauth=%s)", model, base_url, is_oauth)
     try:
         real_client = build_anthropic_client(token, base_url)
@@ -4345,7 +4502,7 @@ def _recoverable_pool_provider(
         return "openai-codex"
     if base_url_host_matches(base, "openrouter.ai"):
         return "openrouter"
-    if base_url_host_matches(base, "inference-api.nastechresearch.com"):
+    if base_url_host_matches(base, "inference-api.nastechresearch.github.io"):
         return "nastech"
     if base_url_host_matches(base, "api.anthropic.com"):
         return "anthropic"
@@ -4684,7 +4841,7 @@ def _auth_refresh_provider_for_route(
         return "openai-codex"
     if base_url_host_matches(client_base_url, "api.anthropic.com"):
         return "anthropic"
-    if base_url_host_matches(client_base_url, "inference-api.nastechresearch.com"):
+    if base_url_host_matches(client_base_url, "inference-api.nastechresearch.github.io"):
         return "nastech"
     return normalized
 
@@ -4735,7 +4892,10 @@ def _fallback_entry_timeout(task: Optional[str], fb_label: str) -> Optional[floa
 
 def _fallback_provider_from_label(label: str) -> str:
     """Recover the provider identifier from a fallback display label."""
-    match = re.match(r"(?:fallback_chain\[\d+\]|main-agent)\(([^)]+)\)$", label or "")
+    match = re.match(
+        r"(?:fallback_chain\[\d+\]|fallback_providers\[\d+\]|main-agent)\(([^)]+)\)$",
+        label or "",
+    )
     return match.group(1).strip() if match else str(label or "").strip()
 
 
@@ -4816,7 +4976,10 @@ def _replan_synchronous_cache_sections(
     destination: _FallbackDestination,
 ) -> tuple[list, list]:
     """Strip source decoration and plan one synchronous destination locally."""
-    from agent.agent_runtime_helpers import plan_cache_sections_for_destination
+    from agent.agent_runtime_helpers import (
+        configured_cache_ttl,
+        plan_cache_sections_for_destination,
+    )
 
     return plan_cache_sections_for_destination(
         messages,
@@ -4825,6 +4988,12 @@ def _replan_synchronous_cache_sections(
         base_url=destination.base_url,
         api_mode=destination.api_mode or "",
         model=destination.model or "",
+        # Thread the operator's configured tier so auxiliary fallback
+        # requests stop regressing a configured 1h to the 5m default
+        # (#84733); the planner clamps per-destination (Qwen → 5m). There
+        # is no live agent here, so read the same config key agent_init
+        # snapshots into agent._cache_ttl.
+        cache_ttl=configured_cache_ttl(),
     )
 
 
@@ -5611,17 +5780,13 @@ def _resolve_auto_route(
     main_provider = str(runtime_provider or _read_main_provider() or "")
     main_model = str(runtime_model or _read_main_model() or "")
 
-    # Latency-critical tasks prefer the provider's registered fast model over
-    # the main chat model. Titling is the only such task: it names a visible
-    # sidebar row, produces ~8 tokens, and running it on a frontier reasoning
-    # model costs seconds per new session. Every comparable tool routes titling
-    # to a small tier (Claude Code → Haiku, OpenCode → small_model, Zed →
-    # default_fast_model, OpenClaw → utilityModel). An explicit
-    # auxiliary.<task>.model in config.yaml still wins — this only redirects
-    # the "auto" default, and only when the provider registered a cheap model.
-    # Every other aux task keeps the "auto means my chat model" contract
-    # documented above: this does NOT change compression, vision, or search.
-    if task in _FAST_MODEL_TASKS and main_provider and main_provider not in {"auto", ""}:
+    # Latency-critical tasks can explicitly prefer the provider's registered
+    # fast model over the main chat model. Titling is the only eligible task:
+    # it names a visible sidebar row, produces ~8 tokens, and running it on a
+    # frontier reasoning model costs seconds per new session. This remains an
+    # opt-in because every settings surface defines "auto" as using the main
+    # model; silently overriding that choice makes the selected model cosmetic.
+    if _task_prefers_fast_model(task) and main_provider and main_provider not in {"auto", ""}:
         fast_model = _get_aux_model_for_provider(main_provider, prefer_fast=True)
         if fast_model and fast_model != main_model:
             logger.debug(
@@ -5806,6 +5971,8 @@ def _to_async_client(sync_client, model: str, is_vision: bool = False):
     """
     from openai import AsyncOpenAI
 
+    if isinstance(sync_client, _AuxProbeClientStub):
+        return sync_client, model
     if isinstance(sync_client, CodexAuxiliaryClient):
         return AsyncCodexAuxiliaryClient(sync_client), model
     if isinstance(sync_client, AnthropicAuxiliaryClient):
@@ -6186,8 +6353,18 @@ def resolve_provider_client(
     if provider == "custom":
         custom_base = ""
         custom_key = ""
+        # Base passed to _wrap_if_needed for the Anthropic-wrap decision.  It
+        # normally equals custom_base, but anthropic_messages talks to the
+        # /anthropic surface directly, so it must keep the raw /anthropic base
+        # while the plain OpenAI client (created from custom_base below, and the
+        # OpenAI-wire fallback taken when the anthropic SDK is unavailable) still
+        # uses the /v1-rewritten base so it never lands on
+        # /anthropic/chat/completions.  Empty means "use custom_base". See #16254.
+        wrap_base = ""
         if explicit_base_url:
             custom_base = _to_openai_base_url(explicit_base_url).strip()
+            if api_mode == "anthropic_messages":
+                wrap_base = (explicit_base_url or "").strip().rstrip("/")
             custom_key = (
                 (explicit_api_key or "").strip()
                 or _scoped_key_env("OPENAI_API_KEY")
@@ -6244,7 +6421,7 @@ def resolve_provider_client(
             if _merged_custom:
                 extra["default_headers"] = _merged_custom
             client = _create_openai_client(api_key=custom_key, base_url=_clean_base, **extra)
-            client = _wrap_if_needed(client, final_model, custom_base, custom_key)
+            client = _wrap_if_needed(client, final_model, wrap_base or custom_base, custom_key)
             return (_to_async_client(client, final_model, is_vision=is_vision) if async_mode
                     else (client, final_model))
         # Try custom first, then API-key providers (Codex excluded here:
@@ -7216,7 +7393,11 @@ def _client_cache_key(
     # `auto` can now resolve through task-specific or main fallback policy,
     # so the task participates in the cache key. Non-auto providers keep the
     # old cache shape because the explicit provider/model tuple is sufficient.
-    task_key = (task or "") if provider == "auto" else ""
+    task_key = (
+        (task or "", _task_prefers_fast_model(task))
+        if provider == "auto"
+        else ""
+    )
     pool_hint = _pool_cache_hint(provider, main_runtime=main_runtime)
     # The model MUST participate in the key. Two concurrent auxiliary calls to
     # the SAME provider/base_url/key but DIFFERENT models (e.g. a MoA reference
@@ -7233,6 +7414,10 @@ def _client_cache_key(
 
 
 def _store_cached_client(cache_key: tuple, client: Any, default_model: Optional[str], *, bound_loop: Any = None) -> None:
+    if isinstance(client, _AuxProbeClientStub):
+        # Probe stubs must never enter the cache — a runtime caller would
+        # receive a non-functional client on the next cache hit.
+        return
     with _client_cache_lock:
         old_entry = _client_cache.get(cache_key)
         if old_entry is not None and old_entry[0] is not client:
@@ -8801,6 +8986,7 @@ def call_llm(
     api_mode: str = None,
     stream: bool = False,
     stream_options: dict = None,
+    route_info: Optional[Dict[str, str]] = None,
 ) -> Any:
     """Run an auxiliary LLM request, applying the configured task limit."""
     semaphore = _acquire_sync_aux_semaphore(task)
@@ -8825,6 +9011,7 @@ def call_llm(
             api_mode=api_mode,
             stream=stream,
             stream_options=stream_options,
+            route_info=route_info,
         )
         if stream and semaphore is not None:
             stream_semaphore = semaphore
@@ -8870,6 +9057,7 @@ def _call_llm_impl(
     api_mode: str = None,
     stream: bool = False,
     stream_options: dict = None,
+    route_info: Optional[Dict[str, str]] = None,
 ) -> Any:
     """Centralized synchronous LLM call.
 
@@ -9007,6 +9195,9 @@ def _call_llm_impl(
         request_provider,
         final_model,
         resolved_api_mode,
+    )
+    _record_route_info(
+        route_info, _fallback_provider_from_label(request_provider), final_model
     )
 
     # Log what we're about to do — makes auxiliary operations visible
@@ -9226,7 +9417,7 @@ def _call_llm_impl(
         # known-good default). Only applies to Nastech-routed calls.
         _heal_is_nastech = (
             resolved_provider == "nastech"
-            or base_url_host_matches(_base_info, "inference-api.nastechresearch.com")
+            or base_url_host_matches(_base_info, "inference-api.nastechresearch.github.io")
         )
         if _is_model_not_found_error(first_err) and _heal_is_nastech:
             healed_model = _refresh_nastech_recommended_model(
@@ -9252,7 +9443,7 @@ def _call_llm_impl(
         # ── Nastech auth refresh parity with main agent ──────────────────
         client_is_nastech = (
             resolved_provider == "nastech"
-            or base_url_host_matches(_base_info, "inference-api.nastechresearch.com")
+            or base_url_host_matches(_base_info, "inference-api.nastechresearch.github.io")
         )
         if (
             _is_payment_error(first_err)
@@ -9527,6 +9718,9 @@ def _call_llm_impl(
                         failed_model=_chain_failed_model)
 
             if fb_client is not None:
+                _record_route_info(
+                    route_info, _fallback_provider_from_label(fb_label), fb_model
+                )
                 fb_resp = _call_fallback_candidate_sync(
                     fb_client, fb_model, fb_label,
                     task=task, messages=messages,
@@ -9542,6 +9736,9 @@ def _call_llm_impl(
                 fb_client, fb_model, fb_label = _try_payment_fallback(
                     resolved_provider, task, reason="stale fallback credential")
                 if fb_client is not None:
+                    _record_route_info(
+                        route_info, _fallback_provider_from_label(fb_label), fb_model
+                    )
                     fb_resp = _call_fallback_candidate_sync(
                         fb_client, fb_model, fb_label,
                         task=task, messages=messages,
@@ -9645,6 +9842,7 @@ async def async_call_llm(
     timeout: float = None,
     extra_body: dict = None,
     reasoning_config: Optional[dict] = None,
+    route_info: Optional[Dict[str, str]] = None,
 ) -> Any:
     """Run an asynchronous auxiliary LLM request under the configured limit."""
     semaphore = _acquire_async_aux_semaphore(task)
@@ -9665,6 +9863,7 @@ async def async_call_llm(
             timeout=timeout,
             extra_body=extra_body,
             reasoning_config=reasoning_config,
+            route_info=route_info,
         )
     finally:
         if semaphore is not None:
@@ -9686,6 +9885,7 @@ async def _async_call_llm_impl(
     timeout: float = None,
     extra_body: dict = None,
     reasoning_config: Optional[dict] = None,
+    route_info: Optional[Dict[str, str]] = None,
 ) -> Any:
     """Centralized asynchronous LLM call.
 
@@ -9781,6 +9981,9 @@ async def _async_call_llm_impl(
         request_provider,
         final_model,
         resolved_api_mode,
+    )
+    _record_route_info(
+        route_info, _fallback_provider_from_label(request_provider), final_model
     )
 
     # Pass the client's actual base_url (not just resolved_base_url) so
@@ -9925,7 +10128,7 @@ async def _async_call_llm_impl(
         # fresh Portal fetch and retry once with the current recommendation.
         _heal_is_nastech = (
             resolved_provider == "nastech"
-            or base_url_host_matches(_client_base, "inference-api.nastechresearch.com")
+            or base_url_host_matches(_client_base, "inference-api.nastechresearch.github.io")
         )
         if _is_model_not_found_error(first_err) and _heal_is_nastech:
             healed_model = _refresh_nastech_recommended_model(
@@ -9951,7 +10154,7 @@ async def _async_call_llm_impl(
         # ── Nastech auth refresh parity with main agent ──────────────────
         client_is_nastech = (
             resolved_provider == "nastech"
-            or base_url_host_matches(_client_base, "inference-api.nastechresearch.com")
+            or base_url_host_matches(_client_base, "inference-api.nastechresearch.github.io")
         )
         if (
             _is_payment_error(first_err)
@@ -10183,6 +10386,11 @@ async def _async_call_llm_impl(
                 async_fb, async_fb_model = _to_async_client(
                     fb_client, fb_model or "", is_vision=(task == "vision")
                 )
+                _record_route_info(
+                    route_info,
+                    _fallback_provider_from_label(fb_label),
+                    async_fb_model or fb_model,
+                )
                 fb_resp = await _call_fallback_candidate_async(
                     async_fb, async_fb_model or fb_model, fb_label,
                     task=task, messages=messages,
@@ -10199,6 +10407,11 @@ async def _async_call_llm_impl(
                 if fb_client is not None:
                     async_fb, async_fb_model = _to_async_client(
                         fb_client, fb_model or "", is_vision=(task == "vision")
+                    )
+                    _record_route_info(
+                        route_info,
+                        _fallback_provider_from_label(fb_label),
+                        async_fb_model or fb_model,
                     )
                     fb_resp = await _call_fallback_candidate_async(
                         async_fb, async_fb_model or fb_model, fb_label,

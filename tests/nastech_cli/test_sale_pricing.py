@@ -79,7 +79,7 @@ def test_resolve_nastech_pricing_credentials_honors_inference_env_override(monke
     """
     monkeypatch.setenv(
         "NASTECH_INFERENCE_BASE_URL",
-        "https://stg-inference-api.nastechresearch.com/v1",
+        "https://stg-inference-api.nastechresearch.github.io/v1",
     )
     # Auth resolution fails / returns nothing — the env override must still win.
     monkeypatch.setattr(
@@ -88,7 +88,7 @@ def test_resolve_nastech_pricing_credentials_honors_inference_env_override(monke
     )
     api_key, base_url = models_mod._resolve_nastech_pricing_credentials()
     assert api_key == ""
-    assert base_url == "https://stg-inference-api.nastechresearch.com/v1"
+    assert base_url == "https://stg-inference-api.nastechresearch.github.io/v1"
 
 
 def test_a_failed_catalog_fetch_is_not_cached_forever(monkeypatch):

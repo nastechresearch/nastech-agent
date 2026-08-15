@@ -147,13 +147,13 @@ describe('pollChargeSettlement', () => {
 
     const outcome = await pollChargeSettlement(api, 'ch_123', {
       ...clock,
-      portalUrl: 'https://portal.nastechresearch.com/billing'
+      portalUrl: 'https://portal.nastechresearch.github.io/billing'
     })
 
     expect(outcome).toEqual({
       kind: 'ambiguous',
       message: 'Charge may still settle. Check the portal before retrying.',
-      portalUrl: 'https://portal.nastechresearch.com/billing',
+      portalUrl: 'https://portal.nastechresearch.github.io/billing',
       title: 'Still processing after 5 minutes'
     })
     expect(clock.waits.reduce((total, ms) => total + ms, 0)).toBe(CHARGE_POLL_CAP_MS)
@@ -166,7 +166,7 @@ describe('pollChargeSettlement', () => {
       chargeStatus: vi.fn().mockResolvedValue(
         refusal('session_revoked', {
           message: 'Your session was logged out.',
-          portalUrl: 'https://portal.nastechresearch.com/billing'
+          portalUrl: 'https://portal.nastechresearch.github.io/billing'
         })
       )
     }
@@ -175,7 +175,7 @@ describe('pollChargeSettlement', () => {
 
     expect(outcome).toMatchObject({
       kind: 'ambiguous',
-      portalUrl: 'https://portal.nastechresearch.com/billing',
+      portalUrl: 'https://portal.nastechresearch.github.io/billing',
       title: 'Charge outcome unconfirmed'
     })
   })
@@ -189,7 +189,7 @@ describe('useChargeFlow', () => {
       refusal: {
         kind: 'no_payment_method',
         message: 'No saved card.',
-        portalUrl: 'https://portal.nastechresearch.com/billing'
+        portalUrl: 'https://portal.nastechresearch.github.io/billing'
       }
     })
 

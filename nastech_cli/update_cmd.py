@@ -2023,12 +2023,13 @@ def _npm_manifest_paths() -> tuple[Path, ...]:
 
     The workspace list is pulled from the root package.json's `workspaces`
     globs (npm's own source of truth) rather than hardcoded, so adding a
-    workspace can never silently escape the skip key. The root install
-    (step 1, --workspaces=false) still hoists shared deps for EVERY
-    workspace — desktop included — so all of them belong in the key, not
-    just the ones step 2 installs. Falls back to hashing just root
-    manifests if package.json is unreadable (never skips more than main
-    would have installed).
+    workspace can never silently escape the skip key. Every workspace
+    manifest belongs in the key — desktop included, even though the
+    install only names ui-tui and web — because the single lockfile spans
+    the whole workspace graph, so any manifest edit can put the lockfile
+    out of sync and change what the install must do. Falls back to hashing
+    just root manifests if package.json is unreadable (never skips more
+    than main would have installed).
     """
     root_pkg = _m().PROJECT_ROOT / "package.json"
     paths = [_m().PROJECT_ROOT / "package-lock.json", root_pkg]
@@ -2101,8 +2102,36 @@ def _record_npm_lockfile_hash(nastech_root: Path) -> None:
     except OSError:
         logger.debug("Could not write npm lockfile hash cache")
 
+def _repair_node_deps_on_current_checkout(print_completion) -> None:
+    """Repair Node deps on the ``commit_count == 0`` path (#77211).
+
+    A current checkout does not imply healthy Node deps: a previous npm
+    install may have failed (EBADENGINE from a node/npm mismatch, network
+    timeout, interrupted install) and its error message says to "re-run
+    nastech update" — but the early return never reached the Node refresh,
+    so that repair advice could never work. ``_update_node_dependencies``
+    self-gates on the lockfile hash, which is only recorded after a
+    SUCCESSFUL npm install (and re-trips when node_modules is missing or
+    the web toolchain never landed), so this is a cheap no-op on healthy
+    installs and a real repair after a failed one.
+    """
+    node_failures = _update_node_dependencies()
+    if node_failures:
+        print(f"  ⚠ Node.js refresh failed for: {', '.join(node_failures)}")
+        print("    Fix npm and re-run `nastech update`.")
+        print_completion(
+            "⚠ Checkout is current, but Node.js dependencies could not be repaired."
+        )
+        return
+    # Pair the refresh with the web build like every other
+    # _update_node_dependencies call site; it staleness-checks internally,
+    # so this is a no-op when nothing changed.
+    _m()._build_web_ui(_m().PROJECT_ROOT / "web")
+    print_completion("✓ Already up to date!")
+
+
 def _update_node_dependencies() -> list[str]:
-    """Refresh Node deps in the repo root and update workspaces.
+    """Refresh Node deps for the ui-tui and web workspaces.
 
     Returns the list of labels whose npm install failed (empty on success),
     so the caller can treat a Node refresh failure as a partial update rather
@@ -2124,7 +2153,7 @@ def _update_node_dependencies() -> list[str]:
             print("  ⚠ Skipped: only a Windows npm is reachable from this WSL shell.")
             print("    Install Node.js inside the WSL distro (nvm, or your distro's")
             print("    package manager), then re-run `nastech update`.")
-            failed = ["repo root"]
+            failed = []
             if any(
                 (_m().PROJECT_ROOT / workspace / "package.json").exists()
                 for workspace in ("ui-tui", "web")
@@ -2139,16 +2168,31 @@ def _update_node_dependencies() -> list[str]:
     # Nastech profile using this checkout. Keep one per-checkout cache under the
     # shared Nastech root rather than rerunning npm once per named profile.
     shared_nastech_root = get_default_nastech_root()
+
+    # Best-effort: warm npx's cache for agent-browser (#43564). Runs before
+    # the lockfile-unchanged early return below since that's the common
+    # `nastech update` case. Synchronous and can block ~11s on a true cold
+    # cache (~0.4s once warm) — print first so that doesn't look like a hang.
+    print("→ Warming npx cache for agent-browser...")
+    try:
+        from tools.browser_tool import warm_agent_browser_npx_cache
+        warm_agent_browser_npx_cache()
+    except Exception:
+        pass
+
     if not _m()._npm_lockfile_changed(shared_nastech_root):
         logger.info("npm lockfile unchanged, skipping npm install")
         return []
 
-    # With a single workspace lockfile the root install would cover ALL
-    # workspaces — but apps/desktop pulls in Electron as a devDependency,
-    # and its postinstall downloads a ~200MB binary.  Most users don't
-    # need desktop during `nastech update`, so we install root-only first
-    # then add just the workspaces the CLI/TUI/web build actually requires.
-    # Desktop deps are installed on demand by the desktop launcher
+    # Root package.json has no dependencies of its own (agent-browser and
+    # @streamdown/math were moved out — see #43564): agent-browser resolves
+    # at runtime via `npx agent-browser` (tools/browser_tool.py), and
+    # @streamdown/math is a desktop-only import now declared in
+    # apps/desktop/package.json. That means a plain workspace-scoped install
+    # can never prune anything root-only, so we only need to name the
+    # workspaces the CLI/TUI/web build actually requires. apps/desktop pulls
+    # in Electron as a devDependency with a ~200MB postinstall download, so
+    # it's deliberately never named here — desktop deps install on demand
     # (see _desktop_build_needed).
     print("→ Updating Node.js dependencies...")
 
@@ -2159,53 +2203,46 @@ def _update_node_dependencies() -> list[str]:
         print("    deps). Fix npm and re-run `nastech update`.")
         return list(labels)
 
-    extra_args = ["--no-fund", "--no-audit", "--prefer-offline", "--progress=false"]
+    install_args = [
+        "--no-fund", "--no-audit", "--prefer-offline", "--progress=false",
+        "--workspace", "ui-tui", "--workspace", "web",
+        # Root package.json's own devDependencies (the shared ESLint flat
+        # config every workspace's eslint.config.mjs imports) are otherwise
+        # pruned by this scoped install, same as agent-browser/@streamdown
+        # math used to be before they moved out of root entirely (#43564).
+        # Unlike those, root's devDependencies have nowhere else to live —
+        # this flag still excludes apps/desktop, which is never named above.
+        "--include-workspace-root",
+    ]
 
     from nastech_constants import with_nastech_node_path
 
     nixos_env = with_nastech_node_path(_m()._nixos_build_env())
 
-    # Step 1: root install (no workspace recursion).
     # NOTE: capture_output=False here is deliberate (#18840) — optional
-    # postinstall scripts (e.g. @askjo/camofox-browser's browser-binary fetch)
-    # print download progress, and capturing it makes a long download look
-    # hung. The chatty npm-deprecation noise during `nastech update` comes from
-    # the *desktop* build, not this step; that one is captured to update.log.
-    root_args = [*extra_args, "--workspaces=false"]
-    root_result = _m()._run_npm_install_deterministic(
+    # postinstall scripts print download progress, and capturing it makes a
+    # long download look hung. The chatty npm-deprecation noise during
+    # `nastech update` comes from the *desktop* build, not this step; that
+    # one is captured to update.log.
+    result = _m()._run_npm_install_deterministic(
         npm,
         _m().PROJECT_ROOT,
-        extra_args=tuple(root_args),
+        extra_args=tuple(install_args),
         capture_output=False,
         env=nixos_env,
     )
-    if root_result.returncode != 0:
-        print("  ⚠ npm install failed in repo root")
-        stderr = (root_result.stderr or "").strip() if root_result.stderr else ""
+    if result.returncode == 0:
+        _record_npm_lockfile_hash(shared_nastech_root)
+        print("  ✓ ui-tui, web workspaces installed (desktop skipped)")
+        failures: list[str] = []
+    else:
+        print("  ⚠ npm install failed")
+        stderr = (result.stderr or "").strip() if result.stderr else ""
         if stderr:
             print(f"    {stderr.splitlines()[-1]}")
-        return _partial_update_failure("repo root")
+        failures = _partial_update_failure("ui-tui, web workspaces")
 
-    # Step 2: install only the workspaces update needs (ui-tui, web).
-    # --workspace selects specific workspaces; the rest (desktop) are skipped.
-    ws_args = [*extra_args, "--workspace", "ui-tui", "--workspace", "web"]
-    ws_result = _m()._run_npm_install_deterministic(
-        npm,
-        _m().PROJECT_ROOT,
-        extra_args=tuple(ws_args),
-        capture_output=False,
-        env=nixos_env,
-    )
-    if ws_result.returncode == 0:
-        _record_npm_lockfile_hash(shared_nastech_root)
-        print("  ✓ repo root + ui-tui, web workspaces (desktop skipped)")
-        return []
-
-    print("  ⚠ npm workspace install failed")
-    stderr = (ws_result.stderr or "").strip() if ws_result.stderr else ""
-    if stderr:
-        print(f"    {stderr.splitlines()[-1]}")
-    return _partial_update_failure("ui-tui, web workspaces")
+    return failures
 
 def _log_only_write(text: str) -> None:
     """Write ``text`` to ``~/.nastech/logs/update.log`` only, never the terminal.
@@ -2382,8 +2419,10 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
         sys.exit(1)
 
     if is_shallow:
-        # No history to count across the shallow boundary. Compare tip SHAs and
-        # report presence-only (mirrors the banner's _check_via_local_git).
+        # No history to count across the shallow boundary. Compare tip SHAs
+        # (mirrors the banner's _check_via_local_git), then try to recover the
+        # exact count via the GitHub compare API — the remote graph is complete
+        # even when the local one is truncated.
         head_sha = subprocess.run(
             git_cmd + ["rev-parse", "HEAD"],
             cwd=_m().PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -2395,9 +2434,19 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
         if head_sha and target_sha and head_sha == target_sha:
             print("✓ Already up to date.")
         else:
-            print(f"𓄃 Update available (behind {compare_branch}).")
+            from nastech_cli.banner import _github_compare_behind
             from nastech_cli.config import recommended_update_command
 
+            counted = _github_compare_behind(head_sha, target_sha)
+            if counted == 0:
+                # Local commits on top of the remote tip — not behind.
+                print("✓ Already up to date.")
+                return
+            if counted is not None:
+                commits_word = "commit" if counted == 1 else "commits"
+                print(f"⚕ Update available: {counted} {commits_word} behind {compare_branch}.")
+            else:
+                print(f"⚕ Update available (behind {compare_branch}).")
             print(f"  Run '{recommended_update_command()}' to install.")
         return
 
@@ -2414,7 +2463,7 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
         print("✓ Already up to date.")
     else:
         commits_word = "commit" if behind == 1 else "commits"
-        print(f"𓄃 Update available: {behind} {commits_word} behind {compare_branch}.")
+        print(f"⚕ Update available: {behind} {commits_word} behind {compare_branch}.")
         from nastech_cli.config import recommended_update_command
 
         print(f"  Run '{recommended_update_command()}' to install.")
@@ -2522,8 +2571,10 @@ def _ensure_acp_launcher() -> None:
     (venv wrapper, FHS symlink, pipx/pip console script) without having to
     reconstruct interpreter/entrypoint paths.
 
-    No-op on Windows (install.ps1 puts ``venv\\Scripts`` on the user PATH, so
-    ``nastech-acp.exe`` already resolves) and wherever a ``nastech-acp`` is
+    No-op on Windows (install.ps1 copies ``nastech.exe`` + ``nastech-acp.exe``
+    into ``$InstallDir\bin`` and puts THAT on the user PATH — never the whole
+    ``venv\Scripts`` dir, which would shadow the user's ``python`` (#83797) —
+    so ``nastech-acp.exe`` already resolves) and wherever a ``nastech-acp`` is
     already present next to the ``nastech`` command.  Unwritable directories
     (e.g. ``/usr/local/bin`` as non-root) are skipped silently.  Idempotent.
     """
@@ -3862,7 +3913,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             logger.debug("Could not read updates.non_interactive_local_changes: %s", exc)
             discard_local_changes = False
 
-    print("𓄃 Updating Nastech Agent...")
+    print("⚕ Updating Nastech Agent...")
     print()
 
     # On Windows, abort early if another nastech.exe is holding the venv shim
@@ -4119,7 +4170,12 @@ def _cmd_update_impl(args, gateway_mode: bool):
             and (gateway_mode or (sys.stdin.isatty() and sys.stdout.isatty()))
         )
 
-        # Check if there are updates
+        # Check if there are updates. On shallow checkouts `rev-list --count`
+        # walks the truncated graph and can report the entire remote ancestry
+        # (e.g. "Found 9980 new commit(s)" on a depth-1 install — #53479).
+        # The zero/nonzero gate is still sound (HEAD == origin/<branch> counts
+        # 0), so keep it, but treat the shallow NUMBER as unknown and recover
+        # the real one via the GitHub compare API when possible.
         result = subprocess.run(
             git_cmd + ["rev-list", f"HEAD..origin/{branch}", "--count"],
             cwd=_m().PROJECT_ROOT,
@@ -4128,6 +4184,33 @@ def _cmd_update_impl(args, gateway_mode: bool):
             check=True,
         )
         commit_count = int(result.stdout.strip())
+
+        apply_is_shallow = (
+            subprocess.run(
+                git_cmd + ["rev-parse", "--is-shallow-repository"],
+                cwd=_m().PROJECT_ROOT,
+                capture_output=True,
+                text=True, encoding="utf-8", errors="replace",
+            ).stdout.strip()
+            == "true"
+        )
+        if commit_count > 0 and apply_is_shallow:
+            from nastech_cli.banner import _github_compare_behind
+
+            head_sha = subprocess.run(
+                git_cmd + ["rev-parse", "HEAD"],
+                cwd=_m().PROJECT_ROOT, capture_output=True,
+                text=True, encoding="utf-8", errors="replace",
+            ).stdout.strip()
+            target_sha = subprocess.run(
+                git_cmd + ["rev-parse", f"origin/{branch}"],
+                cwd=_m().PROJECT_ROOT, capture_output=True,
+                text=True, encoding="utf-8", errors="replace",
+            ).stdout.strip()
+            counted = _github_compare_behind(head_sha, target_sha)
+            # counted == 0 means local-ahead (remote tip reachable from HEAD):
+            # not behind, fall through to the up-to-date path.
+            commit_count = counted if counted is not None else -1
 
         if commit_count == 0:
             _invalidate_update_cache()
@@ -4217,7 +4300,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     print(f"⚠ Venv still unhealthy after repair: {detail_after}")
                     print("  Close all Nastech windows/gateways and re-run: nastech update")
             else:
-                _print_update_completion("✓ Already up to date!")
+                _repair_node_deps_on_current_checkout(_print_update_completion)
             if runtime_repaired is not None and not _m()._is_windows():
                 print()
                 print(
@@ -4231,7 +4314,12 @@ def _cmd_update_impl(args, gateway_mode: bool):
             _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
             return
 
-        print(f"→ Found {commit_count} new commit(s)")
+        if commit_count > 0:
+            print(f"→ Found {commit_count} new commit(s)")
+        else:
+            # Shallow checkout, exact count unrecoverable (offline/rate-limited
+            # compare API) — the tips differ, so there IS an update.
+            print("→ Updates available (commit count unknown on this shallow checkout)")
 
         print("→ Pulling updates...")
         update_succeeded = False

@@ -111,7 +111,7 @@ api.openai.com          api.anthropic.com
 generativelanguage.googleapis.com
 api.x.ai                api.mistral.ai
 api.groq.com            api.together.xyz
-api.deepseek.com        inference.nastechresearch.com
+api.deepseek.com        inference.nastechresearch.github.io
 ```
 
 If your agent needs an upstream that isn't on the list — a self-hosted inference endpoint, an extra cloud LLM, an MCP server — add it to `proxy.extra_allowed_hosts`. Wildcards are matched against the full hostname (`*.example.com` matches `api.example.com` and `staging.example.com` but not `example.com` itself).

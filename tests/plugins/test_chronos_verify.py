@@ -36,7 +36,7 @@ def _mint(priv, claims):
 
 
 AUD = "agent:inst-123"
-ISS = "https://portal.nastechresearch.com"
+ISS = "https://portal.nastechresearch.github.io"
 
 
 def _base_claims(**over):
@@ -145,7 +145,7 @@ def test_jwks_url_path_resolves_key(rsa_keys, monkeypatch):
 
     class FakeJWKClient:
         def __init__(self, url, **kwargs):
-            assert url == "https://portal.nastechresearch.com/.well-known/jwks.json"
+            assert url == "https://portal.nastechresearch.github.io/.well-known/jwks.json"
 
         def get_signing_key_from_jwt(self, tok):
             return FakeKey()
@@ -155,7 +155,7 @@ def test_jwks_url_path_resolves_key(rsa_keys, monkeypatch):
     monkeypatch.setattr(verify_mod, "_JWK_CLIENTS", {})
     claims = verify_nas_fire_token(
         token=token, expected_audience=AUD,
-        jwks_or_key="https://portal.nastechresearch.com/.well-known/jwks.json",
+        jwks_or_key="https://portal.nastechresearch.github.io/.well-known/jwks.json",
         issuer=ISS,
     )
     assert claims is not None and claims["purpose"] == "cron_fire"
@@ -177,7 +177,7 @@ def test_jwks_client_sends_explicit_http_headers(monkeypatch):
     monkeypatch.setattr("jwt.PyJWKClient", FakeJWKClient)
     monkeypatch.setattr(verify_mod, "_JWK_CLIENTS", {})
 
-    url = "https://portal.nastechresearch.com/.well-known/jwks.json"
+    url = "https://portal.nastechresearch.github.io/.well-known/jwks.json"
     verify_mod._get_jwk_client(url)
 
     assert captured["url"] == url

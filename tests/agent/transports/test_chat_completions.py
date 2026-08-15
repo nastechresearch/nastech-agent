@@ -534,7 +534,7 @@ class TestChatCompletionsGeminiNativeExtraBodyStrip:
             [{"role": "user", "content": "hi"}],
             None,
             provider_profile=self._nastech_profile(),
-            base_url="https://inference.nastechresearch.com/v1",
+            base_url="https://inference.nastechresearch.github.io/v1",
             session_id="s1",
             max_tokens=None,
         )

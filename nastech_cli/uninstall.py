@@ -344,7 +344,7 @@ def _nastech_path_markers(nastech_home: Path) -> list[str]:
     markers = [root + "\\nastech-agent", root + "\\git", root + "\\node", root + "\\venv"]
     # Also match if NASTECH_HOME was customised to somewhere else — find-and-nuke
     # any entry whose path component contains "nastech".  We don't want to catch
-    # unrelated entries like "cnastech-foo" or "ephermeral", so we look for
+    # unrelated entries like "chermes-foo" or "ephermeral", so we look for
     # backslash-nastech as a word-ish boundary.
     return markers
 
@@ -529,7 +529,7 @@ def run_gui_uninstall(args):
 
     print()
     print(color("┌─────────────────────────────────────────────────────────┐", Colors.MAGENTA, Colors.BOLD))
-    print(color("│         𓄃 Nastech Chat GUI Uninstaller                  │", Colors.MAGENTA, Colors.BOLD))
+    print(color("│         ⚕ Nastech Chat GUI Uninstaller                  │", Colors.MAGENTA, Colors.BOLD))
     print(color("└─────────────────────────────────────────────────────────┘", Colors.MAGENTA, Colors.BOLD))
     print()
 
@@ -626,7 +626,7 @@ def run_uninstall(args):
 
     print()
     print(color("┌─────────────────────────────────────────────────────────┐", Colors.MAGENTA, Colors.BOLD))
-    print(color("│            𓄃 Nastech Agent Uninstaller                  │", Colors.MAGENTA, Colors.BOLD))
+    print(color("│            ⚕ Nastech Agent Uninstaller                  │", Colors.MAGENTA, Colors.BOLD))
     print(color("└─────────────────────────────────────────────────────────┘", Colors.MAGENTA, Colors.BOLD))
     print()
     
@@ -928,7 +928,7 @@ def _perform_uninstall(
         print(color("Reload your shell to complete the process:", Colors.YELLOW))
         print("  source ~/.bashrc  # or ~/.zshrc")
     print()
-    print("Thank you for using Nastech Agent! 𓄃")
+    print("Thank you for using Nastech Agent! ⚕")
     print()
 
 

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 from nastech_constants import get_nastech_home
 from tools.tool_backend_helpers import managed_nastech_tools_enabled
 
-_DEFAULT_TOOL_GATEWAY_DOMAIN = "nastechresearch.com"
+_DEFAULT_TOOL_GATEWAY_DOMAIN = "nastechresearch.github.io"
 _DEFAULT_TOOL_GATEWAY_SCHEME = "https"
 _NASTECH_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 

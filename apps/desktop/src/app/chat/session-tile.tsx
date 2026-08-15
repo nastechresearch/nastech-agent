@@ -30,10 +30,10 @@ import { findGroupOfPane } from '@/components/pane-shell/tree/model'
 import { $layoutTree, closeTreePane, moveTreePane, setTreeGroupHeaderHidden } from '@/components/pane-shell/tree/store'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { transcribeAudio } from '@/nastech'
 import { useI18n } from '@/i18n'
 import type { ChatMessage } from '@/lib/chat-messages'
 import { NEW_SESSION_TITLE, sessionTitle } from '@/lib/chat-runtime'
-import { transcribeAudio } from '@/nastech'
 import { createComposerAttachmentScope, draftTitleFor } from '@/store/composer'
 import { $pinnedSessionIds, pinSession, unpinSession } from '@/store/layout'
 import { $activeGatewayProfile } from '@/store/profile'
@@ -149,7 +149,7 @@ function TileChat({
     activeSessionId: runtimeId,
     currentCwd: cwd,
     requestGateway,
-    scope: { add: attachments.add, remove: attachments.remove, target: scope.target }
+    scope: { add: attachments.add, remove: attachments.remove, target: scope.target, update: attachments.update }
   })
 
   // ChatView is memo()d — every callback prop must be referentially stable or
@@ -200,6 +200,7 @@ function TileChat({
           onAddUrl={onAddUrl}
           onAttachDroppedItems={composer.attachDroppedItems}
           onAttachImageBlob={composer.attachImageBlob}
+          onAttachPrCommentUrl={composer.attachPrCommentUrl}
           onCancel={actions.cancelRun}
           onDeleteSelectedSession={noop}
           onDismissError={actions.dismissError}

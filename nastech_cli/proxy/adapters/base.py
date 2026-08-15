@@ -26,7 +26,7 @@ class UpstreamCredential:
     """Authorization header value to send upstream (token only, no ``Bearer`` prefix)."""
 
     base_url: str
-    """Upstream base URL, e.g. ``https://inference-api.nastechresearch.com/v1``."""
+    """Upstream base URL, e.g. ``https://inference-api.nastechresearch.github.io/v1``."""
 
     token_type: str = "Bearer"
     """Auth scheme — currently always ``Bearer`` for supported providers."""

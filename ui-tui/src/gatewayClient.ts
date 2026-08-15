@@ -116,10 +116,10 @@ const redactUrl = (raw: string): string => {
     // WHATWG URL rejected the input. Best-effort: strip an embedded
     // `user:pass@` segment AND the query string so a malformed token
     // bearer can never escape into the log tail.
-    const nastecherInfo = raw.replace(_USERINFO_FALLBACK_RE, '$1***@')
-    const queryIdx = nastecherInfo.indexOf('?')
+    const noUserInfo = raw.replace(_USERINFO_FALLBACK_RE, '$1***@')
+    const queryIdx = noUserInfo.indexOf('?')
 
-    return queryIdx >= 0 ? `${nastecherInfo.slice(0, queryIdx)}?***` : nastecherInfo
+    return queryIdx >= 0 ? `${noUserInfo.slice(0, queryIdx)}?***` : noUserInfo
   }
 }
 

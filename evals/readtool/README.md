@@ -47,7 +47,7 @@ python3 evals/readtool/runner.py --model qwen/qwen3.8-max \
 python3 evals/readtool/report.py --labels baseline feat-stat-guard
 ```
 
-Rules of engagement (from nastechbench discipline):
+Rules of engagement (from hermesbench discipline):
 
 - **3 reps minimum**; single-run deltas within ±3% are noise, not wins.
 - Never edit `tools/` while a run is in flight — the runner imports the

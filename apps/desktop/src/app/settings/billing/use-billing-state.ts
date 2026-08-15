@@ -8,8 +8,8 @@ import { resolveRefusal } from './errors'
 import type { BillingStateResponse, SubscriptionStateResponse, SubscriptionTierOption, UsageModelData } from './types'
 
 export const EMPTY_BILLING_VALUE = '—'
-export const FALLBACK_PORTAL_BILLING_URL = 'https://portal.nastechresearch.com/billing'
-export const FALLBACK_PORTAL_URL = 'https://portal.nastechresearch.com'
+export const FALLBACK_PORTAL_BILLING_URL = 'https://portal.nastechresearch.github.io/billing'
+export const FALLBACK_PORTAL_URL = 'https://portal.nastechresearch.github.io'
 
 // The billing endpoint is the authoritative source of truth for balance / cap /
 // plan — the inference `x-nastech-credits-*` headers are best-effort and can drift

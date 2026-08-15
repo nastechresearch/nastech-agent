@@ -153,7 +153,7 @@ class TestFallbackChainAdvancement:
         activation has to re-derive api_mode from the model and rebuild the
         Anthropic client — otherwise the turn POSTs /chat/completions.
         """
-        portal = "https://inference-api.nastechresearch.com/v1"
+        portal = "https://inference-api.nastechresearch.github.io/v1"
         fbs = [
             {
                 "provider": "nastech",
@@ -202,7 +202,7 @@ class TestFallbackChainAdvancement:
         assert agent._anthropic_client is not None
 
     def test_nastech_non_anthropic_fallback_stays_on_chat_completions(self):
-        portal = "https://inference-api.nastechresearch.com/v1"
+        portal = "https://inference-api.nastechresearch.github.io/v1"
         fbs = [{"provider": "nastech", "model": "nastech-4-405b"}]
         agent = _make_agent(fallback_model=fbs)
         with (

@@ -99,7 +99,7 @@ describe('fmtProjectCwdBranch', () => {
   })
 
   it('keeps the project visible when space is tight', () => {
-    expect(fmtProjectCwdBranch('/Users/bb/proj', 'main', 'nastech-agent', 13)).toBe('nastech-agent')
+    expect(fmtProjectCwdBranch('/Users/bb/proj', 'main', 'nastech-agent', 12)).toBe('nastech-agent')
   })
 })
 
