@@ -5,8 +5,8 @@ import { MemoryRouter } from 'react-router'
 import type * as ReactRouterDom from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type * as NastechApi from '@/nastech'
 import { queryClient } from '@/lib/query-client'
+import type * as NastechApi from '@/nastech'
 
 const getSkills = vi.fn()
 const getToolsets = vi.fn()

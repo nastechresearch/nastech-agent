@@ -2,7 +2,6 @@ import type { AppendMessage, ThreadMessage } from '@assistant-ui/react'
 import { useStore } from '@nanostores/react'
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react'
 
-import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS, transcribeAudio } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { stripAnsi } from '@/lib/ansi'
 import { type ChatMessage, textPart } from '@/lib/chat-messages'
@@ -11,6 +10,7 @@ import { sanitizeComposerInput } from '@/lib/composer-input-sanitize'
 import { triggerHaptic } from '@/lib/haptics'
 import { setMutableRef } from '@/lib/mutable-ref'
 import { normalize } from '@/lib/text'
+import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS, transcribeAudio } from '@/nastech'
 import { clearClarifyRequest } from '@/store/clarify'
 import {
   $composerAttachments,

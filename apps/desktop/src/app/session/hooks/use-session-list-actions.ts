@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import { listAllProfileSessions, listSidebarSessions, type SessionInfo } from '@/nastech'
 import { sameCronSignature } from '@/lib/session-signatures'
 import {
   isMessagingSource,
@@ -8,6 +7,7 @@ import {
   MESSAGING_SESSION_SOURCE_IDS,
   normalizeSessionSource
 } from '@/lib/session-source'
+import { listAllProfileSessions, listSidebarSessions, type SessionInfo } from '@/nastech'
 import {
   $pinnedSessionIds,
   $sessionsLimit,
