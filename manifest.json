@@ -47,9 +47,9 @@
     "missing": 0
   },
   "scan": {
-    "total": 9099,
+    "total": 9102,
     "by_category": {
-      "text": 8988,
+      "text": 8991,
       "image": 81,
       "binary": 7,
       "audio": 5,
@@ -57,7 +57,7 @@
       "doc": 5
     },
     "by_format": {
-      "text": 8988,
+      "text": 8991,
       "jpeg": 7,
       "png": 66,
       "icns": 4,
@@ -73,14 +73,12 @@
   },
   "fork": {
     "statuses": {
-      "identical": 7691,
-      "updated": 1039,
-      "locked": 6,
-      "added": 363
+      "identical": 9100,
+      "locked": 2
     },
     "violations": 0,
-    "preserved": 47,
-    "features_fork": 50,
+    "preserved": 50,
+    "features_fork": 51,
     "features_branded": 51,
     "added_lines": 0,
     "deleted_lines": 0
