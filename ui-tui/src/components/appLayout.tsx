@@ -232,6 +232,7 @@ const TranscriptPane = memo(function TranscriptPane({
                   })}
                   sections={ui.sections}
                   t={ui.theme}
+                  timestamps={ui.timestamps}
                 />
               )}
 
@@ -443,7 +444,7 @@ const ComposerPane = memo(function ComposerPane({
         )}
       </Box>
 
-      {!composer.empty && !ui.sid && <Text color={ui.theme.color.muted}>⚕ {ui.status}</Text>}
+      {!composer.empty && !ui.sid && <Text color={ui.theme.color.muted}>𓄃 {ui.status}</Text>}
 
       <AmbientDock placement="dock-bottom" />
       <StatusRulePane at="bottom" composer={composer} status={status} />

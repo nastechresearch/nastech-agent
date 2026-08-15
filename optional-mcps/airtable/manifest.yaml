@@ -1,0 +1,31 @@
+# Nastech-approved MCP catalog entry.
+# Presence in this directory = approval. Merged via PR review.
+manifest_version: 1
+
+name: airtable
+description: >-
+  Bases, tables, and records from your Airtable workspace.
+source: https://support.airtable.com/articles/9897799762-using-the-airtable-mcp-server
+
+# Official vendor-hosted remote MCP (URL-only — Nastech never spawns a local
+# process for this entry). Native OAuth 2.1 + Dynamic Client Registration;
+# Nastech's MCP client + mcp_oauth_manager handle discovery, PKCE, token
+# exchange, and refresh.
+transport:
+  type: http
+  url: https://mcp.airtable.com/mcp
+
+auth:
+  type: oauth
+
+# Composer-suggestion triggers (desktop brand pills).
+suggest:
+  keywords:
+    - airtable
+  hosts:
+    - airtable.com
+
+post_install: |
+  On first connection Nastech opens a browser to authorize with
+  Airtable (or run `nastech mcp login airtable`). Approve access,
+  then restart the session so tools load.

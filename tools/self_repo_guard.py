@@ -714,9 +714,22 @@ def detect_self_repo_git_mutation(
 
 
 def _block_message(operation: str, root: Path) -> str:
+    scratch = _scratch_dir_hint()
     return (
         f"Blocked: `{operation}` would rewrite Nastech's live source checkout "
         f"({root}) and can mix module versions in this running process. "
-        "Use a separate worktree or temporary clone. To change this checkout, "
-        "stop Nastech, run the command externally, then restart Nastech."
+        f"Use a separate worktree or a shared clone on real disk, e.g. "
+        f"`git clone --shared {root} {scratch}/<task>` — avoid /tmp for "
+        "clones that install node/python deps: /tmp is usually RAM-backed "
+        "tmpfs and a few dependency installs can fill it and ENOSPC other "
+        "work. Delete the clone when the branch is pushed. To change this "
+        "checkout, stop Nastech, run the command externally, then restart "
+        "Nastech."
     )
+
+
+def _scratch_dir_hint() -> str:
+    """Disk-backed scratch location suggested to agents for temporary clones."""
+    nastech_home = os.environ.get("NASTECH_HOME", "").strip()
+    base = Path(nastech_home).expanduser() if nastech_home else Path.home() / ".nastech"
+    return str(base / "scratch")

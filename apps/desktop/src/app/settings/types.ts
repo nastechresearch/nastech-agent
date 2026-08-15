@@ -7,6 +7,7 @@ import type { EnvVarInfo } from '@/types/nastech'
 export type SettingsView =
   | 'about'
   | 'billing'
+  | 'connections'
   | 'gateway'
   | 'keybinds'
   | 'keys'

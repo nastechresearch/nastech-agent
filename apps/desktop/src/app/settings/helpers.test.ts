@@ -5,6 +5,7 @@ import type { NastechConfigRecord } from '@/types/nastech'
 import { FIELD_DESCRIPTIONS, FIELD_LABELS, SECTIONS } from './constants'
 import { defineFieldCopy, fieldCopyForSchemaKey, schemaKeyToFieldCopyKey } from './field-copy'
 import {
+  clearsEnabledToolsets,
   enumOptionsFor,
   getNested,
   isExternalMemoryProvider,
@@ -361,6 +362,46 @@ describe('settings helpers', () => {
 
     it('hides declared keys absent from both schema and config', () => {
       expect(sectionFieldEntries({}, {}).get('memory') ?? []).toHaveLength(0)
+    })
+  })
+
+  describe('clearsEnabledToolsets', () => {
+    it('flags a non-empty → empty transition', () => {
+      const prev: NastechConfigRecord = { toolsets: ['memory', 'terminal', 'web_search'] }
+      const next: NastechConfigRecord = { toolsets: [] }
+
+      expect(clearsEnabledToolsets(prev, next)).toBe(true)
+    })
+
+    it('does not flag a non-empty → missing transition (deep-merge preserves the key)', () => {
+      // PUT /api/config deep-merges the override onto the stored config, so an
+      // import that omits `toolsets` keeps the existing list — no wipe happens,
+      // so there is nothing to confirm.
+      const prev: NastechConfigRecord = { toolsets: ['memory'] }
+      const next: NastechConfigRecord = {}
+
+      expect(clearsEnabledToolsets(prev, next)).toBe(false)
+    })
+
+    it('does not flag when at least one toolset remains', () => {
+      const prev: NastechConfigRecord = { toolsets: ['memory', 'terminal'] }
+      const next: NastechConfigRecord = { toolsets: ['memory'] }
+
+      expect(clearsEnabledToolsets(prev, next)).toBe(false)
+    })
+
+    it('does not flag when the list was already empty', () => {
+      const prev: NastechConfigRecord = { toolsets: [] }
+      const next: NastechConfigRecord = { toolsets: [] }
+
+      expect(clearsEnabledToolsets(prev, next)).toBe(false)
+    })
+
+    it('does not flag an unrelated edit that never touched toolsets', () => {
+      const prev: NastechConfigRecord = { model: 'a', toolsets: ['memory'] }
+      const next: NastechConfigRecord = { model: 'b', toolsets: ['memory'] }
+
+      expect(clearsEnabledToolsets(prev, next)).toBe(false)
     })
   })
 })

@@ -56,7 +56,7 @@ get_command_link_display_dir() {
 }
 
 echo ""
-echo -e "${CYAN}⚕ Nastech Agent Setup${NC}"
+echo -e "${CYAN}𓄃 Nastech Agent Setup${NC}"
 echo ""
 
 # ============================================================================
