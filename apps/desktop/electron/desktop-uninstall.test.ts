@@ -102,7 +102,10 @@ test('resolveRemovableAppPath uses APPIMAGE on Linux when set', () => {
 })
 
 test('resolveRemovableAppPath finds the unpacked dir on Linux', () => {
-  assert.equal(resolveRemovableAppPath('/opt/nastech/linux-unpacked/nastech', 'linux', {}), '/opt/nastech/linux-unpacked')
+  assert.equal(
+    resolveRemovableAppPath('/opt/nastech/linux-unpacked/nastech', 'linux', {}),
+    '/opt/nastech/linux-unpacked'
+  )
   // A system-package install (/usr/bin) → null, left to apt/dnf.
   assert.equal(resolveRemovableAppPath('/usr/bin/nastech', 'linux', {}), null)
 })

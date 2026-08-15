@@ -13,9 +13,9 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import type { NastechGitWorktree } from '@/global'
-import type { SessionInfo } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { displayPath } from '@/lib/display-path'
+import type { SessionInfo } from '@/nastech'
 import { $dismissedWorktreeIds, dismissWorktree, setWorkspaceNodeOpen } from '@/store/layout'
 import { notifyError } from '@/store/notifications'
 import { removeWorktreePath } from '@/store/projects'
