@@ -62,7 +62,7 @@ curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 
 Run in powershell:
 ```powershell
-iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1)
+iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1) 
 ```
 
 :::tip Android / Termux
@@ -110,7 +110,7 @@ Good defaults:
 | Provider | What it is | How to set up |
 |----------|-----------|---------------|
 | **Nastech Portal** | Subscription-based, zero-config | OAuth login via `nastech model` |
-| **OpenAI Codex** | ChatGPT OAuth, uses Codex models | Device code auth via `nastech model` |
+| **OpenAI Codex** | ChatGPT or Codex subscription, uses Codex models | Device code auth via `nastech model` → **ChatGPT or Codex Subscription** |
 | **Anthropic** | Claude models directly — Max plan + extra usage credits (OAuth), or API key for pay-per-token | `nastech model` → OAuth login (requires Max + extra credits), or an Anthropic API key |
 | **OpenRouter** | Multi-provider routing across many models | Enter your API key |
 | **Fireworks AI** | Direct OpenAI-compatible model API | Set `FIREWORKS_API_KEY` |

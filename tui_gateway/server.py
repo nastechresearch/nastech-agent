@@ -248,7 +248,25 @@ _LONG_HANDLERS = frozenset(
         # dead after a few skin switches. The handler serializes concurrent
         # reloads via _mcp_reload_lock.
         "reload.mcp",
+        # MCP server test/OAuth RPCs block on network: a probe spawns a stdio
+        # server (cold `npx` cold start = many seconds) or connects to a remote
+        # endpoint; oauth.start blocks up to ~30s waiting for the provider to
+        # publish an authorization URL. Keep them off the reader thread.
+        "mcp.servers.test",
+        "mcp.servers.oauth.start",
         "process.list",
+        # profiles.list runs list_profiles() (recursive skill-tree walk per
+        # profile) and opens each profile's state.db for the last-session
+        # preview; profiles.create copies skill bundles. Both are seconds-
+        # scale on cold disks — keep them off the WS reader thread.
+        "profiles.configure",
+        "profiles.create",
+        "profiles.describe",
+        "profiles.get_asset",
+        "profiles.list",
+        "profiles.set_asset",
+        # image.generate is a multi-second remote API round-trip.
+        "image.generate",
         "projects.discover_repos",
         "projects.record_repos",
         "projects.for_cwd",
@@ -264,6 +282,27 @@ _LONG_HANDLERS = frozenset(
         # the WS read loop and causing false "needs setup" (#50005 family).
         "setup.runtime_check",
         "setup.status",
+        # Voice RPCs can trigger check_voice_requirements() → STT provider
+        # auto-detect → a SYNCHRONOUS faster-whisper lazy install (uv/pip
+        # subprocess with a 300s timeout). Inline they stall the WS reader
+        # loop (handle_ws awaits dispatch before reading the next frame), so
+        # prompt.submit / session.list queued behind a voice.toggle sit
+        # unread and the desktop "send message" appears dead for minutes
+        # (reproduced: voice.toggle → session.list 40s+ timeout). Route them
+        # to the pool so a slow lazy install can't block message handling.
+        "voice.toggle",
+        "voice.record",
+        "voice.tts",
+        # wake.start calls check_wake_word_requirements() → _stt_ready() →
+        # _get_provider() → _try_lazy_install_stt() → ensure("stt.faster_whisper")
+        # (same synchronous subprocess install chain as the voice RPCs above).
+        # It also calls start_listening() → _build_engine() whose constructors
+        # call lazy_deps.ensure("wake.openwakeword" / "wake.sherpa" / …).
+        # wake.status calls check_wake_word_requirements() too and is polled
+        # by the desktop on every gateway-ready, so it can re-trigger the
+        # same block on a fresh launch. Same bug class as #21123 / #50005.
+        "wake.start",
+        "wake.status",
         # Desktop also polls the in-memory live-session registry every 15s.
         # The handler is normally cheap, but under heavy agent GIL pressure it
         # can still stall for tens of seconds. Keep it off the WS reader thread
@@ -329,6 +368,30 @@ _stdio_transport = StdioTransport(lambda: _real_stdout, _stdout_lock)
 _detached_ws_transport = _DropTransport()
 
 
+def _prepend_tool_paths(env: dict[str, str]) -> dict[str, str]:
+    """Prepend Nastech' managed bin, the venv bin dir, and the user-local
+    bin dir to PATH so slash_worker child processes can resolve
+    Nastech-managed CLIs (browser-use, uvx, uv) even when the parent
+    gateway was launched with a minimal PATH (e.g. by the
+    Desktop/Dashboard app). Managed bin leads, matching the managed-first
+    resolution policy for the Browser Use CLI."""
+    managed_bin = ""
+    try:
+        from nastech_constants import get_nastech_home
+
+        managed_bin = str(Path(get_nastech_home()) / "bin")
+    except Exception:
+        pass
+    venv_bin = str(Path(sys.executable).parent)  # <venv>/bin (POSIX) or <venv>/Scripts (Windows)
+    user_bin = str(Path.home() / ".local" / "bin")
+    existing = env.get("PATH") or ""
+    env["PATH"] = os.pathsep.join(
+        [p for p in (managed_bin, venv_bin, user_bin) if p]
+        + ([existing] if existing else [])
+    )
+    return env
+
+
 class _SlashWorker:
     """Persistent NastechCLI subprocess for slash commands."""
 
@@ -365,6 +428,11 @@ class _SlashWorker:
             inherit_profile_home=False,  # base already carries the HOME contract
             extra={"NASTECH_HOME": str(profile_home)} if profile_home else None,
         )
+        # Prepend the Nastech venv bin dir and the user-local bin dir to PATH so
+        # slash_worker child processes can resolve Nastech-managed CLIs
+        # (browser-use, uvx) even when the parent gateway was launched with a
+        # minimal PATH (e.g. by the Desktop/Dashboard app). See #83845.
+        env = _prepend_tool_paths(env)
 
         # start_new_session=True detaches the slash worker into its own
         # process group / session. Without this, the worker inherits the
@@ -2356,11 +2424,42 @@ def _sess_nowait(params, rid):
 
 
 def _sess(params, rid):
+    s, err = _sess_building(params, rid)
+    if err:
+        return (None, err)
+    return (s, _wait_agent(s, rid))
+
+
+def _sess_building(params, rid):
+    """Resolve a session and warm its agent build WITHOUT waiting for it.
+
+    For handlers that need the session record but not the agent. The attach
+    RPCs are the whole reason this exists: ``image.attach``,
+    ``image.attach_bytes``, ``file.attach``, ``pdf.attach``,
+    ``clipboard.paste`` and ``image.detach`` only read ``cwd`` /
+    ``profile_home`` and mutate ``attached_images`` — every one of those
+    fields is populated when the session record is created, so ``_sess``'s
+    ``_wait_agent`` was buying nothing and charging up to 30 seconds for it.
+
+    That charge landed in the worst possible place. Attach runs BEFORE
+    ``prompt.submit``, none of these methods is in ``_LONG_HANDLERS``, and a
+    non-pooled handler runs inline on the socket reader thread — so pasting an
+    image into a session whose deferred build was still running (MCP
+    discovery, model metadata, skills scan: routinely tens of seconds on a
+    cold start) stalled the send AND every RPC queued behind it on the same
+    socket, with no spinner to explain it. Plain text was unaffected because
+    ``prompt.submit`` already resolves via ``_sess_nowait`` and waits later,
+    off the reader thread — which is exactly why the bug reads as "text is
+    instant, images hang."
+
+    The build is still kicked off (it warms the agent the following
+    ``prompt.submit`` needs); we simply stop blocking on it here.
+    """
     s, err = _sess_nowait(params, rid)
     if err:
         return (None, err)
     _start_agent_build(params.get("session_id") or "", s)
-    return (s, _wait_agent(s, rid))
+    return (s, None)
 
 
 def _normalize_completion_path(path_part: str) -> str:
@@ -3286,6 +3385,7 @@ def _block(event: str, sid: str, payload: dict, timeout: float | None = 300) -> 
         "terminal.read.request",
         "preview.read.request",
         "window.read.request",
+        "mcp.setup.request",
     }:
         _emit(
             f"{event.removesuffix('.request')}.expire",
@@ -3732,9 +3832,16 @@ def _resolve_startup_runtime() -> tuple[str, str | None]:
     return model, None
 
 
-# Bare billing buckets are not routable provider identities (kept in parity with the
-# provider gate in agent_init). Restoring one as a session provider override breaks resume.
-_BARE_BILLING_PROVIDERS = {"auto", "openrouter", "custom"}
+# Bare billing buckets are not routable provider identities; restoring one as a
+# session provider override breaks resume. (agent_init's fail-fast gate is a
+# DIFFERENT set that also skips "openrouter" — there it means "default route,
+# don't fail fast", not "unroutable".)
+# ``openrouter`` is deliberately excluded here — it is a fully routable provider
+# with its own API key and base_url. Sessions that used OpenRouter store
+# ``billing_provider="openrouter"``; dropping it forces resume to the current
+# global model (e.g. a custom endpoint), which is the wrong provider for the
+# stored model. See #57588.
+from nastech_state import _BARE_BILLING_PROVIDERS
 
 
 def _stored_session_runtime_overrides(row: dict | None) -> dict:
@@ -3944,12 +4051,28 @@ def _persist_live_session_system_prompt(session: dict | None) -> None:
     if db is None or not hasattr(db, "update_system_prompt"):
         return
 
+    # Re-bind NASTECH_HOME to the session's profile so load_soul_md() and
+    # build_skills_system_prompt() resolve to the correct profile.  Without
+    # this, _start_agent_build's finally block has already reset the
+    # override and the rebuilt prompt silently uses the root profile's
+    # SOUL.md and skills.  See issue #50233.
+    profile_home = session.get("profile_home")
+    home_token = (
+        set_nastech_home_override(profile_home) if profile_home else None
+    )
     try:
         prompt = agent._build_system_prompt(None)
         agent._cached_system_prompt = prompt
         db.update_system_prompt(getattr(agent, "session_id", None) or session_key, prompt)
     except Exception:
-        logger.debug("failed to persist live session system prompt", exc_info=True)
+        logger.warning(
+            "failed to persist live session system prompt for session %s",
+            session_key,
+            exc_info=True,
+        )
+    finally:
+        if home_token is not None:
+            reset_nastech_home_override(home_token)
 
 
 # Stable leading text of the model-switch marker, shared by the builder and the
@@ -4394,7 +4517,8 @@ def _tool_lifecycle_required_for_ui(name: str) -> bool:
     # Desktop renders the clarify choices/question from the tool-call part, then
     # wires request_id from clarify.request. If tool progress is off, suppressing
     # clarify's lifecycle events leaves only the sidebar attention dot visible.
-    return name == "clarify"
+    # setup_mcp is the same shape: its consent card mounts on the tool part.
+    return name in ("clarify", "setup_mcp")
 
 
 def _restart_slash_worker(sid: str, session: dict):
@@ -4608,9 +4732,9 @@ def _apply_model_switch(
 
     if not confirm_expensive_model:
         try:
-            from nastech_cli.model_cost_guard import expensive_model_warning
+            from nastech_cli.model_selection_guards import combined_selection_warning
 
-            warning = expensive_model_warning(
+            warning = combined_selection_warning(
                 result.new_model,
                 provider=result.target_provider,
                 base_url=result.base_url or current_base_url,
@@ -5876,6 +6000,18 @@ def _agent_cbs(sid: str) -> dict:
             sid,
             {},
             timeout=30,
+        ),
+        # setup_mcp tool (desktop GUI): the renderer shows an inline consent
+        # card and walks the user through install/enable/OAuth via the REST
+        # endpoints, then answers mcp.setup.respond with the JSON outcome.
+        # Long timeout on purpose — the flow can include typing an API key or
+        # a browser OAuth round-trip. Same lifecycle as clarify: on timeout
+        # the tool returns "unanswered" and a late answer is tolerated.
+        "setup_mcp_callback": lambda server, action, reason: _block(
+            "mcp.setup.request",
+            sid,
+            {"server": server, "action": action, "reason": reason},
+            timeout=600,
         ),
     }
 
@@ -9073,6 +9209,101 @@ _KANBAN_NOTIFY_KINDS = (
 )
 _KANBAN_SILENT_KINDS = frozenset({"archived", "unblocked"})
 _KANBAN_POLL_SECONDS = 5.0
+_LOOP_POLL_SECONDS = 5.0
+
+
+def _maybe_fire_tui_loop_tick(sid: str, session: dict) -> None:
+    """Fire a due /loop wakeup for an idle TUI/Desktop/dashboard session.
+
+    Called from the per-session notification poller thread on a coarse
+    cadence. Claims the session under history_lock (running=True) before
+    dispatching so a racing user prompt wins cleanly. The post-turn hook
+    in the turn dispatcher completes the tick.
+    """
+    try:
+        from nastech_cli.loops import LoopManager, goal_blocks_loop_tick
+    except Exception:
+        return
+
+    sid_key = session.get("session_key") or ""
+    if not sid_key:
+        return
+    mgr = LoopManager(session_id=sid_key)
+    if not mgr.is_due():
+        return
+    if goal_blocks_loop_tick(sid_key):
+        return
+
+    with session["history_lock"]:
+        if session.get("running"):
+            return  # busy — stays due, next poll retries
+        session["running"] = True
+
+    wakeup = mgr.fire_tick()
+    if not wakeup:
+        with session["history_lock"]:
+            session["running"] = False
+        return
+
+    tick_no = mgr.state.ticks_fired if mgr.state else "?"
+    rid = f"__loop__{int(time.time() * 1000)}"
+    try:
+        _emit(
+            "status.update",
+            sid,
+            {"kind": "loop", "text": f"↻ /loop wakeup #{tick_no} firing…"},
+        )
+        if wakeup.lstrip().startswith("/"):
+            # Slash-command loop: route through the slash pipeline instead of
+            # the model. No model reply to evaluate — complete immediately.
+            with session["history_lock"]:
+                session["running"] = False
+            try:
+                parts = wakeup.lstrip()[1:].split(None, 1)
+                resp = _methods["command.dispatch"](
+                    rid,
+                    {
+                        "name": parts[0] if parts else "",
+                        "arg": parts[1] if len(parts) > 1 else "",
+                        "session_id": sid,
+                    },
+                )
+                payload = (resp or {}).get("result") or {}
+                out = str(payload.get("output") or "").strip()
+                if out:
+                    _emit("status.update", sid, {"kind": "loop", "text": out})
+                if payload.get("type") == "send" and payload.get("message"):
+                    # The command resolves to a prompt (skill command etc.) —
+                    # run it as a normal turn; the post-turn hook completes
+                    # the tick.
+                    with session["history_lock"]:
+                        if session.get("running"):
+                            mgr.abandon_tick()
+                            return
+                        session["running"] = True
+                    _emit("message.start", sid)
+                    _run_prompt_submit(rid, sid, session, payload["message"])
+                    return
+            except Exception:
+                pass
+            decision = mgr.complete_tick("")
+            if decision.get("message"):
+                _emit("status.update", sid, {"kind": "loop", "text": decision["message"]})
+            return
+        _emit("message.start", sid)
+        _run_prompt_submit(rid, sid, session, wakeup)
+    except Exception as exc:
+        print(
+            f"[tui_gateway] loop wakeup dispatch failed: "
+            f"{type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+        with session["history_lock"]:
+            session["running"] = False
+        try:
+            mgr.abandon_tick()
+        except Exception:
+            pass
 
 
 def _format_kanban_event_text(sub: dict, task, ev, board_slug: str) -> Optional[str]:
@@ -9210,11 +9441,11 @@ def _collect_kanban_notifications(session: dict) -> list:
                     text = _format_kanban_event_text(sub, task, ev, slug)
                     if text:
                         texts.append(text)
-                # Unsubscribe only at a truly final status (done/archived);
-                # blocked/crashed subs stay live so a respawned task's next
-                # terminal event still reaches the user (same rule as the
-                # gateway notifier).
-                if task and getattr(task, "status", "") in {"done", "archived"}:
+                # Unsubscribe only on archive. ``done`` is reversible in
+                # review/controller flows, so retaining the subscription lets
+                # a later reopen notify the same originating TUI/Desktop
+                # session. The claimed cursor prevents historical replay.
+                if task and getattr(task, "status", "") == "archived":
                     try:
                         _kb.remove_notify_sub(
                             conn,
@@ -9252,8 +9483,23 @@ def _notification_poller_loop(
 
     _emitted = set()  # dedup re-queued events so same completion isn't emitted 50 times while session is busy
     _last_kanban_poll = 0.0
+    _last_loop_poll = 0.0
     while not stop_event.is_set() and not session.get("_finalized"):
         _now = time.monotonic()
+        # ── /loop wakeup driver ──────────────────────────────────────
+        # Fire a due /loop tick for THIS session while it's idle. Same
+        # claim-under-lock pattern as the kanban dispatch below. Active
+        # non-parked /goal owns the idle boundary and defers the tick.
+        if _now - _last_loop_poll >= _LOOP_POLL_SECONDS:
+            _last_loop_poll = _now
+            try:
+                _maybe_fire_tui_loop_tick(sid, session)
+            except Exception as _loop_exc:
+                print(
+                    f"[tui_gateway] loop wakeup poll failed: "
+                    f"{type(_loop_exc).__name__}: {_loop_exc}",
+                    file=sys.stderr,
+                )
         if _now - _last_kanban_poll >= _KANBAN_POLL_SECONDS:
             _last_kanban_poll = _now
             try:
@@ -9568,6 +9814,12 @@ def _wire_desktop_ui() -> None:
     _desktop_ui_wired = True
 
 
+# (stop_event, thread) for every poller ever started in this process.
+# Pruned of dead threads on each spawn; consumed by test teardowns to reap
+# leaked pollers (see _start_notification_poller).
+_notification_pollers: list = []
+
+
 def _start_notification_poller(sid: str, session: dict) -> threading.Event:
     """Start the background notification poller for a TUI session."""
     _wire_agent_terminal_output()
@@ -9577,7 +9829,18 @@ def _start_notification_poller(sid: str, session: dict) -> threading.Event:
         target=_notification_poller_loop,
         args=(stop, sid, session),
         daemon=True,
+        # Stable, greppable name for debuggers and test teardowns.
+        name=f"tui-notif-poller-{sid}",
     )
+    # Registry of (stop, thread) pairs so test teardowns can reap pollers
+    # leaked by session.init/create tests — an unjoined poller steals
+    # events off the process-global completion_queue mid-assertion in a
+    # LATER test (flaky test_run_prompt_submit_requeues_all_unstarted_...).
+    # Bounded: entries for dead threads are pruned on each spawn.
+    _notification_pollers[:] = [
+        (s, th) for (s, th) in _notification_pollers if th.is_alive()
+    ]
+    _notification_pollers.append((stop, t))
     t.start()
     return stop
 
@@ -10309,6 +10572,36 @@ def _run_prompt_submit(
                     print(
                         f"[tui_gateway] goal continuation hook failed: "
                         f"{type(_goal_exc).__name__}: {_goal_exc}",
+                        file=sys.stderr,
+                    )
+
+            # ── /loop tick completion ──────────────────────────────────
+            # If the turn that just finished was a /loop wakeup (fired by
+            # the notification poller), evaluate it: LOOP_COMPLETE marker,
+            # --until judge, --times / max_ticks caps, next-tick schedule.
+            if status == "complete":
+                try:
+                    from nastech_cli.loops import LoopManager
+
+                    loop_sid_key = session.get("session_key") or ""
+                    if loop_sid_key:
+                        loop_mgr = LoopManager(session_id=loop_sid_key)
+                        loop_state = loop_mgr.state
+                        if loop_state is not None and loop_state.awaiting_response:
+                            loop_decision = loop_mgr.complete_tick(
+                                raw if isinstance(raw, str) else ""
+                            )
+                            loop_msg = loop_decision.get("message") or ""
+                            if loop_msg:
+                                _emit(
+                                    "status.update",
+                                    sid,
+                                    {"kind": "loop", "text": loop_msg},
+                                )
+                except Exception as _loop_exc:
+                    print(
+                        f"[tui_gateway] loop completion hook failed: "
+                        f"{type(_loop_exc).__name__}: {_loop_exc}",
                         file=sys.stderr,
                     )
 
@@ -12175,6 +12468,8 @@ _PENDING_INPUT_COMMANDS: frozenset[str] = frozenset(
         "steer",
         "plan",
         "goal",
+        "loop",
+        "proactive",
         "moa",
         "undo",
         "learn",
@@ -14408,12 +14703,35 @@ def _browser_disconnect(rid) -> dict:
 
 
 
+# Per-profile MCP lifecycle helpers (mcp.servers.* handlers). Defined on THIS
+# namespace so the rebound handler bodies (register() below) can resolve them,
+# same as _ok/_err — a plain def in methods_tools would be unreachable.
+from .mcp_rpc_helpers import (  # noqa: E402
+    reset_profile as _mcp_reset_profile,
+    summarize_server as _mcp_summarize_server_impl,
+)
+
+
+def _mcp_resolve_profile(rid, params):  # noqa: E402
+    # Bind this namespace's _err so the helper's error envelopes match every
+    # other handler's shape; handlers call this with just (rid, params).
+    from .mcp_rpc_helpers import resolve_profile as _rp
+
+    return _rp(rid, params, _err)
+
+
+def _mcp_summarize_server(name, cfg):  # noqa: E402
+    return _mcp_summarize_server_impl(name, cfg)
+
+
 # ── Split @method handler modules (see method_ctx.py) ────────────────
 # Imported at the end of this module so every global the handlers close
 # over already exists; register() rebinds them onto this namespace.
 from . import (  # noqa: E402
     methods_complete as _methods_complete,
     methods_config as _methods_config,
+    methods_images as _methods_images,
+    methods_profiles as _methods_profiles,
     methods_prompt as _methods_prompt,
     methods_session as _methods_session,
     methods_tools as _methods_tools,
@@ -14425,6 +14743,8 @@ for _m in (
     _methods_config,
     _methods_complete,
     _methods_tools,
+    _methods_profiles,
+    _methods_images,
 ):
     _m.register(sys.modules[__name__])
 del _m

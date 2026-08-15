@@ -10,7 +10,7 @@ based on both the scan verdict and the source's trust level.
 
 Trust levels:
   - builtin:   Ships with Nastech. Never scanned, always trusted.
-  - trusted:   Verified vendor-maintained skill collections. Caution verdicts allowed.
+  - trusted:   openai/skills and anthropics/skills only. Caution verdicts allowed.
   - community: Everything else. Any findings = blocked unless --force.
 
 Usage:
@@ -50,19 +50,6 @@ TRUSTED_REPOS = {
     # missing the signature or card). Catalog details:
     # https://github.com/NVIDIA/skills
     "NVIDIA/skills",
-    # Verified vendor-maintained Agent Skills collections.
-    "google/skills",
-    "google-gemini/gemini-skills",
-    "google/agents-cli",
-    "microsoft/skills",
-    "aws/agent-toolkit-for-aws",
-    "cloudflare/skills",
-    "vercel-labs/agent-skills",
-    "android/skills",
-    "dart-lang/skills",
-    "firebase/agent-skills",
-    "flutter/skills",
-    "genkit-ai/skills",
 }
 
 INSTALL_POLICY = {
@@ -710,14 +697,27 @@ def scan_skill(skill_path: Path, source: str = "community") -> ScanResult:
 
 
 def _content_digest(skill_path: Path) -> str:
-    """Canonical SHA-256 over relative paths and exact file bytes."""
+    """Canonical SHA-256 over relative paths and exact file bytes.
+
+    Files are keyed and ORDERED by their POSIX relative path string,
+    case-sensitively. Ordering by ``sorted(rglob(...))`` diverged from the
+    bundle side on Windows: Path comparison is case-insensitive there
+    (normcase), while ``bundle_content_hash`` sorts plain strings — the
+    same skill hashed to different digests and every installed skill
+    reported ``update_available`` forever (#62310). Sorting the rel-posix
+    strings makes the digest OS-independent and byte-symmetric with
+    ``tools.skills_hub.bundle_content_hash``.
+    """
     h = hashlib.sha256()
     if skill_path.is_dir():
-        for file_path in sorted(skill_path.rglob("*")):
-            if file_path.is_file():
-                rel = file_path.relative_to(skill_path).as_posix()
-                h.update(rel.encode("utf-8") + b"\x00")
-                h.update(file_path.read_bytes())
+        entries = sorted(
+            (file_path.relative_to(skill_path).as_posix(), file_path)
+            for file_path in skill_path.rglob("*")
+            if file_path.is_file()
+        )
+        for rel, file_path in entries:
+            h.update(rel.encode("utf-8") + b"\x00")
+            h.update(file_path.read_bytes())
     else:
         h.update(skill_path.read_bytes())
     return h.hexdigest()

@@ -52,6 +52,6 @@ def test_nastech_401_guidance_strings_present():
     assert "nastech portal" in source
 
     # Must point at the portal so users can check account/credit status.
-    assert "portal.nastechresearch.com" in source
+    assert "portal.nastechresearch.github.io" in source
 
 

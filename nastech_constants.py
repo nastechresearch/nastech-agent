@@ -139,6 +139,18 @@ def get_nastech_home() -> Path:
     return _nastech_home_from_env()
 
 
+def nastech_home_key(path: str | Path | None = None) -> str:
+    """Return a stable key for a Nastech home/profile directory.
+
+    Runtime registries use this key to isolate plugin-owned entries while
+    keeping built-in registrations process-global.  ``strict=False`` preserves
+    useful behavior for profiles whose directories have not been created yet.
+    """
+    candidate = Path(path) if path is not None else get_nastech_home()
+    resolved = candidate.expanduser().resolve(strict=False)
+    return os.path.normcase(str(resolved))
+
+
 def get_process_nastech_home() -> Path:
     """Return the Nastech home for the running process, ignoring task overrides.
 

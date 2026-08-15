@@ -192,6 +192,7 @@ stdenv.mkDerivation (finalAttrs: {
           --set NASTECH_OPTIONAL_MCPS $out/share/nastech-agent/optional-mcps \
           --set NASTECH_WEB_DIST $out/share/nastech-agent/web_dist \
           --set NASTECH_TUI_DIR $out/ui-tui \
+          --set-default NASTECH_BIN $out/bin/nastech \
           --set NASTECH_PYTHON ${nastechVenv}/bin/python3 \
           --set NASTECH_NODE ${lib.getExe nastechNpmLib.nodejs}${
             # Fold the line continuation INTO the optionalString: a bare

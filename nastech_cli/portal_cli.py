@@ -26,8 +26,8 @@ import webbrowser
 from nastech_cli.colors import Colors, color
 from nastech_cli.config import load_config
 
-DEFAULT_PORTAL_URL = "https://portal.nastechresearch.com"
-SUBSCRIPTION_URL = "https://portal.nastechresearch.com/manage-subscription"
+DEFAULT_PORTAL_URL = "https://portal.nastechresearch.github.io"
+SUBSCRIPTION_URL = "https://portal.nastechresearch.github.io/manage-subscription"
 DOCS_URL = "https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/tool-gateway"
 
 

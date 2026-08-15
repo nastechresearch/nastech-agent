@@ -247,7 +247,7 @@ def is_free_tier_model(model: str, base_url: str = "") -> bool:
         from nastech_cli.models import _is_model_free, _pricing_cache
 
         # Mirror get_pricing_for_provider's key normalization: the agent's
-        # Nastech base_url is /v1-suffixed (https://inference-api.nastechresearch.com/v1)
+        # Nastech base_url is /v1-suffixed (https://inference-api.nastechresearch.github.io/v1)
         # but the picker keys _pricing_cache on the pre-/v1 root.
         key = base_url.rstrip("/")
         if key.endswith("/v1"):

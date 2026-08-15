@@ -32,7 +32,7 @@ Brave Search、DDGS 和 xAI 均为**仅搜索**——如果同时需要 `web_ext
 **按能力拆分：** 搜索和提取可分别使用不同的提供商——例如搜索使用 SearXNG（免费），提取使用 Firecrawl。详见下方[按能力配置](#per-capability-configuration)。
 
 :::tip Nastech 订阅用户
-如果您拥有付费 [Nastech Portal](https://portal.nastechresearch.com) 订阅，网页搜索和提取可通过 **[Tool Gateway](tool-gateway.md)** 使用托管的 Firecrawl——无需 API 密钥。新安装可运行 `nastech setup --portal` 登录并一次性开启所有 gateway 工具；现有安装可通过 `nastech tools` 单独开启网页功能。
+如果您拥有付费 [Nastech Portal](https://portal.nastechresearch.github.io) 订阅，网页搜索和提取可通过 **[Tool Gateway](tool-gateway.md)** 使用托管的 Firecrawl——无需 API 密钥。新安装可运行 `nastech setup --portal` 登录并一次性开启所有 gateway 工具；现有安装可通过 `nastech tools` 单独开启网页功能。
 :::
 
 ---

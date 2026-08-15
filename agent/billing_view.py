@@ -420,7 +420,7 @@ def _dev_fixture_billing_state() -> Optional[BillingState]:
 
     # Shared fixture portal host (matches subscription_view._DEV_FIXTURE_PORTAL —
     # prod host, not staging; the ?topup=open suffix is the /topup deep-link).
-    portal = "https://portal.nastechresearch.com/billing?topup=open"
+    portal = "https://portal.nastechresearch.github.io/billing?topup=open"
     common: dict[str, Any] = dict(
         org_id="org_acme",
         org_slug="acme",

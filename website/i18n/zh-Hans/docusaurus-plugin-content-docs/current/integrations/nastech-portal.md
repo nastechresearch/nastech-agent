@@ -6,7 +6,7 @@ description: "一个订阅，300+ 前沿模型，以及 Tool Gateway —— 运�
 
 # Nastech Portal
 
-[Nastech Portal](https://portal.nastechresearch.com) 是 Nastech Research 的统一订阅网关，也是**运行 Nastech Agent 的推荐方式**。一次 OAuth 登录，即可替代原本需要手动配置的各模型厂商独立账号、API 密钥和计费关系。
+[Nastech Portal](https://portal.nastechresearch.github.io) 是 Nastech Research 的统一订阅网关，也是**运行 Nastech Agent 的推荐方式**。一次 OAuth 登录，即可替代原本需要手动配置的各模型厂商独立账号、API 密钥和计费关系。
 
 如果你只有时间配置一件事，就配置这个。最快路径：
 
@@ -16,7 +16,7 @@ nastech setup --portal
 
 这条命令会完成 Portal OAuth 认证，让你选择一个 Nastech 模型，在 `config.yaml` 中将 Nastech 设为推理提供商，并开启 Tool Gateway。完成后即可立即运行 `nastech chat`。
 
-还没有订阅？前往 [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription) 注册，然后回来运行上面的命令。
+还没有订阅？前往 [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription) 注册，然后回来运行上面的命令。
 
 ## 订阅包含的内容
 
@@ -81,7 +81,7 @@ Nastech Research 自家的 **Nastech 4** 系列（Nastech-4-70B、Nastech-4-405B
 /model deepseek/deepseek-v3.2          # 高性价比代码模型
 ```
 
-Portal 自身的[模型信息页](https://portal.nastechresearch.com/info)也有相同警告，因此这不是 Nastech 侧的主观意见——这是 Nastech Research 的官方指导。
+Portal 自身的[模型信息页](https://portal.nastechresearch.github.io/info)也有相同警告，因此这不是 Nastech 侧的主观意见——这是 Nastech Research 的官方指导。
 
 ## 配置
 
@@ -93,14 +93,14 @@ nastech setup --portal
 
 一次性完成全部配置：
 
-1. 打开浏览器跳转至 portal.nastechresearch.com 进行 OAuth 登录
+1. 打开浏览器跳转至 portal.nastechresearch.github.io 进行 OAuth 登录
 2. 将 refresh token 存储至 `~/.nastech/auth.json`
 3. 让你从精选列表中选择一个 Nastech 模型（也可跳过以保留当前模型）
 4. 在 `~/.nastech/config.yaml` 中将 Nastech 设为推理提供商（当你选择模型时）
 5. 开启 Tool Gateway（网页、图像、TTS、浏览器路由）
 6. 返回终端，即可运行 `nastech chat`
 
-如果还没有订阅，请先在 [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription) 注册。
+如果还没有订阅，请先在 [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription) 注册。
 
 ### 已有安装——在现有提供商旁添加 Portal
 
@@ -141,7 +141,7 @@ nastech portal open       # 在浏览器中打开订阅管理页面
   Nastech Portal
   ───────────
   Auth:    ✓ logged in
-  Portal:  https://portal.nastechresearch.com
+  Portal:  https://portal.nastechresearch.github.io
   Model:   ✓ using Nastech as inference provider
 
   Tool Gateway
@@ -194,7 +194,7 @@ Tool Gateway 是按工具单独选择启用的，而非全部或全不。完整�
 
 随时管理套餐、查看用量或升级/取消：
 
-- **网页端：** [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription)
+- **网页端：** [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription)
 - **CLI 快捷方式：** `nastech portal open`（在默认浏览器中打开同一页面）
 
 ## 配置参考
@@ -205,7 +205,7 @@ Tool Gateway 是按工具单独选择启用的，而非全部或全不。完整�
 model:
   provider: nastech
   default: anthropic/claude-sonnet-4.6     # 或你选择的其他模型
-  base_url: https://inference.nastechresearch.com/v1
+  base_url: https://inference.nastechresearch.github.io/v1
 ```
 
 Tool Gateway 设置位于各自工具的配置节下：

@@ -15,6 +15,17 @@ import pytest
 # Helpers
 # ---------------------------------------------------------------------------
 
+@pytest.fixture(autouse=True)
+def _no_real_gateway_service(monkeypatch):
+    """run_import() auto-installs the gateway service post-restore; tests must
+    never touch the host's systemd/launchd. Individual tests re-patch these to
+    assert the wiring."""
+    import nastech_cli.gateway as gateway_mod
+
+    monkeypatch.setattr(gateway_mod, "ensure_gateway_service", lambda **kw: False)
+    monkeypatch.setattr(gateway_mod, "_is_service_running", lambda: False)
+
+
 def _advance_backup_clock(seconds: float = 1.1) -> None:
     """Skew nastech_cli.backup's datetime forward instead of sleeping.
 
@@ -263,6 +274,81 @@ class TestImport:
                     zf.writestr(name, content)
                 else:
                     zf.writestr(name, content)
+
+    def test_import_auto_installs_gateway_service(self, tmp_path, monkeypatch):
+        """After a restore, run_import brings the gateway service up without
+        prompting — restored cron jobs and bot tokens must not sit dormant
+        (the install-then-import dead-gateway bug)."""
+        import nastech_cli.gateway as gateway_mod
+
+        nastech_home = tmp_path / ".nastech"
+        nastech_home.mkdir()
+        monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        calls = []
+        monkeypatch.setattr(
+            gateway_mod, "ensure_gateway_service",
+            lambda **kw: calls.append(kw) or True,
+        )
+        monkeypatch.setattr(gateway_mod, "_is_service_running", lambda: False)
+
+        zip_path = tmp_path / "backup.zip"
+        self._make_backup_zip(zip_path, {"config.yaml": "model: test\n"})
+
+        from nastech_cli.backup import run_import
+        run_import(Namespace(zipfile=str(zip_path), force=True))
+
+        assert calls and calls[0].get("context") == "import"
+
+    def test_import_skips_service_when_already_running(self, tmp_path, monkeypatch):
+        """A live gateway is left alone — no reinstall churn during import."""
+        import nastech_cli.gateway as gateway_mod
+
+        nastech_home = tmp_path / ".nastech"
+        nastech_home.mkdir()
+        monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        calls = []
+        monkeypatch.setattr(
+            gateway_mod, "ensure_gateway_service",
+            lambda **kw: calls.append(kw) or True,
+        )
+        monkeypatch.setattr(gateway_mod, "_is_service_running", lambda: True)
+
+        zip_path = tmp_path / "backup.zip"
+        self._make_backup_zip(zip_path, {"config.yaml": "model: test\n"})
+
+        from nastech_cli.backup import run_import
+        run_import(Namespace(zipfile=str(zip_path), force=True))
+
+        assert not calls
+
+    def test_import_survives_service_layer_import_failure(self, tmp_path, monkeypatch, capsys):
+        """If the service helpers can't even be reached, import still completes
+        and prints the manual fallback."""
+        nastech_home = tmp_path / ".nastech"
+        nastech_home.mkdir()
+        monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        import nastech_cli.gateway as gateway_mod
+
+        def boom():
+            raise RuntimeError("service layer unavailable")
+
+        monkeypatch.setattr(gateway_mod, "_is_service_running", boom)
+
+        zip_path = tmp_path / "backup.zip"
+        self._make_backup_zip(zip_path, {"config.yaml": "model: test\n"})
+
+        from nastech_cli.backup import run_import
+        run_import(Namespace(zipfile=str(zip_path), force=True))
+
+        out = capsys.readouterr().out
+        assert "Done. Your Nastech configuration has been restored." in out
+        assert "nastech gateway install" in out
 
 
 

@@ -33,7 +33,7 @@ Nastech 内置了丰富的工具注册表，涵盖网页搜索、浏览器自动
 如需查看由代码派生的权威注册表，请参阅 [内置工具参考](/reference/tools-reference) 和 [工具集参考](/reference/toolsets-reference)。
 
 :::tip Nastech Tool Gateway
-付费 [Nastech Portal](https://portal.nastechresearch.com) 订阅者可通过 **[Tool Gateway](tool-gateway.md)** 使用网页搜索、图像生成、TTS 和浏览器自动化——无需单独配置 API 密钥。运行 `nastech model` 启用，或通过 `nastech tools` 配置各工具。
+付费 [Nastech Portal](https://portal.nastechresearch.github.io) 订阅者可通过 **[Tool Gateway](tool-gateway.md)** 使用网页搜索、图像生成、TTS 和浏览器自动化——无需单独配置 API 密钥。运行 `nastech model` 启用，或通过 `nastech tools` 配置各工具。
 :::
 
 ## 使用工具集

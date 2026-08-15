@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   touchBackend: profile => ipcRenderer.invoke('nastech:backend:touch', profile),
   getGatewayWsUrl: profile => ipcRenderer.invoke('nastech:gateway:ws-url', profile),
   openSessionWindow: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openSession', sessionId, opts),
+  openSessionInTerminal: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openInTerminal', sessionId, opts),
   openWindow: () => ipcRenderer.invoke('nastech:window:openInstance'),
   claimAmbientCue: key => ipcRenderer.invoke('nastech:ambient:claim', key),
   wakeIndicator: {
@@ -199,11 +200,15 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   },
   revealLogs: () => ipcRenderer.invoke('nastech:logs:reveal'),
   getRecentLogs: () => ipcRenderer.invoke('nastech:logs:recent'),
+  // Fire-and-forget: persists a renderer error-boundary catch (with component
+  // stack) to desktop.log so crashes survive the window (#79428).
+  reportRendererError: report => ipcRenderer.send('nastech:logs:renderer-error', report),
   readDir: dirPath => ipcRenderer.invoke('nastech:fs:readDir', dirPath),
   gitRoot: startPath => ipcRenderer.invoke('nastech:fs:gitRoot', startPath),
   revealPath: targetPath => ipcRenderer.invoke('nastech:fs:reveal', targetPath),
   openDir: dirPath => ipcRenderer.invoke('nastech:fs:openDir', dirPath),
   desktopPluginsRoot: () => ipcRenderer.invoke('nastech:fs:desktopPluginsRoot'),
+  agentPluginsRoot: () => ipcRenderer.invoke('nastech:fs:agentPluginsRoot'),
   renamePath: (targetPath, newName) => ipcRenderer.invoke('nastech:fs:rename', targetPath, newName),
   writeTextFile: (filePath, content) => ipcRenderer.invoke('nastech:fs:writeText', filePath, content),
   trashPath: targetPath => ipcRenderer.invoke('nastech:fs:trash', targetPath),
@@ -232,6 +237,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
       shipInfo: repoPath => ipcRenderer.invoke('nastech:git:review:shipInfo', repoPath),
       prList: (repoPath, branches, numbers) =>
         ipcRenderer.invoke('nastech:git:review:prList', repoPath, branches, numbers),
+      fetchPrComment: (repoPath, url) => ipcRenderer.invoke('nastech:git:review:fetchPrComment', repoPath, url),
       createPr: repoPath => ipcRenderer.invoke('nastech:git:review:createPr', repoPath)
     }
   },

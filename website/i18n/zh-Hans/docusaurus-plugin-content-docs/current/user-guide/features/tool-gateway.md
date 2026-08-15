@@ -8,10 +8,10 @@ sidebar_position: 2
 # Nastech Tool Gateway（工具网关）
 
 :::tip 快速开始
-Tool Gateway 包含在付费 Nastech Portal 订阅中。**[管理订阅 →](https://portal.nastechresearch.com/manage-subscription)**
+Tool Gateway 包含在付费 Nastech Portal 订阅中。**[管理订阅 →](https://portal.nastechresearch.github.io/manage-subscription)**
 :::
 
-**Tool Gateway** 让已付费的 [Nastech Portal](https://portal.nastechresearch.com) 用户通过同一份订阅，直接使用网页搜索、文生图、语音合成（TTS）与浏览器自动化，而**不必**再分别注册 Firecrawl、FAL、OpenAI、Browser Use 等服务的 API Key。
+**Tool Gateway** 让已付费的 [Nastech Portal](https://portal.nastechresearch.github.io) 用户通过同一份订阅，直接使用网页搜索、文生图、语音合成（TTS）与浏览器自动化，而**不必**再分别注册 Firecrawl、FAL、OpenAI、Browser Use 等服务的 API Key。
 
 ## 包含能力
 
@@ -26,7 +26,7 @@ Tool Gateway 包含在付费 Nastech Portal 订阅中。**[管理订阅 →](htt
 
 ## 资格与账号
 
-Tool Gateway 仅对 **[付费](https://portal.nastechresearch.com/manage-subscription)** Nastech Portal 订阅开放；免费档不可用——请 [升级订阅](https://portal.nastechresearch.com/manage-subscription) 后解锁。
+Tool Gateway 仅对 **[付费](https://portal.nastechresearch.github.io/manage-subscription)** Nastech Portal 订阅开放；免费档不可用——请 [升级订阅](https://portal.nastechresearch.github.io/manage-subscription) 后解锁。
 
 检查当前状态：
 
@@ -156,7 +156,7 @@ nastech status
 若使用自建或自定义网关，可在 `~/.nastech/.env` 中用环境变量覆盖端点：
 
 ```bash
-TOOL_GATEWAY_DOMAIN=nastechresearch.com     # 网关路由基础域名
+TOOL_GATEWAY_DOMAIN=nastechresearch.github.io     # 网关路由基础域名
 TOOL_GATEWAY_SCHEME=https                 # http 或 https（默认 https）
 TOOL_GATEWAY_USER_TOKEN=your-token        # 鉴权 Token（通常由程序自动填充）
 FIRECRAWL_GATEWAY_URL=https://...         # 单独覆盖 Firecrawl 端点
@@ -176,7 +176,7 @@ FIRECRAWL_GATEWAY_URL=https://...         # 单独覆盖 Firecrawl 端点
 
 ### 订阅到期会怎样？
 
-经网关路由的工具会停止工作，直到你 [续订](https://portal.nastechresearch.com/manage-subscription) 或通过 `nastech tools` 改回直连 Key。
+经网关路由的工具会停止工作，直到你 [续订](https://portal.nastechresearch.github.io/manage-subscription) 或通过 `nastech tools` 改回直连 Key。
 
 ### 与「消息网关」（各聊天平台）是否冲突？
 

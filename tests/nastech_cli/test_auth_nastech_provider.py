@@ -200,8 +200,8 @@ def test_resolve_nastech_runtime_credentials_invoke_jwt_is_idempotent(
         "active_provider": "nastech",
         "providers": {
             "nastech": {
-                "portal_base_url": "https://portal.nastechresearch.com",
-                "inference_base_url": "https://inference-api.nastechresearch.com/v1",
+                "portal_base_url": "https://portal.nastechresearch.github.io",
+                "inference_base_url": "https://inference-api.nastechresearch.github.io/v1",
                 "client_id": "nastech-cli",
                 "token_type": "Bearer",
                 "scope": auth_mod.DEFAULT_NASTECH_SCOPE,
@@ -505,8 +505,8 @@ class TestLoginNastechSkipKeepsCurrent:
         fake_auth_state = {
             "access_token": "fake-nastech-token",
             "agent_key": "fake-agent-key",
-            "inference_base_url": "https://inference-api.nastechresearch.com",
-            "portal_base_url": "https://portal.nastechresearch.com",
+            "inference_base_url": "https://inference-api.nastechresearch.github.io",
+            "portal_base_url": "https://portal.nastechresearch.github.io",
             "refresh_token": "fake-refresh",
             "token_expires_at": 9999999999,
         }
@@ -798,7 +798,7 @@ def test_refresh_token_reuse_detection_surfaces_actionable_message():
     with pytest.raises(AuthError) as exc_info:
         _refresh_access_token(
             client=_FakeClient(),
-            portal_base_url="https://portal.nastechresearch.com",
+            portal_base_url="https://portal.nastechresearch.github.io",
             client_id="nastech-cli",
             refresh_token="rt_consumed_elsewhere",
         )
@@ -838,7 +838,7 @@ def test_refresh_token_exchange_sends_refresh_token_header():
 
     payload = _refresh_access_token(
         client=client,
-        portal_base_url="https://portal.nastechresearch.com",
+        portal_base_url="https://portal.nastechresearch.github.io",
         client_id="nastech-cli",
         refresh_token="refresh-1",
     )
@@ -1011,7 +1011,7 @@ class TestStalePortalBaseUrlMigration:
             "active_provider": "nastech",
             "providers": {
                 "nastech": {
-                    "portal_base_url": "https://api.nastechresearch.com",
+                    "portal_base_url": "https://api.nastechresearch.github.io",
                     "access_token": "test-token",
                     "refresh_token": "test-refresh",
                 }
@@ -1044,7 +1044,7 @@ class TestStalePortalBaseUrlMigration:
         auth_file = nastech_home / "auth.json"
         store = json.loads(auth_file.read_text())
         store["providers"]["nastech"]["portal_base_url"] = (
-            "http://portal.nastechresearch.com"
+            "http://portal.nastechresearch.github.io"
         )
         auth_file.write_text(json.dumps(store, indent=2))
 
@@ -1079,10 +1079,10 @@ class TestNastechDeviceAuthTimeoutMessage:
     def test_timeout_message_mentions_captcha_login_and_retry(self):
         from nastech_cli.auth import _nastech_device_auth_timeout_message
 
-        msg = _nastech_device_auth_timeout_message("https://portal.nastechresearch.com")
+        msg = _nastech_device_auth_timeout_message("https://portal.nastechresearch.github.io")
         assert "CAPTCHA" in msg
         assert "nastech portal" in msg
-        assert "https://portal.nastechresearch.com/login" in msg
+        assert "https://portal.nastechresearch.github.io/login" in msg
         # Must NOT point at the nonexistent /device page (live Portal 404s it).
         assert "/device" not in msg
 
@@ -1119,7 +1119,7 @@ def test_poll_for_token_timeout_raises_actionable_message():
     with pytest.raises(TimeoutError) as excinfo:
         auth_mod._poll_for_token(
             client=cast(httpx.Client, _PendingClient()),
-            portal_base_url="https://portal.nastechresearch.com",
+            portal_base_url="https://portal.nastechresearch.github.io",
             client_id="nastech-cli",
             device_code="device",
             expires_in=1,
@@ -1129,7 +1129,7 @@ def test_poll_for_token_timeout_raises_actionable_message():
     msg = str(excinfo.value)
     assert "CAPTCHA" in msg
     assert "nastech portal" in msg
-    assert "https://portal.nastechresearch.com/login" in msg
+    assert "https://portal.nastechresearch.github.io/login" in msg
 
 
 def test_nastech_device_code_login_timeout_raises_actionable_message(monkeypatch):
@@ -1145,9 +1145,9 @@ def test_nastech_device_code_login_timeout_raises_actionable_message(monkeypatch
         lambda **kwargs: {
             "device_code": "device",
             "user_code": "SMCL-97YT",
-            "verification_uri": "https://portal.nastechresearch.com/manage-subscription",
+            "verification_uri": "https://portal.nastechresearch.github.io/manage-subscription",
             "verification_uri_complete": (
-                "https://portal.nastechresearch.com/manage-subscription"
+                "https://portal.nastechresearch.github.io/manage-subscription"
                 "?user_code=SMCL-97YT"
             ),
             "expires_in": 600,
@@ -1168,7 +1168,7 @@ def test_nastech_device_code_login_timeout_raises_actionable_message(monkeypatch
 
     with pytest.raises(TimeoutError) as excinfo:
         auth_mod._nastech_device_code_login(
-            portal_base_url="https://portal.nastechresearch.com",
+            portal_base_url="https://portal.nastechresearch.github.io",
             inference_base_url="https://inference.example.com/v1",
             open_browser=False,
             timeout_seconds=1,
@@ -1177,4 +1177,4 @@ def test_nastech_device_code_login_timeout_raises_actionable_message(monkeypatch
     msg = str(excinfo.value)
     assert "CAPTCHA" in msg
     assert "nastech portal" in msg
-    assert "https://portal.nastechresearch.com/login" in msg
+    assert "https://portal.nastechresearch.github.io/login" in msg

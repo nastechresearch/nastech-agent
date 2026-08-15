@@ -62,7 +62,12 @@ vi.mock('@/nastech', () => ({
   getNastechConfigRecord: () => getNastechConfigRecord(),
   getNastechConfigSchema: () => getNastechConfigSchema(),
   saveNastechConfig: (config: unknown) => saveNastechConfig(config),
-  getElevenLabsVoices: () => getElevenLabsVoices()
+  getElevenLabsVoices: () => getElevenLabsVoices(),
+  // @/store/profile (pulled in transitively via use-config-record's
+  // normalizeProfileKey import) calls this at module-init; the full-replacement
+  // mock must provide it or the module graph throws on load.
+  setApiRequestProfile: () => undefined,
+  getApiRequestProfile: () => null
 }))
 
 vi.mock('@/store/notifications', () => ({
@@ -862,7 +867,7 @@ describe('ToolsetConfigPanel', () => {
         flow: 'device_code',
         session_id: 'sess-1',
         user_code: 'NASTECH-1234',
-        verification_url: 'https://portal.nastechresearch.com/device?user_code=NASTECH-1234',
+        verification_url: 'https://portal.nastechresearch.github.io/device?user_code=NASTECH-1234',
         poll_interval: 5,
         expires_in: 600
       })
@@ -891,7 +896,7 @@ describe('ToolsetConfigPanel', () => {
 
         await waitFor(() => expect(startOAuthLogin).toHaveBeenCalledWith('nastech'))
         expect(openSpy).toHaveBeenCalledWith(
-          'https://portal.nastechresearch.com/device?user_code=NASTECH-1234',
+          'https://portal.nastechresearch.github.io/device?user_code=NASTECH-1234',
           '_blank',
           'noopener,noreferrer'
         )

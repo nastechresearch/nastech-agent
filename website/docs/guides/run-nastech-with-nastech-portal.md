@@ -6,7 +6,7 @@ description: "Start-to-finish walkthrough: subscribe, set up, switch models, ena
 
 # Run Nastech Agent with Nastech Portal
 
-This guide walks you through running Nastech Agent on a [Nastech Portal](https://portal.nastechresearch.com) subscription end to end — from signing up to verifying that every tool routes correctly. If you just want the overview of what the Portal is and what's in the subscription, see the [Nastech Portal integration page](/integrations/nastech-portal). This page is the task script.
+This guide walks you through running Nastech Agent on a [Nastech Portal](https://portal.nastechresearch.github.io) subscription end to end — from signing up to verifying that every tool routes correctly. If you just want the overview of what the Portal is and what's in the subscription, see the [Nastech Portal integration page](/integrations/nastech-portal). This page is the task script.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ You do **not** need: an OpenAI key, an Anthropic key, a Firecrawl account, a FAL
 
 ## 1. Get a subscription
 
-Open [portal.nastechresearch.com/manage-subscription](https://portal.nastechresearch.com/manage-subscription), sign up, and pick a plan.
+Open [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription), sign up, and pick a plan.
 
 Already subscribed? Skip to step 2.
 
@@ -30,7 +30,7 @@ nastech setup --portal
 
 This single command does five things:
 
-1. Opens your browser to portal.nastechresearch.com for OAuth login
+1. Opens your browser to portal.nastechresearch.github.io for OAuth login
 2. Stores the refresh token at `~/.nastech/auth.json`
 3. Sets `model.provider: nastech` in `~/.nastech/config.yaml`
 4. Picks a default agentic model (`anthropic/claude-sonnet-4.6` or similar)
@@ -66,7 +66,7 @@ You should see:
   Nastech Portal
   ───────────
   Auth:    ✓ logged in
-  Portal:  https://portal.nastechresearch.com
+  Portal:  https://portal.nastechresearch.github.io
   Model:   ✓ using Nastech as inference provider
 
   Tool Gateway
@@ -122,7 +122,7 @@ nastech config set model.default anthropic/claude-sonnet-4.6
 
 Nastech-4-70B and Nastech-4-405B are available on the Portal at deep discounts, but they're **chat/reasoning models**, not tool-call-tuned. They will struggle with multi-step agent loops. Use them for conversation/research work through the [subscription proxy](/user-guide/features/subscription-proxy) from non-agent tools. For Nastech Agent itself, stick to the frontier agentic models above.
 
-The Portal's own [info page](https://portal.nastechresearch.com/info) carries this warning too — it's the official Nastech guidance, not just a Nastech-side opinion.
+The Portal's own [info page](https://portal.nastechresearch.github.io/info) carries this warning too — it's the official Nastech guidance, not just a Nastech-side opinion.
 
 ## 6. (Optional) Customize Tool Gateway routing
 

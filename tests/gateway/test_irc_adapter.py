@@ -339,11 +339,11 @@ class TestIRCStandaloneSend:
 
         monkeypatch.setenv("IRC_SERVER", "irc.test.net")
         monkeypatch.setenv("IRC_CHANNEL", "#cron")
-        monkeypatch.setenv("IRC_NICKNAME", "nastechbot")
+        monkeypatch.setenv("IRC_NICKNAME", "hermesbot")
         monkeypatch.setenv("IRC_USE_TLS", "false")
 
         # Server greets us with 001 RPL_WELCOME, then nothing for QUIT drain.
-        conn = _FakeIRCConnection([b":server 001 nastechbot-cron :Welcome"])
+        conn = _FakeIRCConnection([b":server 001 hermesbot-cron :Welcome"])
 
         async def _fake_open(host, port, **kwargs):
             return conn, conn  # reader and writer share the same fake
@@ -362,8 +362,8 @@ class TestIRCStandaloneSend:
         sent_lines = b"".join(conn.writes).decode("utf-8").splitlines()
         # NICK uses the cron-suffixed identity to avoid colliding with the
         # long-running gateway adapter that may already hold the nickname.
-        assert any(line.startswith("NICK nastechbot-cron") for line in sent_lines)
-        assert any(line.startswith("USER nastechbot-cron 0 * :Nastech Agent (cron)")
+        assert any(line.startswith("NICK hermesbot-cron") for line in sent_lines)
+        assert any(line.startswith("USER hermesbot-cron 0 * :Nastech Agent (cron)")
                    for line in sent_lines)
         assert any(line == "PRIVMSG #cron :hello from cron" for line in sent_lines)
         assert any(line.startswith("QUIT ") for line in sent_lines)
@@ -375,7 +375,7 @@ class TestIRCStandaloneSend:
 
         monkeypatch.setenv("IRC_SERVER", "irc.test.net")
         monkeypatch.setenv("IRC_CHANNEL", "#cron")
-        monkeypatch.setenv("IRC_NICKNAME", "nastechbot")
+        monkeypatch.setenv("IRC_NICKNAME", "hermesbot")
         monkeypatch.setenv("IRC_USE_TLS", "false")
 
         # No 001 response: the readuntil call returns IncompleteReadError so

@@ -191,7 +191,7 @@ export const ga: Translations = {
     input: "Ionchur",
     output: "Aschur",
     total: "Iomlán",
-    nastechageData: "Gan sonraí úsáide don tréimhse seo",
+    noUsageData: "Gan sonraí úsáide don tréimhse seo",
     startSession: "Tosaigh seisiún chun anailís a fheiceáil anseo",
     date: "Dáta",
     model: "Samhail",

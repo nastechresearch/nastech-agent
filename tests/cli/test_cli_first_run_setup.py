@@ -177,7 +177,7 @@ def test_offer_first_run_setup_routes_into_shared_picker(monkeypatch):
         lambda **kw: {
             "provider": "nastech",
             "api_key": "portal-token",
-            "base_url": "https://inference-api.nastechresearch.com/v1",
+            "base_url": "https://inference-api.nastechresearch.github.io/v1",
             "source": "oauth",
         },
     )

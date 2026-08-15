@@ -1,2 +1,2 @@
 jrcrittenden
-# PR #28749 salvage (sec: release-age gate on nastech update)
+# PR #28749 salvage (sec: release-age gate on hermes update)

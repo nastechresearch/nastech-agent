@@ -19,6 +19,16 @@ database:
   # journal_size_limit: 67108864 # cap the WAL/journal file size in bytes
 
 # =============================================================================
+# Runtime Limits
+# =============================================================================
+# Long-running Nastech server processes raise their RLIMIT_NOFILE soft limit to
+# this value when the operating system permits it. The value is clamped to the
+# hard limit and never lowers an already higher soft limit. Set to 0, false, or
+# null to disable the adjustment. Default: 4096.
+runtime:
+  nofile_soft_limit: 4096
+
+# =============================================================================
 # Model Configuration
 # =============================================================================
 model:
@@ -157,6 +167,26 @@ model:
 #         stale_timeout_seconds: 1800  # Longer non-stream stale timeout for slow large-context turns
 
 # =============================================================================
+# Unified Timeouts (operation deadlines)
+# =============================================================================
+# One place to override Nastech's internal operation deadlines (seconds).
+# Keys are dotted paths resolved by agent/deadline.py:resolve_timeout().
+# Precedence: this section > legacy NASTECH_* env var (back-compat) > built-in
+# default. 0 or a negative value disables the bound (unbounded); very large
+# values are clamped to a platform-safe maximum automatically.
+#
+# Currently resolved keys (more paths migrate here over time — see issue #85125):
+#
+# timeouts:
+#   tools:
+#     concurrent_batch: 420   # Deadline for a parallel tool-call batch
+#                             # (legacy env: NASTECH_CONCURRENT_TOOL_TIMEOUT_S)
+#     sequential_call: 420    # Deadline for one sequentially-executed tool call.
+#                             # Defaults to concurrent_batch's value so the two
+#                             # executor paths stay in sync; human waits
+#                             # (approval prompts, clarify) never count against it.
+
+# =============================================================================
 # OpenRouter Provider Routing (only applies when using OpenRouter)
 # =============================================================================
 # Control how requests are routed across providers on OpenRouter.
@@ -213,6 +243,16 @@ model:
 #
 # worktree_sync: true   # Default — branch from the fetched remote tip
 # worktree_sync: false  # Branch from local HEAD (offline / pinned base)
+
+# =============================================================================
+# Kanban Review Dispatch
+# =============================================================================
+# First-class review tasks are dispatched automatically by default. The worker
+# is spawned with the bundled sdlc-review skill and can approve, request changes
+# back to the original implementer, or escalate a genuine external blocker.
+# Disable this only when every review is performed manually from the dashboard.
+kanban:
+  review_dispatch: true
 
 # =============================================================================
 # Terminal Tool Configuration
@@ -376,6 +416,9 @@ terminal:
 #   tirith_path: "tirith"       # Path to tirith binary (supports ~ expansion)
 #   tirith_timeout: 5           # Scan timeout in seconds
 #   tirith_fail_open: true      # Allow commands if tirith unavailable
+#   approval:
+#     transport: builtin        # Or an explicitly enabled plugin transport name
+#     transport_fallback: deny  # Set builtin to opt into fallback on transport failure
 
 # =============================================================================
 # Browser Tool Configuration
@@ -1037,6 +1080,11 @@ platform_toolsets:
 #         priority_mode: prepend
 #         priority:
 #           - my_plugin_command
+#   slack:
+#     extra:
+#       # Render live tool calls as Slack-native plan/task cards. This explicit
+#       # opt-in works even though Slack text tool_progress defaults to off.
+#       native_task_cards: false
 #   webhook:
 #     extra:
 #       # Route scripts default to a 30 second timeout. Scripts must live under
@@ -1210,6 +1258,29 @@ stt:
   # cloud_trim_silence: true   # set false to always upload the original audio
   # cloud_trim_threshold_db: -40  # audio quieter than this counts as silence
   # cloud_trim_keep_ms: 300    # how much of each pause survives (keeps natural pacing)
+  # Optional static transcription prompt: vocabulary/context hints for
+  # prompt-capable backends. Composition is deterministic: this config value
+  # is the base, then `pre_transcription` hooks run in registration order with
+  # last-writer-wins semantics per field.
+  #
+  # Privacy: the final prompt is sent to the configured STT provider alongside
+  # the audio. Do not include secrets or session context you would not send to
+  # that provider.
+  #
+  # Length / truncation contract: Whisper-family backends (local, openai,
+  # groq, deepinfra) only use the final ~224 prompt tokens, so Nastech
+  # truncates longer prompts client-side (keeping the tail) with a WARNING
+  # log — never an error. Other backends own their own validation.
+  #
+  # Provider behavior:
+  #   local (faster-whisper)  -> `initial_prompt`, forwarded unchanged
+  #   openai / groq          -> `prompt`, forwarded unchanged
+  #   mistral                -> `prompt`, forwarded unchanged
+  #   deepinfra              -> OpenAI-compatible `prompt`, unchanged
+  #   local_command/xai/
+  #   elevenlabs             -> unsupported; DEBUG log, then continue
+  #   plugin providers       -> `prompt` in `**extra`; plugin owns limits
+  # prompt: "Nastech, Teknium, Nastech Research, kanban"
   local:
     model: "base"              # tiny | base | small | medium | large-v3 | turbo
     # language: ""             # auto-detect; set to "en", "es", "fr", etc. to force
@@ -1311,7 +1382,7 @@ code_execution:
 # The delegate_task tool spawns child agents with isolated context.
 # Supports single tasks and batch mode (default 3 parallel, configurable).
 delegation:
-  max_iterations: 50                          # Max tool-calling turns per child (default: 50)
+  max_iterations: 250                         # Max tool-calling turns per child (default: 250)
   # max_concurrent_children: 3                # Max parallel child agents per batch (default: 3, floor: 1, no ceiling).
                                               # WARNING: values above 10 multiply API cost linearly.
   # max_spawn_depth: 1                        # Delegation tree depth cap (range: 1-3, default: 1 = flat).
@@ -1327,6 +1398,10 @@ delegation:
   # provider: "openrouter"                    # Override provider for subagents (empty = inherit parent)
   #                                           # Resolves full credentials (base_url, api_key) automatically.
   #                                           # Supported: openrouter, nastech, zai, kimi-coding, minimax
+  #                                           # Cost tip: keep the parent on a frontier model and pin
+  #                                           # delegation.model to an inexpensive one — children carry the
+  #                                           # vast majority of tokens, so this is where spend is cut while
+  #                                           # planning quality stays with the frontier parent.
 
 # =============================================================================
 # Honcho Integration (Cross-Session User Modeling)
@@ -1425,11 +1500,13 @@ display:
   # Background process notifications (gateway/messaging only).
   # Controls how chatty the process watcher is when you use
   # terminal(background=true, notify_on_complete=true) from Telegram/Discord/etc.
+  #   concise: One-line status message on completion; failures include a short
+  #            output tail (default)
   #   off:     No watcher messages at all
-  #   result:  Only the final completion message
-  #   error:   Only the final message when exit code != 0
-  #   all:     Running output updates + final message (default)
-  background_process_notifications: all
+  #   result:  Only the final raw-output completion message
+  #   error:   Only the final raw-output message when exit code != 0
+  #   all:     Running output updates + final raw-output message
+  background_process_notifications: concise
 
 
   # Play terminal bell when agent finishes a response.
@@ -1630,7 +1707,7 @@ updates:
 # dashboard:
 #   oauth:
 #     client_id: ""    # agent:{instance_id}; Portal provisions this at deploy
-#     portal_url: ""   # blank → default https://portal.nastechresearch.com
+#     portal_url: ""   # blank → default https://portal.nastechresearch.github.io
 #
 #   # Force the absolute base URL the OAuth callback (and any other public
 #   # URL the dashboard hands to external systems) is built from. Set this

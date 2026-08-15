@@ -116,12 +116,12 @@ test('profileRemoteOverride treats a cloud entry as a remote override', () => {
   // entry would (Q6) — the override must be returned, not dropped.
   const config = {
     profiles: {
-      coder: { mode: 'cloud', url: 'https://agent-1.agents.nastechresearch.com', authMode: 'oauth' }
+      coder: { mode: 'cloud', url: 'https://agent-1.agents.nastechresearch.github.io', authMode: 'oauth' }
     }
   }
 
   assert.deepEqual(profileRemoteOverride(config, 'coder'), {
-    url: 'https://agent-1.agents.nastechresearch.com',
+    url: 'https://agent-1.agents.nastechresearch.github.io',
     authMode: 'oauth',
     token: undefined
   })
@@ -489,19 +489,11 @@ test('cookiesHaveSession handles non-arrays', () => {
 })
 
 test('AT_COOKIE_VARIANTS covers all three deploy shapes', () => {
-  assert.deepEqual(AT_COOKIE_VARIANTS, [
-    '__Host-nastech_session_at',
-    '__Secure-nastech_session_at',
-    'nastech_session_at'
-  ])
+  assert.deepEqual(AT_COOKIE_VARIANTS, ['__Host-nastech_session_at', '__Secure-nastech_session_at', 'nastech_session_at'])
 })
 
 test('RT_COOKIE_VARIANTS covers all three deploy shapes', () => {
-  assert.deepEqual(RT_COOKIE_VARIANTS, [
-    '__Host-nastech_session_rt',
-    '__Secure-nastech_session_rt',
-    'nastech_session_rt'
-  ])
+  assert.deepEqual(RT_COOKIE_VARIANTS, ['__Host-nastech_session_rt', '__Secure-nastech_session_rt', 'nastech_session_rt'])
 })
 
 // --- cookiesHaveLiveSession (AT or RT — the connectivity check) ---

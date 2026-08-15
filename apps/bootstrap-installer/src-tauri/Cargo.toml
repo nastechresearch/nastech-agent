@@ -2,7 +2,7 @@
 name = "nastech-bootstrap"
 version = "0.0.1"
 description = "Nastech Setup — signed installer that drives scripts/install.ps1"
-authors = ["Nastech Research <info@nastechresearch.com>"]
+authors = ["Nastech Research <info@nastechresearch.github.io>"]
 edition = "2021"
 rust-version = "1.77"
 

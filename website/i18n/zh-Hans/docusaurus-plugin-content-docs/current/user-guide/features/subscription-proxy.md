@@ -118,7 +118,7 @@ nastech proxy start
 openviking-server
 ```
 
-OpenViking 的 VLM 调用现在将通过你的 Portal 订阅进行。Embedding 模型侧仍需要自己的提供商——Portal 确实提供 `/v1/embeddings`，但模型选择取决于你的套餐所支持的内容；请查看 `portal.nastechresearch.com/models`。
+OpenViking 的 VLM 调用现在将通过你的 Portal 订阅进行。Embedding 模型侧仍需要自己的提供商——Portal 确实提供 `/v1/embeddings`，但模型选择取决于你的套餐所支持的内容；请查看 `portal.nastechresearch.github.io/models`。
 
 ## 配置 Karakeep（或任何书签/摘要应用）
 
@@ -145,7 +145,7 @@ nastech proxy start --host 0.0.0.0 --port 8645
 
 ## 速率限制
 
-你的 Portal 套餐的 RPM/TPM 限制适用于整个代理。代理不进行扇出或连接池——它是单个 bearer，使用你的完整订阅配额。请在 [portal.nastechresearch.com](https://portal.nastechresearch.com) 监控使用情况。
+你的 Portal 套餐的 RPM/TPM 限制适用于整个代理。代理不进行扇出或连接池——它是单个 bearer，使用你的完整订阅配额。请在 [portal.nastechresearch.github.io](https://portal.nastechresearch.github.io) 监控使用情况。
 
 ## 架构
 

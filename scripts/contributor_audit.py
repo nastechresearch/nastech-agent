@@ -49,7 +49,7 @@ IGNORED_PATTERNS = [
     re.compile(r"^dependabot", re.IGNORECASE),
     re.compile(r"^renovate", re.IGNORECASE),
     re.compile(r"^Nastech\s+(Agent|Audit)$", re.IGNORECASE),
-    re.compile(r"^nastechbot(-eng)?$", re.IGNORECASE),
+    re.compile(r"^nousbot(-eng)?$", re.IGNORECASE),
     re.compile(r"^Ubuntu$", re.IGNORECASE),
     # v0.20.0 audit additions:
     re.compile(r"^Blut-?Agent$", re.IGNORECASE),          # self-described AI agent account
@@ -62,11 +62,11 @@ IGNORED_PATTERNS = [
 IGNORED_EMAILS = {
     "noreply@anthropic.com",
     "noreply@github.com",
-    "noreply@nastechresearch.com",
+    "noreply@nastechresearch.github.io",
     "cursoragent@cursor.com",
-    "nastech@nastechresearch.com",
+    "nastech@nastechresearch.github.io",
     "nastech-audit@example.com",
-    "nastechbot@nastechresearch.com",
+    "nousbot@nastechresearch.github.io",
     "nastech@habibilabs.dev",
     "omx@oh-my-codex.dev",
     "codex@openai.com",

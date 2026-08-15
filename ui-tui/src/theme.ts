@@ -251,10 +251,10 @@ export function themeToneHex(tone: string): string {
 
 const BRAND: ThemeBrand = {
   name: 'Nastech Agent',
-  icon: '𓄃',
+  icon: '⚕',
   prompt: '❯',
   welcome: 'Type your message or /help for commands.',
-  goodbye: 'Goodbye! 𓄃',
+  goodbye: 'Goodbye! ⚕',
   tool: '┊',
   helpHeader: '(^_^)? Commands'
 }

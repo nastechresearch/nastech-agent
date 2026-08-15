@@ -35,6 +35,12 @@ declare global {
       // a spectator window (lazy resume — no agent build) for live-streaming
       // a running subagent's session.
       openSessionWindow: (sessionId: string, opts?: { watch?: boolean }) => Promise<{ ok: boolean; error?: string }>
+      // Resume this session in the user's own terminal emulator (`nastech --tui
+      // --resume <id>`) — the external terminal, not the in-app pane.
+      openSessionInTerminal: (
+        sessionId: string,
+        opts?: { cwd?: string; profile?: string }
+      ) => Promise<{ ok: boolean; error?: string }>
       // Open a new full-chrome app window — a peer instance of the primary that
       // renders the complete app against the shared backend, so the user can run
       // multiple GUI windows at once.
@@ -198,6 +204,13 @@ declare global {
       }
       revealLogs: () => Promise<{ ok: boolean; path: string; error?: string }>
       getRecentLogs: () => Promise<{ path: string; lines: string[] }>
+      /** Persist a renderer error-boundary catch to desktop.log (fire-and-forget). */
+      reportRendererError?: (report: {
+        label: string
+        boundary: string
+        message: string
+        componentStack: string
+      }) => void
       readDir: (path: string) => Promise<NastechReadDirResult>
       gitRoot?: (path: string) => Promise<string | null>
       // Reveal a path in the OS file manager (Finder / Explorer).
@@ -208,6 +221,11 @@ declare global {
       // resolved by Electron independently of the connected backend (#66899).
       // Created on demand; returns the normalized absolute path.
       desktopPluginsRoot?: () => Promise<string>
+      // Local AGENT-plugin root (<NASTECH_HOME>/plugins), same Electron-local
+      // resolution. The disk door also scans it for `<name>/desktop/plugin.js`
+      // so one agent-plugin package can ship a desktop UI half. Optional:
+      // older Electron shells predate it — the scanner then skips this root.
+      agentPluginsRoot?: () => Promise<string>
       // Rename a file/folder in place (new base name, same parent dir).
       renamePath?: (path: string, newName: string) => Promise<{ path: string }>
       // Write a small UTF-8 text file (hardened path, parent must exist).
@@ -265,6 +283,10 @@ declare global {
           // number — for badging a list of sessions in one request instead of
           // one `pr view` per checkout.
           prList: (repoPath: string, branches: string[], numbers?: number[]) => Promise<NastechRepoPullRequests>
+          // A pasted PR review/issue comment URL resolved to its structured
+          // context (author, body, file + line anchor, diff hunk). Null when
+          // gh can't answer — the paste stays a plain URL.
+          fetchPrComment: (repoPath: string, url: string) => Promise<NastechPrComment | null>
           createPr: (repoPath: string) => Promise<{ url: string }>
         }
         // Repo-first discovery: scan bounded roots for git repos (depth-capped).
@@ -423,7 +445,10 @@ export interface DesktopUpdateStatus {
   reason?: string
   message?: string
   error?: string
-  behind?: number
+  /** Exact commits behind. null = update available, but the count is
+   *  unknowable (shallow clone without a merge-base) — never render it as a
+   *  literal number. */
+  behind?: number | null
   currentSha?: string
   /** Backend only: the version string the backend reports for itself. */
   currentVersion?: string
@@ -518,6 +543,10 @@ export interface NastechConnection {
   // Set for pool (non-primary) backends so the renderer knows which profile a
   // connection belongs to.
   profile?: string
+  // True only when `profile` is a request scope on the shared primary backend.
+  // A pooled backend also carries `profile`, so presence alone cannot identify
+  // the shared-primary routing case.
+  sharedPrimary?: boolean
   windowButtonPosition: { x: number; y: number } | null
 }
 
@@ -562,6 +591,14 @@ export interface DesktopConnectionConfig {
   remoteOauthConnected: boolean
   remoteTokenPreview: string | null
   remoteTokenSet: boolean
+  // Whether OS-keychain-backed encryption (Electron safeStorage) is currently
+  // available on this machine. When false, a persisted remote token can only be
+  // stored as plain text on disk (with an explicit opt-in).
+  secureTokenStorage: boolean
+  // Whether the currently-persisted remote token is stored with encoding
+  // 'plain' (i.e. plain text on disk in connection.json), which happens when
+  // the user opted in on a machine without secure storage.
+  remoteTokenPlainText: boolean
   remoteUrl: string
   // For a 'cloud' connection: the persisted Nastech Cloud org (slug or id) the
   // connected instance was discovered under, so Settings → Gateway can reopen
@@ -582,6 +619,10 @@ export interface DesktopConnectionConfigInput {
   profile?: null | string
   remoteAuthMode?: 'oauth' | 'token'
   remoteToken?: string
+  // When true and secure (OS-keychain) storage is unavailable, persist the
+  // remote token as plain text on disk instead of failing. Requires an explicit
+  // user opt-in from the renderer.
+  allowPlainTextToken?: boolean
   remoteUrl?: string
   // For a 'cloud' connection: the selected Nastech Cloud org (slug or id) to
   // persist so Settings can reopen into it. Ignored for remote/local modes.
@@ -959,6 +1000,21 @@ export interface NastechRepoPullRequests {
   prs: NastechBranchPullRequest[]
 }
 
+// A PR review/issue comment resolved from a pasted GitHub URL — the composer's
+// review-comment attachment context. `path`/`line`/`diffHunk` are empty for
+// conversation-tab (issue) comments; `line` is null when the comment is
+// outdated and only `original_line` remained.
+export interface NastechPrComment {
+  author: string
+  body: string
+  diffHunk: string
+  kind: 'issue' | 'review'
+  line: null | number
+  path: string
+  prNumber: number
+  startLine: null | number
+  url: string
+}
 // gh availability/auth + the current branch's PR — drives the review pane's PR
 // button (disabled when gh isn't ready, "Open PR" vs "Create PR" otherwise).
 export interface NastechReviewShipInfo {

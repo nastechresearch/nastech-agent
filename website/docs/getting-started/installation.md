@@ -29,7 +29,7 @@ curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 
 Run in powershell:
 ```powershell
-iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1)
+iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1) 
 ```
 
 If you want to install & run Nastech Desktop after a command-line only install, simply run
@@ -131,6 +131,8 @@ Running Nastech as a dedicated unprivileged user (e.g. a `nastech` systemd servi
    ```bash
    curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash -s -- --skip-browser
    ```
+
+   The installer also pre-installs [`cua-driver`](../user-guide/features/computer-use.md) so the Computer Use toolset works the moment you enable it; pass `--skip-computer-use` to opt out (it will then install on demand when you enable the tool).
 
 3. **Make `nastech` available to the service user's shells.** The installer writes the launcher to `~/.local/bin/nastech`. System service accounts often have a minimal PATH that doesn't include `~/.local/bin`. Either add it to the user's environment, or symlink the launcher into a system location:
    ```bash

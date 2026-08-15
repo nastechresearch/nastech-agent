@@ -34,7 +34,7 @@ describe('createBillingApi', () => {
       monthly_cap: null,
       ok: true,
       org_name: 'Nastech',
-      portal_url: 'https://portal.nastechresearch.com/billing',
+      portal_url: 'https://portal.nastechresearch.github.io/billing',
       role: 'OWNER'
     } satisfies BillingStateResponse
 
@@ -52,7 +52,7 @@ describe('createBillingApi', () => {
       error: {
         kind: 'no_payment_method',
         message: 'No saved card.',
-        portal_url: 'https://portal.nastechresearch.com/billing',
+        portal_url: 'https://portal.nastechresearch.github.io/billing',
         retry_after: 30
       },
       ok: false
@@ -66,7 +66,7 @@ describe('createBillingApi', () => {
       refusal: {
         kind: 'no_payment_method',
         message: 'No saved card.',
-        portalUrl: 'https://portal.nastechresearch.com/billing',
+        portalUrl: 'https://portal.nastechresearch.github.io/billing',
         retryAfter: 30
       }
     })
@@ -79,7 +79,7 @@ describe('createBillingApi', () => {
       message: 'Monthly spend cap reached.',
       ok: false,
       payload: { remainingUsd: '4.50' },
-      portal_url: 'https://portal.nastechresearch.com/billing'
+      portal_url: 'https://portal.nastechresearch.github.io/billing'
     })
 
     const api = createBillingApi(requestGatewayMock)
@@ -91,7 +91,7 @@ describe('createBillingApi', () => {
         kind: 'monthly_cap_exceeded',
         message: 'Monthly spend cap reached.',
         payload: { remainingUsd: '4.50' },
-        portalUrl: 'https://portal.nastechresearch.com/billing'
+        portalUrl: 'https://portal.nastechresearch.github.io/billing'
       }
     })
     expect(requestGatewayMock).toHaveBeenCalledWith('billing.auto_reload', {

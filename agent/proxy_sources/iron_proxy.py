@@ -140,7 +140,7 @@ _DEFAULT_ALLOWED_HOSTS: Tuple[str, ...] = (
     "api.groq.com",
     "api.together.xyz",
     "api.deepseek.com",
-    "inference.nastechresearch.com",
+    "inference.nastechresearch.github.io",
 )
 
 # Provider env-var name -> upstream host (or list of hosts) on which the
@@ -153,7 +153,7 @@ _BEARER_PROVIDERS: Dict[str, Tuple[str, ...]] = {
     "DEEPSEEK_API_KEY": ("api.deepseek.com",),
     "MISTRAL_API_KEY": ("api.mistral.ai",),
     "XAI_API_KEY": ("api.x.ai",),
-    "NASTECH_API_KEY": ("inference.nastechresearch.com",),
+    "NASTECH_API_KEY": ("inference.nastechresearch.github.io",),
 }
 
 

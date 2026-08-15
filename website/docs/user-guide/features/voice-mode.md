@@ -218,7 +218,7 @@ The bot supports two interaction modes on Discord:
 
 **DM (recommended for personal use):** Just open a DM with the bot and type — no @mention needed. Voice replies and all commands work the same as in channels.
 
-**Server channels:** The bot only responds when you @mention it (e.g. `@nastechbyt4 hello`). Make sure you select the **bot user** from the mention popup, not the role with the same name.
+**Server channels:** The bot only responds when you @mention it (e.g. `@hermesbyt4 hello`). Make sure you select the **bot user** from the mention popup, not the role with the same name.
 
 :::tip
 To disable the mention requirement in server channels, add to `~/.nastech/.env`:

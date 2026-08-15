@@ -37,7 +37,7 @@ export const fmtProjectCwdBranch = (cwd: string, branch: null | string, projectN
   const remaining = max - project.length - separator.length
 
   if (remaining < 8) {
-    return shortProject(project, max)
+    return project
   }
 
   return `${project}${separator}${fmtCwdBranch(cwd, branch, remaining)}`

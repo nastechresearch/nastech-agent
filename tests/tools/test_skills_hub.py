@@ -32,24 +32,6 @@ from tools.skills_hub import (
 
 
 # ---------------------------------------------------------------------------
-# GitHubAuth environment resolution
-# ---------------------------------------------------------------------------
-
-
-class TestGitHubAuthEnvironmentResolution:
-    def test_prefers_gh_token_from_environment(self, monkeypatch):
-        monkeypatch.setenv("GH_TOKEN", "workflow-token")
-        monkeypatch.setenv("GITHUB_TOKEN", "fallback-token")
-        auth = GitHubAuth()
-
-        with patch.object(auth, "_try_gh_cli") as gh_cli:
-            assert auth._resolve_token() == "workflow-token"
-
-        assert auth.auth_method() == "pat"
-        gh_cli.assert_not_called()
-
-
-# ---------------------------------------------------------------------------
 # GitHubSource._parse_frontmatter_quick
 # ---------------------------------------------------------------------------
 
@@ -129,33 +111,6 @@ class TestSkillsShGroupings:
 
         assert len(skills) == 1
         assert skills[0].extra["category"] == "Decision Optimization"
-
-    def test_recursive_tap_discovers_nested_and_hidden_skill_directories(self):
-        src = GitHubSource(auth=MagicMock(spec=GitHubAuth))
-        tree = [
-            {"type": "blob", "path": ".github/plugins/azure/skills/foundry/SKILL.md"},
-            {"type": "blob", "path": "skills/cloud/gcloud/SKILL.md"},
-            {"type": "blob", "path": "skills/cloud/gcloud/references/guide.md"},
-        ]
-
-        def inspect(identifier):
-            return SkillMeta(
-                name=identifier.rsplit("/", 1)[-1], description="d", source="github",
-                identifier=identifier, trust_level="trusted",
-            )
-
-        with patch.object(src, "_read_cache", return_value=None), \
-             patch.object(src, "_write_cache") as write_cache, \
-             patch.object(src, "_get_repo_tree", return_value=("main", tree)), \
-             patch.object(src, "_get_skillsh_groupings", return_value=None), \
-             patch.object(src, "inspect", side_effect=inspect):
-            skills = src._list_skills_recursively("microsoft/skills", "")
-
-        assert {skill.identifier for skill in skills} == {
-            "microsoft/skills/.github/plugins/azure/skills/foundry",
-            "microsoft/skills/skills/cloud/gcloud",
-        }
-        write_cache.assert_called_once()
 
 # ---------------------------------------------------------------------------
 # GitHubSource.trust_level_for

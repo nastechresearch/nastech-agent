@@ -34,7 +34,7 @@ class TestIsGatewayOwnedSource:
             assert _is_gateway_owned_source(src) is False, src
 
     def test_arbitrary_strings_are_not(self):
-        assert _is_gateway_owned_source("nastechbench-task-xyz") is False
+        assert _is_gateway_owned_source("hermesbench-task-xyz") is False
         assert _is_gateway_owned_source(None) is False
 
 

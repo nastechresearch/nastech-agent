@@ -5,17 +5,17 @@
 # Nastech Agent 𓄃
 
 <p align="center">
-  <a href="https://nastechresearch.github.io/nastech-agent/docs/"><img src="https://img.shields.io/badge/Docs-nastech--agent.nastechresearch.com-FFD700?style=for-the-badge" alt="Documentation"></a>
+  <a href="https://nastechresearch.github.io/nastech-agent/docs/"><img src="https://img.shields.io/badge/Docs-nastech--agent.nastechresearch.github.io-FFD700?style=for-the-badge" alt="Documentation"></a>
   <a href="https://discord.gg/NastechResearch"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/NastechResearch/nastech-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://nastechresearch.com"><img src="https://img.shields.io/badge/Built%20by-Nastech%20Research-blueviolet?style=for-the-badge" alt="Built by Nastech Research"></a>
+  <a href="https://nastechresearch.github.io"><img src="https://img.shields.io/badge/Built%20by-Nastech%20Research-blueviolet?style=for-the-badge" alt="Built by Nastech Research"></a>
   <a href="README.md"><img src="https://img.shields.io/badge/Lang-English-lightgrey?style=for-the-badge" alt="English"></a>
   <a href="README.ur-pk.md"><img src="https://img.shields.io/badge/Lang-اردو-green?style=for-the-badge" alt="اردو"></a>
 </p>
 
-**由 [Nastech Research](https://nastechresearch.com) 构建的自进化 AI 代理。** 它是唯一内置学习闭环的智能代理——从经验中创建技能，在使用中改进技能，主动持久化知识，搜索过往对话，并在跨会话中逐步构建对你的深度理解。可以在 $5 的 VPS 上运行，也可以在 GPU 集群上运行，或者使用几乎零成本的 Serverless 基础设施。它不绑定你的笔记本——你可以在 Telegram 上与它对话，而它在云端 VM 上工作。
+**由 [Nastech Research](https://nastechresearch.github.io) 构建的自进化 AI 代理。** 它是唯一内置学习闭环的智能代理——从经验中创建技能，在使用中改进技能，主动持久化知识，搜索过往对话，并在跨会话中逐步构建对你的深度理解。可以在 $5 的 VPS 上运行，也可以在 GPU 集群上运行，或者使用几乎零成本的 Serverless 基础设施。它不绑定你的笔记本——你可以在 Telegram 上与它对话，而它在云端 VM 上工作。
 
-支持任意模型——[Nastech Portal](https://portal.nastechresearch.com)、[OpenRouter](https://openrouter.ai)（200+ 模型）、[NVIDIA NIM](https://build.nvidia.com)（Nemotron）、[小米 MiMo](https://platform.xiaomimimo.com)、[z.ai/GLM](https://z.ai)、[Kimi/Moonshot](https://platform.moonshot.ai)、[MiniMax](https://www.minimax.io)、[Hugging Face](https://huggingface.co)、OpenAI，或自定义端点。使用 `nastech model` 即可切换——无需改代码，无锁定。
+支持任意模型——[Nastech Portal](https://portal.nastechresearch.github.io)、[OpenRouter](https://openrouter.ai)（200+ 模型）、[NVIDIA NIM](https://build.nvidia.com)（Nemotron）、[小米 MiMo](https://platform.xiaomimimo.com)、[z.ai/GLM](https://z.ai)、[Kimi/Moonshot](https://platform.moonshot.ai)、[MiniMax](https://www.minimax.io)、[Hugging Face](https://huggingface.co)、OpenAI，或自定义端点。使用 `nastech model` 即可切换——无需改代码，无锁定。
 
 <table>
 <tr><td><b>真正的终端界面</b></td><td>完整的 TUI，支持多行编辑、斜杠命令自动补全、对话历史、中断重定向和流式工具输出。</td></tr>
@@ -74,7 +74,7 @@ nastech doctor       # 诊断问题
 
 ## 省去到处收集 API Key — Nastech Portal
 
-Nastech 始终允许你使用任意服务商，这点不会改变。但如果你不想为模型、网页搜索、图像生成、TTS、云浏览器分别去申请五个不同的 API Key，**[Nastech Portal](https://portal.nastechresearch.com)** 用一个订阅就能覆盖全部：
+Nastech 始终允许你使用任意服务商，这点不会改变。但如果你不想为模型、网页搜索、图像生成、TTS、云浏览器分别去申请五个不同的 API Key，**[Nastech Portal](https://portal.nastechresearch.github.io)** 用一个订阅就能覆盖全部：
 
 - **300+ 模型** — 用 `/model <name>` 随时切换
 - **Tool Gateway** — 网页搜索（Firecrawl）、图像生成（FAL）、文本转语音（OpenAI）、云浏览器（Browser Use），全部通过订阅托管。无需额外注册任何账户。
@@ -197,7 +197,7 @@ python -m pytest tests/ -q
 - 📚 [技能中心](https://agentskills.io)
 - 🐛 [问题反馈](https://github.com/NastechResearch/nastech-agent/issues)
 - 💡 [讨论区](https://github.com/NastechResearch/nastech-agent/discussions)
-- 🔌 [NastechClaw](https://github.com/AaronWong1999/nastechclaw) — 社区微信桥接：在同一微信账号上运行 Nastech Agent 和 OpenClaw。
+- 🔌 [NastechClaw](https://github.com/AaronWong1999/hermesclaw) — 社区微信桥接：在同一微信账号上运行 Nastech Agent 和 OpenClaw。
 
 ---
 
@@ -205,4 +205,4 @@ python -m pytest tests/ -q
 
 MIT — 详见 [LICENSE](LICENSE)。
 
-由 [Nastech Research](https://nastechresearch.com) 构建。
+由 [Nastech Research](https://nastechresearch.github.io) 构建。

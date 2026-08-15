@@ -501,6 +501,12 @@ def load_cli_config() -> Dict[str, Any]:
             "busy_input_mode": "interrupt",
             "persistent_output": True,
             "persistent_output_max_lines": 200,
+            # Clear terminal scrollback as well as the visible viewport when the
+            # classic CLI performs a full redraw/resize recovery. Disabled by
+            # default because some users prefer preserving terminal history;
+            # enable when a terminal/tmux stack stamps stale prompt chrome into
+            # scrollback during fullscreen/restore resizes.
+            "cli_rebuild_scrollback_on_redraw": False,
             # Print a one-line summary of resolved modal prompts (approval /
             # clarify) into scrollback so the decision survives the repaint.
             "persist_prompts": True,
@@ -1651,10 +1657,18 @@ def _setup_worktree(repo_root: str = None, sync_base: bool = True) -> Optional[D
     else:
         base_ref, base_label = "HEAD", "HEAD (local — worktree_sync disabled)"
 
-    # Create the worktree
+    # Create the worktree. checkout.workers parallelizes the file
+    # materialization (~6k files on this repo): 0.6s serial → ~0.2s with 8
+    # workers. Harmless on git builds without parallel-checkout support —
+    # unknown -c keys are ignored for checkout, and the fallback retry
+    # below drops the flags entirely.
+    _wt_add_cfg = [
+        "-c", "checkout.workers=8",
+        "-c", "checkout.thresholdForParallelism=100",
+    ]
     try:
         result = subprocess.run(
-            ["git", "worktree", "add", str(wt_path), "-b", branch_name, base_ref],
+            ["git", *_wt_add_cfg, "worktree", "add", str(wt_path), "-b", branch_name, base_ref],
             capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30, cwd=repo_root,
         )
         if result.returncode != 0:
@@ -2681,6 +2695,63 @@ def _query_osc11_background() -> str | None:
             pass
 
 
+def _heal_cooked_mode_drift(fd: int) -> bool:
+    """Detect and heal cooked-mode termios drift on *fd* while prompt_toolkit
+    expects raw mode.
+
+    prompt_toolkit's ``run_in_terminal`` / ``in_terminal`` wraps every
+    "print above the prompt" in a ``cooked_mode()`` context: it flips the
+    tty back to cooked (ICANON/ECHO/ISIG), runs the function, then restores
+    raw mode.  Nastech schedules those windows cross-thread constantly — the
+    background self-review's ``💾`` summary, background process notification
+    drains, curses pickers — and if a restore is ever lost (coroutine
+    cancelled mid-window, racing chains, an external writer touching the
+    shared tty), the terminal is left in cooked mode while the Application
+    still believes it owns raw mode.  The kernel line-buffers every
+    keystroke and the CLI appears to "stop taking input" even though the
+    process is perfectly healthy (observed live: pts in ``icanon echo``
+    while the event loop idled normally in ``ep_poll``).
+
+    This helper is the last line of defense for that whole class: when the
+    lflag has drifted back to cooked, re-apply prompt_toolkit's own raw-mode
+    flag surgery (mirrors ``prompt_toolkit.input.vt100.raw_mode``) in place.
+    Returns True when drift was detected and healed, False when the tty was
+    already raw (or could not be inspected).
+
+    POSIX-only by construction — callers must not invoke this on Windows
+    (no termios; prompt_toolkit uses the win32 console API there instead).
+    """
+    try:
+        import termios
+        attrs = termios.tcgetattr(fd)
+    except Exception:
+        return False
+    lflag = attrs[3]
+    if not (lflag & (termios.ICANON | termios.ECHO)):
+        return False  # still raw — nothing to do
+    # Same surgery as prompt_toolkit.input.vt100.raw_mode._patch_lflag /
+    # _patch_iflag, applied to the *current* attrs so any user settings
+    # (speed, size-independent flags) are preserved.
+    attrs[3] = lflag & ~(
+        termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG
+    )
+    attrs[0] = attrs[0] & ~(
+        termios.IXON
+        | termios.IXOFF
+        | termios.ICRNL
+        | termios.INLCR
+        | termios.IGNCR
+    )
+    # VMIN=1 so reads return per-byte (Solaris-derived systems default to 4;
+    # prompt_toolkit sets this explicitly in raw_mode.__enter__).
+    attrs[6][termios.VMIN] = 1
+    try:
+        termios.tcsetattr(fd, termios.TCSANOW, attrs)
+    except Exception:
+        return False
+    return True
+
+
 def _detect_light_mode() -> bool:
     global _LIGHT_MODE_CACHE
     if _LIGHT_MODE_CACHE is not None:
@@ -3543,6 +3614,58 @@ def _strip_leaked_bracketed_paste_wrappers(text: str) -> str:
     return strip_leaked_bracketed_paste_wrappers(text)
 
 
+def _nastech_call_output_screen_diff(
+    orig_osd,
+    app,
+    output,
+    screen,
+    current_pos,
+    color_depth,
+    previous_screen,
+    last_style,
+    is_done,
+    full_screen,
+    attrs_for_style_string,
+    style_string_has_style,
+    size,
+    previous_width,
+):
+    """Call prompt_toolkit ``_output_screen_diff`` with Nastech resize guards.
+
+    1. Inflate ``previous_screen.height`` when the new screen is taller so pt
+       skips the reserve-vertical-space cursor move that stamps chrome into
+       scrollback (pt #29 / Nastech #26137).
+    2. On AttributeError/TypeError from a corrupt previous paint buffer
+       (classic after tmux attach with same width), retry once with
+       ``previous_screen=None`` so pt first-paints cleanly instead of crashing
+       the event loop with ``'cell' object has no attribute 'char'``.
+    """
+    try:
+        if previous_screen is not None and hasattr(previous_screen, "height"):
+            if previous_screen.height < screen.height:
+                previous_screen.height = screen.height
+    except Exception:
+        pass
+
+    try:
+        return orig_osd(
+            app, output, screen, current_pos, color_depth,
+            previous_screen, last_style, is_done, full_screen,
+            attrs_for_style_string, style_string_has_style,
+            size, previous_width,
+        )
+    except (AttributeError, TypeError):
+        # Corrupt previous_screen / row cells after client reattach.
+        return orig_osd(
+            app, output, screen, current_pos, color_depth,
+            None,  # previous_screen → first-paint erase path
+            None,  # last_style
+            is_done, full_screen,
+            attrs_for_style_string, style_string_has_style,
+            size, 0,  # previous_width → treat as changed
+        )
+
+
 def _apply_bracketed_paste_timeout_patch() -> None:
     """Patch prompt_toolkit to recover from torn bracketed-paste sequences.
 
@@ -3889,6 +4012,26 @@ def _estimate_tui_input_height(
     return min(max(visual_lines, 1), max(1, int(max_height or 1)))
 
 
+def _status_bar_visible_from_display_config(display_config: object) -> bool:
+    """Return the initial classic-CLI status-bar visibility from display config.
+
+    ``display.tui_statusbar`` is the persisted user-facing setting toggled by
+    the TUI/statusbar controls. YAML parses bare ``off`` as ``False``, while
+    older config snapshots or hand edits may use strings such as ``"off"`` or
+    ``"hidden"``. Treat those values consistently so a new CLI process does not
+    re-enable a status bar that the user deliberately disabled.
+    """
+    if not isinstance(display_config, dict):
+        display_config = {}
+    statusbar_config = display_config.get(
+        "statusbar",
+        display_config.get("tui_statusbar", "top"),
+    )
+    if isinstance(statusbar_config, str):
+        return statusbar_config.strip().lower() not in {"0", "false", "hidden", "no", "off"}
+    return statusbar_config is not False
+
+
 def _collect_query_images(query: str | None, image_arg: str | None = None) -> tuple[str, list[Path]]:
     """Collect local image attachments for single-query CLI flows."""
     message = query or ""
@@ -4012,8 +4155,8 @@ def _build_compact_banner() -> str:
     dim_color = _skin.get_color("banner_dim", "#B8860B") if _skin else "#B8860B"
 
     if skin_name == "default":
-        line1 = "𓄃 NASTECH NASTECH - AI Agent Framework"
-        tiny_line = "𓄃 NASTECH NASTECH"
+        line1 = "⚕ NASTECH NASTECH - AI Agent Framework"
+        tiny_line = "⚕ NASTECH NASTECH"
     else:
         agent_name = _skin.get_branding("agent_name", "Nastech Agent") if _skin else "Nastech Agent"
         line1 = f"{agent_name} - AI Agent Framework"
@@ -4413,6 +4556,8 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._pending_edit_snapshots = {}
         self._last_input_mode_recovery = 0.0
         self._input_mode_recovery_notice_shown = False
+        self._last_termios_drift_check = 0.0
+        self._termios_drift_notice_shown = False
         
         # Configuration - priority: CLI args > env vars > config file
         # Model comes from: CLI arg or config.yaml (single source of truth).
@@ -4422,6 +4567,9 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         _model_config = CLI_CONFIG.get("model", {})
         _config_model = (_model_config.get("default") or _model_config.get("model") or "") if isinstance(_model_config, dict) else (_model_config or "")
         _DEFAULT_CONFIG_MODEL = ""
+        # Track whether the user passed -m / --model so resume knows not to
+        # clobber an explicit override with the session's stored model.
+        self._explicit_model_override = bool(model)
         self.model = model or _config_model or _DEFAULT_CONFIG_MODEL
         # A ``moa:<preset>`` model string selects the MoA virtual provider in
         # one shot (parity with interactive ``/moa`` and the model picker). Do
@@ -4770,6 +4918,13 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._prompt_stash = _PromptStash()
         self.preloaded_skills: list[str] = []
         self._startup_skills_line_shown = False
+        # Background --skills preload (started by cmd_chat; joined by
+        # finalize_preloaded_skills before any agent is built).
+        self._preload_skills_thread: Optional[threading.Thread] = None
+        self._preload_skills_result: Optional[tuple] = None
+        self._preload_skills_error: Optional[BaseException] = None
+        self._preload_skills_requested: list = []
+        self._preload_skills_finalized = False
         self._active_session_lease = None
 
         # Voice mode state (also reinitialized inside run() for interactive TUI).
@@ -4788,7 +4943,9 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._voice_barge_phase = None  # "generation" or "playback" phase of the last barge trip
 
         # Status bar visibility (toggled via /statusbar)
-        self._status_bar_visible = True
+        self._status_bar_visible = _status_bar_visible_from_display_config(
+            CLI_CONFIG.get("display") if isinstance(CLI_CONFIG, dict) else None
+        )
         # Battery read-out in the status bar (toggled via /battery, off by
         # default). Persisted to display.battery so it survives restarts.
         self._battery_visible = bool(CLI_CONFIG["display"].get("battery", False))
@@ -4914,12 +5071,59 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         app = getattr(self, "_app", None)
         if not app:
             return
-        self._clear_prompt_toolkit_screen(app)
+        self._clear_prompt_toolkit_screen(
+            app,
+            rebuild_scrollback=self._redraw_rebuilds_scrollback(),
+        )
         _replay_output_history()
         try:
             app.invalidate()
         except Exception:
             pass
+
+    def _schedule_focus_regain_redraw(self, min_interval: float = 1.0) -> None:
+        """Repaint after a terminal focus-in report (``CSI I``), rate-limited.
+
+        Terminals with focus tracking active (Ghostty, iTerm2, xterm builds,
+        multiplexers that toggle DECSET 1004 upstream) emit ``\\x1b[I`` when
+        the Nastech tab/window becomes visible again. Emulators can coalesce
+        or drop hidden-tab output and repaint the surface while we're
+        invisible, so on regain prompt_toolkit's incremental diff stacks on
+        stale content — a second copy of the composer/prompt chrome next to
+        the ghost of the old one (#60920 focus-regain variant, #25337).
+
+        The stock handling maps ``CSI I``/``CSI O`` to ``Keys.Ignore`` so the
+        bytes never pollute the input buffer; this hook additionally routes
+        focus-in through the same recovery as Ctrl+L / ``/redraw``. It is
+        self-gating: terminals that never enable focus tracking never emit
+        the sequence, so nothing changes for them. Rate-limited so a burst of
+        focus reports (rapid Alt+Tab, mux pane hops) repaints at most once
+        per ``min_interval`` seconds.
+        """
+        now = time.monotonic()
+        last = getattr(self, "_last_focus_regain_redraw", 0.0)
+        if now - last < min_interval:
+            return
+        self._last_focus_regain_redraw = now
+        self._force_full_redraw()
+
+    @staticmethod
+    def _redraw_rebuilds_scrollback() -> bool:
+        """Return whether CLI redraw/resize recovery should clear scrollback.
+
+        Some terminal/tmux stacks move prompt_toolkit's non-fullscreen bottom
+        chrome into scrollback when the window is maximized/restored. A normal
+        CSI 2J viewport clear cannot remove those stale prompt/input-rule rows,
+        so users who hit that class of bug need CSI 3J as well, followed by the
+        existing bounded output-history replay.
+        """
+        display_config = CLI_CONFIG.get("display") if isinstance(CLI_CONFIG, dict) else {}
+        if not isinstance(display_config, dict):
+            display_config = {}
+        raw = display_config.get("cli_rebuild_scrollback_on_redraw", False)
+        if isinstance(raw, str):
+            return raw.strip().lower() in {"1", "true", "yes", "on", "always"}
+        return bool(raw)
 
     def _recover_terminal_after_interrupt(self) -> None:
         """Recover the terminal after an interrupted agent turn (#33271).
@@ -4945,6 +5149,13 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             flush_stdin()
         except Exception:
             pass
+        # #60920: The interruption marker is now printed with
+        # _suspend_output_history in chat(), so _OUTPUT_HISTORY only
+        # contains the normal response text (no marker text). Do NOT
+        # clear history here — _force_full_redraw → _replay_output_history
+        # replays the response correctly without duplicating the marker.
+        # The /redraw + Ctrl+L paths also preserve replay for scrollback
+        # recovery as intended.
         self._force_full_redraw()
 
     def _clear_prompt_toolkit_screen(self, app, *, rebuild_scrollback: bool = False) -> None:
@@ -5029,20 +5240,40 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         # reach, leaving a duplicated status bar stranded above the live origin.
         # Ctrl+L / /redraw clears it cleanly, so route the resize path through
         # the SAME recovery: wipe the visible viewport (banner-safe — CSI 2J
-        # only, never CSI 3J) and replay the transcript so nothing is lost.
-        # Row-count-only changes skip this (no reflow → no ghost) to avoid an
-        # unnecessary full repaint.
+        # by default; CSI 3J only when display.cli_rebuild_scrollback_on_redraw
+        # is enabled) and replay the transcript so nothing is lost.
+        # Same-width SIGWINCH (tmux attach, benign focus/tab signals) is left
+        # untouched — no clear, no replay — because a 2J without replay erases
+        # the visible transcript and a replay against preserved scrollback
+        # duplicates it (#65293). The stale-previous_screen crash tmux attach
+        # used to trigger is handled by _nastech_call_output_screen_diff's
+        # retry-with-first-paint instead (#83874).
         try:
             new_width = self._get_tui_terminal_width()
         except Exception:
             new_width = None
         prev_width = getattr(self, "_last_resize_width", None)
-        # First resize of the session has no prior width to compare against;
-        # treat it as a change so an initial maximize/restore is covered too.
-        width_changed = new_width is not None and new_width != prev_width
+        # Replay only on an OBSERVED width change.  The first signal of a
+        # session must not count as one (#65293): GNOME Terminal and friends
+        # deliver benign SIGWINCHes (tab bar appearing, monitor-scale change,
+        # focus events), and a 2J+replay against preserved scrollback
+        # duplicates everything ``_OUTPUT_HISTORY`` holds — after a resume
+        # that is the entire "Previous Conversation" recap plus the first
+        # live exchange.  ``_install_resize_recovery`` seeds the baseline at
+        # startup, so an initial maximize/restore still differs from it and
+        # is still recovered; with no baseline (width probe failed) this
+        # signal just records one for the next comparison.
+        width_changed = (
+            new_width is not None
+            and prev_width is not None
+            and new_width != prev_width
+        )
         if width_changed:
             try:
-                self._clear_prompt_toolkit_screen(app, rebuild_scrollback=False)
+                self._clear_prompt_toolkit_screen(
+                    app,
+                    rebuild_scrollback=self._redraw_rebuilds_scrollback(),
+                )
                 _replay_output_history()
             except Exception:
                 pass
@@ -5137,6 +5368,45 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         except Exception:
             self._resize_recovery_pending = False
             self._recover_after_resize(app, original_on_resize)
+
+    def _install_resize_recovery(self, app) -> None:
+        """Route prompt_toolkit's ``_on_resize`` through the debounced
+        ghost-clearing recovery (#5474/#49120) and record the current terminal
+        width as the baseline for width-change detection.
+
+        Seeding the baseline here is what keeps the session's FIRST SIGWINCH
+        honest (#65293): ``_recover_after_resize`` replays the transcript only
+        on an observed width change, and without a startup baseline it could
+        not tell a benign signal (GNOME Terminal tab bar, monitor-scale
+        change) from a real one.  An initial maximize/restore still differs
+        from the seeded width, so it is still recovered.
+
+        The probe reads ``app.output`` directly — NOT
+        ``_get_tui_terminal_width`` — because this runs before ``app.run()``,
+        when ``get_app()`` still returns prompt_toolkit's DummyApplication
+        whose DummyOutput reports a hardcoded 80 columns; seeding that fake
+        width would make the first real signal look like a width change and
+        resurrect the duplicate-replay bug this exists to fix.
+        ``app.output`` is the same object the running app's resize handler
+        measures, so install-time and signal-time widths are comparable.
+        """
+        width = None
+        try:
+            width = app.output.get_size().columns
+        except Exception:
+            width = None
+        if not width or width <= 0:
+            try:
+                width = shutil.get_terminal_size((80, 24)).columns
+            except Exception:
+                width = None
+        self._last_resize_width = width
+        original_on_resize = app._on_resize
+
+        def _resize_clear_ghosts():
+            self._schedule_resize_recovery(app, original_on_resize)
+
+        app._on_resize = _resize_clear_ghosts
 
     def _status_bar_context_style(self, percent_used: Optional[int]) -> str:
         if percent_used is None:
@@ -6057,7 +6327,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             yolo_active = self._is_session_yolo_active()
             goal_segment = self._status_bar_goal_segment(snapshot)
             if width < 52:
-                text = f"{battery_prefix}𓄃 {snapshot['model_short']} · {duration_label}"
+                text = f"{battery_prefix}⚕ {snapshot['model_short']} · {duration_label}"
                 if goal_segment:
                     text += f" · {goal_segment}"
                 if focus_label:
@@ -6066,7 +6336,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     text += " · ⚠ YOLO"
                 return self._right_align_status_title(text, session_title, width)
             if width < 76:
-                parts = [f"𓄃 {snapshot['model_short']}", percent_label]
+                parts = [f"⚕ {snapshot['model_short']}", percent_label]
                 if battery_label:
                     parts.insert(0, battery_label)
                 compressions = snapshot.get("compressions", 0)
@@ -6098,7 +6368,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 context_label = "ctx --"
 
             compressions = snapshot.get("compressions", 0)
-            parts = [f"𓄃 {snapshot['model_short']}", context_label, percent_label]
+            parts = [f"⚕ {snapshot['model_short']}", context_label, percent_label]
             if battery_label:
                 parts.insert(0, battery_label)
             if compressions:
@@ -6127,7 +6397,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 parts.append("⚠ YOLO")
             return self._right_align_status_title(" │ ".join(parts), session_title, width)
         except Exception:
-            return f"𓄃 {self.model if getattr(self, 'model', None) else 'Nastech'}"
+            return f"⚕ {self.model if getattr(self, 'model', None) else 'Nastech'}"
 
     def _get_status_bar_fragments(self):
         if not self._status_bar_visible or getattr(self, '_model_picker_state', None):
@@ -6150,7 +6420,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
 
             if width < 52:
                 frags = [
-                    ("class:status-bar", " 𓄃 "),
+                    ("class:status-bar", " ⚕ "),
                     ("class:status-bar-strong", snapshot["model_short"]),
                     ("class:status-bar-dim", " · "),
                     ("class:status-bar-dim", duration_label),
@@ -6174,7 +6444,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     bg_proc_count = snapshot.get("active_background_processes", 0)
                     bg_subagent_count = snapshot.get("active_background_subagents", 0)
                     frags = [
-                        ("class:status-bar", " 𓄃 "),
+                        ("class:status-bar", " ⚕ "),
                         ("class:status-bar-strong", snapshot["model_short"]),
                         ("class:status-bar-dim", " · "),
                         (self._status_bar_context_style(percent), percent_label),
@@ -6219,7 +6489,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     bg_proc_count = snapshot.get("active_background_processes", 0)
                     bg_subagent_count = snapshot.get("active_background_subagents", 0)
                     frags = [
-                        ("class:status-bar", " 𓄃 "),
+                        ("class:status-bar", " ⚕ "),
                         ("class:status-bar-strong", snapshot["model_short"]),
                         ("class:status-bar-dim", " │ "),
                         ("class:status-bar-dim", context_label),
@@ -6289,7 +6559,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     frags.append(("class:status-bar-strong", stash_indicator))
 
             # Battery is the first status-bar element when enabled: prepend it
-            # ahead of the leading 𓄃 marker in whichever width tier ran above.
+            # ahead of the leading ⚕ marker in whichever width tier ran above.
             if battery_label:
                 frags[0:0] = [
                     ("class:status-bar", " "),
@@ -6927,10 +7197,10 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             try:
                 from nastech_cli.skin_engine import get_active_skin
                 _skin = get_active_skin()
-                label = _skin.get_branding("response_label", "𓄃 Nastech")
+                label = _skin.get_branding("response_label", "⚕ Nastech")
                 _text_hex = _skin.get_color("banner_text", "#FFF8DC")
             except Exception:
-                label = "𓄃 Nastech"
+                label = "⚕ Nastech"
                 _text_hex = "#FFF8DC"
             # Build a true-color ANSI escape for the response text color
             # so streamed content matches the Rich Panel appearance.
@@ -7343,6 +7613,72 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             # logged at DEBUG by the advisory module.
             pass
 
+    def _show_browser_backend_notice(self):
+        """One-time hint when the default Browser Use backend isn't runnable.
+
+        Browser Use mode is the default browser backend, but it silently
+        falls back to the built-in browser tools when neither the
+        browser-use CLI nor uvx can be found. Surface that downgrade once
+        per 24h so users know why browsing behaves differently and how to
+        fix it (rate limiting lives in default_downgrade_notice()).
+        """
+        try:
+            from tools.browser_use_cli import default_downgrade_notice
+
+            notice = default_downgrade_notice()
+            if notice:
+                self._console_print(f"[yellow]⚠ {notice}[/yellow]")
+        except Exception:
+            # Never let a hint block startup.
+            logger.debug("browser backend notice failed", exc_info=True)
+
+    def finalize_preloaded_skills(self) -> None:
+        """Join the background --skills preload and fold it into the prompt.
+
+        Idempotent; no-op when no preload was requested. Called from
+        ``_init_agent`` (before the agent snapshots ``self.system_prompt``)
+        and safe to call from any other consumer of the system prompt.
+        Raises ``ValueError`` when EVERY requested skill was unknown —
+        the same contract the old synchronous path enforced in cmd_chat.
+        """
+        if getattr(self, "_preload_skills_finalized", False):
+            return
+        thread = getattr(self, "_preload_skills_thread", None)
+        if thread is None:
+            self._preload_skills_finalized = True
+            return
+        thread.join(timeout=120)
+        self._preload_skills_finalized = True
+        err = getattr(self, "_preload_skills_error", None)
+        if err is not None:
+            raise err
+        result = getattr(self, "_preload_skills_result", None)
+        if not result:
+            return
+        skills_prompt, loaded_skills, missing_skills = result
+        if missing_skills:
+            missing_display = ", ".join(missing_skills)
+            # If at least one skill loaded, degrade gracefully: skip the
+            # unknown ones and continue. A typo'd skill name should not crash
+            # the worker (which auto-blocks the Kanban task after retries).
+            # Only when EVERY requested skill is missing do we hard-fail, so a
+            # fully-misconfigured worker fails loudly instead of running blind.
+            if loaded_skills:
+                logger.warning(
+                    "Unknown skill(s) requested, skipping: %s. "
+                    "Continuing with: %s. "
+                    "List available skills with `nastech skills list`.",
+                    missing_display,
+                    ", ".join(loaded_skills),
+                )
+            else:
+                raise ValueError(f"Unknown skill(s): {missing_display}")
+        if skills_prompt:
+            self.system_prompt = "\n\n".join(
+                part for part in (self.system_prompt, skills_prompt) if part
+            ).strip()
+            self.preloaded_skills = loaded_skills
+
     def show_banner(self):
         """Display the welcome banner in Claude Code style."""
         self.console.clear()
@@ -7359,28 +7695,115 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             self._console_print(_build_compact_banner())
             self._show_status()
         else:
-            # Get tools for display
-            tools = get_tool_definitions(enabled_toolsets=self.enabled_toolsets, quiet_mode=True)
-            
+            # Warm-launch fast path: replay last launch's tool panel when the
+            # snapshot fingerprint (config.yaml + .env + checkout rev +
+            # toolsets) is unchanged, skipping the ~0.5-0.9s cold
+            # get_tool_definitions walk. The agent's REAL tool list is still
+            # computed fresh at first message; a background refresh below
+            # re-verifies the snapshot so any drift self-heals next launch.
+            from nastech_cli.banner import (
+                compute_toolset_availability,
+                load_banner_snapshot,
+                save_banner_snapshot,
+            )
+
+            snapshot = None
+            try:
+                snapshot = load_banner_snapshot(self.enabled_toolsets)
+            except Exception:
+                snapshot = None
+
             # Get terminal working directory (where commands will execute)
             cwd = os.getenv("TERMINAL_CWD", os.getcwd())
-            
-            # Build and display the banner
-            build_welcome_banner(
-                console=self.console,
-                model=self.model,
-                cwd=cwd,
-                tools=tools,
-                enabled_toolsets=self.enabled_toolsets,
-                session_id=self.session_id,
-                context_length=ctx_len,
-                provider=self.provider,
-            )
+
+            if snapshot is not None:
+                self._defer_tool_warnings = True
+                toolset_map = snapshot["toolset_map"]
+                build_welcome_banner(
+                    console=self.console,
+                    model=self.model,
+                    cwd=cwd,
+                    tools=snapshot["tools"],
+                    enabled_toolsets=self.enabled_toolsets,
+                    session_id=self.session_id,
+                    get_toolset_for_tool=lambda name: toolset_map.get(name),
+                    context_length=ctx_len,
+                    provider=self.provider,
+                    availability=snapshot["availability"],
+                    skills_by_category=snapshot.get("skills_by_category"),
+                )
+
+                def _refresh_banner_snapshot() -> None:
+                    try:
+                        from model_tools import get_toolset_for_tool
+                        tools = get_tool_definitions(
+                            enabled_toolsets=self.enabled_toolsets, quiet_mode=True
+                        )
+                        availability = compute_toolset_availability(self.enabled_toolsets)
+                        tmap = {
+                            t["function"]["name"]: get_toolset_for_tool(t["function"]["name"])
+                            for t in tools
+                        }
+                        for item in availability.get("unavailable_toolsets", []):
+                            for name in item.get("tools", []):
+                                tmap.setdefault(
+                                    name, item.get("id", item.get("name", ""))
+                                )
+                        save_banner_snapshot(
+                            tools, self.enabled_toolsets, availability, tmap
+                        )
+                    except Exception:
+                        logger.debug("banner snapshot refresh failed", exc_info=True)
+
+                threading.Thread(
+                    target=_refresh_banner_snapshot,
+                    name="banner-snapshot-refresh",
+                    daemon=True,
+                ).start()
+            else:
+                # Cold path: compute everything live, then persist the snapshot
+                # so the next launch replays it.
+                from model_tools import get_toolset_for_tool
+                tools = get_tool_definitions(enabled_toolsets=self.enabled_toolsets, quiet_mode=True)
+                availability = compute_toolset_availability(self.enabled_toolsets)
+
+                build_welcome_banner(
+                    console=self.console,
+                    model=self.model,
+                    cwd=cwd,
+                    tools=tools,
+                    enabled_toolsets=self.enabled_toolsets,
+                    session_id=self.session_id,
+                    context_length=ctx_len,
+                    provider=self.provider,
+                    availability=availability,
+                )
+                try:
+                    tmap = {
+                        t["function"]["name"]: get_toolset_for_tool(t["function"]["name"])
+                        for t in tools
+                    }
+                    for item in availability.get("unavailable_toolsets", []):
+                        for name in item.get("tools", []):
+                            tmap.setdefault(name, item.get("id", item.get("name", "")))
+                    save_banner_snapshot(tools, self.enabled_toolsets, availability, tmap)
+                except Exception:
+                    logger.debug("banner snapshot save failed", exc_info=True)
         
         # Tool discovery is intentionally deferred on the Termux bare prompt
         # path; availability warnings are shown once tools are initialized.
+        # On the snapshot fast path (warm launch), the check walks every
+        # check_fn (~180ms) — run it in the background refresh thread instead
+        # and let its output land above the prompt (patch_stdout-safe).
         if os.environ.get("NASTECH_DEFER_AGENT_STARTUP") != "1":
-            self._show_tool_availability_warnings()
+            if getattr(self, "_defer_tool_warnings", False):
+                threading.Thread(
+                    target=self._show_tool_availability_warnings,
+                    name="tool-availability-warnings",
+                    daemon=True,
+                ).start()
+            else:
+                self._show_tool_availability_warnings()
 
         # Warn about low context lengths (common with local servers). Keep
         # this tied to the runtime guard so guidance cannot drift again.
@@ -7519,6 +7942,179 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         else:
             self._console_print(f"[dim]{_escape(msg)}[/dim]")
 
+    def _persist_model_switch_to_session(self, result) -> None:
+        """Persist a session-scoped /model switch to the session DB row.
+
+        Writes the model column plus the runtime route so ``--resume``
+        (CLI, reads ``gateway_runtime``) and ``session.resume`` (TUI/desktop,
+        reads top-level ``model_config`` keys via
+        ``_stored_session_runtime_overrides``) both restore the switched
+        provider instead of recombining the model with the ambient default
+        (#79536). Mirrors the gateway's ``update_session_model()`` call.
+        getattr: tests drive the switch paths with ``object.__new__`` stubs.
+        """
+        db = getattr(self, "_session_db", None)
+        sid = getattr(self, "session_id", None)
+        if not db or not sid:
+            return
+        provider = result.target_provider
+        # Bare "custom" is the resolved billing class, not a routable
+        # identity — persisting it verbatim makes a later resume hard-fail
+        # when the config default has moved off the custom endpoint
+        # (resolve_runtime_provider only trusts config base_url for bare
+        # custom while the config provider is still custom-ish). Heal to
+        # the durable custom:<name> menu key, else drop the provider —
+        # same recovery the TUI gateway applies on its read path.
+        if str(provider or "").strip().lower() == "custom":
+            try:
+                from nastech_cli.runtime_provider import canonical_custom_identity
+                provider = canonical_custom_identity(
+                    base_url=result.base_url or None,
+                    model=result.new_model or None,
+                ) or None
+            except Exception:
+                provider = None
+        # Both shapes use the same or-None discipline so stale keys from a
+        # previous switch are deleted (not merely omitted) in BOTH the
+        # nested gateway_runtime dict (CLI reader) and the top-level keys
+        # (TUI gateway reader). _merge_model_config_json only deletes on
+        # explicit None, so falsy values must be converted, not filtered.
+        # Deriving the top-level from **route guarantees the two shapes
+        # can never diverge — the asymmetry that caused the original
+        # stale-key bug (#85261 simplify-code review).
+        route = {
+            "provider": provider or None,
+            "base_url": result.base_url or None,
+            "api_mode": result.api_mode or None,
+        }
+        try:
+            db.update_session_model(sid, result.new_model)
+            db.patch_session_model_config(sid, {
+                "gateway_runtime": route,
+                **route,
+            })
+        except Exception:
+            logger.debug(
+                "Failed to persist model switch to session DB", exc_info=True
+            )
+
+    def _restore_session_model(self, session_meta: dict, *, quiet: bool = False) -> None:
+        """Restore model/provider from the session DB row on resume.
+
+        Companion to ``_restore_session_cwd`` / ``_restore_session_yolo`` —
+        called from every resume path (startup ``--resume``/``-c`` and
+        mid-chat ``/resume``). The persisted model lives in the session row's
+        ``model`` column (written at creation time and updated on ``/model``
+        switches via ``update_session_model``); the provider/endpoint live in
+        ``model_config.gateway_runtime`` (written by the gateway's
+        ``_sync_session_model_from_agent`` and the CLI ``/model`` persist).
+        Without this restore a resumed session silently falls back to the
+        config default model, losing the user's last ``/model`` choice.
+
+        When the stored provider differs from the ambient one, credentials
+        are re-resolved for the stored provider (mirroring the gateway's
+        ``_rehydrate_session_model_override``) — the ambient ``self.api_key``
+        belongs to the config-default provider and must not be sent to the
+        session's endpoint. On resolution failure the ambient credentials are
+        kept so the session still opens (the first turn surfaces the auth
+        error instead of the resume dying).
+
+        Skips when the session has no model recorded or when the CLI was
+        launched with an explicit ``-m`` override (user intent wins).
+        """
+        stored_model = (session_meta or {}).get("model")
+        if not stored_model:
+            return
+        # An explicit -m / --model on the command line overrides resume.
+        if getattr(self, "_explicit_model_override", False):
+            return
+        # Stored provider/endpoint via the canonical row-level reader
+        # (prefers model_config.gateway_runtime, falls back to the TUI
+        # gateway's top-level keys).
+        from nastech_state import SessionDB as _SessionDB
+        _stored_runtime = _SessionDB.session_gateway_runtime(session_meta)
+        stored_provider = _stored_runtime.get("provider") or None
+        stored_base_url = _stored_runtime.get("base_url") or None
+        stored_api_mode = _stored_runtime.get("api_mode") or None
+        # Heal bare "custom" persisted by older builds / gateway turns: it's
+        # the resolved billing class, not a routable identity. Recover the
+        # durable custom:<name> menu key from the endpoint, else drop the
+        # provider so resume keeps the ambient default. (Stricter than the
+        # TUI gateway's recovery, which keeps bare "custom" when a base_url
+        # exists — the CLI's resolve path would hard-fail on it, #14676.)
+        if str(stored_provider or "").strip().lower() == "custom":
+            try:
+                from nastech_cli.runtime_provider import canonical_custom_identity
+                stored_provider = canonical_custom_identity(
+                    base_url=stored_base_url or None,
+                    model=stored_model or None,
+                ) or None
+            except Exception:
+                stored_provider = None
+        model_changed = stored_model != self.model
+        provider_changed = bool(stored_provider) and stored_provider != self.provider
+        if not model_changed and not provider_changed:
+            return
+        self.model = stored_model
+        if stored_provider:
+            self.provider = stored_provider
+            self.requested_provider = stored_provider
+            if stored_base_url:
+                self.base_url = stored_base_url
+            if stored_api_mode:
+                self.api_mode = stored_api_mode
+        if provider_changed:
+            # Stale launch-time explicit overrides belong to the AMBIENT
+            # provider; carrying them into the restored provider's
+            # resolution poisons _ensure_runtime_credentials on startup
+            # resume (same leak _apply_model_switch_result guards against
+            # by overwriting _explicit_* on every switch).
+            self._explicit_api_key = None
+            self._explicit_base_url = stored_base_url
+            # Re-resolve credentials for the restored provider. api_key is
+            # never persisted to the session DB (by design) — the normal
+            # runtime provider resolution owns credentials.
+            try:
+                from nastech_cli.runtime_provider import resolve_runtime_provider
+                resolved = resolve_runtime_provider(requested=stored_provider)
+                if resolved.get("api_key"):
+                    self.api_key = resolved["api_key"]
+                    self._credential_pool = resolved.get("credential_pool")
+                if not stored_base_url and resolved.get("base_url"):
+                    self.base_url = resolved["base_url"]
+                if not stored_api_mode and resolved.get("api_mode"):
+                    self.api_mode = resolved["api_mode"]
+            except Exception:
+                logger.debug(
+                    "Credential re-resolution for resumed session provider "
+                    "%s failed; keeping ambient credentials",
+                    stored_provider, exc_info=True,
+                )
+        # If the agent is already running (mid-chat /resume), swap it
+        # in-place so the next turn uses the restored model. On startup
+        # --resume the agent isn't built yet — _init_agent will pick up
+        # self.model / self.provider when constructing AIAgent.
+        if self.agent is not None:
+            try:
+                self.agent.switch_model(
+                    new_model=self.model,
+                    new_provider=self.provider,
+                    api_key=self.api_key or "",
+                    base_url=self.base_url or "",
+                    api_mode=self.api_mode or "",
+                )
+            except Exception:
+                logger.debug(
+                    "In-place agent model swap on resume failed", exc_info=True
+                )
+        msg = f"Model restored from session: {stored_model}"
+        if stored_provider:
+            msg += f" ({stored_provider})"
+        if quiet:
+            print(msg, file=sys.stderr)
+        else:
+            self._console_print(f"[dim]{_escape(msg)}[/dim]")
+
 
 
     def _render_resume_history_panel_lines(self, panel) -> list[str]:
@@ -7632,6 +8228,57 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 f"  {_DIM}Recovered terminal input modes after leaked mouse reports. "
                 f"If this repeats, run /new or restart this tab.{_RST}"
             )
+
+    def _check_termios_drift(self) -> None:
+        """Watchdog: heal the tty if it drifted back to cooked mode.
+
+        See ``_heal_cooked_mode_drift`` for the failure class (a lost
+        ``run_in_terminal`` cooked→raw restore leaves the terminal
+        line-buffering keystrokes while the prompt_toolkit app believes it
+        owns raw mode — the CLI looks dead but the process is healthy).
+
+        Called from ``process_loop``'s idle branch, so a drifted terminal
+        self-heals within ~a second of the agent going idle instead of
+        requiring an external ``stty`` rescue.  Skipped while a
+        ``run_in_terminal`` window is legitimately holding cooked mode
+        (``app._running_in_terminal``), while the agent is running (approval
+        prompts and sudo prompts legitimately manipulate the tty), and on
+        Windows (no termios).
+        """
+        if os.name == "nt":
+            return
+        app = getattr(self, "_app", None)
+        if app is None or not getattr(app, "_is_running", False):
+            return
+        # A run_in_terminal window is *supposed* to be cooked — don't fight it.
+        if getattr(app, "_running_in_terminal", False):
+            return
+        now = time.monotonic()
+        if now - self._last_termios_drift_check < 1.0:
+            return
+        self._last_termios_drift_check = now
+        try:
+            if not sys.stdin.isatty():
+                return
+            fd = sys.stdin.fileno()
+        except Exception:
+            return
+        if _heal_cooked_mode_drift(fd):
+            logger.warning(
+                "Healed cooked-mode termios drift on stdin — a "
+                "run_in_terminal cooked→raw restore was lost."
+            )
+            # Redraw so the prompt is visibly alive again.
+            try:
+                self._invalidate()
+            except Exception:
+                pass
+            if not self._termios_drift_notice_shown:
+                self._termios_drift_notice_shown = True
+                _cprint(
+                    f"  {_DIM}Recovered terminal from cooked-mode drift "
+                    f"(input should respond normally again).{_RST}"
+                )
 
 
 
@@ -8309,6 +8956,10 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self.conversation_history = []
         self._pending_title = None
         self._resumed = False
+        # /new clears the -m / --model override flag: an explicit CLI model
+        # was for the previous session only, not for every session spawned
+        # afterwards.
+        self._explicit_model_override = False
         self.reasoning_config = _parse_reasoning_config(
             CLI_CONFIG["agent"].get("reasoning_effort", "")
         )
@@ -9088,9 +9739,9 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         if not getattr(result, "success", False):
             return True
         try:
-            from nastech_cli.model_cost_guard import expensive_model_warning
+            from nastech_cli.model_selection_guards import combined_selection_warning
 
-            warning = expensive_model_warning(
+            warning = combined_selection_warning(
                 result.new_model,
                 provider=result.target_provider,
                 base_url=result.base_url or self.base_url or "",
@@ -9107,7 +9758,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             ("cancel", "Cancel", "Keep the current model."),
         ]
         raw = self._prompt_text_input_modal(
-            title="!!! Expensive Model Warning !!!",
+            title=f"!!! {warning.title} !!!",
             detail=warning.message,
             choices=choices,
             timeout=120,
@@ -9387,6 +10038,13 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         else:
             _cprint("    (session only — add --global to persist)")
 
+        # Persist the switch to this session's row so --resume /
+        # session.resume restore it. --global also updates config.yaml
+        # (future sessions), but the row still records what THIS session
+        # actually runs — otherwise a later resume would restore the stale
+        # creation-time model over the user's new global choice.
+        NastechCLI._persist_model_switch_to_session(self, result)
+
     def _handle_model_picker_selection(self, persist_global: bool = False) -> None:
         state = self._model_picker_state
         if not state:
@@ -9610,6 +10268,33 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             except Exception as exc:
                 logger.debug("preflight-compression switch warning failed: %s", exc)
 
+        # Run the confirm + apply sequence off the main thread. The
+        # expensive-model confirmation modal blocks the calling thread on a
+        # response queue (see _prompt_text_input_modal); running it on the
+        # prompt_toolkit main thread freezes TUI rendering, so the modal never
+        # appears and the switch silently cancels after the 120s timeout.
+        # Mirror the picker path (_handle_model_picker_selection), which
+        # already dispatches confirm+apply on a worker thread.
+        if getattr(self, "_app", None):
+            threading.Thread(
+                target=self._confirm_and_apply_cli_model_switch,
+                args=(result, persist_global, one_turn, custom_provs),
+                daemon=True,
+            ).start()
+            return
+        self._confirm_and_apply_cli_model_switch(
+            result, persist_global, one_turn, custom_provs
+        )
+        return
+
+    def _confirm_and_apply_cli_model_switch(
+        self, result, persist_global: bool, one_turn: bool, custom_provs=None
+    ) -> None:
+        """Confirm an expensive model switch and apply it to CLI state.
+
+        Runs on a worker thread when the TUI is active (see
+        _handle_model_switch) so the confirmation modal can render.
+        """
         if not self._confirm_expensive_model_switch(result):
             _cprint("  Model switch cancelled.")
             return
@@ -9737,6 +10422,13 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             _cprint("    (next turn only — restores after one response)")
         else:
             _cprint("    (session only — add --global to persist)")
+
+        # Persist the switch to this session's row so --resume /
+        # session.resume restore it (--global also updates config.yaml but
+        # the row still records what THIS session runs; --once is ephemeral
+        # and restored after one turn, so it must not touch the row).
+        if not one_turn:
+            NastechCLI._persist_model_switch_to_session(self, result)
 
     def _handle_codex_runtime(self, cmd_original: str) -> None:
         """Handle /codex-runtime — toggle the codex app-server runtime opt-in.
@@ -10005,6 +10697,22 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         _base_word = cmd_lower.split()[0].lstrip("/")
         _cmd_def = _resolve_cmd(_base_word)
         canonical = _cmd_def.name if _cmd_def else _base_word
+
+        # pre_command observer hook (#64204): fires for every recognized
+        # slash command BEFORE its handler runs. Observer-only in v1 —
+        # return values are ignored (fire_pre_command_hook logs directives
+        # at debug). Never raises, so a broken plugin can't break dispatch.
+        if _cmd_def is not None:
+            from nastech_cli.plugins import fire_pre_command_hook
+            _rest_parts = cmd_original.split(None, 1)
+            fire_pre_command_hook(
+                surface="cli",
+                command=canonical,
+                alias_used=_base_word,
+                args_raw=_rest_parts[1].strip() if len(_rest_parts) > 1 else "",
+                session_key=getattr(self, "session_id", None),
+                platform="cli",
+            )
 
         # A bare `/resume` prompt is one-shot: any command other than the
         # resume/sessions handlers (which manage the pending state themselves)
@@ -10458,6 +11166,8 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             self._handle_heartbeat_command(cmd_original)
         elif canonical == "refine":
             self._handle_refine_command(cmd_original)
+        elif canonical == "loop":
+            self._handle_loop_command(cmd_original)
         elif canonical == "moa":
             # /moa is one-shot sugar only: run a single prompt through the
             # default MoA preset, then restore the prior model. To *switch* to a
@@ -10801,6 +11511,149 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 self._heartbeat_watchdog_started = False
 
         threading.Thread(target=_loop, daemon=True, name="heartbeat-watchdog").start()
+
+    # ────────────────────────────────────────────────────────────────
+    # /loop — recurring in-session wakeups (Claude Code /loop parity)
+    # ────────────────────────────────────────────────────────────────
+    def _get_loop_manager(self):
+        """Return the LoopManager bound to the current session_id.
+
+        Cached on ``self._loop_manager`` and rebound lazily when
+        ``session_id`` changes (mirrors ``_get_goal_manager``).
+        """
+        try:
+            from nastech_cli.loops import LoopManager
+        except Exception as exc:
+            logging.debug("loop manager unavailable: %s", exc)
+            return None
+
+        sid = getattr(self, "session_id", None) or ""
+        if not sid:
+            return None
+
+        existing = getattr(self, "_loop_manager", None)
+        if existing is not None and getattr(existing, "session_id", None) == sid:
+            return existing
+
+        mgr = LoopManager(session_id=sid)
+        self._loop_manager = mgr
+        return mgr
+
+    def _maybe_fire_loop_tick(self) -> None:
+        """Idle hook run from process_loop: fire a due /loop wakeup.
+
+        Only runs while the agent is idle and nothing is queued — a real
+        user message always wins the idle boundary. An active (non-parked)
+        /goal also wins: its judge-driven continuations own the idle
+        boundary, so the loop defers to the next poll.
+        """
+        mgr = self._get_loop_manager()
+        if mgr is None or not mgr.is_due():
+            return
+        # The idle poll runs at ~10 Hz; once a tick is due but deferred
+        # (queued input / active goal), every poll would otherwise hit the
+        # DB via goal_blocks_loop_tick. Throttle the deferred re-check.
+        now = time.time()
+        if now - getattr(self, "_last_loop_tick_check", 0.0) < 2.0:
+            return
+        self._last_loop_tick_check = now
+        # Real user input (or anything else queued) takes priority; the
+        # loop stays due and fires at the next idle poll.
+        try:
+            if not self._pending_input.empty():
+                return
+        except Exception:
+            return
+        try:
+            from nastech_cli.loops import goal_blocks_loop_tick
+
+            if goal_blocks_loop_tick(mgr.session_id):
+                return
+        except Exception:
+            pass
+
+        wakeup = mgr.fire_tick()
+        if not wakeup:
+            return
+        try:
+            state = mgr.state
+            tick_no = state.ticks_fired if state else "?"
+            _cprint(f"  {_DIM}↻ /loop wakeup #{tick_no} firing…{_RST}")
+            self._pending_input.put(wakeup)
+        except Exception as exc:
+            logging.debug("loop tick injection failed: %s", exc)
+            try:
+                mgr.abandon_tick()
+            except Exception:
+                pass
+            return
+        # A slash-command loop (e.g. `/loop 10m /recap`) is dispatched via
+        # process_command, which never reaches the post-turn chat() finally
+        # block — so the tick would never complete and the loop would wedge
+        # on awaiting_response. Slash ticks have no model reply to evaluate;
+        # complete them immediately (caps and scheduling still apply).
+        if wakeup.lstrip().startswith("/"):
+            try:
+                decision = mgr.complete_tick("")
+                msg = decision.get("message") or ""
+                if msg:
+                    _cprint(f"  {msg}")
+            except Exception:
+                pass
+
+    def _maybe_complete_loop_tick_after_turn(self) -> None:
+        """Post-turn hook: evaluate a finished /loop wakeup turn.
+
+        No-op unless the turn that just ended was a loop wakeup
+        (``awaiting_response`` set by ``fire_tick``). Detects the
+        LOOP_COMPLETE marker, judges --until, applies caps, and schedules
+        the next tick. Mirrors _maybe_continue_goal_after_turn's shape.
+        """
+        mgr = self._get_loop_manager()
+        if mgr is None:
+            return
+        state = mgr.state
+        if state is None or not state.awaiting_response:
+            return
+
+        # A user-interrupted wakeup turn pauses the loop (recoverable via
+        # /loop resume) — same contract as the goal loop's Ctrl+C handling.
+        if getattr(self, "_last_turn_interrupted", False):
+            try:
+                mgr.pause(reason="user-interrupted (Ctrl+C)")
+            except Exception:
+                pass
+            _cprint(
+                f"  {_DIM}⏸ Loop paused — wakeup turn was interrupted. "
+                f"Use /loop resume to continue, or /loop stop to end it.{_RST}"
+            )
+            return
+
+        last_response = ""
+        try:
+            hist = self.conversation_history or []
+            for msg in reversed(hist):
+                if msg.get("role") == "assistant":
+                    content = msg.get("content", "")
+                    if isinstance(content, list):
+                        parts = [
+                            p.get("text", "")
+                            for p in content
+                            if isinstance(p, dict) and p.get("type") in {"text", "output_text"}
+                        ]
+                        last_response = "\n".join(t for t in parts if t)
+                    else:
+                        last_response = str(content or "")
+                    break
+        except Exception:
+            last_response = ""
+
+        decision = mgr.complete_tick(last_response)
+        msg = decision.get("message") or ""
+        if msg:
+            _cprint(f"  {msg}")
+        elif decision.get("status") == "active" and mgr.state is not None:
+            _cprint(f"  {_DIM}↻ Loop: {mgr.state.remaining_label()}.{_RST}")
 
 
 
@@ -14107,7 +14960,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                         if not _streaming_box_opened:
                             _streaming_box_opened = True
                             w = self._scrollback_box_width(getattr(self.console, "width", 80))
-                            label = " 𓄃 Nastech "
+                            label = " ⚕ Nastech "
                             if self.show_timestamps:
                                 label = f"{label}{datetime.now().strftime(getattr(self, 'timestamp_format', '%H:%M'))} "
                             fill = w - 2 - NastechCLI._status_bar_display_width(label)
@@ -14465,15 +15318,19 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
 
             # Handle interrupt - check if we were interrupted
             pending_message = None
+            _show_interrupt_marker = False
             _interrupted_this_turn = bool(result and result.get("interrupted"))
             # Expose the flag for post-turn hooks (e.g. goal continuation)
             # so they can skip themselves when the turn was user-cancelled.
             self._last_turn_interrupted = _interrupted_this_turn
             if _interrupted_this_turn:
                 pending_message = result.get("interrupt_message") or interrupt_msg
-                # Add indicator that we were interrupted
-                if response and pending_message:
-                    response = response + "\n\n---\n_[Interrupted - processing new message]_"
+                # #60920: Don't append the interruption marker to response so it
+                # is never recorded in _OUTPUT_HISTORY by the Panel rendering
+                # below. The marker is printed separately with _suspend_output_history
+                # after the response Panel to preserve the visual while avoiding
+                # duplicates on terminal redraw (_recover_terminal_after_interrupt).
+                _show_interrupt_marker = bool(response and pending_message)
             elif interrupt_msg:
                 # We fired agent.interrupt(interrupt_msg) but the turn result
                 # doesn't acknowledge it. Two ways this happens, both racy:
@@ -14534,11 +15391,11 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 try:
                     from nastech_cli.skin_engine import get_active_skin
                     _skin = get_active_skin()
-                    label = _skin.get_branding("response_label", "𓄃 Nastech")
+                    label = _skin.get_branding("response_label", "⚕ Nastech")
                     _resp_color = _maybe_remap_for_light_mode(_skin.get_color("response_border", "#CD7F32"))
                     _resp_text = _maybe_remap_for_light_mode(_skin.get_color("banner_text", "#FFF8DC"))
                 except Exception:
-                    label = "𓄃 Nastech"
+                    label = "⚕ Nastech"
                     _resp_color = _maybe_remap_for_light_mode("#CD7F32")
                     _resp_text = _maybe_remap_for_light_mode("#FFF8DC")
 
@@ -14603,6 +15460,16 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                         ))
                     except Exception:
                         pass
+
+            # #60920: Print interruption marker with history suppressed so it
+            # is never recorded in _OUTPUT_HISTORY. The marker was previously
+            # appended to `response` which caused a duplicate on terminal redraw
+            # when _replay_output_history replayed it. Printing it here with
+            # _suspend_output_history preserves the user-visible indicator while
+            # keeping _OUTPUT_HISTORY clean for replay.
+            if _show_interrupt_marker:
+                with _suspend_output_history():
+                    _cprint(f"\n{_DIM}── [Interrupted — processing new message] ──{_RST}")
 
 
             # Focus view: dim recovery line reporting what was hidden this turn
@@ -14891,9 +15758,9 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         else:
             try:
                 from nastech_cli.skin_engine import get_active_goodbye
-                goodbye = get_active_goodbye("Goodbye! 𓄃")
+                goodbye = get_active_goodbye("Goodbye! ⚕")
             except Exception:
-                goodbye = "Goodbye! 𓄃"
+                goodbye = "Goodbye! ⚕"
             print(goodbye)
 
     def _get_tui_prompt_symbols(self) -> tuple[str, str]:
@@ -14982,7 +15849,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         if self._command_running:
             return _state_fragment("class:prompt-working", self._command_spinner_frame())
         if self._agent_running:
-            return _state_fragment("class:prompt-working", "𓄃")
+            return _state_fragment("class:prompt-working", "⚕")
         if self._voice_mode:
             return _state_fragment("class:voice-prompt", "🎤")
         return [("class:prompt", symbol)]
@@ -15146,6 +16013,9 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         # Surface any active supply-chain security advisories right after the
         # welcome banner. Quiet/single-query paths call this themselves.
         self._show_security_advisories()
+        # Surface a silent browser-backend downgrade (default Browser Use
+        # mode with no runnable CLI) — one line, rate-limited to 24h.
+        self._show_browser_backend_notice()
 
         # First-run: a completely unconfigured install must route into
         # provider onboarding, not a chat that cannot work. Previously a
@@ -15294,8 +16164,14 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             maybe_pull_org_skills()
         except Exception:
             pass
-        if self.preloaded_skills and not self._startup_skills_line_shown:
-            skills_label = ", ".join(self.preloaded_skills)
+        _skills_for_line = self.preloaded_skills or list(
+            getattr(self, "_preload_skills_requested", []) or []
+        )
+        if _skills_for_line and not self._startup_skills_line_shown:
+            # When the background --skills preload hasn't been folded in yet
+            # (it joins at agent init), show the REQUESTED names — identical
+            # to the loaded set except for typo'd names, which warn later.
+            skills_label = ", ".join(_skills_for_line)
             self._console_print(
                 f"[bold {_accent_hex()}]Activated skills:[/] {skills_label}"
             )
@@ -15395,7 +16271,20 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             VT100 parser level. Without this no-op binding the default
             self-insert path would still fire and the bytes would land in
             the buffer.
+
+            Focus-in (CSI I) additionally schedules a rate-limited full
+            repaint: while the tab/window was hidden the emulator may have
+            coalesced output or repainted the surface, so prompt_toolkit's
+            incremental diff would stack a fresh copy of the prompt chrome
+            on top of the stale one (#60920 focus-regain variant, #25337).
             """
+            try:
+                for press in getattr(event, "key_sequence", None) or ():
+                    if getattr(press, "data", None) == "\x1b[I":
+                        self._schedule_focus_regain_redraw()
+                        break
+            except Exception:
+                pass
             return None
 
         def handle_enter(event):
@@ -17462,20 +18351,20 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     other code path's behavior.
 
                     Critical: do NOT replace a None previous_screen with
-                    a fresh Screen() — that would skip the proper
-                    reset_attributes()+erase_down() at L178-185 which
-                    fires when previous_screen is None (first-paint /
+                    a fresh Screen() on the happy path — that would skip
+                    the proper reset_attributes()+erase_down() at L178-185
+                    which fires when previous_screen is None (first-paint /
                     width-change).  Without that reset, ANSI styles
                     leak between renders.
-                    """
-                    try:
-                        if previous_screen is not None and hasattr(previous_screen, "height"):
-                            if previous_screen.height < screen.height:
-                                previous_screen.height = screen.height
-                    except Exception:
-                        pass
 
-                    return _orig_osd(
+                    Safety net: if the diff crashes with AttributeError /
+                    TypeError (corrupt previous_screen after tmux attach —
+                    "'cell' object has no attribute 'char'"), retry once
+                    with previous_screen=None so pt takes the first-paint
+                    erase path instead of wedging the event loop.
+                    """
+                    return _nastech_call_output_screen_diff(
+                        _orig_osd,
                         app, output, screen, current_pos, color_depth,
                         previous_screen, last_style, is_done, full_screen,
                         attrs_for_style_string, style_string_has_style,
@@ -17491,12 +18380,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         # don't permanently freeze the input (issue #16263). Idempotent.
         _apply_bracketed_paste_timeout_patch()
 
-        _original_on_resize = app._on_resize
-
-        def _resize_clear_ghosts():
-            self._schedule_resize_recovery(app, _original_on_resize)
-
-        app._on_resize = _resize_clear_ghosts
+        self._install_resize_recovery(app)
 
         def spinner_loop():
             while not self._should_exit:
@@ -17528,10 +18412,24 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                         # Periodic config watcher — auto-reload MCP on mcp_servers change
                         if not self._agent_running:
                             self._check_config_mcp_changes()
+                            # Heal cooked-mode termios drift (lost
+                            # run_in_terminal restore) before draining
+                            # notifications — a drifted tty makes the CLI
+                            # look dead even though the loop is healthy.
+                            try:
+                                self._check_termios_drift()
+                            except Exception:
+                                pass
                             # Check for background process notifications (completions
                             # and watch pattern matches) while agent is idle.
                             try:
                                 self._drain_process_notifications("cli-idle")
+                            except Exception:
+                                pass
+                            # Fire a due /loop wakeup while idle (defers to
+                            # queued user input and active /goal loops).
+                            try:
+                                self._maybe_fire_loop_tick()
                             except Exception:
                                 pass
                         continue
@@ -17703,6 +18601,14 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                             self._maybe_continue_goal_after_turn()
                         except Exception as _goal_exc:
                             logging.debug("goal continuation hook failed: %s", _goal_exc)
+
+                        # /loop tick completion: if the turn that just ended
+                        # was a loop wakeup, evaluate it (LOOP_COMPLETE marker,
+                        # --until judge, caps) and schedule the next tick.
+                        try:
+                            self._maybe_complete_loop_tick_after_turn()
+                        except Exception as _loop_exc:
+                            logging.debug("loop completion hook failed: %s", _loop_exc)
 
                         # Continuous voice: auto-restart recording after agent responds.
                         # Dispatch to a daemon thread so play_beep (sd.wait) and
@@ -18093,6 +18999,13 @@ def _run_kanban_goal_loop_q(cli: "NastechCLI", first_response: str) -> None:
     task_id = (_os.environ.get("NASTECH_KANBAN_TASK") or "").strip()
     if not task_id:
         return
+    worker_run_id = None
+    raw_run_id = (_os.environ.get("NASTECH_KANBAN_RUN_ID") or "").strip()
+    if raw_run_id:
+        try:
+            worker_run_id = int(raw_run_id)
+        except ValueError:
+            logger.warning("invalid NASTECH_KANBAN_RUN_ID=%r", raw_run_id)
 
     from nastech_cli import kanban_db as _kb
     from nastech_cli.goals import run_kanban_goal_loop as _run_loop, DEFAULT_MAX_TURNS as _DEF_TURNS
@@ -18138,8 +19051,7 @@ def _run_kanban_goal_loop_q(cli: "NastechCLI", first_response: str) -> None:
     def _task_status() -> "str | None":
         c = _kb.connect()
         try:
-            t = _kb.get_task(c, task_id)
-            return t.status if t is not None else None
+            return _kb.goal_run_status(c, task_id, worker_run_id)
         finally:
             try:
                 c.close()
@@ -18149,7 +19061,12 @@ def _run_kanban_goal_loop_q(cli: "NastechCLI", first_response: str) -> None:
     def _block(reason: str) -> None:
         c = _kb.connect()
         try:
-            _kb.block_task(c, task_id, reason=reason)
+            _kb.block_task(
+                c,
+                task_id,
+                reason=reason,
+                expected_run_id=worker_run_id,
+            )
         finally:
             try:
                 c.close()
@@ -18259,25 +19176,69 @@ def main(
         use_worktree = worktree or w or CLI_CONFIG.get("worktree", False)
         wt_info = None
         if use_worktree:
-            # Prune stale worktrees from crashed/killed sessions
-            _repo = _git_repo_root()
-            if _repo:
-                _prune_stale_worktrees(_repo)
-            # Branch the worktree from the freshly-fetched remote tip by
-            # default so it starts current with the project. Opt out with
-            # worktree_sync: false to branch from local HEAD instead.
+            # Overlap tool discovery with the network/subprocess-bound
+            # worktree setup (base fetch + parallel `git worktree add`
+            # release the GIL for most of their wall time). show_banner()
+            # then hits the warm cache instead of paying ~0.4s serially.
+            # Only done on the -w path: on plain `nastech` there is no I/O
+            # wait to hide and the extra thread just contends for CPU.
+            def _prewarm_tools() -> None:
+                try:
+                    import model_tools as _mt
+                    _mt.get_tool_definitions(quiet_mode=True)
+                except Exception:
+                    logger.debug("tool prewarm failed", exc_info=True)
+
+            threading.Thread(
+                target=_prewarm_tools, name="tool-prewarm", daemon=True
+            ).start()
+            # Worktree creation itself (~0.2-0.6s of git subprocess wall
+            # time) runs concurrently with the rest of startup; join right
+            # after NastechCLI construction, before anything consumes
+            # TERMINAL_CWD / wt_info. Failure semantics preserved: setup
+            # failure still aborts the session (checked at join).
             _sync_base = CLI_CONFIG.get("worktree_sync", True)
-            wt_info = _setup_worktree(sync_base=_sync_base)
-            if wt_info:
-                _active_worktree = wt_info
-                os.environ["TERMINAL_CWD"] = wt_info["path"]
-                atexit.register(_cleanup_worktree, wt_info)
-            else:
-                # Worktree was explicitly requested but setup failed —
-                # don't silently run without isolation.
-                return
+            _wt_result: dict = {}
+
+            def _create_worktree() -> None:
+                try:
+                    _wt_result["info"] = _setup_worktree(sync_base=_sync_base)
+                except Exception:
+                    logger.debug("worktree setup failed", exc_info=True)
+                    _wt_result["info"] = None
+
+            _wt_thread = threading.Thread(
+                target=_create_worktree, name="worktree-setup", daemon=True
+            )
+            _wt_thread.start()
+
+            def _join_worktree() -> Optional[Dict[str, str]]:
+                _wt_thread.join(timeout=120)
+                info = _wt_result.get("info")
+                if info:
+                    global _active_worktree
+                    _active_worktree = info
+                    os.environ["TERMINAL_CWD"] = info["path"]
+                    atexit.register(_cleanup_worktree, info)
+                    # Prune stale worktrees from crashed/killed sessions in
+                    # the background — pure GC, nothing downstream depends
+                    # on it. Ordered AFTER _setup_worktree so the two never
+                    # race on git's worktrees metadata; the new tree itself
+                    # is immune to reaping (<24h age gate + live pid lock).
+                    _repo = _git_repo_root()
+                    if _repo:
+                        threading.Thread(
+                            target=_prune_stale_worktrees,
+                            args=(_repo,),
+                            name="worktree-prune",
+                            daemon=True,
+                        ).start()
+                return info
+        else:
+            _join_worktree = None
     else:
-        wt_info = None
+        _join_worktree = None
+    wt_info = None
     
     # Handle query shorthand
     query = query or q
@@ -18333,32 +19294,37 @@ def main(
     )
 
     if parsed_skills:
-        skills_prompt, loaded_skills, missing_skills = build_preloaded_skills_prompt(
-            parsed_skills,
-            task_id=cli.session_id,
-        )
-        if missing_skills:
-            missing_display = ", ".join(missing_skills)
-            # If at least one skill loaded, degrade gracefully: skip the
-            # unknown ones and continue. A typo'd skill name should not crash
-            # the worker (which auto-blocks the Kanban task after retries).
-            # Only when EVERY requested skill is missing do we hard-fail, so a
-            # fully-misconfigured worker fails loudly instead of running blind.
-            if loaded_skills:
-                logger.warning(
-                    "Unknown skill(s) requested, skipping: %s. "
-                    "Continuing with: %s. "
-                    "List available skills with `nastech skills list`.",
-                    missing_display,
-                    ", ".join(loaded_skills),
+        # Load the skill payloads in the background: skill_view walks the
+        # full skills tree per skill (~0.5s for a large library) and the
+        # result is only consumed at agent init (first message / first
+        # agent-touching command), not by the banner. cmd_chat joins the
+        # thread via cli.finalize_preloaded_skills() before any consumer
+        # reads cli.system_prompt — NastechCLI._create_agent calls it too,
+        # so no agent can be built with the skills missing.
+        def _load_preloaded_skills() -> None:
+            try:
+                cli._preload_skills_result = build_preloaded_skills_prompt(
+                    parsed_skills,
+                    task_id=cli.session_id,
                 )
-            else:
-                raise ValueError(f"Unknown skill(s): {missing_display}")
-        if skills_prompt:
-            cli.system_prompt = "\n\n".join(
-                part for part in (cli.system_prompt, skills_prompt) if part
-            ).strip()
-            cli.preloaded_skills = loaded_skills
+            except Exception as exc:  # surfaced by finalize below
+                cli._preload_skills_error = exc
+
+        cli._preload_skills_requested = parsed_skills
+        cli._preload_skills_thread = threading.Thread(
+            target=_load_preloaded_skills, name="skills-preload", daemon=True
+        )
+        cli._preload_skills_thread.start()
+
+    # Join the background worktree creation (started above) before anything
+    # consumes TERMINAL_CWD / wt_info — the NastechCLI construction it
+    # overlapped with is done. Setup failure keeps the old abort semantics.
+    if _join_worktree is not None:
+        wt_info = _join_worktree()
+        if not wt_info:
+            # Worktree was explicitly requested but setup failed —
+            # don't silently run without isolation.
+            return
 
     # Inject worktree context into agent's system prompt
     if wt_info:

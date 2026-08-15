@@ -951,6 +951,10 @@ def test_spawn_nastech_action_scrubs_gateway_loop_guard_env(monkeypatch, tmp_pat
 
     monkeypatch.setenv("_NASTECH_GATEWAY", "1")
     monkeypatch.setattr(ws, "_ACTION_LOG_DIR", tmp_path)
+    # Isolate the module-global proc registry: _spawn_nastech_action stores
+    # _FakeProc (no poll()) in _ACTION_PROCS, and later tests' lifespan
+    # shutdown (_terminate_desktop_managed_gateway) would trip over it.
+    monkeypatch.setattr(ws, "_ACTION_PROCS", {})
 
     captured = {}
 
@@ -967,3 +971,69 @@ def test_spawn_nastech_action_scrubs_gateway_loop_guard_env(monkeypatch, tmp_pat
 
     assert "_NASTECH_GATEWAY" not in captured["env"]
     assert captured["env"]["NASTECH_NONINTERACTIVE"] == "1"
+
+
+# ---------------------------------------------------------------------------
+# Desktop lifespan reaps orphan gateways at serve startup (#77276)
+# ---------------------------------------------------------------------------
+
+def test_desktop_lifespan_reaps_orphan_gateways_on_startup(
+    monkeypatch, _isolate_nastech_home
+):
+    """Starting a Desktop serve backend should reap orphan gateways left by a
+    previous serve session before forking a fresh one (#77276).
+
+    Graceful shutdown reaps the managed child, but an abnormal exit reparents
+    the old gateway to launchd (PPID=1) where it keeps holding the QQ
+    WebSocket. The lifespan calls _reap_unsupervised_gateway_orphans() once at
+    startup under NASTECH_DESKTOP=1 so the stale orphan is cleared first.
+    """
+    import nastech_cli.web_server as ws
+
+    called = []
+
+    def _fake_reap():
+        called.append(True)
+        return True
+
+    monkeypatch.setenv("NASTECH_DESKTOP", "1")
+    # Keep the lifespan cheap: don't re-import the gateway module or spin up the
+    # real cron scheduler thread.
+    monkeypatch.setattr(ws, "_warm_gateway_module", lambda: None)
+    monkeypatch.setattr(ws, "_start_desktop_cron_ticker", lambda *_args: None)
+    # web_server imports the reaper lazily from nastech_cli.gateway, so patch it
+    # on that module.
+    import nastech_cli.gateway as g
+
+    monkeypatch.setattr(g, "_reap_unsupervised_gateway_orphans", _fake_reap)
+
+    client, _header = _client()
+    with client:
+        pass
+
+    assert called == [True]
+
+
+def test_desktop_lifespan_terminates_managed_gateway_restart(monkeypatch):
+    """A Desktop-owned gateway child must not survive its serve backend."""
+    import nastech_cli.web_server as ws
+
+    calls = []
+
+    class _FakeRunningProc:
+        def poll(self):
+            return None
+
+        def terminate(self):
+            calls.append("terminate")
+
+    monkeypatch.setenv("NASTECH_DESKTOP", "1")
+    monkeypatch.setattr(ws, "_warm_gateway_module", lambda: None)
+    monkeypatch.setattr(ws, "_start_desktop_cron_ticker", lambda *_args: None)
+    monkeypatch.setitem(ws._ACTION_PROCS, "gateway-restart", _FakeRunningProc())
+
+    client, _header = _client()
+    with client:
+        pass
+
+    assert calls == ["terminate"]

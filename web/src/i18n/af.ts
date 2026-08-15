@@ -191,7 +191,7 @@ export const af: Translations = {
     input: "Inset",
     output: "Uitset",
     total: "Totaal",
-    nastechageData: "Geen gebruiksdata vir hierdie tydperk nie",
+    noUsageData: "Geen gebruiksdata vir hierdie tydperk nie",
     startSession: "Begin 'n sessie om analise hier te sien",
     date: "Datum",
     model: "Model",

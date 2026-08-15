@@ -4,7 +4,7 @@ _ALLOWED_NASTECH_INFERENCE_HOSTS treatment.
 
 Real incident (2026-07): a hosted agent provisioned by nastech-account-service
 on the `staging` Vercel environment is stamped with
-``NASTECH_PORTAL_BASE_URL=https://portal.staging-nastechresearch.com`` in its
+``NASTECH_PORTAL_BASE_URL=https://portal.staging-nastechresearch.github.io`` in its
 container env (the documented dev/staging override), while its bootstrap
 ``auth.json`` ALSO persists ``portal_base_url`` to the same staging host.
 
@@ -50,11 +50,11 @@ class TestPortalEnvOverrideHelper:
         _NASTECH_PORTAL_ALLOWED_HOSTS, and the helper must return it anyway —
         gating happens only for network-provenance values."""
         monkeypatch.setenv(
-            "NASTECH_PORTAL_BASE_URL", "https://portal.staging-nastechresearch.com"
+            "NASTECH_PORTAL_BASE_URL", "https://portal.staging-nastechresearch.github.io"
         )
-        assert "portal.staging-nastechresearch.com" not in _NASTECH_PORTAL_ALLOWED_HOSTS
+        assert "portal.staging-nastechresearch.github.io" not in _NASTECH_PORTAL_ALLOWED_HOSTS
         assert (
-            _nastech_portal_env_override() == "https://portal.staging-nastechresearch.com"
+            _nastech_portal_env_override() == "https://portal.staging-nastechresearch.github.io"
         )
 
 
@@ -122,7 +122,7 @@ class TestResolveAccessTokenEnvOverrideWins:
         allowlist-rejection warning must never fire."""
         import nastech_cli.auth as auth
 
-        staging_portal = "https://portal.staging-nastechresearch.com"
+        staging_portal = "https://portal.staging-nastechresearch.github.io"
         monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
         monkeypatch.setenv("NASTECH_PORTAL_BASE_URL", staging_portal)
         self._write_auth_file(tmp_path, stored_portal_url=staging_portal)

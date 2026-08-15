@@ -65,7 +65,7 @@ const subState = (o: Partial<SubscriptionStateResponse> = {}): SubscriptionState
   context: 'personal',
   current: null,
   tiers: tierList(),
-  portal_url: 'https://portal.nastechresearch.com/billing',
+  portal_url: 'https://portal.nastechresearch.github.io/billing',
   ...o
 })
 
@@ -118,7 +118,7 @@ const billState = (o: Partial<BillingStateResponse> = {}): BillingStateResponse 
   auto_reload: { enabled: false, reload_to_display: '$25', reload_to_usd: '25', threshold_display: '$5', threshold_usd: '5' },
   org_name: 'Acme Inc',
   role: 'OWNER',
-  portal_url: 'https://portal.nastechresearch.com/billing',
+  portal_url: 'https://portal.nastechresearch.github.io/billing',
   charge_presets: ['10', '25', '50', '100'],
   charge_presets_display: ['$10', '$25', '$50', '$100'],
   ...o

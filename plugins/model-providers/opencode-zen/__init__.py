@@ -11,8 +11,20 @@ from __future__ import annotations
 
 from typing import Any
 
+from nastech_cli import __version__ as _NASTECH_VERSION
 from providers import register_provider
 from providers.base import ProviderProfile
+
+# Attribution headers sent on every OpenCode request. Same values we send
+# to OpenRouter, Vercel AI Gateway, and Fireworks. Going through
+# profile.default_headers means they survive model switches and credential
+# rotation. Without them OpenCode only sees the OpenAI SDK's generic
+# "OpenAI/Python x.y.z" User-Agent and can't tell the traffic is Nastech Agent.
+_ATTRIBUTION_HEADERS = {
+    "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
+    "X-Title": "Nastech Agent",
+    "User-Agent": f"NastechAgent/{_NASTECH_VERSION}",
+}
 
 
 def _flat_model_name(model: str | None) -> str:
@@ -132,6 +144,7 @@ opencode_zen = ProviderProfile(
     aliases=("opencode", "opencode_zen", "zen"),
     env_vars=("OPENCODE_ZEN_API_KEY",),
     base_url="https://opencode.ai/zen/v1",
+    default_headers=dict(_ATTRIBUTION_HEADERS),
     default_aux_model="gemini-3-flash",
 )
 
@@ -140,6 +153,7 @@ opencode_go = OpenCodeGoProfile(
     aliases=("opencode_go", "go", "opencode-go-sub"),
     env_vars=("OPENCODE_GO_API_KEY",),
     base_url="https://opencode.ai/zen/go/v1",
+    default_headers=dict(_ATTRIBUTION_HEADERS),
     default_aux_model="glm-5",
 )
 
