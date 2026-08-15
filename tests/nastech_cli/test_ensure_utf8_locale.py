@@ -1,7 +1,7 @@
 """Regression tests for nastech_cli._ensure_utf8().
 
 Covers the crash class where the setup wizard (and other banner-printing
-commands) emit box-drawing characters and the ⚕ glyph, which raise
+commands) emit box-drawing characters and the 𓄃 glyph, which raise
 UnicodeEncodeError when stdout/stderr are bound to a non-UTF-8 codec.
 
 Historically the repair was gated on ``sys.platform == "win32"`` and only
@@ -19,7 +19,7 @@ import nastech_cli
 
 
 # The exact glyphs the setup wizard / banners print (setup.py ~line 2962+).
-_BANNER = "┌─────┐\n│ ⚕ Nastech │\n└─────┘"
+_BANNER = "┌─────┐\n│ 𓄃 Nastech │\n└─────┘"
 
 
 class _FakeStream:
@@ -109,7 +109,7 @@ def test_fallback_when_reconfigure_unavailable(monkeypatch, tmp_path):
     sys.stdout.write(_BANNER)
     sys.stdout.flush()
     fh.close()
-    assert "⚕".encode("utf-8") in real_path.read_bytes()
+    assert "𓄃".encode("utf-8") in real_path.read_bytes()
 
 
 

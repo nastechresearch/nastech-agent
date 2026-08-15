@@ -14,6 +14,7 @@ const buildUiState = (): UiState => ({
   busy: false,
   busyInputMode: 'queue',
   compact: false,
+  destructiveSlashConfirm: true,
   detailsMode: 'collapsed',
   detailsModeCommandOverride: false,
   focusView: false,
@@ -32,6 +33,7 @@ const buildUiState = (): UiState => ({
   status: 'summoning nastech…',
   statusBar: 'top',
   streaming: true,
+  timestamps: false,
   // Last session's resolved theme paints frame one (flash-free boot, like
   // the desktop's nastech-boot-* keys); DEFAULT_THEME only on first launch.
   theme: bootTheme ?? DEFAULT_THEME,

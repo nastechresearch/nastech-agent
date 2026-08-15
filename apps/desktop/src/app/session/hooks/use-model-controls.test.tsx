@@ -213,9 +213,42 @@ describe('useModelControls', () => {
     expect($currentModel.get()).toBe('poolside/laguna-xs-2.1:free')
     expect($currentProvider.get()).toBe('nastech')
     expect(getCurrentModelSource()).toBe('default')
-    expect(queryClient.getQueryData(modelOptionsQueryKey('default'))).toMatchObject({
+    expect(queryClient.getQueryData(modelOptionsQueryKey('default'))).toEqual({
       model: 'poolside/laguna-xs-2.1:free',
-      provider: 'nastech'
+      provider: 'nastech',
+      providers: [
+        {
+          models: ['poolside/laguna-xs-2.1:free'],
+          name: 'nastech',
+          slug: 'nastech'
+        }
+      ]
+    })
+  })
+
+  it('preserves a populated model catalog when painting a saved profile default', () => {
+    const queryClient = new QueryClient()
+    const providers = [{ models: ['tencent/hy3:free'], name: 'Nastech', slug: 'nastech' }]
+
+    queryClient.setQueryData(modelOptionsQueryKey('default'), {
+      model: 'tencent/hy3:free',
+      provider: 'nastech',
+      providers
+    })
+
+    const { result } = renderHook(() =>
+      useModelControls({
+        queryClient,
+        requestGateway: vi.fn()
+      })
+    )
+
+    result.current.applySavedMainModel('nastech', 'poolside/laguna-xs-2.1:free')
+
+    expect(queryClient.getQueryData(modelOptionsQueryKey('default'))).toEqual({
+      model: 'poolside/laguna-xs-2.1:free',
+      provider: 'nastech',
+      providers
     })
   })
 

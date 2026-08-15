@@ -369,7 +369,7 @@ gateway:
     not_git_repo:            "✗ ليس مستودع git — لا يمكن التحديث."
     nastech_cmd_not_found:    "✗ تعذّر تحديد موقع أمر `nastech`. Nastech يعمل، لكن أمر التحديث لم يجد الملف التنفيذي على PATH أو عبر مُفسّر Python الحالي. جرّب تشغيل `nastech update` يدويًا في طرفيتك."
     start_failed:            "✗ فشل بدء التحديث: {error}"
-    starting:                "⚕ جارٍ بدء تحديث Nastech… سأبثّ التقدّم هنا."
+    starting:                "𓄃 جارٍ بدء تحديث Nastech… سأبثّ التقدّم هنا."
 
   usage:
     rate_limits:              "⏱️ **حدود المعدّل:** {state}"

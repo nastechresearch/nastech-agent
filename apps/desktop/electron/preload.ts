@@ -2,9 +2,16 @@ import { contextBridge, ipcRenderer, webUtils } from 'electron'
 
 contextBridge.exposeInMainWorld('nastechDesktop', {
   getConnection: profile => ipcRenderer.invoke('nastech:connection', profile),
+  // Registry-scoped backend resolution: { connectionId, profile } → descriptor.
+  getConnectionFor: payload => ipcRenderer.invoke('nastech:connection:for', payload),
   revalidateConnection: () => ipcRenderer.invoke('nastech:connection:revalidate'),
   touchBackend: profile => ipcRenderer.invoke('nastech:backend:touch', profile),
   getGatewayWsUrl: profile => ipcRenderer.invoke('nastech:gateway:ws-url', profile),
+  // Registry-scoped fresh WS URL: { connectionId, profile } → result shape of
+  // getGatewayWsUrl, minted against that connection's backend.
+  getGatewayWsUrlFor: payload => ipcRenderer.invoke('nastech:gateway:ws-url-for', payload),
+  // Union agent roster across every registered connection.
+  getAgentRoster: () => ipcRenderer.invoke('nastech:agents:roster'),
   openSessionWindow: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openSession', sessionId, opts),
   openSessionInTerminal: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openInTerminal', sessionId, opts),
   openWindow: () => ipcRenderer.invoke('nastech:window:openInstance'),
@@ -123,6 +130,16 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   saveConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:save', payload),
   applyConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:apply', payload),
   testConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:test', payload),
+  // v2 multi-connection registry: named agent sources (local / remote / cloud / ssh).
+  connections: {
+    list: () => ipcRenderer.invoke('nastech:connections:list'),
+    save: payload => ipcRenderer.invoke('nastech:connections:save', payload),
+    remove: id => ipcRenderer.invoke('nastech:connections:remove', id),
+    setPrimary: id => ipcRenderer.invoke('nastech:connections:set-primary', id),
+    test: id => ipcRenderer.invoke('nastech:connections:test', id),
+    // Fan out `nastech update` to every eligible registered connection.
+    updateAll: () => ipcRenderer.invoke('nastech:connections:update-all')
+  },
   sshConfigHosts: () => ipcRenderer.invoke('nastech:ssh-config:hosts'),
   sshResolveHost: host => ipcRenderer.invoke('nastech:ssh-config:resolve', host),
   probeConnectionConfig: remoteUrl => ipcRenderer.invoke('nastech:connection-config:probe', remoteUrl),
@@ -156,6 +173,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   selectSavePath: options => ipcRenderer.invoke('nastech:selectSavePath', options),
   writeClipboard: text => ipcRenderer.invoke('nastech:writeClipboard', text),
   readClipboard: () => ipcRenderer.invoke('nastech:readClipboard'),
+  saveGatewayFile: payload => ipcRenderer.invoke('nastech:saveGatewayFile', payload),
   saveImageFromUrl: url => ipcRenderer.invoke('nastech:saveImageFromUrl', url),
   saveImageBuffer: (data, ext) => ipcRenderer.invoke('nastech:saveImageBuffer', { data, ext }),
   saveClipboardImage: () => ipcRenderer.invoke('nastech:saveClipboardImage'),
@@ -175,6 +193,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   setNativeTheme: mode => ipcRenderer.send('nastech:native-theme', mode),
   setTranslucency: payload => ipcRenderer.send('nastech:translucency', payload),
   setKeepAwake: on => ipcRenderer.send('nastech:keep-awake', on),
+  setDisableF12: blocked => ipcRenderer.send('nastech:devtools:disable-f12', blocked),
   setPreviewShortcutActive: active => ipcRenderer.send('nastech:previewShortcutActive', Boolean(active)),
   openExternal: url => ipcRenderer.invoke('nastech:openExternal', url),
   openPreviewInBrowser: url => ipcRenderer.invoke('nastech:openPreviewInBrowser', url),
@@ -396,5 +415,14 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     ipcRenderer.on('nastech:found-in-page', listener)
 
     return () => ipcRenderer.removeListener('nastech:found-in-page', listener)
+  },
+  // Main-process `before-input-event` forwards Ctrl/Cmd+F here so renderer
+  // can open the FindBar even when the GTK compositor has already grabbed
+  // the chord at the windowing layer (#81727).
+  onOpenFindBarRequested: callback => {
+    const listener = () => callback()
+    ipcRenderer.on('nastech:open-find-bar', listener)
+
+    return () => ipcRenderer.removeListener('nastech:open-find-bar', listener)
   }
 })

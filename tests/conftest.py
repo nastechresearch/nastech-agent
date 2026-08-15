@@ -91,6 +91,20 @@ if _nastech_home_points_at_production(os.environ.get("NASTECH_HOME", "")):
     os.environ["NASTECH_HOME"] = _SESSION_NASTECH_HOME
     atexit.register(shutil.rmtree, _SESSION_NASTECH_HOME, True)
 
+# Subprocess-surviving isolation marker (#82770). PYTEST_CURRENT_TEST /
+# PYTEST_VERSION are pytest's own vars, and tests that spawn children
+# routinely rebuild the child env and strip them ("the subprocess must look
+# like a real CLI") — which used to disarm nastech_state's live-DB guard in
+# the child at the same moment the child lost the NASTECH_HOME redirect.
+# NASTECH_TEST_ISOLATION is OUR marker: exported here (before any test module
+# imports), inherited by every child by default, and honored by
+# nastech_state._running_under_pytest() as a test-context signal. A child
+# that carries it and still resolves the production state.db fails hard.
+# Tests that legitimately need a child to look like a non-test process AND
+# open a real DB must export NASTECH_STATE_DB_GUARD_BYPASS=1 in that child's
+# env instead of stripping markers.
+os.environ["NASTECH_TEST_ISOLATION"] = os.environ.get("NASTECH_HOME", "") or "1"
+
 #: NASTECH_HOME as it stood when conftest was imported - i.e. before any test
 #: module could import code that configures logging. Recorded so the guard in
 #: tests/test_log_isolation.py can assert the sandbox existed AT THAT MOMENT.
@@ -467,6 +481,14 @@ def _hermetic_environment(tmp_path, monkeypatch):
     (fake_nastech_home / "memories").mkdir()
     (fake_nastech_home / "skills").mkdir()
     monkeypatch.setenv("NASTECH_HOME", str(fake_nastech_home))
+    # Keep the subprocess-surviving isolation marker pointed at THIS test's
+    # home (#82770): children spawned by the test inherit it by default, so
+    # nastech_state's live-DB guard stays armed in them even when the test
+    # strips pytest's own PYTEST_* vars from the child env.
+    monkeypatch.setenv("NASTECH_TEST_ISOLATION", str(fake_nastech_home))
+    # And never let a developer-shell (or leaked child) bypass disarm the
+    # guard for in-process code under test.
+    monkeypatch.delenv("NASTECH_STATE_DB_GUARD_BYPASS", raising=False)
 
     # 3b. nastech_state computes ``DEFAULT_DB_PATH = get_nastech_home() / "state.db"``
     #     at import time. When the module is first imported at collection (any
