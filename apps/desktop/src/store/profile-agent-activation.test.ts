@@ -43,7 +43,8 @@ const localConn = (over: Partial<NastechConnection> = {}): NastechConnection =>
   ({ baseUrl: '', mode: 'local', profile: 'default', ...over }) as NastechConnection
 
 const getConnection = vi.fn<(profile?: string | null) => Promise<NastechConnection>>()
-const getConnectionFor = vi.fn<(payload: { connectionId?: null | string; profile?: null | string }) => Promise<NastechConnection>>()
+const getConnectionFor =
+  vi.fn<(payload: { connectionId?: null | string; profile?: null | string }) => Promise<NastechConnection>>()
 
 function deferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve!: () => void

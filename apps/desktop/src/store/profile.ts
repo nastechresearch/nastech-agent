@@ -1,7 +1,6 @@
 import { backendScopeKey } from '@nastech/shared'
 import { atom, computed } from 'nanostores'
 
-import { getProfiles, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { invalidateProfileScopedQueries } from '@/lib/query-client'
 import {
   arraysEqual,
@@ -12,6 +11,7 @@ import {
   storedStringArray,
   storedStringRecord
 } from '@/lib/storage'
+import { getProfiles, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { invalidateCronModelImpactScopeState } from '@/store/cron-model-impact-scope'
 import { $gateway, ensureGatewayForAgent, ensureGatewayForProfile, openGatewayForProfile } from '@/store/gateway'
 import { setConnection } from '@/store/session'
