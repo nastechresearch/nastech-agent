@@ -1,10 +1,11 @@
 import { useStore } from '@nanostores/react'
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react'
 
+import { graftRefreshedTailOntoBackfill } from '@/app/chat/transcript-backfill'
+import { getLatestSessionMessages } from '@/nastech'
 import { preserveLocalAssistantErrors, sealOpenToolParts, toChatMessages } from '@/lib/chat-messages'
 import { createClientSessionState } from '@/lib/chat-runtime'
 import { sessionMessagesSignature } from '@/lib/session-signatures'
-import { getLatestSessionMessages } from '@/nastech'
 import { $changeEventsAvailable, $cronChangeTick, $sessionsChangeTick } from '@/store/live-sync'
 import { $onBattery, batteryPollInterval } from '@/store/power'
 import { refreshActiveProfile } from '@/store/profile'
@@ -104,7 +105,13 @@ export async function reconcileActiveTranscript({
 
     updateSessionState(
       runtimeSessionId,
-      state => ({ ...state, messages: preserveLocalAssistantErrors(messages, state.messages) }),
+      state => ({
+        ...state,
+        // The refresh re-reads only the newest tail page; graft it onto any
+        // older pages "Show earlier" already backfilled instead of clobbering
+        // them (see transcript-backfill).
+        messages: preserveLocalAssistantErrors(graftRefreshedTailOntoBackfill(messages, state.messages), state.messages)
+      }),
       storedSessionId
     )
   } catch {
@@ -255,6 +262,7 @@ export function rehydrateLiveSessionStatuses(
           needsInput: false,
           streamId: null,
           turnStartedAt: null,
+          turnLive: false,
           // The turn ended without its completion events reaching us — a lost
           // `tool.complete` would otherwise leave a spinning tool row in an
           // idle session. Seal open tool parts the same way the settle path

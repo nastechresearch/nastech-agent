@@ -845,6 +845,54 @@ class TestDetectVenvDir:
 class TestSystemUnitNastechHome:
     """NASTECH_HOME in system units must reference the target user, not root."""
 
+    def test_managed_node_makes_system_unit_independent_of_callers_path(
+        self, monkeypatch, tmp_path
+    ):
+        """A target-managed Node must suppress caller-specific PATH fallbacks."""
+        target_home = tmp_path / "home" / "alice"
+        target_nastech = target_home / ".nastech"
+        root_home = tmp_path / "root"
+        root_nastech = root_home / ".nastech"
+        managed_bin = target_nastech / "node" / "bin"
+        managed_bin.mkdir(parents=True)
+        root_nastech.mkdir(parents=True)
+
+        monkeypatch.setattr(Path, "home", staticmethod(lambda: root_home))
+        monkeypatch.setenv("NASTECH_HOME", str(root_nastech))
+        monkeypatch.setattr(
+            gateway_cli,
+            "_system_service_identity",
+            lambda run_as_user=None: ("alice", "alice", str(target_home)),
+        )
+        monkeypatch.setattr(gateway_cli, "get_nastech_home", lambda: root_nastech)
+        monkeypatch.setattr(gateway_cli, "_build_service_path_dirs", lambda: [])
+
+        monkeypatch.setattr(gateway_cli.shutil, "which", lambda name: "/root/bin/node")
+        root_unit = gateway_cli.generate_systemd_unit(system=True, run_as_user="alice")
+
+        monkeypatch.setattr(gateway_cli.shutil, "which", lambda name: "/home/alice/.local/bin/node")
+        user_unit = gateway_cli.generate_systemd_unit(system=True, run_as_user="alice")
+
+        assert root_unit == user_unit
+        assert str(managed_bin) in root_unit
+        assert "/root/bin" not in root_unit
+
+    def test_node_path_lookup_remains_fallback_without_managed_node(
+        self, monkeypatch, tmp_path
+    ):
+        """External Node installs still work when the managed tree is absent."""
+        monkeypatch.setattr(
+            "nastech_constants.iter_nastech_node_dirs", lambda root=None: []
+        )
+        monkeypatch.setattr(
+            gateway_cli.shutil, "which", lambda name: "/opt/external-node/bin/node"
+        )
+        entries: list[str] = []
+
+        gateway_cli._append_node_dir_for_service(entries, tmp_path / ".nastech")
+
+        assert entries == ["/opt/external-node/bin"]
+
     def test_system_unit_uses_target_user_home_not_calling_user(self, monkeypatch):
         # Simulate sudo: Path.home() returns /root, target user is alice
         monkeypatch.setattr(Path, "home", staticmethod(lambda: Path("/root")))
@@ -1249,6 +1297,7 @@ class TestProfileArg:
             "gateway",
             "run",
             "--replace",
+            "--external-supervisor",
         ]
 
     def test_launchd_plist_path_uses_real_user_home_not_profile_home(self, tmp_path, monkeypatch):

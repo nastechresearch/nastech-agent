@@ -123,6 +123,93 @@ def _import_cli():
     return importlib.import_module("cli")
 
 
+def test_provider_flag_uses_named_custom_default_model(monkeypatch):
+    """`--provider <custom>` without `-m` uses that entry's default_model (#86978)."""
+    cli = _import_cli()
+    monkeypatch.setitem(
+        cli.CLI_CONFIG,
+        "model",
+        {"default": "tencent/hy3:free", "provider": "nastech"},
+    )
+    config = {
+        "model": {"default": "tencent/hy3:free", "provider": "nastech"},
+        "providers": {
+            "gmk-lan": {
+                "name": "GMK Local",
+                "base_url": "http://gmk.lan:9931/v1",
+                "api_key": "not-needed",
+                "default_model": "/models/gemma.gguf",
+            }
+        },
+    }
+    monkeypatch.setattr("nastech_cli.config.load_config", lambda: config)
+    monkeypatch.setattr("nastech_cli.runtime_provider.load_config", lambda: config)
+
+    shell = cli.NastechCLI(provider="gmk-lan", compact=True, max_turns=1)
+
+    assert shell.model == "/models/gemma.gguf"
+    assert shell.requested_provider == "gmk-lan"
+
+
+def test_explicit_model_wins_over_provider_default_model(monkeypatch):
+    """`-m` still wins when `--provider` also names a custom default_model."""
+    cli = _import_cli()
+    monkeypatch.setitem(
+        cli.CLI_CONFIG,
+        "model",
+        {"default": "tencent/hy3:free", "provider": "nastech"},
+    )
+    config = {
+        "model": {"default": "tencent/hy3:free", "provider": "nastech"},
+        "providers": {
+            "gmk-lan": {
+                "name": "GMK Local",
+                "base_url": "http://gmk.lan:9931/v1",
+                "api_key": "not-needed",
+                "default_model": "/models/gemma.gguf",
+            }
+        },
+    }
+    monkeypatch.setattr("nastech_cli.config.load_config", lambda: config)
+    monkeypatch.setattr("nastech_cli.runtime_provider.load_config", lambda: config)
+
+    shell = cli.NastechCLI(
+        provider="gmk-lan",
+        model="explicit-id",
+        compact=True,
+        max_turns=1,
+    )
+
+    assert shell.model == "explicit-id"
+
+
+def test_provider_flag_logs_when_custom_default_model_cannot_resolve(monkeypatch, caplog):
+    """A named --provider that fails to resolve must not fail silently."""
+    cli = _import_cli()
+    monkeypatch.setitem(
+        cli.CLI_CONFIG,
+        "model",
+        {"default": "tencent/hy3:free", "provider": "nastech"},
+    )
+
+    def _boom(_name):
+        raise RuntimeError("catalog unavailable")
+
+    monkeypatch.setattr(
+        "nastech_cli.runtime_provider._get_named_custom_provider",
+        _boom,
+    )
+
+    with caplog.at_level("WARNING"):
+        shell = cli.NastechCLI(provider="gmk-lan", compact=True, max_turns=1)
+
+    assert shell.model == "tencent/hy3:free"
+    assert any(
+        "gmk-lan" in rec.getMessage() and "catalog unavailable" in rec.getMessage()
+        for rec in caplog.records
+    )
+
+
 def test_nastech_cli_init_does_not_eagerly_resolve_runtime_provider(monkeypatch):
     cli = _import_cli()
     calls = {"count": 0}

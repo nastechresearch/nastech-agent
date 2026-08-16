@@ -1,11 +1,12 @@
+import { JsonRpcGatewayError } from '@nastech/shared'
 import { act, cleanup, render, waitFor } from '@testing-library/react'
 import type { MutableRefObject } from 'react'
 import { useEffect, useRef } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { getSession } from '@/nastech'
 import { textPart } from '@/lib/chat-messages'
 import { createClientSessionState } from '@/lib/chat-runtime'
-import { getSession } from '@/nastech'
 import { $composerAttachments, $composerDraft, type ComposerAttachment, setComposerDraft } from '@/store/composer'
 import { $queuedPromptsBySession, getQueuedPrompts } from '@/store/composer-queue'
 import { $hudMode } from '@/store/hud'
@@ -106,6 +107,7 @@ function Harness({
   runtimeIdByStoredSessionIdRef: runtimeIdByStoredSessionIdRefProp,
   seedMessages,
   seedStreamId,
+  seedTurnStartedAt,
   selectedStoredSessionIdRef: selectedStoredSessionIdRefProp,
   storedSessionId,
   activeSessionId,
@@ -130,6 +132,7 @@ function Harness({
   runtimeIdByStoredSessionIdRef?: MutableRefObject<Map<string, string>>
   seedMessages?: unknown[]
   seedStreamId?: null | string
+  seedTurnStartedAt?: null | number
   selectedStoredSessionIdRef?: MutableRefObject<string | null>
   storedSessionId?: null | string
   activeSessionId?: null | string
@@ -163,6 +166,7 @@ function Harness({
     awaitingResponse: false,
     interrupted: true,
     streamId: seedStreamId ?? null,
+    turnStartedAt: seedTurnStartedAt ?? null,
     interimBoundaryPending: false
   } as never)
 
@@ -1205,6 +1209,10 @@ describe('usePromptActions slash.exec dispatch payloads', () => {
     // never heard about. The busy path must park the kickoff on the composer
     // queue so the settle drain sends it.
     $queuedPromptsBySession.set({})
+    publishSessionState(RUNTIME_SESSION_ID, {
+      ...createClientSessionState(RUNTIME_SESSION_ID),
+      busy: true
+    })
 
     const calls: { method: string; params?: Record<string, unknown> }[] = []
     const states: Record<string, unknown>[] = []
@@ -1258,6 +1266,7 @@ describe('usePromptActions slash.exec dispatch payloads', () => {
     expect(renderedText).toContain('⊙ Goal set (20-turn budget): ship the release notes')
     expect(renderedText).toContain('queued')
 
+    dropSessionState(RUNTIME_SESSION_ID)
     $queuedPromptsBySession.set({})
   })
 
@@ -1720,6 +1729,59 @@ describe('usePromptActions submit / queue drain semantics', () => {
     )
   })
 
+  it('arms turnStartedAt at submit time instead of waiting for message.start', async () => {
+    const seeds: Record<string, unknown>[] = []
+    const requestGateway = vi.fn(async () => ({}) as never)
+
+    let handle: HarnessHandle | null = null
+    await actRender(
+      <Harness
+        onReady={h => (handle = h)}
+        onSeedState={s => seeds.push(s)}
+        refreshSessions={async () => undefined}
+        requestGateway={requestGateway}
+      />
+    )
+
+    const before = Date.now()
+    await handle!.submitText('arm the clock now')
+
+    // The optimistic seed carries the clock — the progress box's timer must
+    // not be hostage to the submit→gateway-accept round trip (which can take
+    // seconds under load). message.start later keeps this value (?? guard).
+    expect(seeds.length).toBeGreaterThan(0)
+    const armed = seeds[0].turnStartedAt
+
+    expect(typeof armed).toBe('number')
+    expect(armed as number).toBeGreaterThanOrEqual(before)
+    expect(armed as number).toBeLessThanOrEqual(Date.now())
+  })
+
+  it('keeps a live turn clock when a second seed races it (?? guard)', async () => {
+    const seeds: Record<string, unknown>[] = []
+    const requestGateway = vi.fn(async () => ({}) as never)
+    const preArmed = Date.now() - 12_345
+
+    let handle: HarnessHandle | null = null
+    await actRender(
+      <Harness
+        onReady={h => (handle = h)}
+        onSeedState={s => seeds.push(s)}
+        refreshSessions={async () => undefined}
+        requestGateway={requestGateway}
+        seedTurnStartedAt={preArmed}
+      />
+    )
+
+    // Submit into state that already carries a live clock (queued send racing
+    // a running turn): the seed must preserve it, not restart the visible
+    // elapsed time.
+    await handle!.submitText('send racing a live clock')
+
+    expect(seeds.length).toBeGreaterThan(0)
+    expect(seeds[0].turnStartedAt).toBe(preArmed)
+  })
+
   it('flags prompt.submit with interrupted:true after a voice-playback barge', async () => {
     const { markVoicePlaybackInterrupted } = await import('@/lib/voice-playback')
     const requestGateway = vi.fn(async () => ({}) as never)
@@ -2102,8 +2164,12 @@ describe('usePromptActions submit / queue drain semantics', () => {
     )
   })
 
-  it('a normal (non-queue) submit still respects the busyRef guard', async () => {
-    const busyRef = { current: true }
+  it('a normal (non-queue) submit is blocked when the target session is busy', async () => {
+    publishSessionState(RUNTIME_SESSION_ID, {
+      ...createClientSessionState(RUNTIME_SESSION_ID),
+      busy: true
+    })
+    const busyRef = { current: false }
     const requestGateway = vi.fn(async () => ({}) as never)
 
     let handle: HarnessHandle | null = null
@@ -2120,6 +2186,7 @@ describe('usePromptActions submit / queue drain semantics', () => {
 
     expect(accepted).toBe(false)
     expect(requestGateway).not.toHaveBeenCalledWith('prompt.submit', expect.anything())
+    dropSessionState(RUNTIME_SESSION_ID)
   })
 })
 
@@ -5111,5 +5178,79 @@ describe('usePromptActions stale-closure session routing', () => {
         expect(params.session_id).toBe(RUNTIME_SESSION_B)
       }
     }
+  })
+})
+
+describe('usePromptActions editMessage stale-target recovery (#82462)', () => {
+  type GatewayRequestFn = <T>(method: string, params?: Record<string, unknown>, timeoutMs?: number) => Promise<T>
+  type GatewayMock = GatewayRequestFn & { mock: { calls: unknown[][] } }
+
+  afterEach(() => {
+    cleanup()
+    clearNotifications()
+    setMessages([])
+    $busy.set(false)
+  })
+
+  it('surfaces a compressed-away notice instead of plain-resubmitting without an ordinal', async () => {
+    let handle: HarnessHandle | undefined
+
+    const requestGateway = vi.fn(async (method: string) => {
+      if (method === 'prompt.submit') {
+        throw new JsonRpcGatewayError('target user message is no longer in session history', {
+          code: 4018,
+          data: {
+            user_turn_count: 1,
+            ordinal: 0,
+            segment_ordinal: -1,
+            prefix_user_count: 1
+          }
+        })
+      }
+
+      return {} as never
+    }) as unknown as GatewayMock
+
+    const seed = [
+      { id: 'u1', parts: [textPart('pre-compress')], role: 'user' as const, timestamp: 0 },
+      { id: 'a1', parts: [textPart('reply')], role: 'assistant' as const, timestamp: 1 }
+    ]
+
+    setMessages(seed)
+
+    await actRender(
+      <Harness
+        onReady={h => {
+          handle = h
+        }}
+        refreshSessions={async () => undefined}
+        requestGateway={requestGateway}
+        seedMessages={seed}
+        storedSessionId="stored-1"
+      />
+    )
+
+    await handle!.editMessage({
+      content: [{ text: 'edited', type: 'text' }],
+      parentId: null,
+      role: 'user',
+      sourceId: 'u1'
+    } as never)
+
+    await waitFor(() => {
+      const titles = $notifications.get().map(n => n.title)
+      expect(titles.some(t => /no longer in server history|compressed/i.test(t || ''))).toBe(true)
+    })
+
+    const submitCalls = (requestGateway as unknown as { mock: { calls: unknown[][] } }).mock.calls.filter(
+      ([method]) => method === 'prompt.submit'
+    )
+
+    // First attempt only — no plain resubmit that drops truncate_before_user_ordinal.
+    expect(submitCalls).toHaveLength(1)
+    expect(submitCalls[0]?.[1]).toMatchObject({
+      truncate_before_user_ordinal: 0,
+      confirm_truncate: true
+    })
   })
 })

@@ -1,6 +1,7 @@
 """Tests for nastech_cli.gateway."""
 
 import argparse
+import json
 import os
 import signal
 import subprocess
@@ -11,6 +12,9 @@ from types import ModuleType, SimpleNamespace
 import pytest
 
 import nastech_cli.gateway as gateway
+
+
+_BREAKAWAY_MARKER = "_NASTECH_GATEWAY_BREAKAWAY"
 
 
 def _install_fake_gateway_run(monkeypatch, start_gateway):
@@ -47,6 +51,102 @@ def _install_fake_gateway_run(monkeypatch, start_gateway):
         "get_gateway_runtime_snapshot",
         lambda *a, **k: gateway.GatewayRuntimeSnapshot(manager="manual process"),
     )
+
+
+def _run_native_windows_gateway_start_diag(
+    tmp_path, breakaway_marker: str | None
+):
+    script = textwrap.dedent(
+        """
+        import ctypes
+        import json
+        import os
+        import pathlib
+        import sys
+        import types
+
+        import nastech_cli.gateway as gateway_cli
+
+        async def start_gateway(*, replace, verbosity):
+            assert "_NASTECH_GATEWAY_BREAKAWAY" not in os.environ
+            return True
+
+        fake_run = types.ModuleType("gateway.run")
+        fake_run.start_gateway = start_gateway
+        fake_run._exit_after_graceful_shutdown = lambda code: None
+        sys.modules["gateway.run"] = fake_run
+
+        gateway_cli._guard_official_docker_root_gateway = lambda: None
+        gateway_cli._guard_named_profile_under_multiplexer = lambda force=False: None
+        gateway_cli._guard_supervised_gateway_conflict = lambda force=False: None
+        gateway_cli._guard_existing_gateway_process_conflict = lambda replace=False: None
+        gateway_cli.supports_systemd_services = lambda: False
+        gateway_cli.run_gateway(quiet=True)
+
+        diag_path = pathlib.Path(os.environ["NASTECH_HOME"]) / "logs" / "gateway-exit-diag.log"
+        rows = [json.loads(line) for line in diag_path.read_text(encoding="utf-8").splitlines()]
+        start = next(row for row in rows if row["tag"] == "gateway.start")
+        payload = {
+            "diag": start,
+            "get_console_window": bool(ctypes.windll.kernel32.GetConsoleWindow()),
+        }
+        print("DIAG_JSON=" + json.dumps(payload))
+        """
+    )
+    env: dict[str, str] = dict(os.environ)
+    env.update(
+        {
+            "NASTECH_HOME": str(tmp_path),
+            "NASTECH_GATEWAY_DETACHED": "1",
+            "NASTECH_GATEWAY_EXIT_DIAG": "1",
+            "NASTECH_GATEWAY_MAX_STARTS": "0",
+            "PYTHONIOENCODING": "utf-8",
+        }
+    )
+    if breakaway_marker is None:
+        env.pop(_BREAKAWAY_MARKER, None)
+    else:
+        env[_BREAKAWAY_MARKER] = breakaway_marker
+
+    from nastech_cli._subprocess_compat import windows_detach_flags_without_breakaway
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        creationflags=windows_detach_flags_without_breakaway(),
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    line = next(
+        line for line in completed.stdout.splitlines() if line.startswith("DIAG_JSON=")
+    )
+    return json.loads(line.removeprefix("DIAG_JSON="))
+
+
+@pytest.mark.windows_only
+@pytest.mark.parametrize(
+    ("marker", "expected_breakaway"),
+    [("1", True), ("0", False), (None, None)],
+)
+def test_windows_gateway_start_diag_reports_detach_state(
+    tmp_path, marker, expected_breakaway
+):
+    """DEVNULL is a Windows TTY but must not masquerade as a console window."""
+    payload = _run_native_windows_gateway_start_diag(tmp_path, marker)
+    diag = payload["diag"]
+
+    assert payload["get_console_window"] is False
+    assert diag["stdin_is_tty"] is True
+    assert diag["console_window_attached"] is False
+    assert diag["detached"] is True
+    assert diag["breakaway"] is expected_breakaway
 
 
 
@@ -771,3 +871,134 @@ def test_module_has_logger():
     """Verify module has a logger instance (regression guard for #27154)."""
     assert hasattr(gateway, "logger")
     assert gateway.logger.name == "nastech_cli.gateway"
+
+
+class TestWindowsScheduledTaskSupervisorGuard:
+    """The reaper must skip when the profile's scheduled task is still a
+    supervisor — Running *or* Ready.
+
+    Regression guard: ``_reaper_candidate_is_supervisor_owned`` walks the
+    parent chain up to ``services.exe`` and fails open when the Task-launched
+    bootstrap has already exited (Windows does not reparent, so the chain
+    breaks). After that exit the task is typically Ready, not Running. A
+    Running-only check then treats the detached gateway as an orphan: the
+    reaper writes the planned-stop marker, the gateway exits cleanly with
+    code 0, and the scheduler never restarts it — silently killing
+    A2A/messaging on every desktop-app launch (#86098, #87001).
+    """
+
+    def test_running_task_skips_reap(self, monkeypatch):
+        """Nastech_Gateway_* is Running => reaper returns False, kills nothing."""
+        monkeypatch.setattr(gateway, "is_windows", lambda: True)
+        monkeypatch.setattr(gateway, "is_macos", lambda: False)
+        monkeypatch.setattr(gateway, "supports_systemd_services", lambda: False)
+        # The guard must query the PROFILE-AWARE install-time task name from
+        # gateway_windows.get_task_name(), never a hardcoded literal — a
+        # hardcoded "NastechGateway" would leave the guard dormant on every
+        # standard install (task name is Nastech_Gateway / Nastech_Gateway_<p>).
+        import nastech_cli.gateway_windows as gateway_windows
+
+        monkeypatch.setattr(
+            gateway_windows, "get_task_name", lambda: "Nastech_Gateway_testprof"
+        )
+        queried = []
+
+        def _fake_supervises(name):
+            queried.append(name)
+            return True
+
+        monkeypatch.setattr(
+            gateway, "_windows_scheduled_task_supervises", _fake_supervises
+        )
+
+        # Guard: if the task check were bypassed, these would be reaped.
+        def _boom_find_gateway_pids(exclude_pids=None):
+            raise AssertionError("must not scan when scheduled task supervises")
+
+        monkeypatch.setattr(gateway, "find_gateway_pids", _boom_find_gateway_pids)
+        killed_pids = []
+        monkeypatch.setattr(gateway.os, "kill", lambda pid, sig: killed_pids.append((pid, sig)))
+
+        result = gateway._reap_unsupervised_gateway_orphans()
+
+        assert result is False
+        assert killed_pids == []
+        assert queried == ["Nastech_Gateway_testprof"]
+
+    def test_ready_task_skips_reap(self, monkeypatch):
+        """Ready is the post-launcher steady state — still supervised (#87001)."""
+        monkeypatch.setattr(gateway, "is_windows", lambda: True)
+        monkeypatch.setattr(gateway, "is_macos", lambda: False)
+        monkeypatch.setattr(gateway, "supports_systemd_services", lambda: False)
+        import nastech_cli.gateway_windows as gateway_windows
+
+        monkeypatch.setattr(
+            gateway_windows, "get_task_name", lambda: "Nastech_Gateway_testprof"
+        )
+        monkeypatch.setattr(
+            gateway, "_windows_scheduled_task_state", lambda name: "Ready"
+        )
+
+        def _boom_find_gateway_pids(exclude_pids=None):
+            raise AssertionError("must not scan when scheduled task is Ready")
+
+        monkeypatch.setattr(gateway, "find_gateway_pids", _boom_find_gateway_pids)
+        killed_pids = []
+        monkeypatch.setattr(gateway.os, "kill", lambda pid, sig: killed_pids.append((pid, sig)))
+
+        result = gateway._reap_unsupervised_gateway_orphans()
+
+        assert result is False
+        assert killed_pids == []
+
+    def test_disabled_or_missing_task_still_reaps_real_orphan(self, monkeypatch):
+        """Disabled / missing task => reaper behaves as before and still
+        reaps a genuine orphan."""
+        orphan_pid = 99998
+
+        monkeypatch.setattr(gateway, "is_windows", lambda: True)
+        monkeypatch.setattr(gateway, "is_macos", lambda: False)
+        monkeypatch.setattr(gateway, "supports_systemd_services", lambda: False)
+        monkeypatch.setattr(gateway, "_windows_scheduled_task_supervises", lambda name: False)
+        monkeypatch.setattr("gateway.status.get_running_pid", lambda: None)
+        monkeypatch.setattr(gateway, "_get_service_pids", lambda: set())
+
+        monkeypatch.setattr(
+            gateway,
+            "find_gateway_pids",
+            lambda exclude_pids=None: [
+                p for p in [orphan_pid] if p not in (exclude_pids or set())
+            ],
+        )
+        killed_pids = []
+        monkeypatch.setattr(gateway.os, "kill", lambda pid, sig: killed_pids.append((pid, sig)))
+        monkeypatch.setattr("gateway.status._pid_exists", lambda pid: False)
+        monkeypatch.setattr("gateway.status.write_planned_stop_marker", lambda pid: None)
+        monkeypatch.setattr("time.sleep", lambda _: None)
+        monkeypatch.setattr("time.monotonic", lambda: 1.0)
+
+        result = gateway._reap_unsupervised_gateway_orphans()
+
+        assert result is True
+        assert orphan_pid in [pid for pid, _ in killed_pids]
+
+    def test_windows_scheduled_task_running_returns_false_off_windows(self, monkeypatch):
+        """The state helper is inert on POSIX (no subprocess spawned)."""
+        monkeypatch.setattr(gateway, "is_windows", lambda: False)
+
+        def _boom_run(*_a, **_k):
+            raise AssertionError("subprocess must not run off Windows")
+
+        monkeypatch.setattr(gateway.subprocess, "run", _boom_run)
+        assert gateway._windows_scheduled_task_running("NastechGateway") is False
+        assert gateway._windows_scheduled_task_supervises("NastechGateway") is False
+        assert gateway._windows_scheduled_task_state("NastechGateway") is None
+
+    def test_supervises_ready_and_queued_but_not_disabled(self, monkeypatch):
+        monkeypatch.setattr(gateway, "is_windows", lambda: True)
+        states = {"Running": True, "Ready": True, "Queued": True, "Disabled": False, "MISSING": False}
+
+        for state, expected in states.items():
+            monkeypatch.setattr(gateway, "_windows_scheduled_task_state", lambda name, s=state: s)
+            assert gateway._windows_scheduled_task_supervises("Nastech_Gateway") is expected, state
+            assert gateway._windows_scheduled_task_running("Nastech_Gateway") is (state == "Running")

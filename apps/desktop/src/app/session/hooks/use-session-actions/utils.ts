@@ -1,13 +1,15 @@
 import { textWithoutReferenceLines } from '@/components/assistant-ui/reference-kinds'
+import { getSession } from '@/nastech'
 import { assistantTextPart, type ChatMessage, chatMessageText, textPart } from '@/lib/chat-messages'
 import { normalizePersonalityValue } from '@/lib/chat-runtime'
 import { embeddedImageUrls, textWithoutEmbeddedImages } from '@/lib/embedded-images'
-import { getSession } from '@/nastech'
 import { reconcileApprovalModeForProfile } from '@/store/approval-mode'
 import { requestDesktopOnboardingForCredentialWarning } from '@/store/onboarding'
 import { $activeGatewayProfile, $profiles, normalizeProfileKey } from '@/store/profile'
 import {
+  $cronSessions,
   $currentCwd,
+  $messagingSessions,
   $sessions,
   commitWorkspaceCwdForSelectedSession,
   releaseWorkspaceCwdOwner,
@@ -149,7 +151,10 @@ const COMPARED_FIELDS = [
   'interim',
   'reactions',
   'timestamp',
-  'completedAt'
+  'completedAt',
+  // Turn wall-clock duration — stamps the visible "⏱ 38s" badge, so a change
+  // must re-render (set once at completion; stable afterwards).
+  'durationS'
 ] as const
 
 const IGNORED_FIELDS = ['attachmentRefs', 'parts', 'rowId'] as const
@@ -1288,7 +1293,9 @@ function upsertResolvedSession(session: SessionInfo, storedSessionId: string) {
 }
 
 export async function resolveStoredSession(storedSessionId: string): Promise<SessionInfo | undefined> {
-  const cached = $sessions.get().find(session => sessionMatchesStoredId(session, storedSessionId))
+  const cached = [...$sessions.get(), ...$cronSessions.get(), ...$messagingSessions.get()].find(session =>
+    sessionMatchesStoredId(session, storedSessionId)
+  )
 
   // A row with no owning profile can't route a resume when more than one
   // profile exists — a resume without a profile lands on whichever gateway is

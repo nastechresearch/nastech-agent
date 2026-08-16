@@ -138,7 +138,16 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     setPrimary: id => ipcRenderer.invoke('nastech:connections:set-primary', id),
     test: id => ipcRenderer.invoke('nastech:connections:test', id),
     // Fan out `nastech update` to every eligible registered connection.
-    updateAll: () => ipcRenderer.invoke('nastech:connections:update-all')
+    updateAll: () => ipcRenderer.invoke('nastech:connections:update-all'),
+    // Registry lifecycle push (main → renderer): a connection was removed or
+    // materially edited, so secondaries scoped to it must be disposed (and,
+    // for edits, re-dialed at the new target).
+    onChanged: callback => {
+      const listener = (_event, payload) => callback(payload)
+      ipcRenderer.on('nastech:connections:changed', listener)
+
+      return () => ipcRenderer.removeListener('nastech:connections:changed', listener)
+    }
   },
   sshConfigHosts: () => ipcRenderer.invoke('nastech:ssh-config:hosts'),
   sshResolveHost: host => ipcRenderer.invoke('nastech:ssh-config:resolve', host),

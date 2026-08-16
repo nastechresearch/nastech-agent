@@ -2449,6 +2449,16 @@ def _cmd_update_check(branch: str = "main", *, branch_explicit: bool = False):
     if sys.platform == "win32":
         git_cmd = ["git", "-c", "windows.appendAtomically=false"]
 
+    # A crashed/interrupted fetch can leave .git/shallow.lock (or another git
+    # lock file) behind; every later fetch then fails with "File exists" and
+    # the check reports a hard failure (or, in the banner path, silently
+    # compares stale refs). Self-heal abandoned locks before fetching.
+    from nastech_cli.gitlock import clear_stale_git_locks
+
+    cleared = clear_stale_git_locks(_m().PROJECT_ROOT)
+    for lock_path in cleared:
+        print(f"  (removed stale git lock: {lock_path})")
+
     # Fetch only the branch we compare against; prefer upstream as the canonical
     # reference. A bare `git fetch <remote>` pulls every ref, and this repo has
     # thousands of auto-generated branches, so scope the fetch to <branch>.
@@ -4524,6 +4534,16 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # against.
         branch = _m()._resolve_update_branch(args)
 
+        # Self-heal abandoned git lock files (e.g. .git/shallow.lock left by a
+        # crashed fetch) before the fetch — otherwise the update fails with
+        # "Unable to create .../shallow.lock: File exists" and never reaches
+        # the network.
+        from nastech_cli.gitlock import clear_stale_git_locks
+
+        cleared = clear_stale_git_locks(_m().PROJECT_ROOT)
+        if cleared:
+            print("  (removed stale git lock(s): %s)" % ", ".join(cleared))
+
         print("→ Fetching updates...")
         fetch_result = subprocess.run(
             git_cmd + ["fetch", "origin", branch],
@@ -5328,8 +5348,21 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 f"  ℹ Updating config format (v{current_ver} → v{latest_ver})…"
             )
             try:
-                _run_migrate_config_fresh(interactive=False, quiet=True)
+                _mig_results = _run_migrate_config_fresh(
+                    interactive=False, quiet=True
+                )
                 print("  ✓ Config format updated (no new settings to configure)")
+                # quiet=True also mutes migration steps that RESET or REMOVE an
+                # existing setting (e.g. the v33→v34 personality reset from
+                # #81946, which records its note only in the results dict).
+                # Re-surface those notes so an unattended update never silently
+                # changes user configuration (#86656). In this branch
+                # missing_config is empty, so config_added can only contain
+                # migration-step mutations, not missing-key listings.
+                for _note in _mig_results.get("config_added") or []:
+                    print(f"  ℹ {_note}")
+                for _warn in _mig_results.get("warnings") or []:
+                    print(f"  ⚠️  {_warn}")
             except Exception as _mig_err:
                 print(f"  ⚠️  Config format update failed: {_mig_err}")
                 print("     Run 'nastech config migrate' to retry.")

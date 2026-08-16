@@ -17,6 +17,7 @@ import { codiconIcon } from '@/components/ui/codicon'
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { KbdCombo } from '@/components/ui/kbd'
+import { getNastechConfigRecord, listAllProfileSessions } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
 import {
@@ -40,6 +41,7 @@ import {
   MessageCircle,
   Monitor,
   Moon,
+  Network,
   Package,
   Palette,
   PawPrint,
@@ -57,7 +59,6 @@ import {
 import { normalize } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { resolveVersionStatus } from '@/lib/version-status'
-import { getNastechConfigRecord, listAllProfileSessions } from '@/nastech'
 import { $repoWorktrees } from '@/store/coding-status'
 import {
   $commandPaletteOpen,
@@ -385,6 +386,7 @@ const toSessionEntry = (session: SessionRow): SessionEntry => ({
 type NonConfigSettingsLabel =
   | 'about'
   | 'archivedChats'
+  | 'connections'
   | 'gateway'
   | 'keysSettings'
   | 'keysTools'
@@ -412,6 +414,12 @@ const NON_CONFIG_SETTINGS: ReadonlyArray<{
     tab: 'providers&pview=keys'
   },
   { icon: Globe, keywords: ['connection', 'messaging'], labelKey: 'gateway', tab: 'gateway' },
+  {
+    icon: Network,
+    keywords: ['connections', 'gateway', 'remote', 'multi', 'instances', 'ssh', 'cloud', 'add gateway', 'registry'],
+    labelKey: 'connections',
+    tab: 'connections'
+  },
   {
     icon: KeyRound,
     keywords: ['api', 'secrets', 'tokens', 'credentials', 'browser', 'search'],
