@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { queryClient, writeCache } from '@/lib/query-client'
 import { getNastechConfigRecord } from '@/nastech'
+import { queryClient, writeCache } from '@/lib/query-client'
 import { normalizeProfileKey } from '@/store/profile'
 import type { NastechConfigRecord } from '@/types/nastech'
 

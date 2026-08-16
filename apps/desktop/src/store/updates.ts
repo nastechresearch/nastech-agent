@@ -8,14 +8,15 @@ import { atom } from 'nanostores'
 import type {
   DesktopUpdateApplyOptions,
   DesktopUpdateApplyResult,
+  DesktopUpdateBlocker,
   DesktopUpdateProgress,
   DesktopUpdateStage,
   DesktopUpdateStatus,
   DesktopVersionInfo
 } from '@/global'
+import { checkNastechUpdate, getActionStatus, updateNastech } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { persistString, storedString } from '@/lib/storage'
-import { checkNastechUpdate, getActionStatus, updateNastech } from '@/nastech'
 import { dismissNotification, notify } from '@/store/notifications'
 import { $connection } from '@/store/session'
 import type { BackendUpdateCheckResponse } from '@/types/nastech'
@@ -29,6 +30,8 @@ export interface UpdateApplyState {
   /** When the stage is 'manual': the exact command the user should run
    *  (CLI install with no staged updater). */
   command: string | null
+  /** Structured update blockers used by the safe close-and-update confirmation. */
+  blockers?: readonly DesktopUpdateBlocker[] | null
   log: readonly { stage: DesktopUpdateStage; message: string; at: number }[]
 }
 
@@ -480,7 +483,8 @@ export async function applyUpdates(opts: DesktopUpdateApplyOptions = {}): Promis
           applying: false,
           stage: 'error',
           error: result?.error ?? 'apply-failed',
-          message: result?.message ?? translateNow('updates.errorBody')
+          message: result?.message ?? translateNow('updates.errorBody'),
+          blockers: result?.blockers ?? null
         })
       }
     }

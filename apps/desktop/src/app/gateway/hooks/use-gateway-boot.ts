@@ -2,10 +2,10 @@ import { isGatewayReauthRequired, resolveGatewayWsUrl } from '@nastech/shared'
 import { useEffect, useRef } from 'react'
 
 import type { NastechConnection } from '@/global'
+import { NastechGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd } from '@/lib/desktop-fs'
 import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
-import { NastechGateway } from '@/nastech'
 import {
   $desktopBoot,
   applyDesktopBootProgress,
@@ -17,6 +17,7 @@ import {
   $gateway,
   closeSecondaryGateways,
   configureGatewayRegistry,
+  disposeSecondariesForConnection,
   ensureGatewayForProfile,
   pruneSecondaryGateways,
   reconnectSecondaryGateways,
@@ -434,6 +435,18 @@ export function useGatewayBoot({
     const offPowerResume = desktop.onPowerResume?.(() => reconnectNow())
     const offConnectionApplied = desktop.onConnectionApplied?.(() => void softSwitch())
 
+    // Registry lifecycle: a removed connection's secondaries must close NOW
+    // (remote/cloud have no local process whose death would drop the socket —
+    // they'd keep streaming ghost events); a materially edited one is
+    // disposed AND re-dialed so its sockets target the new endpoint.
+    const offConnectionsChanged = desktop.connections?.onChanged?.(payload => {
+      if (!payload || typeof payload.connectionId !== 'string') {
+        return
+      }
+
+      disposeSecondariesForConnection(payload.connectionId, { redial: payload.reason === 'updated' })
+    })
+
     const onOnline = () => reconnectNow()
 
     const onVisible = () => {
@@ -636,6 +649,7 @@ export function useGatewayBoot({
       document.removeEventListener('visibilitychange', onVisible)
       offPowerResume?.()
       offConnectionApplied?.()
+      offConnectionsChanged?.()
       offState()
       offEvent()
       offExit()
