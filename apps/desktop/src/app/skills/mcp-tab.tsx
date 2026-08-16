@@ -15,20 +15,6 @@ import { Switch } from '@/components/ui/switch'
 import { TextTab } from '@/components/ui/text-tab'
 import { Textarea } from '@/components/ui/textarea'
 import { Tip } from '@/components/ui/tooltip'
-import {
-  authMcpServer,
-  getActionStatus,
-  getLogs,
-  getMcpCatalog,
-  getMcpOAuthFlow,
-  getUsageAnalytics,
-  type NastechGateway,
-  installMcpCatalogEntry,
-  type McpCatalogEntry,
-  type McpTestResult,
-  saveMcpServers,
-  testMcpServer
-} from '@/nastech'
 import { type Translations, useI18n } from '@/i18n'
 import { compactNumber } from '@/lib/format'
 import { brandFor, brandGlyphStyle } from '@/lib/mcp-brands'
@@ -38,6 +24,20 @@ import { type McpImportEntry, parseMcpImport } from '@/lib/mcp-import'
 import { NEEDS_AUTH_RE, PROBE_TTL_MS, probeCache, probeKey, serverFingerprint } from '@/lib/mcp-probe-cache'
 import { countEnabledTools, isToolEnabled, toggleToolInServer } from '@/lib/mcp-tool-filter'
 import { cn } from '@/lib/utils'
+import {
+  authMcpServer,
+  getActionStatus,
+  getLogs,
+  getMcpCatalog,
+  getMcpOAuthFlow,
+  getUsageAnalytics,
+  installMcpCatalogEntry,
+  type McpCatalogEntry,
+  type McpTestResult,
+  type NastechGateway,
+  saveMcpServers,
+  testMcpServer
+} from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $activeSessionId } from '@/store/session'
@@ -1453,13 +1453,7 @@ function ServerIconActions({
 // README shape — mcp.json snippet, npx/docker command line, `claude mcp add`,
 // a bare URL, or a Cursor deeplink — see the inferred name + config, then
 // merge it into the editor draft (unsaved, like the "+" starter entry).
-function McpImportButton({
-  disabled,
-  onImport
-}: {
-  disabled: boolean
-  onImport: (entries: McpImportEntry[]) => void
-}) {
+function McpImportButton({ disabled, onImport }: { disabled: boolean; onImport: (entries: McpImportEntry[]) => void }) {
   const { t } = useI18n()
   const m = t.settings.mcp
   const [open, setOpen] = useState(false)

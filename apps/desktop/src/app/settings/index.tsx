@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router'
 
 import { codiconIcon } from '@/components/ui/codicon'
 import { Tip } from '@/components/ui/tooltip'
-import { getNastechConfigDefaults, getNastechConfigRecord, saveNastechConfig } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import {
@@ -23,6 +22,7 @@ import {
   Wrench,
   Zap
 } from '@/lib/icons'
+import { getNastechConfigDefaults, getNastechConfigRecord, saveNastechConfig } from '@/nastech'
 import { notifyError } from '@/store/notifications'
 
 import { useRouteEnumParam } from '../hooks/use-route-enum-param'

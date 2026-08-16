@@ -528,7 +528,14 @@ test('upsertConnection replaces by id and appends new ids', () => {
 // --- connectionDialFieldsChanged (edit → recycle decision) ---
 
 test('connectionDialFieldsChanged: label-only edits do not recycle', () => {
-  const before = { id: 'homelab', kind: 'remote', label: 'Homelab', url: 'http://10.0.0.5:9119', authMode: 'token', token: { encoding: 'safeStorage', value: 'abc' } } as const
+  const before = {
+    id: 'homelab',
+    kind: 'remote',
+    label: 'Homelab',
+    url: 'http://10.0.0.5:9119',
+    authMode: 'token',
+    token: { encoding: 'safeStorage', value: 'abc' }
+  } as const
 
   assert.equal(connectionDialFieldsChanged(before, { ...before, label: 'Home lab (renamed)' }), false)
   // Identity edit is also a no-op.
@@ -536,11 +543,21 @@ test('connectionDialFieldsChanged: label-only edits do not recycle', () => {
 })
 
 test('connectionDialFieldsChanged: url / auth / token changes recycle', () => {
-  const before = { id: 'homelab', kind: 'remote', label: 'Homelab', url: 'http://10.0.0.5:9119', authMode: 'token', token: { encoding: 'safeStorage', value: 'abc' } } as const
+  const before = {
+    id: 'homelab',
+    kind: 'remote',
+    label: 'Homelab',
+    url: 'http://10.0.0.5:9119',
+    authMode: 'token',
+    token: { encoding: 'safeStorage', value: 'abc' }
+  } as const
 
   assert.equal(connectionDialFieldsChanged(before, { ...before, url: 'http://10.0.0.9:9119' }), true)
   assert.equal(connectionDialFieldsChanged(before, { ...before, authMode: 'oauth', token: undefined }), true)
-  assert.equal(connectionDialFieldsChanged(before, { ...before, token: { encoding: 'safeStorage', value: 'NEW' } }), true)
+  assert.equal(
+    connectionDialFieldsChanged(before, { ...before, token: { encoding: 'safeStorage', value: 'NEW' } }),
+    true
+  )
 })
 
 test('connectionDialFieldsChanged: ssh routing fields recycle, kind change recycles', () => {
@@ -550,5 +567,8 @@ test('connectionDialFieldsChanged: ssh routing fields recycle, kind change recyc
   assert.equal(connectionDialFieldsChanged(before, { ...before, host: 'other.lan' }), true)
   assert.equal(connectionDialFieldsChanged(before, { ...before, port: 2222 }), true)
   assert.equal(connectionDialFieldsChanged(before, { ...before, remoteProfile: 'work' }), true)
-  assert.equal(connectionDialFieldsChanged(before, { id: 'box', kind: 'remote', label: 'Box', url: 'http://x:1' }), true)
+  assert.equal(
+    connectionDialFieldsChanged(before, { id: 'box', kind: 'remote', label: 'Box', url: 'http://x:1' }),
+    true
+  )
 })

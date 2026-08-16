@@ -1,5 +1,5 @@
-import { isGatewayReauthRequired, resolveGatewayWsUrl } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { isGatewayReauthRequired, resolveGatewayWsUrl } from '@nastech/shared'
 import { useCallback, useEffect, useRef } from 'react'
 
 import type { NastechGateway } from '@/nastech'

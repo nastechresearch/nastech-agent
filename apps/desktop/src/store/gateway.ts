@@ -1,8 +1,8 @@
 import { backendScopeKey, type ConnectionState, type GatewayEvent, resolveGatewayWsUrl } from '@nastech/shared'
 import { atom } from 'nanostores'
 
-import { NastechGateway } from '@/nastech'
 import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
+import { NastechGateway } from '@/nastech'
 import { markNativeNotifyBaseline } from '@/store/notify-baseline'
 import { setConnection, setGatewayState } from '@/store/session'
 
