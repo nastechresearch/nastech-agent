@@ -12,10 +12,10 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldHint } from '@/components/ui/field'
 import { SanitizedInput } from '@/components/ui/sanitized-input'
-import { renameProfile } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { AlertTriangle } from '@/lib/icons'
 import { slug } from '@/lib/sanitize'
+import { renameProfile } from '@/nastech'
 
 import { isValidProfileName } from './create-profile-dialog'
 
