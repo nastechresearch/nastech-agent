@@ -93,8 +93,14 @@ test('remoteRequestMatchesBaseUrl treats HTTPS and WSS as the same gateway origi
     true
   )
   assert.equal(remoteRequestMatchesBaseUrl('ws://nastech.example.com/api/ws', 'http://nastech.example.com'), true)
-  assert.equal(remoteRequestMatchesBaseUrl('wss://nastech.example.com/other/api/ws', 'https://nastech.example.com/gateway'), false)
-  assert.equal(remoteRequestMatchesBaseUrl('wss://other.example.com/gateway/api/ws', 'https://nastech.example.com/gateway'), false)
+  assert.equal(
+    remoteRequestMatchesBaseUrl('wss://nastech.example.com/other/api/ws', 'https://nastech.example.com/gateway'),
+    false
+  )
+  assert.equal(
+    remoteRequestMatchesBaseUrl('wss://other.example.com/gateway/api/ws', 'https://nastech.example.com/gateway'),
+    false
+  )
 })
 
 // --- modeIsRemoteLike ---
@@ -635,11 +641,19 @@ test('cookiesHaveSession handles non-arrays', () => {
 })
 
 test('AT_COOKIE_VARIANTS covers all three deploy shapes', () => {
-  assert.deepEqual(AT_COOKIE_VARIANTS, ['__Host-nastech_session_at', '__Secure-nastech_session_at', 'nastech_session_at'])
+  assert.deepEqual(AT_COOKIE_VARIANTS, [
+    '__Host-nastech_session_at',
+    '__Secure-nastech_session_at',
+    'nastech_session_at'
+  ])
 })
 
 test('RT_COOKIE_VARIANTS covers all three deploy shapes', () => {
-  assert.deepEqual(RT_COOKIE_VARIANTS, ['__Host-nastech_session_rt', '__Secure-nastech_session_rt', 'nastech_session_rt'])
+  assert.deepEqual(RT_COOKIE_VARIANTS, [
+    '__Host-nastech_session_rt',
+    '__Secure-nastech_session_rt',
+    'nastech_session_rt'
+  ])
 })
 
 // --- cookiesHaveLiveSession (AT or RT — the connectivity check) ---

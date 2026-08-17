@@ -25,8 +25,6 @@ import type {
   DebugShareResponse,
   ElevenLabsVoicesResponse,
   EnvVarInfo,
-  NastechConfig,
-  NastechConfigRecord,
   LogsResponse,
   McpCatalogResponse,
   McpServerSummary,
@@ -41,6 +39,8 @@ import type {
   ModelAssignmentResponse,
   ModelInfoResponse,
   ModelOptionsResponse,
+  NastechConfig,
+  NastechConfigRecord,
   OAuthPollResponse,
   OAuthProvidersResponse,
   OAuthStartResponse,
@@ -168,8 +168,6 @@ export type {
   ElevenLabsVoicesResponse,
   EnvVarInfo,
   GatewayReadyPayload,
-  NastechConfig,
-  NastechConfigRecord,
   LogsResponse,
   McpCatalogEntry,
   McpCatalogResponse,
@@ -191,6 +189,8 @@ export type {
   ModelInfoResponse,
   ModelOptionProvider,
   ModelOptionsResponse,
+  NastechConfig,
+  NastechConfigRecord,
   PaginatedSessions,
   PairingResponse,
   PairingUser,
@@ -2074,13 +2074,15 @@ export function installMcpCatalogEntry(
   env: Record<string, string> = {},
   profile?: null | string
 ): Promise<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }> {
-  return window.nastechDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>({
-    ...profileScoped(profile),
-    path: '/api/mcp/catalog/install',
-    method: 'POST',
-    body: { name, env, enable: true },
-    timeoutMs: 60_000
-  })
+  return window.nastechDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>(
+    {
+      ...profileScoped(profile),
+      path: '/api/mcp/catalog/install',
+      method: 'POST',
+      body: { name, env, enable: true },
+      timeoutMs: 60_000
+    }
+  )
 }
 
 // ---------------------------------------------------------------------------
