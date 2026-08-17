@@ -26,14 +26,22 @@ import type { ClientSessionState } from '@/app/types'
 import { $narrowViewport } from '@/components/pane-shell/tree/store'
 import { onGatewayEvent } from '@/contrib/events'
 import { deleteProfile, getLogs, getStatus, type NastechGateway } from '@/nastech'
-import { $gateway, openGatewayForAgent, openGatewayForProfile } from '@/store/gateway'
+import {
+  $gateway,
+  openGatewayForAgent,
+  openGatewayForProfile,
+  requestGatewayForAgent,
+  requestGatewayForProfile
+} from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
 import {
   $activeGatewayProfile,
+  $profiles,
   ensureGatewayAgent,
   ensureGatewayProfile,
   newSessionInProfile,
   normalizeProfileKey,
+  refreshProfiles,
   selectProfile,
   setActiveProfile,
   setShowAllProfiles
@@ -76,6 +84,15 @@ const $focusedAwaitingResponse = focusedTurnFlag(
   PRIMARY_SESSION_VIEW.$awaitingResponse
 )
 
+export interface PluginProfileRoute {
+  connectionId: string
+  mode: 'local' | 'remote'
+  /** Desktop profile used to select the connection route. */
+  profile: string
+  /** Backend Nastech profile served by that route. */
+  targetProfile: string
+}
+
 /** Window geometry + the app's responsive posture, one readonly rect. */
 export interface ViewportRect {
   width: number
@@ -102,6 +119,38 @@ const $busyBySession = computed($sessionStates, states => {
 })
 
 const $viewport = atom<ViewportRect>(readViewport())
+
+async function requestPluginProfile<T>(
+  route: PluginProfileRoute | string,
+  method: string,
+  params: Record<string, unknown>
+): Promise<T> {
+  if (typeof route !== 'string') {
+    return requestGatewayForAgent<T>(route.connectionId, route.profile, method, params)
+  }
+
+  const getAgentRoster = window.nastechDesktop?.getAgentRoster
+
+  if (!getAgentRoster) {
+    return requestGatewayForProfile<T>(route, method, params)
+  }
+
+  const roster = await getAgentRoster()
+  const profile = route.trim() || 'default'
+  const soleLocalSource = roster.sources.length === 1 && roster.sources[0]?.kind === 'local'
+
+  // The string overload is compatibility-only. A sole local registry is the
+  // one topology where a profile name is intrinsically unambiguous, even when
+  // its live enumeration transiently failed. Any additional source requires a
+  // descriptor because an undialed/unreachable source may expose the same name.
+  if (soleLocalSource) {
+    return requestGatewayForProfile<T>(profile, method, params)
+  }
+
+  throw new Error(
+    `Profile "${profile}" requires a route descriptor from host.profileRoutes(); profile-only routing is limited to legacy/local profiles.`
+  )
+}
 
 if (typeof window !== 'undefined') {
   const refresh = () => $viewport.set(readViewport())
@@ -319,6 +368,38 @@ export const host = {
   /** One-shot system status snapshot (platforms, versions, …). */
   status: async () => getStatus(),
 
+  /** Credential-free routes across every current registry source. Identity is
+   *  the (connectionId, profile) pair; endpoint/auth details stay in Electron. */
+  profileRoutes: async () => {
+    const desktop = window.nastechDesktop
+    const getProfileRoutes = desktop?.getProfileRoutes
+
+    if (!getProfileRoutes) {
+      throw new Error('Nastech Desktop connection routing unavailable')
+    }
+
+    let profiles = $profiles.get()
+
+    try {
+      profiles = await refreshProfiles()
+    } catch {
+      // Route inventory is a read: a transient backend failure falls back to
+      // the last cache. Electron always adds the primary Desktop profile.
+    }
+
+    return getProfileRoutes(profiles.map(profile => profile.name))
+  },
+
+  /** Gateway JSON-RPC through a credential-free route descriptor without
+   *  foregrounding it. Passing a bare profile is the v1/local compatibility
+   *  overload; registry callers must pass the descriptor so duplicate names
+   *  remain unambiguous. */
+  requestProfile: async <T>(
+    route: PluginProfileRoute | string,
+    method: string,
+    params: Record<string, unknown> = {}
+  ): Promise<T> => requestPluginProfile<T>(route, method, params),
+
   /** Gateway JSON-RPC — sessions, config, skills, cron, kanban, everything
    *  the app itself uses. Lazy: resolves the LIVE socket per call. */
   request: async <T>(method: string, params: Record<string, unknown> = {}): Promise<T> => {
@@ -460,6 +541,9 @@ export type {
  *  id with your plugin slug (`kanban:board-switcher`). */
 export { Contribute, type ContributeProps } from '@/contrib/react/contribute'
 export type { Contribution } from '@/contrib/types'
+/** The live gateway instance type — for typing the `gateway` prop `McpTab`
+ *  takes; obtain the instance from `host.getGateway()`. */
+export type { NastechGateway } from '@/nastech'
 /** Grab-to-pan for overflow containers (boards, timelines, wide tables) —
  *  the shared scrub primitive; don't hand-roll drag-to-scroll. */
 export { type GrabScroll, useGrabScroll } from '@/hooks/use-grab-scroll'
@@ -492,6 +576,8 @@ export { profileColor, profileColorSoft } from '@/lib/profile-color'
  *  `ctx.socket` frame invalidating a query). Inside components keep using
  *  `useQueryClient`. */
 export { queryClient } from '@/lib/query-client'
+
+export const PANES_AREA = 'panes'
 /** Nastech' reasoning levels + their compact labels, so a plugin surfacing a
  *  thinking depth uses the same scale and spelling as the rest of the app. */
 export {
@@ -501,20 +587,15 @@ export {
   type ReasoningEffort,
   reasoningEffortLabel
 } from '@/lib/reasoning-effort'
+export const STATUSBAR_AREAS = { left: 'statusBar.left', right: 'statusBar.right' } as const
+export const TITLEBAR_AREAS = { center: 'titleBar.center', left: 'titleBar.left', right: 'titleBar.right' } as const
 
-export const PANES_AREA = 'panes'
 /** The app's own gateway-readiness evaluation (setup.status +
  *  setup.runtime_check, reconciled) — pass `host.request`. Don't hand-roll
  *  readiness from raw RPC shapes. */
 export { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
-export const STATUSBAR_AREAS = { left: 'statusBar.left', right: 'statusBar.right' } as const
-export const TITLEBAR_AREAS = { center: 'titleBar.center', left: 'titleBar.left', right: 'titleBar.right' } as const
-
 export { coarseElapsed, fmtDateTime, fmtDayTime, relativeTime } from '@/lib/time'
 export { cn } from '@/lib/utils'
-/** The live gateway instance type — for typing the `gateway` prop `McpTab`
- *  takes; obtain the instance from `host.getGateway()`. */
-export type { NastechGateway } from '@/nastech'
 export { THEMES_AREA } from '@/themes/user-themes'
 export type { RpcEvent, StatusResponse } from '@/types/nastech'
 /** Subscribe a component to a `host.state` atom. */

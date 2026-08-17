@@ -4757,6 +4757,7 @@ _LAZY_COMMAND_EXPORTS = {
         "_resume_windows_gateways_after_update",
         "_run_logged_subprocess",
         "_run_pre_update_backup",
+        "_service_unit_supports_graceful_sigusr1_restart",
         "_should_skip_upstream_prompt",
         "_stash_apply_failed_only_on_existing_untracked",
         "_stash_local_changes_if_needed",
@@ -12585,7 +12586,7 @@ def main():
     build_tools_parser(subparsers, cmd_tools=cmd_tools)
 
     # =========================================================================
-    # computer-use command — manage Computer Use (cua-driver) on macOS
+    # computer-use command — manage Computer Use (cua-driver)
     # =========================================================================
     computer_use_parser = subparsers.add_parser(
         "computer-use",
@@ -12688,47 +12689,20 @@ def main():
         "grant",
         help="Request the grants (opens the dialog attributed to CuaDriver)",
     )
-    computer_use_browser_approve = computer_use_sub.add_parser(
-        "browser-approve",
-        help="Mint a single-use token authorizing browser attachment for one exact window",
-        description=(
-            "Runs `cua-driver browser-approve` to mint a five-minute,\n"
-            "single-use token that authorizes ONE browser preparation for the\n"
-            "exact process (and window) you name. Give the printed token to\n"
-            "the agent; it passes it as approval_token on the\n"
-            "cua_browser_prepare action.\n\n"
-            "This is the explicit human boundary for attaching to a browser —\n"
-            "especially an existing signed-in profile, where the DevTools\n"
-            "protocol can see that profile's live pages, cookies, and storage.\n"
-            "Ordinary tool approval never substitutes for this grant, so a\n"
-            "model can never mint or guess the token itself.\n\n"
-            "Find the pid/window_id via the agent (list_windows) or ask it to\n"
-            "read them from a native capture."
-        ),
-    )
-    computer_use_browser_approve.add_argument(
-        "--pid", type=int, required=True,
-        help="Exact browser process id to authorize",
-    )
-    computer_use_browser_approve.add_argument(
-        "--window-id", type=int, default=None,
-        help="Exact native window id (required for existing-profile attachment)",
-    )
-    computer_use_browser_approve.add_argument(
-        "--profile-mode",
-        choices=["isolated_new", "isolated_named", "existing_profile"],
-        default="isolated_new",
-        help="Preparation the token authorizes (default: isolated_new)",
-    )
-
     def cmd_computer_use(args):
         action = getattr(args, "computer_use_action", None)
         if action == "install":
-            from nastech_cli.tools_config import install_cua_driver
-            install_cua_driver(upgrade=bool(getattr(args, "upgrade", False)))
-            return
+            from nastech_cli.tools_config import (
+                _cua_driver_contract_status,
+                install_cua_driver,
+            )
+            if not install_cua_driver(upgrade=bool(getattr(args, "upgrade", False))):
+                return 1
+            return 0 if _cua_driver_contract_status().get("ready") else 1
         if action == "status":
+            import os as _os
             import subprocess
+            from nastech_cli.tools_config import _cua_driver_contract_status
             from tools.computer_use.cua_backend import (
                 cua_driver_update_check,
                 resolve_cua_driver_cmd,
@@ -12736,6 +12710,7 @@ def main():
             # Must match the runtime resolver: Desktop/TUI processes can omit
             # ~/.local/bin even though the official installer put the driver there.
             path = resolve_cua_driver_cmd()
+            override = _os.environ.get("NASTECH_CUA_DRIVER_CMD", "").strip()
             if path:
                 version = ""
                 try:
@@ -12747,10 +12722,31 @@ def main():
                     ).stdout.strip()
                 except Exception:
                     pass
+                from nastech_cli.tools_config import _cua_version_summary
+                version = _cua_version_summary(version)
+                # Name the override here too. Without it the operator is told
+                # to repair an install that `nastech computer-use install` will
+                # (correctly) refuse to touch, with nothing pointing at the
+                # env var that actually selected the binary.
+                origin = " [custom binary from NASTECH_CUA_DRIVER_CMD]" if override else ""
                 if version:
-                    print(f"cua-driver: installed at {path} ({version})")
+                    print(f"cua-driver: installed at {path}{origin} ({version})")
                 else:
-                    print(f"cua-driver: installed at {path}")
+                    print(f"cua-driver: installed at {path}{origin}")
+                contract = _cua_driver_contract_status(path)
+                if not contract.get("ready"):
+                    print(
+                        "  ⚠ Repair required: "
+                        + (contract.get("reason") or "runtime contract is incomplete")
+                    )
+                    if override:
+                        print(
+                            "    Update the binary selected by NASTECH_CUA_DRIVER_CMD, or unset "
+                            "the override and run: nastech computer-use install --upgrade"
+                        )
+                    else:
+                        print("    Run: nastech computer-use install")
+                    return 1
                 try:
                     st = cua_driver_update_check()
                     if st and st.get("update_available"):
@@ -12764,10 +12760,10 @@ def main():
                         print("  Refresh to latest: nastech computer-use install --upgrade")
                 except Exception:
                     print("  Refresh to latest: nastech computer-use install --upgrade")
-                return
+                return 0
             print("cua-driver: not installed")
             print("  Run: nastech computer-use install")
-            return
+            return 1
         if action == "doctor":
             from tools.computer_use.doctor import run_doctor
             code = run_doctor(
@@ -12776,36 +12772,6 @@ def main():
                 json_output=bool(getattr(args, "json", False)),
             )
             sys.exit(code)
-        if action == "browser-approve":
-            import subprocess
-            from tools.computer_use.cua_backend import (
-                cua_driver_child_env,
-                cua_driver_install_hint,
-                resolve_cua_driver_cmd,
-            )
-            binary = resolve_cua_driver_cmd()
-            if not binary:
-                print(cua_driver_install_hint())
-                sys.exit(2)
-            cmd = [binary, "browser-approve", "--pid", str(args.pid)]
-            window_id = getattr(args, "window_id", None)
-            if window_id is not None:
-                cmd += ["--window-id", str(window_id)]
-            cmd += ["--profile-mode", getattr(args, "profile_mode", "isolated_new")]
-            try:
-                # Interactive passthrough: cua-driver requires a TTY to mint
-                # the grant, prints the token itself, and owns the expiry.
-                proc = subprocess.run(cmd, env=cua_driver_child_env())
-            except OSError as exc:
-                print(f"cua-driver browser-approve failed to launch: {exc}", file=sys.stderr)
-                sys.exit(2)
-            if proc.returncode == 0:
-                print(
-                    "\nGive the token above to the agent — it passes it as "
-                    "approval_token on cua_browser_prepare. Single use, "
-                    "expires in ~5 minutes."
-                )
-            sys.exit(proc.returncode)
         if action == "permissions":
             perms_action = getattr(args, "computer_use_perms_action", None)
             if perms_action == "grant":

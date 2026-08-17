@@ -45,7 +45,7 @@ import {
   verifyNastechCli
 } from './backend-probes'
 import { waitForDashboardPortAnnouncement } from './backend-ready'
-import { shouldLatchBackendStartFailure, shouldLatchRemoteReauthFailure } from './backend-start-failure'
+import { isRetryableRemoteBootFailure, shouldLatchBackendStartFailure, shouldLatchRemoteReauthFailure } from './backend-start-failure'
 import {
   detectRemoteDisplay,
   isWindowsBinaryPathInWsl,
@@ -56,6 +56,7 @@ import { decideBootstrapRepair } from './bootstrap-repair-guard'
 import { runBootstrap } from './bootstrap-runner'
 import { applyConnectionChange, resolveTerminalConnection } from './connection-apply'
 import {
+  apiRequestRegistryConnectionId,
   authModeFromStatus,
   buildGatewayWsUrl,
   buildGatewayWsUrlWithTicket,
@@ -70,17 +71,21 @@ import {
   localProfileEntry,
   modeIsRemoteLike,
   normalizeRemoteBaseUrl,
+  normalizeRemoteHeaders,
   normalizeSshConfig,
   normAuthMode,
   pathWithGlobalRemoteProfile,
+  pathWithProfileScope,
   profileHasRemoteConnection,
   profileRemoteOverride,
   profileSshOverride,
+  remoteRequestMatchesBaseUrl,
   resolveAuthMode,
   resolveProfileBackendRoute,
   resolveTestWsUrl,
   savedProfileSsh,
-  tokenPreview
+  tokenPreview,
+  translateSelfProfileQuery
 } from './connection-config'
 import {
   backendScopeKey,
@@ -92,6 +97,7 @@ import {
   normalizeConnectionInput,
   normalizeRegistry,
   removeConnection,
+  resolveRegistryLocalRoute,
   setPrimaryConnection,
   updateEligibility,
   upsertConnection
@@ -213,7 +219,14 @@ import {
   electronProcessStartMarker,
   parentWatchdogEnv
 } from './parent-process-identity'
+import {
+  buildRegistryProfileRoutes,
+  localRouteFallbackProfiles,
+  registryGatewayWsUrl,
+  undialedSshRouteSeeds
+} from './plugin-profile-routes'
 import { selectPoolEvictions } from './pool-eviction'
+import { poolTouchKeys } from './pool-touch-scope'
 import { createKeepAwake } from './power-save'
 import { FirstRunSetupResetError, runPrimaryBackendStartup } from './primary-backend-startup'
 import { rehomePrimaryConnection } from './primary-connection-rehome'
@@ -1221,6 +1234,8 @@ let connectionConfigCache = null
 let connectionConfigCacheMtime = null
 let connectionRegistryCache = null
 let connectionRegistryCacheMtime = null
+let remoteHeaderRulesInstalled = false
+const remoteWsHeadersByUrl = new Map<string, Record<string, string>>()
 const nastechLog = []
 const previewWatchers = new Map()
 let previewShortcutActive = false
@@ -1235,6 +1250,7 @@ let bootProgressState = {
   message: 'Waiting to start Nastech backend',
   phase: 'idle',
   progress: 0,
+  retryable: false,
   running: false,
   timestamp: Date.now()
 }
@@ -1801,6 +1817,12 @@ function updateBootProgress(update, options: { allowDecrease?: boolean } = {}) {
     error: update.error === undefined ? bootProgressState.error : update.error,
     fakeMode: BOOT_FAKE_MODE || Boolean(update.fakeMode),
     progress: nextProgress,
+    // `retryable` rides with `error`: it survives updates that preserve the
+    // error and resets alongside a new/cleared error unless explicitly set.
+    retryable:
+      update.retryable === undefined
+        ? update.error === undefined && Boolean(bootProgressState.retryable)
+        : Boolean(update.retryable),
     timestamp: Date.now()
   }
 
@@ -3671,9 +3693,7 @@ async function handOffWindowsBootstrapRecovery(reason) {
   // --repair (full venv recreate) and drove reinstall loops. The venv interpreter
   // and the bootstrap-complete marker are present earlier and are better signals.
   const haveRealInstall =
-    fileExists(venvPython) ||
-    fileExists(venvNastech) ||
-    fileExists(path.join(updateRoot, '.nastech-bootstrap-complete'))
+    fileExists(venvPython) || fileExists(venvNastech) || fileExists(path.join(updateRoot, '.nastech-bootstrap-complete'))
 
   const updaterArgs = chooseUpdaterArgs(haveRealInstall, branch)
 
@@ -4279,8 +4299,7 @@ function createActiveBackend(backendArgs) {
 function resolveNastechBackend(backendArgs) {
   // 1. Explicit override -- NASTECH_DESKTOP_NASTECH_ROOT points at a developer
   //    checkout. Honour it as-is (no bootstrap; the user is driving).
-  const overrideRoot =
-    process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
+  const overrideRoot = process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
 
   if (overrideRoot && isNastechSourceRoot(overrideRoot)) {
     const backend = createPythonBackend(overrideRoot, `Nastech source at ${overrideRoot}`, backendArgs)
@@ -4667,6 +4686,8 @@ function fetchJson(url, token, options: any = {}) {
       {
         method: options.method || 'GET',
         headers: {
+          ...headersForRemoteRequest(url),
+          ...(options.headers || {}),
           'Content-Type': contentType,
           'X-Nastech-Session-Token': token,
           // RFC 8252 native flow authenticates the gated gateway with a bearer
@@ -4827,6 +4848,8 @@ function fetchPublicJson(url, options: any = {}) {
       {
         method: options.method || 'GET',
         headers: {
+          ...headersForRemoteRequest(url),
+          ...(options.headers || {}),
           'Content-Type': 'application/json',
           ...(body ? { 'Content-Length': String(body.length) } : {})
         }
@@ -5516,6 +5539,16 @@ function closePreviewWatchers() {
   }
 }
 
+function requestOptionsWithHeaders(options: any = {}, headers = {}) {
+  return {
+    ...options,
+    headers: {
+      ...headers,
+      ...(options.headers || {})
+    }
+  }
+}
+
 /** Watch a DIRECTORY for entry churn (folders appearing/vanishing) — the
  *  disk-plugin door's "new plugin folder" signal, replacing the renderer's 5s
  *  readdir poll. Same registry + change channel as the preview file watchers
@@ -5562,7 +5595,7 @@ function watchDirectory(rawDir) {
 // strict guard — backends predating /api/auth/providers are unaffected.
 const gatewayAuthProvidersCache = new Map<string, any[]>()
 
-async function gatewayAuthProviders(baseUrl) {
+async function gatewayAuthProviders(baseUrl, headers = {}) {
   const cached = gatewayAuthProvidersCache.get(baseUrl)
 
   if (cached) {
@@ -5572,7 +5605,10 @@ async function gatewayAuthProviders(baseUrl) {
   let providers = []
 
   try {
-    const body = (await fetchPublicJson(`${baseUrl}/api/auth/providers`, { timeoutMs: 8_000 })) as any
+    const body = (await fetchPublicJson(
+      `${baseUrl}/api/auth/providers`,
+      requestOptionsWithHeaders({ timeoutMs: 8_000 }, headers)
+    )) as any
 
     if (Array.isArray(body?.providers)) {
       providers = body.providers
@@ -5580,11 +5616,11 @@ async function gatewayAuthProviders(baseUrl) {
         .map(p => ({ name: String(p.name || ''), supportsPassword: Boolean(p.supports_password) }))
         .filter(p => p.name)
     }
+
+    gatewayAuthProvidersCache.set(baseUrl, providers)
   } catch {
     // Optional metadata — an unreadable list keeps the strict guard.
   }
-
-  gatewayAuthProvidersCache.set(baseUrl, providers)
 
   return providers
 }
@@ -5626,15 +5662,17 @@ async function buildReadinessHealthProbe(baseUrl, authMode, token) {
   return { probeHealth: fetchPublicJson, probeIsCredentialed: false }
 }
 
-async function waitForNastech(baseUrl, token, signal?, authMode?) {
+async function waitForNastech(baseUrl, token, signal?, authMode?, headers = {}) {
   const { probeHealth, probeIsCredentialed } = await buildReadinessHealthProbe(baseUrl, authMode, token)
 
   return waitForNastechReady(baseUrl, {
     token,
     signal,
     fetchPublicJson,
-    fetchJson: probeIsCredentialed ? (url, _token, options) => probeHealth(url, options) : fetchJson,
-    probeHealth,
+    fetchJson: probeIsCredentialed
+      ? (url, _token, options = {}) => probeHealth(url, requestOptionsWithHeaders(options, headers))
+      : fetchJson,
+    probeHealth: (url, options = {}) => probeHealth(url, requestOptionsWithHeaders(options, headers)),
     probeIsCredentialed
   })
 }
@@ -6703,6 +6741,10 @@ function fetchJsonViaOauthSession(url, options: any = {}) {
 
     setJsonRequestHeaders(request)
 
+    for (const [name, value] of Object.entries({ ...headersForRemoteRequest(url), ...(options.headers || {}) })) {
+      request.setHeader(name, String(value))
+    }
+
     let timedOut = false
 
     const timer = setTimeout(() => {
@@ -7071,10 +7113,11 @@ async function saveGatewayFile(payload: any = {}) {
   const fallbackName = path.basename(filePath) || suggested || 'download'
   const ctx = { suggested, fallbackName }
 
-  const requestPath = pathWithGlobalRemoteProfile(`/api/fs/download?path=${encodeURIComponent(filePath)}`, profile, {
-    globalRemote: globalRemoteActive(),
-    profileRemoteOverride: profileHasRemoteOverride(profile)
-  })
+  const requestPath = pathWithGlobalRemoteProfile(
+    `/api/fs/download?path=${encodeURIComponent(filePath)}`,
+    profile,
+    profileRouteOptions(profile)
+  )
 
   const url = `${connection.baseUrl}${requestPath}`
 
@@ -7102,10 +7145,7 @@ async function saveGatewayFileViaDataUrl(connection, profile, filePath, ctx: any
   const requestPath = pathWithGlobalRemoteProfile(
     `/api/fs/read-data-url?path=${encodeURIComponent(filePath)}`,
     profile,
-    {
-      globalRemote: globalRemoteActive(),
-      profileRemoteOverride: profileHasRemoteOverride(profile)
-    }
+    profileRouteOptions(profile)
   )
 
   const url = `${connection.baseUrl}${requestPath}`
@@ -7142,7 +7182,7 @@ async function saveGatewayFileViaDataUrl(connection, profile, filePath, ctx: any
 // falling back to the OAuth cookie partition otherwise.
 // Throws (with statusCode 401) if the session cookie is missing/expired —
 // callers treat that as "needs re-login".
-async function mintGatewayWsTicket(baseUrl) {
+async function mintGatewayWsTicket(baseUrl, headers = {}) {
   // Native flow: mint the ticket with the bearer token, no cookie involved.
   const nativeAt = await ensureNativeAccessToken(baseUrl).catch(() => null)
 
@@ -7150,7 +7190,8 @@ async function mintGatewayWsTicket(baseUrl) {
     const body = (await fetchJson(`${baseUrl}/api/auth/ws-ticket`, null, {
       method: 'POST',
       timeoutMs: 8_000,
-      bearer: nativeAt
+      bearer: nativeAt,
+      headers
     })) as any
 
     const ticket = body?.ticket
@@ -7164,7 +7205,8 @@ async function mintGatewayWsTicket(baseUrl) {
 
   const body = (await fetchJsonViaOauthSession(`${baseUrl}/api/auth/ws-ticket`, {
     method: 'POST',
-    timeoutMs: 8_000
+    timeoutMs: 8_000,
+    headers
   })) as any
 
   const ticket = body?.ticket
@@ -7192,12 +7234,17 @@ async function freshGatewayWsUrl(profile) {
   const connection = await ensureBackend(profile)
 
   if (connection.authMode === 'oauth') {
-    const ticket = await mintGatewayWsTicket(connection.baseUrl)
+    const ticket = await mintGatewayWsTicket(connection.baseUrl, connection.headers)
+    const wsUrl = buildGatewayWsUrlWithTicket(connection.baseUrl, ticket)
 
-    return buildGatewayWsUrlWithTicket(connection.baseUrl, ticket)
+    rememberRemoteWsHeaders(wsUrl, connection.headers)
+
+    return wsUrl
   }
 
   // Local/token: the cached wsUrl already carries the (long-lived) token.
+  rememberRemoteWsHeaders(connection.wsUrl, connection.headers)
+
   return connection.wsUrl
 }
 
@@ -7764,6 +7811,126 @@ function decryptDesktopSecret(secret) {
   return value
 }
 
+function decryptRemoteHeaders(headers) {
+  const normalized = normalizeRemoteHeaders(headers)
+  const out = {}
+
+  for (const [name, secret] of Object.entries(normalized)) {
+    const value = decryptDesktopSecret(secret)
+
+    if (value) {
+      out[name] = value
+    }
+  }
+
+  return out
+}
+
+/**
+ * Turn an editor payload of remote gateway headers into stored secret
+ * envelopes. The payload map is authoritative (a name missing from it is
+ * cleared); per-name values are:
+ *   - non-empty string  → new plaintext value, encrypted like a token
+ *   - null              → keep the currently stored envelope for that name
+ *                         (the editor shows a set-but-hidden secret)
+ *   - envelope object   → stored verbatim (hand-edited import path)
+ * Name filtering (forbidden/managed headers) happens in
+ * normalizeRemoteHeaders at the registry/config layer.
+ */
+function encryptIncomingRemoteHeaders(raw, existing, options: { allowPlainText?: boolean } = {}) {
+  const out = {}
+  const stored = normalizeRemoteHeaders(existing)
+
+  for (const [name, value] of Object.entries(raw || {})) {
+    const key = String(name || '').trim()
+
+    if (!key) {
+      continue
+    }
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+
+      if (trimmed) {
+        out[key] = encryptDesktopSecret(trimmed, { allowPlainText: options.allowPlainText === true })
+      }
+
+      continue
+    }
+
+    if (value === null) {
+      if (stored[key]) {
+        out[key] = stored[key]
+      }
+
+      continue
+    }
+
+    if (value && typeof value === 'object') {
+      out[key] = value
+    }
+  }
+
+  return out
+}
+
+function rememberRemoteWsHeaders(wsUrl, headers = {}) {
+  if (!wsUrl || Object.keys(headers).length === 0) {
+    return
+  }
+
+  remoteWsHeadersByUrl.set(String(wsUrl), headers as Record<string, string>)
+
+  while (remoteWsHeadersByUrl.size > 100) {
+    const oldest = remoteWsHeadersByUrl.keys().next().value
+
+    if (!oldest) {
+      break
+    }
+
+    remoteWsHeadersByUrl.delete(oldest)
+  }
+}
+
+function headersForRemoteRequest(requestUrl) {
+  const exactWsHeaders = remoteWsHeadersByUrl.get(String(requestUrl))
+
+  if (exactWsHeaders && Object.keys(exactWsHeaders).length > 0) {
+    return exactWsHeaders
+  }
+
+  const config = readDesktopConnectionConfig()
+
+  if (modeIsRemoteLike(config.mode) && config.remote?.url) {
+    const headers = decryptRemoteHeaders(config.remote.headers)
+
+    if (Object.keys(headers).length > 0 && remoteRequestMatchesBaseUrl(requestUrl, config.remote.url)) {
+      return headers
+    }
+  }
+
+  return {}
+}
+
+function installRemoteHeaderRules() {
+  if (remoteHeaderRulesInstalled) {
+    return
+  }
+
+  remoteHeaderRulesInstalled = true
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    const headers = headersForRemoteRequest(details.url)
+
+    if (Object.keys(headers).length === 0) {
+      callback({})
+
+      return
+    }
+
+    callback({ requestHeaders: { ...details.requestHeaders, ...headers } })
+  })
+}
+
 // Validate + normalize the per-profile remote overrides map read from disk.
 // Drops malformed names/entries and keeps only the recognized fields so a
 // hand-edited or stale connection.json can't inject junk into resolution.
@@ -7802,6 +7969,7 @@ function sanitizeConnectionProfiles(raw: Record<string, any>) {
       url?: string
       authMode?: string
       token?: object
+      headers?: object
       org?: string
       savedSsh?: object
     } = {
@@ -7826,6 +7994,12 @@ function sanitizeConnectionProfiles(raw: Record<string, any>) {
 
     if ((entry as any).token && typeof entry.token === 'object') {
       cleaned.token = entry.token
+    }
+
+    const headers = normalizeRemoteHeaders((entry as any).headers)
+
+    if (Object.keys(headers).length > 0) {
+      cleaned.headers = headers
     }
 
     // Preserve the Nastech Cloud org tag on cloud-mode entries so Settings can
@@ -8003,13 +8177,17 @@ function writeDesktopConnectionsRegistry(registry) {
  * sanitizeDesktopConnectionConfig.
  */
 function sanitizeRegistryConnection(entry) {
-  const { token, ...rest } = entry
+  const { token, headers, ...rest } = entry
   const decrypted = decryptDesktopSecret(token)
 
   return {
     ...rest,
     tokenSet: Boolean(decrypted),
-    tokenPreview: tokenPreview(decrypted)
+    tokenPreview: tokenPreview(decrypted),
+    // Header VALUES are secrets (Cloudflare Access client secrets etc.) and
+    // never cross the IPC boundary — the renderer only needs the names to
+    // render the edit form.
+    headerNames: headers && typeof headers === 'object' ? Object.keys(headers) : []
   }
 }
 
@@ -8042,7 +8220,7 @@ function sanitizeConnectionsRegistry(registry = readDesktopConnectionsRegistry()
  * stored envelope on edit; switching auth away from 'token' clears it
  * (normalizeConnectionInput drops tokens on non-token entries).
  */
-function saveRegistryConnection(input: any = {}) {
+async function saveRegistryConnection(input: any = {}) {
   const registry = readDesktopConnectionsRegistry()
   const existing = input.id ? registry.connections.find(c => c.id === input.id) : null
   const incomingToken = typeof input.token === 'string' ? input.token.trim() : ''
@@ -8055,7 +8233,18 @@ function saveRegistryConnection(input: any = {}) {
     encryptSecret: encryptDesktopSecret
   })
 
-  const merged = mergeConnectionInput({ ...input, token }, existing)
+  // Extra gateway headers arrive as plaintext strings from the editor (or
+  // envelopes from a hand-edited import). Encrypt plaintext values the same
+  // way tokens are stored; a null/empty value drops that header. An absent
+  // `headers` field inherits the stored set via mergeConnectionInput.
+  const headers =
+    input.headers && typeof input.headers === 'object'
+      ? encryptIncomingRemoteHeaders(input.headers, existing?.headers, {
+          allowPlainText: input.allowPlainTextToken
+        })
+      : input.headers
+
+  const merged = mergeConnectionInput({ ...input, token, headers }, existing)
   const entry = normalizeConnectionInput(merged, registry)
 
   // Token-auth remotes must actually have a token to be dialable. OAuth and
@@ -8072,7 +8261,7 @@ function saveRegistryConnection(input: any = {}) {
   // connection's pooled backends/tunnels and tell renderers to dispose+redial
   // their secondaries for this connection id.
   if (existing && connectionDialFieldsChanged(existing, entry)) {
-    stopRegistryConnectionBackends(entry.id)
+    await stopRegistryConnectionBackends(entry.id)
     broadcastConnectionsChanged({ connectionId: entry.id, reason: 'updated' })
   }
 
@@ -8199,15 +8388,21 @@ async function sanitizeDesktopConnectionConfig(config = readDesktopConnectionCon
 // `org` (optional) is the Nastech Cloud org slug/id the instance was discovered
 // under — persisted so Settings can reopen into the same org; omitted from the
 // block when empty so plain remote connections stay unchanged.
-function buildRemoteBlock(remoteUrl, authMode, token, org?: string) {
+function buildRemoteBlock(remoteUrl, authMode, token, org?: string, headers?: object) {
   if (authMode !== 'oauth' && !decryptDesktopSecret(token)) {
     throw new Error('Remote gateway session token is required.')
   }
 
-  const block: { url: string; authMode: string; token: object; org?: string } = {
+  const block: { url: string; authMode: string; token: object; headers?: object; org?: string } = {
     url: normalizeRemoteBaseUrl(remoteUrl),
     authMode,
     token
+  }
+
+  const remoteHeaders = normalizeRemoteHeaders(headers)
+
+  if (Object.keys(remoteHeaders).length > 0) {
+    block.headers = remoteHeaders
   }
 
   const orgValue = typeof org === 'string' ? org.trim() : ''
@@ -8249,6 +8444,9 @@ function coerceDesktopConnectionConfig(input: any = {}, existing = readDesktopCo
   const cloudOrg = mode === 'cloud' ? String(input.cloudOrg ?? existingBlock.org ?? '').trim() : ''
   const incomingToken = typeof input.remoteToken === 'string' ? input.remoteToken.trim() : ''
 
+  const remoteHeaders =
+    input.remoteHeaders && typeof input.remoteHeaders === 'object' ? input.remoteHeaders : existingBlock.headers
+
   // Persist decision lives in hardening.resolvePersistedRemoteToken so the
   // IPC-propagation seam (allowPlainTextToken → encryptDesktopSecret opt-in) is
   // covered by a focused regression test. Pass allowPlainText through RAW — the
@@ -8285,7 +8483,10 @@ function coerceDesktopConnectionConfig(input: any = {}, existing = readDesktopCo
     const profiles = { ...(existing.profiles || {}) }
 
     if (remoteLike) {
-      profiles[key] = { mode, ...buildRemoteBlock(remoteUrl, authMode, nextToken, cloudOrg) }
+      profiles[key] = {
+        mode,
+        ...buildRemoteBlock(remoteUrl, authMode, nextToken, cloudOrg, remoteHeaders)
+      }
     } else {
       const localEntry = localProfileEntry(rawExistingBlock)
 
@@ -8304,7 +8505,7 @@ function coerceDesktopConnectionConfig(input: any = {}, existing = readDesktopCo
   }
 
   const nextRemote = remoteLike
-    ? buildRemoteBlock(remoteUrl, authMode, nextToken, cloudOrg)
+    ? buildRemoteBlock(remoteUrl, authMode, nextToken, cloudOrg, remoteHeaders)
     : existingMode === 'ssh'
       ? rawExistingBlock
       : { url: remoteUrl ? normalizeRemoteBaseUrl(remoteUrl) : remoteUrl, authMode, token: nextToken }
@@ -8355,9 +8556,11 @@ async function buildRemoteConnection(
   source,
   remoteHost?,
   remoteKind = 'url',
-  remoteIdentity?
+  remoteIdentity?,
+  headers?
 ) {
   const baseUrl = normalizeRemoteBaseUrl(rawUrl)
+  const remoteHeaders = decryptRemoteHeaders(headers)
   // For token/oauth remotes the meaningful host is the real backend URL; for
   // SSH remotes the caller passes the entered/resolved host explicitly (the
   // baseUrl is a 127.0.0.1 tunnel and would be useless in the pill).
@@ -8381,7 +8584,7 @@ async function buildRemoteConnection(
     // the stored bearer.
     if (
       !oauthSessionIsLive(hasNativeSession(baseUrl), await hasLiveOauthSession(baseUrl)) &&
-      oauthGuardMayHardFail(await gatewayAuthProviders(baseUrl))
+      oauthGuardMayHardFail(await gatewayAuthProviders(baseUrl, remoteHeaders))
     ) {
       const err = new Error(
         'Remote Nastech gateway uses OAuth, but you are not signed in. ' +
@@ -8395,7 +8598,7 @@ async function buildRemoteConnection(
     let ticket
 
     try {
-      ticket = await mintGatewayWsTicket(baseUrl)
+      ticket = await mintGatewayWsTicket(baseUrl, remoteHeaders)
     } catch (error) {
       throw gatewayTicketFailure(
         error,
@@ -8403,6 +8606,10 @@ async function buildRemoteConnection(
         'Could not reach the remote Nastech gateway while refreshing its WebSocket ticket. Try reconnecting.'
       )
     }
+
+    const wsUrl = buildGatewayWsUrlWithTicket(baseUrl, ticket)
+
+    rememberRemoteWsHeaders(wsUrl, remoteHeaders)
 
     return {
       baseUrl,
@@ -8412,9 +8619,10 @@ async function buildRemoteConnection(
       remoteHost: host || undefined,
       remoteIdentity,
       remoteKind,
+      headers: remoteHeaders,
       // No static token in OAuth mode; REST is cookie-authed via the partition.
       token: null,
-      wsUrl: buildGatewayWsUrlWithTicket(baseUrl, ticket)
+      wsUrl
     }
   }
 
@@ -8425,6 +8633,10 @@ async function buildRemoteConnection(
     )
   }
 
+  const wsUrl = buildGatewayWsUrl(baseUrl, token)
+
+  rememberRemoteWsHeaders(wsUrl, remoteHeaders)
+
   return {
     baseUrl,
     mode: 'remote',
@@ -8433,8 +8645,9 @@ async function buildRemoteConnection(
     remoteHost: host || undefined,
     remoteIdentity,
     remoteKind,
+    headers: remoteHeaders,
     token,
-    wsUrl: buildGatewayWsUrl(baseUrl, token)
+    wsUrl
   }
 }
 
@@ -8607,7 +8820,7 @@ async function bootstrapSshConnectionInner(profile, sshConfig, reuseToken, sourc
       }
     )
     removeForceCleanup = lease.onForceCleanup(() => ssh.close())
-    await ssh.open()
+    await ssh.open({ signal: lease.signal })
   }
 
   let result
@@ -8634,6 +8847,20 @@ async function bootstrapSshConnectionInner(profile, sshConfig, reuseToken, sourc
     if (created) {
       try {
         await ssh.close()
+      } catch {
+        void 0
+      }
+    } else {
+      // The cached master was reused but the lifecycle probe against it
+      // failed ("Could not verify the existing SSH backend"). Keeping the
+      // stale entry means every subsequent boot re-attempts through the same
+      // wedged master/tunnel and fails identically until the user re-enters
+      // the connection details (whose changed fingerprint forces a teardown).
+      // Tear it down now so the next attempt — automatic retry included —
+      // bootstraps a fresh master, which is exactly what manual re-entry
+      // did (#82679).
+      try {
+        await teardownSshConnection(profile)
       } catch {
         void 0
       }
@@ -8759,7 +8986,9 @@ async function resolveRemoteBackend(profile) {
       token,
       'profile',
       undefined,
-      config.profiles?.[connectionScopeKey(profile)]?.mode === 'cloud' ? 'cloud' : 'url'
+      config.profiles?.[connectionScopeKey(profile)]?.mode === 'cloud' ? 'cloud' : 'url',
+      undefined,
+      override.headers
     )
   }
 
@@ -8805,7 +9034,9 @@ async function resolveRemoteBackend(profile) {
     token,
     'settings',
     undefined,
-    config.mode === 'cloud' ? 'cloud' : 'url'
+    config.mode === 'cloud' ? 'cloud' : 'url',
+    undefined,
+    config.remote?.headers
   )
 }
 
@@ -8864,13 +9095,13 @@ async function requestJsonForProfile(profile: string, path: string, method: stri
     const nativeAt = await ensureNativeAccessToken(conn.baseUrl).catch(() => null)
 
     if (nativeAt) {
-      return fetchJson(url, null, { ...opts, bearer: nativeAt })
+      return fetchJson(url, null, { ...opts, bearer: nativeAt, headers: conn.headers })
     }
 
-    return fetchJsonViaOauthSession(url, opts)
+    return fetchJsonViaOauthSession(url, { ...opts, headers: conn.headers })
   }
 
-  return fetchJson(url, conn.token, opts)
+  return fetchJson(url, conn.token, { ...opts, headers: conn.headers })
 }
 
 async function probeRemoteAuthMode(rawUrl) {
@@ -9041,10 +9272,12 @@ async function testDesktopConnectionConfig(input: any = {}) {
   let baseUrl
   let token = null
   let authMode = 'token'
+  let testHeaders = {}
 
   if (wantRemote && block?.url) {
     baseUrl = normalizeRemoteBaseUrl(block.url)
     authMode = normAuthMode(block.authMode)
+    testHeaders = decryptRemoteHeaders(block.headers)
 
     if (authMode !== 'oauth') {
       token = decryptDesktopSecret(block.token)
@@ -9054,9 +9287,10 @@ async function testDesktopConnectionConfig(input: any = {}) {
     baseUrl = remote.baseUrl
     token = remote.token
     authMode = normAuthMode(remote.authMode)
+    testHeaders = remote.headers || {}
   }
 
-  const status = (await fetchJson(`${baseUrl}/api/status`, token, { timeoutMs: 8_000 })) as any
+  const status = (await fetchJson(`${baseUrl}/api/status`, token, { timeoutMs: 8_000, headers: testHeaders })) as any
 
   // The HTTP status check above proves the backend is reachable, but the chat
   // surface only works once the renderer's live WebSocket to ``/api/ws``
@@ -9065,13 +9299,15 @@ async function testDesktopConnectionConfig(input: any = {}) {
   // false-positive "reachable" while the real boot still failed with "Could not
   // connect to Nastech gateway". Mirror the renderer's connect here so the test
   // reflects the full path the app actually uses.
-  const wsUrl = await resolveTestWsUrl(baseUrl, authMode, token, { mintTicket: mintGatewayWsTicket })
+  const wsUrl = await resolveTestWsUrl(baseUrl, authMode, token, {
+    mintTicket: url => mintGatewayWsTicket(url, testHeaders)
+  })
 
   // Skip the WS leg only when the runtime genuinely lacks a WebSocket (so an
   // older Electron/Node never fails the test spuriously); Electron's main
   // process ships a global WebSocket on every supported version.
   if (wsUrl && typeof globalThis.WebSocket === 'function') {
-    const probe = await probeGatewayWebSocket(wsUrl, { WebSocketImpl: globalThis.WebSocket })
+    const probe = await probeGatewayWebSocket(wsUrl, { WebSocketImpl: globalThis.WebSocket, headers: testHeaders })
 
     if (!probe.ok) {
       throw new Error(
@@ -9231,10 +9467,16 @@ function primaryProfileKey() {
 
 // Options describing the current connection setup for `resolveProfileBackendRoute`.
 function profileRouteOptions(profile) {
+  const config = readDesktopConnectionConfig()
+  const sshOverride = profileSshOverride(config, profile)
+
   return {
+    // A desktop profile can be only a client-side routing alias. Keep backend
+    // endpoint filters in the SSH target's namespace (e.g. mara → default).
+    backendProfile: sshOverride?.remoteProfile,
     globalRemote: globalRemoteActive(),
     primaryProfile: primaryProfileKey(),
-    profileRemoteOverride: Boolean(profileHasRemoteOverride(profile))
+    profileRemoteOverride: Boolean(profileRemoteOverride(config, profile) || sshOverride)
   }
 }
 
@@ -9293,10 +9535,11 @@ async function ensureBackend(profile) {
 
 // ── Registry-scoped backends (multi-connection, PR 2 of the campaign) ──────
 // Resolve a backend for (connectionId, profile) against the v2 registry.
-// The LOCAL connection routes through ensureBackend() untouched, so every
-// single-source path stays byte-identical; non-local connections pool under
-// the composite key from backendScopeKey() and reuse the same pool entry
-// lifecycle (LRU, idle reaper, touch) as per-profile local backends.
+// The LOCAL connection routes through ensureBackend() when the v1 route is
+// itself local (so every single-source path stays byte-identical), and forces
+// a genuinely-local child when the v1 mode says remote; non-local connections
+// pool under the composite key from backendScopeKey() and reuse the same pool
+// entry lifecycle (LRU, idle reaper, touch) as per-profile local backends.
 async function ensureRegistryBackend(connectionId, profile) {
   const registry = readDesktopConnectionsRegistry()
   const id = String(connectionId || '').trim() || registry.primary
@@ -9307,7 +9550,61 @@ async function ensureRegistryBackend(connectionId, profile) {
   }
 
   if (source.kind === 'local') {
-    return ensureBackend(profile)
+    // The registry's 'local' entry means THIS machine's runtime — always.
+    // ensureBackend() follows the v1 routing table, which resolves to a
+    // REMOTE descriptor when the v1 global mode is remote (or the profile
+    // has its own remote override). A migrated remote-mode user would then
+    // see the roster's "This device" rows enumerate + dial the remote box
+    // (every profile duplicated, -slug handles forced). Delegate only when
+    // the v1 route is genuinely local; otherwise spawn/reuse a forced-local
+    // child pooled under the composite 'conn:local::<profile>' key so it
+    // can't collide with the v1 remote descriptor cached at the bare key.
+    const profileKey = String(profile ?? '').trim() || 'default'
+
+    const localRoute = resolveRegistryLocalRoute(profileKey, {
+      globalRemote: globalRemoteActive(),
+      profileRemoteOverride: Boolean(profileHasRemoteOverride(profileKey))
+    })
+
+    if (localRoute.delegate) {
+      return ensureBackend(profile)
+    }
+
+    const existingLocal = backendPool.get(localRoute.poolKey)
+
+    if (existingLocal) {
+      existingLocal.lastActiveAt = Date.now()
+
+      return existingLocal.connectionPromise
+    }
+
+    evictLruPoolBackends(POOL_MAX_BACKENDS - 1)
+
+    const localEntry = {
+      process: null,
+      port: null,
+      token: null,
+      connectionPromise: null,
+      lastActiveAt: Date.now(),
+      remoteBaseUrl: null
+    }
+
+    localEntry.connectionPromise = spawnPoolBackend(profileKey, localEntry, {
+      forceLocal: true,
+      poolKey: localRoute.poolKey
+    }).catch(async error => {
+      if (backendPool.get(localRoute.poolKey) === localEntry) {
+        backendPool.delete(localRoute.poolKey)
+      }
+
+      stopBackendChild(localEntry.process)
+      await waitForBackendExit(localEntry.process)
+      throw error
+    })
+    backendPool.set(localRoute.poolKey, localEntry)
+    startPoolIdleReaper()
+
+    return localEntry.connectionPromise
   }
 
   const key = backendScopeKey(id, profile)
@@ -9381,6 +9678,10 @@ async function connectRegistryBackend(source, profile, key, poolEntry) {
       ...connection,
       profile: profileKey,
       connectionId: source.id,
+      // The remote process runs as this profile; the desktop-side profile key
+      // is only the routing label. nastech:api uses it to translate explicit
+      // self-profile query filters into the backend's namespace.
+      remoteProfile: sshConfig.remoteProfile || '',
       logs: nastechLog.slice(-80),
       ...getWindowState()
     }
@@ -9397,10 +9698,12 @@ async function connectRegistryBackend(source, profile, key, poolEntry) {
     token,
     `registry:${source.id}`,
     undefined,
-    source.kind === 'cloud' ? 'cloud' : 'url'
+    source.kind === 'cloud' ? 'cloud' : 'url',
+    undefined,
+    source.headers
   )
 
-  await waitForNastech(connection.baseUrl, connection.token, undefined, connection.authMode)
+  await waitForNastech(connection.baseUrl, connection.token, undefined, connection.authMode, connection.headers)
   poolEntry.remoteBaseUrl = connection.baseUrl
 
   return {
@@ -9417,7 +9720,7 @@ async function connectRegistryBackend(source, profile, key, poolEntry) {
 
 // Stop every pooled backend and ssh scope owned by a registry connection —
 // called when the connection is removed from the registry.
-function stopRegistryConnectionBackends(connectionId) {
+async function stopRegistryConnectionBackends(connectionId) {
   const prefix = backendScopePrefix(connectionId)
 
   for (const key of [...backendPool.keys()]) {
@@ -9426,27 +9729,31 @@ function stopRegistryConnectionBackends(connectionId) {
     }
   }
 
-  for (const scope of [...sshConnections.keys()]) {
-    if (String(scope).startsWith(prefix)) {
-      void teardownSshConnection(scope)
-    }
-  }
+  const sshScopes = new Set([
+    ...[...sshConnections.keys()].filter(scope => String(scope).startsWith(prefix)),
+    ...[...sshBootstrapCoordinator.active].map(entry => entry.scope).filter(scope => String(scope).startsWith(prefix))
+  ])
+
+  await Promise.all(
+    [...sshScopes].map(async scope => {
+      await sshBootstrapCoordinator.cancelAndWait(scope)
+      await teardownSshConnection(scope)
+    })
+  )
 }
 
 // Mark a pool profile as recently used so the idle reaper spares it. The
 // renderer calls this when it opens a profile's chat WS and periodically while
 // streaming, since the main process can't see the direct renderer↔backend WS.
 function touchPoolBackend(profile) {
-  const key = profile && String(profile).trim() ? String(profile).trim() : null
+  for (const key of poolTouchKeys(profile)) {
+    const entry = backendPool.get(key)
 
-  if (!key) {
-    return
-  }
+    if (entry) {
+      entry.lastActiveAt = Date.now()
 
-  const entry = backendPool.get(key)
-
-  if (entry) {
-    entry.lastActiveAt = Date.now()
+      return
+    }
   }
 }
 
@@ -9498,7 +9805,13 @@ function startPoolIdleReaper() {
 // Spawn an additional dashboard backend pinned to a named profile. Mirrors the
 // local-spawn portion of startNastech() but without the boot-progress UI,
 // bootstrap, or remote handling (those belong to the primary backend only).
-async function spawnPoolBackend(profile, entry) {
+// `opts.forceLocal` skips remote resolution entirely (the registry 'local'
+// entry means THIS machine regardless of the v1 routing table); `opts.poolKey`
+// is the backendPool key when it differs from the profile name (composite
+// registry scopes) so the exit/error cleanup evicts the right entry.
+async function spawnPoolBackend(profile, entry, opts: { forceLocal?: boolean; poolKey?: string } = {}) {
+  const poolKey = opts.poolKey || profile
+
   await reapOrphanedBackendsOnce()
   // A profile may point at its OWN remote backend (connection.json
   // `profiles[name]`), or inherit the app-wide remote (env / global settings).
@@ -9506,10 +9819,10 @@ async function spawnPoolBackend(profile, entry) {
   // remote is reachable and hand back its connection descriptor. The pool
   // entry keeps `entry.process === null`, which stopPoolBackend/evict already
   // tolerate.
-  const remote = await resolveRemoteBackend(profile)
+  const remote = opts.forceLocal ? null : await resolveRemoteBackend(profile)
 
   if (remote) {
-    await waitForNastech(remote.baseUrl, remote.token, undefined, remote.authMode)
+    await waitForNastech(remote.baseUrl, remote.token, undefined, remote.authMode, remote.headers)
 
     // Recorded on the entry so revalidation can probe this descriptor without
     // awaiting connectionPromise, which may still be pending for a sibling.
@@ -9608,13 +9921,13 @@ async function spawnPoolBackend(profile, entry) {
   child.once('error', error => {
     rememberLog(`Nastech backend for profile "${profile}" failed to start: ${error.message}`)
     releaseBackendChild(child)
-    backendPool.delete(profile)
+    backendPool.delete(poolKey)
     rejectStart?.(error)
   })
   child.once('exit', (code, signal) => {
     rememberLog(`Nastech backend for profile "${profile}" exited (${signal || code})`)
     releaseBackendChild(child)
-    backendPool.delete(profile)
+    backendPool.delete(poolKey)
 
     if (!ready) {
       rejectStart?.(
@@ -9811,8 +10124,22 @@ async function startNastech() {
 
   const connectionPromise = (async () => {
     const connectRemote = async remote => {
+      // resolveRemote() may take arbitrarily long (settings resolve / ws-ticket
+      // mint). If a newer attempt started meanwhile (e.g. the user switched
+      // remotes and Apply invalidated this attempt), bail before probing.
+      if (!backendConnectionState.isCurrentAttempt(connectionAttempt)) {
+        throw new Error('Nastech backend start was superseded by a newer connection attempt.')
+      }
+
       await advanceBootProgress('backend.remote', `Connecting to remote Nastech backend at ${remote.baseUrl}`, 24)
-      await waitForNastech(remote.baseUrl, remote.token, undefined, remote.authMode)
+      await waitForNastech(remote.baseUrl, remote.token, undefined, remote.authMode, remote.headers)
+
+      // Second async boundary: the health probe itself can outlive the
+      // attempt. A late success here must not publish a stale descriptor.
+      if (!backendConnectionState.isCurrentAttempt(connectionAttempt)) {
+        throw new Error('Nastech backend start was superseded by a newer connection attempt.')
+      }
+
       updateBootProgress({
         phase: 'backend.ready',
         message: 'Remote Nastech backend is ready',
@@ -10097,6 +10424,12 @@ async function startNastech() {
         error: message,
         message: `Desktop boot failed: ${message}`,
         phase: 'backend.error',
+        // Renderer contract for the self-heal loop (#82679): a transient
+        // REMOTE failure (dropped SSH/HTTP registered connection, mint
+        // timeout) is retryable — the renderer re-attempts the boot with
+        // bounded backoff. Local failures and confirmed reauth rejections
+        // are not: those end in the recovery overlay / sign-in affordance.
+        retryable: isRetryableRemoteBootFailure({ attemptedRemote, isReauth: isReauthRequiredError(error) }),
         running: false
       },
       { allowDecrease: true }
@@ -11373,7 +11706,9 @@ function createWindow() {
 ipcMain.handle('nastech:connection', async (_event, profile) => ensureBackend(profile))
 // Registry-scoped variant: resolve a backend for (connectionId, profile).
 // connectionId '' / 'local' / the registry primary all behave sensibly; the
-// local kind delegates to ensureBackend so legacy behavior is untouched.
+// local kind delegates to ensureBackend when the v1 route is local, and
+// forces a genuinely-local child when the v1 global mode is remote (the
+// registry 'local' entry always means this machine).
 ipcMain.handle('nastech:connection:for', async (_event, payload) => {
   const { connectionId, profile } = payload && typeof payload === 'object' ? (payload as any) : ({} as any)
 
@@ -11873,6 +12208,69 @@ ipcMain.handle('nastech:bootstrap:get', async () => getBootstrapState())
 ipcMain.handle('nastech:connection-config:get', async (_event, profile) =>
   sanitizeDesktopConnectionConfig(readDesktopConnectionConfig(), profile)
 )
+ipcMain.handle('nastech:plugin-profile-routes', async (_event, rawProfileNames) => {
+  const fallbackProfileNames = Array.isArray(rawProfileNames)
+    ? rawProfileNames
+        .filter(name => typeof name === 'string')
+        .map(name => name.trim())
+        .filter(Boolean)
+        .slice(0, 256)
+    : []
+
+  const registry = readDesktopConnectionsRegistry()
+  const enumerations = await enumerateRegistryAgentSources(registry)
+  let agents = buildAgentRoster(enumerations)
+
+  // Roster enumeration deliberately does not dial connect-on-demand SSH
+  // sources. Publish one credential-free seed route so a plugin can be the
+  // first caller that opens the tunnel.
+  const sshSeeds = undialedSshRouteSeeds(agents, registry.connections)
+
+  if (sshSeeds.length > 0) {
+    agents = [
+      ...agents,
+      ...sshSeeds.map(seed => {
+        const source = registry.connections.find(connection => connection.id === seed.connectionId)!
+
+        return {
+          connectionId: source.id,
+          connectionKind: source.kind,
+          connectionLabel: source.label,
+          handle: seed.profile,
+          profile: seed.profile
+        }
+      })
+    ]
+  }
+
+  // A local enumeration can fail while remote/cloud sources succeed. Preserve
+  // cached v1 profile names as explicitly-local rows so those valid routes do
+  // not disappear and duplicate names remain source-qualified.
+  const localSource = registry.connections.find(source => source.kind === 'local')
+
+  const localEnumeration = localSource
+    ? enumerations.find(({ connection }) => connection.id === localSource.id)
+    : undefined
+
+  const localFallbackProfiles = localSource
+    ? localRouteFallbackProfiles(agents, localSource.id, fallbackProfileNames, Boolean(localEnumeration?.error))
+    : []
+
+  if (localSource && localFallbackProfiles.length > 0) {
+    agents = [
+      ...agents,
+      ...localFallbackProfiles.map(profile => ({
+        connectionId: localSource.id,
+        connectionKind: localSource.kind,
+        connectionLabel: localSource.label,
+        handle: profile,
+        profile
+      }))
+    ]
+  }
+
+  return buildRegistryProfileRoutes({ agents, sources: registry.connections })
+})
 ipcMain.handle('nastech:ssh-config:hosts', async () => ({ hosts: collectSshConfigHosts() }))
 ipcMain.handle('nastech:ssh-config:resolve', async (_event, host) => {
   const value = String(host || '').trim()
@@ -11925,7 +12323,7 @@ ipcMain.handle('nastech:connection-config:test', async (_event, payload) => test
 // list, so they are safe to ship ahead of the switchover.
 ipcMain.handle('nastech:connections:list', async () => sanitizeConnectionsRegistry())
 ipcMain.handle('nastech:connections:save', async (_event, payload) => {
-  const saved = saveRegistryConnection(payload)
+  const saved = await saveRegistryConnection(payload)
 
   return { ok: true, connection: saved, registry: sanitizeConnectionsRegistry() }
 })
@@ -11935,7 +12333,7 @@ ipcMain.handle('nastech:connections:remove', async (_event, id) => {
   writeDesktopConnectionsRegistry(registry)
   // Tear down anything the removed connection still had running: pooled
   // backends under its composite keys and any ssh tunnel scopes it owned.
-  stopRegistryConnectionBackends(key)
+  await stopRegistryConnectionBackends(key)
   // And the renderer side: without this push, secondaries scoped to the
   // removed connection keep their WebSocket open (remote/cloud have no local
   // process to kill) and stream ghost events until page reload.
@@ -11980,6 +12378,7 @@ ipcMain.handle('nastech:connections:test', async (_event, id) => {
   let baseUrl
   let token = null
   let authMode = 'token'
+  let testHeaders = {}
 
   if (entry.kind === 'local') {
     const local = await startNastech()
@@ -11989,6 +12388,7 @@ ipcMain.handle('nastech:connections:test', async (_event, id) => {
   } else {
     baseUrl = normalizeRemoteBaseUrl(entry.url)
     authMode = normAuthMode(entry.authMode)
+    testHeaders = decryptRemoteHeaders(entry.headers)
 
     if (authMode !== 'oauth') {
       token = decryptDesktopSecret(entry.token)
@@ -11999,14 +12399,16 @@ ipcMain.handle('nastech:connections:test', async (_event, id) => {
     }
   }
 
-  const status = (await fetchJson(`${baseUrl}/api/status`, token, { timeoutMs: 8_000 })) as any
+  const status = (await fetchJson(`${baseUrl}/api/status`, token, { timeoutMs: 8_000, headers: testHeaders })) as any
 
   // Same HTTP+WS two-leg check as testDesktopConnectionConfig: HTTP alone is
   // a false positive when the WebSocket leg is blocked.
-  const wsUrl = await resolveTestWsUrl(baseUrl, authMode, token, { mintTicket: mintGatewayWsTicket })
+  const wsUrl = await resolveTestWsUrl(baseUrl, authMode, token, {
+    mintTicket: url => mintGatewayWsTicket(url, testHeaders)
+  })
 
   if (wsUrl && typeof globalThis.WebSocket === 'function') {
-    const probe = await probeGatewayWebSocket(wsUrl, { WebSocketImpl: globalThis.WebSocket })
+    const probe = await probeGatewayWebSocket(wsUrl, { WebSocketImpl: globalThis.WebSocket, headers: testHeaders })
 
     if (!probe.ok) {
       throw new Error(
@@ -12028,10 +12430,8 @@ ipcMain.handle('nastech:connections:test', async (_event, id) => {
 // are SKIPPED (connect-on-demand — dialing every ssh box just to list agents
 // would spawn tunnels the user never asked for); once dialed, their pooled
 // descriptor serves the enumeration like any remote.
-ipcMain.handle('nastech:agents:roster', async () => {
-  const registry = readDesktopConnectionsRegistry()
-
-  const enumerations = await Promise.all(
+async function enumerateRegistryAgentSources(registry = readDesktopConnectionsRegistry()) {
+  return Promise.all(
     registry.connections.map(async connection => {
       try {
         if (
@@ -12060,6 +12460,10 @@ ipcMain.handle('nastech:agents:roster', async () => {
       }
     })
   )
+}
+
+ipcMain.handle('nastech:agents:roster', async () => {
+  const enumerations = await enumerateRegistryAgentSources()
 
   return {
     agents: buildAgentRoster(enumerations),
@@ -12082,12 +12486,17 @@ ipcMain.handle('nastech:gateway:ws-url-for', async (_event, payload) => {
     const connection: any = await ensureRegistryBackend(connectionId, profile)
 
     if (connection.authMode === 'oauth') {
-      const ticket = await mintGatewayWsTicket(connection.baseUrl)
+      const ticket = await mintGatewayWsTicket(connection.baseUrl, connection.headers)
+      const wsUrl = buildGatewayWsUrlWithTicket(connection.baseUrl, ticket)
 
-      return buildGatewayWsUrlWithTicket(connection.baseUrl, ticket)
+      rememberRemoteWsHeaders(wsUrl, connection.headers)
+
+      return registryGatewayWsUrl(connection, wsUrl)
     }
 
-    return connection.wsUrl
+    rememberRemoteWsHeaders(connection.wsUrl, connection.headers)
+
+    return registryGatewayWsUrl(connection, connection.wsUrl)
   })
 })
 
@@ -12157,10 +12566,57 @@ async function getJsonForBackend(descriptor, path, opts: any = {}) {
   const url = `${descriptor.baseUrl}${path}`
 
   if (descriptor.authMode === 'oauth') {
-    return fetchJsonViaOauthSession(url, opts)
+    return fetchJsonViaOauthSession(url, requestOptionsWithHeaders(opts, descriptor.headers || {}))
   }
 
-  return fetchJson(url, descriptor.token, opts)
+  return fetchJson(url, descriptor.token, requestOptionsWithHeaders(opts, descriptor.headers || {}))
+}
+
+// Any-method REST call against a resolved backend descriptor — the descriptor
+// analogue of the nastech:api handler's own auth split: OAuth backends prefer a
+// native bearer (cookieless RFC 8252 flow) and fall back to the OAuth cookie
+// partition; token/local descriptors use the static session-token header.
+async function fetchJsonForBackend(
+  descriptor,
+  path,
+  opts: { method?: string; body?: unknown; upload?: unknown; timeoutMs?: number } = {}
+) {
+  const url = `${descriptor.baseUrl}${path}`
+
+  if (descriptor.authMode === 'oauth') {
+    // The OAuth cookie path rides electron.net with JSON headers; multipart
+    // isn't wired there. Fail loudly rather than corrupting the upload.
+    if (opts.upload) {
+      throw new Error('File uploads are not supported against OAuth-gated remote backends yet.')
+    }
+
+    const nativeAt = await ensureNativeAccessToken(descriptor.baseUrl).catch(() => null)
+
+    if (nativeAt) {
+      return fetchJson(url, null, {
+        method: opts.method,
+        body: opts.body,
+        timeoutMs: opts.timeoutMs,
+        bearer: nativeAt,
+        headers: descriptor.headers
+      })
+    }
+
+    return fetchJsonViaOauthSession(url, {
+      method: opts.method,
+      body: opts.body,
+      timeoutMs: opts.timeoutMs,
+      headers: descriptor.headers
+    })
+  }
+
+  return fetchJson(url, descriptor.token, {
+    method: opts.method,
+    body: opts.body,
+    upload: opts.upload,
+    timeoutMs: opts.timeoutMs,
+    headers: descriptor.headers
+  })
 }
 
 ipcMain.handle('nastech:connection-config:probe', async (_event, rawUrl) => probeRemoteAuthMode(rawUrl))
@@ -12571,6 +13027,34 @@ async function mergeRemoteProfileSessions(searchParams, remoteProfiles) {
 }
 
 ipcMain.handle('nastech:api', async (_event, request) => {
+  // Registry-pinned request (request.connectionId): the renderer is working
+  // against a REGISTERED gateway connection, so the data — cron jobs and their
+  // run sessions included — lives in THAT host's state.db, not any local
+  // profile's. Resolve the backend through the registry (same pool the job
+  // list and WS traffic use) instead of the legacy profile route; a shared
+  // remote/cloud host serves every profile via ?profile=, so scope the path.
+  // '' / 'local' fall through to the byte-identical v1 route below (#87882).
+  const registryConnectionId = apiRequestRegistryConnectionId(request)
+
+  if (registryConnectionId) {
+    const connection: any = await ensureRegistryBackend(registryConnectionId, request?.profile)
+
+    // A shared remote host serves every profile via ?profile=; an SSH-scoped
+    // backend instead runs AS one remote profile, so an explicit self-profile
+    // filter must be translated from the desktop routing label into that
+    // backend namespace (same contract as the v1 profileRouteOptions path).
+    const requestPath = connection.sharedRemote
+      ? pathWithProfileScope(request.path, request?.profile)
+      : translateSelfProfileQuery(request.path, request?.profile, connection.remoteProfile)
+
+    return fetchJsonForBackend(connection, requestPath, {
+      method: request?.method,
+      body: request?.body,
+      upload: request?.upload,
+      timeoutMs: resolveTimeoutMs(request?.timeoutMs, DEFAULT_FETCH_TIMEOUT_MS)
+    })
+  }
+
   // Remote-profile session requests would otherwise hit the local primary off
   // each profile's on-disk state.db — fine for local profiles, but a remote
   // profile's sessions live on its remote host, so the UI's IDs 404 (or mutations
@@ -14239,6 +14723,7 @@ app.whenReady().then(() => {
   installDownloadHandling()
   registerMediaProtocol()
   installEmbedReferer()
+  installRemoteHeaderRules()
   registerDeepLinkProtocol()
   ensureWslWindowsFonts()
   configureSpellChecker()

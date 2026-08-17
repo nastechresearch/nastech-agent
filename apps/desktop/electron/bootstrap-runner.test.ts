@@ -91,16 +91,7 @@ test('fresh bootstrap args include the packaged commit pin', () => {
       activeRoot: '/tmp/nastech-agent',
       nastechHome: '/tmp/nastech'
     }),
-    [
-      '--dir',
-      '/tmp/nastech-agent',
-      '--nastech-home',
-      '/tmp/nastech',
-      '--branch',
-      'main',
-      '--commit',
-      installStamp.commit
-    ]
+    ['--dir', '/tmp/nastech-agent', '--nastech-home', '/tmp/nastech', '--branch', 'main', '--commit', installStamp.commit]
   )
 })
 

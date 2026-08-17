@@ -163,6 +163,9 @@ DEFAULT_CONFIG = {
         # (docker/modal/ssh — they have their own probe).  Set False to
         # disable entirely.
         "environment_probe": True,
+        # Bot Mode teammate-messaging protocol section (silent unless a
+        # profile is managed by the desktop's Bot Mode).
+        "bot_mode_protocol": True,
         # Embedder-supplied environment description appended to the system
         # prompt's environment-hints block. Lets a host that wraps Nastech
         # (sandbox runner, managed platform) explain the runtime environment
@@ -1150,16 +1153,6 @@ DEFAULT_CONFIG = {
             "timeout": 120,
             "extra_body": {},
             "reasoning_effort": "",  # per-task thinking level: none|minimal|low|medium|high|xhigh|max|ultra (empty = provider default)
-            # Tool-calling iteration budget for the review fork. Default 16
-            # matches historical behavior. The review has no hard "nothing to
-            # do" early-out — a session with nothing worth saving can still
-            # burn the full budget. Lower this to bound worst-case cost;
-            # clamped to [1, 64].
-            "max_iterations": 16,
-            # Optional path to a custom review prompt (replaces the built-in
-            # memory/skill/combined prompts). Relative paths resolve under
-            # NASTECH_HOME. Empty = use built-in prompts.
-            "prompt_file": "",
         },
         "moa_reference": {
             "provider": "auto",
@@ -3322,21 +3315,23 @@ DEFAULT_CONFIG = {
         #   True  = always disable the overlay
         #   False = always enable the overlay
         "no_overlay": None,
-        # cua-driver permission mode for this Nastech install.
+        # cua-driver permission mode for each Nastech computer-use runtime.
         #   standard (default) — cua-driver's own approval boundary. Protected
         #     operations (e.g. attaching to an existing signed-in browser
         #     profile) fail closed unless grant_existing_profile is enabled
         #     below.
         #   bounded — repeatable automation under a user-reviewed session
-        #     policy manifest (set capability_manifest below). No runtime
+        #     capability manifest (set capability_manifest below). No runtime
         #     prompts; anything outside the manifest fails closed inside
         #     cua-driver.
         # `unrestricted` is intentionally NOT accepted here: it stays bound to
         # the explicit per-session YOLO toggle so a config line can never
         # silently bypass approvals.
         "permission_mode": "standard",
-        # Absolute or ~ path to the reviewed cua-driver session-policy
-        # manifest YAML used when permission_mode is "bounded". See
+        # Absolute or ~ path to the reviewed cua-driver capability
+        # manifest used when permission_mode is "bounded". Nastech passes the
+        # canonical --capability-manifest and --approve-capability-manifest
+        # flags when it launches the runtime. See
         # https://cua.ai/docs/reference/cua-driver/permission-modes
         "capability_manifest": "",
         # Pre-authorize existing-profile browser attachment in standard mode

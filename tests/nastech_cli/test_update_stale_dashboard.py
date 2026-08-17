@@ -338,6 +338,30 @@ class TestSupervisedBackendRestart:
         # Supervised restart succeeded — no manual hint.
         assert "when you're ready" not in out
 
+    def test_already_restarted_unit_is_left_untouched(self):
+        """Review on #83595: nastech update's systemd fleet-restart loop may
+        already have restarted this PID's owning unit directly (e.g. a
+        Serve-only install). Passing it via already_restarted_units must
+        skip killing/restarting it again here."""
+        live = self._live()
+
+        with patch.object(live, "_restart_managed_dashboard_service", return_value=False), \
+             patch.object(live, "_find_stale_dashboard_pids", return_value=[4321]), \
+             patch.object(live, "_get_pid_cgroup_path",
+                          return_value="/system.slice/nastech-serve.service"), \
+             patch.object(live, "_get_systemd_service_for_pid",
+                          return_value="nastech-serve.service"), \
+             patch.object(live, "_try_restart_systemd_service") as restart, \
+             patch("os.kill") as kill, \
+             patch("time.sleep"):
+            result = _kill_stale_dashboard_processes(
+                restart_managed=True, already_restarted_units={"nastech-serve"}
+            )
+
+        kill.assert_not_called()
+        restart.assert_not_called()
+        assert result == {"matched": [], "killed": [], "failed": []}
+
 
 class TestManualBackendRespawn:
     """Manually-started dashboards/serves have their argv captured before the
@@ -661,3 +685,87 @@ class TestCmdlineCapture:
         """
         live = self._live()
         assert live._dashboard_cmdline_for_pid(123) is None
+
+
+class TestPostUpdateStaleModuleReload:
+    """Regression tests for the post-update stale-module ImportError.
+
+    ``nastech update`` runs in the PRE-pull Python process. When the update
+    adds a new symbol to ``nastech_cli._subprocess_compat`` (as #87134 added
+    ``bounded_probe_run``), the post-update dashboard cleanup's lazy
+    ``from nastech_cli._subprocess_compat import bounded_probe_run`` hits the
+    stale cached module and crashes with ImportError — after the code update
+    itself already succeeded. The cleanup entry point must force-reload the
+    process-scan modules first (PR #87757 + ZIP-path widening).
+    """
+
+    def test_cleanup_reloads_before_scanning(self):
+        """_finish_dashboard_update_cleanup must reload the process-scan
+        modules BEFORE calling _kill_stale_dashboard_processes, on every
+        call path (git update and ZIP fallback both route here)."""
+        from nastech_cli import update_cmd
+
+        order: list[str] = []
+        with patch.object(
+            update_cmd, "_reload_process_scan_modules",
+            side_effect=lambda: order.append("reload"),
+        ), patch(
+            "nastech_cli.main._kill_stale_dashboard_processes",
+            side_effect=lambda **kw: order.append("kill") or {"unrecovered": []},
+        ):
+            update_cmd._finish_dashboard_update_cleanup([])
+
+        assert order == ["reload", "kill"]
+
+    def test_node_failures_skip_reload_and_kill(self):
+        """A failed Node refresh leaves the running dashboard untouched —
+        no reload, no kill (existing safety rule preserved)."""
+        from nastech_cli import update_cmd
+
+        with patch.object(update_cmd, "_reload_process_scan_modules") as mock_reload, \
+             patch("nastech_cli.main._kill_stale_dashboard_processes") as mock_kill:
+            update_cmd._finish_dashboard_update_cleanup(["dashboard"])
+
+        mock_reload.assert_not_called()
+        mock_kill.assert_not_called()
+
+    def test_reload_restores_missing_symbol(self):
+        """Simulate the stale-module state: strip ``bounded_probe_run`` off
+        the cached module object (what an old pre-#87134 module looks like)
+        and verify the reload restores it from disk — the exact state the
+        Windows update crash came from."""
+        import nastech_cli._subprocess_compat as compat
+        from nastech_cli import update_cmd
+
+        assert hasattr(compat, "bounded_probe_run")
+        try:
+            delattr(compat, "bounded_probe_run")
+            assert not hasattr(compat, "bounded_probe_run")
+
+            update_cmd._reload_process_scan_modules()
+
+            stale = sys.modules["nastech_cli._subprocess_compat"]
+            assert hasattr(stale, "bounded_probe_run")
+        finally:
+            importlib.reload(sys.modules["nastech_cli._subprocess_compat"])
+            importlib.reload(sys.modules["nastech_cli.dashboard_procs"])
+
+    def test_reload_failure_is_nonfatal(self):
+        """A reload failure must log and continue, never raise — the cleanup
+        step runs after the update already succeeded."""
+        from nastech_cli import update_cmd
+
+        with patch("importlib.reload", side_effect=RuntimeError("boom")):
+            update_cmd._reload_process_scan_modules()  # must not raise
+
+    def test_config_reload_list_includes_process_scan_modules(self):
+        """PR #87757's half: the git-path pre-cleanup reload also refreshes
+        the process-scan modules (belt to the entry-point suspenders)."""
+        from nastech_cli import update_cmd
+
+        reloaded: list[str] = []
+        with patch("importlib.reload", side_effect=lambda m: reloaded.append(m.__name__)):
+            update_cmd._reload_config_modules()
+
+        assert "nastech_cli._subprocess_compat" in reloaded
+        assert "nastech_cli.dashboard_procs" in reloaded

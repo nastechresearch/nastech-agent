@@ -3261,19 +3261,20 @@ def _append_node_dir_for_service(
 
     PATH lookup remains the fallback rung for installs with no managed Node.
     """
-    from nastech_constants import iter_nastech_node_dirs
+    from nastech_constants import (
+        nastech_managed_node_tree_present,
+        iter_nastech_node_dirs,
+    )
 
-    managed_node_present = False
-    for directory in iter_nastech_node_dirs(nastech_root):
+    managed_node_present = nastech_managed_node_tree_present(nastech_root)
+    for directory in iter_nastech_node_dirs(nastech_root) if managed_node_present else ():
         entry = str(directory)
         try:
             present = directory.is_dir()
         except OSError:
             present = False
-        if present:
-            managed_node_present = True
-            if entry not in path_entries:
-                path_entries.append(entry)
+        if present and entry not in path_entries:
+            path_entries.append(entry)
 
     # Ambient PATH lookup is a fallback, not an additional rung. Once the
     # target Nastech home provides managed Node, consulting the invoker's PATH

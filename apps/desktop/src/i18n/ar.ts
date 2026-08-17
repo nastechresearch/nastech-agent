@@ -61,6 +61,7 @@ export const ar = defineLocale({
       connectingGateway: 'جار الاتصال ببوابة سطح المكتب',
       loadingSettings: 'جار تحميل إعدادات Nastech',
       loadingSessions: 'جار تحميل الجلسات الأخيرة',
+      retryingRemoteBackend: 'جارٍ إعادة الاتصال بخادم Nastech البعيد…',
       startingDesktopConnection: 'جار بدء اتصال سطح المكتب',
       startingNastechDesktop: 'جار تشغيل Nastech Desktop...'
     },
@@ -2048,8 +2049,7 @@ export const ar = defineLocale({
     copyAuthCode: 'انسخ رمز التفويض وألصقه أدناه.',
     pasteAuthCode: 'ألصق رمز التفويض',
     reopenAuthPage: 'إعادة فتح صفحة التفويض',
-    autoBrowser: provider =>
-      `فتحنا ${provider} في المتصفح. صرّح لـ Nastech هناك وسيتم الاتصال تلقائياً دون نسخ أو لصق.`,
+    autoBrowser: provider => `فتحنا ${provider} في المتصفح. صرّح لـ Nastech هناك وسيتم الاتصال تلقائياً دون نسخ أو لصق.`,
     reopenSignInPage: 'إعادة فتح صفحة تسجيل الدخول',
     waitingAuthorize: 'بانتظار التفويض...',
     externalPending: provider =>
@@ -2122,6 +2122,7 @@ export const ar = defineLocale({
       inferenceNotReady: 'الاستدلال غير جاهز',
       checkingInference: 'جار فحص الاستدلال',
       disconnected: 'منقطع',
+      reconnectGateway: 'إعادة الاتصال بالبوابة',
       openSystem: 'فتح النظام',
       connection: label => `الاتصال: ${label}`,
       recentActivity: 'النشاط الأخير',

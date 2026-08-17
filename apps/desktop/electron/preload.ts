@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   getConnection: profile => ipcRenderer.invoke('nastech:connection', profile),
   // Registry-scoped backend resolution: { connectionId, profile } → descriptor.
   getConnectionFor: payload => ipcRenderer.invoke('nastech:connection:for', payload),
+  getProfileRoutes: profiles => ipcRenderer.invoke('nastech:plugin-profile-routes', profiles),
   revalidateConnection: () => ipcRenderer.invoke('nastech:connection:revalidate'),
   touchBackend: profile => ipcRenderer.invoke('nastech:backend:touch', profile),
   getGatewayWsUrl: profile => ipcRenderer.invoke('nastech:gateway:ws-url', profile),

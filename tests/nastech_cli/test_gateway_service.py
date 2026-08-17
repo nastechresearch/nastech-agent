@@ -845,6 +845,37 @@ class TestDetectVenvDir:
 class TestSystemUnitNastechHome:
     """NASTECH_HOME in system units must reference the target user, not root."""
 
+    def test_empty_managed_node_dir_uses_only_ambient_fallback(
+        self, monkeypatch, tmp_path
+    ):
+        managed_bin = tmp_path / ".nastech" / "node" / "bin"
+        managed_bin.mkdir(parents=True)
+        monkeypatch.setattr(
+            gateway_cli.shutil, "which", lambda name: "/opt/external-node/bin/node"
+        )
+        entries: list[str] = []
+
+        gateway_cli._append_node_dir_for_service(entries, tmp_path / ".nastech")
+
+        assert entries == ["/opt/external-node/bin"]
+
+    def test_non_executable_managed_node_uses_only_ambient_fallback(
+        self, monkeypatch, tmp_path
+    ):
+        managed_bin = tmp_path / ".nastech" / "node" / "bin"
+        managed_bin.mkdir(parents=True)
+        node = managed_bin / "node"
+        node.write_text("#!/bin/sh\n")
+        node.chmod(0o644)
+        monkeypatch.setattr(
+            gateway_cli.shutil, "which", lambda name: "/opt/external-node/bin/node"
+        )
+        entries: list[str] = []
+
+        gateway_cli._append_node_dir_for_service(entries, tmp_path / ".nastech")
+
+        assert entries == ["/opt/external-node/bin"]
+
     def test_managed_node_makes_system_unit_independent_of_callers_path(
         self, monkeypatch, tmp_path
     ):
@@ -855,6 +886,9 @@ class TestSystemUnitNastechHome:
         root_nastech = root_home / ".nastech"
         managed_bin = target_nastech / "node" / "bin"
         managed_bin.mkdir(parents=True)
+        node = managed_bin / "node"
+        node.write_text("#!/bin/sh\n")
+        node.chmod(0o755)
         root_nastech.mkdir(parents=True)
 
         monkeypatch.setattr(Path, "home", staticmethod(lambda: root_home))
@@ -883,6 +917,10 @@ class TestSystemUnitNastechHome:
         """External Node installs still work when the managed tree is absent."""
         monkeypatch.setattr(
             "nastech_constants.iter_nastech_node_dirs", lambda root=None: []
+        )
+        monkeypatch.setattr(
+            "nastech_constants.nastech_managed_node_tree_present",
+            lambda root=None: False,
         )
         monkeypatch.setattr(
             gateway_cli.shutil, "which", lambda name: "/opt/external-node/bin/node"

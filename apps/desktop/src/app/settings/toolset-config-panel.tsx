@@ -4,9 +4,6 @@ import { useNavigate } from 'react-router'
 import { SETTINGS_ROUTE } from '@/app/routes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useI18n } from '@/i18n'
-import { Check, Loader2, Save, Terminal } from '@/lib/icons'
-import { cn } from '@/lib/utils'
 import {
   deleteEnvVar,
   getActionStatus,
@@ -20,6 +17,9 @@ import {
   setEnvVar,
   startOAuthLogin
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import { Check, Loader2, Save, Terminal } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import { upsertDesktopActionTask } from '@/store/activity'
 import { notify, notifyError } from '@/store/notifications'
 import type {

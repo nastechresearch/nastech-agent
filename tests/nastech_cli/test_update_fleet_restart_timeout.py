@@ -15,6 +15,7 @@ import pytest
 
 from nastech_cli.main import (
     _for_each_systemd_gateway_unit,
+    _service_unit_supports_graceful_sigusr1_restart,
     _warn_incomplete_gateway_fleet_restart,
 )
 
@@ -89,6 +90,72 @@ class TestFleetRestartTimeoutIsolation:
         )
 
         assert seen == ["nastech-gateway-coder"]
+
+    def test_nastech_serve_units_are_included(self):
+        # #83438 — nastech update restarted nastech-gateway* units but left
+        # nastech-serve* (the Desktop app's backend) on stale pre-update code.
+        seen: list[str] = []
+
+        _for_each_systemd_gateway_unit(
+            "\n".join(
+                [
+                    "ssh.service loaded active running",
+                    "nastech-serve.service loaded active running",
+                    "nastech-serve-work.service loaded active running",
+                    "nastech-gateway.service loaded active running",
+                    "",
+                ]
+            ),
+            process_unit=seen.append,
+            on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
+        )
+
+        assert seen == ["nastech-serve", "nastech-serve-work", "nastech-gateway"]
+
+    def test_nastech_server_near_prefix_is_rejected(self):
+        # Review on #83595: a bare ``startswith("nastech-serve")`` gate also
+        # accepts the unrelated ``nastech-server.service``. Only the exact
+        # base unit or the hyphenated profile family should pass.
+        seen: list[str] = []
+
+        _for_each_systemd_gateway_unit(
+            _list_units_stdout(["nastech-server"]),
+            process_unit=seen.append,
+            on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
+        )
+
+        assert seen == []
+
+    def test_nastech_gateway_near_prefix_is_rejected(self):
+        # Same strict shape on the gateway side: profile units are
+        # ``nastech-gateway-<profile>``, so a hypothetical
+        # ``nastech-gatewayd.service`` must not enter the restart path.
+        seen: list[str] = []
+
+        _for_each_systemd_gateway_unit(
+            _list_units_stdout(["nastech-gatewayd", "nastech-gateway-coder"]),
+            process_unit=seen.append,
+            on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
+        )
+
+        assert seen == ["nastech-gateway-coder"]
+
+
+class TestGracefulSigusr1Eligibility:
+    def test_gateway_units_are_eligible(self):
+        assert _service_unit_supports_graceful_sigusr1_restart("nastech-gateway")
+        assert _service_unit_supports_graceful_sigusr1_restart(
+            "nastech-gateway-work"
+        )
+
+    def test_serve_units_are_not_eligible(self):
+        # nastech-serve doesn't run gateway/run.py, so it never installs the
+        # SIGUSR1 handler — sending it the signal would just terminate the
+        # process (the default action) instead of draining gracefully.
+        assert not _service_unit_supports_graceful_sigusr1_restart("nastech-serve")
+        assert not _service_unit_supports_graceful_sigusr1_restart(
+            "nastech-serve-work"
+        )
 
     def test_process_errors_other_than_timeout_still_propagate(self):
         def process_unit(_svc_name: str) -> None:
