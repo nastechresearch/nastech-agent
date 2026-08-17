@@ -1,7 +1,8 @@
 export {
   backendScopeKey,
   backendScopePrefix,
-  LOCAL_CONNECTION_ID
+  LOCAL_CONNECTION_ID,
+  registryBackendScopeKey
 } from './backend-scope'
 export {
   BILLING_REFUSAL_POLICY,
@@ -72,8 +73,8 @@ export {
   GatewayReauthRequiredError,
   type GatewayWsConnection,
   type GatewayWsUrlResult,
-  isGatewayReauthRequired,
   type NastechWebSocketUrlOptions,
+  isGatewayReauthRequired,
   resolveGatewayWsUrl,
   type ResolveGatewayWsUrlDeps,
   type WebSocketAuthParam

@@ -1,7 +1,3 @@
-import { translateNow } from '@/i18n'
-import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
-import { MCP_DIRECTORY } from '@/lib/mcp-directory'
-import { prettyName } from '@/lib/text'
 import {
   addMcpServer,
   authMcpServer,
@@ -11,6 +7,10 @@ import {
   listMcpServers,
   removeMcpServer
 } from '@/nastech'
+import { translateNow } from '@/i18n'
+import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
+import { MCP_DIRECTORY } from '@/lib/mcp-directory'
+import { prettyName } from '@/lib/text'
 import { type ComposerSuggestion, registerDraftProvider } from '@/store/composer-suggestions'
 import { $gateway } from '@/store/gateway'
 import { notifyError } from '@/store/notifications'

@@ -22,6 +22,7 @@ const gatewayMocks = vi.hoisted(() => {
 })
 
 vi.mock('@/nastech', () => ({
+  setApiRequestConnection: vi.fn(),
   NastechGateway: class {
     connectionState = 'closed'
     close = vi.fn(() => {

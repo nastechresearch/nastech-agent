@@ -2,9 +2,9 @@ import type { Unstable_TriggerAdapter, Unstable_TriggerItem } from '@assistant-u
 import { useCallback } from 'react'
 
 import { refChipLabel } from '@/components/assistant-ui/directive-text'
+import type { NastechGateway } from '@/nastech'
 import { cachedPathCompletion, hasCachedPathCompletion } from '@/lib/slash-completion-cache'
 import { normalize } from '@/lib/text'
-import type { NastechGateway } from '@/nastech'
 
 import type { CompletionEntry, CompletionPayload } from './use-live-completion-adapter'
 import { useLiveCompletionAdapter } from './use-live-completion-adapter'

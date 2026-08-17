@@ -1423,14 +1423,14 @@ class AIAgent:
         # (Nemotron 3 Ultra, OpenAI o1/o3, Anthropic Opus 4.x thinking,
         # DeepSeek R1, Qwen QwQ, xAI Grok reasoning, etc.) whose cloud
         # gateways idle-kill before the model's thinking phase ends.
-        # This is still an implicit default: only the model name selected the
-        # value. Preserve that distinction so a local endpoint keeps the
-        # existing no-watchdog behavior unless the user explicitly configures
-        # a stale timeout. Cloud endpoints still use the finite floor below.
+        # uses_implicit_default is False here so the local-endpoint
+        # short-circuit in _compute_non_stream_stale_timeout does not
+        # disable stale detection for users running reasoning models on a
+        # local NIM endpoint.
         from agent.reasoning_timeouts import get_reasoning_stale_timeout_floor
         reasoning_floor = get_reasoning_stale_timeout_floor(self.model)
         if reasoning_floor is not None:
-            return reasoning_floor, True
+            return reasoning_floor, False
 
         return 90.0, True
 
@@ -1833,7 +1833,7 @@ class AIAgent:
         # (``auxiliary.background_review.enabled: false``). Manual ``/refine``
         # still works — same contract as zeroing the nudge intervals (#87250).
         # Load the task block once here and pass it into the spawn path so
-        # prompt_file / max_iterations / aux routing do not re-read config.
+        # aux routing does not re-read config.
         task_cfg = None
         if focus is None:
             from agent.background_review import load_background_review_settings
@@ -3865,6 +3865,15 @@ class AIAgent:
                     "database). Your message should already be saved — "
                     "please send it again in a moment."
                 )
+            if cause == "corrupt":
+                return (
+                    prefix
+                    + "the turn was stopped because the state database "
+                    "reported structural corruption (the transcript would "
+                    "have been lost on restart). Freeing disk space will "
+                    "not help — run `nastech doctor` to repair the state "
+                    "database, then send your message again."
+                )
             if cause == "disk":
                 return (
                     prefix
@@ -4891,28 +4900,19 @@ class AIAgent:
 
         Valid JSON arguments are canonicalized so equivalent objects do not
         evade deduplication merely because their keys or whitespace differ.
-        Duplicate object keys use the parser's last-value-wins semantics,
-        matching downstream argument parsing. Malformed or excessively nested
-        arguments retain their raw representation rather than being repaired
-        here. Only the first occurrence of each unique pair is kept.
+        Malformed arguments retain their raw representation rather than being
+        repaired here. Only the first occurrence of each unique pair is kept.
         Returns the original list if no duplicates were found.
         """
-        seen_raw: set = set()
         seen: set = set()
         unique: list = []
         for tc in tool_calls:
-            raw_key = (tc.function.name, tc.function.arguments)
-            if raw_key in seen_raw:
-                logger.warning("Removed duplicate tool call: %s", tc.function.name)
-                continue
-            seen_raw.add(raw_key)
-
             arguments = tc.function.arguments
             try:
                 arguments = json.dumps(
                     json.loads(arguments), separators=(",", ":"), sort_keys=True
                 )
-            except (RecursionError, TypeError, ValueError):
+            except (TypeError, ValueError):
                 pass
             key = (tc.function.name, arguments)
             if key not in seen:

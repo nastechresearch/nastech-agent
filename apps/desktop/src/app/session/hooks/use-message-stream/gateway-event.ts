@@ -1,4 +1,5 @@
 import type { BillingBlock } from '@nastech/shared'
+import { registryBackendScopeKey } from '@nastech/shared'
 import type { NastechSkin } from '@nastech/shared/skin'
 import type { QueryClient } from '@tanstack/react-query'
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react'
@@ -27,7 +28,7 @@ import { billingCtaLabel, clearBillingBlock, runBillingRecovery, setBillingBlock
 import { clearClarifyRequest, normalizeChoices, setClarifyRequest, warnDroppedChoices } from '@/store/clarify'
 import { setSessionCompacting } from '@/store/compaction'
 import { refreshBackgroundProcesses } from '@/store/composer-status'
-import { $gateway } from '@/store/gateway'
+import { $gateway, activeGatewayConnectionId } from '@/store/gateway'
 import { applyGoalStatusText } from '@/store/goals'
 import {
   notifyCronChanged,
@@ -335,6 +336,17 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
     (event: RpcEvent) => {
       const payload = event.payload as GatewayEventPayload | undefined
 
+      // "From the active profile" must mean "from the active SOURCE": every
+      // registered connection exposes a 'default' profile, so a bare profile
+      // comparison attributes gateway B's 'default' events to gateway A's
+      // 'default'. Compare the composite (connectionId, profile) scope with
+      // registryBackendScopeKey — untagged primary events keep the legacy
+      // bare-profile behavior byte-identical.
+      const fromActiveSource = (): boolean =>
+        (!event.profile || normalizeProfileKey(event.profile) === normalizeProfileKey($activeGatewayProfile.get())) &&
+        registryBackendScopeKey(event.connectionId ?? null, event.profile ?? null) ===
+          registryBackendScopeKey(activeGatewayConnectionId(), event.profile ?? null)
+
       const occurredAt =
         typeof payload?.timestamp === 'number' && Number.isFinite(payload.timestamp)
           ? payload.timestamp
@@ -417,11 +429,8 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
         return
       } else if (event.type === 'skin.changed') {
         // A runtime skin switch (Nastech activating an authored skin, or `/skin`
-        // on another surface). Only the active profile's change repaints.
-        const fromActiveProfile =
-          !event.profile || normalizeProfileKey(event.profile) === normalizeProfileKey($activeGatewayProfile.get())
-
-        if (fromActiveProfile) {
+        // on another surface). Only the active source+profile's change repaints.
+        if (fromActiveSource()) {
           ingestBackendSkin(payload as NastechSkin | undefined, { apply: true })
         }
 
@@ -435,12 +444,10 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
       ) {
         // Change-watcher broadcasts (server._broadcast_watched_changes): the
         // backend's on-disk signature moved. Route to the live-sync ticks the
-        // former pollers now subscribe to. Only the active profile's changes
-        // apply — background profile sockets watch their own homes.
-        const fromActiveChangeProfile =
-          !event.profile || normalizeProfileKey(event.profile) === normalizeProfileKey($activeGatewayProfile.get())
-
-        if (fromActiveChangeProfile) {
+        // former pollers now subscribe to. Only the active source+profile's
+        // changes apply — background profile sockets (and other connections'
+        // gateways) watch their own homes.
+        if (fromActiveSource()) {
           if (event.type === 'pet.changed') {
             notifyPetChanged(payload as PetChangeMeta | undefined)
           } else if (event.type === 'cron.changed') {
@@ -500,12 +507,7 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
         // gateway may reconcile the foreground cache. Requiring the renderer's
         // source tag prevents an event queued before a profile swap from being
         // attributed to the newly active profile.
-        if (
-          isActiveEvent &&
-          typeof payload?.approval_mode === 'string' &&
-          event.profile &&
-          normalizeProfileKey(event.profile) === normalizeProfileKey($activeGatewayProfile.get())
-        ) {
+        if (isActiveEvent && typeof payload?.approval_mode === 'string' && event.profile && fromActiveSource()) {
           reconcileApprovalModeForProfile(event.profile, payload.approval_mode)
         }
 

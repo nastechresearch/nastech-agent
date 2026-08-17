@@ -68,6 +68,7 @@ export const en: Translations = {
       connectingGateway: 'Connecting live desktop gateway',
       loadingSettings: 'Loading Nastech settings',
       loadingSessions: 'Loading recent sessions',
+      retryingRemoteBackend: 'Reconnecting to the remote Nastech backend…',
       startingDesktopConnection: 'Starting desktop connection',
       startingNastechDesktop: 'Starting Nastech Desktop…'
     },
@@ -684,6 +685,13 @@ export const en: Translations = {
       labelPlaceholder: 'Homelab',
       urlTitle: 'Gateway URL',
       sshHostTitle: 'SSH host',
+      headersTitle: 'Extra gateway headers',
+      headersDesc:
+        'Sent with every HTTP and WebSocket request to this gateway — for access proxies such as Cloudflare Access (CF-Access-Client-Id / CF-Access-Client-Secret). Values are stored encrypted. Headers Nastech manages (Authorization, Cookie, Host…) are ignored.',
+      headerValuePlaceholder: 'Value',
+      headerValueSaved: 'Saved — leave blank to keep',
+      headerAdd: 'Add header',
+      headerRemove: 'Remove',
       save: 'Save connection',
       saving: 'Saving…',
       cancel: 'Cancel',
@@ -1048,8 +1056,7 @@ export const en: Translations = {
       useBackend: 'Use this backend',
       nastechIncluded: 'Included with a Nastech subscription — sign in to Nastech Portal to activate.',
       nastechAuthNeededTitle: 'Sign in to Nastech Portal',
-      nastechAuthNeededMessage: provider =>
-        `${provider} is saved but won't activate until you sign in to Nastech Portal.`,
+      nastechAuthNeededMessage: provider => `${provider} is saved but won't activate until you sign in to Nastech Portal.`,
       nastechAuthSignIn: 'Sign in',
       nastechAuthDoneTitle: 'Nastech Portal connected',
       nastechAuthDoneMessage: 'Your subscription backends are now active.',
@@ -2535,8 +2542,7 @@ export const en: Translations = {
       xai: { short: 'Grok models', description: 'Direct access to xAI Grok models.' },
       local: {
         short: 'self-hosted',
-        description:
-          'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
+        description: 'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
       }
     },
     backToSignIn: 'Back to sign in',
@@ -2644,6 +2650,7 @@ export const en: Translations = {
       inferenceNotReady: 'Inference not ready',
       checkingInference: 'Checking inference',
       disconnected: 'Disconnected',
+      reconnectGateway: 'Reconnect gateway',
       openSystem: 'Open system panel',
       connection: label => `Connection: ${label}`,
       recentActivity: 'Recent activity',

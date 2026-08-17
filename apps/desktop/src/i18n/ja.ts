@@ -68,6 +68,7 @@ export const ja = defineLocale({
       connectingGateway: 'ライブデスクトップゲートウェイに接続中',
       loadingSettings: 'Nastech の設定を読み込み中',
       loadingSessions: '最近のセッションを読み込み中',
+      retryingRemoteBackend: 'リモート Nastech バックエンドに再接続中…',
       startingDesktopConnection: 'デスクトップ接続を開始中',
       startingNastechDesktop: 'Nastech Desktop を起動中…'
     },
@@ -1017,8 +1018,7 @@ export const ja = defineLocale({
       activeBackend: '使用中',
       activeBackendHint: 'これが現在アクティブなバックエンドです',
       useBackend: 'このバックエンドを使う',
-      nastechIncluded:
-        'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
+      nastechIncluded: 'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
       nastechAuthNeededTitle: 'Nastech Portal にサインイン',
       nastechAuthNeededMessage: provider =>
         `${provider} は保存されましたが、Nastech Portal にサインインするまで有効になりません。`,
@@ -2125,8 +2125,7 @@ export const ja = defineLocale({
     done: '完了',
     applyingBody:
       'Nastech アップデーターが独自のウィンドウで引き継ぎ、完了後に自動的に Nastech を再度開きます。更新中はご自分で Nastech を開き直さないでください。',
-    applyingBodyBackend:
-      'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
+    applyingBodyBackend: 'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
     applyingClose: 'このウィンドウは更新中に閉じ、その後 Nastech が自動的に再度開きます。',
     errorTitle: '更新が完了しませんでした',
     errorBody: 'ご安心ください。何も失われていません。今すぐ再試行できます。',
@@ -2369,6 +2368,7 @@ export const ja = defineLocale({
       inferenceNotReady: '推論準備未完了',
       checkingInference: '推論を確認中',
       disconnected: '切断済み',
+      reconnectGateway: 'ゲートウェイに再接続',
       openSystem: 'システムパネルを開く',
       connection: label => `接続: ${label}`,
       recentActivity: '最近のアクティビティ',

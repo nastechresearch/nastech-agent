@@ -68,6 +68,7 @@ export const zhHant = defineLocale({
       connectingGateway: '正在連線桌面閘道',
       loadingSettings: '正在載入 Nastech 設定',
       loadingSessions: '正在載入最近工作階段',
+      retryingRemoteBackend: '正在重新連線遠端 Nastech 後端…',
       startingDesktopConnection: '正在啟動桌面連線',
       startingNastechDesktop: '正在啟動 Nastech Desktop…'
     },
@@ -863,8 +864,7 @@ export const zhHant = defineLocale({
       disableTool: tool => `停用 ${tool}`,
       noOutput: '尚無輸出。',
       deepLinkTitle: '新增 MCP 伺服器？',
-      deepLinkDescription:
-        '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
+      deepLinkDescription: '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
       deepLinkStdioWarning: '此伺服器會使用下方所示指令在你的電腦上執行本機程序。僅在信任其來源時繼續。',
       deepLinkConfirm: '新增伺服器',
       deepLinkNameInvalid: '名稱須為 1-64 個字母、數字、點、連字號或底線。',
@@ -2285,6 +2285,7 @@ export const zhHant = defineLocale({
       inferenceNotReady: '推論未就緒',
       checkingInference: '正在檢查推論',
       disconnected: '已中斷連線',
+      reconnectGateway: '重新連線閘道',
       openSystem: '開啟系統面板',
       connection: label => `連線：${label}`,
       recentActivity: '最近活動',
