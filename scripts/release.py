@@ -2230,9 +2230,9 @@ def resolve_author(name: str, email: str) -> str:
         return f"@{gh_user}"
 
     # Try noreply pattern
-    noreply_match = re.match(r"[^+]+\+(.+)@users\.noreply\.github\.com", email)
+    noreply_match = re.match(r"(\d+)\+(.+)@users\.noreply\.github\.com", email)
     if noreply_match:
-        return f"@{noreply_match.group(1)}"
+        return f"@{noreply_match.group(2)}"
 
     # Try username@users.noreply.github.com
     noreply_match2 = re.match(r"(.+)@users\.noreply\.github\.com", email)
@@ -2278,22 +2278,12 @@ def categorize_commit(subject: str) -> str:
 
 
 def clean_subject(subject: str) -> str:
-    """Clean up a conventional commit subject for release-note display."""
-    prefixes = (
-        "feat|fix|docs|chore|refactor|test|perf|ci|build|improve|add|update|"
-        "cleanup|hotfix|breaking|enhance|optimize|bugfix|bug|feature|tests|deps|bump"
-    )
-    # Handle both a scoped conventional commit, such as ``fix(docs): ...``,
-    # and an unscoped prefix. The previous expression left ``docs):`` in the
-    # rendered release notes.
-    cleaned = re.sub(
-        rf"^(?:{prefixes})(?:\([^)]*\))?!?\s*:\s*",
-        "",
-        subject,
-        flags=re.IGNORECASE,
-    )
-    cleaned = re.sub(rf"^(?:{prefixes})[\s:!]+\s*", "", cleaned, flags=re.IGNORECASE)
+    """Clean up a commit subject for display."""
+    # Remove conventional commit prefix
+    cleaned = re.sub(r"^(feat|fix|docs|chore|refactor|test|perf|ci|build|improve|add|update|cleanup|hotfix|breaking|enhance|optimize|bugfix|bug|feature|tests|deps|bump)[\s:(!]+\s*", "", subject, flags=re.IGNORECASE)
+    # Remove trailing issue refs that are redundant with PR links
     cleaned = cleaned.strip()
+    # Capitalize first letter
     if cleaned:
         cleaned = cleaned[0].upper() + cleaned[1:]
     return cleaned
@@ -2399,39 +2389,19 @@ def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/N
         lines.append("> for Nastech Agent. See below for everything included in this initial release.")
         lines.append("")
 
-    # Group commits by category. Automated accounts are kept in the detailed
-    # technical history but excluded from the human contributor roll-up.
+    # Group commits by category
     categories = defaultdict(list)
     all_authors = set()
-    excluded_authors = {"@teknium1", "@github-actions[bot]", "@nastechresearch[bot]"}
+    teknium_aliases = {"@teknium1"}
 
     for commit in commits:
         categories[commit["category"]].append(commit)
         author = commit["github_author"]
-        if author not in excluded_authors:
+        if author not in teknium_aliases:
             all_authors.add(author)
         for coauthor in commit.get("coauthors", []):
-            if coauthor not in excluded_authors:
+            if coauthor not in teknium_aliases:
                 all_authors.add(coauthor)
-
-    upstream_syncs = sum(
-        1
-        for commit in commits
-        if "branded update" in commit["subject"].lower()
-    )
-    lines.append("## Release Overview")
-    lines.append("")
-    lines.append(
-        "This release is maintained by **NasTech Research** and incorporates "
-        "verified upstream work from **Nous Research** through the NasTech "
-        "validation and branding process."
-    )
-    lines.append("")
-    lines.append(
-        f"It contains **{len(commits)} non-merge changes** since the previous release"
-        + (f", including **{upstream_syncs} verified upstream synchronization update(s)**." if upstream_syncs else ".")
-    )
-    lines.append("")
 
     # Category display order and emoji
     category_order = [
@@ -2465,7 +2435,7 @@ def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/N
             else:
                 parts.append(f"([`{commit['short_sha']}`]({repo_url}/commit/{commit['sha']}))")
 
-            if author not in excluded_authors:
+            if author not in teknium_aliases:
                 parts.append(f"— {author}")
 
             lines.append(" ".join(parts))
@@ -2478,26 +2448,17 @@ def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/N
         author_counts = defaultdict(int)
         for commit in commits:
             author = commit["github_author"]
-            if author not in excluded_authors:
+            if author not in teknium_aliases:
                 author_counts[author] += 1
             for coauthor in commit.get("coauthors", []):
-                if coauthor not in excluded_authors:
+                if coauthor not in teknium_aliases:
                     author_counts[coauthor] += 1
 
         sorted_authors = sorted(author_counts.items(), key=lambda x: -x[1])
 
-        lines.append("## Acknowledgments")
-        lines.append("")
-        lines.append(
-            "We thank **Nous Research** and its contributors for the upstream work "
-            "incorporated through the verified synchronization process. We also thank "
-            "the **NasTech Research** contributors who validate, maintain, and deliver "
-            "this release."
-        )
-        lines.append("")
         lines.append("## 👥 Contributors")
         lines.append("")
-        lines.append("Thank you to the human contributors represented in this release!")
+        lines.append("Thank you to everyone who contributed to this release!")
         lines.append("")
         for author, count in sorted_authors:
             commit_word = "commit" if count == 1 else "commits"

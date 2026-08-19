@@ -25,6 +25,11 @@ nastech
 # Single query mode (non-interactive)
 nastech chat -q "Hello"
 
+# Single query from a file or stdin — nothing is shell-interpreted, so
+# arbitrary text (quotes, $(...), backticks) arrives verbatim
+nastech chat --query-file prompt.txt
+nastech chat --query-file - < prompt.txt
+
 # With a specific model
 nastech chat --model "anthropic/claude-sonnet-4"
 

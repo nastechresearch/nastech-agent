@@ -1,6 +1,17 @@
-import { contextBridge, ipcRenderer, webUtils } from 'electron'
+import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
+
+// Which translucency the OS can back. Asked synchronously because the renderer
+// needs it before its first paint, and answered by main because deciding it
+// needs `os.release()` — a sandboxed preload may only require electron, events,
+// timers and url, so importing node:os here throws before contextBridge runs
+// and takes the ENTIRE bridge down with it (window.nastechDesktop undefined =>
+// "Desktop IPC bridge is unavailable"). No reply means no glass, which degrades
+// to an ordinary opaque window rather than a page thinned over nothing.
+const translucencySupport = ipcRenderer.sendSync('nastech:translucency:support')
 
 contextBridge.exposeInMainWorld('nastechDesktop', {
+  glassSupported: translucencySupport?.glass === true,
+  translucencySupported: translucencySupport?.translucency === true,
   getConnection: profile => ipcRenderer.invoke('nastech:connection', profile),
   // Registry-scoped backend resolution: { connectionId, profile } → descriptor.
   getConnectionFor: payload => ipcRenderer.invoke('nastech:connection:for', payload),
@@ -137,6 +148,8 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     save: payload => ipcRenderer.invoke('nastech:connections:save', payload),
     remove: id => ipcRenderer.invoke('nastech:connections:remove', id),
     setPrimary: id => ipcRenderer.invoke('nastech:connections:set-primary', id),
+    setLaunchMode: mode => ipcRenderer.invoke('nastech:connections:set-launch-mode', mode),
+    setLastUsed: id => ipcRenderer.invoke('nastech:connections:set-last-used', id),
     test: id => ipcRenderer.invoke('nastech:connections:test', id),
     // Fan out `nastech update` to every eligible registered connection.
     updateAll: () => ipcRenderer.invoke('nastech:connections:update-all'),
@@ -185,6 +198,16 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   readClipboard: () => ipcRenderer.invoke('nastech:readClipboard'),
   saveGatewayFile: payload => ipcRenderer.invoke('nastech:saveGatewayFile', payload),
   saveImageFromUrl: url => ipcRenderer.invoke('nastech:saveImageFromUrl', url),
+  contextMenuEdit: command => ipcRenderer.invoke('nastech:context-menu:edit', command),
+  contextMenuCopyImage: () => ipcRenderer.invoke('nastech:context-menu:copy-image'),
+  contextMenuSpellcheck: action => ipcRenderer.invoke('nastech:context-menu:spellcheck', action),
+  contextMenuGuestAddWord: payload => ipcRenderer.invoke('nastech:context-menu:guest-add-word', payload),
+  onContextMenuSpellcheck: callback => {
+    const listener = (_event, payload) => callback(payload)
+    ipcRenderer.on('nastech:context-menu-spellcheck', listener)
+
+    return () => ipcRenderer.removeListener('nastech:context-menu-spellcheck', listener)
+  },
   saveImageBuffer: (data, ext) => ipcRenderer.invoke('nastech:saveImageBuffer', { data, ext }),
   saveClipboardImage: () => ipcRenderer.invoke('nastech:saveClipboardImage'),
   getPathForFile: file => {
@@ -218,6 +241,9 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   zoom: {
     // Current zoom of this window, as { level, percent }.
     get: () => ipcRenderer.invoke('nastech:zoom:get'),
+    // Synchronous zoom factor (1 = 100%). Coordinate math needs it in the
+    // same tick as the event it converts, so no IPC round-trip here.
+    factor: () => webFrame.getZoomFactor(),
     setPercent: percent => ipcRenderer.send('nastech:zoom:set-percent', percent),
     // Fires on every zoom change, including the Ctrl/Cmd +/-/0 shortcuts,
     // so the settings UI can stay in sync with the keyboard.
