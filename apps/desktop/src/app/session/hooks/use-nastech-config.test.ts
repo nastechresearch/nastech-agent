@@ -18,6 +18,8 @@ import {
   setDefaultReasoningEffort
 } from '@/store/session'
 
+import { deferred } from '../../../test/deferred'
+
 import { useNastechConfig } from './use-nastech-config'
 
 vi.mock('@/nastech', () => ({
@@ -26,16 +28,6 @@ vi.mock('@/nastech', () => ({
 }))
 
 const WORKSPACE_CWD_KEY = 'nastech.desktop.workspace-cwd'
-
-function deferred<T>() {
-  let resolve!: (value: T | PromiseLike<T>) => void
-
-  const promise = new Promise<T>(done => {
-    resolve = done
-  })
-
-  return { promise, resolve }
-}
 
 const mockConfig = (config: Record<string, unknown>) =>
   vi.mocked(getNastechConfig).mockResolvedValue(config as Awaited<ReturnType<typeof getNastechConfig>>)

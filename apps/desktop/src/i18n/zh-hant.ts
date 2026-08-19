@@ -52,6 +52,9 @@ export const zhHant = defineLocale({
     revealInSidebar: '在檔案樹中顯示',
     copyPath: '複製路徑',
     copyRelativePath: '複製相對路徑',
+    download: '下載',
+    downloadSaved: '已儲存',
+    downloadFailed: '下載失敗',
     rename: '重新命名…',
     delete: '刪除',
     renameTitle: '重新命名',
@@ -335,10 +338,12 @@ export const zhHant = defineLocale({
       terminalFontPreview: '字形預覽',
       terminalFontReset: '使用預設字型',
       translucencyTitle: '視窗透明',
-      translucencyDesc: '讓整個視窗透出桌面。僅支援 macOS 與 Windows。',
-      translucencyGlassDesc: '霧面玻璃：桌面以柔和模糊透出，文字保持清晰。僅支援 macOS。',
+      translucencyDesc: '讓整個視窗（包括文字）透出桌面。',
+      translucencyGlassDesc: '霧面玻璃：桌面以柔和模糊透出，文字保持清晰。',
       translucencyModeClear: '透明',
       translucencyModeGlass: '玻璃',
+      translucencyTintTitle: '色調',
+      translucencyFadeTitle: '淡出',
       translucencyFrostTitle: '磨砂質感',
       translucencyFrost: {
         'under-window': '深邃',
@@ -1426,6 +1431,8 @@ export const zhHant = defineLocale({
     allProfiles: '全部設定檔',
     showAllProfiles: '顯示全部設定檔',
     switchToProfile: name => `切換至 ${name}`,
+    switchToConnection: name => `切換至 ${name}`,
+    switchConnectionFailed: name => `無法連線至 ${name}`,
     manageProfiles: '管理設定檔…',
     actions: '動作',
     color: '顏色…',
@@ -2029,6 +2036,7 @@ export const zhHant = defineLocale({
       openPr: '開啟 PR',
       ghMissing: '安裝 GitHub CLI (gh) 並登入後可開啟 PR',
       agentShip: '讓 Nastech 提交並開 PR',
+      agentShipUnavailable: '擁有這些變更的對話目前不在畫面上。',
       agentShipPrompt: '檢查目前的變更，使用清晰的約定式提交訊息提交，推送分支，並開啟一個拉取請求。',
       newBranch: '新增分支',
       branchOffFrom: base => `從 ${base} 建立新分支`,
@@ -2571,6 +2579,30 @@ export const zhHant = defineLocale({
     notExpressible: '此排列互相咬合（風車形）——暫時無法表示為巢狀分割',
     zoneCount: count => `${count} 個區域`,
     tabCount: count => `${count} 個分頁`
+  },
+
+  contextMenu: {
+    link: {
+      openInApp: '在應用程式內瀏覽器中開啟',
+      openExternal: '在外部瀏覽器中開啟',
+      copyUrl: '複製 URL',
+      copyResolvedUrl: '複製解析後的 URL'
+    },
+    image: {
+      copyImage: '複製圖片',
+      copyImageAddress: '複製圖片位址',
+      saveImageAs: '圖片另存為…'
+    },
+    edit: {
+      cut: '剪下',
+      paste: '貼上',
+      selectAll: '全選',
+      addToDictionary: '新增至字典'
+    },
+    page: {
+      copyPageUrl: '複製頁面 URL',
+      inspectElement: '檢查元素'
+    }
   },
 
   assistant: {

@@ -25,7 +25,7 @@ test('BotRow keys the highlight off the focused profile, not the socket home', (
   const row = source.slice(rowStart, rowStart + 2000)
 
   assert.match(row, /const focusedProfile = useValue\(\$focusedBotProfile\)/)
-  assert.match(row, /const isActive = !bot\.remoteSource && bot\.name === focusedProfile/)
+  assert.match(row, /const isActive = !activeGroup && !bot\.remoteSource && bot\.name === focusedProfile/)
 })
 
 test('BotRow keeps turn-busy (work mood) a socket fact', () => {
@@ -48,6 +48,6 @@ test('RoutinesPane scopes the Cronjobs tile to the focused chat owner', () => {
   assert.ok(!/useValue\(host\.state\.profile\)/.test(pane), 'the tile must not read the socket-home atom directly')
 })
 
-test('the $selectedBot tracker listens on the focused profile ladder (unbind captured)', () => {
-  assert.match(source, /const unbindProfileListener = \$focusedBotProfile\.listen\(profile => \{/)
+test('the $selectedBot tracker binds the focused profile ladder (reseed + unbind captured)', () => {
+  assert.match(source, /const unbindProfileListener = bindProfileSync\(\$focusedBotProfile\)/)
 })

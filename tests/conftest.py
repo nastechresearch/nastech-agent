@@ -264,6 +264,12 @@ _NASTECH_BEHAVIORAL_VARS = frozenset({
     "NASTECH_VOICE",
     "NASTECH_VOICE_TTS",
     "NASTECH_YOLO_MODE",
+    # Injected into subprocess envs by the terminal tool (_make_run_env), so
+    # any test run launched FROM a Nastech agent session inherits them and
+    # nastech_constants home-resolution helpers prefer them over monkeypatched
+    # HOME (test_subprocess_home_isolation red locally, green on CI).
+    "NASTECH_REAL_HOME",
+    "TERMINAL_HOME_MODE",
     "NASTECH_INTERACTIVE",
     "NASTECH_QUIET",
     "NASTECH_TOOL_PROGRESS",
