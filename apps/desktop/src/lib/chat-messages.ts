@@ -91,6 +91,10 @@ export type GatewayEventPayload = {
   question?: string
   choices?: string[] | null
   multi_select?: boolean
+  // clarify.request batch form: questions replaces question/choices, and
+  // answers (qid → locked answer) rides along on reconnect replay only.
+  questions?: unknown
+  answers?: Record<string, unknown>
   // mcp.setup.request (setup_mcp tool — inline MCP consent card)
   server?: string
   action?: string
@@ -112,6 +116,8 @@ export type GatewayEventPayload = {
   kind?: string
   // pane.reveal (agent focusing a desktop pane via the focus_pane tool)
   pane?: string
+  // layout.apply (agent applying a layout preset via the apply_layout tool)
+  preset?: string
   // message.reaction (agent reacting via the react_to_message tool) — the
   // durable messages.id, that row's full reaction list after the write, and
   // the row's role so a live (not-yet-round-tripped) message can be matched.
@@ -249,6 +255,41 @@ export function collectUnspokenTurnSpeech(
 }
 
 const normalizeWs = (value: string) => value.replace(/\s+/g, ' ').trim()
+
+/**
+ * Drop earlier text parts that a later text part repeats verbatim (after
+ * whitespace normalization). Providers that continue a turn after a tool
+ * call sometimes re-send the previous assistant text as the next message's
+ * prefix (tool_calls row, then a stop row with identical prose) — the turn
+ * merge then holds the same paragraph twice and everything in it renders
+ * twice, most visibly ::preview frames. The LAST occurrence is the
+ * authoritative one; keep it.
+ */
+export function dedupeRepeatedTextInParts(parts: ChatMessagePart[]): ChatMessagePart[] {
+  const lastByText = new Map<string, number>()
+
+  parts.forEach((part, index) => {
+    if (part.type === 'text') {
+      const key = normalizeWs(part.text)
+
+      if (key) {
+        lastByText.set(key, index)
+      }
+    }
+  })
+
+  const dropped = parts.filter((part, index) => {
+    if (part.type !== 'text') {
+      return true
+    }
+
+    const key = normalizeWs(part.text)
+
+    return !key || lastByText.get(key) === index
+  })
+
+  return dropped.length === parts.length ? parts : dropped
+}
 
 /**
  * Merge the final assistant text into a message's parts.
@@ -580,16 +621,49 @@ function collectToolMatchValues(query: string, context: string, preview: string)
 
 function toolPayloadMatchValues(payload: GatewayEventPayload | undefined): string[] {
   const payloadArgs = liveToolArgs(payload)
+
   // `question` is clarify's identifying arg: a synthetic row hydrated from
   // `clarify.request` (a fresh request id) must correlate with the `tool.start`
   // row (the model's tool_call_id) so the two ids don't produce a duplicate
   // clarify card — same correlation ClarifyToolPending uses for request↔args.
   // `server` is setup_mcp's identifying arg, for the identical reason.
-  const query = firstStringField(payloadArgs, ['search_term', 'query', 'question', 'server', 'command', 'code', 'path'])
+  const query =
+    firstStringField(payloadArgs, ['search_term', 'query', 'question', 'server', 'command', 'code', 'path']) ||
+    batchClarifyMatchValue(payloadArgs.questions)
+
   const context = typeof payload?.context === 'string' ? payload.context.trim() : ''
   const preview = typeof payload?.preview === 'string' ? payload.preview.trim() : ''
 
   return collectToolMatchValues(query, context, preview)
+}
+
+/**
+ * The batch-clarify counterpart of the `question` correlation key: a batch
+ * payload has no top-level `question`, only `questions[]`, so without this
+ * the request row and the tool.start row never match and the card mounts
+ * twice. The joined per-question texts identify the batch the same way one
+ * question text identifies a single prompt. The `\u0000` separator cannot
+ * appear in real question text, so a batch key can never collide with a
+ * single-question key.
+ */
+function batchClarifyMatchValue(questions: unknown): string {
+  if (!Array.isArray(questions)) {
+    return ''
+  }
+
+  const texts = questions
+    .map(entry => {
+      if (!entry || typeof entry !== 'object') {
+        return ''
+      }
+
+      const question = (entry as Record<string, unknown>).question
+
+      return typeof question === 'string' ? question.trim() : ''
+    })
+    .filter(Boolean)
+
+  return texts.length > 0 ? texts.join('\u0000') : ''
 }
 
 function toolPartMatchValues(part: ChatMessagePart): string[] {
@@ -598,7 +672,11 @@ function toolPartMatchValues(part: ChatMessagePart): string[] {
   }
 
   const args = part.args as Record<string, unknown>
-  const query = firstStringField(args, ['search_term', 'query', 'question', 'server', 'command', 'code', 'path'])
+
+  const query =
+    firstStringField(args, ['search_term', 'query', 'question', 'server', 'command', 'code', 'path']) ||
+    batchClarifyMatchValue(args.questions)
+
   const context = typeof args.context === 'string' ? args.context.trim() : ''
   const preview = typeof args.preview === 'string' ? args.preview.trim() : ''
 
@@ -1242,7 +1320,9 @@ export function toChatMessages(messages: SessionMessage[]): ChatMessage[] {
   flushPendingTools(messages.length)
 
   const withoutGeneratedImageEchoes = result.map(message =>
-    message.role === 'assistant' ? { ...message, parts: dedupeGeneratedImageEchoesInParts(message.parts) } : message
+    message.role === 'assistant'
+      ? { ...message, parts: dedupeRepeatedTextInParts(dedupeGeneratedImageEchoesInParts(message.parts)) }
+      : message
   )
 
   return withUniqueToolCallIds(

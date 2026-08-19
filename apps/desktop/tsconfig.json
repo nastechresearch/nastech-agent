@@ -19,10 +19,10 @@
       "@/*": ["./src/*"],
       "@nastech/plugin-sdk": ["./src/sdk/index.ts"],
       "@nastech/shared/billing": ["../shared/src/billing-types.ts"],
+      "@nastech/shared/translucency": ["../shared/src/translucency.ts"],
       "@nastech/shared": ["../shared/src/index.ts"]
     }
   },
   "include": ["src", "../shared/src"],
-  "exclude": ["e2e", "electron", "playwright.config.ts"],
-  "references": [{ "path": "./tsconfig.electron.json" }]
+  "exclude": ["e2e", "electron", "playwright.config.ts"]
 }

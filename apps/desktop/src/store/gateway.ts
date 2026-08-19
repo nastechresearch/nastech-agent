@@ -2,8 +2,8 @@ import { type ConnectionState, type GatewayEvent, registryBackendScopeKey, resol
 import { atom } from 'nanostores'
 
 import type { NastechConnection } from '@/global'
-import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
 import { NastechGateway, setApiRequestConnection } from '@/nastech'
+import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
 import { markNativeNotifyBaseline } from '@/store/notify-baseline'
 import { setConnection, setGatewayState } from '@/store/session'
 
@@ -27,6 +27,15 @@ interface RegistryConfig {
   onEvent: (event: GatewayEvent) => void
   onActiveConnectionInvalidated?: (fallbackProfile: string, activationEpoch: number) => void
   onActiveConnectionChanged?: (connection: NastechConnection) => void
+  /**
+   * Fires whenever applyActive() moves the active route to a (possibly
+   * different) profile — including registry-internal eviction fallbacks
+   * (idle reap, connection removal, profile delete) that no renderer call
+   * initiated. Consumers mirror this into $activeGatewayProfile so the
+   * published profile can never diverge from the socket actually selected
+   * (#89206: the stale-profile split-brain that stranded bot wake-ups).
+   */
+  onActiveRouteChanged?: (profile: string) => void
 }
 
 // ── Secondary (pool) backends ──────────────────────────────────────────────
@@ -71,6 +80,7 @@ interface GatewayRegistryState {
   activationEpoch: number
   secondaries: Map<string, Secondary>
   $gateway: ReturnType<typeof atom<NastechGateway | null>>
+  $activeProfile: ReturnType<typeof atom<string>>
 }
 
 const STATE_KEY = Symbol.for('nastech.desktop.gatewayRegistryState')
@@ -86,7 +96,14 @@ function createRegistryState(): GatewayRegistryState {
     // The active gateway instance, exposed for inline message-stream
     // components (inline ClarifyTool, model overlays) that call gateway
     // methods without the instance threaded down through props.
-    $gateway: atom<NastechGateway | null>(null)
+    $gateway: atom<NastechGateway | null>(null),
+    // The PROFILE the active gateway is routed to (bare profile name, never a
+    // composite registry scope). Owned exclusively by applyActive() so the
+    // published profile can never diverge from the socket actually selected —
+    // the split-brain where an eviction re-pointed activeKey at the primary
+    // while the profile atom kept naming the evicted bot routed every
+    // "loki" session.resume to the default backend (#89206 wake failures).
+    $activeProfile: atom<string>('default')
   }
 }
 
@@ -114,6 +131,19 @@ const g = gatewayState()
 // reload of this module hands back the SAME atom subscribers are already wired
 // to. (A fresh `atom()` per reload would orphan existing subscriptions.)
 export const $gateway = g.$gateway
+
+// The profile the ACTIVE gateway is actually routed to. Registry-owned: the
+// only writer is applyActive(), which sets it in the same synchronous step
+// that selects the socket — so a consumer that reads this and then calls
+// activeGateway() always gets a matching (profile, socket) pair. Renderer
+// surfaces (store/profile.ts's $activeGatewayProfile) mirror this atom
+// instead of writing their own copy.
+export const $activeGatewayRoute = g.$activeProfile
+
+/** Bare profile name the active gateway serves (never a composite scope). */
+export function activeGatewayProfileKey(): string {
+  return g.$activeProfile.get()
+}
 
 export function configureGatewayRegistry(cfg: RegistryConfig): void {
   g.config = cfg
@@ -218,6 +248,19 @@ function applyActive(profile: string, activationEpoch: number): boolean {
   // through the same source of truth every activation path maintains here —
   // registry-agent activations included, not just profile switches.
   setApiRequestConnection(activeGatewayConnectionId())
+
+  // Publish the BARE profile this route serves, in the same synchronous step
+  // as the socket selection. activeKey may be a composite registry scope
+  // (connectionId::profile); consumers route RPCs by profile, so resolve it
+  // through the secondary's own record. This atom is the single source of
+  // truth for "which profile is the active gateway on" — every eviction /
+  // fallback path funnels through applyActive, so the published profile can
+  // never linger on a backend that is no longer selected (#89206).
+  const routeProfile =
+    g.activeKey === g.primaryProfile ? g.primaryProfile : (g.secondaries.get(g.activeKey)?.profile ?? g.primaryProfile)
+
+  g.$activeProfile.set(routeProfile)
+  g.config?.onActiveRouteChanged?.(routeProfile)
 
   return true
 }
@@ -325,12 +368,20 @@ async function reconnectSecondary(entry: Secondary): Promise<void> {
     entry.reconnectAttempt = 0
   } catch (error) {
     // The registry no longer knows this connection (removed while we were
-    // backing off). Retrying forever can never succeed — fail-stop: dispose
-    // the entry and evict it instead of an infinite 15s-cap retry loop.
-    if (entry.connectionId && isMissingConnectionError(error)) {
+    // backing off), or Electron's deletion guard reports the profile itself
+    // gone/mid-delete. Both are permanent for this scoped socket — retrying
+    // forever can never succeed and hammers the spawn guard every backoff
+    // tick (#88769). Fail-stop: dispose the entry and evict it instead of an
+    // infinite 15s-cap retry loop.
+    if ((entry.connectionId && isMissingConnectionError(error)) || isMissingProfileError(error)) {
       entry.reconnecting = false
       disposeSecondary(entry)
-      g.secondaries.delete(entry.scope)
+
+      if (g.secondaries.get(entry.scope) === entry) {
+        g.secondaries.delete(entry.scope)
+      }
+
+      restoreActiveToPrimaryIfEvicted()
 
       return
     }
@@ -351,6 +402,16 @@ function isMissingConnectionError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? '')
 
   return message.includes('No connection with id')
+}
+
+// Electron's spawn guard (assertLocalProfileCanStart) rejects with these when
+// the profile's directory is gone or its DELETE is still in flight. For a
+// renderer socket that condition is permanent: the backend it reconnects to
+// can never come back, and every retry hammers the guard (#88769).
+function isMissingProfileError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+
+  return message.includes('no longer exists') || message.includes('is being deleted')
 }
 
 function createSecondary(profile: string, connectionId: null | string = null): Secondary {
@@ -606,13 +667,27 @@ export async function openGatewayForAgent(connectionId: null | string, profile: 
   }
 }
 
-export async function ensureGatewayForAgent(connectionId: null | string, profile: string): Promise<boolean> {
+// The agent-scoped analogue of prepareGatewayForProfile, and the same
+// publication seam: dial the agent's socket without publishing anything, and
+// hand back the synchronous activation thunk. A null connection id falls
+// through to the profile seam, so both doors into an activation share one
+// atomicity contract instead of drifting apart; an explicit `local` id is a
+// registry identity (`registryBackendScopeKey` keeps its own scope for it) and
+// stays on the registry route.
+//
+// The thunk reports whether it actually published, preserving the `activated`
+// contract callers rely on: a source edit/remove can dispose this entry while
+// its dial is in flight, and a caller must be able to tell "switched" from
+// "the target stopped existing" rather than assume the former.
+export async function prepareGatewayForAgent(connectionId: null | string, profile: string): Promise<() => boolean> {
   const scope = registryBackendScopeKey(connectionId, profile)
 
+  // Genuinely-local scope: the profile door owns this route, so hand back ITS
+  // thunk unchanged. Wrapping it to return an unconditional `true` would have
+  // reported a rejected activation as a successful one and let the agent
+  // caller publish companion state for a switch that never happened.
   if (scope === normKey(profile)) {
-    await ensureGatewayForProfile(profile)
-
-    return true
+    return prepareGatewayForProfile(profile)
   }
 
   if (!window.nastechDesktop?.getConnectionFor) {
@@ -641,42 +716,54 @@ export async function ensureGatewayForAgent(connectionId: null | string, profile
     }
   }
 
-  // A source edit/remove may dispose this entry while its dial is still in
-  // flight. Only the still-registered, still-owned activation may publish.
-  const activated =
-    entry.wantOpen &&
-    g.secondaries.get(scope) === entry &&
-    Boolean(entry.connection) &&
-    applyActive(scope, activationEpoch)
+  // Bind the entry this dial settled on; see prepareGatewayForProfile.
+  const prepared = entry
 
-  if (activated && entry.connection) {
-    publishActiveConnection(entry.connection)
+  return () => {
+    // A source edit/remove may dispose this entry while its dial is still in
+    // flight. Only the still-registered, still-owned activation may publish.
+    const activated =
+      prepared.wantOpen &&
+      g.secondaries.get(scope) === prepared &&
+      Boolean(prepared.connection) &&
+      applyActive(scope, activationEpoch)
+
+    if (activated && prepared.connection) {
+      publishActiveConnection(prepared.connection)
+    }
+
+    return activated
   }
-
-  return activated
 }
 
-// Make `profile` the active gateway, lazily opening its socket if needed. The
-// primary is a no-op fast path. Background sockets are never closed here.
-export async function ensureGatewayForProfile(profile: string): Promise<void> {
+export async function ensureGatewayForAgent(connectionId: null | string, profile: string): Promise<boolean> {
+  return (await prepareGatewayForAgent(connectionId, profile))()
+}
+
+// Open `profile`'s socket if needed and hand back a synchronous activation
+// thunk — the publication seam for atomic profile switches. The caller invokes
+// the thunk in the same synchronous frame as its own atom writes (profile
+// pointer, connection descriptor), so no subscriber can observe the active
+// gateway pointing at one backend while companion state still describes
+// another. Nothing is published until the thunk runs.
+export async function prepareGatewayForProfile(profile: string): Promise<() => boolean> {
   const key = normKey(profile)
   const activationEpoch = beginGatewayActivation()
 
   if (key === g.primaryProfile) {
-    applyActive(key, activationEpoch)
-
-    return
+    return () => applyActive(key, activationEpoch)
   }
 
   // Global-remote share (routing case 3): one remote host serves every
   // profile through the PRIMARY socket, scoped per request. Activate the
   // primary instead of dialing a doomed duplicate socket at the same
-  // descriptor — $activeGatewayProfile still moves to `key`, so request
-  // scoping and profile-aware surfaces behave identically.
+  // descriptor - $activeGatewayProfile still moves to `key`, so request
+  // scoping and profile-aware surfaces behave identically. Checked BEFORE
+  // createSecondary so a shared-remote profile never mints a secondary
+  // entry, and returned as a thunk like every other path here so this
+  // switch publishes as atomically as a dedicated-socket one.
   if (await sharedPrimaryRoute(key)) {
-    applyActive(g.primaryProfile, activationEpoch)
-
-    return
+    return () => applyActive(g.primaryProfile, activationEpoch)
   }
 
   let entry = g.secondaries.get(key)
@@ -699,9 +786,34 @@ export async function ensureGatewayForProfile(profile: string): Promise<void> {
     }
   }
 
-  if (entry.wantOpen && g.secondaries.get(key) === entry && applyActive(key, activationEpoch) && entry.connection) {
-    publishActiveConnection(entry.connection)
+  // Bind the entry the await settled on. `g.secondaries.get(key)` can be a
+  // DIFFERENT object by the time the thunk runs (a teardown + redial between
+  // prepare and publish), and publishing that one's descriptor would be the
+  // very mismatch this seam exists to prevent, so the identity re-check below
+  // compares against this exact entry.
+  const prepared = entry
+
+  // Reports whether the ACTIVATION was accepted, which is a different question
+  // from whether a descriptor was published: an accepted activation with no
+  // cached connection still moved the gateway, so the caller must still move
+  // its companion state. Only a rejected activation (disposed entry, or an
+  // epoch superseded by a newer switch while this one was dialing) must leave
+  // every companion store alone.
+  return () => {
+    const activated = prepared.wantOpen && g.secondaries.get(key) === prepared && applyActive(key, activationEpoch)
+
+    if (activated && prepared.connection) {
+      publishActiveConnection(prepared.connection)
+    }
+
+    return activated
   }
+}
+
+// Make `profile` the active gateway, lazily opening its socket if needed. The
+// primary is a no-op fast path. Background sockets are never closed here.
+export async function ensureGatewayForProfile(profile: string): Promise<void> {
+  ;(await prepareGatewayForProfile(profile))()
 }
 
 // Reconnect the active gateway after a transient request failure. Primary
@@ -721,8 +833,29 @@ export async function ensureActiveGatewayOpen(): Promise<NastechGateway | null> 
     await reconnectSecondary(entry)
   }
 
+  if (!isOpen(entry.gateway)) {
+    // A remote/registry secondary can still be ACTIVATING (backend waking,
+    // socket dialing). Failing instantly turned a routine cold start into
+    // "Nastech gateway is not connected" on the Sessions `+` action (#88880).
+    // Wait a bounded beat for the in-flight activation instead of erroring;
+    // a genuinely dead gateway still returns null when the window closes.
+    const deadline = Date.now() + ACTIVE_GATEWAY_OPEN_WAIT_MS
+
+    while (Date.now() < deadline && entry.wantOpen && g.secondaries.get(g.activeKey) === entry) {
+      if (isOpen(entry.gateway)) {
+        break
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 250))
+    }
+  }
+
   return isOpen(entry.gateway) ? entry.gateway : null
 }
+
+// How long ensureActiveGatewayOpen waits out an in-flight secondary
+// activation before reporting the gateway as unavailable.
+const ACTIVE_GATEWAY_OPEN_WAIT_MS = 8_000
 
 // Wake signal (sleep/network/visibility): nudge every live secondary back open.
 export function reconnectSecondaryGateways(): void {
@@ -804,6 +937,43 @@ export function closeSecondaryGateways(): void {
 
   g.secondaries.clear()
   restoreActiveToPrimaryIfEvicted()
+}
+
+// A local profile can have two renderer-owned sockets: the legacy bare
+// profile scope and the explicit `local` registry scope. Profile deletion
+// stops their Electron backend processes, but a retained Secondary otherwise
+// sees that shutdown as a transient disconnect and starts its reconnect loop,
+// resurrecting the backend that was just deleted. Retire both local scopes
+// before the DELETE request while preserving same-named agents on remote,
+// cloud, or SSH connections.
+export function retireLocalProfileGateways(profile: string): void {
+  const name = String(profile || '').trim()
+
+  if (!name) {
+    return
+  }
+
+  const key = normKey(name)
+  const scopes = new Set([key, registryBackendScopeKey('local', key)])
+  let activeInvalidated = false
+
+  for (const scope of scopes) {
+    const entry = g.secondaries.get(scope)
+
+    if (!entry) {
+      continue
+    }
+
+    activeInvalidated ||= scope === g.activeKey
+    disposeSecondary(entry)
+    g.secondaries.delete(scope)
+  }
+
+  restoreActiveToPrimaryIfEvicted()
+
+  if (activeInvalidated) {
+    g.config?.onActiveConnectionInvalidated?.(g.primaryProfile, gatewayActivationEpoch())
+  }
 }
 
 // Registry lifecycle: a connection was removed or materially edited. Dispose

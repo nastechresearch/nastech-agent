@@ -207,6 +207,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   setPreviewShortcutActive: active => ipcRenderer.send('nastech:previewShortcutActive', Boolean(active)),
   openExternal: url => ipcRenderer.invoke('nastech:openExternal', url),
   openPreviewInBrowser: url => ipcRenderer.invoke('nastech:openPreviewInBrowser', url),
+  reachPreviewUrl: url => ipcRenderer.invoke('nastech:preview:reach', url),
   fetchLinkTitle: url => ipcRenderer.invoke('nastech:fetchLinkTitle', url),
   sanitizeWorkspaceCwd: cwd => ipcRenderer.invoke('nastech:workspace:sanitize', cwd),
   settings: {
@@ -297,6 +298,12 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
 
     return () => ipcRenderer.removeListener('nastech:close-preview-requested', listener)
   },
+  onPreviewNav: callback => {
+    const listener = (_event, command) => callback(command)
+    ipcRenderer.on('nastech:preview-nav', listener)
+
+    return () => ipcRenderer.removeListener('nastech:preview-nav', listener)
+  },
   onOpenFolderRequested: callback => {
     const listener = () => callback()
     ipcRenderer.on('nastech:open-folder-requested', listener)
@@ -316,6 +323,8 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     return () => ipcRenderer.removeListener('nastech:deep-link', listener)
   },
   signalDeepLinkReady: () => ipcRenderer.invoke('nastech:deep-link-ready'),
+  probePluginRepo: payload => ipcRenderer.invoke('nastech:plugin:probe', payload),
+  installDesktopPlugin: payload => ipcRenderer.invoke('nastech:plugin:installDesktop', payload),
   onWindowStateChanged: callback => {
     const listener = (_event, payload) => callback(payload)
     ipcRenderer.on('nastech:window-state-changed', listener)
@@ -333,6 +342,12 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     ipcRenderer.on('nastech:notification-action', listener)
 
     return () => ipcRenderer.removeListener('nastech:notification-action', listener)
+  },
+  onNotificationActivate: callback => {
+    const listener = (_event, payload) => callback(payload)
+    ipcRenderer.on('nastech:notification-activate', listener)
+
+    return () => ipcRenderer.removeListener('nastech:notification-activate', listener)
   },
   onPreviewFileChanged: callback => {
     const listener = (_event, payload) => callback(payload)

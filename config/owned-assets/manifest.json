@@ -22,6 +22,8 @@
   "apps/desktop/public/nastech.png": "desktop/nastech.png",
   "apps/desktop/src/components/pet/pet-egg-sheet.png": "pet/pet-egg-sheet.png",
   "assets/banner.png": "assets/banner.png",
+  "plugins/nastech-achievements/docs/assets/achievements-dashboard-hd.png": "achievements-dashboard-hd.png",
+  "plugins/nastech-achievements/docs/assets/achievements-tier-showcase-hd.png": "achievements-tier-showcase-hd.png",
   "web/public/favicon.ico": "web/favicon.ico",
   "website/static/img/apple-touch-icon.png": "website/apple-touch-icon.png",
   "website/static/img/favicon-16x16.png": "website/favicon-16x16.png",

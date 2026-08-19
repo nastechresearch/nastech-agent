@@ -1,4 +1,5 @@
 import type { GatewayWsUrlResult } from '@nastech/shared'
+import type { TranslucencyState } from '@nastech/shared/translucency'
 
 import type { WakeIndicatorState } from './lib/wake-indicator'
 import type {
@@ -226,7 +227,7 @@ declare global {
       setActiveWork?: (payload: NastechActiveWork) => void
       setTitleBarTheme?: (payload: NastechTitleBarTheme) => void
       setNativeTheme?: (mode: 'dark' | 'light' | 'system') => void
-      setTranslucency?: (payload: { intensity: number }) => void
+      setTranslucency?: (payload: TranslucencyState) => void
       setKeepAwake?: (on: boolean) => void
       setDisableF12?: (blocked: boolean) => void
       setPreviewShortcutActive?: (active: boolean) => void
@@ -349,16 +350,37 @@ declare global {
         start: (options?: { cols?: number; cwd?: string; rows?: number }) => Promise<NastechTerminalSession>
         write: (id: string, data: string) => Promise<boolean>
       }
+      reachPreviewUrl?: (url: string) => Promise<string>
       onClosePreviewRequested?: (callback: () => void) => () => void
+      onPreviewNav?: (callback: (command: 'back' | 'forward' | 'reload') => void) => () => void
       onOpenFolderRequested?: (callback: () => void) => () => void
       onOpenUpdatesRequested?: (callback: () => void) => () => void
       onDeepLink?: (
         callback: (payload: { kind: string; name: string; params: Record<string, string> }) => void
       ) => () => void
       signalDeepLinkReady?: () => Promise<{ ok: boolean }>
+      probePluginRepo?: (payload: { identifier?: string; repo?: string }) => Promise<{
+        ok: boolean
+        agent: boolean
+        desktop: boolean
+        agentName?: string | null
+        desktopName?: string | null
+        warnings?: string[]
+        insecure?: boolean
+        error?: string
+      }>
+      installDesktopPlugin?: (payload: {
+        identifier?: string
+        repo?: string
+        force?: boolean
+      }) => Promise<{ ok: boolean; pluginName?: string; path?: string; error?: string }>
       onWindowStateChanged?: (callback: (payload: NastechWindowState) => void) => () => void
       onFocusSession?: (callback: (sessionId: string) => void) => () => void
       onNotificationAction?: (callback: (payload: { actionId: string; sessionId?: string }) => void) => () => void
+      /** Plugin (and other session-less) notification body/action activation. */
+      onNotificationActivate?: (
+        callback: (payload: { actionId?: string; activate?: string; notifyId?: string; tag?: string }) => void
+      ) => () => void
       onPreviewFileChanged: (callback: (payload: NastechPreviewFileChanged) => void) => () => void
       onBackendExit: (callback: (payload: BackendExit) => void) => () => void
       // Soft gateway-mode apply: primary backend was torn down without a window
@@ -450,6 +472,11 @@ export interface DesktopVersionInfo {
   nodeVersion: string
   platform: string
   nastechRoot: string
+  /** True when the running renderer bundle predates desktop changes in the
+   *  installed source tree (runtime updated, app binary not rebuilt/swapped). */
+  bundleOutOfSync?: boolean
+  /** Commits under apps/desktop/ the running bundle is missing (null unknown). */
+  bundleCommitsBehind?: null | number
 }
 
 export type DesktopUninstallMode = 'full' | 'gui' | 'lite'
@@ -612,8 +639,9 @@ export interface NastechConnection {
   // Set for pool (non-primary) backends so the renderer knows which profile a
   // connection belongs to.
   profile?: string
-  // The registry connection this descriptor was resolved through (absent on
-  // legacy v1/primary paths). Set by getConnectionFor.
+  // The registry connection this descriptor resolves to. Registry-scoped
+  // secondaries carry it directly; legacy primary remotes preserve it from
+  // their selected stored route before dialing.
   connectionId?: string
   // True only when `profile` is a request scope on the shared primary backend.
   // A pooled backend also carries `profile`, so presence alone cannot identify
@@ -758,6 +786,11 @@ export interface DesktopRegistryConnection {
   // header VALUES are secrets and never cross the IPC boundary. Optional so
   // fixtures/older payloads without the field remain valid.
   headerNames?: string[]
+  // Last-known stable backend identity (the /api/status `install_id`).
+  // Present once a roster enumeration or connection test has seen it; two
+  // connections sharing it are one physical backend registered under two
+  // addresses (display-only "Same backend as …" hint in Settings).
+  installId?: string
 }
 
 export interface DesktopConnectionsRegistry {
@@ -812,6 +845,8 @@ export interface DesktopAgentRoster {
     kind: DesktopConnectionKind
     reachable: boolean
     error?: string
+    // Stable backend identity (/api/status install_id) when known.
+    installId?: string
   }[]
 }
 
@@ -1036,7 +1071,13 @@ export interface NastechNotification {
   sessionId?: string
   /** Dedupe discriminator for session-less notifications (e.g. plugin id). */
   tag?: string
-  actions?: { id: string; text: string }[]
+  /** Absolute icon path for Electron `Notification`. */
+  icon?: string
+  /** Resolved hash-router path opened on body click (plugin / deeplink-compatible). */
+  activate?: string
+  /** Renderer handle for onActivate / onAction callbacks. */
+  notifyId?: string
+  actions?: { id: string; text: string; activate?: string }[]
 }
 
 export interface NastechPreviewTarget {

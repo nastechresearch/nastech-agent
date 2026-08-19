@@ -15,6 +15,22 @@ import { Switch } from '@/components/ui/switch'
 import { TextTab } from '@/components/ui/text-tab'
 import { Textarea } from '@/components/ui/textarea'
 import { Tip } from '@/components/ui/tooltip'
+import {
+  authMcpServer,
+  getActionStatus,
+  getLogs,
+  getMcpCatalog,
+  getMcpOAuthFlow,
+  getUsageAnalytics,
+  type NastechGateway,
+  installMcpCatalogEntry,
+  type McpCatalogEntry,
+  type McpTestResult,
+  type ProfileScope,
+  profileScopeKey,
+  saveMcpServers,
+  testMcpServer
+} from '@/nastech'
 import { type Translations, useI18n } from '@/i18n'
 import { compactNumber } from '@/lib/format'
 import { brandFor, brandGlyphStyle } from '@/lib/mcp-brands'
@@ -24,20 +40,6 @@ import { type McpImportEntry, parseMcpImport } from '@/lib/mcp-import'
 import { NEEDS_AUTH_RE, PROBE_TTL_MS, probeCache, probeKey, serverFingerprint } from '@/lib/mcp-probe-cache'
 import { countEnabledTools, isToolEnabled, toggleToolInServer } from '@/lib/mcp-tool-filter'
 import { cn } from '@/lib/utils'
-import {
-  authMcpServer,
-  getActionStatus,
-  getLogs,
-  getMcpCatalog,
-  getMcpOAuthFlow,
-  getUsageAnalytics,
-  installMcpCatalogEntry,
-  type McpCatalogEntry,
-  type McpTestResult,
-  type NastechGateway,
-  saveMcpServers,
-  testMcpServer
-} from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $activeSessionId } from '@/store/session'
@@ -130,7 +132,7 @@ interface ServerCost {
 const MCP_USAGE_TTL_MS = 10 * 60_000
 const mcpUsageCache = new Map<string, { at: number; value: Record<string, number> }>()
 
-async function loadMcpUsage(scopeKey: string, scopeProfile: null | string): Promise<null | Record<string, number>> {
+async function loadMcpUsage(scopeKey: string, scopeProfile: ProfileScope): Promise<null | Record<string, number>> {
   const cached = mcpUsageCache.get(scopeKey)
 
   if (cached && Date.now() - cached.at < MCP_USAGE_TTL_MS) {
@@ -367,7 +369,7 @@ function scanServerBlocks(text: string): ServerBlock[] {
   return blocks
 }
 
-export function McpTab({ gateway, profile }: { gateway: NastechGateway | null; profile?: null | string }) {
+export function McpTab({ gateway, profile }: { gateway: NastechGateway | null; profile?: ProfileScope }) {
   const { t } = useI18n()
   const m = t.settings.mcp
   const activeSessionId = useStore($activeSessionId)
@@ -379,7 +381,7 @@ export function McpTab({ gateway, profile }: { gateway: NastechGateway | null; p
   // profile's servers (AGENTS.md scope-in-key). When no override is passed this
   // resolves to $activeGatewayProfile, so behavior is identical to before.
   const appProfile = useStore($activeGatewayProfile)
-  const scopeProfileKey = normalizeProfileKey(profile ?? appProfile)
+  const scopeProfileKey = profile != null ? profileScopeKey(profile) : normalizeProfileKey(appProfile)
 
   // Shared config cache (see use-config-record): revisiting the tab paints the
   // cached record instantly; mutations write through `setConfig` and stay
@@ -1551,7 +1553,7 @@ function McpCatalog({
   entries: McpCatalogEntry[]
   loading: boolean
   onInstalled: () => void
-  profile?: null | string
+  profile?: ProfileScope
 }) {
   const { t } = useI18n()
   const m = t.settings.mcp

@@ -820,7 +820,7 @@ class GatewaySlashCommandsMixin:
         # Resolve current-context size + window with cascading fallbacks.
         #   used  : compressor.last_prompt_tokens → SessionStore.last_prompt_tokens
         #   model : agent.model → SessionDB row model
-        #   window: compressor.context_length → get_model_context_length(model)
+        #   window: compressor.context_length → effective gateway model route
         used = 0
         context_length = 0
         if ctx is not None:
@@ -839,6 +839,26 @@ class GatewaySlashCommandsMixin:
                     model_name = _clean_str(row.get("model", ""))
             except Exception:
                 model_name = ""
+
+        if not context_length:
+            try:
+                from gateway.run import (
+                    _profile_runtime_scope,
+                    _resolve_gateway_model_context,
+                )
+
+                def _resolve_nonresident_context():
+                    if getattr(getattr(self, "config", None), "multiplex_profiles", False):
+                        profile_home = self._resolve_profile_home_for_source(source)
+                        with _profile_runtime_scope(profile_home):
+                            return _resolve_gateway_model_context(model_name or None)
+                    return _resolve_gateway_model_context(model_name or None)
+
+                resolved = await asyncio.to_thread(_resolve_nonresident_context)
+                model_name = model_name or resolved.model
+                context_length = _int_value(resolved.context_length)
+            except Exception:
+                context_length = 0
 
         if not context_length and model_name:
             try:
@@ -2709,6 +2729,27 @@ class GatewaySlashCommandsMixin:
             state = mgr.resume()
             if state is None:
                 return t("gateway.goal.no_resume")
+            # Resume must restart work, not just flip persisted state
+            # (#75362): enqueue the canonical continuation through the
+            # adapter FIFO — the same path the post-turn judge uses — so
+            # the next turn fires as soon as this reply is delivered. A
+            # real user message already queued still preempts naturally,
+            # and pause/clear's stale-continuation cleanup recognizes it.
+            prompt = mgr.next_continuation_prompt()
+            try:
+                adapter = self.adapters.get(event.source.platform) if event.source else None
+                _quick_key = self._session_key_for_source(event.source) if event.source else None
+                if prompt and adapter and _quick_key:
+                    cont_event = MessageEvent(
+                        text=prompt,
+                        message_type=MessageType.TEXT,
+                        source=event.source,
+                        message_id=None,
+                        channel_prompt=None,
+                    )
+                    self._enqueue_fifo(_quick_key, cont_event, adapter)
+            except Exception as exc:
+                logger.debug("goal resume: continuation enqueue failed: %s", exc)
             return t("gateway.goal.resumed", goal=state.goal)
 
         if lower in {"clear", "stop", "done"}:
@@ -3018,6 +3059,10 @@ class GatewaySlashCommandsMixin:
         except Exception as exc:
             logger.debug("loop manager unavailable: %s", exc)
             return None, None
+        # Warm the SessionDB cache off-loop. A cold cache drops the first
+        # /loop write while the reply claims the loop was set (same class
+        # as the /goal false-ack fix).
+        await self._warm_goals_session_db("loop manager")
         try:
             session_entry = await self.async_session_store.get_or_create_session(event.source)
         except Exception:
@@ -3297,6 +3342,16 @@ class GatewaySlashCommandsMixin:
         cwd = os.getenv("TERMINAL_CWD", str(Path.home()))
         arg = event.get_command_args().strip()
 
+        # --all / --force: classic full restore, overwriting user edits too.
+        restore_all = False
+        arg_parts = []
+        for tok in arg.split():
+            if tok.lower() in ("--all", "--force"):
+                restore_all = True
+            else:
+                arg_parts.append(tok)
+        arg = " ".join(arg_parts)
+
         if not arg:
             checkpoints = mgr.list_checkpoints(cwd)
             return format_checkpoint_list(checkpoints, cwd)
@@ -3316,13 +3371,22 @@ class GatewaySlashCommandsMixin:
         except ValueError:
             target_hash = arg
 
-        result = mgr.restore(cwd, target_hash)
+        result = mgr.restore(cwd, target_hash, safe=not restore_all)
         if result["success"]:
-            return t(
+            msg = t(
                 "gateway.rollback.restored",
                 hash=result["restored_to"],
                 reason=result["reason"],
             )
+            skipped = result.get("skipped_user_edits") or []
+            if skipped:
+                shown = ", ".join(skipped[:5])
+                more = f" (+{len(skipped) - 5})" if len(skipped) > 5 else ""
+                msg += "\n" + t(
+                    "gateway.rollback.kept_user_edits",
+                    files=shown + more,
+                )
+            return msg
         return t("gateway.rollback.restore_failed", error=result["error"])
 
     async def _handle_diff_command(self, event: MessageEvent) -> str:

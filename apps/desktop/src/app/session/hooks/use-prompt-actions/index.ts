@@ -1,8 +1,9 @@
 import type { AppendMessage, ThreadMessage } from '@assistant-ui/react'
-import { useStore } from '@nanostores/react'
 import { JsonRpcGatewayError } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react'
 
+import { transcribeAudio } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { stripAnsi } from '@/lib/ansi'
 import { type ChatMessage, textPart } from '@/lib/chat-messages'
@@ -11,7 +12,6 @@ import { sanitizeComposerInput } from '@/lib/composer-input-sanitize'
 import { triggerHaptic } from '@/lib/haptics'
 import { setMutableRef } from '@/lib/mutable-ref'
 import { normalize } from '@/lib/text'
-import { transcribeAudio } from '@/nastech'
 import { clearClarifyRequest } from '@/store/clarify'
 import {
   $composerAttachments,
@@ -891,7 +891,9 @@ export function usePromptActions({
         updateSessionState(sessionId, state => ({
           ...state,
           busy: false,
-          awaitingResponse: false
+          awaitingResponse: false,
+          turnLive: false,
+          turnStartedAt: null
         }))
         notifyError(err, copy.regenerateFailed)
       }
@@ -965,6 +967,8 @@ export function usePromptActions({
           ...state,
           busy: false,
           awaitingResponse: false,
+          turnLive: false,
+          turnStartedAt: null,
           messages
         }))
         throw err
@@ -1086,7 +1090,14 @@ export function usePromptActions({
         setMutableRef(busyRef, false)
         setBusy(false)
         setAwaitingResponse(false)
-        updateSessionState(sessionId, state => ({ ...state, busy: false, awaitingResponse: false, messages }))
+        updateSessionState(sessionId, state => ({
+          ...state,
+          busy: false,
+          awaitingResponse: false,
+          turnLive: false,
+          turnStartedAt: null,
+          messages
+        }))
         notifyError(surfaced, unavailable ? copy.editTurnUnavailable : copy.editFailed)
       }
     },

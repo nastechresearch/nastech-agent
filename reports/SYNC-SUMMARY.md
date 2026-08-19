@@ -6,85 +6,118 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 86 commits affecting 1201 files.
-- **Source revision:** `d66341ab2863`.
-- **Previous source revision:** `7095e23eb206`.
+- **Changes incorporated:** 513 commits affecting 1249 files.
+- **Source revision:** `5dd15872a687`.
+- **Previous source revision:** `d66341ab2863`.
 
 ## Technical coverage
 
-- **.gitignore/:** 1 changed files.
-- **agent/:** 15 changed files.
-- **apps/:** 212 changed files.
-- **cli-config.yaml.example/:** 1 changed files.
-- **contributors/:** 5 changed files.
-- **gateway/:** 7 changed files.
-- **hermes_cli/:** 26 changed files.
-- **hermes_state.py/:** 4 changed files.
-- **plugins/:** 1 changed files.
-- **pyproject.toml/:** 1 changed files.
-- **run_agent.py/:** 4 changed files.
+- **.github/:** 10 changed files.
+- **acp_adapter/:** 7 changed files.
+- **agent/:** 53 changed files.
+- **apps/:** 850 changed files.
+- **cli-config.yaml.example/:** 2 changed files.
+- **cli.py/:** 9 changed files.
+- **contributors/:** 33 changed files.
+- **cron/:** 30 changed files.
+- **evals/:** 12 changed files.
+- **flake.lock/:** 1 changed files.
+- **flake.nix/:** 1 changed files.
+- **gateway/:** 24 changed files.
+- **locales/:** 34 changed files.
+- **mcp_serve.py/:** 1 changed files.
+- **nastech_cli/:** 141 changed files.
+- **nastech_state.py/:** 1 changed files.
+- **nastech_state_schema.py/:** 2 changed files.
+- **nix/:** 5 changed files.
+- **optional-skills/:** 7 changed files.
+- **package-lock.json/:** 1 changed files.
+- **plugins/:** 29 changed files.
+- **providers/:** 1 changed files.
+- **pyproject.toml/:** 3 changed files.
+- **run_agent.py/:** 3 changed files.
 - **scripts/:** 3 changed files.
-- **skills/:** 2 changed files.
-- **tests/:** 60 changed files.
-- **tools/:** 23 changed files.
-- **tui_gateway/:** 4 changed files.
-- **ui-tui/:** 13 changed files.
-- **uv.lock/:** 1 changed files.
-- **website/:** 16 changed files.
+- **skills/:** 4 changed files.
+- **tests/:** 277 changed files.
+- **tools/:** 81 changed files.
+- **tui_gateway/:** 12 changed files.
+- **ui-tui/:** 37 changed files.
+- **uv.lock/:** 3 changed files.
+- **web/:** 19 changed files.
+- **website/:** 96 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(delegation): record model/provider in live-transcript manifest (#telemetry)
-- feat(desktop): carry remote gateway headers through the connections registry, test probes, and Settings UI
-- feat(desktop): support remote gateway headers
-- feat(desktop): add status bar reconnect for offline gateways
-- feat(state): support the context-manager protocol on SessionDB
-- feat: raise Codex OAuth context to 900K for gpt-5.6 family and gpt-5.4 (subscription 1M rollout)
-- feat: sync bundled Bot Mode with multi-source roster (Nastech-Bot-Mode#68)
-- feat(agent): one-time protocol upgrade for legacy Bot Chat sessions
-- feat(agent): capability-refresh + timeless prompts for eternal Bot Chat sessions
-- feat(agent): core Bot Mode teammate protocol — stable-tier prompt section
-- feat(desktop): bundle Bot Mode (nastech-bots) as a built-in, default-on plugin
-- feat(desktop): expose connection-aware plugin routing
-- 2 additional new capabilities updates are included in this verified snapshot.
+- feat(desktop): agent-applied layout presets — apply_layout joins the desktop_ui toolset
+- feat(tui): restore the earlier answer when a batch question is re-visited
+- feat(tui): Tab cycles batch clarify questions directly
+- feat(cli): batch clarify back-navigation and answer visibility
+- feat(desktop): single confirm for the batch clarify card
+- feat(cli): compact multi-question clarify panel
+- feat(tui): compact multi-question clarify prompt
+- feat(desktop): multi-question clarify card with per-question locks
+- feat(tui_gateway): batch clarify bridge with per-question locks
+- feat(clarify): accept a questions batch in the clarify tool core
+- feat(ci): add nix flake check as unrequired job
+- feat(nix): home-manager module, shared with the NixOS module
+- 80 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(status): strict writer-identity ownership for aggregated platform entries (OOF-3)
-- fix(status): freshness-filter aggregated per-profile platform entries (OOF-3)
-- fix(status): aggregate independent per-profile gateway failures; harden key filter (OOF-3)
-- fix(gateway): surface multiplex profile failures (OOF-3)
-- fix(gateway): attribute scoped credential lock conflicts to the owning profile (OOF-3)
-- fix(desktop): self-heal dropped SSH/HTTP registered remote connections
-- fix(gateway): scope slash.exec's skill-command check to the session's profile
-- fix(skills): rescan skill commands cache when active profile changes
-- fix(gateway): accept CJK full-width punctuation as MEDIA path terminators
-- fix(gateway): ignore invalid managed Node directories
-- fix(state): avoid overlapping context manager change
-- fix(state): release abandoned session database handles
-- 42 additional reliability and fixes updates are included in this verified snapshot.
+- fix: never evict pinned CIMD sockets from the callback reservation FIFO
+- fix(goals): /goal resume actually restarts work after budget exhaustion
+- fix(desktop): /goal clear removes the Goal paused card immediately
+- fix(desktop): Bots sidebar highlight and Cronjobs tile now follow the chat on screen
+- fix(desktop): merge duplicate batch clarify cards
+- fix(nix): let the install-method stamp name a home-manager install
+- fix(aux): retry once without response_format when a provider rejects it
+- fix(aux): translate top-level response_format kwarg on the Anthropic adapter
+- fix(aux): translate response_format to output_config.format for anthropic transport
+- fix(desktop): hide close affordance on navigation tabs
+- fix(gateway): real user text stays clean in the transcript on resume-pending turns (#86580)
+- fix(gateway): persist resume recovery notes
+- 220 additional reliability and fixes updates are included in this verified snapshot.
+
+### Performance
+
+- perf(desktop): durable transcript-tail cache — bot wakes paint at ~0ms
+- perf(desktop): Bot Mode wakes paint-first — transcript paint completes the wake instead of the full runtime boot (#89206 class)
+- perf(desktop): stop the translucency slider thrashing the main process
+- perf(cron): skip run_claim clear for recurring jobs on dispatch failure
 
 ### Documentation
 
-- docs(computer-use): note driver contract auto-repair at update and runtime
+- docs(clarify): advertise the questions batch in the tool description
+- docs: describe multi-question clarify batches per surface
+- docs: document one-click plugin install links (nastech://plugin/install)
+- docs(desktop): state one fallthrough contract at the agent seam
+- docs(teams-pipeline): document fetch --organizer-user-id
+- docs: escape backslash in cli-symbols glossary so MDX compiles
+- docs: add CLI symbols glossary reference page
+- docs(relay): clarify timeout payload isolation
+- docs(desktop): document the tabbed SESSIONS|BOTS sidebar, Bots-mode-only Cronjobs pane, per-bot Hide/Unhide, and host.paneVisibility (#88788, #88800)
+- docs: reflect the unified Gateways page, settings profile scope, plugins cleanup, Bot Mode group rows, and host.openWorkspace
+- docs(termux): document community pkg distribution
+- docs(sdk): document profiles.list preferred_session_ids lookup
+- 9 additional documentation updates are included in this verified snapshot.
 
 ### Improvements
 
-- chore: map contributor email for tigercraft4 (PR #74468 salvage)
-- fmt(js): `npm run fix` on merge (#88079)
-- chore: map contributor email for attribution audit
-- fmt(js): `npm run fix` on merge (#88016)
-- test(desktop): steer suite drives the real redirectPrompt path; hydration fixture carries durable row shape
-- test(desktop): harden steer-order suite against fake-timer id collisions
-- test(desktop): pin steered-turn transcript order end-to-end
-- fmt(js): `npm run fix` on merge (#88014)
-- chore: add contributor email mapping for addelh
-- fmt(js): `npm run fix` on merge (#87880)
-- chore: map contributor email for xkam7ar
-- Revert "fix(agent): harden canonical tool call deduplication"
-- 5 additional improvements updates are included in this verified snapshot.
+- MCP CIMD auth
+- fmt(js): `npm run fix` on merge (#89619)
+- test(desktop): batch clarify E2E spec and mock trigger
+- refactor(ci): hoist docker detect-changes into the .py file
+- fmt(js): `npm run fix` on merge (#89580)
+- chore: remove case-colliding agent@Agents-Mac-mini.local contributor entries
+- test: shrink the goal-DB timing tests to sub-second wall time
+- refactor(goals): share one dropped-write warning across managers
+- refactor(desktop): wrap the prepareGatewayForAgent signature at the project width
+- fmt(js): `npm run fix` on merge (#89501)
+- fmt(js): `npm run fix` on merge (#89492)
+- fmt(js): `npm run fix` on merge (#89485)
+- 152 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

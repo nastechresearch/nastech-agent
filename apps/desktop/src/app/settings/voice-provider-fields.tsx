@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { useI18n } from '@/i18n'
 import { getElevenLabsVoices, getNastechConfigSchema, saveNastechConfig } from '@/nastech'
+import { useI18n } from '@/i18n'
 import { notifyError } from '@/store/notifications'
 import type { NastechConfigRecord } from '@/types/nastech'
 
@@ -37,7 +37,7 @@ export function VoiceProviderFields({ section, providerKey }: { section: 'tts' |
 
   const { data: schemaResponse } = useQuery({
     queryKey: ['nastech-config-schema'],
-    queryFn: getNastechConfigSchema,
+    queryFn: () => getNastechConfigSchema(),
     staleTime: 5 * 60 * 1000
   })
 

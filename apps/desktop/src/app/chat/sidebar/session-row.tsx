@@ -11,6 +11,7 @@ import { formatMessageTimestamp } from '@/components/assistant-ui/thread/timesta
 import { Button } from '@/components/ui/button'
 import { Codicon } from '@/components/ui/codicon'
 import { OverflowTip, Tip } from '@/components/ui/tooltip'
+import type { SessionInfo } from '@/nastech'
 import { type Translations, useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
 import { pathLeaf } from '@/lib/display-path'
@@ -23,7 +24,6 @@ import { handoffOriginSource, sessionSourceLabel } from '@/lib/session-source'
 import { coarseElapsed } from '@/lib/time'
 import { useStoreSelector } from '@/lib/use-session-slice'
 import { cn } from '@/lib/utils'
-import type { SessionInfo } from '@/nastech'
 import { $sidebarRowMeta } from '@/store/layout'
 import { normalizeProfileKey } from '@/store/profile'
 import { $projects } from '@/store/projects'
@@ -354,10 +354,12 @@ function SidebarSessionRowImpl({
           isSelected && 'bg-(--ui-row-active-background)',
           liveTurn && 'text-foreground',
           // Opaque surface while lifted so the dragged row erases what's under
-          // it (translucency let the rows below bleed through).
+          // it (translucency let the rows below bleed through). data-glass-opaque
+          // keeps that true when window glass thins the field.
           dragging && 'z-10 cursor-grabbing bg-(--ui-sidebar-surface-background)',
           className
         )}
+        data-glass-opaque={dragging ? '' : undefined}
         data-working={liveTurn ? 'true' : undefined}
         // The row runs BOTH drags off one press, and each declines outside its
         // own region — so no timing/arbitration rule is needed and neither can

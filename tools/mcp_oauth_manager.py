@@ -307,7 +307,14 @@ def _make_nastech_provider_class() -> Optional[type]:
             builders and response handlers so we track whatever the SDK
             version we're pinned to expects.
             """
-            import httpx  # local import: httpx is an MCP SDK dependency
+            # The SDK's httpx flavour, not Nastech' — mcp 2.0 builds on httpx2,
+            # and `create_oauth_metadata_request` below returns one of *its*
+            # Request objects, which only its own AsyncClient can send. See
+            # tools.mcp_tool.sdk_httpx.
+            from tools.mcp_tool import sdk_httpx
+            httpx = sdk_httpx()
+            if httpx is None:  # pragma: no cover — SDK import would have failed
+                return
             from mcp.client.auth.utils import (
                 build_oauth_authorization_server_metadata_discovery_urls,
                 build_protected_resource_metadata_discovery_urls,
@@ -450,6 +457,27 @@ def _make_nastech_provider_class() -> Optional[type]:
 
                 storage = self.context.storage
                 from tools.mcp_oauth import NastechTokenStorage
+
+                # When the rejected client_id was our Client ID Metadata
+                # Document URL, re-presenting it next flow would loop: the
+                # server has already fetched that document and refused it.
+                # Dropping the URL sends the retry down the DCR branch
+                # instead, and the marker on disk keeps the next process from
+                # walking back into the same refusal. `nastech mcp login`
+                # clears the marker, so a fixed document gets another chance.
+                cimd_url = getattr(self.context, "client_metadata_url", None)
+                rejected_id = getattr(self.context.client_info, "client_id", None)
+                if cimd_url and rejected_id == cimd_url:
+                    logger.warning(
+                        "MCP OAuth '%s': authorization server rejected our "
+                        "Client ID Metadata Document (%s) with invalid_client "
+                        "— falling back to dynamic client registration.",
+                        self._nastech_server_name, cimd_url,
+                    )
+                    self.context.client_metadata_url = None
+                    if isinstance(storage, NastechTokenStorage):
+                        storage.mark_cimd_rejected()
+
                 if isinstance(storage, NastechTokenStorage):
                     storage.poison_client_registration()
                 # Drop the in-memory client so the SDK re-registers next flow.
@@ -614,6 +642,7 @@ class MCPOAuthManager:
             _maybe_preregister_client,
             _make_callback_waiter,
             _make_redirect_handler,
+            cimd_provider_kwargs,
         )
 
         if not _OAUTH_AVAILABLE:
@@ -648,7 +677,12 @@ class MCPOAuthManager:
 
         resolved_port = cfg.get("_resolved_port", 0)
         redirect_handler = _make_redirect_handler(resolved_port)
-        callback_handler = _make_callback_waiter(resolved_port)
+        # mcp 2.0 removed OAuthClientProvider's `timeout` argument, so the
+        # configured `oauth.timeout` now bounds the callback waiter's own poll
+        # loop instead — that is where the browser round-trip is awaited.
+        callback_handler = _make_callback_waiter(
+            resolved_port, cfg.get("_cimd_url"), timeout=float(cfg.get("timeout", 300))
+        )
 
         return _NASTECH_PROVIDER_CLS(
             server_name=server_name,
@@ -658,7 +692,7 @@ class MCPOAuthManager:
             storage=storage,
             redirect_handler=redirect_handler,
             callback_handler=callback_handler,
-            timeout=float(cfg.get("timeout", 300)),
+            **cimd_provider_kwargs(cfg),
         )
 
     def remove(

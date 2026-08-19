@@ -71,6 +71,7 @@ Each entry requires both `provider` and `model`. Entries missing either field ar
 | Qwen Portal (OAuth) | `qwen-oauth` | `nastech model` (Qwen Portal OAuth; optional: `NASTECH_QWEN_BASE_URL`) |
 | MiniMax (OAuth) | `minimax-oauth` | `nastech model` (MiniMax portal OAuth) |
 | OpenCode Zen | `opencode-zen` | `OPENCODE_ZEN_API_KEY` |
+| CommandCode | `commandcode` (alias `commandcode-chat`; Claude via `commandcode-anthropic`) | `COMMANDCODE_API_KEY` |
 | OpenCode Go | `opencode-go` | `OPENCODE_GO_API_KEY` |
 | Kilo Code | `kilocode` | `KILOCODE_API_KEY` |
 | Xiaomi MiMo | `xiaomi` | `XIAOMI_API_KEY` |

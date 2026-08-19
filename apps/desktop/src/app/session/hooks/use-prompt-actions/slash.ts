@@ -1,6 +1,7 @@
 import { skillInvocationText } from '@nastech/shared'
 import { type MutableRefObject, useCallback, useRef } from 'react'
 
+import { getProfiles } from '@/nastech'
 import type { Translations } from '@/i18n'
 import { type ChatMessage, toChatMessages } from '@/lib/chat-messages'
 import { parseCommandDispatch, parseSlashCommand, sessionTitle } from '@/lib/chat-runtime'
@@ -15,7 +16,6 @@ import {
 } from '@/lib/desktop-slash-commands'
 import { isMissingRpcMethod } from '@/lib/gateway-rpc'
 import { setSessionYolo } from '@/lib/yolo-session'
-import { getProfiles } from '@/nastech'
 import { openCommandPalettePage } from '@/store/command-palette'
 import { setComposerDraft } from '@/store/composer'
 import { enqueueQueuedPrompt } from '@/store/composer-queue'
@@ -265,6 +265,17 @@ export function useSlashCommand(deps: SlashCommandDeps) {
           dispatch: NonNullable<ReturnType<typeof parseCommandDispatch>>
         ): Promise<void> => {
           if (dispatch.type === 'exec' || dispatch.type === 'plugin') {
+            // `/goal clear|pause|resume|status` can come back as a TYPED exec
+            // dispatch (command.dispatch routing) instead of the plain-output
+            // shape handled below. This branch used to render and return
+            // without touching the goal store, so "✓ Goal cleared." printed
+            // while the stale "Goal paused" card kept showing until the chat
+            // was reopened (#80348). Mirror the output into the store exactly
+            // like the plain-output path does.
+            if (name === 'goal' && dispatch.output) {
+              applyGoalStatusText(sessionId, dispatch.output)
+            }
+
             renderSlashOutput(dispatch.output ?? '(no output)')
 
             return

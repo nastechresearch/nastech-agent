@@ -1,6 +1,6 @@
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { deleteLearningNode, type ProfileScope } from '@/nastech'
 import { type Translations, useI18n } from '@/i18n'
-import { deleteLearningNode } from '@/nastech'
 import { notify } from '@/store/notifications'
 
 export const ARCHIVE_SKILL_DESCRIPTION = 'The skill is archived and can be restored with `nastech curator restore`.'
@@ -9,7 +9,7 @@ export function notifySkillArchived(t: Translations): void {
   notify({ kind: 'success', message: t.skills.skillArchivedMessage, title: t.skills.skillArchivedTitle })
 }
 
-export async function archiveLearningSkill(id: string, profile?: null | string): Promise<void> {
+export async function archiveLearningSkill(id: string, profile?: ProfileScope): Promise<void> {
   const res = await deleteLearningNode(id, profile)
 
   if (!res.ok) {
@@ -34,7 +34,7 @@ interface ArchiveSkillConfirmDialogProps {
   open: boolean
   /** Capabilities profile-scope override — archive against THIS profile's
    *  backend; undefined/null keeps the app-wide active profile. */
-  profile?: null | string
+  profile?: ProfileScope
   skillId: string
   skillName: string
 }
