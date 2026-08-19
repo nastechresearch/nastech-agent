@@ -1,0 +1,116 @@
+name: Nastech Release
+
+# This workflow is intentionally manual-only. It never runs for a push, pull
+# request, tag, schedule, or release event. The default action is a dry-run
+# preview. Publishing requires both an explicit PUBLISH selection and the
+# repository's configured release-publish environment approval, if enabled.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Semantic version component to bump"
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      release_date:
+        description: "Optional CalVer date override, formatted YYYY.M.D"
+        required: false
+        type: string
+      action:
+        description: "PREVIEW only generates notes; PUBLISH creates the version commit, tag, and GitHub release"
+        required: true
+        default: PREVIEW
+        type: choice
+        options:
+          - PREVIEW
+          - PUBLISH
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nastech-manual-release
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    name: Preview Nastech release
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Generate release preview
+        env:
+          BUMP: ${{ inputs.bump }}
+          RELEASE_DATE: ${{ inputs.release_date }}
+        run: |
+          set -euo pipefail
+          args=(--bump "$BUMP")
+          if [ -n "$RELEASE_DATE" ]; then
+            args+=(--date "$RELEASE_DATE")
+          fi
+          python3 scripts/release.py "${args[@]}" --output release-preview.md
+          cat release-preview.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Explain publish boundary
+        run: |
+          if [ "${{ inputs.action }}" = "PUBLISH" ]; then
+            echo "Publish was explicitly requested; the protected publish job will run after this preview." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Preview complete. No commit, tag, GitHub release, or deployment was created." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload release preview
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nastech-release-preview
+          path: release-preview.md
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish approved Nastech release
+    needs: preview
+    if: github.ref == 'refs/heads/main' && inputs.action == 'PUBLISH'
+    runs-on: ubuntu-latest
+    environment: release-publish
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Configure release committer
+        run: |
+          git config user.name "nastechresearch[bot]"
+          git config user.email "nastechresearch[bot]@users.noreply.github.com"
+
+      - name: Create approved release
+        env:
+          BUMP: ${{ inputs.bump }}
+          RELEASE_DATE: ${{ inputs.release_date }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          args=(--bump "$BUMP")
+          if [ -n "$RELEASE_DATE" ]; then
+            args+=(--date "$RELEASE_DATE")
+          fi
+          python3 scripts/release.py "${args[@]}" --publish
