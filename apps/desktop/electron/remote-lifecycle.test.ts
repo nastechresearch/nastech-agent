@@ -1,4 +1,9 @@
 import assert from 'node:assert/strict'
+import { exec as execCallback, spawn } from 'node:child_process'
+import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import { promisify } from 'node:util'
 
 import { test } from 'vitest'
 
@@ -10,6 +15,7 @@ import {
   expandRemotePath,
   fingerprintToken,
   isForwardBindCollision,
+  listRemoteNastechProfiles,
   locateNastech,
   LOCKFILE_SCHEMA_VERSION,
   lockfilePath,
@@ -25,12 +31,14 @@ import {
   scrapeReadyPort,
   spawnLogPath,
   spawnRemoteDashboard,
+  spawnTokenPath,
   validateRemotePath,
   writeLockfile
 } from './remote-lifecycle'
 
 const OWNERSHIP_ID = '0123456789abcdef0123456789abcdef'
 const SPAWN_NONCE = '0123456789abcdef'
+const exec = promisify(execCallback)
 
 function ownedLock(over: any = {}) {
   return {
@@ -78,6 +86,36 @@ function fakeSsh(rules: any[] = []) {
     }
   }
 }
+
+test('listRemoteNastechProfiles inventories Mini-style profile dirs without spawning a dashboard', async () => {
+  const ssh = fakeSsh([
+    [/NASTECH_HOME/, '/Users/zillajr/.nastech\n'],
+    [/ls -1/, 'bob\ndixie\ngoose\nrambo\nbob.rollback-old\n']
+  ])
+
+  assert.deepEqual(await listRemoteNastechProfiles(ssh), ['default', 'bob', 'dixie', 'goose', 'rambo'])
+  assert.equal(
+    ssh.calls.some(cmd => cmd.includes('serve') || cmd.includes('dashboard')),
+    false
+  )
+})
+
+test('listRemoteNastechProfiles rejects a hostile NASTECH_HOME', async () => {
+  const ssh = fakeSsh([[/NASTECH_HOME/, '/tmp/x; echo pwned\n']])
+
+  await assert.rejects(
+    () => listRemoteNastechProfiles(ssh),
+    (err: any) => {
+      assert.equal(err.kind, 'unsafe-path')
+
+      return true
+    }
+  )
+  assert.equal(
+    ssh.calls.some(cmd => cmd.includes('ls -1')),
+    false
+  )
+})
 
 test('locateNastech prefers the explicit profile path when executable', async () => {
   const ssh = fakeSsh([[/\[ -x .*\/opt\/nastech/, 'OK']])
@@ -267,6 +305,170 @@ test('pidIsOurDashboard requires the exact serve ownership nonce', async () => {
   )
   assert.equal(await pidIsOurDashboard(fakeSsh([[/print\("OWNED"/, 'FOREIGN\n']]), 5, SPAWN_NONCE, '/x/nastech'), false)
 })
+
+test('pidIsOurDashboard accepts the venv entrypoint an installer wrapper execs into', async () => {
+  let ownershipProbe = ''
+
+  const ssh = fakeSsh([
+    [
+      /python3 -c/,
+      (command: string) => {
+        ownershipProbe = command
+
+        return 'OWNED\n'
+      }
+    ]
+  ])
+
+  assert.equal(
+    await pidIsOurDashboard(ssh, 5, SPAWN_NONCE, '~/.local/bin/nastech', '/Users/cd9c/.nastech', OWNERSHIP_ID, 'ops'),
+    true
+  )
+  assert.match(ownershipProbe, /nastech-agent.*venv.*bin.*nastech/)
+  assert.match(ownershipProbe, /desktop-ssh.*0123456789abcdef\.token/)
+  assert.match(ownershipProbe, /expected_profile=.*ops/)
+})
+
+test.skipIf(process.platform === 'win32')(
+  'pidIsOurDashboard recognizes an installer wrapper after it execs python + entrypoint',
+  async () => {
+    const temp = await mkdtemp(path.join(os.tmpdir(), 'nastech wrapper ownership '))
+    const installDir = path.join(temp, 'install dir')
+    const venvBin = path.join(installDir, 'venv', 'bin')
+    const pythonLink = path.join(venvBin, 'python')
+    const entrypoint = path.join(installDir, 'nastech')
+    const launcher = path.join(temp, 'nastech launcher')
+    const python = (await exec('command -v python3')).stdout.trim()
+    const tokenPath = path.join(os.homedir(), spawnTokenPath(OWNERSHIP_ID, SPAWN_NONCE).replace(/^~\//, ''))
+
+    await mkdir(venvBin, { recursive: true })
+    await symlink(python, pythonLink)
+    await writeFile(entrypoint, 'import time\ntime.sleep(30)\n', 'utf8')
+    await writeFile(launcher, `#!/bin/bash\nexec "${pythonLink}" "${entrypoint}" "$@"\n`, 'utf8')
+    await chmod(launcher, 0o755)
+
+    const backendFlags = [
+      '--host',
+      '127.0.0.1',
+      '--port',
+      '0',
+      '--ssh-session-token-file',
+      tokenPath,
+      '--ssh-owner-nonce',
+      SPAWN_NONCE
+    ]
+
+    const children: ReturnType<typeof spawn>[] = []
+
+    const spawnInstaller = (args: string[]) => {
+      const process = spawn(launcher, args, { stdio: 'ignore' })
+
+      children.push(process)
+
+      return process
+    }
+
+    const child = spawnInstaller(['--profile', 'ops', 'serve', '--isolated', ...backendFlags])
+
+    const ssh = {
+      exec: async (command: string) => (await exec(command, { shell: '/bin/bash' })).stdout
+    }
+
+    const waitForEntrypoint = async (process: ReturnType<typeof spawn>) => {
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        const command = (await exec(`ps -ww -o command= -p ${process.pid}`)).stdout
+
+        if (command.includes(entrypoint)) {
+          return true
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 25))
+      }
+
+      return false
+    }
+
+    try {
+      assert.equal(await waitForEntrypoint(child), true, 'wrapper must exec into the fake installer entrypoint')
+      assert.equal(
+        await pidIsOurDashboard(ssh, child.pid, SPAWN_NONCE, launcher, '/unrelated/nastech-home', OWNERSHIP_ID, 'ops'),
+        true
+      )
+      assert.equal(
+        await pidIsOurDashboard(
+          ssh,
+          child.pid,
+          SPAWN_NONCE,
+          launcher,
+          '/unrelated/nastech-home',
+          'fedcba9876543210fedcba9876543210',
+          'ops'
+        ),
+        false
+      )
+      assert.equal(
+        await pidIsOurDashboard(
+          ssh,
+          child.pid,
+          SPAWN_NONCE,
+          launcher,
+          '/unrelated/nastech-home',
+          OWNERSHIP_ID,
+          'wrong-profile'
+        ),
+        false
+      )
+
+      const misplacedIsolated = spawnInstaller(['--profile', 'ops', '--isolated', 'serve', ...backendFlags])
+
+      assert.equal(await waitForEntrypoint(misplacedIsolated), true)
+      assert.equal(
+        await pidIsOurDashboard(
+          ssh,
+          misplacedIsolated.pid,
+          SPAWN_NONCE,
+          launcher,
+          '/unrelated/nastech-home',
+          OWNERSHIP_ID,
+          'ops'
+        ),
+        false,
+        '--isolated before serve must remain foreign'
+      )
+
+      const conflictingProfile = spawnInstaller([
+        '--profile',
+        'ops',
+        'serve',
+        '--isolated',
+        ...backendFlags,
+        '--profile',
+        'foreign'
+      ])
+
+      assert.equal(await waitForEntrypoint(conflictingProfile), true)
+      assert.equal(
+        await pidIsOurDashboard(
+          ssh,
+          conflictingProfile.pid,
+          SPAWN_NONCE,
+          launcher,
+          '/unrelated/nastech-home',
+          OWNERSHIP_ID,
+          'ops'
+        ),
+        false,
+        'a duplicate conflicting profile must remain foreign'
+      )
+    } finally {
+      for (const process of children) {
+        process.kill('SIGTERM')
+      }
+
+      await rm(temp, { force: true, recursive: true })
+    }
+  }
+)
 
 test('cleanupStale kills ONLY a provably-ours pid, always drops the lockfile', async () => {
   const notOurs = fakeSsh([[/print\("OWNED"/, 'FOREIGN\n']])
@@ -848,8 +1050,7 @@ test('spawnRemoteDashboard removes a token file when upload reporting fails', as
   ])
 
   await assert.rejects(
-    () =>
-      spawnRemoteDashboard(ssh, { nastechPath: '/x/nastech', profile: '', token: 'tok', ownershipId: OWNERSHIP_ID }),
+    () => spawnRemoteDashboard(ssh, { nastechPath: '/x/nastech', profile: '', token: 'tok', ownershipId: OWNERSHIP_ID }),
     /channel closed/
   )
   assert.ok(ssh.calls.some(command => /rm -f .*\.token/.test(command)))

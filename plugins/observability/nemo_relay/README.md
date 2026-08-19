@@ -209,6 +209,25 @@ create a second LLM or tool lifecycle. `tool_parallelism.mode = "observe_only"`
 keeps tool scheduling observational while still intercepting the core-managed
 execution boundary.
 
+### Managed LLM Operation Names
+
+Nastech identifies managed LLM operations by provider wire protocol, not by the
+physical service routing the request. This keeps Relay middleware and codec
+selection stable when providers such as OpenRouter or Nastech expose an
+OpenAI-compatible API:
+
+| Nastech API mode | Relay operation |
+| --- | --- |
+| `chat_completions` | `openai.chat_completions` |
+| `codex_responses` | `openai.responses` |
+| `anthropic_messages` | `anthropic.messages` |
+
+Middleware written against earlier Nastech builds might match physical provider
+names such as `openrouter`, `nastech`, or `anthropic` as the operation. Match the
+canonical operation instead. Nastech retains the original provider in the
+managed invocation metadata field `nastech.provider`. Unknown or custom API
+modes continue to use the physical provider name as their operation.
+
 ### Dynamic Plugins
 
 Nastech uses the dynamic-plugin activation API available in NeMo Relay 0.6 and

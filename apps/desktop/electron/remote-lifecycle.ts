@@ -27,6 +27,8 @@
 
 import crypto from 'node:crypto'
 
+import { parseRemoteProfileListing } from './connection-registry'
+
 const LOCKFILE_SCHEMA_VERSION = 2
 // Bumped when the desktop<->dashboard reuse contract changes in a way that makes
 // an old running dashboard unsafe to reattach to (token handling, readiness/spawn
@@ -87,6 +89,10 @@ function lockfilePath(ownershipId) {
 
 function spawnLogPath(ownershipId, spawnNonce) {
   return `${ownershipDirectory(ownershipId)}/${validateSpawnNonce(spawnNonce)}.log`
+}
+
+function spawnTokenPath(ownershipId, spawnNonce) {
+  return `${ownershipDirectory(ownershipId)}/${validateSpawnNonce(spawnNonce)}.token`
 }
 
 // shell-single-quote a value for safe interpolation into a remote command.
@@ -254,6 +260,35 @@ async function probeRemoteNastechHome(ssh) {
   }
 }
 
+async function listRemoteNastechProfiles(ssh) {
+  const home = assertSafeRemoteHome(await probeRemoteNastechHome(ssh))
+  const dir = expandRemotePath(`${home}/profiles`)
+  let listing = ''
+
+  try {
+    listing = await ssh.exec(`if [ -d ${dir} ]; then ls -1 ${dir}; fi`)
+  } catch (cause) {
+    const error: any = new Error('Could not list remote Nastech profiles.')
+    error.kind = 'transient-transport-error'
+    error.cause = cause
+    throw error
+  }
+
+  return parseRemoteProfileListing(listing)
+}
+
+function assertSafeRemoteHome(home) {
+  const value = String(home || '').trim()
+
+  if (!/^(\/|~\/)[A-Za-z0-9._/+-]+$/.test(value) || value.includes('..')) {
+    const error: any = new Error('Unsafe remote Nastech home.')
+    error.kind = 'unsafe-path'
+    throw error
+  }
+
+  return value.replace(/\/+$/, '')
+}
+
 async function readLockfile(ssh, ownershipId) {
   const lpath = lockfilePath(ownershipId)
   let raw
@@ -364,7 +399,15 @@ async function remotePidAlive(ssh, pid) {
 
 // A pid is "provably ours" only if its remote cmdline carries our dashboard
 // args — never kill a pid we can't positively identify as our dashboard.
-async function pidIsOurDashboard(ssh, pid, spawnNonce, nastechPath = '') {
+async function pidIsOurDashboard(
+  ssh,
+  pid,
+  spawnNonce,
+  nastechPath = '',
+  nastechHome = '',
+  ownershipId = '',
+  profile = ''
+) {
   if (!pid || !/^[0-9a-f]{16}$/.test(String(spawnNonce || '')) || !nastechPath) {
     return false
   }
@@ -374,20 +417,46 @@ async function pidIsOurDashboard(ssh, pid, spawnNonce, nastechPath = '') {
       'import os,shlex,subprocess,sys\n' +
       `pid=${Number(pid)}\n` +
       `expected=os.path.expanduser(${shq(nastechPath)})\n` +
+      // The installer-facing launcher is intentionally preserved for invocation
+      // (#74411), but it may `exec python <install-dir>/nastech`, leaving neither
+      // launcher nor NASTECH_HOME-derived entrypoint in argv. The ownership-scoped
+      // token path + random nonce + exact profile below are the alternative proof.
+      `nastech_home=os.path.expanduser(${shq(nastechHome)}) if ${shq(nastechHome)} else ""\n` +
+      'expected_entries={expected}\n' +
+      'if nastech_home:\n' +
+      ' expected_entries.add(os.path.join(nastech_home,"nastech-agent","venv","bin","nastech"))\n' +
+      `expected_token=os.path.expanduser(${shq(ownershipId ? spawnTokenPath(ownershipId, spawnNonce) : '')})\n` +
+      `expected_profile=${shq(profile)}\n` +
       `nonce=${shq(spawnNonce)}\n` +
       'try:\n' +
       ' raw=open(f"/proc/{pid}/cmdline","rb").read()\n' +
       ' args=[x.decode("utf-8","surrogateescape") for x in raw.split(b"\\0") if x]\n' +
       'except OSError:\n' +
-      ' line=subprocess.check_output(["ps","-o","command=","-p",str(pid)],text=True).strip()\n' +
+      ' try:\n' +
+      '  line=subprocess.check_output(["ps","-ww","-o","command=","-p",str(pid)],text=True).strip()\n' +
+      ' except subprocess.CalledProcessError:\n' +
+      '  # pid already gone — a dead process is FOREIGN, not a transport error\n' +
+      '  print("FOREIGN");sys.exit(0)\n' +
       ' args=shlex.split(line)\n' +
       'ok=False\n' +
       'try:\n' +
       ' serve=args.index("serve")\n' +
       ' owner=args.index("--ssh-owner-nonce",serve+1)\n' +
-      ' direct=args[0]==expected\n' +
-      ' python_entry=len(args)>1 and args[1]==expected and os.path.basename(args[0]).startswith("python")\n' +
-      ' ok=(direct or python_entry) and "--isolated" in args[serve+1:] and args[owner+1]==nonce\n' +
+      ' token=args.index("--ssh-session-token-file",serve+1) if expected_token else -1\n' +
+      ' isolated=args.index("--isolated",serve+1)\n' +
+      ' profile_arg=args.index("--profile") if expected_profile else -1\n' +
+      ' serve_count=args.count("serve")\n' +
+      ' owner_count=args.count("--ssh-owner-nonce")\n' +
+      ' token_count=args.count("--ssh-session-token-file")\n' +
+      ' isolated_count=args.count("--isolated")\n' +
+      ' profile_count=args.count("--profile")\n' +
+      ' direct=args[0] in expected_entries\n' +
+      ' python_entry=len(args)>1 and args[1] in expected_entries and os.path.basename(args[0]).startswith("python")\n' +
+      ' token_ok=not expected_token or args[token+1]==expected_token\n' +
+      ' isolated_ok=isolated_count==1 and isolated>serve\n' +
+      ' profile_ok=(profile_count==1 and profile_arg<serve and args[profile_arg+1]==expected_profile) if expected_profile else profile_count==0\n' +
+      ' spawn_proof=bool(expected_token) and owner_count==1 and token_count==1 and token_ok and profile_ok\n' +
+      ' ok=(direct or python_entry or spawn_proof) and serve_count==1 and isolated_ok and owner_count==1 and args[owner+1]==nonce and token_ok and profile_ok\n' +
       'except (ValueError,IndexError):pass\n' +
       'print("OWNED" if ok else "FOREIGN")'
 
@@ -404,7 +473,19 @@ async function pidIsOurDashboard(ssh, pid, spawnNonce, nastechPath = '') {
 
 // Kill the stale dashboard ONLY if provably ours, then drop the lockfile.
 async function cleanupStale(ssh, ownershipId, lock, pidAlive = true) {
-  if (pidAlive && lock && (await pidIsOurDashboard(ssh, lock.pid, lock.spawnNonce, lock.nastechPath))) {
+  if (
+    pidAlive &&
+    lock &&
+    (await pidIsOurDashboard(
+      ssh,
+      lock.pid,
+      lock.spawnNonce,
+      lock.nastechPath,
+      lock.nastechHome,
+      ownershipId,
+      lock.profile
+    ))
+  ) {
     try {
       const result = (
         await ssh.exec(
@@ -519,8 +600,7 @@ async function spawnRemoteDashboard(ssh, { nastechPath, profile, token, ownershi
   }
 
   const spawnNonce = crypto.randomBytes(8).toString('hex')
-  const tokenDir = ownershipDirectory(ownershipId)
-  const tokenFilePath = `${tokenDir}/${spawnNonce}.token`
+  const tokenFilePath = spawnTokenPath(ownershipId, spawnNonce)
   const logPath = spawnLogPath(ownershipId, spawnNonce)
 
   const tokenUploadPy =
@@ -706,7 +786,18 @@ async function connect(deps) {
 
   if (lock) {
     const pidAlive = await remotePidAlive(ssh, lock.pid)
-    const owned = pidAlive && (await pidIsOurDashboard(ssh, lock.pid, lock.spawnNonce, lock.nastechPath))
+
+    const owned =
+      pidAlive &&
+      (await pidIsOurDashboard(
+        ssh,
+        lock.pid,
+        lock.spawnNonce,
+        lock.nastechPath,
+        lock.nastechHome,
+        ownershipId,
+        lock.profile
+      ))
 
     const reusable =
       pidAlive &&
@@ -879,6 +970,7 @@ export {
   expandRemotePath,
   fingerprintToken,
   isForwardBindCollision,
+  listRemoteNastechProfiles,
   locateNastech,
   LOCKFILE_SCHEMA_VERSION,
   lockfilePath,
@@ -900,6 +992,7 @@ export {
   shq,
   spawnLogPath,
   spawnRemoteDashboard,
+  spawnTokenPath,
   SUPPORTED_REMOTE_OS,
   validateRemotePath,
   writeLockfile

@@ -81,6 +81,7 @@ nastech teams-pipeline subscriptions         # current Graph webhook subscriptio
 nastech teams-pipeline run <job-id>          # replay a stored job (re-summarize, re-deliver)
 nastech teams-pipeline fetch --meeting-id <id>   # dry-run: resolve meeting + transcript without persisting
 nastech teams-pipeline fetch --join-web-url "<url>"   # dry-run by join URL
+nastech teams-pipeline fetch --join-web-url "<url>" --organizer-user-id <id>   # organizer-scoped lookup (required for /meet/ short URLs)
 ```
 
 ### Subscription management

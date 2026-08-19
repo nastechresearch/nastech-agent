@@ -302,6 +302,29 @@ def _write_cron_jobs(tmp_path, jobs):
 class TestCronModelDriftConfigWarning:
     """Warn operators before unpinned snapshot-bearing cron jobs fail closed."""
 
+    def test_warning_names_the_user_owned_cli_pin_path(
+        self,
+        _isolated_nastech_home,
+        capsys,
+    ):
+        _write_cron_jobs(
+            _isolated_nastech_home,
+            [
+                {
+                    "id": "model-drift-job",
+                    "enabled": True,
+                    "model": None,
+                    "model_snapshot": "old-model",
+                }
+            ],
+        )
+
+        set_config_value("model.default", "new-model")
+
+        warning = capsys.readouterr().out
+        assert "nastech cron edit <job_id> --provider <provider> --model <model>" in warning
+        assert "cronjob action=update" not in warning
+
 
 
 

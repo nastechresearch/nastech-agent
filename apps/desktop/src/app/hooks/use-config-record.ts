@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
+import { getNastechConfigRecord, type ProfileScope, profileScopeKey } from '@/nastech'
 import { queryClient, writeCache } from '@/lib/query-client'
-import { getNastechConfigRecord } from '@/nastech'
-import { normalizeProfileKey } from '@/store/profile'
 import type { NastechConfigRecord } from '@/types/nastech'
 
 // One shared cache for the whole profile config record (`GET /api/config`).
@@ -14,22 +13,25 @@ import type { NastechConfigRecord } from '@/types/nastech'
 // it pushes personality/cwd/voice/… into the session stores for live chat.
 export const NASTECH_CONFIG_KEY = ['nastech-config-record'] as const
 
-// Per-profile cache key. The base key (no profile suffix) is the app-wide
-// active profile, unchanged for every caller that passes nothing. An explicit
-// profile — the Capabilities profile-scope selector configuring ANOTHER
-// profile — gets its own suffixed key so switching the selector refetches and
-// never paints stale cross-profile config (the AGENTS.md scope-in-key rule).
-export const nastechConfigKey = (profile?: null | string) =>
-  profile == null ? NASTECH_CONFIG_KEY : ([...NASTECH_CONFIG_KEY, normalizeProfileKey(profile)] as const)
+// Per-scope cache key. The base key (no suffix) is the app-wide active
+// profile, unchanged for every caller that passes nothing. An explicit scope —
+// the Capabilities scope selector configuring ANOTHER profile, possibly on
+// another registered gateway — gets its own suffixed key so switching the
+// selector refetches and never paints stale cross-profile config (the
+// AGENTS.md scope-in-key rule). profileScopeKey folds a remote pin's
+// connection id into the suffix, so two gateways' same-named profiles never
+// share a cache row.
+export const nastechConfigKey = (profile?: ProfileScope) =>
+  profile == null ? NASTECH_CONFIG_KEY : ([...NASTECH_CONFIG_KEY, profileScopeKey(profile)] as const)
 
 // staleTime 0 → serve cache instantly, background-revalidate on every mount.
 // `profile` scopes both the query key and the fetch; omitting it preserves the
 // exact app-wide behavior (base key, `profileScoped(undefined)` fallback).
-export const useNastechConfigRecord = (profile?: null | string) =>
+export const useNastechConfigRecord = (profile?: ProfileScope) =>
   useQuery({
     queryKey: nastechConfigKey(profile),
     // null/undefined both mean "no override" → fetch with undefined so
-    // profileScoped falls back to the app-wide active profile (passing null
+    // capabilityScoped falls back to the app-wide active profile (passing null
     // would wrongly target the primary backend).
     queryFn: () => getNastechConfigRecord(profile ?? undefined),
     staleTime: 0
@@ -39,8 +41,8 @@ export const useNastechConfigRecord = (profile?: null | string) =>
 // write the suffixed per-profile cache instead — keeps the selector's optimistic
 // write-through landing on the same key its query reads.
 export const setNastechConfigCache = writeCache<NastechConfigRecord>(NASTECH_CONFIG_KEY)
-export const nastechConfigCacheWriter = (profile?: null | string) =>
+export const nastechConfigCacheWriter = (profile?: ProfileScope) =>
   writeCache<NastechConfigRecord>(nastechConfigKey(profile))
 
-export const invalidateNastechConfig = (profile?: null | string) =>
+export const invalidateNastechConfig = (profile?: ProfileScope) =>
   queryClient.invalidateQueries({ queryKey: nastechConfigKey(profile) })

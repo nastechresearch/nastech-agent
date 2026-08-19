@@ -6,13 +6,13 @@ import {
   type SidebarProjectTree
 } from '@/app/chat/sidebar/projects/workspace-groups'
 import type { NastechGitBaseBranch, NastechGitBranch } from '@/global'
+import { getNastechConfig, type NastechGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd, isDesktopFsRemoteMode, selectDesktopPaths, writeDesktopFileText } from '@/lib/desktop-fs'
-import { desktopGit } from '@/lib/desktop-git'
+import { desktopGit, isGitEndpointMissingError } from '@/lib/desktop-git'
 import { isMissingRpcMethod } from '@/lib/gateway-rpc'
 import { isUnderPath } from '@/lib/path-compare'
 import { persistentAtom } from '@/lib/persisted'
-import { getNastechConfig, type NastechGateway } from '@/nastech'
 import { $gateway, activeGateway, ensureActiveGatewayOpen } from '@/store/gateway'
 import { setSidebarAgentsGrouped } from '@/store/layout'
 import { notify } from '@/store/notifications'
@@ -1074,7 +1074,22 @@ export async function startWorkInRepo(
     return null
   }
 
-  const result = await git.worktreeAdd(repoPath, options)
+  let result
+
+  try {
+    result = await git.worktreeAdd(repoPath, options)
+  } catch (err) {
+    // Capability gate (#81724): a remote gateway serves worktree ops via the
+    // backend's /api/git mirror, and an older backend may predate it. The raw
+    // failure ("Expected JSON … but got HTML" / a bare 404) reads like a git
+    // error — name the real remedy instead of degrading silently.
+    if (isDesktopFsRemoteMode() && isGitEndpointMissingError(err)) {
+      throw new Error(translateNow('sidebar.projects.worktreeStaleBackend'))
+    }
+
+    throw err
+  }
+
   bumpWorktrees()
 
   return { branch: result.branch, path: result.path }
@@ -1084,7 +1099,8 @@ export async function startWorkInRepo(
 // local heads, plus the remote-tracking refs that have no local branch yet. A
 // teammate's branch is therefore reachable, and the user does not check it out
 // by hand first.
-// Empty on a remote backend or a non-repo, where the Electron probe cannot run.
+// Empty on a non-repo. On a remote gateway the list comes from the backend's
+// /api/git/branches mirror, so it acts on the repo where sessions actually run.
 export async function listRepoBranches(repoPath: string): Promise<NastechGitBranch[]> {
   const git = desktopGit()
 
@@ -1097,7 +1113,8 @@ export async function listRepoBranches(repoPath: string): Promise<NastechGitBran
 
 // Local + remote-tracking branches for the base-branch picker in the
 // new-worktree dialog. The remote default (origin/HEAD) is flagged so the
-// UI can preselect it. Empty on a remote backend / non-repo.
+// UI can preselect it. Empty on a non-repo; remote gateways serve it from the
+// backend's /api/git/base-branches mirror.
 export async function listBaseBranches(repoPath: string): Promise<NastechGitBaseBranch[]> {
   const git = desktopGit()
 

@@ -25,7 +25,13 @@ import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
 import { type AgentNoticePayload, clearAgentNotice, nativeNoticeInput, showAgentNotice } from '@/store/agent-notices'
 import { reconcileApprovalModeForProfile } from '@/store/approval-mode'
 import { billingCtaLabel, clearBillingBlock, runBillingRecovery, setBillingBlock } from '@/store/billing-block'
-import { clearClarifyRequest, normalizeChoices, setClarifyRequest, warnDroppedChoices } from '@/store/clarify'
+import {
+  clearClarifyRequest,
+  normalizeChoices,
+  normalizeQuestions,
+  setClarifyRequest,
+  warnDroppedChoices
+} from '@/store/clarify'
 import { setSessionCompacting } from '@/store/compaction'
 import { refreshBackgroundProcesses } from '@/store/composer-status'
 import { $gateway, activeGatewayConnectionId } from '@/store/gateway'
@@ -43,7 +49,7 @@ import { setMcpSetupRequest } from '@/store/mcp-setup'
 import { dispatchNativeNotification } from '@/store/native-notifications'
 import { isDiskFullErrorMessage, notify, notifyError } from '@/store/notifications'
 import { requestDesktopOnboarding, requestDesktopOnboardingForCredentialWarning } from '@/store/onboarding'
-import { revealDesktopPane } from '@/store/pane-focus'
+import { applyDesktopLayoutPreset, revealDesktopPane } from '@/store/pane-focus'
 import { flashPetActivity, markPetUnread, setPetActivity } from '@/store/pet'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { followActiveSessionCwd } from '@/store/projects'
@@ -77,7 +83,7 @@ import {
   setWorkspaceCwdOwner,
   setYoloActive
 } from '@/store/session'
-import { dropSessionState } from '@/store/session-states'
+import { dropSessionState, unbindTileRuntime } from '@/store/session-states'
 import { pruneDelegateFallbackSubagents, pruneFinishedSessionSubagents, upsertSubagent } from '@/store/subagents'
 import { reportMcpToolResult } from '@/store/suggestion-providers/repair'
 import { invalidateSkillSuggestionIndex } from '@/store/suggestion-providers/skill'
@@ -95,7 +101,13 @@ import type { RpcEvent } from '@/types/nastech'
 import type { ClientSessionState } from '../../../types'
 import { finalizeInterruptedMessages } from '../use-prompt-actions/rewind'
 
-import { hasSessionInfoStatePatch, sessionInfoStatePatch, SUBAGENT_EVENT_TYPES, toTodoPayload } from './utils'
+import {
+  hasSessionInfoStatePatch,
+  PRE_TURN_LIVE_SETTLE_GRACE_MS,
+  sessionInfoStatePatch,
+  SUBAGENT_EVENT_TYPES,
+  toTodoPayload
+} from './utils'
 
 function firstBillingLine(text: string): string {
   return (text || '').split('\n')[0]?.trim() ?? ''
@@ -473,6 +485,15 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
 
         if (reclaimedRuntimeId) {
           dropSessionState(reclaimedRuntimeId)
+          // A tile bound to the reclaimed runtime would otherwise render an
+          // empty transcript forever: its view reads $sessionStates[runtime]
+          // (just dropped) and its resume effect is gated on !runtimeId, so a
+          // bound tile never re-resumes (#82620). Unbind it so the effect
+          // refires against the intact stored session — and purge the wiring
+          // cache's entry, or resumeTile's warm path would hand the dead
+          // runtime straight back instead of cold-resuming a live one.
+          unbindTileRuntime(reclaimedRuntimeId)
+          sessionStateByRuntimeIdRef.current.delete(reclaimedRuntimeId)
         }
 
         // The row's ended_at moved, so refresh the lists that render it.
@@ -649,7 +670,24 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
               // here is exactly "no turn has been reported running yet".
               // (turnStartedAt can't discriminate — it is optimistically
               // seeded at submit so the visible timer starts at Enter.)
-              if (state.awaitingResponse && !state.sawAssistantPayload && !state.turnLive) {
+              //
+              // BOUNDED (#86795): an armed turn that never goes live — a
+              // restore/edit whose rewind was refused after the optimistic
+              // arm, a submit response lost to a gateway bounce, a terminal
+              // error event that never arrived — would otherwise hold this
+              // gate forever. busy then latches until app restart:
+              // isTargetSessionBusy refuses every send, the composer queues
+              // each message, and the queue drain (gated on busy→false) never
+              // fires. turnStartedAt is seeded at the optimistic arm, so its
+              // age bounds the hold; past the grace window (or with no clock
+              // at all) the gateway's running=false is authoritative and the
+              // settle below releases the session.
+              const armedAt = state.turnStartedAt
+
+              const withinPreStartGrace =
+                typeof armedAt === 'number' && Date.now() - armedAt < PRE_TURN_LIVE_SETTLE_GRACE_MS
+
+              if (state.awaitingResponse && !state.sawAssistantPayload && !state.turnLive && withinPreStartGrace) {
                 return state
               }
 
@@ -1133,8 +1171,66 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
         const rawChoices = payload?.choices
         const choices = normalizeChoices(rawChoices)
         const multiSelect = payload?.multi_select === true
+        // Batch (multi-question) clarify: `questions` replaces question/choices
+        // on the wire. `answers` rides along only on reconnect replay, carrying
+        // the per-question locks the server already accepted.
+        const questions = normalizeQuestions(payload?.questions)
 
-        if (requestId && question) {
+        const lockedAnswers =
+          typeof payload?.answers === 'object' && payload?.answers !== null
+            ? Object.fromEntries(
+                Object.entries(payload.answers as Record<string, unknown>).filter(
+                  (entry): entry is [string, string] => typeof entry[1] === 'string'
+                )
+              )
+            : undefined
+
+        if (requestId && questions.length > 0) {
+          setClarifyRequest({
+            choices: null,
+            lockedAnswers,
+            multiSelect: false,
+            question: '',
+            questions,
+            requestId,
+            sessionId: sessionId ?? null
+          })
+
+          if (sessionId) {
+            // Same hydration-race guard as the single-question path below: the
+            // form mounts from the tool row, so upsert a stable one keyed by
+            // the request id in case tool.start was missed.
+            upsertToolCall(
+              sessionId,
+              {
+                args: {
+                  questions: questions.map(q => ({
+                    choices: q.choices ?? undefined,
+                    multi_select: q.multiSelect || undefined,
+                    question: q.question
+                  }))
+                },
+                name: 'clarify',
+                tool_id: requestId
+              },
+              'running',
+              event.type,
+              occurredAt
+            )
+            updateSessionState(sessionId, state => ({ ...state, needsInput: true }))
+
+            if (sessionId === activeSessionIdRef.current) {
+              requestScrollToBottom()
+            }
+          }
+
+          dispatchNativeNotification({
+            body: questions.map(q => q.question).join(' · '),
+            kind: 'input',
+            sessionId,
+            title: translateNow('notifications.native.inputTitle')
+          })
+        } else if (requestId && question) {
           if (rawChoices != null && choices.length === 0) {
             warnDroppedChoices('gateway', question, rawChoices)
           }
@@ -1365,6 +1461,14 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
         // offer, don't hijack).
         if (isActiveEvent) {
           revealDesktopPane(payload?.pane ?? '')
+        }
+      } else if (event.type === 'layout.apply') {
+        // Agent applied a layout preset via the desktop-gated apply_layout
+        // tool. Same contract as pane.reveal: active session only, and the
+        // preset resolves against the SAME layouts registry the picker reads,
+        // so core, plugin, and user presets are all addressable.
+        if (isActiveEvent) {
+          applyDesktopLayoutPreset(typeof payload?.preset === 'string' ? payload.preset : '')
         }
       } else if (event.type === 'message.reaction') {
         // The agent reacted to a message via the desktop-gated

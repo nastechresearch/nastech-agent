@@ -1,5 +1,6 @@
 import { type MutableRefObject, useCallback } from 'react'
 
+import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
 import type { Translations } from '@/i18n'
 import { type ChatMessage, textPart } from '@/lib/chat-messages'
 import { optimisticAttachmentRef } from '@/lib/chat-runtime'
@@ -11,7 +12,6 @@ import {
   stopVoicePlayback,
   takeVoicePlaybackInterrupted
 } from '@/lib/voice-playback'
-import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
 import {
   $composerAttachments,
   type ComposerAttachment,
@@ -377,9 +377,16 @@ export function useSubmitPrompt(deps: SubmitPromptDeps) {
             // assistant bubble — settle any leftover (drop it when empty)
             // before appending, or a stale spinner gets stranded
             // mid-transcript above this message forever.
+            //
+            // Off-screen sends (displayKind 'hidden', widget intents) settle
+            // leftovers but append NO bubble: an absent row can't become a
+            // dead branch sibling in the runtime repository. The durable row
+            // is typed hidden by the gateway, so resume stays bubble-free.
             messages: state.messages.some(m => m.id === optimisticId)
               ? state.messages
-              : [...finalizeInterruptedMessages(state.messages, state.streamId), buildUserMessage()],
+              : options?.displayKind === 'hidden'
+                ? finalizeInterruptedMessages(state.messages, state.streamId)
+                : [...finalizeInterruptedMessages(state.messages, state.streamId), buildUserMessage()],
             busy: true,
             awaitingResponse: true,
             pendingBranchGroup: null,
@@ -688,6 +695,9 @@ export function useSubmitPrompt(deps: SubmitPromptDeps) {
           session_id: targetId,
           text,
           ...(interrupted && { interrupted }),
+          // Off-screen widget intent: the gateway types the persisted user
+          // row display_kind=hidden so no client renders it as a bubble.
+          ...(options?.displayKind === 'hidden' && { display_kind: 'hidden' }),
           // Typed into the floating HUD, so the user is looking at another app
           // rather than at Nastech. The gateway turns this into a per-turn hint
           // to read the window underneath and work in it.

@@ -32,6 +32,7 @@ import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { ProfileGlyph } from '@/components/ui/profile-glyph'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { getProfileSoul, updateProfileSoul } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { PROFILE_SWATCHES, profileColorSoft, resolveProfileColor } from '@/lib/profile-color'
@@ -42,7 +43,6 @@ import {
   reorderStepHaptic
 } from '@/lib/reorder'
 import { cn } from '@/lib/utils'
-import { getProfileSoul, updateProfileSoul } from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 import {
   $activeGatewayProfile,
@@ -53,6 +53,7 @@ import {
   $profileScope,
   ALL_PROFILES,
   normalizeProfileKey,
+  profileLabel,
   refreshActiveProfile,
   selectProfile,
   setProfileColor,
@@ -69,6 +70,7 @@ import { RenameProfileDialog } from '../../profiles/rename-profile-dialog'
 import { PROFILES_ROUTE, SETTINGS_ROUTE } from '../../routes'
 
 import { useProfilePrewarm } from './use-profile-prewarm'
+import { useProfileRailRefreshOnActive } from './use-profile-rail-refresh-on-active'
 
 const RAIL_GAP = 4 // px — matches gap-1 between squares.
 
@@ -204,11 +206,13 @@ export function ProfileRail() {
     }
   }
 
-  // Re-pull the running profile + list on mount so a profile created elsewhere
-  // shows up; cheap and best-effort.
-  useEffect(() => {
-    void refreshActiveProfile()
-  }, [])
+  // Re-pull the running profile + list on mount, and again whenever the window
+  // regains focus/visibility -- a profile created, deleted, or renamed by
+  // another surface (Manage Profiles, another window, the CLI) leaves this
+  // rail's cached $profiles stale until something re-fetches it. See
+  // use-profile-rail-refresh-on-active.ts for the extracted (and tested)
+  // wiring.
+  useProfileRailRefreshOnActive()
 
   // Open the create dialog when the `profile.create` hotkey fires (the dialog
   // state lives here, so the global keybind bumps a request atom we watch).
@@ -237,7 +241,7 @@ export function ProfileRail() {
           <ProfilePill
             active={isAll || onDefault}
             glyph={isAll ? 'layers' : 'home'}
-            label={onDefault ? p.showAllProfiles : p.switchToProfile(defaultProfile.name)}
+            label={onDefault ? p.showAllProfiles : p.switchToProfile(profileLabel(defaultProfile))}
             onSelect={() => (onDefault ? setShowAllProfiles(true) : selectProfile(defaultProfile.name))}
           />
         ) : (
@@ -249,7 +253,7 @@ export function ProfileRail() {
         <ProfilePill
           active
           glyph="home"
-          label={defaultProfile.name}
+          label={profileLabel(defaultProfile)}
           onSelect={() => selectProfile(defaultProfile.name)}
         />
       )}
@@ -291,7 +295,7 @@ export function ProfileRail() {
                       active={!isAll && normalizeProfileKey(profile.name) === activeKey}
                       color={resolveProfileColor(profile.name, colors)}
                       key={profile.name}
-                      label={profile.name}
+                      label={profileLabel(profile)}
                       onDelete={() => setPendingDelete(profile)}
                       onEditSoul={() => setPendingSoul(profile.name)}
                       onRecolor={color => setProfileColor(profile.name, color)}
@@ -316,15 +320,16 @@ export function ProfileRail() {
       <ProfilePill active={false} glyph="ellipsis" label={p.manageProfiles} onSelect={() => navigate(PROFILES_ROUTE)} />
 
       {/* Multi-gateway discoverability: a plug pinned beside Manage deep-links
-          to Settings → Connections. The registry (local runtime + remote
-          gateways + Nastech Cloud + SSH) is otherwise buried three levels into
-          Settings, and the rail is exactly where a user looks when they wonder
-          "how do I get my other machine's agents in here". */}
+          to Settings → Gateways (the connections registry lives on the unified
+          Gateways page now). The registry (local runtime + remote gateways +
+          Nastech Cloud + SSH) is otherwise buried three levels into Settings,
+          and the rail is exactly where a user looks when they wonder "how do I
+          get my other machine's agents in here". */}
       <ProfilePill
         active={false}
         glyph="plug"
         label={p.connectGateway}
-        onSelect={() => navigate(`${SETTINGS_ROUTE}?tab=connections`)}
+        onSelect={() => navigate(`${SETTINGS_ROUTE}?tab=gateway`)}
       />
 
       {/* Land in the new profile on a fresh chat (selectProfile triggers the
@@ -341,6 +346,7 @@ export function ProfileRail() {
 
       <RenameProfileDialog
         currentName={pendingRename?.name ?? ''}
+        isDefault={pendingRename?.is_default ?? false}
         onClose={() => setPendingRename(null)}
         onRenamed={refreshActiveProfile}
         open={pendingRename !== null}
@@ -498,6 +504,7 @@ function ProfileDropdown({
           <ProfileDropdownItem
             color={resolveProfileColor(profile.name, colors)}
             key={profile.name}
+            label={profileLabel(profile)}
             name={profile.name}
           />
         ))}
@@ -508,14 +515,14 @@ function ProfileDropdown({
 
 // One dropdown row per profile — its own component so each row can own a
 // hover-intent prewarm timer (see useProfilePrewarm).
-function ProfileDropdownItem({ color, name }: { color: null | string; name: string }) {
+function ProfileDropdownItem({ color, label, name }: { color: null | string; label: string; name: string }) {
   const { cancelPrewarm, startPrewarm } = useProfilePrewarm(name)
 
   return (
     <SelectItem onPointerEnter={startPrewarm} onPointerLeave={cancelPrewarm} value={name}>
       <span className="flex min-w-0 items-center gap-1.5">
         <ProfileGlyph aria-hidden="true" color={color} isDefault={false} name={name} />
-        <span className="truncate">{name}</span>
+        <span className="truncate">{label}</span>
       </span>
     </SelectItem>
   )

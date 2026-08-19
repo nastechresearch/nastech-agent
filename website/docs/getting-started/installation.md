@@ -82,6 +82,10 @@ nastech setup --portal
 That logs you in, sets Nastech as your provider, and turns on the Tool Gateway in one command.
 :::
 
+:::tip Already running Nastech on another machine?
+You don't need to rebuild your setup from scratch. Restore a full backup with `nastech import` (see [Exporting Nastech to another machine](/reference/faq#exporting-nastech-to-another-machine)), or bring over a single agent with `nastech profile import` (see [Moving a single profile to another machine](/reference/faq#moving-a-single-profile-to-another-machine)). Note that a profile export excludes credentials by design, so an export alone is not a full backup — [`nastech backup` vs `nastech profile export`](/reference/faq#nastech-backup-vs-nastech-profile-export) explains which to use.
+:::
+
 ---
 
 ## Prerequisites

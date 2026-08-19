@@ -1,4 +1,10 @@
-# nix/nixosModules.nix — NixOS module for nastech-agent
+# nix/nixosModules.nix — the NixOS module for nastech-agent
+#
+# This module shares its options, its renderers for config.yaml, .env and
+# documents, and its state setup with the Home Manager module
+# (nix/homeManagerModules.nix). The shared code is in nix/moduleCommon.nix.
+# This file holds only the parts that need root: the service user, a system
+# state directory, the system PATH, and container mode.
 #
 # Two modes:
 #   container.enable = false (default) → native systemd service
@@ -19,990 +25,642 @@
 # Usage:
 #   services.nastech-agent = {
 #     enable = true;
-#     settings.model = "anthropic/claude-sonnet-4";
+#     settings.model.default = "anthropic/claude-sonnet-4";
 #     environmentFiles = [ config.sops.secrets."nastech/env".path ];
 #   };
 #
-{ inputs, ... }: {
-  flake.nixosModules.default = { config, lib, pkgs, ... }:
+{ inputs, ... }:
+{
+  flake.nixosModules.default =
+    {
+      config,
+      lib,
+      options,
+      pkgs,
+      ...
+    }:
 
-  let
-    cfg = config.services.nastech-agent;
-    effectivePackage =
-      if cfg.extraPythonPackages == [ ] && cfg.extraDependencyGroups == [ ]
-      then cfg.package
-      else cfg.package.override { inherit (cfg) extraPythonPackages extraDependencyGroups; };
-    nastech-agent = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    let
+      cfg = config.services.nastech-agent;
+      common = import ./moduleCommon.nix { inherit lib; };
 
-    # Deep-merge config type (from 0xrsydn/nix-nastech-agent)
-    deepConfigType = lib.types.mkOptionType {
-      name = "nastech-config-attrs";
-      description = "Nastech YAML config (attrset), merged deeply via lib.recursiveUpdate.";
-      check = builtins.isAttrs;
-      merge = _loc: defs: lib.foldl' lib.recursiveUpdate { } (map (d: d.value) defs);
-    };
+      effectivePackage = common.effectivePackage cfg;
+      nastech-agent = inputs.self.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-    # Generate config.yaml from Nix attrset (YAML is a superset of JSON).
-    # terminal.cwd replaces the deprecated MESSAGING_CWD env var — nastech
-    # reads it from config.yaml and bridges it to TERMINAL_CWD internally.
-    # recursiveUpdate: cfg.settings wins, so an explicit
-    # settings.terminal.cwd overrides the workingDirectory default.
-    # Container mode uses the in-container mount path.
-    effectiveWorkDir = if cfg.container.enable then containerWorkDir else cfg.workingDirectory;
-    configJson = builtins.toJSON (
-      lib.recursiveUpdate { terminal.cwd = effectiveWorkDir; } cfg.settings
-    );
-    generatedConfigFile = pkgs.writeText "nastech-config.yaml" configJson;
-    configFile = if cfg.configFile != null then cfg.configFile else generatedConfigFile;
+      nastechHome = "${cfg.stateDir}/.nastech";
 
-    configMergeScript = pkgs.callPackage ./configMergeScript.nix { };
+      # In container mode, the agent uses the mount path in the container.
+      effectiveWorkDir = if cfg.container.enable then containerWorkDir else cfg.workingDirectory;
 
-    # config.yaml mode: group-writable (0660) when interactive users share this
-    # NASTECH_HOME via addToSystemPackages, so they can save settings through the
-    # CLI/TUI without hitting EACCES; otherwise group-read-only (0640). Secrets
-    # (.env) stay 0640 regardless — see below.
-    configYamlMode = if cfg.addToSystemPackages then "0660" else "0640";
+      # config.yaml mode: group-writable (0660) when interactive users share this
+      # NASTECH_HOME via addToSystemPackages, so they can save settings through the
+      # CLI/TUI without hitting EACCES; otherwise group-read-only (0640). Secrets
+      # (.env) stay 0640 regardless.
+      configYamlMode = if cfg.addToSystemPackages then "0660" else "0640";
 
-    # Generate .env from non-secret environment attrset
-    envFileContent = lib.concatStringsSep "\n" (
-      lib.mapAttrsToList (k: v: "${k}=${v}") cfg.environment
-    );
-    # Build documents derivation (from 0xrsydn)
-    documentDerivation = pkgs.runCommand "nastech-documents" { } (
-      ''
-        mkdir -p $out
-      '' + lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (name: value:
-          if builtins.isPath value || lib.isStorePath value
-          then "cp ${value} $out/${name}"
-          else "cat > $out/${name} <<'NASTECH_DOC_EOF'\n${value}\nNASTECH_DOC_EOF"
-        ) cfg.documents
-      )
-    );
+      containerName = "nastech-agent";
+      containerDataDir = "/data"; # stateDir mount point inside container
+      containerHomeDir = "/home/nastech";
 
-    containerName = "nastech-agent";
-    containerDataDir = "/data";     # stateDir mount point inside container
-    containerHomeDir = "/home/nastech";
+      # ── Container mode helpers ──────────────────────────────────────────
+      containerBin =
+        if cfg.container.backend == "docker" then
+          "${pkgs.docker}/bin/docker"
+        else
+          "${pkgs.podman}/bin/podman";
 
-    # ── Container mode helpers ──────────────────────────────────────────
-    containerBin = if cfg.container.backend == "docker"
-      then "${pkgs.docker}/bin/docker"
-      else "${pkgs.podman}/bin/podman";
+      # Runs as root inside the container on every start. Provisions the
+      # nastech user + sudo on first boot (writable layer persists), then
+      # drops privileges. Supports arbitrary base images (Debian, Alpine, etc).
+      containerEntrypoint = pkgs.writeShellScript "nastech-container-entrypoint" ''
+        set -eu
 
-    # Runs as root inside the container on every start. Provisions the
-    # nastech user + sudo on first boot (writable layer persists), then
-    # drops privileges. Supports arbitrary base images (Debian, Alpine, etc).
-    containerEntrypoint = pkgs.writeShellScript "nastech-container-entrypoint" ''
-      set -eu
+        NASTECH_UID="''${NASTECH_UID:?NASTECH_UID must be set}"
+        NASTECH_GID="''${NASTECH_GID:?NASTECH_GID must be set}"
 
-      NASTECH_UID="''${NASTECH_UID:?NASTECH_UID must be set}"
-      NASTECH_GID="''${NASTECH_GID:?NASTECH_GID must be set}"
-
-      # ── Group: ensure a group with GID=$NASTECH_GID exists ──
-      # Check by GID (not name) to avoid collisions with pre-existing groups
-      # (e.g. GID 100 = "users" on Ubuntu)
-      EXISTING_GROUP=$(getent group "$NASTECH_GID" 2>/dev/null | cut -d: -f1 || true)
-      if [ -n "$EXISTING_GROUP" ]; then
-        GROUP_NAME="$EXISTING_GROUP"
-      else
-        GROUP_NAME="nastech"
-        if command -v groupadd >/dev/null 2>&1; then
-          groupadd -g "$NASTECH_GID" "$GROUP_NAME"
-        elif command -v addgroup >/dev/null 2>&1; then
-          addgroup -g "$NASTECH_GID" "$GROUP_NAME" 2>/dev/null || true
+        # ── Group: ensure a group with GID=$NASTECH_GID exists ──
+        # Check by GID (not name) to avoid collisions with pre-existing groups
+        # (e.g. GID 100 = "users" on Ubuntu)
+        EXISTING_GROUP=$(getent group "$NASTECH_GID" 2>/dev/null | cut -d: -f1 || true)
+        if [ -n "$EXISTING_GROUP" ]; then
+          GROUP_NAME="$EXISTING_GROUP"
+        else
+          GROUP_NAME="nastech"
+          if command -v groupadd >/dev/null 2>&1; then
+            groupadd -g "$NASTECH_GID" "$GROUP_NAME"
+          elif command -v addgroup >/dev/null 2>&1; then
+            addgroup -g "$NASTECH_GID" "$GROUP_NAME" 2>/dev/null || true
+          fi
         fi
-      fi
 
-      # ── User: ensure a user with UID=$NASTECH_UID exists ──
-      PASSWD_ENTRY=$(getent passwd "$NASTECH_UID" 2>/dev/null || true)
-      if [ -n "$PASSWD_ENTRY" ]; then
-        TARGET_USER=$(echo "$PASSWD_ENTRY" | cut -d: -f1)
-        TARGET_HOME=$(echo "$PASSWD_ENTRY" | cut -d: -f6)
-      else
-        TARGET_USER="nastech"
-        TARGET_HOME="/home/nastech"
-        if command -v useradd >/dev/null 2>&1; then
-          useradd -u "$NASTECH_UID" -g "$NASTECH_GID" -m -d "$TARGET_HOME" -s /bin/bash "$TARGET_USER"
-        elif command -v adduser >/dev/null 2>&1; then
-          adduser -u "$NASTECH_UID" -D -h "$TARGET_HOME" -s /bin/sh -G "$GROUP_NAME" "$TARGET_USER" 2>/dev/null || true
+        # ── User: ensure a user with UID=$NASTECH_UID exists ──
+        PASSWD_ENTRY=$(getent passwd "$NASTECH_UID" 2>/dev/null || true)
+        if [ -n "$PASSWD_ENTRY" ]; then
+          TARGET_USER=$(echo "$PASSWD_ENTRY" | cut -d: -f1)
+          TARGET_HOME=$(echo "$PASSWD_ENTRY" | cut -d: -f6)
+        else
+          TARGET_USER="nastech"
+          TARGET_HOME="/home/nastech"
+          if command -v useradd >/dev/null 2>&1; then
+            useradd -u "$NASTECH_UID" -g "$NASTECH_GID" -m -d "$TARGET_HOME" -s /bin/bash "$TARGET_USER"
+          elif command -v adduser >/dev/null 2>&1; then
+            adduser -u "$NASTECH_UID" -D -h "$TARGET_HOME" -s /bin/sh -G "$GROUP_NAME" "$TARGET_USER" 2>/dev/null || true
+          fi
         fi
-      fi
-      mkdir -p "$TARGET_HOME"
-      chown "$NASTECH_UID:$NASTECH_GID" "$TARGET_HOME"
-      chmod 0750 "$TARGET_HOME"
+        mkdir -p "$TARGET_HOME"
+        chown "$NASTECH_UID:$NASTECH_GID" "$TARGET_HOME"
+        chmod 0750 "$TARGET_HOME"
 
-      # Ensure NASTECH_HOME is owned by the target user.
-      # Use find instead of chown -R: chown strips the setgid bit (kernel
-      # behavior), destroying the 2770 permissions the NixOS activation
-      # script sets for group access by hostUsers.  Only touch files with
-      # wrong ownership so correctly-owned dirs keep their permission bits.
-      if [ -n "''${NASTECH_HOME:-}" ] && [ -d "$NASTECH_HOME" ]; then
-        find "$NASTECH_HOME" \! -user "$NASTECH_UID" -exec chown "$NASTECH_UID:$NASTECH_GID" {} +
-      fi
+        # Ensure NASTECH_HOME is owned by the target user.
+        # Use find instead of chown -R: chown strips the setgid bit (kernel
+        # behavior), destroying the 2770 permissions the NixOS activation
+        # script sets for group access by hostUsers.  Only touch files with
+        # wrong ownership so correctly-owned dirs keep their permission bits.
+        if [ -n "''${NASTECH_HOME:-}" ] && [ -d "$NASTECH_HOME" ]; then
+          find "$NASTECH_HOME" \! -user "$NASTECH_UID" -exec chown "$NASTECH_UID:$NASTECH_GID" {} +
+        fi
 
-      # ── Provision apt packages (first boot only, cached in writable layer) ──
-      # sudo: agent self-modification
-      # nodejs/npm: writable node so npm i -g works (nix store copies are read-only)
-      #   Node 22 via NodeSource — Ubuntu 24.04 ships Node 18 which is EOL.
-      # curl: needed for uv installer + NodeSource setup
-      if [ ! -f /var/lib/nastech-tools-provisioned ] && command -v apt-get >/dev/null 2>&1; then
-        echo "First boot: provisioning agent tools..."
-        apt-get update -qq
-        apt-get install -y -qq sudo curl ca-certificates gnupg
-        mkdir -p /etc/apt/keyrings
-        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-          | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-        echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
-          > /etc/apt/sources.list.d/nodesource.list
-        apt-get update -qq
-        apt-get install -y -qq nodejs
-        touch /var/lib/nastech-tools-provisioned
-      fi
+        # ── Provision apt packages (first boot only, cached in writable layer) ──
+        # sudo: agent self-modification
+        # nodejs/npm: writable node so npm i -g works (nix store copies are read-only)
+        #   Node 22 via NodeSource — Ubuntu 24.04 ships Node 18 which is EOL.
+        # curl: needed for uv installer + NodeSource setup
+        if [ ! -f /var/lib/nastech-tools-provisioned ] && command -v apt-get >/dev/null 2>&1; then
+          echo "First boot: provisioning agent tools..."
+          apt-get update -qq
+          apt-get install -y -qq sudo curl ca-certificates gnupg
+          mkdir -p /etc/apt/keyrings
+          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+            | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+            > /etc/apt/sources.list.d/nodesource.list
+          apt-get update -qq
+          apt-get install -y -qq nodejs
+          touch /var/lib/nastech-tools-provisioned
+        fi
 
-      if command -v sudo >/dev/null 2>&1 && [ ! -f /etc/sudoers.d/nastech ]; then
-        mkdir -p /etc/sudoers.d
-        echo "$TARGET_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nastech
-        chmod 0440 /etc/sudoers.d/nastech
-      fi
+        if command -v sudo >/dev/null 2>&1 && [ ! -f /etc/sudoers.d/nastech ]; then
+          mkdir -p /etc/sudoers.d
+          echo "$TARGET_USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nastech
+          chmod 0440 /etc/sudoers.d/nastech
+        fi
 
-      # uv (Python manager) — not in Ubuntu repos, retry-safe outside the sentinel
-      if ! command -v uv >/dev/null 2>&1 && [ ! -x "$TARGET_HOME/.local/bin/uv" ] && command -v curl >/dev/null 2>&1; then
-        su -s /bin/sh "$TARGET_USER" -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' || true
-      fi
+        # uv (Python manager) — not in Ubuntu repos, retry-safe outside the sentinel
+        if ! command -v uv >/dev/null 2>&1 && [ ! -x "$TARGET_HOME/.local/bin/uv" ] && command -v curl >/dev/null 2>&1; then
+          su -s /bin/sh "$TARGET_USER" -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' || true
+        fi
 
-      # Python 3.12 venv — gives the agent a writable Python with pip.
-      # --seed includes pip/setuptools so bare `pip install` works.
-      _UV_BIN="$TARGET_HOME/.local/bin/uv"
-      if [ ! -d "$TARGET_HOME/.venv" ] && [ -x "$_UV_BIN" ]; then
-        su -s /bin/sh "$TARGET_USER" -c "
-          export PATH=\"\$HOME/.local/bin:\$PATH\"
-          uv python install 3.12
-          uv venv --python 3.12 --seed \"\$HOME/.venv\"
-        " || true
-      fi
+        # Python 3.12 venv — gives the agent a writable Python with pip.
+        # --seed includes pip/setuptools so bare `pip install` works.
+        _UV_BIN="$TARGET_HOME/.local/bin/uv"
+        if [ ! -d "$TARGET_HOME/.venv" ] && [ -x "$_UV_BIN" ]; then
+          su -s /bin/sh "$TARGET_USER" -c "
+            export PATH=\"\$HOME/.local/bin:\$PATH\"
+            uv python install 3.12
+            uv venv --python 3.12 --seed \"\$HOME/.venv\"
+          " || true
+        fi
 
-      # Put the agent venv first on PATH so python/pip resolve to writable copies
-      if [ -d "$TARGET_HOME/.venv/bin" ]; then
-        export PATH="$TARGET_HOME/.venv/bin:$PATH"
-      fi
+        # Put the agent venv first on PATH so python/pip resolve to writable copies
+        if [ -d "$TARGET_HOME/.venv/bin" ]; then
+          export PATH="$TARGET_HOME/.venv/bin:$PATH"
+        fi
 
-      if command -v setpriv >/dev/null 2>&1; then
-        exec setpriv --reuid="$NASTECH_UID" --regid="$NASTECH_GID" --init-groups "$@"
-      elif command -v su >/dev/null 2>&1; then
-        exec su -s /bin/sh "$TARGET_USER" -c 'exec "$0" "$@"' -- "$@"
-      else
-        echo "WARNING: no privilege-drop tool (setpriv/su), running as root" >&2
-        exec "$@"
-      fi
-    '';
+        if command -v setpriv >/dev/null 2>&1; then
+          exec setpriv --reuid="$NASTECH_UID" --regid="$NASTECH_GID" --init-groups "$@"
+        elif command -v su >/dev/null 2>&1; then
+          exec su -s /bin/sh "$TARGET_USER" -c 'exec "$0" "$@"' -- "$@"
+        else
+          echo "WARNING: no privilege-drop tool (setpriv/su), running as root" >&2
+          exec "$@"
+        fi
+      '';
 
-    # Identity hash — only recreate container when structural config changes.
-    # Package and entrypoint use stable symlinks (current-package, current-entrypoint)
-    # so they can update without recreation. Env vars go through $NASTECH_HOME/.env.
-    containerIdentity = builtins.hashString "sha256" (builtins.toJSON {
-      schema = 4; # bump when identity inputs change (4: Node 18→22 via NodeSource)
-      image = cfg.container.image;
-      extraVolumes = cfg.container.extraVolumes;
-      extraOptions = cfg.container.extraOptions;
-    });
+      # Identity hash — only recreate container when structural config changes.
+      # Package and entrypoint use stable symlinks (current-package, current-entrypoint)
+      # so they can update without recreation. Env vars go through $NASTECH_HOME/.env.
+      containerIdentity = builtins.hashString "sha256" (
+        builtins.toJSON {
+          schema = 4; # bump when identity inputs change (4: Node 18→22 via NodeSource)
+          image = cfg.container.image;
+          extraVolumes = cfg.container.extraVolumes;
+          extraOptions = cfg.container.extraOptions;
+        }
+      );
 
-    identityFile = "${cfg.stateDir}/.container-identity";
+      identityFile = "${cfg.stateDir}/.container-identity";
 
-    # Default: /var/lib/nastech/workspace → /data/workspace.
-    # Custom paths outside stateDir pass through unchanged (user must add extraVolumes).
-    containerWorkDir =
-      if lib.hasPrefix "${cfg.stateDir}/" cfg.workingDirectory
-      then "${containerDataDir}/${lib.removePrefix "${cfg.stateDir}/" cfg.workingDirectory}"
-      else cfg.workingDirectory;
+      # The CLI on the host reads this file, in get_container_exec_info. The
+      # file tells the CLI to run in the container and not on the host.
+      containerModeFile = pkgs.writeText "nastech-container-mode" ''
+        # Written by the NixOS activation script. Do not edit manually.
+        backend=${cfg.container.backend}
+        container_name=${containerName}
+        exec_user=${cfg.user}
+        nastech_bin=${containerDataDir}/current-package/bin/nastech
+      '';
 
-  in {
-    options.services.nastech-agent = with lib; {
-      enable = mkEnableOption "Nastech Agent gateway service";
+      # Default: /var/lib/nastech/workspace → /data/workspace.
+      # Custom paths outside stateDir pass through unchanged (user must add extraVolumes).
+      containerWorkDir =
+        if lib.hasPrefix "${cfg.stateDir}/" cfg.workingDirectory then
+          "${containerDataDir}/${lib.removePrefix "${cfg.stateDir}/" cfg.workingDirectory}"
+        else
+          cfg.workingDirectory;
 
-      # ── Package ──────────────────────────────────────────────────────────
-      package = mkOption {
-        type = types.package;
-        default = nastech-agent;
-        description = "The nastech-agent package to use.";
+      # The hardening and the environment that the gateway unit and the
+      # backend unit share.
+      commonServiceConfig = {
+        User = cfg.user;
+        Group = cfg.group;
+        WorkingDirectory = cfg.workingDirectory;
+
+        Restart = cfg.restart;
+        RestartSec = cfg.restartSec;
+
+        # Shared-state: files created by the service should be group-writable
+        # so interactive users in the nastech group can read/write them.
+        UMask = "0007";
+
+        # Hardening
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = false;
+        ReadWritePaths = [
+          cfg.stateDir
+          cfg.workingDirectory
+        ];
+        PrivateTmp = true;
       };
 
-      # ── Service identity ─────────────────────────────────────────────────
-      user = mkOption {
-        type = types.str;
-        default = "nastech";
-        description = "System user running the gateway.";
-      };
+      commonUnitEnvironment = {
+        HOME = cfg.stateDir;
+      }
+      // common.processEnvironment { inherit nastechHome; };
 
-      group = mkOption {
-        type = types.str;
-        default = "nastech";
-        description = "System group running the gateway.";
-      };
+      unitPath = common.processPath { inherit pkgs cfg; };
 
-      createUser = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Create the user/group automatically.";
-      };
-
-      # ── Directories ──────────────────────────────────────────────────────
-      stateDir = mkOption {
-        type = types.str;
-        default = "/var/lib/nastech";
-        description = "State directory. Contains .nastech/ subdir (NASTECH_HOME).";
-      };
-
-      workingDirectory = mkOption {
-        type = types.str;
-        default = "${cfg.stateDir}/workspace";
-        defaultText = literalExpression ''"''${cfg.stateDir}/workspace"'';
-        description = "Working directory for the agent.";
-      };
-
-      # ── Declarative config ───────────────────────────────────────────────
-      configFile = mkOption {
-        type = types.nullOr types.path;
-        default = null;
-        description = ''
-          Path to an existing config.yaml. If set, takes precedence over
-          the declarative `settings` option.
-        '';
-      };
-
-      settings = mkOption {
-        type = deepConfigType;
-        default = { };
-        description = ''
-          Declarative Nastech config (attrset). Deep-merged across module
-          definitions and rendered as config.yaml.
-        '';
-        example = literalExpression ''
+    in
+    {
+      options.services.nastech-agent =
+        common.sharedOptions {
+          defaultPackage = nastech-agent;
+          defaultPackageText = lib.literalExpression "nastech-agent.packages.\${system}.default";
+          defaultWorkingDirectory = "${cfg.stateDir}/workspace";
+          defaultWorkingDirectoryText = lib.literalExpression ''"''${cfg.stateDir}/workspace"'';
+        }
+        // (
+          with lib;
           {
-            model = "anthropic/claude-sonnet-4";
-            terminal.backend = "local";
-            compression = { enabled = true; threshold = 0.85; };
-            toolsets = [ "all" ];
-          }
-        '';
-      };
-
-      # ── Secrets / environment ────────────────────────────────────────────
-      environmentFiles = mkOption {
-        type = types.listOf types.str;
-        default = [ ];
-        description = ''
-          Paths to environment files containing secrets (API keys, tokens).
-          Contents are merged into $NASTECH_HOME/.env at activation time.
-          Nastech reads this file on every startup via load_nastech_dotenv().
-        '';
-      };
-
-      environment = mkOption {
-        type = types.attrsOf types.str;
-        default = { };
-        description = ''
-          Non-secret environment variables. Merged into $NASTECH_HOME/.env
-          at activation time. Do NOT put secrets here — use environmentFiles.
-        '';
-      };
-
-      authFile = mkOption {
-        type = types.nullOr types.path;
-        default = null;
-        description = ''
-          Path to an auth.json seed file (OAuth credentials).
-          Only copied on first deploy — existing auth.json is preserved.
-        '';
-      };
-
-      authFileForceOverwrite = mkOption {
-        type = types.bool;
-        default = false;
-        description = "Always overwrite auth.json from authFile on activation.";
-      };
-
-      # ── Documents ────────────────────────────────────────────────────────
-      documents = mkOption {
-        type = types.attrsOf (types.either types.str types.path);
-        default = { };
-        description = ''
-          Workspace files (SOUL.md, USER.md, etc.). Keys are filenames,
-          values are inline strings or paths. Installed into workingDirectory.
-        '';
-        example = literalExpression ''
-          {
-            "SOUL.md" = "You are a helpful AI assistant.";
-            "USER.md" = ./documents/USER.md;
-          }
-        '';
-      };
-
-      # ── MCP Servers ──────────────────────────────────────────────────────
-      mcpServers = mkOption {
-        type = types.attrsOf (types.submodule {
-          options = {
-            # Stdio transport
-            command = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = "MCP server command (stdio transport).";
-            };
-            args = mkOption {
-              type = types.listOf types.str;
-              default = [ ];
-              description = "Command-line arguments (stdio transport).";
-            };
-            env = mkOption {
-              type = types.attrsOf types.str;
-              default = { };
-              description = "Environment variables for the server process (stdio transport).";
+            # ── Service identity ───────────────────────────────────────────
+            user = mkOption {
+              type = types.str;
+              default = "nastech";
+              description = "System user running the gateway.";
             };
 
-            # HTTP/StreamableHTTP transport
-            url = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = "MCP server endpoint URL (HTTP/StreamableHTTP transport).";
-            };
-            headers = mkOption {
-              type = types.attrsOf types.str;
-              default = { };
-              description = "HTTP headers, e.g. for authentication (HTTP transport).";
+            group = mkOption {
+              type = types.str;
+              default = "nastech";
+              description = "System group running the gateway.";
             };
 
-            # Authentication
-            auth = mkOption {
-              type = types.nullOr (types.enum [ "oauth" ]);
-              default = null;
+            createUser = mkOption {
+              type = types.bool;
+              default = true;
+              description = "Create the user/group automatically.";
+            };
+
+            # ── Directories ────────────────────────────────────────────────
+            stateDir = mkOption {
+              type = types.str;
+              default = "/var/lib/nastech";
+              description = "State directory. Contains .nastech/ subdir (NASTECH_HOME).";
+            };
+
+            addToSystemPackages = mkOption {
+              type = types.bool;
+              default = false;
               description = ''
-                Authentication method. Set to "oauth" for OAuth 2.1 PKCE flow
-                (remote MCP servers). Tokens are stored in $NASTECH_HOME/mcp-tokens/.
+                Add the nastech CLI to environment.systemPackages and export
+                NASTECH_HOME system-wide (via environment.variables) so interactive
+                shells share state with the gateway service.
               '';
             };
 
-            # Enable/disable
-            enabled = mkOption {
-              type = types.bool;
-              default = true;
-              description = "Enable or disable this MCP server.";
-            };
+            # ── OCI Container (opt-in) ────────────────────────────────────
+            container = {
+              enable = mkEnableOption "OCI container mode (Ubuntu base, full self-modification support)";
 
-            # Common options
-            timeout = mkOption {
-              type = types.nullOr types.int;
-              default = null;
-              description = "Tool call timeout in seconds (default: 120).";
-            };
-            connect_timeout = mkOption {
-              type = types.nullOr types.int;
-              default = null;
-              description = "Initial connection timeout in seconds (default: 60).";
-            };
-
-            # Tool filtering
-            tools = mkOption {
-              type = types.nullOr (types.submodule {
-                options = {
-                  include = mkOption {
-                    type = types.listOf types.str;
-                    default = [ ];
-                    description = "Tool allowlist — only these tools are registered.";
-                  };
-                  exclude = mkOption {
-                    type = types.listOf types.str;
-                    default = [ ];
-                    description = "Tool blocklist — these tools are hidden.";
-                  };
-                };
-              });
-              default = null;
-              description = "Filter which tools are exposed by this server.";
-            };
-
-            # Sampling (server-initiated LLM requests)
-            sampling = mkOption {
-              type = types.nullOr (types.submodule {
-                options = {
-                  enabled = mkOption { type = types.bool; default = true; description = "Enable sampling."; };
-                  model = mkOption { type = types.nullOr types.str; default = null; description = "Override model for sampling requests."; };
-                  max_tokens_cap = mkOption { type = types.nullOr types.int; default = null; description = "Max tokens per request."; };
-                  timeout = mkOption { type = types.nullOr types.int; default = null; description = "LLM call timeout in seconds."; };
-                  max_rpm = mkOption { type = types.nullOr types.int; default = null; description = "Max requests per minute."; };
-                  max_tool_rounds = mkOption { type = types.nullOr types.int; default = null; description = "Max tool-use rounds per sampling request."; };
-                  allowed_models = mkOption { type = types.listOf types.str; default = [ ]; description = "Models the server is allowed to request."; };
-                  log_level = mkOption {
-                    type = types.nullOr (types.enum [ "debug" "info" "warning" ]);
-                    default = null;
-                    description = "Audit log level for sampling requests.";
-                  };
-                };
-              });
-              default = null;
-              description = "Sampling configuration for server-initiated LLM requests.";
-            };
-          };
-        });
-        default = { };
-        description = ''
-          MCP server configurations (merged into settings.mcp_servers).
-          Each server uses either stdio (command/args) or HTTP (url) transport.
-        '';
-        example = literalExpression ''
-          {
-            filesystem = {
-              command = "npx";
-              args = [ "-y" "@modelcontextprotocol/server-filesystem" "/home/user" ];
-            };
-            remote-api = {
-              url = "http://my-server:8080/v0/mcp";
-              headers = { Authorization = "Bearer ..."; };
-            };
-            remote-oauth = {
-              url = "https://mcp.example.com/mcp";
-              auth = "oauth";
-            };
-          }
-        '';
-      };
-
-      # ── Service behavior ─────────────────────────────────────────────────
-      extraArgs = mkOption {
-        type = types.listOf types.str;
-        default = [ ];
-        description = "Extra command-line arguments for `nastech gateway`.";
-      };
-
-      extraPackages = mkOption {
-        type = types.listOf types.package;
-        default = [ ];
-        description = ''
-          Extra packages available to the agent — terminal commands, skills,
-          cron jobs, and the service process all see them.
-
-          Implemented via the nastech user's per-user profile
-          (`/etc/profiles/per-user/${cfg.user}/bin`), which NixOS includes
-          in PATH for login shells.  The packages are also added to the
-          systemd service PATH for direct process access.
-        '';
-      };
-
-      extraPlugins = mkOption {
-        type = types.listOf types.package;
-        default = [ ];
-        description = ''
-          Directory-based plugin packages to symlink into the nastech plugins
-          directory. Each package should contain a plugin.yaml and __init__.py
-          at its root. Nastech discovers these automatically on startup.
-        '';
-        example = literalExpression ''
-          [
-            (pkgs.fetchFromGitHub {
-              owner = "stephenschoettler";
-              repo = "nastech-lcm";
-              name = "nastech-lcm";
-              rev = "v0.7.0";
-              hash = "sha256-...";
-            })
-          ]
-        '';
-      };
-
-      extraPythonPackages = mkOption {
-        type = types.listOf types.package;
-        default = [ ];
-        description = ''
-          Python packages to add to PYTHONPATH for entry-point plugin discovery.
-          These are pip-packaged plugins that register via the
-          nastech_agent.plugins entry-point group. Each package must be built
-          with the same Python interpreter as nastech (python312).
-        '';
-        example = literalExpression ''
-          [
-            (pkgs.python312Packages.buildPythonPackage {
-              pname = "rtk-nastech";
-              version = "1.0.0";
-              src = pkgs.fetchFromGitHub {
-                owner = "ogallotti";
-                repo = "rtk-nastech";
-                rev = "main";
-                hash = "sha256-...";
+              backend = mkOption {
+                type = types.enum [
+                  "docker"
+                  "podman"
+                ];
+                default = "docker";
+                description = "Container runtime.";
               };
-            })
-          ]
-        '';
-      };
 
-      extraDependencyGroups = mkOption {
-        type = types.listOf types.str;
-        default = [ ];
-        description = ''
-          Additional pyproject.toml optional-dependency groups to include in
-          the sealed Python venv. These are resolved by uv alongside core
-          dependencies — no PYTHONPATH patching or collision risk.
+              extraVolumes = mkOption {
+                type = types.listOf types.str;
+                default = [ ];
+                description = "Extra volume mounts (host:container:mode format).";
+                example = [ "/home/user/projects:/projects:rw" ];
+              };
 
-          Use this for optional extras already declared in nastech-agent's
-          pyproject.toml (e.g. "hindsight", "honcho", "voice").
-          Use extraPythonPackages for external packages not in pyproject.toml.
-        '';
-        example = [ "hindsight" ];
-      };
+              extraOptions = mkOption {
+                type = types.listOf types.str;
+                default = [ ];
+                description = "Extra arguments passed to docker/podman run.";
+              };
 
-      restart = mkOption {
-        type = types.str;
-        default = "always";
-        description = "systemd Restart= policy.";
-      };
+              image = mkOption {
+                type = types.str;
+                default = "ubuntu:24.04";
+                description = "OCI container image. The container pulls this at runtime via Docker/Podman.";
+              };
 
-      restartSec = mkOption {
-        type = types.int;
-        default = 5;
-        description = "systemd RestartSec= value.";
-      };
+              hostUsers = mkOption {
+                type = types.listOf types.str;
+                default = [ ];
+                description = ''
+                  Interactive users who get a ~/.nastech symlink to the service
+                  stateDir. These users are automatically added to the nastech group.
+                '';
+                example = [ "sidbin" ];
+              };
+            };
+          }
+        );
 
-      addToSystemPackages = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Add the nastech CLI to environment.systemPackages and export
-          NASTECH_HOME system-wide (via environment.variables) so interactive
-          shells share state with the gateway service.
-        '';
-      };
+      config = lib.mkIf cfg.enable (
+        lib.mkMerge [
 
-      # ── OCI Container (opt-in) ──────────────────────────────────────────
-      container = {
-        enable = mkEnableOption "OCI container mode (Ubuntu base, full self-modification support)";
+          # ── Merge MCP servers into settings ────────────────────────────────
+          (lib.mkIf (cfg.mcpServers != { }) {
+            services.nastech-agent.settings.mcp_servers = common.mcpServersToConfig cfg.mcpServers;
+          })
 
-        backend = mkOption {
-          type = types.enum [ "docker" "podman" ];
-          default = "docker";
-          description = "Container runtime.";
-        };
+          # ── User / group ──────────────────────────────────────────────────
+          (lib.mkIf cfg.createUser {
+            users.groups.${cfg.group} = { };
+            users.users.${cfg.user} = {
+              isSystemUser = true;
+              group = cfg.group;
+              home = cfg.stateDir;
+              createHome = true;
+              shell = pkgs.bashInteractive;
+            };
+          })
 
-        extraVolumes = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = "Extra volume mounts (host:container:mode format).";
-          example = [ "/home/user/projects:/projects:rw" ];
-        };
+          # ── Host CLI ──────────────────────────────────────────────────────
+          # Add the nastech CLI to system PATH and export NASTECH_HOME system-wide
+          # so interactive shells share state (sessions, skills, cron) with the
+          # gateway service instead of creating a separate ~/.nastech/.
+          (lib.mkIf cfg.addToSystemPackages {
+            environment.systemPackages = [ effectivePackage ];
+            environment.variables.NASTECH_HOME = nastechHome;
+          })
 
-        extraOptions = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = "Extra arguments passed to docker/podman run.";
-        };
+          # ── Host user group membership ─────────────────────────────────────
+          (lib.mkIf (cfg.container.enable && cfg.container.hostUsers != [ ]) {
+            users.users = lib.genAttrs cfg.container.hostUsers (_user: {
+              extraGroups = [ cfg.group ];
+            });
+          })
 
-        image = mkOption {
-          type = types.str;
-          default = "ubuntu:24.04";
-          description = "OCI container image. The container pulls this at runtime via Docker/Podman.";
-        };
+          # ── Assertions ─────────────────────────────────────────────────────
+          {
+            assertions =
+              common.pluginNameAssertions {
+                inherit cfg;
+                optionPath = "services.nastech-agent";
+              }
+              ++ common.workspaceFilesAssertions {
+                inherit cfg;
+                opt = options.services.nastech-agent.workingDirectory;
+                optionPath = "services.nastech-agent";
+              }
+              ++ [
+                {
+                  # Container mode runs one command in one container. A second
+                  # process needs its own container and its own ports. This
+                  # module does not do that.
+                  assertion = !(cfg.container.enable && cfg.backend.mode != "none");
+                  message = "services.nastech-agent: backend.mode is not supported together with container.enable — the container runs the gateway only.";
+                }
+              ];
+          }
 
-        hostUsers = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          description = ''
-            Interactive users who get a ~/.nastech symlink to the service
-            stateDir. These users are automatically added to the nastech group.
-          '';
-          example = [ "sidbin" ];
-        };
-      };
+          # ── Per-user profile for extraPackages ───────────────────────────
+          # Wire extraPackages into the nastech user's per-user profile so the
+          # login-shell snapshot (which rebuilds PATH from NixOS profiles) sees
+          # them.  The systemd service PATH also includes them for direct access.
+          (lib.mkIf (cfg.extraPackages != [ ]) {
+            # listOf options are merged by the NixOS module system — this appends to
+            # any packages the operator assigned to this user externally (e.g. when
+            # createUser = false and the user definition lives elsewhere in the config).
+            users.users.${cfg.user}.packages = cfg.extraPackages;
+          })
+
+          # ── Warnings ──────────────────────────────────────────────────────
+          (lib.mkIf
+            (cfg.container.enable && !cfg.addToSystemPackages && cfg.container.hostUsers != [ ])
+            {
+              warnings = [
+                ''
+                  services.nastech-agent: container.enable is true and container.hostUsers
+                  is set, but addToSystemPackages is false. Without a host-installed nastech
+                  binary, container routing will not work for interactive users.
+                  Set addToSystemPackages = true or ensure nastech is on PATH.
+                ''
+              ];
+            }
+          )
+
+          # ── Directories ───────────────────────────────────────────────────
+          {
+            systemd.tmpfiles.rules = [
+              "d ${cfg.stateDir}                2770 ${cfg.user} ${cfg.group} - -"
+              "d ${nastechHome}                  2770 ${cfg.user} ${cfg.group} - -"
+              "d ${cfg.stateDir}/home           0750 ${cfg.user} ${cfg.group} - -"
+              "d ${cfg.workingDirectory}        2770 ${cfg.user} ${cfg.group} - -"
+            ]
+            ++ map (d: "d ${nastechHome}/${d} 2770 ${cfg.user} ${cfg.group} - -") common.stateSubdirs;
+          }
+
+          # ── Activation: link config + auth + documents ────────────────────
+          {
+            system.activationScripts."nastech-agent-setup" =
+              lib.stringAfter
+                (
+                  [ "users" ] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets"
+                )
+                ''
+                  # Ensure directories exist (activation runs before tmpfiles)
+                  mkdir -p ${nastechHome}
+                  mkdir -p ${cfg.stateDir}/home
+                  mkdir -p ${cfg.workingDirectory}
+                  chown ${cfg.user}:${cfg.group} ${cfg.stateDir} ${nastechHome} ${cfg.stateDir}/home ${cfg.workingDirectory}
+                  chmod 2770 ${cfg.stateDir} ${nastechHome} ${cfg.workingDirectory}
+                  chmod 0750 ${cfg.stateDir}/home
+
+                  # Create subdirs, set setgid + group-writable, migrate existing files.
+                  # Nix-managed .env/.managed stay 0640/0644; config.yaml uses
+                  # configYamlMode (0660 under addToSystemPackages, else 0640).
+                  find ${nastechHome} -maxdepth 1 \
+                    \( -name "*.db" -o -name "*.db-wal" -o -name "*.db-shm" -o -name "SOUL.md" \) \
+                    -exec chmod g+rw {} + 2>/dev/null || true
+                  for _subdir in ${lib.concatStringsSep " " common.stateSubdirs}; do
+                    mkdir -p "${nastechHome}/$_subdir"
+                    chown ${cfg.user}:${cfg.group} "${nastechHome}/$_subdir"
+                    chmod 2770 "${nastechHome}/$_subdir"
+                    find "${nastechHome}/$_subdir" -type f \
+                      -exec chmod g+rw {} + 2>/dev/null || true
+                  done
+
+                  ${common.mkStateScript {
+                    inherit pkgs cfg nastechHome;
+                    workingDirectory = cfg.workingDirectory;
+                    configWorkingDirectory = effectiveWorkDir;
+                    owner = "${cfg.user}:${cfg.group}";
+                    stateDirs = common.stateSubdirs;
+                    modes = {
+                      config = configYamlMode;
+                      env = "0640";
+                      managed = "0644";
+                      auth = "0600";
+                      document = "0640";
+                    };
+                  }}
+
+                  chown -h ${cfg.user}:${cfg.group} ${nastechHome}/plugins/nix-managed-* 2>/dev/null || true
+
+                  # Container mode metadata — tells the host CLI to exec into the
+                  # container instead of running locally. Removed when container mode
+                  # is disabled so the host CLI falls back to native execution.
+                  ${
+                    if cfg.container.enable then
+                      ''
+                        install -o ${cfg.user} -g ${cfg.group} -m 0644 ${containerModeFile} ${nastechHome}/.container-mode
+                      ''
+                    else
+                      ''
+                        rm -f ${nastechHome}/.container-mode
+
+                        # Remove symlink bridge for hostUsers
+                        ${lib.concatStringsSep "\n" (
+                          map (
+                            user:
+                            let
+                              userHome = config.users.users.${user}.home;
+                              symlinkPath = "${userHome}/.nastech";
+                            in
+                            ''
+                              if [ -L "${symlinkPath}" ] && [ "$(readlink "${symlinkPath}")" = "${nastechHome}" ]; then
+                                rm -f "${symlinkPath}"
+                                echo "nastech-agent: removed symlink ${symlinkPath}"
+                              fi
+                            ''
+                          ) cfg.container.hostUsers
+                        )}
+                      ''
+                  }
+
+                  # ── Symlink bridge for interactive users ───────────────────────
+                  # Create ~/.nastech -> stateDir/.nastech for each hostUser so the
+                  # host CLI shares state with the container service.
+                  # Only runs when container mode is enabled.
+                  ${lib.optionalString cfg.container.enable (
+                    lib.concatStringsSep "\n" (
+                      map (
+                        user:
+                        let
+                          userHome = config.users.users.${user}.home;
+                          symlinkPath = "${userHome}/.nastech";
+                        in
+                        ''
+                          if [ -d "${symlinkPath}" ] && [ ! -L "${symlinkPath}" ]; then
+                            # Real directory — back it up, then create symlink.
+                            # (ln -sfn cannot atomically replace a directory.)
+                            _backup="${symlinkPath}.bak.$(date +%s)"
+                            echo "nastech-agent: backing up existing ${symlinkPath} to $_backup"
+                            mv "${symlinkPath}" "$_backup"
+                          fi
+                          # For everything else (existing symlink, doesn't exist, etc.)
+                          # ln -sfn handles it: replaces symlinks, creates new ones.
+                          ln -sfn "${nastechHome}" "${symlinkPath}"
+                          chown -h ${user}:${cfg.group} "${symlinkPath}"
+                        ''
+                      ) cfg.container.hostUsers
+                    )
+                  )}
+                '';
+          }
+
+          # ══════════════════════════════════════════════════════════════════
+          # MODE A: Native systemd service (default)
+          # ══════════════════════════════════════════════════════════════════
+          (lib.mkIf (!cfg.container.enable) {
+            systemd.services.nastech-agent = {
+              description = "Nastech Agent Gateway";
+              wantedBy = [ "multi-user.target" ];
+              after = [ "network-online.target" ];
+              wants = [ "network-online.target" ];
+
+              # cfg.environment and cfg.environmentFiles are written to
+              # $NASTECH_HOME/.env by the activation script. load_nastech_dotenv()
+              # reads them at Python startup — no systemd EnvironmentFile needed.
+              environment = commonUnitEnvironment;
+
+              serviceConfig = commonServiceConfig // {
+                ExecStart = lib.escapeShellArgs (common.gatewayArgv cfg);
+              };
+
+              path = unitPath;
+            };
+          })
+
+          # ── The backend: nastech serve or nastech dashboard ─────────────────
+          # This is a different process from the gateway. Both use one
+          # NASTECH_HOME.
+          (lib.mkIf (!cfg.container.enable && cfg.backend.mode != "none") {
+            systemd.services.nastech-backend = {
+              description = common.backendDescription cfg;
+              wantedBy = [ "multi-user.target" ];
+              after = [ "network-online.target" ];
+              wants = [ "network-online.target" ];
+
+              environment = commonUnitEnvironment;
+
+              serviceConfig = commonServiceConfig // {
+                ExecStart = lib.escapeShellArgs (common.backendArgv cfg);
+              };
+
+              path = unitPath;
+            };
+          })
+
+          # ══════════════════════════════════════════════════════════════════
+          # MODE B: OCI container (persistent writable layer)
+          # ══════════════════════════════════════════════════════════════════
+          (lib.mkIf cfg.container.enable {
+            # Ensure the container runtime is available
+            virtualisation.docker.enable = lib.mkDefault (cfg.container.backend == "docker");
+
+            systemd.services.nastech-agent = {
+              description = "Nastech Agent Gateway (container)";
+              wantedBy = [ "multi-user.target" ];
+              after = [
+                "network-online.target"
+              ]
+              ++ lib.optional (cfg.container.backend == "docker") "docker.service";
+              wants = [ "network-online.target" ];
+              requires = lib.optional (cfg.container.backend == "docker") "docker.service";
+
+              preStart = ''
+                # Stable symlinks — container references these, not store paths directly
+                ln -sfn ${effectivePackage} ${cfg.stateDir}/current-package
+                ln -sfn ${containerEntrypoint} ${cfg.stateDir}/current-entrypoint
+
+                # GC roots so nix-collect-garbage doesn't remove store paths in use
+                ${pkgs.nix}/bin/nix-store --add-root ${cfg.stateDir}/.gc-root --indirect -r ${effectivePackage} 2>/dev/null || true
+                ${pkgs.nix}/bin/nix-store --add-root ${cfg.stateDir}/.gc-root-entrypoint --indirect -r ${containerEntrypoint} 2>/dev/null || true
+
+                # Check if container needs (re)creation
+                NEED_CREATE=false
+                if ! ${containerBin} inspect ${containerName} &>/dev/null; then
+                  NEED_CREATE=true
+                elif [ ! -f ${identityFile} ] || [ "$(cat ${identityFile})" != "${containerIdentity}" ]; then
+                  echo "Container config changed, recreating..."
+                  ${containerBin} rm -f ${containerName} || true
+                  NEED_CREATE=true
+                fi
+
+                if [ "$NEED_CREATE" = "true" ]; then
+                  # Resolve numeric UID/GID — passed to entrypoint for in-container user setup
+                  NASTECH_UID=$(${pkgs.coreutils}/bin/id -u ${cfg.user})
+                  NASTECH_GID=$(${pkgs.coreutils}/bin/id -g ${cfg.user})
+
+                  echo "Creating container..."
+                  ${containerBin} create \
+                    --name ${containerName} \
+                    --network=host \
+                    --entrypoint ${containerDataDir}/current-entrypoint \
+                    --volume /nix/store:/nix/store:ro \
+                    --volume ${cfg.stateDir}:${containerDataDir} \
+                    --volume ${cfg.stateDir}/home:${containerHomeDir} \
+                    ${lib.concatStringsSep " " (map (v: "--volume ${v}") cfg.container.extraVolumes)} \
+                    --env NASTECH_UID="$NASTECH_UID" \
+                    --env NASTECH_GID="$NASTECH_GID" \
+                    --env NASTECH_HOME=${containerDataDir}/.nastech \
+                    --env NASTECH_MANAGED=true \
+                    --env HOME=${containerHomeDir} \
+                    ${lib.concatStringsSep " " cfg.container.extraOptions} \
+                    ${cfg.container.image} \
+                    ${containerDataDir}/current-package/bin/nastech gateway run --replace ${lib.concatStringsSep " " cfg.extraArgs}
+
+                  echo "${containerIdentity}" > ${identityFile}
+                fi
+              '';
+
+              script = ''
+                exec ${containerBin} start -a ${containerName}
+              '';
+
+              preStop = ''
+                ${containerBin} stop -t 10 ${containerName} || true
+              '';
+
+              serviceConfig = {
+                Type = "simple";
+                Restart = cfg.restart;
+                RestartSec = cfg.restartSec;
+                TimeoutStopSec = 30;
+              };
+            };
+          })
+        ]
+      );
     };
-
-    config = lib.mkIf cfg.enable (lib.mkMerge [
-
-      # ── Merge MCP servers into settings ────────────────────────────────
-      (lib.mkIf (cfg.mcpServers != { }) {
-        services.nastech-agent.settings.mcp_servers = lib.mapAttrs (_name: srv:
-          # Stdio transport
-          lib.optionalAttrs (srv.command != null) { inherit (srv) command args; }
-          // lib.optionalAttrs (srv.env != { }) { inherit (srv) env; }
-          # HTTP transport
-          // lib.optionalAttrs (srv.url != null) { inherit (srv) url; }
-          // lib.optionalAttrs (srv.headers != { }) { inherit (srv) headers; }
-          # Auth
-          // lib.optionalAttrs (srv.auth != null) { inherit (srv) auth; }
-          # Enable/disable
-          // { inherit (srv) enabled; }
-          # Common options
-          // lib.optionalAttrs (srv.timeout != null) { inherit (srv) timeout; }
-          // lib.optionalAttrs (srv.connect_timeout != null) { inherit (srv) connect_timeout; }
-          # Tool filtering
-          // lib.optionalAttrs (srv.tools != null) {
-            tools = lib.filterAttrs (_: v: v != [ ]) {
-              inherit (srv.tools) include exclude;
-            };
-          }
-          # Sampling
-          // lib.optionalAttrs (srv.sampling != null) {
-            sampling = lib.filterAttrs (_: v: v != null && v != [ ]) {
-              inherit (srv.sampling) enabled model max_tokens_cap timeout max_rpm
-                max_tool_rounds allowed_models log_level;
-            };
-          }
-        ) cfg.mcpServers;
-      })
-
-      # ── User / group ──────────────────────────────────────────────────
-      (lib.mkIf cfg.createUser {
-        users.groups.${cfg.group} = { };
-        users.users.${cfg.user} = {
-          isSystemUser = true;
-          group = cfg.group;
-          home = cfg.stateDir;
-          createHome = true;
-          shell = pkgs.bashInteractive;
-        };
-      })
-
-      # ── Host CLI ──────────────────────────────────────────────────────
-      # Add the nastech CLI to system PATH and export NASTECH_HOME system-wide
-      # so interactive shells share state (sessions, skills, cron) with the
-      # gateway service instead of creating a separate ~/.nastech/.
-      (lib.mkIf cfg.addToSystemPackages {
-        environment.systemPackages = [ effectivePackage ];
-        environment.variables.NASTECH_HOME = "${cfg.stateDir}/.nastech";
-      })
-
-      # ── Host user group membership ─────────────────────────────────────
-      (lib.mkIf (cfg.container.enable && cfg.container.hostUsers != []) {
-        users.users = lib.genAttrs cfg.container.hostUsers (user: {
-          extraGroups = [ cfg.group ];
-        });
-      })
-
-      # ── Assertions ─────────────────────────────────────────────────────
-      {
-        assertions = let
-          names = map lib.getName cfg.extraPlugins;
-        in [{
-          assertion = (lib.length names) == (lib.length (lib.unique names));
-          message = "services.nastech-agent.extraPlugins: duplicate plugin names detected: ${toString names}. If using fetchFromGitHub, set name = \"plugin-name\" to disambiguate.";
-        }];
-      }
-
-      # ── Warnings ──────────────────────────────────────────────────────
-      # ── Per-user profile for extraPackages ───────────────────────────
-      # Wire extraPackages into the nastech user's per-user profile so the
-      # login-shell snapshot (which rebuilds PATH from NixOS profiles) sees
-      # them.  The systemd service PATH also includes them for direct access.
-      (lib.mkIf (cfg.extraPackages != []) {
-        # listOf options are merged by the NixOS module system — this appends to
-        # any packages the operator assigned to this user externally (e.g. when
-        # createUser = false and the user definition lives elsewhere in the config).
-        users.users.${cfg.user}.packages = cfg.extraPackages;
-      })
-
-      (lib.mkIf (cfg.container.enable && !cfg.addToSystemPackages && cfg.container.hostUsers != []) {
-        warnings = [
-          ''
-            services.nastech-agent: container.enable is true and container.hostUsers
-            is set, but addToSystemPackages is false. Without a host-installed nastech
-            binary, container routing will not work for interactive users.
-            Set addToSystemPackages = true or ensure nastech is on PATH.
-          ''
-        ];
-      })
-
-      # ── Directories ───────────────────────────────────────────────────
-      {
-        systemd.tmpfiles.rules = [
-          "d ${cfg.stateDir}                2770 ${cfg.user} ${cfg.group} - -"
-          "d ${cfg.stateDir}/.nastech        2770 ${cfg.user} ${cfg.group} - -"
-          "d ${cfg.stateDir}/.nastech/cron   2770 ${cfg.user} ${cfg.group} - -"
-          "d ${cfg.stateDir}/.nastech/sessions 2770 ${cfg.user} ${cfg.group} - -"
-          "d ${cfg.stateDir}/.nastech/logs   2770 ${cfg.user} ${cfg.group} - -"
-          "d ${cfg.stateDir}/.nastech/memories 2770 ${cfg.user} ${cfg.group} - -"
-          "d ${cfg.stateDir}/.nastech/plugins 2770 ${cfg.user} ${cfg.group} - -"
-          "d ${cfg.stateDir}/home           0750 ${cfg.user} ${cfg.group} - -"
-          "d ${cfg.workingDirectory}         2770 ${cfg.user} ${cfg.group} - -"
-        ];
-      }
-
-      # ── Activation: link config + auth + documents ────────────────────
-      {
-        system.activationScripts."nastech-agent-setup" = lib.stringAfter ([ "users" ] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets") ''
-          # Ensure directories exist (activation runs before tmpfiles)
-          mkdir -p ${cfg.stateDir}/.nastech
-          mkdir -p ${cfg.stateDir}/home
-          mkdir -p ${cfg.workingDirectory}
-          chown ${cfg.user}:${cfg.group} ${cfg.stateDir} ${cfg.stateDir}/.nastech ${cfg.stateDir}/home ${cfg.workingDirectory}
-          chmod 2770 ${cfg.stateDir} ${cfg.stateDir}/.nastech ${cfg.workingDirectory}
-          chmod 0750 ${cfg.stateDir}/home
-
-          # Create subdirs, set setgid + group-writable, migrate existing files.
-          # Nix-managed .env/.managed stay 0640/0644; config.yaml uses
-          # configYamlMode (0660 under addToSystemPackages, else 0640).
-          find ${cfg.stateDir}/.nastech -maxdepth 1 \
-            \( -name "*.db" -o -name "*.db-wal" -o -name "*.db-shm" -o -name "SOUL.md" \) \
-            -exec chmod g+rw {} + 2>/dev/null || true
-          for _subdir in cron sessions logs memories plugins; do
-            mkdir -p "${cfg.stateDir}/.nastech/$_subdir"
-            chown ${cfg.user}:${cfg.group} "${cfg.stateDir}/.nastech/$_subdir"
-            chmod 2770 "${cfg.stateDir}/.nastech/$_subdir"
-            find "${cfg.stateDir}/.nastech/$_subdir" -type f \
-              -exec chmod g+rw {} + 2>/dev/null || true
-          done
-
-          # Merge Nix settings into existing config.yaml.
-          # Preserves user-added keys (skills, streaming, etc.); Nix keys win.
-          # If configFile is user-provided (not generated), overwrite instead of merge.
-          # Mode is configYamlMode (0660 under addToSystemPackages so interactive
-          # nastech-group users can save settings via the CLI/TUI, else 0640).
-          ${if cfg.configFile != null then ''
-            install -o ${cfg.user} -g ${cfg.group} -m ${configYamlMode} -D ${configFile} ${cfg.stateDir}/.nastech/config.yaml
-          '' else ''
-            ${configMergeScript} ${generatedConfigFile} ${cfg.stateDir}/.nastech/config.yaml
-            chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/.nastech/config.yaml
-            chmod ${configYamlMode} ${cfg.stateDir}/.nastech/config.yaml
-          ''}
-
-          # Managed mode marker (so interactive shells also detect NixOS management)
-          touch ${cfg.stateDir}/.nastech/.managed
-          chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/.nastech/.managed
-          chmod 0644 ${cfg.stateDir}/.nastech/.managed
-
-          # Container mode metadata — tells the host CLI to exec into the
-          # container instead of running locally. Removed when container mode
-          # is disabled so the host CLI falls back to native execution.
-          ${if cfg.container.enable then ''
-            cat > ${cfg.stateDir}/.nastech/.container-mode <<'NASTECH_CONTAINER_MODE_EOF'
-    # Written by NixOS activation script. Do not edit manually.
-    backend=${cfg.container.backend}
-    container_name=${containerName}
-    exec_user=${cfg.user}
-    nastech_bin=${containerDataDir}/current-package/bin/nastech
-    NASTECH_CONTAINER_MODE_EOF
-            chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/.nastech/.container-mode
-            chmod 0644 ${cfg.stateDir}/.nastech/.container-mode
-          '' else ''
-            rm -f ${cfg.stateDir}/.nastech/.container-mode
-
-            # Remove symlink bridge for hostUsers
-            ${lib.concatStringsSep "\n" (map (user:
-              let
-                userHome = config.users.users.${user}.home;
-                symlinkPath = "${userHome}/.nastech";
-              in ''
-                if [ -L "${symlinkPath}" ] && [ "$(readlink "${symlinkPath}")" = "${cfg.stateDir}/.nastech" ]; then
-                  rm -f "${symlinkPath}"
-                  echo "nastech-agent: removed symlink ${symlinkPath}"
-                fi
-              '') cfg.container.hostUsers)}
-          ''}
-
-          # ── Symlink bridge for interactive users ───────────────────────
-          # Create ~/.nastech -> stateDir/.nastech for each hostUser so the
-          # host CLI shares state with the container service.
-          # Only runs when container mode is enabled.
-          ${lib.optionalString cfg.container.enable
-            (lib.concatStringsSep "\n" (map (user:
-              let
-                userHome = config.users.users.${user}.home;
-                symlinkPath = "${userHome}/.nastech";
-                target = "${cfg.stateDir}/.nastech";
-              in ''
-                if [ -d "${symlinkPath}" ] && [ ! -L "${symlinkPath}" ]; then
-                  # Real directory — back it up, then create symlink.
-                  # (ln -sfn cannot atomically replace a directory.)
-                  _backup="${symlinkPath}.bak.$(date +%s)"
-                  echo "nastech-agent: backing up existing ${symlinkPath} to $_backup"
-                  mv "${symlinkPath}" "$_backup"
-                fi
-                # For everything else (existing symlink, doesn't exist, etc.)
-                # ln -sfn handles it: replaces symlinks, creates new ones.
-                ln -sfn "${target}" "${symlinkPath}"
-                chown -h ${user}:${cfg.group} "${symlinkPath}"
-              '') cfg.container.hostUsers))}
-
-          # Seed auth file if provided
-          ${lib.optionalString (cfg.authFile != null) ''
-            ${if cfg.authFileForceOverwrite then ''
-              install -o ${cfg.user} -g ${cfg.group} -m 0600 ${cfg.authFile} ${cfg.stateDir}/.nastech/auth.json
-            '' else ''
-              if [ ! -f ${cfg.stateDir}/.nastech/auth.json ]; then
-                install -o ${cfg.user} -g ${cfg.group} -m 0600 ${cfg.authFile} ${cfg.stateDir}/.nastech/auth.json
-              fi
-            ''}
-          ''}
-
-          # Seed .env from Nix-declared environment + environmentFiles.
-          # Nastech reads $NASTECH_HOME/.env at startup via load_nastech_dotenv(),
-          # so this is the single source of truth for both native and container mode.
-          ${lib.optionalString (cfg.environment != {} || cfg.environmentFiles != []) ''
-            ENV_FILE="${cfg.stateDir}/.nastech/.env"
-            install -o ${cfg.user} -g ${cfg.group} -m 0640 /dev/null "$ENV_FILE"
-            cat > "$ENV_FILE" <<'NASTECH_NIX_ENV_EOF'
-    ${envFileContent}
-    NASTECH_NIX_ENV_EOF
-            ${lib.concatStringsSep "\n" (map (f: ''
-              if [ -f "${f}" ]; then
-                echo "" >> "$ENV_FILE"
-                cat "${f}" >> "$ENV_FILE"
-              fi
-            '') cfg.environmentFiles)}
-          ''}
-
-          # Link documents into workspace
-          ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: _value: ''
-            install -o ${cfg.user} -g ${cfg.group} -m 0640 ${documentDerivation}/${name} ${cfg.workingDirectory}/${name}
-          '') cfg.documents)}
-
-        # ── Declarative plugins ─────────────────────────────────────────
-        # Remove stale managed symlinks (plugins removed from config)
-        find ${cfg.stateDir}/.nastech/plugins -maxdepth 1 -type l -name 'nix-managed-*' -delete 2>/dev/null || true
-
-        ${lib.concatStringsSep "\n" (map (plugin:
-          let
-            name = lib.getName plugin;
-          in ''
-            if [ ! -f "${plugin}/plugin.yaml" ]; then
-              echo "ERROR: extraPlugins entry '${plugin}' has no plugin.yaml" >&2
-              exit 1
-            fi
-            ln -sfn ${plugin} ${cfg.stateDir}/.nastech/plugins/nix-managed-${name}
-            chown -h ${cfg.user}:${cfg.group} ${cfg.stateDir}/.nastech/plugins/nix-managed-${name}
-          '') cfg.extraPlugins)}
-        '';
-      }
-
-      # ══════════════════════════════════════════════════════════════════
-      # MODE A: Native systemd service (default)
-      # ══════════════════════════════════════════════════════════════════
-      (lib.mkIf (!cfg.container.enable) {
-        systemd.services.nastech-agent = {
-          description = "Nastech Agent Gateway";
-          wantedBy = [ "multi-user.target" ];
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
-
-          environment = {
-            HOME = cfg.stateDir;
-            NASTECH_HOME = "${cfg.stateDir}/.nastech";
-            NASTECH_MANAGED = "true";
-            # Working directory is declared via terminal.cwd in the merged
-            # config.yaml (see configJson above) — MESSAGING_CWD is deprecated.
-          };
-
-          serviceConfig = {
-            User = cfg.user;
-            Group = cfg.group;
-            WorkingDirectory = cfg.workingDirectory;
-
-            # cfg.environment and cfg.environmentFiles are written to
-            # $NASTECH_HOME/.env by the activation script. load_nastech_dotenv()
-            # reads them at Python startup — no systemd EnvironmentFile needed.
-
-            ExecStart = lib.concatStringsSep " " ([
-              "${effectivePackage}/bin/nastech"
-              "gateway"
-            ] ++ cfg.extraArgs);
-
-            Restart = cfg.restart;
-            RestartSec = cfg.restartSec;
-
-            # Shared-state: files created by the gateway should be group-writable
-            # so interactive users in the nastech group can read/write them.
-            UMask = "0007";
-
-            # Hardening
-            NoNewPrivileges = true;
-            ProtectSystem = "strict";
-            ProtectHome = false;
-            ReadWritePaths = [
-              cfg.stateDir
-              cfg.workingDirectory
-            ];
-            PrivateTmp = true;
-          };
-
-          path = [
-            effectivePackage
-            pkgs.bash
-            pkgs.coreutils
-            pkgs.git
-          ] ++ cfg.extraPackages;
-        };
-      })
-
-      # ══════════════════════════════════════════════════════════════════
-      # MODE B: OCI container (persistent writable layer)
-      # ══════════════════════════════════════════════════════════════════
-      (lib.mkIf cfg.container.enable {
-        # Ensure the container runtime is available
-        virtualisation.docker.enable = lib.mkDefault (cfg.container.backend == "docker");
-
-        systemd.services.nastech-agent = {
-          description = "Nastech Agent Gateway (container)";
-          wantedBy = [ "multi-user.target" ];
-          after = [ "network-online.target" ]
-            ++ lib.optional (cfg.container.backend == "docker") "docker.service";
-          wants = [ "network-online.target" ];
-          requires = lib.optional (cfg.container.backend == "docker") "docker.service";
-
-          preStart = ''
-            # Stable symlinks — container references these, not store paths directly
-            ln -sfn ${effectivePackage} ${cfg.stateDir}/current-package
-            ln -sfn ${containerEntrypoint} ${cfg.stateDir}/current-entrypoint
-
-            # GC roots so nix-collect-garbage doesn't remove store paths in use
-            ${pkgs.nix}/bin/nix-store --add-root ${cfg.stateDir}/.gc-root --indirect -r ${effectivePackage} 2>/dev/null || true
-            ${pkgs.nix}/bin/nix-store --add-root ${cfg.stateDir}/.gc-root-entrypoint --indirect -r ${containerEntrypoint} 2>/dev/null || true
-
-            # Check if container needs (re)creation
-            NEED_CREATE=false
-            if ! ${containerBin} inspect ${containerName} &>/dev/null; then
-              NEED_CREATE=true
-            elif [ ! -f ${identityFile} ] || [ "$(cat ${identityFile})" != "${containerIdentity}" ]; then
-              echo "Container config changed, recreating..."
-              ${containerBin} rm -f ${containerName} || true
-              NEED_CREATE=true
-            fi
-
-            if [ "$NEED_CREATE" = "true" ]; then
-              # Resolve numeric UID/GID — passed to entrypoint for in-container user setup
-              NASTECH_UID=$(${pkgs.coreutils}/bin/id -u ${cfg.user})
-              NASTECH_GID=$(${pkgs.coreutils}/bin/id -g ${cfg.user})
-
-              echo "Creating container..."
-              ${containerBin} create \
-                --name ${containerName} \
-                --network=host \
-                --entrypoint ${containerDataDir}/current-entrypoint \
-                --volume /nix/store:/nix/store:ro \
-                --volume ${cfg.stateDir}:${containerDataDir} \
-                --volume ${cfg.stateDir}/home:${containerHomeDir} \
-                ${lib.concatStringsSep " " (map (v: "--volume ${v}") cfg.container.extraVolumes)} \
-                --env NASTECH_UID="$NASTECH_UID" \
-                --env NASTECH_GID="$NASTECH_GID" \
-                --env NASTECH_HOME=${containerDataDir}/.nastech \
-                --env NASTECH_MANAGED=true \
-                --env HOME=${containerHomeDir} \
-                ${lib.concatStringsSep " " cfg.container.extraOptions} \
-                ${cfg.container.image} \
-                ${containerDataDir}/current-package/bin/nastech gateway run --replace ${lib.concatStringsSep " " cfg.extraArgs}
-
-              echo "${containerIdentity}" > ${identityFile}
-            fi
-          '';
-
-          script = ''
-            exec ${containerBin} start -a ${containerName}
-          '';
-
-          preStop = ''
-            ${containerBin} stop -t 10 ${containerName} || true
-          '';
-
-          serviceConfig = {
-            Type = "simple";
-            Restart = cfg.restart;
-            RestartSec = cfg.restartSec;
-            TimeoutStopSec = 30;
-          };
-        };
-      })
-    ]);
-  };
 }

@@ -78,6 +78,7 @@ from nastech_cli.config import (
     check_config_version,
     detect_install_method,
     format_docker_update_message,
+    is_nix_install_method,
     recommended_update_command_for_method,
     redact_key,
     write_platform_config_field,
@@ -3318,6 +3319,78 @@ _TOPOLOGY_CACHE: Dict[str, Any] = {"ts": 0.0, "data": None, "fn": None}
 _TOPOLOGY_CACHE_LOCK = threading.Lock()
 _TOPOLOGY_CACHE_TTL = 10.0
 
+# Stable install identity for /api/status. One random opaque id per physical
+# install, minted on first read and persisted under the ROOT Nastech home
+# (get_default_nastech_root()) — NOT the profile-scoped NASTECH_HOME — so every
+# profile served by the same install reports the same id. Clients (the desktop
+# connection registry) use it to recognize that two registered addresses
+# (hostname + Tailscale IP, LAN + WAN) are one backend and collapse duplicate
+# roster rows. Privacy: uuid4 hex, no hardware/user-derived material; the only
+# fact it reveals is "these addresses are the same box", which is the feature.
+# It must never change across restarts/updates, so reads are cached for the
+# process lifetime and the file is written once, atomically.
+_INSTALL_ID_FILENAME = "install_id"
+_INSTALL_ID_RE = re.compile(r"^[0-9a-f]{32}$")
+_INSTALL_ID_CACHE: Dict[str, Optional[str]] = {"value": None}
+_INSTALL_ID_LOCK = threading.Lock()
+
+
+def _read_or_create_install_id() -> Optional[str]:
+    """Read (or mint + persist) the install id under the root Nastech home.
+
+    Returns ``None`` only when the id can neither be read nor persisted (e.g.
+    a read-only filesystem) — an unpersisted id would violate the stability
+    contract, so callers omit the field rather than emit a churning value.
+    """
+    import uuid
+
+    from nastech_constants import get_default_nastech_root
+
+    root = get_default_nastech_root()
+    path = root / _INSTALL_ID_FILENAME
+    try:
+        existing = path.read_text(encoding="utf-8").strip().lower()
+        if _INSTALL_ID_RE.match(existing):
+            return existing
+    except FileNotFoundError:
+        pass
+    except (OSError, UnicodeDecodeError):
+        return None
+
+    minted = uuid.uuid4().hex
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        # Atomic replace so a crash mid-write can't leave a truncated id that
+        # would be regenerated (i.e. changed) on the next boot.
+        fd, tmp_name = tempfile.mkstemp(dir=str(root), prefix=".install_id-")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(minted + "\n")
+            os.replace(tmp_name, path)
+        except BaseException:
+            with contextlib.suppress(OSError):
+                os.unlink(tmp_name)
+            raise
+    except OSError:
+        return None
+    return minted
+
+
+def get_install_id() -> Optional[str]:
+    """Process-lifetime-cached stable install id (see _read_or_create_install_id)."""
+    cached = _INSTALL_ID_CACHE["value"]
+    if cached:
+        return cached
+    with _INSTALL_ID_LOCK:
+        cached = _INSTALL_ID_CACHE["value"]
+        if cached:
+            return cached
+        value = _read_or_create_install_id()
+        if value:
+            _INSTALL_ID_CACHE["value"] = value
+        return value
+
+
 # Serializes read-modify-write cycles over config.yaml for handlers that run
 # in worker threads (asyncio.to_thread). config.py's _CONFIG_LOCK covers each
 # load_config()/save_config() call individually, not the span between them —
@@ -3586,7 +3659,23 @@ async def get_status(profile: Optional[str] = None):
             gateway_updated_at = normalize_updated_at(runtime.get("updated_at"))
             if not gateway_running:
                 gateway_state = gateway_state if gateway_state in {"stopped", "startup_failed"} else "stopped"
-                gateway_platforms = {}
+                # A cleanly stopped gateway's platform states are stale noise —
+                # clear them so a dead process can't report "connected". But a
+                # startup_failed gateway's FATAL entries are the diagnosis:
+                # they carry per-profile credential collisions and auth
+                # failures (multiplex entries under ``<profile>:<platform>``)
+                # that the single exit_reason string can't express. Writer
+                # -identity and freshness filtering upstream already dropped
+                # entries from other/older processes, so keeping fatals here
+                # cannot leak another gateway's live state (#80451 follow-up).
+                if gateway_state == "startup_failed":
+                    gateway_platforms = {
+                        key: value
+                        for key, value in gateway_platforms.items()
+                        if isinstance(value, dict) and value.get("state") == "fatal"
+                    }
+                else:
+                    gateway_platforms = {}
             elif gateway_running and remote_health_body is not None:
                 # The health probe confirmed the gateway is alive, but the local
                 # runtime status file may be stale (cross-container).  Override
@@ -3717,6 +3806,16 @@ async def get_status(profile: Optional[str] = None):
             "auth_flows": auth_flows,
             "nastech_session_valid": nastech_session_valid,
         }
+
+        # Stable per-install identity (see get_install_id above). First call
+        # may touch disk, so keep it off the event loop; afterwards it is a
+        # process-global cache hit. Omitted (not null) when unpersistable so
+        # older-client behavior and the no-identity fallback stay identical.
+        install_id = await asyncio.get_running_loop().run_in_executor(
+            None, get_install_id
+        )
+        if install_id:
+            status["install_id"] = install_id
 
         # Component-level health rollup. Counts and status enums only — this
         # payload is public (PUBLIC_API_PATHS), so no messages, paths, or
@@ -4678,14 +4777,16 @@ async def update_nastech():
             "update_command": recommended_update_command_for_method(install_method),
         }
 
-    if install_method in {"nix", "nixos"}:
+    if is_nix_install_method(install_method) or install_method == "apt":
         message = recommended_update_command_for_method(install_method)
         _record_completed_action("nastech-update", message, exit_code=1)
         return {
             "ok": False,
             "pid": None,
             "name": "nastech-update",
-            "error": "nix_update_unsupported",
+            "error": (
+                "apt_update_required" if install_method == "apt" else "nix_update_unsupported"
+            ),
             "message": message,
             "update_command": message,
         }
@@ -4784,7 +4885,7 @@ async def check_nastech_update(force: bool = False):
     ``POST /api/nastech/update`` actually runs ``nastech update``.
 
     Returns:
-        install_method: 'git' | 'docker' | 'nix' | 'nixos' | 'unknown'
+        install_method: 'apt' | 'git' | 'docker' | 'nix' | 'nixos' | 'unknown'
         current_version: installed Nastech version string
         behind: commits behind upstream (>=1), 0 if up to date,
                 -1 if behind by an unknown count, or null if the
@@ -4830,6 +4931,11 @@ async def check_nastech_update(force: bool = False):
 
     if install_method == "docker":
         payload["message"] = format_docker_update_message()
+        return payload
+    if install_method == "apt":
+        payload["message"] = (
+            "Nastech is managed by Termux APT; run `pkg upgrade nastech-agent`."
+        )
         return payload
 
     # banner.check_for_updates() handles git / nix-revision paths and
@@ -12291,6 +12397,11 @@ def _validate_dashboard_cron_context_from(
     if not refs:
         return
     for ref in refs:
+        # "self" (the continuity toggle) resolves to the job's own id at run
+        # time — it can't be validated against the store (create precedes the
+        # job's existence).
+        if isinstance(ref, str) and ref.strip().lower() == "self":
+            continue
         if not _call_cron_for_profile(profile_name, "get_job", ref):
             raise HTTPException(
                 status_code=400,
@@ -14366,6 +14477,7 @@ def _profile_to_dict(info) -> Dict[str, Any]:
         "gateway_running": bool(_profile_attr(info, "gateway_running", False)),
         "description": _profile_attr(info, "description", "") or "",
         "description_auto": bool(_profile_attr(info, "description_auto", False)),
+        "display_name": _profile_attr(info, "display_name", "") or "",
         "distribution_name": _profile_attr(info, "distribution_name"),
         "distribution_version": _profile_attr(info, "distribution_version"),
         "distribution_source": _profile_attr(info, "distribution_source"),
@@ -14628,6 +14740,11 @@ def _profile_scope(profile: Optional[str]):
        Like ``_call_cron_for_profile`` does for cron's module globals,
        temporarily retarget both under a lock and restore them
        immediately after.
+
+    ``tools.skills_sync`` (reset/diff/list-modified/opt-in/opt-out/
+    repair-official) needs NO retargeting: since #65828 its directory
+    lookups resolve at call time through the same contextvar override
+    set in step 1.
 
     ``profile`` of None/""/"current" means "the dashboard's own profile" —
     config resolution is untouched, but the skill-module globals are still
@@ -18859,7 +18976,11 @@ def start_server(
             if headless:
                 # No SPA, and the JSON-RPC/WS endpoints are auth-gated — don't
                 # advertise a paste-and-connect URL, just announce the bind.
-                print(f"  Nastech backend listening on {host}:{actual_port}")
+                # flush: on a piped stdout (Desktop spawn) this line is
+                # block-buffered and can surface MINUTES after the flushed
+                # READY sentinel above, which reads as a slow boot in
+                # support bundles when the backend was actually up.
+                print(f"  Nastech backend listening on {host}:{actual_port}", flush=True)
             else:
                 print(f"  Nastech Web UI → http://{host}:{actual_port}")
             _maybe_open_browser(host, actual_port, open_browser, initial_profile)

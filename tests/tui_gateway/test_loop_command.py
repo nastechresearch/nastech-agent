@@ -25,11 +25,11 @@ def nastech_home(tmp_path, monkeypatch):
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.setenv("NASTECH_HOME", str(home))
 
-    from nastech_cli import loops
+    from nastech_cli import goals
 
-    loops._DB_CACHE.clear()
+    goals._DB_CACHE.clear()
     yield home
-    loops._DB_CACHE.clear()
+    goals._DB_CACHE.clear()
 
 
 @pytest.fixture()

@@ -53,6 +53,7 @@ nastech [global-options] <command> [subcommand/options]
 | `nastech auth` | Manage credentials — add, list, remove, reset, status, logout. Handles OAuth flows for Codex/Nastech/Anthropic. |
 | `nastech login` / `logout` | **Deprecated** — use `nastech auth` instead. |
 | `nastech send` | Send a one-shot message to a configured messaging platform (Telegram, Discord, Slack, Signal, SMS, …). Useful from shell scripts, cron jobs, CI hooks, and monitoring daemons — no agent loop, no LLM. |
+| `nastech peer` | Register peer Nastech gateways on other machines and DM their agents' canonical Bot Chats (`nastech peer dm <peer>[/<agent>] "…"`). The transport behind cross-machine bot-to-bot messaging. |
 | `nastech secrets` | Manage external secret sources (currently Bitwarden Secrets Manager) for pulling API keys at process startup instead of from `~/.nastech/.env`. |
 | `nastech migrate` | Diagnose and (optionally) rewrite `config.yaml` to replace references to retired models or deprecated settings (e.g. `migrate xai`). |
 | `nastech status` | Show agent, auth, and platform status. |
@@ -113,7 +114,7 @@ Common options:
 | `-q`, `--query "..."` | One-shot, non-interactive prompt. |
 | `-m`, `--model <model>` | Override the model for this run. |
 | `-t`, `--toolsets <csv>` | Enable a comma-separated set of toolsets. |
-| `--provider <provider>` | Force a provider: `auto`, `openrouter`, `nastech`, `openai-codex`, `copilot-acp`, `copilot`, `anthropic`, `gemini`, `huggingface`, `novita` (aliases `novita-ai`, `novitaai`), `openai-api`, `zai`, `kimi-coding`, `kimi-coding-cn`, `minimax`, `minimax-cn`, `minimax-oauth`, `kilocode`, `xiaomi`, `arcee`, `gmi`, `upstage` (alias `solar`), `alibaba`, `alibaba-coding-plan` (alias `alibaba_coding`), `deepseek`, `nvidia`, `ollama-cloud`, `xai` (alias `grok`), `xai-oauth` (alias `grok-oauth`), `qwen-oauth`, `bedrock`, `opencode-zen`, `opencode-go`, `ai-gateway`, `azure-foundry`, `lmstudio`, `stepfun`, `tencent-tokenhub` (alias `tencent`, `tokenhub`). |
+| `--provider <provider>` | Force a provider: `auto`, `openrouter`, `nastech`, `openai-codex`, `copilot-acp`, `copilot`, `anthropic`, `gemini`, `huggingface`, `novita` (aliases `novita-ai`, `novitaai`), `openai-api`, `zai`, `kimi-coding`, `kimi-coding-cn`, `minimax`, `minimax-cn`, `minimax-oauth`, `kilocode`, `xiaomi`, `arcee`, `gmi`, `upstage` (alias `solar`), `alibaba`, `alibaba-coding-plan` (alias `alibaba_coding`), `deepseek`, `nvidia`, `ollama-cloud`, `xai` (alias `grok`), `xai-oauth` (alias `grok-oauth`), `qwen-oauth`, `bedrock`, `opencode-zen`, `opencode-go`, `commandcode`, `commandcode-anthropic`, `ai-gateway`, `azure-foundry`, `lmstudio`, `stepfun`, `tencent-tokenhub` (alias `tencent`, `tokenhub`). |
 | `-s`, `--skills <name>` | Preload one or more skills for the session (can be repeated or comma-separated). |
 | `-v`, `--verbose` | Verbose output. |
 | `-Q`, `--quiet` | Programmatic mode: suppress banner/spinner/tool previews. |
@@ -437,6 +438,42 @@ nastech send --list                  # all platforms
 nastech send --list telegram         # filter by platform
 ```
 
+
+
+## `nastech peer`
+
+```bash
+nastech peer add <name> --url http://host:port --key <API_SERVER_KEY>
+nastech peer list
+nastech peer dm <peer>[/<agent>] "message"
+nastech peer remove <name>
+```
+
+Bot-to-bot DMs across machines. Register another Nastech gateway (any machine
+running the `api_server` platform) as a *peer*, then message its agents:
+`nastech peer dm` resolves the remote agent's canonical **Bot Chat** session
+over the peer's API server, runs one agent turn there, and prints the reply
+on stdout — the cross-machine twin of the local
+`nastech -p <bot> chat --in ~ -c "Bot Chat" …` bot-messaging command.
+
+`<peer>` alone targets the peer gateway's main agent;
+`<peer>/<agent>` targets a named profile on a multiplexed peer (routed via
+its `/p/<profile>/` mirror).
+
+| Subcommand | Description |
+|--------|-------------|
+| `add <name> --url <URL> [--key <KEY>] [--note TEXT]` | Register or update a peer. The URL goes to `config.yaml` (`bot_peers`); the key is stored as `NASTECH_PEER_<NAME>_KEY` in `~/.nastech/.env`. |
+| `list` | List peers and whether each has a key configured. |
+| `dm <peer>[/<agent>] [message]` | Message the peer agent's canonical Bot Chat and print the reply (`--json` for machine-readable output; message falls back to stdin). |
+| `remove <name>` | Remove a peer from the registry (the `.env` key entry is left in place). |
+
+When at least one peer is registered, the Bot Mode messaging protocol
+(`agent.bot_mode_protocol`) taught to every canonical Bot Chat automatically
+includes the peer roster and the `nastech peer dm` pattern, so agents discover
+cross-machine teammates without SOUL edits. See
+[Bot Mode](../user-guide/bot-mode.md).
+
+Exit codes: `0` on success, `1` on delivery/peer failure, `2` on usage errors.
 
 ## `nastech secrets`
 
