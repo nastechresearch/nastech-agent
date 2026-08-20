@@ -5958,8 +5958,11 @@ class GatewaySlashCommandsMixin:
                 import textwrap
                 from nastech_cli._subprocess_compat import windows_detach_popen_kwargs
 
-                # nastech_cmd is a list of argv parts we can pass directly
-                # (no shell-quoting needed).
+                # Invoke the updater as a module under this interpreter rather
+                # than through nastech_cmd (venv\Scripts\nastech.exe): the shim
+                # launcher holds its own file open for the whole run, and the
+                # update has to replace it. Going through python.exe maps no
+                # shim, so the entry points can be rewritten freely.
                 helper = textwrap.dedent(
                     """
                     import os, subprocess, sys
@@ -5979,7 +5982,8 @@ class GatewaySlashCommandsMixin:
                     [
                         sys.executable, "-c", helper,
                         str(output_path), str(exit_code_path),
-                        *nastech_cmd, "update", "--gateway",
+                        sys.executable, "-m", "nastech_cli.main",
+                        "update", "--gateway",
                     ],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,

@@ -5,9 +5,9 @@
 //   1. buildPathExtCandidates() — PATHEXT extensions must be tried BEFORE the
 //      empty extension, or an extensionless Git-Bash `nastech` shim shadows
 //      the real nastech.cmd/nastech.exe.
-//   2. chooseUpdaterArgs() — must gate on haveRealInstall (any real-install
-//      signal), not just the nastech.exe console-script shim, or healthy
-//      installs get forced into a destructive --repair.
+//   2. chooseUpdaterArgs() — must distinguish a runnable updater from stale
+//      install provenance. The bootstrap marker can outlive the venv, and a
+//      partial venv cannot run the updater; those states require --repair.
 //   3. resolveVenvNastechCommand() — must probe the venv python via
 //      canImportNastechCli() before trusting it, or a broken venv gets
 //      re-selected forever instead of falling through to bootstrap.
@@ -45,17 +45,43 @@ test('buildPathExtCandidates: non-Windows only tries the bare name', () => {
   assert.deepEqual(buildPathExtCandidates(undefined, false), [''])
 })
 
-test('chooseUpdaterArgs: gentle --update when a real-install signal is present', () => {
-  assert.deepEqual(chooseUpdaterArgs(true, 'main'), ['--update', '--branch', 'main'])
+test('chooseUpdaterArgs: gentle --update when both updater runtime files exist', () => {
+  assert.deepEqual(chooseUpdaterArgs({ hasBootstrapMarker: true, hasVenvNastech: true, hasVenvPython: true }, 'main'), [
+    '--update',
+    '--branch',
+    'main'
+  ])
 })
 
-test('chooseUpdaterArgs: destructive --repair only when NO real-install signal is present', () => {
-  assert.deepEqual(chooseUpdaterArgs(false, 'main'), ['--repair', '--branch', 'main'])
+test('chooseUpdaterArgs: marker-only install uses --repair when the venv is gone', () => {
+  assert.deepEqual(
+    chooseUpdaterArgs({ hasBootstrapMarker: true, hasVenvNastech: false, hasVenvPython: false }, 'main'),
+    ['--repair', '--branch', 'main']
+  )
 })
 
-test('chooseUpdaterArgs: passes the branch through unchanged in both cases', () => {
-  assert.deepEqual(chooseUpdaterArgs(true, 'release/1.2'), ['--update', '--branch', 'release/1.2'])
-  assert.deepEqual(chooseUpdaterArgs(false, 'release/1.2'), ['--repair', '--branch', 'release/1.2'])
+test('chooseUpdaterArgs: partial updater runtimes use --repair', () => {
+  assert.deepEqual(chooseUpdaterArgs({ hasBootstrapMarker: true, hasVenvNastech: false, hasVenvPython: true }, 'main'), [
+    '--repair',
+    '--branch',
+    'main'
+  ])
+  assert.deepEqual(chooseUpdaterArgs({ hasBootstrapMarker: true, hasVenvNastech: true, hasVenvPython: false }, 'main'), [
+    '--repair',
+    '--branch',
+    'main'
+  ])
+})
+
+test('chooseUpdaterArgs: passes the branch through unchanged in both modes', () => {
+  assert.deepEqual(
+    chooseUpdaterArgs({ hasBootstrapMarker: false, hasVenvNastech: true, hasVenvPython: true }, 'release/1.2'),
+    ['--update', '--branch', 'release/1.2']
+  )
+  assert.deepEqual(
+    chooseUpdaterArgs({ hasBootstrapMarker: false, hasVenvNastech: false, hasVenvPython: false }, 'release/1.2'),
+    ['--repair', '--branch', 'release/1.2']
+  )
 })
 
 function makeDeps(overrides: Partial<Parameters<typeof resolveVenvNastechCommand>[2]> = {}) {
