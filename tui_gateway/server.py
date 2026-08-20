@@ -3548,6 +3548,7 @@ def _block(
         "clarify.request",
         "terminal.read.request",
         "preview.read.request",
+        "preview.act.request",
         "window.read.request",
         "mcp.setup.request",
         "tour.request",
@@ -6367,6 +6368,20 @@ def _agent_cbs(sid: str) -> dict:
             {k: v for k, v in (("start", start), ("count", count)) if v is not None},
             timeout=45,
         ),
+        # drive_preview tool (desktop GUI): the renderer injects the interaction
+        # engine into the preview pane's webview (or drives the pane's history)
+        # and answers preview.act.respond with the outcome plus a refreshed
+        # element inventory. Same budget as the preview read, which it ends
+        # with — a click on a slow page pays for the settle and the re-scan.
+        # annotate_preview rides this same callback: it resolves a target
+        # through the same engine and differs only in the verb it sends, so it
+        # needs a tool of its own but not a channel of its own.
+        "drive_preview_callback": lambda payload: _block(
+            "preview.act.request",
+            sid,
+            dict(payload),
+            timeout=45,
+        ),
         # read_window_below tool (desktop GUI): the renderer asks its main
         # process (which owns native window enumeration) which OS window sits
         # directly underneath the Nastech window, and answers
@@ -6603,14 +6618,20 @@ def _apply_personality_to_session(
 
 
 def _cfg_max_turns(cfg: dict, default: int) -> int:
-    try:
-        env_max = int(os.environ.get("NASTECH_TUI_MAX_TURNS", "") or 0)
-        if env_max > 0:
-            return env_max
-    except (TypeError, ValueError):
-        pass
+    from nastech_cli.config import resolve_turn_limit as _resolve_turn_limit
+    # Env var override (highest priority)
+    env_val = os.environ.get("NASTECH_TUI_MAX_TURNS")
+    if env_val:
+        return _resolve_turn_limit(env_val, default=default)
+    # Config file value — route through resolve_turn_limit so that
+    # "none"/"unlimited"/0 are first-class spellings, not int() crashes.
     agent_cfg = cfg.get("agent") or {}
-    return int(agent_cfg.get("max_turns") or cfg.get("max_turns") or default)
+    raw = agent_cfg.get("max_turns")
+    if raw is None:
+        raw = cfg.get("max_turns")
+    if raw is not None:
+        return _resolve_turn_limit(raw, default=default)
+    return default
 
 
 def _parse_tui_skills_env() -> list[str]:

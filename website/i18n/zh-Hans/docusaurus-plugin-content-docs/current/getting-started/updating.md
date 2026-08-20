@@ -120,7 +120,7 @@ tail -f ~/.nastech/logs/update.log
 ### 查看当前版本
 
 ```bash
-nastech version
+nastech --version
 ```
 
 与 [GitHub releases 页面](https://github.com/NastechResearch/nastech-agent/releases) 上的最新版本进行比较。

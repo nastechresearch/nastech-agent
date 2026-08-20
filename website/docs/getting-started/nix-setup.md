@@ -147,7 +147,7 @@ Setting `addToSystemPackages = true` does two things: puts the `nastech` CLI on 
 :::info
 When `container.enable = true` and `addToSystemPackages = true`, **every** `nastech` command on the host automatically routes into the managed container. This means your interactive CLI session runs inside the same environment as the gateway service — with access to all container-installed packages and tools.
 
-- The routing is transparent: `nastech chat`, `nastech sessions list`, `nastech version`, etc. all exec into the container under the hood
+- The routing is transparent: `nastech chat`, `nastech sessions list`, `nastech --version`, etc. all exec into the container under the hood
 - All CLI flags are forwarded as-is
 - If the container isn't running, the CLI retries briefly (5s with a spinner for interactive use, 10s silently for scripts) then fails with a clear error — no silent fallback
 - For developers working on the nastech codebase, set `NASTECH_DEV=1` to bypass container routing and run the local checkout directly
@@ -191,7 +191,7 @@ systemctl status nastech-agent
 journalctl -u nastech-agent -f
 
 # If addToSystemPackages is true, test the CLI
-nastech version
+nastech --version
 nastech config       # shows the generated config
 ```
 
@@ -681,7 +681,7 @@ journalctl --user -u nastech-agent -f
 launchctl list | grep nastech
 tail -f ~/Library/Logs/nastech-agent.log
 
-nastech version
+nastech --version
 nastech config     # shows the configuration that Nix wrote
 ```
 
@@ -937,7 +937,7 @@ nix build .#checks.x86_64-linux.config-roundtrip    # merge script preserves use
 
 | Check | What it tests |
 |---|---|
-| `package-contents` | `nastech` and `nastech-agent` binaries exist and `nastech version` runs |
+| `package-contents` | `nastech` and `nastech-agent` binaries exist and `nastech --version` runs |
 | `entry-points-sync` | Every `[project.scripts]` entry in `pyproject.toml` has a wrapped binary in the Nix package |
 | `cli-commands` | `nastech --help` exposes `gateway` and `config` subcommands |
 | `managed-guard` | `NASTECH_MANAGED=true nastech config set ...` prints the NixOS error |
@@ -1180,7 +1180,7 @@ nix-store --query --roots $(docker exec nastech-agent readlink /data/current-pac
 | `Cannot save configuration: managed by NixOS` | CLI guards active | Edit `configuration.nix` and `nixos-rebuild switch` |
 | `No adapter available for discord` (or telegram/slack) | Messaging deps missing from the sealed Nix venv | Install `#messaging` variant: `nix profile install ...#messaging`. For NixOS module: `extraDependencyGroups = [ "messaging" ]`. Check `journalctl -u nastech-agent` for `FeatureUnavailable` or `requirements not met` for the underlying error. |
 | Container recreated unexpectedly | `extraVolumes`, `extraOptions`, or `image` changed | Expected — writable layer resets. Reinstall packages or use a custom image |
-| `nastech version` shows old version | Container not restarted | `systemctl restart nastech-agent` |
+| `nastech --version` shows old version | Container not restarted | `systemctl restart nastech-agent` |
 | Permission denied on `/var/lib/nastech` | State dir is `0750 nastech:nastech` | Use `docker exec` or `sudo -u nastech` |
 | `nix-collect-garbage` removed nastech | GC root missing | Restart the service (preStart recreates the GC root) |
 | `no container with name or ID "nastech-agent"` (Podman) | Podman rootful container not visible to regular user | Add passwordless sudo for podman (see [Container Mode](#container-mode) section) |

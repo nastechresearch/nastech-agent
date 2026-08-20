@@ -43,7 +43,11 @@ DEFAULT_CONFIG = {
         "terminal_continue": True,
     },
     "agent": {
-        "max_turns": 500,
+        # Unlimited by default. The agent turn cap caused more problems than
+        # it solved (silent mid-task truncation). null = unlimited; set a
+        # positive integer to cap, or use "none"/"unlimited"/"inf"/0/-1 —
+        # all normalized by nastech_cli.config.resolve_turn_limit.
+        "max_turns": None,
         # Optional wall-clock budget in seconds per conversation run.
         # null/absent = feature fully off (zero behavior change). When set,
         # the agent gets a one-time wrap-up notice at 80% elapsed and
@@ -498,6 +502,11 @@ DEFAULT_CONFIG = {
         # failing over to the next ring vendor on rate limits. Never
         # pre-empts a configured or keyed backend. Set false to disable.
         "keyless_fallback": True,
+        # One-shot keyless rescue: when the chosen/keyed backend fails a
+        # web_search/web_extract call, THAT call retries once on the keyless
+        # free-tier ring — the next call attempts the chosen backend again
+        # (no sticky failover). Off when keyless_fallback is false.
+        "keyless_rescue": True,
         # Per-provider tier selection for ring vendors with both a keyless
         # free endpoint and a keyed paid path (exa, parallel, tavily,
         # firecrawl, keenable). Set by the `nastech tools` picker's

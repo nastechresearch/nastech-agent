@@ -97,7 +97,7 @@ nastech [global-options] <command> [subcommand/options]
 | `nastech desktop` (alias `gui`) | Build and launch the native Electron desktop app. |
 | `nastech profile` | Manage profiles — multiple isolated Nastech instances. |
 | `nastech completion` | Print shell completion scripts (bash/zsh/fish). |
-| `nastech version` | Show version information. |
+| `nastech --version` | Show version information. |
 | `nastech update` | Pull latest code and reinstall dependencies. `--check` previews without installing; `--backup` takes a pre-pull `NASTECH_HOME` snapshot. |
 | `nastech uninstall` | Remove Nastech from the system. |
 
@@ -1758,7 +1758,7 @@ Additional behavior:
 
 | Command | Description |
 |---------|-------------|
-| `nastech version` | Print version information. |
+| `nastech --version` | Print version information. |
 | `nastech update` | Pull latest changes and reinstall dependencies. |
 
 | `nastech uninstall [--full] [--gui] [--dry-run] [--yes]` | Remove Nastech, optionally deleting all config/data. `--gui` removes only the desktop Chat GUI, leaving the agent intact; `--full` also deletes config/data; `--dry-run` prints what would be removed without changing anything; `--yes` skips prompts. |
