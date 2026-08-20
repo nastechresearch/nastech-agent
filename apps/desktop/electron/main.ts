@@ -3269,7 +3269,20 @@ const backendOwnership = createBackendOwnership({
         return null
       }
     },
-    write: writeBackendOwnership
+    write: writeBackendOwnership,
+    // A corrupt ownership file is moved aside instead of being rewritten
+    // away by the reap sweep — its records are the only pointer to any
+    // still-running backends it described (#89298).
+    quarantine: () => {
+      const parked = `${DESKTOP_BACKEND_OWNERSHIP_PATH}.corrupt`
+
+      try {
+        fs.renameSync(DESKTOP_BACKEND_OWNERSHIP_PATH, parked)
+        rememberLog(`Backend ownership file was unreadable; moved to ${parked}`)
+      } catch {
+        // Nothing to move (or no permission) — the sweep already skipped.
+      }
+    }
   }
 })
 
@@ -4406,8 +4419,7 @@ function createActiveBackend(backendArgs) {
 function resolveNastechBackend(backendArgs) {
   // 1. Explicit override -- NASTECH_DESKTOP_NASTECH_ROOT points at a developer
   //    checkout. Honour it as-is (no bootstrap; the user is driving).
-  const overrideRoot =
-    process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
+  const overrideRoot = process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
 
   if (overrideRoot && isNastechSourceRoot(overrideRoot)) {
     const backend = createPythonBackend(overrideRoot, `Nastech source at ${overrideRoot}`, backendArgs)

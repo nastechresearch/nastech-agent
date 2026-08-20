@@ -237,7 +237,7 @@ fix(security): prevent shell injection in sudo password piping
 ## 报告问题
 
 - 使用 [GitHub Issues](https://github.com/NastechResearch/nastech-agent/issues)
-- 请包含：操作系统、Python 版本、Nastech 版本（`nastech version`）、完整错误堆栈
+- 请包含：操作系统、Python 版本、Nastech 版本（`nastech --version`）、完整错误堆栈
 - 包含复现步骤
 - 创建前请检查是否已有重复 issue
 - 安全漏洞请私下报告

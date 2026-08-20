@@ -118,7 +118,7 @@ ln -sf "$PWD/venv/bin/nastech" "$PREFIX/bin/nastech"
 ### 6. 验证安装
 
 ```bash
-nastech version
+nastech --version
 nastech doctor
 ```
 

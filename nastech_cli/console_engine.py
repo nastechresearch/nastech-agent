@@ -567,6 +567,7 @@ class NastechConsoleEngine:
 
     def _register_defaults(self) -> None:
         self.register(("status",), "status", "Show Nastech component status.", _status)
+        self.register(("version",), "version", "Show Nastech version information.", _version)
         self.register(("doctor",), "doctor", "Run diagnostics without auto-fix.", _doctor)
         self.register(("logs",), "logs [name] [-n N]", "Show recent Nastech logs.", _logs)
         self.register(("sessions", "list"), "sessions list [--limit N]", "List recent sessions.", _sessions_list)
@@ -613,13 +614,6 @@ class NastechConsoleEngine:
         """Register non-admin CLI commands that are safe for Nastech Console."""
 
         extracted = {
-            "version": (
-                "nastech_cli.subcommands.version",
-                "build_version_parser",
-                "cmd_version",
-                [()],
-                set(),
-            ),
             "dump": (
                 "nastech_cli.subcommands.dump",
                 "build_dump_parser",
@@ -1278,6 +1272,13 @@ def _apply_confirmed_defaults(args: argparse.Namespace) -> None:
         setattr(args, "yes", True)
     if getattr(args, "memory_command", None) == "reset":
         setattr(args, "yes", True)
+
+
+def _version(_engine: NastechConsoleEngine, args: list[str]) -> str:
+    _expect_no_args(args, "version")
+    from nastech_cli._startup_fast import print_fast_version_info
+
+    return _capture_output(lambda: print_fast_version_info(check_updates=True))
 
 
 def _status(_engine: NastechConsoleEngine, args: list[str]) -> str:

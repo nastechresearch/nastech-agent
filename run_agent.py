@@ -443,7 +443,7 @@ class AIAgent:
         command: str = None,
         args: list[str] | None = None,
         model: str = "",
-        max_iterations: int = 90,  # Default tool-calling iterations (shared with subagents)
+        max_iterations: int = sys.maxsize,  # Default: unlimited tool-calling iterations (shared with subagents)
         tool_delay: float = None,  # Deprecated: accepted for compatibility, ignored
         enabled_toolsets: List[str] = None,
         disabled_toolsets: List[str] = None,
@@ -470,6 +470,7 @@ class AIAgent:
         clarify_callback: callable = None,
         read_terminal_callback: callable = None,
         read_preview_callback: callable = None,
+        drive_preview_callback: callable = None,
         read_window_below_callback: callable = None,
         setup_mcp_callback: callable = None,
         tour_callback: callable = None,
@@ -560,6 +561,7 @@ class AIAgent:
             clarify_callback=clarify_callback,
             read_terminal_callback=read_terminal_callback,
             read_preview_callback=read_preview_callback,
+            drive_preview_callback=drive_preview_callback,
             read_window_below_callback=read_window_below_callback,
             setup_mcp_callback=setup_mcp_callback,
             tour_callback=tour_callback,

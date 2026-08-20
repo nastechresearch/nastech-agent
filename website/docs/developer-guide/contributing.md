@@ -287,7 +287,7 @@ When you ask Nastech to review a PR in a repository that has `.agents/checks/`, 
 ## Reporting Issues
 
 - Use [GitHub Issues](https://github.com/NastechResearch/nastech-agent/issues)
-- Include: OS, Python version, Nastech version (`nastech version`), full error traceback
+- Include: OS, Python version, Nastech version (`nastech --version`), full error traceback
 - Include steps to reproduce
 - Check existing issues before creating duplicates
 - For security vulnerabilities, please report privately

@@ -571,7 +571,7 @@ json.dump(sorted(leaf_paths(DEFAULT_CONFIG)), sys.stdout, indent=2)
           echo "PASS: All binaries present"
 
           echo "=== Checking version ==="
-          ${nastech-agent}/bin/nastech version 2>&1 | grep -qi "nastech" || (echo "FAIL: version check"; exit 1)
+          ${nastech-agent}/bin/nastech --version 2>&1 | grep -qi "nastech" || (echo "FAIL: version check"; exit 1)
           echo "PASS: Version check"
 
           echo "=== All checks passed ==="

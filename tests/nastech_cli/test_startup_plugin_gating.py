@@ -2,7 +2,7 @@
 
 ``nastech_cli.main`` skips eager plugin discovery at argparse-setup time
 when the invocation is clearly targeting a known built-in subcommand.
-This saves 500-650ms on ``nastech --help``, ``nastech version``,
+This saves 500-650ms on ``nastech --help``, ``nastech --version``,
 ``nastech logs``, etc., by not importing ``google.cloud.pubsub_v1``,
 ``aiohttp``, ``grpc``, and friends.
 

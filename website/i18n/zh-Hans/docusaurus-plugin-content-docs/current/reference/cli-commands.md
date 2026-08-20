@@ -78,7 +78,7 @@ nastech [global-options] <command> [subcommand/options]
 | `nastech dashboard` | 启动用于管理配置、API 密钥和会话的 Web 控制台。 |
 | `nastech profile` | 管理 profile——多个隔离的 Nastech 实例。 |
 | `nastech completion` | 打印 shell 补全脚本（bash/zsh/fish）。 |
-| `nastech version` | 显示版本信息。 |
+| `nastech --version` | 显示版本信息。 |
 | `nastech update` | 拉取最新代码并重新安装依赖。`--check` 预览而不安装；`--backup` 在拉取前对 `NASTECH_HOME` 进行快照。 |
 | `nastech uninstall` | 从系统中删除 Nastech。 |
 
@@ -1246,7 +1246,7 @@ nastech update [--check] [--backup] [--restart-gateway]
 
 | 命令 | 说明 |
 |---------|-------------|
-| `nastech version` | 打印版本信息。 |
+| `nastech --version` | 打印版本信息。 |
 | `nastech update` | 拉取最新变更并重新安装依赖。 |
 | `nastech uninstall [--full] [--yes]` | 删除 Nastech，可选择删除所有 config/数据。 |
 

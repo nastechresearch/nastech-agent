@@ -6,90 +6,88 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 204 commits affecting 1273 files.
-- **Source revision:** `6f31cfad7825`.
-- **Previous source revision:** `2eb0b3b2c895`.
+- **Changes incorporated:** 65 commits affecting 1279 files.
+- **Source revision:** `044acf2bf700`.
+- **Previous source revision:** `6f31cfad7825`.
 
 ## Technical coverage
 
-- **.github/:** 2 changed files.
-- **AGENTS.md/:** 1 changed files.
-- **agent/:** 47 changed files.
-- **apps/:** 214 changed files.
-- **cli-config.yaml.example/:** 1 changed files.
-- **cli.py/:** 10 changed files.
-- **contributors/:** 7 changed files.
-- **default.tar.gz/:** 1 changed files.
-- **docs/:** 18 changed files.
-- **gateway/:** 18 changed files.
-- **nastech_cli/:** 69 changed files.
-- **nastech_state.py/:** 1 changed files.
-- **plugins/:** 45 changed files.
+- **CONTRIBUTING.es.md/:** 1 changed files.
+- **CONTRIBUTING.md/:** 1 changed files.
+- **SECURITY.es.md/:** 1 changed files.
+- **SECURITY.md/:** 1 changed files.
+- **agent/:** 4 changed files.
+- **apps/:** 56 changed files.
+- **cli.py/:** 5 changed files.
+- **contributors/:** 1 changed files.
+- **cron/:** 13 changed files.
+- **docs/:** 1 changed files.
+- **gateway/:** 13 changed files.
+- **nastech_cli/:** 25 changed files.
+- **nix/:** 1 changed files.
 - **run_agent.py/:** 2 changed files.
-- **scripts/:** 6 changed files.
-- **tests/:** 163 changed files.
-- **tools/:** 11 changed files.
+- **scripts/:** 2 changed files.
+- **tests/:** 41 changed files.
+- **tools/:** 7 changed files.
+- **toolsets.py/:** 1 changed files.
 - **tui_gateway/:** 4 changed files.
-- **ui-tui/:** 7 changed files.
-- **website/:** 46 changed files.
+- **website/:** 21 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(desktop): updating now updates every target — remote backends, other gateways, and the app itself
-- feat(desktop): keep midnight, and retint themes that shade their accent
-- feat(desktop): an accent picker plugin, off by default
-- feat(desktop): glass ships on, tuned per appearance and platform
-- feat(desktop): re-seed any theme's accent from one colour
-- feat(desktop): ship the GitHub themes, with Nastech blue on top
-- feat: keyless web tier becomes a 5-vendor round-robin ring (adds Tavily, Firecrawl, Keenable)
-- feat: identical re-calls enter context as reference stubs, not duplicate payloads
-- feat(desktop): the composer collapse ladder continues below stacking
-- feat: nastech worktree list/prune — attended reclaim for accumulated worktrees and merged branches
-- feat: keyless free-tier failover + Tavily/Firecrawl salvage integration
-- feat(computer-use): expose screenshots for chat delivery
-- 23 additional new capabilities updates are included in this verified snapshot.
+- feat: desktop updates no longer re-apply local source edits (--keep-stash)
+- feat(config): default agent.max_turns to unlimited; accept inf/infinity/null spellings
+- feat(config): resolve_turn_limit — first-class 'none'/'unlimited' for agent.max_turns
+- feat(process): positive process identity — spawn tags, machine spawn ledger, Windows job-object self-attach
+- feat(cli): declutter /help + Ctrl+P command palette (C-04/C-05)
+- feat(cli): /status shows reasoning, approval mode, and context usage (C-02)
+- feat(cli): rotating task-oriented composer placeholder (C-09)
+- feat(cli): type-to-fuzzy-filter the /model picker model list
+- feat(desktop): durable element handles, and a delta instead of the whole page
+- feat(desktop): an overlay that shows what the agent is doing to the page
+- feat(desktop): drive the preview with real input, not synthetic events
+- feat(tools): drive_preview and annotate_preview — the agent can use the page it opened
+- 4 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(desktop): remote-gateway desktop stops lying after disconnects — roster survives outages, spawn failures log, host-key change stops the retry wall
-- fix(sessions): error paths return non-zero exit codes (delete/rename/prune/import)
-- fix(desktop): sort updates.ts imports for perfectionist lint
-- fix(backup): friendly error on unwritable output path instead of raw traceback
-- fix(config): set coerces negatives/whitespace/null and rejects malformed keys
-- fix(sessions): prune/archive spare pinned sessions by default (data loss)
-- fix(cli): /undo typo no longer quits the CLI; +3 slash-command papercuts
-- fix(cli): worktree lifecycle messages render colors instead of raw ANSI escapes
-- fix(desktop): a fresh profile follows the OS, and plugins stay behind the SDK
-- fix(desktop): off means off when glass is turned down
-- fix(desktop): the finished-session dot follows the theme
-- fix(desktop): renamed Bot Mode agents stay @-taggable by their new name
-- 87 additional reliability and fixes updates are included in this verified snapshot.
+- fix(update): gateway auto-restart no longer dies on stale cached modules after the pull
+- fix(resolve_turn_limit): gateway bridge null handling, TUI resolver, docs
+- fix: keyless rescue no longer re-fetches policy-blocked URLs
+- fix(bot-mode): group-chat command approvals surface in the room too — same hidden-session class
+- fix(bot-mode): group-chat members' clarify questions surface in the room and are answerable (#90694)
+- fix(update): fail closed when the hand-off shim check cannot run
+- fix(update): reap leaked serve backends during a GUI hand-off instead of dead-ending the venv sync (Windows)
+- fix(desktop): corrupt backend-ownership.json no longer erases records of live backends (#89298)
+- fix(bot-mode): disband dialog no longer points at the removed session browser
+- fix(bot-mode): canonical-chat adoption survives busy profiles via exact-title lookup
+- fix(update): hand off only the dependency sync, not the whole update (#90240)
+- fix(cron): stamp persisted origin scope_id onto origin-matching delivery metadata
+- 13 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(desktop): troubleshooting entry for SSH host-key-changed latch
-- docs(computer-use): document requesting the actual screenshot on chat surfaces
-- docs: tool provider selection follows the nastech tools pick (post #90317)
-- docs: correct Exa keyless rate-limit characterization
-- docs(relay): link supported observability exporters
+- docs(bot-mode): drop the removed per-bot Sessions browser from the Bots-pane list
+- docs(cron): document the in_channel carve-out on the mirror opt-in
+- docs(relay): document the two new descriptor capability bits in the contract §2 table
 
 ### Improvements
 
-- fmt(js): `npm run fix` on merge (#90690)
-- Merge pull request #90572 from Nastechresearch/feat/keyless-tavily-firecrawl-failover
-- test: capture worktree messages through the _cprint route
-- fmt(js): `npm run fix` on merge (#90637)
-- test: pin ring entry vendor in provider-routing tests (ring rotation made direct-callable mocks stale)
-- chore: retrigger CI (zero-job dispatch failure, auto-heal)
-- chore: retrigger CI (zero-job dispatch failure, auto-heal)
-- Merge remote-tracking branch 'origin/main' into feat/keyless-tavily-firecrawl-failover
-- test: vary marathon-turn fixture args — identical calls now legitimately dedupe to stubs
-- ci: retrigger after incident window
-- refactor(agent): consolidate uncompressed-overflow guard to one warn site + re-arm
-- refactor(cli): fold lock-bit review findings - docstrings, dead tilde forms, _lock_twins idiom
-- 53 additional improvements updates are included in this verified snapshot.
+- chore(tests): remove two flaky test files that tax CI
+- test: shim-progress fake nastech answers the --keep-stash --help probe
+- test(desktop): parent watchdog env now carries NASTECH_SPAWN — update exact-shape assertions
+- Merge pull request #90038 from victor-kyriazakos/feat/relay-slack-parity
+- test: pre-command hook stubs accept show_help(arg) after /help filter change
+- chore: nudge PR head sync (empty)
+- Merge branch 'main' into feat/relay-slack-parity
+- test(cron): native scalar-fallback test asserts the live delivery actually ran
+- test(cron): pin the auto-mocked D6 accessor; prove the native scalar fallback with a real adapter shape
+- Merge pull request #90197 from Nastechresearch/bb/preview-act
+- refactor(desktop): give the act engine's pure logic real modules
+- test(relay): rename misnamed precedence test; document the flat-key fallback nuance
+- 9 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
