@@ -15,22 +15,6 @@ import { Switch } from '@/components/ui/switch'
 import { TextTab } from '@/components/ui/text-tab'
 import { Textarea } from '@/components/ui/textarea'
 import { Tip } from '@/components/ui/tooltip'
-import {
-  authMcpServer,
-  getActionStatus,
-  getLogs,
-  getMcpCatalog,
-  getMcpOAuthFlow,
-  getUsageAnalytics,
-  type NastechGateway,
-  installMcpCatalogEntry,
-  type McpCatalogEntry,
-  type McpTestResult,
-  type ProfileScope,
-  profileScopeKey,
-  saveMcpServers,
-  testMcpServer
-} from '@/nastech'
 import { type Translations, useI18n } from '@/i18n'
 import { compactNumber } from '@/lib/format'
 import { brandFor, brandGlyphStyle } from '@/lib/mcp-brands'
@@ -41,6 +25,22 @@ import { NEEDS_AUTH_RE, PROBE_TTL_MS, probeCache, probeKey, serverFingerprint } 
 import { getServers, isServerShape, type McpServers, normalizeEntry } from '@/lib/mcp-servers'
 import { countEnabledTools, isToolEnabled, toggleToolInServer } from '@/lib/mcp-tool-filter'
 import { cn } from '@/lib/utils'
+import {
+  authMcpServer,
+  getActionStatus,
+  getLogs,
+  getMcpCatalog,
+  getMcpOAuthFlow,
+  getUsageAnalytics,
+  installMcpCatalogEntry,
+  type McpCatalogEntry,
+  type McpTestResult,
+  type NastechGateway,
+  type ProfileScope,
+  profileScopeKey,
+  saveMcpServers,
+  testMcpServer
+} from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $activeSessionId } from '@/store/session'
