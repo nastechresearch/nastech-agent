@@ -6,79 +6,90 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 81 commits affecting 1259 files.
-- **Source revision:** `2eb0b3b2c895`.
-- **Previous source revision:** `28803e68b452`.
+- **Changes incorporated:** 204 commits affecting 1273 files.
+- **Source revision:** `6f31cfad7825`.
+- **Previous source revision:** `2eb0b3b2c895`.
 
 ## Technical coverage
 
-- **agent/:** 29 changed files.
-- **apps/:** 48 changed files.
+- **.github/:** 2 changed files.
+- **AGENTS.md/:** 1 changed files.
+- **agent/:** 47 changed files.
+- **apps/:** 214 changed files.
 - **cli-config.yaml.example/:** 1 changed files.
-- **cli.py/:** 1 changed files.
+- **cli.py/:** 10 changed files.
 - **contributors/:** 7 changed files.
-- **gateway/:** 1 changed files.
-- **nastech_cli/:** 22 changed files.
-- **nastech_constants.py/:** 1 changed files.
-- **plugins/:** 9 changed files.
-- **run_agent.py/:** 4 changed files.
-- **scripts/:** 11 changed files.
-- **skills/:** 1 changed files.
-- **tests/:** 55 changed files.
-- **tools/:** 20 changed files.
-- **toolsets.py/:** 1 changed files.
-- **tui_gateway/:** 2 changed files.
-- **ui-tui/:** 2 changed files.
-- **website/:** 8 changed files.
+- **default.tar.gz/:** 1 changed files.
+- **docs/:** 18 changed files.
+- **gateway/:** 18 changed files.
+- **nastech_cli/:** 69 changed files.
+- **nastech_state.py/:** 1 changed files.
+- **plugins/:** 45 changed files.
+- **run_agent.py/:** 2 changed files.
+- **scripts/:** 6 changed files.
+- **tests/:** 163 changed files.
+- **tools/:** 11 changed files.
+- **tui_gateway/:** 4 changed files.
+- **ui-tui/:** 7 changed files.
+- **website/:** 46 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat: runtime stall guards — identical-call loop breaker and continue-intent recovery (agent.stall_guards)
-- feat: wall-clock run budget — wrap-up injection at 80% and deadline-scaled stale timeouts (agent.run_budget_seconds / --run-budget)
-- feat: MCP tool results spill at 50K and carry upstream-elision warnings
-- feat: execution-discipline guidance now reaches all tool-capable models (config model.execution_guidance)
-- feat(image-gen): route live-catalog models to the Image API; merge picker catalogs; docs
-- feat(plugins): add OpenRouter Image API surface to openrouter image_gen backend
-- feat(desktop): close preview tabs on preview.close
-- feat(tools): close_preview so the agent can dismiss the pane it opened
-- feat(desktop): add an Appearance toggle that disables the intro splash
-- feat(config): per-provider reasoning_echo opt-in for custom providers
-- feat(skill): route nastech-agent's unknown-feature questions to llms.txt
-- feat(skills): add --yes/-y flag to nastech skills uninstall
+- feat(desktop): updating now updates every target — remote backends, other gateways, and the app itself
+- feat(desktop): keep midnight, and retint themes that shade their accent
+- feat(desktop): an accent picker plugin, off by default
+- feat(desktop): glass ships on, tuned per appearance and platform
+- feat(desktop): re-seed any theme's accent from one colour
+- feat(desktop): ship the GitHub themes, with Nastech blue on top
+- feat: keyless web tier becomes a 5-vendor round-robin ring (adds Tavily, Firecrawl, Keenable)
+- feat: identical re-calls enter context as reference stubs, not duplicate payloads
+- feat(desktop): the composer collapse ladder continues below stacking
+- feat: nastech worktree list/prune — attended reclaim for accumulated worktrees and merged branches
+- feat: keyless free-tier failover + Tavily/Firecrawl salvage integration
+- feat(computer-use): expose screenshots for chat delivery
+- 23 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(desktop): stand the terminal overlay down when its tab loses focus
-- fix: read tool_budget config via load_config_readonly (config read guard)
-- fix(bot-mode): accept both host.connections() shapes in the Create-on picker normalize
-- fix(sdk): preserve primary in registered connections
-- fix(sdk): return registered connection list
-- fix(tools): honor raw stt.provider: local; finish _reconfigure_provider provider-string migration
-- fix(cli): persist one provider string per picker row; mirror strict routing in status
-- fix(browser): strict cloud-provider selection; camofox becomes a selection
-- fix(voice): route TTS/STT OpenAI audio on the stored selection, not credentials
-- fix(web): honor the stored web backend selection; no silent backend swaps
-- fix(tools): dispatch image/video FAL strictly on the stored nastech tools selection
-- fix: widen reasoning-effort wire translation to sibling sites (#89503 class)
-- 21 additional reliability and fixes updates are included in this verified snapshot.
+- fix(desktop): remote-gateway desktop stops lying after disconnects — roster survives outages, spawn failures log, host-key change stops the retry wall
+- fix(sessions): error paths return non-zero exit codes (delete/rename/prune/import)
+- fix(desktop): sort updates.ts imports for perfectionist lint
+- fix(backup): friendly error on unwritable output path instead of raw traceback
+- fix(config): set coerces negatives/whitespace/null and rejects malformed keys
+- fix(sessions): prune/archive spare pinned sessions by default (data loss)
+- fix(cli): /undo typo no longer quits the CLI; +3 slash-command papercuts
+- fix(cli): worktree lifecycle messages render colors instead of raw ANSI escapes
+- fix(desktop): a fresh profile follows the OS, and plugins stay behind the SDK
+- fix(desktop): off means off when glass is turned down
+- fix(desktop): the finished-session dot follows the theme
+- fix(desktop): renamed Bot Mode agents stay @-taggable by their new name
+- 87 additional reliability and fixes updates are included in this verified snapshot.
+
+### Documentation
+
+- docs(desktop): troubleshooting entry for SSH host-key-changed latch
+- docs(computer-use): document requesting the actual screenshot on chat surfaces
+- docs: tool provider selection follows the nastech tools pick (post #90317)
+- docs: correct Exa keyless rate-limit characterization
+- docs(relay): link supported observability exporters
 
 ### Improvements
 
-- Merge pull request #90351 from Nastechresearch/bb/terminal-tab-trap
-- test(desktop): cover the terminal overlay hiding on an unfocused tab switch
-- chore(sdk): remove unrelated session helper from #89893
-- test(sdk): cover registry primary connection mapping
-- test(sdk): cover connection registry list contract
-- test(tools): repin selector/picker tests to the provider-string contract
-- test(tools): pin strict provider-string selection per category
-- test(codex): cover nested retention entry paths
-- refactor(codex): name the dropped shape in the wire-guard warning
-- test(codex): pin the retention drop to real endpoints
-- chore: map contributor email for #89969 salvage
-- chore: map contributor email for Haik-G
-- 24 additional improvements updates are included in this verified snapshot.
+- fmt(js): `npm run fix` on merge (#90690)
+- Merge pull request #90572 from Nastechresearch/feat/keyless-tavily-firecrawl-failover
+- test: capture worktree messages through the _cprint route
+- fmt(js): `npm run fix` on merge (#90637)
+- test: pin ring entry vendor in provider-routing tests (ring rotation made direct-callable mocks stale)
+- chore: retrigger CI (zero-job dispatch failure, auto-heal)
+- chore: retrigger CI (zero-job dispatch failure, auto-heal)
+- Merge remote-tracking branch 'origin/main' into feat/keyless-tavily-firecrawl-failover
+- test: vary marathon-turn fixture args — identical calls now legitimately dedupe to stubs
+- ci: retrigger after incident window
+- refactor(agent): consolidate uncompressed-overflow guard to one warn site + re-arm
+- refactor(cli): fold lock-bit review findings - docstrings, dead tilde forms, _lock_twins idiom
+- 53 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

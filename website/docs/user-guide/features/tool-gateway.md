@@ -124,37 +124,51 @@ The set evolves — `nastech tools` → Image Generation shows the current live 
 
 Most users never need to touch this — `nastech model` and `nastech tools` cover every workflow interactively. This section is for writing config.yaml directly or scripting setups.
 
-### Per-tool `use_gateway` flag
+### One selection key per tool category
 
-Each tool's config block takes a `use_gateway` boolean:
+Each tool category has a single provider-selection key, written by the `nastech tools` picker (or the desktop GUI). Picking the **Nastech Subscription** row stores the value `nastech`, which routes that category through the managed Tool Gateway. Picking a BYOK row stores the vendor name (`fal`, `openai`, `firecrawl`, `browser-use`, ...), which goes direct with your own credentials:
 
 ```yaml
 web:
-  backend: firecrawl
-  use_gateway: true
+  backend: nastech          # web search/extract via the Tool Gateway
 
 image_gen:
-  use_gateway: true
+  provider: nastech         # image generation via the Tool Gateway
 
 tts:
-  provider: openai
-  use_gateway: true
+  provider: nastech         # TTS via the Tool Gateway
+
+stt:
+  provider: nastech         # speech-to-text via the Tool Gateway
 
 browser:
-  cloud_provider: browser-use
-  use_gateway: true
+  cloud_provider: nastech   # cloud browser via the Tool Gateway
 ```
 
-Precedence: `use_gateway: true` routes through Nastech regardless of any direct keys in `.env`. `use_gateway: false` (or absent) uses direct keys if available and only falls back to the gateway when none exist.
+The runtime **always uses the stored selection** — credential presence never selects or reroutes a category. A `FAL_KEY` sitting in `.env` is ignored while `image_gen.provider: nastech`; conversely, `image_gen.provider: fal` with no `FAL_KEY` set produces a clear error instead of silently falling back to the gateway:
 
-### Disabling the gateway
+```
+image_gen is configured to use fal (set via nastech tools), but FAL_KEY is not set. Run 'nastech tools' to change it.
+```
+
+Categories you have **never configured** (no selection key ever written) autodetect from available credentials, same as before. But once a selection exists, adding a key to `.env` does not change the route — only `nastech tools` (or editing the selection key) does.
+
+### Switching back to your own keys
+
+```bash
+nastech tools    # pick the tool → choose a direct provider (e.g. Firecrawl)
+```
+
+Or set the selection key directly:
 
 ```yaml
 web:
-  use_gateway: false   # Nastech now uses FIRECRAWL_API_KEY from .env
+  backend: firecrawl   # Nastech now uses FIRECRAWL_API_KEY from .env
 ```
 
-`nastech tools` automatically clears the flag when you pick a non-gateway provider, so this usually happens for you.
+### Legacy `use_gateway` flag (deprecated)
+
+Older Nastech versions used a per-tool `use_gateway: true` boolean to route through the gateway. That flag is **legacy**: it is never written anymore, and the `nastech tools` picker removes it from a category's config when it rewrites the selection. Old configs that still contain `use_gateway: true` are interpreted at read time as the `nastech` selection, so existing setups keep working. Don't set `use_gateway` in new configs — select the provider in `nastech tools` instead.
 
 ### Self-hosted gateway (advanced)
 
@@ -189,4 +203,4 @@ Modal is available as an **optional add-on** through the Nastech subscription, n
 
 ### Do I need to delete my existing API keys when I enable the gateway?
 
-No — keep them in `.env`. When `use_gateway: true`, Nastech skips direct keys and uses the gateway. Flip the flag back to `false` and your keys become the source again. The gateway isn't a lock-in.
+No — keep them in `.env`. While a tool's selection is **Nastech Subscription**, direct keys for that tool are simply ignored. Pick the direct provider again in `nastech tools` and your keys become the source again. The gateway isn't a lock-in.

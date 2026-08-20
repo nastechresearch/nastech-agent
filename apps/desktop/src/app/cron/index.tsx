@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import { createCronTriggerController, type CronTriggerController } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import type * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -8,6 +8,7 @@ import { PageLoader } from '@/components/page-loader'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Codicon } from '@/components/ui/codicon'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
   Dialog,
   DialogContent,
@@ -28,10 +29,6 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { type Translations, useI18n } from '@/i18n'
-import { AlertTriangle } from '@/lib/icons'
-import { requestModelOptions } from '@/lib/model-options'
-import { asText } from '@/lib/text'
 import {
   type AutomationBlueprint,
   createCronJob,
@@ -47,6 +44,10 @@ import {
   type SessionInfo,
   updateCronJob
 } from '@/nastech'
+import { type Translations, useI18n } from '@/i18n'
+import { AlertTriangle } from '@/lib/icons'
+import { requestModelOptions } from '@/lib/model-options'
+import { asText } from '@/lib/text'
 import { $cronFocusJobId, $cronJobs, invalidateCronJobsRequests, setCronFocusJobId } from '@/store/cron'
 import { $changeEventsAvailable, $cronChangeTick } from '@/store/live-sync'
 import { notify, notifyError } from '@/store/notifications'
@@ -343,7 +344,6 @@ export function CronView({ onClose, onOpenSession, setStatusbarItemGroup: _setSt
 
   const [editor, setEditor] = useState<EditorState>({ mode: 'closed' })
   const [pendingDelete, setPendingDelete] = useState<CronJob | null>(null)
-  const [deleting, setDeleting] = useState(false)
 
   // Jobs live per-profile on disk and the list endpoint aggregates 'all' by
   // default — scope the fetch to the sidebar's profile scope so this overlay
@@ -533,31 +533,23 @@ export function CronView({ onClose, onOpenSession, setStatusbarItemGroup: _setSt
     }
   }
 
+  // Throws on failure — ConfirmDialog reports it inline and stays open.
   async function handleConfirmDelete() {
     if (!pendingDelete) {
       return
     }
 
-    setDeleting(true)
+    const { refreshError, stale } = await mutateAndRefreshCronJobs(profile, () => deleteCronJob(pendingDelete.id))
 
-    try {
-      const { refreshError, stale } = await mutateAndRefreshCronJobs(profile, () => deleteCronJob(pendingDelete.id))
-
-      if (stale) {
-        return
-      }
-
-      if (refreshError) {
-        notifyError(refreshError, c.failedLoad)
-      }
-
-      notify({ kind: 'success', title: c.deleted, message: truncate(jobTitle(pendingDelete), 60) })
-      setPendingDelete(null)
-    } catch (err) {
-      notifyError(err, c.failedDelete)
-    } finally {
-      setDeleting(false)
+    if (stale) {
+      return
     }
+
+    if (refreshError) {
+      notifyError(refreshError, c.failedLoad)
+    }
+
+    notify({ kind: 'success', title: c.deleted, message: truncate(jobTitle(pendingDelete), 60) })
   }
 
   async function handleEditorSave(values: EditorValues) {
@@ -682,7 +674,9 @@ export function CronView({ onClose, onOpenSession, setStatusbarItemGroup: _setSt
               />
             ))}
             {visibleJobs.length === 0 && (
-              <p className="px-2 py-4 text-center text-xs text-muted-foreground">{c.emptyTitleSearch}</p>
+              <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+                {query.trim() ? c.emptyTitleSearch : c.emptyTitleNew}
+              </p>
             )}
             <PanelAddButton label={c.newCron} onClick={() => setEditor({ mode: 'create' })} />
             {visibleBlueprints.length > 0 && (
@@ -711,8 +705,17 @@ export function CronView({ onClose, onOpenSession, setStatusbarItemGroup: _setSt
               onPauseResume={() => void handlePauseResume(selectedJob)}
               onTrigger={() => void handleTrigger(selectedJob)}
             />
-          ) : (
+          ) : query.trim() ? (
+            // A search with no selected job: search-flavored copy is right.
             <PanelEmpty description={c.emptyDescSearch} icon="search" />
+          ) : (
+            // No selection and no search — "Try a broader search query" here
+            // just confused people staring at an empty panel with zero jobs.
+            <PanelEmpty
+              description={c.emptyDescNew}
+              icon="watch"
+              title={jobs.length === 0 ? c.emptyTitleNew : undefined}
+            />
           )}
         </PanelBody>
       )}
@@ -724,30 +727,24 @@ export function CronView({ onClose, onOpenSession, setStatusbarItemGroup: _setSt
         onSave={handleEditorSave}
       />
 
-      <Dialog onOpenChange={open => !open && !deleting && setPendingDelete(null)} open={pendingDelete !== null}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{c.deleteTitle}</DialogTitle>
-            <DialogDescription>
-              {pendingDelete ? (
-                <>
-                  {c.deleteDescPrefix}
-                  <span className="font-medium text-foreground">{truncate(jobTitle(pendingDelete), 60)}</span>
-                  {c.deleteDescSuffix}
-                </>
-              ) : null}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button disabled={deleting} onClick={() => setPendingDelete(null)} variant="outline">
-              {t.common.cancel}
-            </Button>
-            <Button disabled={deleting} onClick={() => void handleConfirmDelete()} variant="destructive">
-              {deleting ? c.deleting : t.common.delete}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        busyLabel={c.deleting}
+        confirmLabel={t.common.delete}
+        description={
+          pendingDelete ? (
+            <>
+              {c.deleteDescPrefix}
+              <span className="font-medium text-foreground">{truncate(jobTitle(pendingDelete), 60)}</span>
+              {c.deleteDescSuffix}
+            </>
+          ) : null
+        }
+        destructive
+        onClose={() => setPendingDelete(null)}
+        onConfirm={handleConfirmDelete}
+        open={pendingDelete !== null}
+        title={c.deleteTitle}
+      />
     </Panel>
   )
 }

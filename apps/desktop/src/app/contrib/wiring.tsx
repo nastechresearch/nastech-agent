@@ -16,6 +16,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { graftRefreshedTailOntoBackfill } from '@/app/chat/transcript-backfill'
 import { formatRefValue } from '@/components/assistant-ui/directive-text'
 import { BootFailureOverlay } from '@/components/boot-failure-overlay'
+import { ConfirmHost } from '@/components/confirm-host'
 import { DesktopInstallOverlay } from '@/components/desktop-install-overlay'
 import { FindBar } from '@/components/find-bar'
 import { GatewayConnectingOverlay } from '@/components/gateway-connecting-overlay'
@@ -25,12 +26,12 @@ import { $newSessionTabAction, registerPaneCloser } from '@/components/pane-shel
 import { FloatingPet } from '@/components/pet/floating-pet'
 import { RemoteDisplayBanner } from '@/components/remote-display-banner'
 import { emitGatewayEvent } from '@/contrib/events'
+import { getLatestSessionMessages } from '@/nastech'
 import { type ChatMessage, chatMessageText, preserveLocalAssistantErrors, toChatMessages } from '@/lib/chat-messages'
 import { isMessagingSource } from '@/lib/session-source'
 import { latestSessionTodos } from '@/lib/todos'
 import { activateWakeIndicator } from '@/lib/wake-indicator'
 import { playWakeSound } from '@/lib/wake-sound'
-import { getLatestSessionMessages } from '@/nastech'
 import { $billingSettingsRequest } from '@/store/billing-block'
 import { $desktopBoot } from '@/store/boot'
 import { requestVoiceConversationStart } from '@/store/composer'
@@ -62,12 +63,14 @@ import {
   $selectedStoredSessionId,
   $sessionResumeRequest,
   $sessions,
+  rememberedSessionProfile,
   sessionMatchesStoredId,
   sessionPinId,
   setAwaitingResponse,
   setBusy,
   setMessages
 } from '@/store/session'
+import { requestForSessionProfile } from '@/store/session-request-router'
 import { clearSessionTodos, setSessionTodos, todosForHydration } from '@/store/todos'
 import { armWakeWord, stopClientCapture } from '@/store/wake-word'
 import { isAuxiliaryWindow, isHudWindow } from '@/store/windows'
@@ -104,9 +107,9 @@ import { SessionSwitcher } from '../session-switcher'
 import { useBackgroundQueueDrain } from '../session/hooks/use-background-queue-drain'
 import { useContextSuggestions } from '../session/hooks/use-context-suggestions'
 import { useCwdActions } from '../session/hooks/use-cwd-actions'
+import { useNastechConfig } from '../session/hooks/use-nastech-config'
 import { useMessageStream } from '../session/hooks/use-message-stream'
 import { useModelControls } from '../session/hooks/use-model-controls'
-import { useNastechConfig } from '../session/hooks/use-nastech-config'
 import { usePreviewRouting } from '../session/hooks/use-preview-routing'
 import { usePromptActions } from '../session/hooks/use-prompt-actions'
 import { useRouteResume } from '../session/hooks/use-route-resume'
@@ -279,7 +282,22 @@ export function ContribWiring({ children }: { children: ReactNode }) {
     setMessages
   })
 
-  const { connectionRef, gateway, gatewayRef, requestGateway } = useGatewayRequest()
+  const { connectionRef, gateway, gatewayRef, requestGateway: ambientRequestGateway } = useGatewayRequest()
+
+  // When chrome stays on the launch backend (Bot Mode / all-profiles
+  // navigation), session-owned RPCs still have to hit the session's backend.
+  const requestGateway = useCallback(
+    <T,>(method: string, params?: Record<string, unknown>, timeoutMs?: number, signal?: AbortSignal) => {
+      const owner = rememberedSessionProfile(
+        $sessions.get(),
+        selectedStoredSessionIdRef.current,
+        $activeGatewayProfile.get()
+      )
+
+      return requestForSessionProfile<T>(owner, ambientRequestGateway, method, params ?? {}, timeoutMs, signal)
+    },
+    [ambientRequestGateway]
+  )
 
   const { loadMoreMessagingForPlatform, loadMoreSessions, refreshCronJobs, refreshMessagingSessions, refreshSessions } =
     useSessionListActions({ profileScope })
@@ -1159,6 +1177,9 @@ export function ContribWiring({ children }: { children: ReactNode }) {
 
       {/* Toasts above everything. */}
       <NotificationStack />
+
+      {/* Backs confirm() from @/store/confirm — renders only while one is open. */}
+      <ConfirmHost />
 
       {/* Petdex floating mascot — renders nothing unless installed + enabled.
           Never in the HUD: that window is the chat bar and nothing else. */}

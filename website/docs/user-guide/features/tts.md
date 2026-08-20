@@ -44,7 +44,7 @@ Convert text to speech with eleven providers:
 ```yaml
 # In ~/.nastech/config.yaml
 tts:
-  provider: "edge"              # "edge" | "elevenlabs" | "openai" | "minimax" | "mistral" | "gemini" | "xai" | "deepinfra" | "neutts" | "kittentts" | "piper"
+  provider: "edge"              # "edge" | "elevenlabs" | "openai" | "minimax" | "mistral" | "gemini" | "xai" | "deepinfra" | "neutts" | "kittentts" | "piper" — or "nastech" for the managed Tool Gateway (written when you pick Nastech Subscription in `nastech tools`)
   speed: 1.0                    # Global speed multiplier (provider-specific settings override this)
   edge:
     voice: "en-US-AriaNeural"   # 322 voices, 74 languages
@@ -525,10 +525,12 @@ Nastech writes the incoming voice message to `{input_path}`, runs the command, a
 
 ### Fallback Behavior
 
-If your configured provider isn't available, Nastech automatically falls back:
+An **explicit** `stt.provider` selection (written in `config.yaml`, e.g. via `nastech tools`) is honored strictly — if that provider can't run, transcription fails with a clear error (`stt is configured to use <provider> (set via nastech tools), but <failure>. Run 'nastech tools' to change it.`) instead of silently switching engines. Note that `stt.provider: local` written in your config counts as an explicit selection.
+
+When **no provider has ever been selected**, Nastech auto-detects from what's available:
 - **Local faster-whisper unavailable** → Tries a local `whisper` CLI or `NASTECH_LOCAL_STT_COMMAND` before cloud providers
-- **Groq key not set** → Falls back to local transcription, then OpenAI
-- **OpenAI key not set** → Falls back to local transcription, then Groq
+- **Groq key not set** → Skipped; next available provider
+- **OpenAI key not set** → Skipped; next available provider
 - **Mistral key/SDK not set** → Skipped in auto-detect; falls through to next available provider
 - **Nothing available** → Voice messages pass through with an accurate note to the user
 

@@ -365,15 +365,14 @@ If the model emits tool-call-shaped text instead of a structured call, it usuall
 
 ### STT (voice note transcription) returns empty / "could not transcribe"
 
-The default `stt.provider: local` requires `pip install faster-whisper`.  If you're a Nastech subscriber, you can route STT through Meta's managed audio gateway instead:
+The default `stt.provider: local` requires `pip install faster-whisper`.  If you're a Nastech subscriber, you can route STT through the managed gateway instead — select **Nastech Subscription** for speech-to-text in `nastech tools`, or set it directly:
 
 ```bash
-nastech config set stt.provider openai
-nastech config set stt.use_gateway true
+nastech config set stt.provider nastech
 nastech gateway restart
 ```
 
-This uses your Nastech Portal access token instead of needing a separate OpenAI key.
+This uses your Nastech Portal access token instead of needing a separate OpenAI key. (Older docs suggested `stt.use_gateway true` — that flag is legacy; the provider selection alone controls routing now.)
 
 ---
 

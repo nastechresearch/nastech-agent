@@ -40,8 +40,10 @@ in real production traffic.
      provider: openrouter
    YAML
    printf 'OPENROUTER_API_KEY=%s\n' "$KEY" > "$ABEVAL_HOME/.env"
-   NASTECH_HOME=$ABEVAL_HOME nastech plugins enable observability/nemo_relay
    ```
+
+   The runner writes a per-run Relay `plugins.toml` and points the native SDK
+   integration at it; no Nastech observability plugin needs to be enabled.
 
 2. Prepare the two trees:
 

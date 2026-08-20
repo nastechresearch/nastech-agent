@@ -181,6 +181,7 @@ export const ar = defineLocale({
     swapSidebarSides: 'تبديل جانبي الأشرطة',
     hideRightSidebar: 'إخفاء الشريط الأيمن',
     showRightSidebar: 'إظهار الشريط الأيمن',
+    unreadSessions: count => (count === 1 ? 'جلسة واحدة غير مقروءة' : `${count} جلسات غير مقروءة`),
     muteHaptics: 'كتم الاهتزازات',
     unmuteHaptics: 'تفعيل الاهتزازات',
     openSettings: 'فتح الإعدادات',
@@ -1765,6 +1766,7 @@ export const ar = defineLocale({
     endShort: 'إنهاء',
     stopDictation: 'إيقاف الإملاء',
     transcribingDictation: 'جار تفريغ الإملاء',
+    voiceControls: 'صوت',
     voiceDictation: 'إملاء صوتي',
     lookupLoading: 'جار البحث...',
     lookupNoMatches: 'لا توجد نتائج',
@@ -1969,6 +1971,14 @@ export const ar = defineLocale({
     pidLabel: pid => `معرّف العملية ${pid}`,
     technicalDetails: 'التفاصيل التقنية',
     notNow: 'ليس الآن',
+    clientAlsoBehindTitle: 'تطبيق سطح المكتب متأخر',
+    clientAlsoBehindMessage:
+      'الخادم الخلفي محدث، لكن تطبيق سطح المكتب هذا لا يزال على إصدار أقدم. حدّثه للحصول على أحدث الإصلاحات.',
+    clientAlsoBehindAction: 'تحديث تطبيق سطح المكتب',
+    everythingDispatched: 'تم إرسال التحديث',
+    everythingSkipped: 'تم التخطي',
+    everythingRowFailed: 'فشل التحديث',
+    everythingFanoutFailedTitle: 'تعذر تحديث المثيلات الأخرى',
     applyStatus: {
       preparing: 'جار تحديث الواجهة الخلفية...',
       pulling: 'جار تحديث الواجهة الخلفية...',
@@ -2080,8 +2090,7 @@ export const ar = defineLocale({
     copyAuthCode: 'انسخ رمز التفويض وألصقه أدناه.',
     pasteAuthCode: 'ألصق رمز التفويض',
     reopenAuthPage: 'إعادة فتح صفحة التفويض',
-    autoBrowser: provider =>
-      `فتحنا ${provider} في المتصفح. صرّح لـ Nastech هناك وسيتم الاتصال تلقائياً دون نسخ أو لصق.`,
+    autoBrowser: provider => `فتحنا ${provider} في المتصفح. صرّح لـ Nastech هناك وسيتم الاتصال تلقائياً دون نسخ أو لصق.`,
     reopenSignInPage: 'إعادة فتح صفحة تسجيل الدخول',
     waitingAuthorize: 'بانتظار التفويض...',
     externalPending: provider =>

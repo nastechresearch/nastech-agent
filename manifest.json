@@ -1,124 +1,249 @@
 {
   "number": 1,
   "dir": "Nastech-Update#1",
-  "upstream_sha": "2eb0b3b2c895e4a6f99714a52d35578088ad8ec7",
+  "upstream_sha": "6f31cfad7825a78b69c46eedbd31f2ac2abacfb8",
   "nastech_url": "https://github.com/Nastechresearch/nastech-agent.git",
   "source_provenance": {
     "remote_url": "https://github.com/Nastechresearch/nastech-agent.git",
-    "fetched_at": "2026-08-20T00:07:20+00:00",
+    "fetched_at": "2026-08-20T09:29:48+00:00",
     "acquisition": "fresh-direct-clone",
-    "baseline_sha": "28803e68b452d39435c89b148407d327e91b0735"
+    "baseline_sha": "2eb0b3b2c895e4a6f99714a52d35578088ad8ec7"
   },
   "commit_subjects": [
-    "Merge pull request #90351 from Nastechresearch/bb/terminal-tab-trap",
-    "feat: runtime stall guards \u2014 identical-call loop breaker and continue-intent recovery (agent.stall_guards)",
-    "feat: wall-clock run budget \u2014 wrap-up injection at 80% and deadline-scaled stale timeouts (agent.run_budget_seconds / --run-budget)",
-    "test(desktop): cover the terminal overlay hiding on an unfocused tab switch",
-    "fix(desktop): stand the terminal overlay down when its tab loses focus",
-    "fix: read tool_budget config via load_config_readonly (config read guard)",
-    "feat: MCP tool results spill at 50K and carry upstream-elision warnings",
-    "feat: execution-discipline guidance now reaches all tool-capable models (config model.execution_guidance)",
-    "fix(bot-mode): accept both host.connections() shapes in the Create-on picker normalize",
-    "chore(sdk): remove unrelated session helper from #89893",
-    "fix(sdk): preserve primary in registered connections",
-    "test(sdk): cover registry primary connection mapping",
-    "test(sdk): cover connection registry list contract",
-    "fix(sdk): return registered connection list",
-    "test(tools): repin selector/picker tests to the provider-string contract",
-    "fix(tools): honor raw stt.provider: local; finish _reconfigure_provider provider-string migration",
-    "test(tools): pin strict provider-string selection per category",
-    "fix(cli): persist one provider string per picker row; mirror strict routing in status",
-    "fix(browser): strict cloud-provider selection; camofox becomes a selection",
-    "fix(voice): route TTS/STT OpenAI audio on the stored selection, not credentials",
-    "fix(web): honor the stored web backend selection; no silent backend swaps",
-    "fix(tools): dispatch image/video FAL strictly on the stored nastech tools selection",
-    "fix: widen reasoning-effort wire translation to sibling sites (#89503 class)",
-    "fix(agent): cap the ultra reasoning level at the wire vocabulary",
-    "fix(bot-mode): roster age, pulse, unread, and sort now see canonical Bot Chat activity",
-    "fix(bot-mode): unwrap connections registry object so 'Create on' picker renders",
-    "test(codex): cover nested retention entry paths",
-    "refactor(codex): name the dropped shape in the wire-guard warning",
-    "fix(codex): strip nested extra_body retention at the consumer Codex wire",
-    "test(codex): pin the retention drop to real endpoints",
-    "chore: map contributor email for #89969 salvage",
-    "fix(codex): strip unsupported cache retention at wire",
-    "chore: map contributor email for Haik-G",
-    "feat(image-gen): route live-catalog models to the Image API; merge picker catalogs; docs",
-    "feat(plugins): add OpenRouter Image API surface to openrouter image_gen backend",
-    "fix(dashboard): coalesce repeat gateway restarts for a short window",
-    "fmt(js): `npm run fix` on merge (#90248)",
-    "Merge pull request #90239 from Nastechresearch/bb/close-preview",
-    "feat(desktop): close preview tabs on preview.close",
-    "feat(tools): close_preview so the agent can dismiss the pane it opened",
-    "fix(approval): align the execute_code CLI fall-through with its sibling guards",
-    "fix(approval): route check_execute_code_guard through the CLI fall-through too",
-    "feat(desktop): add an Appearance toggle that disables the intro splash",
-    "Merge pull request #90205 from Nastechresearch/bb/windows-update-reexec-unattended",
-    "Merge main for the MoA switch test fix (#90212)",
-    "Merge pull request #90212 from Nastechresearch/bb/fix-moa-switch-test-reasoning-echo",
-    "test(agent): give the MoA switch fake a reasoning_echo reader",
-    "fix(update): run the Windows update hand-off unattended",
-    "refactor: extract duplicated load_config_readonly try/except into helper",
-    "chore: map contributor emails",
-    "chore: map contributor email for yingliang-zhang",
-    "test: production-shape resolver + init-read coverage for reasoning_echo",
-    "fix: add reasoning_echo_flag to init snapshot and switch rollback",
-    "feat(config): per-provider reasoning_echo opt-in for custom providers",
-    "Merge pull request #90194 from Nastechresearch/review/88767",
-    "Merge pull request #90192 from Nastechresearch/bb/windows-update-shim-self-lock",
-    "test(update): cover the Windows shim self-lock class",
-    "test(update): cover the progress contract without a test hook in the updater",
-    "fix(update): one elapsed clock, served to the shim by both orchestrators",
-    "fix(gateway): run Windows /update as a module, not through the shim",
-    "fix(update): stop deferring shim renames to next boot",
-    "fix(update): re-run Windows updates off the console shim",
-    "fix(update): resolve the project venv as venv or .venv",
-    "fix(update): show live Desktop update progress",
-    "Merge pull request #90070 from dcdexhome/fix/desktop-pin-sync-reentrant-crash",
-    "ci: run the Python lane for docs and website script changes",
-    "feat(skill): route nastech-agent's unknown-feature questions to llms.txt",
-    "fix(docs): index every docs page in llms.txt, not a hand-picked 98",
-    "chore: map contributor email for noahingh",
-    "test(skills): add CLI regression tests for skills uninstall --yes/-y flag",
-    "feat(skills): add --yes/-y flag to nastech skills uninstall",
-    "test: drop the upscale-defaults-off catalog invariant",
-    "fmt(js): `npm run fix` on merge (#90140)",
-    "Merge pull request #88887 from helix4u/fix/desktop-repair-missing-venv",
-    "Merge pull request #90014 from xxxigm/fix/desktop-wrap-toast-titles",
-    "Merge pull request #90112 from Nastechresearch/bb/tour-unanswered-bridge",
-    "fix(tour): an unanswered tour bridge no longer costs 45s per action",
-    "fix(desktop): stop re-entrant pin-sync reconcile from overflowing nanostores",
-    "test(desktop): keep long toast titles readable",
-    "fix(desktop): wrap toast titles so long errors stay readable",
-    "fix(desktop): repair missing Windows runtime"
+    "fmt(js): `npm run fix` on merge (#90690)",
+    "docs(desktop): troubleshooting entry for SSH host-key-changed latch",
+    "fix(desktop): remote-gateway desktop stops lying after disconnects \u2014 roster survives outages, spawn failures log, host-key change stops the retry wall",
+    "fix(sessions): error paths return non-zero exit codes (delete/rename/prune/import)",
+    "fix(desktop): sort updates.ts imports for perfectionist lint",
+    "feat(desktop): updating now updates every target \u2014 remote backends, other gateways, and the app itself",
+    "fix(backup): friendly error on unwritable output path instead of raw traceback",
+    "fix(config): set coerces negatives/whitespace/null and rejects malformed keys",
+    "fix(sessions): prune/archive spare pinned sessions by default (data loss)",
+    "Merge pull request #90572 from Nastechresearch/feat/keyless-tavily-firecrawl-failover",
+    "fix(cli): /undo typo no longer quits the CLI; +3 slash-command papercuts",
+    "test: capture worktree messages through the _cprint route",
+    "fix(cli): worktree lifecycle messages render colors instead of raw ANSI escapes",
+    "fmt(js): `npm run fix` on merge (#90637)",
+    "fix(desktop): a fresh profile follows the OS, and plugins stay behind the SDK",
+    "feat(desktop): keep midnight, and retint themes that shade their accent",
+    "fix(desktop): off means off when glass is turned down",
+    "feat(desktop): an accent picker plugin, off by default",
+    "feat(desktop): glass ships on, tuned per appearance and platform",
+    "fix(desktop): the finished-session dot follows the theme",
+    "feat(desktop): re-seed any theme's accent from one colour",
+    "feat(desktop): ship the GitHub themes, with Nastech blue on top",
+    "test: pin ring entry vendor in provider-routing tests (ring rotation made direct-callable mocks stale)",
+    "chore: retrigger CI (zero-job dispatch failure, auto-heal)",
+    "chore: retrigger CI (zero-job dispatch failure, auto-heal)",
+    "Merge remote-tracking branch 'origin/main' into feat/keyless-tavily-firecrawl-failover",
+    "feat: keyless web tier becomes a 5-vendor round-robin ring (adds Tavily, Firecrawl, Keenable)",
+    "test: vary marathon-turn fixture args \u2014 identical calls now legitimately dedupe to stubs",
+    "feat: identical re-calls enter context as reference stubs, not duplicate payloads",
+    "ci: retrigger after incident window",
+    "fix(desktop): renamed Bot Mode agents stay @-taggable by their new name",
+    "feat(desktop): the composer collapse ladder continues below stacking",
+    "fix(desktop): the composer surface can no longer be widened by its own content",
+    "refactor(agent): consolidate uncompressed-overflow guard to one warn site + re-arm",
+    "fix(agent): add mid-turn uncompressed context overflow guardrail (#89297)",
+    "fix(agent): guard against uncompressed session overflow when compression is disabled (#89297)",
+    "fix(worktree): pruner reaps rebase-merged trees via PR state; worktree add survives disk contention",
+    "feat: nastech worktree list/prune \u2014 attended reclaim for accumulated worktrees and merged branches",
+    "refactor(cli): fold lock-bit review findings - docstrings, dead tilde forms, _lock_twins idiom",
+    "fix(cli): widen lock-bit coverage to alias installers, legacy nav keys, and PUA functional keys",
+    "fix(cli): map NumLock/CapsLock modifier-bit variants under kitty protocol",
+    "fix(cli): map kitty CSI-u lock-bit variants so key combos survive NumLock",
+    "Revert \"ci: parse-cache buster (zero-job dispatch, new blob forces re-parse)\"",
+    "ci: parse-cache buster (zero-job dispatch, new blob forces re-parse)",
+    "ci: retrigger wave 3 \u2014 zero-job load-shedding",
+    "ci: retrigger wave 2 \u2014 zero-job load-shedding",
+    "ci: retrigger wave 1 \u2014 zero-job load-shedding",
+    "chore: retrigger CI (zero-job dispatch failure, auto-heal)",
+    "chore: retrigger CI (zero-job dispatch failure, auto-heal)",
+    "chore: retrigger CI (zero-job dispatch failure, auto-heal)",
+    "ci: retrigger \u2014 zero-job dispatch on 5a3b1c2de",
+    "docs(computer-use): document requesting the actual screenshot on chat surfaces",
+    "chore: retrigger CI (zero-job dispatch failure, auto-heal)",
+    "test: explicit keyless Firecrawl selection asserts the keyless cloud route",
+    "chore: map contributor email for #87427 salvage",
+    "test: mock load_config_readonly in memory status gate tests",
+    "fix(cli): align nastech memory status and docs with memory tool gate",
+    "fix(desktop): floating sidebar overlays keep an opaque background under glass",
+    "fix(tui): skip the kitty protocol push for Ghostty in the Ink TUI too",
+    "fix(cli): skip Kitty keyboard protocol push for Ghostty, use modifyOtherKeys only",
+    "chore: map salvaged contributor emails (Dhruv7201, ekinnee)",
+    "fix(agent): route relay-wrapped output-cap 429s into the output-cap handler",
+    "fix(model-metadata): parse 'exceeds model maximum output tokens' cap errors",
+    "fix(model-metadata): converge output-cap retry on vLLM",
+    "fix(compression): salvage follow-up \u2014 todo snapshot last-resort, reuse prune helpers",
+    "fix(config): recognize memory nudge interval",
+    "fix(compression): salvage grown candidates before refusal",
+    "fix(compression): count a would-grow refusal as an ineffective strike",
+    "Merge pull request #89584 from victor-kyriazakos/relay-ws-hardening",
+    "fix(desktop): skip source restore in auxiliary windows",
+    "fix(desktop): keep peer windows on shared gateway",
+    "Merge remote-tracking branch 'origin/main' into feat/keyless-tavily-firecrawl-failover",
+    "chore: map contributor email for Tavily salvage",
+    "fix(doctor): web readiness reflects the selected provider's real state (#78412)",
+    "fix(desktop): stamp the focused profile on projects RPCs and refresh a remote scan",
+    "fix(tui_gateway): scan remote git roots and scope projects.* to the focused profile",
+    "fix(memory): profile-only config gets narrow USER_PROFILE_GUIDANCE instead of the full memory block",
+    "test(memory): cover the disabled built-in memory surface",
+    "fix(memory): drop dead memory tool and guidance when built-in stores are off",
+    "chore: remove unused import pytest from test file",
+    "fix(telegram): log the first confirmed getUpdates progress per generation",
+    "feat: keyless free-tier failover + Tavily/Firecrawl salvage integration",
+    "feat(computer-use): expose screenshots for chat delivery",
+    "fix(api-server): 'max' and 'ultra' reasoning efforts are no longer silently ignored on API/browser requests",
+    "fix: K3 plan-variant slugs (k3-256k) now get K3's effort vocabulary",
+    "Merge branch 'main' into relay-ws-hardening",
+    "fix(web): explicit Firecrawl selection works keyless against the public cloud API",
+    "fmt(js): `npm run fix` on merge (#90552)",
+    "feat(onboarding): enhance Tavily backend support for keyless access",
+    "feat(tavily): update Tavily integration to support keyless access",
+    "feat(desktop): show unread count on the sessions sidebar toggle",
+    "feat(desktop): count unread sessions from the shared status map",
+    "fix(checkpoints): bare /rollback falls back to a labeled all-directories view (#10505, reapply #10633)",
+    "fix(compression): /compress refusal no longer reports a successful rewrite",
+    "fix(desktop): authenticate gated file downloads like REST",
+    "fix(desktop): name the gated file-download auth decision",
+    "fix: Codex Responses effort vocabulary is now per-model \u2014 gpt-5.5 no longer 400s on 'max' (#68365 confirmed live)",
+    "fix(desktop): give mermaid diagrams a pixel size in the overlay and on copy",
+    "fix(desktop): mermaid zoom overlay body collapsed to zero height",
+    "feat(relay): live-card ops \u2014 native draft streaming + task cards over the relay (gateway half) (#85796)",
+    "fix(relay): a raising socket write returns the result dict, not an exception",
+    "fix(relay): dedupe key platform component is spelling-invariant",
+    "fmt(js): `npm run fix` on merge (#90536)",
+    "feat(desktop): unfocused session panes recede",
+    "fix(desktop): scrollbars stop carrying the theme accent",
+    "feat(desktop): one theme list in the palette, with a mode toggle inside it",
+    "fix(a2a): expose schemas through tool describe",
+    "fmt(js): `npm run fix` on merge (#90523)",
+    "refactor(desktop): replace every window.confirm with the shared dialog",
+    "feat(desktop): add confirm() as the imperative front door to ConfirmDialog",
+    "feat(desktop): let ConfirmDialog carry a secondary action",
+    "refactor(desktop): route cron delete and review revert through ConfirmDialog",
+    "fix(desktop): confirm dialogs take focus so Enter confirms",
+    "test(desktop): prove the status bar keeps its own right-click menu",
+    "fix(desktop): keep Radix context menus when asChild overwrites data-slot",
+    "fix(nastech): treat \"takes no reasoning parameter\" as a definitive no",
+    "fix(nastech): make \"thinking off\" stick on a cold start",
+    "fix(relay): reader without a socket settles pending waiters instead of asserting",
+    "fix(relay): gate sends on the socket handle, not supervisor state",
+    "fix(bot-mode): group chat opens as one room pane, not two (#89788)",
+    "fix(relay): reader clears the dead socket handle on unexpected exit",
+    "feat(desktop): drag markdown table columns to resize them",
+    "feat(desktop): keep markdown table column widths across turns and sessions",
+    "test(relay): dedupe regression tests drive the real wire-decode path",
+    "fix(relay): dedupe key reads chat identity from event.source, keyed per platform",
+    "fmt(js): `npm run fix` on merge (#90461)",
+    "feat(desktop): hide the Thinking toggle where a disable is rejected",
+    "fix(nastech): stop dropping \"thinking off\" on Portal models that can honor it",
+    "feat(models): read Nastech Portal reasoning capabilities from its catalog",
+    "Merge pull request #90313 from Nastechresearch/feat/keyless-web-search-fallback",
+    "fix(cli): first launch banner shows the seeded skill catalog, not \"No skills installed\"",
+    "fix(cli): bare /hatch no longer freezes input with an invisible raw input() prompt",
+    "fix(cli): /config displays the live agent credential, not the env-var constructor seed",
+    "fix(cli): /yolo reports locked-ON under process-frozen YOLO instead of a false OFF",
+    "test: pin -z/--oneshot --skills forwarding and partial-success contract",
+    "chore: map contributor email for GarlicGo",
+    "fix(cli): Fix oneshot skills preload",
+    "fix(skills): publish and read the (map, platform) pair under one lock",
+    "fix(cli): wire /whoami slash command in classic CLI",
+    "Merge remote-tracking branch 'origin/main' into feat/keyless-web-search-fallback",
+    "fix(image_gen/openai-codex): do not save progressive partial frames as finals",
+    "fix(cli): give every wizard free-text prompt arrow-key and Ctrl+A/E editing",
+    "fix(cli): enable editing in custom model prompt",
+    "Merge remote-tracking branch 'origin/main' into feat/keyless-web-search-fallback",
+    "fix(bot-mode): protect ordinary sessions from hide sweep",
+    "fix(bot-mode): running kanban/tool workers now light the Bots roster (#90268)",
+    "test(update): deflake the Windows progress self-test (both race directions seen in CI)",
+    "refactor: single canonical reasoning-effort vocabulary ends the per-vendor clamp drift",
+    "style: sort sidebar-archive import per perfectionist/sort-imports",
+    "fix(desktop): deleting an archived session no longer leaves a ghost row that spins forever",
+    "docs: tool provider selection follows the nastech tools pick (post #90317)",
+    "fix(desktop): gateway restart no longer clickable-by-mistake next to reconnect",
+    "fix(config): remove obsolete cwd warning parameter",
+    "test(config): cover unreadable dotenv warning path",
+    "fix(config): warn for all deprecated dotenv cwd entries",
+    "fix(config): read deprecated cwd settings from dotenv",
+    "fix(desktop): cron panel empty states stop suggesting a broader search when no search is active",
+    "fix(desktop): sidebar search results no longer show raw >>>term<<< FTS markers",
+    "fix(desktop): Models/Providers settings no longer hang 20s when gh CLI is signed out",
+    "Merge pull request #77915 from bbednarski9/feat/relay-native-plugin-init",
+    "fmt(js): `npm run fix` on merge (#90408)",
+    "style(desktop): prettier",
+    "fix(desktop): keep the two-argument call shape for session RPCs without a deadline",
+    "fix(desktop): keep chrome API home when opening a Bot Chat",
+    "fix(desktop): keep Sessions workspace when opening a Bot Chat",
+    "fix(desktop): move the hydration-timeout retry into host.openSession",
+    "fix(desktop): bound the profile-activation half of a Bot Chat wake",
+    "fmt(js): `npm run fix` on merge (#90384)",
+    "feat(desktop): move the HUD's way out onto the bar and drop the strip above it",
+    "feat(desktop): fold the HUD's voice controls into one menu",
+    "feat(desktop): paint the HUD band as the app's thread surface under Glass",
+    "feat(desktop): back the HUD band with the same window material the app uses",
+    "Merge remote-tracking branch 'origin/main' into feat/keyless-web-search-fallback",
+    "ci: retrigger \u2014 workflows never dispatched for 4d87290d39",
+    "feat: keyless web traffic splits 50/50 between Exa and Parallel like opencode",
+    "test: registry zero-credential resolution may return a keyless-capable provider",
+    "feat: nastech tools lets Exa/Parallel users pick the free keyless or paid keyed endpoint",
+    "docs: correct Exa keyless rate-limit characterization",
+    "feat: web search/extract now work keyless on fresh installs via Parallel + Exa free tiers",
+    "chore: retrigger CI after main image fix",
+    "test(relay): defer compaction flush expectation",
+    "docs(relay): link supported observability exporters",
+    "fix(relay): complete native plugin cutover",
+    "chore: refresh pull request head",
+    "chore: retrigger checks after rebase",
+    "fix(relay): preserve shutdown scope cleanup",
+    "fix(relay): define process-wide profile policy",
+    "fix(relay): guard native plugin ownership cutover",
+    "fix(relay): clarify opt-in plugin layering",
+    "test(plugins): drop unrelated fixture rename",
+    "refactor(relay): require 0.7 plugin APIs",
+    "refactor(relay): use canonical dynamic plugin config",
+    "refactor(relay): remove legacy observability plugin",
+    "fix(relay): retain legacy observability plugin",
+    "refactor(relay): remove legacy observability plugin",
+    "fix(relay): require explicit plugin configuration",
+    "fix(relay): defer subscriber flush to shutdown",
+    "feat(relay): load standard dynamic plugin records",
+    "feat(relay): activate configured dynamic plugins",
+    "feat(relay): initialize discovered plugin components",
+    "fix(relay): drop replayed inbounds \u2014 bounded dedupe on (chat_id, message_id)",
+    "fix(relay): WAN-friendly keepalive tuning (ping_interval=30, ping_timeout=60)",
+    "fix(relay): fail sends fast while the reconnect supervisor is mid-redial",
+    "fix(relay): _read_loop fails in-flight pending futures on any exit"
   ],
   "changed_areas": {
-    "agent": 29,
-    "apps": 48,
+    ".github": 2,
+    "AGENTS.md": 1,
+    "agent": 47,
+    "apps": 214,
     "cli-config.yaml.example": 1,
-    "cli.py": 1,
+    "cli.py": 10,
     "contributors": 7,
-    "gateway": 1,
-    "nastech_cli": 22,
-    "nastech_constants.py": 1,
-    "plugins": 9,
-    "run_agent.py": 4,
-    "scripts": 11,
-    "skills": 1,
-    "tests": 55,
-    "tools": 20,
-    "toolsets.py": 1,
-    "tui_gateway": 2,
-    "ui-tui": 2,
-    "website": 8
+    "default.tar.gz": 1,
+    "docs": 18,
+    "gateway": 18,
+    "nastech_cli": 69,
+    "nastech_state.py": 1,
+    "plugins": 45,
+    "run_agent.py": 2,
+    "scripts": 6,
+    "tests": 163,
+    "tools": 11,
+    "tui_gateway": 4,
+    "ui-tui": 7,
+    "website": 46
   },
   "source_delta": {
-    "baseline_sha": "28803e68b452d39435c89b148407d327e91b0735",
+    "baseline_sha": "2eb0b3b2c895e4a6f99714a52d35578088ad8ec7",
     "complete": true,
     "counts": {
-      "added": 29,
-      "modified": 133,
-      "deleted": 0,
+      "added": 82,
+      "modified": 269,
+      "deleted": 6,
       "renamed": 0
     },
     "owned_paths": [
@@ -161,16 +286,9 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "agent/agent_init.py",
+        "new_path": "AGENTS.md",
         "old_mapped": "",
-        "new_mapped": "agent/agent_init.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "agent/agent_runtime_helpers.py",
-        "old_mapped": "",
-        "new_mapped": "agent/agent_runtime_helpers.py"
+        "new_mapped": "AGENTS.md"
       },
       {
         "status": "modified",
@@ -182,16 +300,16 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "agent/chat_completion_helpers.py",
+        "new_path": "agent/context_compressor.py",
         "old_mapped": "",
-        "new_mapped": "agent/chat_completion_helpers.py"
+        "new_mapped": "agent/context_compressor.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "agent/codex_runtime.py",
+        "new_path": "agent/conversation_compression.py",
         "old_mapped": "",
-        "new_mapped": "agent/codex_runtime.py"
+        "new_mapped": "agent/conversation_compression.py"
       },
       {
         "status": "modified",
@@ -203,9 +321,16 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "agent/image_gen_registry.py",
+        "new_path": "agent/manual_compression_feedback.py",
         "old_mapped": "",
-        "new_mapped": "agent/image_gen_registry.py"
+        "new_mapped": "agent/manual_compression_feedback.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "agent/model_metadata.py",
+        "old_mapped": "",
+        "new_mapped": "agent/model_metadata.py"
       },
       {
         "status": "modified",
@@ -215,18 +340,39 @@
         "new_mapped": "agent/prompt_builder.py"
       },
       {
+        "status": "added",
+        "old_path": "",
+        "new_path": "agent/reasoning_effort.py",
+        "old_mapped": "",
+        "new_mapped": "agent/reasoning_effort.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "agent/relay_llm.py",
+        "old_mapped": "",
+        "new_mapped": "agent/relay_llm.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "agent/relay_runtime.py",
+        "old_mapped": "",
+        "new_mapped": "agent/relay_runtime.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "agent/skill_commands.py",
+        "old_mapped": "",
+        "new_mapped": "agent/skill_commands.py"
+      },
+      {
         "status": "modified",
         "old_path": "",
         "new_path": "agent/system_prompt.py",
         "old_mapped": "",
         "new_mapped": "agent/system_prompt.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "agent/tool_dispatch_helpers.py",
-        "old_mapped": "",
-        "new_mapped": "agent/tool_dispatch_helpers.py"
       },
       {
         "status": "modified",
@@ -266,9 +412,58 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "agent/video_gen_registry.py",
+        "new_path": "agent/web_search_provider.py",
         "old_mapped": "",
-        "new_mapped": "agent/video_gen_registry.py"
+        "new_mapped": "agent/web_search_provider.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "agent/web_search_registry.py",
+        "old_mapped": "",
+        "new_mapped": "agent/web_search_registry.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/DESIGN.md",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/DESIGN.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/electron/backend-start-failure.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/electron/backend-start-failure.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/electron/backend-start-failure.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/electron/backend-start-failure.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/electron/connection-registry.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/electron/connection-registry.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/electron/connection-registry.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/electron/connection-registry.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/electron/hud-ipc.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/electron/hud-ipc.ts"
       },
       {
         "status": "modified",
@@ -280,30 +475,107 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/electron/windows-nastech-path.test.ts",
+        "new_path": "apps/desktop/electron/native-auth-decisions.test.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/electron/windows-nastech-path.test.ts"
+        "new_mapped": "apps/desktop/electron/native-auth-decisions.test.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/electron/windows-nastech-path.ts",
+        "new_path": "apps/desktop/electron/native-auth-decisions.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/electron/windows-nastech-path.ts"
+        "new_mapped": "apps/desktop/electron/native-auth-decisions.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/chat/composer/focus.ts",
+        "new_path": "apps/desktop/electron/preload.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/chat/composer/focus.ts"
+        "new_mapped": "apps/desktop/electron/preload.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.test.tsx",
+        "new_path": "apps/desktop/electron/session-windows.test.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/chat/composer/hooks/use-composer-submit.test.tsx"
+        "new_mapped": "apps/desktop/electron/session-windows.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/electron/session-windows.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/electron/session-windows.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/electron/translucency.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/electron/translucency.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/electron/translucency.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/electron/translucency.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/composer/composer-utils.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/composer/composer-utils.ts"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/composer/control-classes.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/composer/control-classes.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/composer/controls.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/composer/controls.test.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/composer/controls.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/composer/controls.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/composer/hooks/use-composer-metrics.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/composer/hooks/use-composer-metrics.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/composer/index.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/composer/index.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/composer/model-pill.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/composer/model-pill.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/composer/voice-menu.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/composer/voice-menu.tsx"
       },
       {
         "status": "modified",
@@ -313,81 +585,340 @@
         "new_mapped": "apps/desktop/src/app/chat/index.tsx"
       },
       {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/session-status-dot.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/session-status-dot.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/sidebar/connection-switcher.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/connection-switcher.test.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/sidebar/connection-switcher.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/connection-switcher.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/sidebar/cron-jobs-section.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/cron-jobs-section.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/sidebar/index.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/index.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/sidebar/projects/entered-content.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/projects/entered-content.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/sidebar/session-actions-menu.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/session-actions-menu.test.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/sidebar/session-actions-menu.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/session-actions-menu.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/chat/sidebar/session-row.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/session-row.tsx"
+      },
+      {
         "status": "added",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/chat/intro-visibility.test.ts",
+        "new_path": "apps/desktop/src/app/chat/sidebar/strip-fts-markers.test.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/chat/intro-visibility.test.ts"
+        "new_mapped": "apps/desktop/src/app/chat/sidebar/strip-fts-markers.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/command-center/maintenance.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/command-center/maintenance.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/command-palette/index.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/command-palette/index.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/context-menu/app-context-menu.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/context-menu/app-context-menu.test.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/context-menu/app-context-menu.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/context-menu/app-context-menu.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/contrib/wiring.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/contrib/wiring.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/cron/index.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/cron/index.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/hud/glass.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/hud/glass.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/hud/hud-shell.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/hud/hud-shell.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/right-sidebar/review/index.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/right-sidebar/review/index.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/session/hooks/use-session-actions/index.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/session/hooks/use-session-actions/index.ts"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/chat/intro-visibility.ts",
+        "new_path": "apps/desktop/src/app/session/hooks/use-session-actions/remove-archived-session.test.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/chat/intro-visibility.ts"
+        "new_mapped": "apps/desktop/src/app/session/hooks/use-session-actions/remove-archived-session.test.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/right-sidebar/terminal/persistent.test.tsx",
+        "new_path": "apps/desktop/src/app/settings/config-settings.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/right-sidebar/terminal/persistent.test.tsx"
+        "new_mapped": "apps/desktop/src/app/settings/config-settings.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/right-sidebar/terminal/persistent.tsx",
+        "new_path": "apps/desktop/src/app/settings/custom-endpoints-settings.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/right-sidebar/terminal/persistent.tsx"
+        "new_mapped": "apps/desktop/src/app/settings/custom-endpoints-settings.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/session/hooks/preview-open.test.tsx",
+        "new_path": "apps/desktop/src/app/settings/env-credentials.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/session/hooks/preview-open.test.tsx"
+        "new_mapped": "apps/desktop/src/app/settings/env-credentials.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/session/hooks/use-preview-routing.ts",
+        "new_path": "apps/desktop/src/app/settings/index.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/session/hooks/use-preview-routing.ts"
+        "new_mapped": "apps/desktop/src/app/settings/index.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/settings/appearance-settings.tsx",
+        "new_path": "apps/desktop/src/app/settings/providers-settings.test.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/settings/appearance-settings.tsx"
+        "new_mapped": "apps/desktop/src/app/settings/providers-settings.test.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/settings/settings-search.ts",
+        "new_path": "apps/desktop/src/app/settings/providers-settings.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/settings/settings-search.ts"
+        "new_mapped": "apps/desktop/src/app/settings/providers-settings.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/settings/use-settings-search.ts",
+        "new_path": "apps/desktop/src/app/settings/sessions-settings.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/settings/use-settings-search.ts"
+        "new_mapped": "apps/desktop/src/app/settings/sessions-settings.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/settings/toolset-config-panel.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/settings/toolset-config-panel.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/shell/gateway-menu-panel.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/shell/gateway-menu-panel.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/shell/model-catalog-menu.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/shell/model-catalog-menu.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/app/shell/model-edit-submenu.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/app/shell/model-edit-submenu.tsx"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "apps/desktop/src/components/notifications.test.tsx",
+        "new_path": "apps/desktop/src/app/shell/statusbar-context-menu.test.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/components/notifications.test.tsx"
+        "new_mapped": "apps/desktop/src/app/shell/statusbar-context-menu.test.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/components/notifications.tsx",
+        "new_path": "apps/desktop/src/app/shell/titlebar-controls.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/components/notifications.tsx"
+        "new_mapped": "apps/desktop/src/app/shell/titlebar-controls.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/assistant-ui/embeds/mermaid-embed.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/assistant-ui/embeds/mermaid-embed.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/assistant-ui/markdown-table.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/assistant-ui/markdown-table.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/assistant-ui/markdown-text.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/assistant-ui/markdown-text.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/confirm-host.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/confirm-host.test.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/confirm-host.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/confirm-host.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/pane-shell/tree/renderer/narrow-overlays.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/pane-shell/tree/renderer/narrow-overlays.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/ui/badge.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/ui/badge.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/ui/confirm-dialog.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/ui/confirm-dialog.test.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/ui/confirm-dialog.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/ui/confirm-dialog.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/ui/context-menu.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/ui/context-menu.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/ui/dialog.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/ui/dialog.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/ui/zoomable.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/ui/zoomable.test.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/components/ui/zoomable.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/components/ui/zoomable.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/global.d.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/global.d.ts"
       },
       {
         "status": "modified",
@@ -434,6 +965,48 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "apps/desktop/src/lib/icons.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/lib/icons.ts"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/lib/markdown-table-widths.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/lib/markdown-table-widths.ts"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/lib/svg-image.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/lib/svg-image.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/lib/svg-image.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/lib/svg-image.ts"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/plugins/accent/picker.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/plugins/accent/picker.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/plugins/accent/plugin.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/plugins/accent/plugin.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "apps/desktop/src/plugins/nastech-bots/plugin.js",
         "old_mapped": "",
         "new_mapped": "apps/desktop/src/plugins/nastech-bots/plugin.js"
@@ -448,30 +1021,44 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/activity-toasts.test.mjs",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-identity.test.mjs",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/activity-toasts.test.mjs"
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-identity.test.mjs"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/cross-connection-bots.test.mjs",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-pin.test.mjs",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/cross-connection-bots.test.mjs"
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-pin.test.mjs"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/profile-prewarm.test.mjs",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/group-chat.test.mjs",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/profile-prewarm.test.mjs"
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/group-chat.test.mjs"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/sdk/index.test.ts",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/hide-bot-chats.test.mjs",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/sdk/index.test.ts"
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/hide-bot-chats.test.mjs"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/mention-renamed-bots.test.mjs",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/mention-renamed-bots.test.mjs"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/session-workspace.test.mjs",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/session-workspace.test.mjs"
       },
       {
         "status": "modified",
@@ -483,51 +1070,93 @@
       {
         "status": "added",
         "old_path": "",
-        "new_path": "apps/desktop/src/store/intro-splash.ts",
+        "new_path": "apps/desktop/src/sdk/plugin-open-session-plan.test.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/intro-splash.ts"
+        "new_mapped": "apps/desktop/src/sdk/plugin-open-session-plan.test.ts"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/sdk/plugin-open-session-plan.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/sdk/plugin-open-session-plan.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/store/preview.test.ts",
+        "new_path": "apps/desktop/src/sdk/profile-routing.test.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/preview.test.ts"
+        "new_mapped": "apps/desktop/src/sdk/profile-routing.test.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/store/preview.ts",
+        "new_path": "apps/desktop/src/store/backdrop.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/preview.ts"
+        "new_mapped": "apps/desktop/src/store/backdrop.ts"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/confirm.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/confirm.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/store/review.ts",
+        "new_path": "apps/desktop/src/store/gateway.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/review.ts"
+        "new_mapped": "apps/desktop/src/store/gateway.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/store/session-pin-sync.test.ts",
+        "new_path": "apps/desktop/src/store/projects.test.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/session-pin-sync.test.ts"
+        "new_mapped": "apps/desktop/src/store/projects.test.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/store/session-pin-sync.ts",
+        "new_path": "apps/desktop/src/store/projects.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/session-pin-sync.ts"
+        "new_mapped": "apps/desktop/src/store/projects.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/store/session-unread.ts",
+        "new_path": "apps/desktop/src/store/session-dot-state.test.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/session-unread.ts"
+        "new_mapped": "apps/desktop/src/store/session-dot-state.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/session-dot-state.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/session-dot-state.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/session-request-router.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/session-request-router.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/session-request-router.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/session-request-router.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/session-states.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/session-states.ts"
       },
       {
         "status": "modified",
@@ -535,6 +1164,118 @@
         "new_path": "apps/desktop/src/store/translucency.test.ts",
         "old_mapped": "",
         "new_mapped": "apps/desktop/src/store/translucency.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/translucency.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/translucency.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/updates.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/updates.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/updates.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/updates.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/windows.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/windows.test.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/store/windows.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/store/windows.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/styles.css",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/styles.css"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/themes/accent-override.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/themes/accent-override.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/themes/color.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/themes/color.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/themes/context.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/themes/context.test.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/themes/context.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/themes/context.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/themes/presets.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/themes/presets.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/themes/profile-theme.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/themes/profile-theme.test.ts"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/themes/retint.test.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/themes/retint.test.ts"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/themes/retint.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/themes/retint.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/types/nastech.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/types/nastech.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/shared/src/translucency.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/shared/src/translucency.ts"
       },
       {
         "status": "modified",
@@ -553,79 +1294,184 @@
       {
         "status": "added",
         "old_path": "",
-        "new_path": "contributors/emails/a@l",
+        "new_path": "contributors/emails/582149912@qq.com",
         "old_mapped": "",
-        "new_mapped": "contributors/emails/a@l"
+        "new_mapped": "contributors/emails/582149912@qq.com"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "contributors/emails/caleb.deleeuw@gmail.com",
+        "new_path": "contributors/emails/cassie@omg.lol",
         "old_mapped": "",
-        "new_mapped": "contributors/emails/caleb.deleeuw@gmail.com"
+        "new_mapped": "contributors/emails/cassie@omg.lol"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "contributors/emails/f4lko@pm.me",
+        "new_path": "contributors/emails/contact@grahfmusic.com",
         "old_mapped": "",
-        "new_mapped": "contributors/emails/f4lko@pm.me"
+        "new_mapped": "contributors/emails/contact@grahfmusic.com"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "contributors/emails/hukla25@gmail.com",
+        "new_path": "contributors/emails/dhruv.modi2345@gmail.com",
         "old_mapped": "",
-        "new_mapped": "contributors/emails/hukla25@gmail.com"
+        "new_mapped": "contributors/emails/dhruv.modi2345@gmail.com"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "contributors/emails/opsdownn@gmail.com",
+        "new_path": "contributors/emails/erick@kinnee.net",
         "old_mapped": "",
-        "new_mapped": "contributors/emails/opsdownn@gmail.com"
+        "new_mapped": "contributors/emails/erick@kinnee.net"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "contributors/emails/sergey.veys@gmail.com",
+        "new_path": "contributors/emails/lakshya.agarwal@tavily.com",
         "old_mapped": "",
-        "new_mapped": "contributors/emails/sergey.veys@gmail.com"
+        "new_mapped": "contributors/emails/lakshya.agarwal@tavily.com"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "contributors/emails/zhangyingliang@outlook.com",
+        "new_path": "contributors/emails/zhangcw1989@gmail.com",
         "old_mapped": "",
-        "new_mapped": "contributors/emails/zhangyingliang@outlook.com"
+        "new_mapped": "contributors/emails/zhangcw1989@gmail.com"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "default.tar.gz",
+        "old_mapped": "",
+        "new_mapped": "default.tar.gz"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "gateway/slash_commands.py",
+        "new_path": "docs/middleware/README.md",
         "old_mapped": "",
-        "new_mapped": "gateway/slash_commands.py"
+        "new_mapped": "docs/middleware/README.md"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/_install_repair.py",
+        "new_path": "docs/observability/README.md",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/_install_repair.py"
+        "new_mapped": "docs/observability/README.md"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/_parser.py",
+        "new_path": "docs/observability/monitoring.md",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/_parser.py"
+        "new_mapped": "docs/observability/monitoring.md"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/cli_agent_setup_mixin.py",
+        "new_path": "docs/observability/relay-shared-metrics.md",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/cli_agent_setup_mixin.py"
+        "new_mapped": "docs/observability/relay-shared-metrics.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/platforms/api_server.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/platforms/api_server.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/platforms/base.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/platforms/base.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/relay/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/relay/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/relay/ws_transport.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/relay/ws_transport.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/run.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/run.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/stream_consumer.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/stream_consumer.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/auth.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/auth.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/auth_commands.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/auth_commands.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/backup.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/backup.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/bundles.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/bundles.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/cli_commands_mixin.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/cli_commands_mixin.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/cli_output.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/cli_output.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/commands.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/commands.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/config.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/config.py"
       },
       {
         "status": "modified",
@@ -637,9 +1483,44 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/dump.py",
+        "new_path": "nastech_cli/config_migrations.py",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/dump.py"
+        "new_mapped": "nastech_cli/config_migrations.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/copilot_auth.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/copilot_auth.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/doctor.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/doctor.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/foreign_sessions.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/foreign_sessions.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/gateway.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/gateway.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/inventory.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/inventory.py"
       },
       {
         "status": "modified",
@@ -651,9 +1532,86 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "nastech_cli/memory_setup.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/memory_setup.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/model_setup_flows.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/model_setup_flows.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/models.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/models.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "nastech_cli/nastech_subscription.py",
         "old_mapped": "",
         "new_mapped": "nastech_cli/nastech_subscription.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/oneshot.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/oneshot.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/plugins.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/plugins.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/plugins_cmd.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/plugins_cmd.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/pt_input_extras.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/pt_input_extras.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "nastech_cli/relay_plugin_cutover.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/relay_plugin_cutover.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/sessions_cmd.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/sessions_cmd.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/setup.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/setup.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/setup_whatsapp_cloud.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/setup_whatsapp_cloud.py"
       },
       {
         "status": "modified",
@@ -665,72 +1623,37 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/subcommands/skills.py",
-        "old_mapped": "",
-        "new_mapped": "nastech_cli/subcommands/skills.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "nastech_cli/subcommands/update.py",
-        "old_mapped": "",
-        "new_mapped": "nastech_cli/subcommands/update.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
         "new_path": "nastech_cli/tools_config.py",
         "old_mapped": "",
         "new_mapped": "nastech_cli/tools_config.py"
       },
       {
-        "status": "modified",
+        "status": "added",
         "old_path": "",
-        "new_path": "nastech_cli/web_server.py",
+        "new_path": "nastech_cli/worktree_cmd.py",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/web_server.py"
+        "new_mapped": "nastech_cli/worktree_cmd.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "nastech_cli/worktree_gc.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/worktree_gc.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_constants.py",
+        "new_path": "nastech_state.py",
         "old_mapped": "",
-        "new_mapped": "nastech_constants.py"
+        "new_mapped": "nastech_state.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "plugins/browser/browser_use/provider.py",
+        "new_path": "plugins/image_gen/openai-codex/__init__.py",
         "old_mapped": "",
-        "new_mapped": "plugins/browser/browser_use/provider.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "plugins/image_gen/krea/__init__.py",
-        "old_mapped": "",
-        "new_mapped": "plugins/image_gen/krea/__init__.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "plugins/image_gen/openrouter/__init__.py",
-        "old_mapped": "",
-        "new_mapped": "plugins/image_gen/openrouter/__init__.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "plugins/image_gen/openrouter/plugin.yaml",
-        "old_mapped": "",
-        "new_mapped": "plugins/image_gen/openrouter/plugin.yaml"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "plugins/model-providers/copilot/__init__.py",
-        "old_mapped": "",
-        "new_mapped": "plugins/model-providers/copilot/__init__.py"
+        "new_mapped": "plugins/image_gen/openai-codex/__init__.py"
       },
       {
         "status": "modified",
@@ -742,9 +1665,107 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "plugins/video_gen/fal/__init__.py",
+        "new_path": "plugins/model-providers/deepseek/__init__.py",
         "old_mapped": "",
-        "new_mapped": "plugins/video_gen/fal/__init__.py"
+        "new_mapped": "plugins/model-providers/deepseek/__init__.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/model-providers/kimi-coding/__init__.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/model-providers/kimi-coding/__init__.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/model-providers/meta-ai/__init__.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/model-providers/meta-ai/__init__.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/model-providers/nastech/__init__.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/model-providers/nastech/__init__.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/model-providers/ollama-cloud/__init__.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/model-providers/ollama-cloud/__init__.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/model-providers/opencode-zen/__init__.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/model-providers/opencode-zen/__init__.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/model-providers/upstage/__init__.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/model-providers/upstage/__init__.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/model-providers/zai/__init__.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/model-providers/zai/__init__.py"
+      },
+      {
+        "status": "deleted",
+        "old_path": "plugins/observability/nemo_relay/README.md",
+        "new_path": "",
+        "old_mapped": "plugins/observability/nemo_relay/README.md",
+        "new_mapped": ""
+      },
+      {
+        "status": "deleted",
+        "old_path": "plugins/observability/nemo_relay/__init__.py",
+        "new_path": "",
+        "old_mapped": "plugins/observability/nemo_relay/__init__.py",
+        "new_mapped": ""
+      },
+      {
+        "status": "deleted",
+        "old_path": "plugins/observability/nemo_relay/plugin.yaml",
+        "new_path": "",
+        "old_mapped": "plugins/observability/nemo_relay/plugin.yaml",
+        "new_mapped": ""
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/a2a/tools.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/a2a/tools.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/telegram/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/telegram/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/web/exa/provider.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/exa/provider.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/web/firecrawl/plugin.yaml",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/firecrawl/plugin.yaml"
       },
       {
         "status": "modified",
@@ -752,6 +1773,55 @@
         "new_path": "plugins/web/firecrawl/provider.py",
         "old_mapped": "",
         "new_mapped": "plugins/web/firecrawl/provider.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "plugins/web/keenable/__init__.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/keenable/__init__.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "plugins/web/keenable/plugin.yaml",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/keenable/plugin.yaml"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "plugins/web/keenable/provider.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/keenable/provider.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "plugins/web/keyless_mcp.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/keyless_mcp.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/web/parallel/provider.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/parallel/provider.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/web/tavily/plugin.yaml",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/tavily/plugin.yaml"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/web/tavily/provider.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/web/tavily/provider.py"
       },
       {
         "status": "modified",
@@ -763,72 +1833,44 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "scripts/ci/classify_changes.py",
+        "new_path": "scripts/toolperf_abeval/README.md",
         "old_mapped": "",
-        "new_mapped": "scripts/ci/classify_changes.py"
+        "new_mapped": "scripts/toolperf_abeval/README.md"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "scripts/desktop-update/posix.sh",
+        "new_path": "scripts/toolperf_abeval/ab_eval.py",
         "old_mapped": "",
-        "new_mapped": "scripts/desktop-update/posix.sh"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "scripts/desktop-update/serve-ui.py",
-        "old_mapped": "",
-        "new_mapped": "scripts/desktop-update/serve-ui.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "scripts/desktop-update/ui.html",
-        "old_mapped": "",
-        "new_mapped": "scripts/desktop-update/ui.html"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "scripts/desktop-update/windows.ps1",
-        "old_mapped": "",
-        "new_mapped": "scripts/desktop-update/windows.ps1"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "skills/autonomous-ai-agents/nastech-agent/SKILL.md",
-        "old_mapped": "",
-        "new_mapped": "skills/autonomous-ai-agents/nastech-agent/SKILL.md"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/agent/test_message_sanitization_policy.py",
-        "old_mapped": "",
-        "new_mapped": "tests/agent/test_message_sanitization_policy.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/agent/test_moa_switch_api_mode.py",
-        "old_mapped": "",
-        "new_mapped": "tests/agent/test_moa_switch_api_mode.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/agent/test_prompt_builder.py",
-        "old_mapped": "",
-        "new_mapped": "tests/agent/test_prompt_builder.py"
+        "new_mapped": "scripts/toolperf_abeval/ab_eval.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/agent/test_reasoning_effort_wire_translation.py",
+        "new_path": "tests/agent/test_builtin_memory_disabled_surface.py",
         "old_mapped": "",
-        "new_mapped": "tests/agent/test_reasoning_effort_wire_translation.py"
+        "new_mapped": "tests/agent/test_builtin_memory_disabled_surface.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/agent/test_compaction_anti_thrash.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_compaction_anti_thrash.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/agent/test_manual_compression_refusal_feedback.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_manual_compression_refusal_feedback.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/agent/test_reasoning_effort_module.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_reasoning_effort_module.py"
       },
       {
         "status": "modified",
@@ -838,35 +1880,70 @@
         "new_mapped": "tests/agent/test_relay_llm.py"
       },
       {
-        "status": "added",
+        "status": "modified",
         "old_path": "",
-        "new_path": "tests/agent/test_run_budget.py",
+        "new_path": "tests/agent/test_relay_runtime_bounded_scope_ops.py",
         "old_mapped": "",
-        "new_mapped": "tests/agent/test_run_budget.py"
+        "new_mapped": "tests/agent/test_relay_runtime_bounded_scope_ops.py"
       },
       {
         "status": "added",
+        "old_path": "",
+        "new_path": "tests/agent/test_relay_runtime_plugins.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_relay_runtime_plugins.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/agent/test_relay_session_segments.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_relay_session_segments.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/agent/test_relay_tools.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_relay_tools.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/agent/test_salvage_grown_transcript.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_salvage_grown_transcript.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/agent/test_skill_commands.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_skill_commands.py"
+      },
+      {
+        "status": "modified",
         "old_path": "",
         "new_path": "tests/agent/test_stall_guards.py",
         "old_mapped": "",
         "new_mapped": "tests/agent/test_stall_guards.py"
       },
       {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/agent/test_system_prompt.py",
-        "old_mapped": "",
-        "new_mapped": "tests/agent/test_system_prompt.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/agent/test_tool_dispatch_helpers.py",
-        "old_mapped": "",
-        "new_mapped": "tests/agent/test_tool_dispatch_helpers.py"
-      },
-      {
         "status": "added",
+        "old_path": "",
+        "new_path": "tests/agent/test_uncompressed_context_guardrail.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_uncompressed_context_guardrail.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/agent/transports/test_chat_completions.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/transports/test_chat_completions.py"
+      },
+      {
+        "status": "modified",
         "old_path": "",
         "new_path": "tests/agent/transports/test_reasoning_effort_sibling_sites.py",
         "old_mapped": "",
@@ -875,16 +1952,324 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/ci/test_classify_changes.py",
+        "new_path": "tests/cli/test_cli_init.py",
         "old_mapped": "",
-        "new_mapped": "tests/ci/test_classify_changes.py"
+        "new_mapped": "tests/cli/test_cli_init.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/nastech_cli/test_imagegen_managed_gateway.py",
+        "new_path": "tests/cli/test_cli_yolo_toggle.py",
         "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_imagegen_managed_gateway.py"
+        "new_mapped": "tests/cli/test_cli_yolo_toggle.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/cli/test_ctrl_enter_newline.py",
+        "old_mapped": "",
+        "new_mapped": "tests/cli/test_ctrl_enter_newline.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/cli/test_modify_other_keys_aliases.py",
+        "old_mapped": "",
+        "new_mapped": "tests/cli/test_modify_other_keys_aliases.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/cli/test_show_config_credential.py",
+        "old_mapped": "",
+        "new_mapped": "tests/cli/test_show_config_credential.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/cli/test_slash_undo_title_robustness.py",
+        "old_mapped": "",
+        "new_mapped": "tests/cli/test_slash_undo_title_robustness.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/cli/test_worktree.py",
+        "old_mapped": "",
+        "new_mapped": "tests/cli/test_worktree.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/stub_connector.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/stub_connector.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_live_cards_flow_trace.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_live_cards_flow_trace.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_ack_ambiguity.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_ack_ambiguity.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_adapter.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_adapter.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_inbound_dedupe.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_inbound_dedupe.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_live_cards.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_live_cards.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_multiplatform_semantics.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_multiplatform_semantics.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_roundtrip_telegram.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_roundtrip_telegram.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_seal_cancellation.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_seal_cancellation.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_state_bounds.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_state_bounds.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_stream_semantics_gating.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_stream_semantics_gating.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_task_card_failures.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_task_card_failures.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_relay_turn_keying.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_relay_turn_keying.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/relay/test_ws_transport_hardening.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/relay/test_ws_transport_hardening.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_api_server_reasoning_ladder.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_api_server_reasoning_ladder.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_draft_id_restart_uniqueness.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_draft_id_restart_uniqueness.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_interim_send_lanes.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_interim_send_lanes.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_notice_delivery.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_notice_delivery.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_relay_seal_failure.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_relay_seal_failure.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_slack.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_slack.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_slack_turn_recipient_identity.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_slack_turn_recipient_identity.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_split_final_suffix_reconcile.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_split_final_suffix_reconcile.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_stale_finalize_suppression.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_stale_finalize_suppression.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_stream_abandon_on_turn_death.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_stream_abandon_on_turn_death.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_stream_consumer_draft.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_stream_consumer_draft.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_stream_final_adoption_gate.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_stream_final_adoption_gate.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_stream_final_contract.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_stream_final_contract.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_telegram_polling_health_confirmation.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_telegram_polling_health_confirmation.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_api_key_providers.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_api_key_providers.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_backup_path_errors.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_backup_path_errors.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_cli_output.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_cli_output.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_config_set_coercion.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_config_set_coercion.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_copilot_auth.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_copilot_auth.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_deprecated_cwd_warning.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_deprecated_cwd_warning.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_doctor.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_doctor.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_hatch_prompt_thread_safety.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_hatch_prompt_thread_safety.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_inventory_reasoning_caps.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_inventory_reasoning_caps.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_memory_setup.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_memory_setup.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_nastech_reasoning_metadata.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_nastech_reasoning_metadata.py"
       },
       {
         "status": "modified",
@@ -896,79 +2281,177 @@
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/nastech_cli/test_skills_uninstall_flags.py",
+        "new_path": "tests/nastech_cli/test_oneshot_skills.py",
         "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_skills_uninstall_flags.py"
+        "new_mapped": "tests/nastech_cli/test_oneshot_skills.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_plugins.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_plugins.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_plugins_cmd_enable_disable_nested.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_plugins_cmd_enable_disable_nested.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/nastech_cli/test_spawn_gateway_restart_cooldown.py",
+        "new_path": "tests/nastech_cli/test_prune_spares_pinned.py",
         "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_spawn_gateway_restart_cooldown.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_spawn_gateway_restart_reap.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_spawn_gateway_restart_reap.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_stt_picker.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_stt_picker.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_tools_config.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_tools_config.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_update_concurrent_quarantine.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_update_concurrent_quarantine.py"
+        "new_mapped": "tests/nastech_cli/test_prune_spares_pinned.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/nastech_cli/test_update_shim_self_lock.py",
+        "new_path": "tests/nastech_cli/test_reasoning_caps_disk_cache.py",
         "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_update_shim_self_lock.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_video_gen_picker.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_video_gen_picker.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_web_server.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_web_server.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/plugins/image_gen/test_openrouter_compat_provider.py",
-        "old_mapped": "",
-        "new_mapped": "tests/plugins/image_gen/test_openrouter_compat_provider.py"
+        "new_mapped": "tests/nastech_cli/test_reasoning_caps_disk_cache.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/run_agent/test_reasoning_echo_resolver_e2e.py",
+        "new_path": "tests/nastech_cli/test_relay_plugin_cutover.py",
         "old_mapped": "",
-        "new_mapped": "tests/run_agent/test_reasoning_echo_resolver_e2e.py"
+        "new_mapped": "tests/nastech_cli/test_relay_plugin_cutover.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_sale_pricing.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_sale_pricing.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_sessions_error_exit_codes.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_sessions_error_exit_codes.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_set_config_value.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_set_config_value.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_terminal_menu_fallbacks.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_terminal_menu_fallbacks.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_worktree_command.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_worktree_command.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_worktree_gc.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_worktree_gc.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/plugins/image_gen/test_openai_codex_provider.py",
+        "old_mapped": "",
+        "new_mapped": "tests/plugins/image_gen/test_openai_codex_provider.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/plugins/model_providers/test_nastech_profile.py",
+        "old_mapped": "",
+        "new_mapped": "tests/plugins/model_providers/test_nastech_profile.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/plugins/model_providers/test_ollama_cloud_profile.py",
+        "old_mapped": "",
+        "new_mapped": "tests/plugins/model_providers/test_ollama_cloud_profile.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/plugins/model_providers/test_opencode_go_profile.py",
+        "old_mapped": "",
+        "new_mapped": "tests/plugins/model_providers/test_opencode_go_profile.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/plugins/test_a2a_schema_registration.py",
+        "old_mapped": "",
+        "new_mapped": "tests/plugins/test_a2a_schema_registration.py"
+      },
+      {
+        "status": "deleted",
+        "old_path": "tests/plugins/test_nemo_relay_bounded_marks.py",
+        "new_path": "",
+        "old_mapped": "tests/plugins/test_nemo_relay_bounded_marks.py",
+        "new_mapped": ""
+      },
+      {
+        "status": "deleted",
+        "old_path": "tests/plugins/test_nemo_relay_mark_turn_parenting.py",
+        "new_path": "",
+        "old_mapped": "tests/plugins/test_nemo_relay_mark_turn_parenting.py",
+        "new_mapped": ""
+      },
+      {
+        "status": "deleted",
+        "old_path": "tests/plugins/test_nemo_relay_plugin.py",
+        "new_path": "",
+        "old_mapped": "tests/plugins/test_nemo_relay_plugin.py",
+        "new_mapped": ""
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/plugins/web/test_web_search_provider_plugins.py",
+        "old_mapped": "",
+        "new_mapped": "tests/plugins/web/test_web_search_provider_plugins.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/providers/test_transport_parity.py",
+        "old_mapped": "",
+        "new_mapped": "tests/providers/test_transport_parity.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/run_agent/test_callable_api_key.py",
+        "old_mapped": "",
+        "new_mapped": "tests/run_agent/test_callable_api_key.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/run_agent/test_compression_budget_refund.py",
+        "old_mapped": "",
+        "new_mapped": "tests/run_agent/test_compression_budget_refund.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/run_agent/test_in_place_compaction.py",
+        "old_mapped": "",
+        "new_mapped": "tests/run_agent/test_in_place_compaction.py"
       },
       {
         "status": "modified",
@@ -980,27 +2463,6 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/run_agent/test_run_agent_codex_responses.py",
-        "old_mapped": "",
-        "new_mapped": "tests/run_agent/test_run_agent_codex_responses.py"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "tests/skills/test_nastech_agent_skill.py",
-        "old_mapped": "",
-        "new_mapped": "tests/skills/test_nastech_agent_skill.py"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "tests/test_desktop_update_shim_progress.py",
-        "old_mapped": "",
-        "new_mapped": "tests/test_desktop_update_shim_progress.py"
-      },
-      {
-        "status": "added",
-        "old_path": "",
         "new_path": "tests/test_desktop_update_windows_progress.py",
         "old_mapped": "",
         "new_mapped": "tests/test_desktop_update_windows_progress.py"
@@ -1008,86 +2470,44 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/tools/test_budget_config.py",
+        "new_path": "tests/test_output_cap_parsing.py",
         "old_mapped": "",
-        "new_mapped": "tests/tools/test_budget_config.py"
+        "new_mapped": "tests/test_output_cap_parsing.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/tools/test_cli_approval_exec_ask_leak.py",
+        "new_path": "tests/tools/test_computer_use.py",
         "old_mapped": "",
-        "new_mapped": "tests/tools/test_cli_approval_exec_ask_leak.py"
+        "new_mapped": "tests/tools/test_computer_use.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/tools/test_close_preview_tool.py",
+        "new_path": "tests/tools/test_rollback_all_directories.py",
         "old_mapped": "",
-        "new_mapped": "tests/tools/test_close_preview_tool.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/tools/test_image_generation.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tools/test_image_generation.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/tools/test_managed_media_gateways.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tools/test_managed_media_gateways.py"
+        "new_mapped": "tests/tools/test_rollback_all_directories.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/tools/test_mcp_result_size_limit.py",
+        "new_path": "tests/tools/test_web_keyless_fallback.py",
         "old_mapped": "",
-        "new_mapped": "tests/tools/test_mcp_result_size_limit.py"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "tests/tools/test_strict_provider_selection.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tools/test_strict_provider_selection.py"
+        "new_mapped": "tests/tools/test_web_keyless_fallback.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/tools/test_tool_result_storage.py",
+        "new_path": "tests/tools/test_web_providers.py",
         "old_mapped": "",
-        "new_mapped": "tests/tools/test_tool_result_storage.py"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "tests/tools/test_tour_tool.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tools/test_tour_tool.py"
+        "new_mapped": "tests/tools/test_web_providers.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/tools/test_transcription.py",
+        "new_path": "tests/tools/test_web_providers_searxng.py",
         "old_mapped": "",
-        "new_mapped": "tests/tools/test_transcription.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/tools/test_transcription_tools.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tools/test_transcription_tools.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/tools/test_tts_openai_config.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tools/test_tts_openai_config.py"
+        "new_mapped": "tests/tools/test_web_providers_searxng.py"
       },
       {
         "status": "modified",
@@ -1099,107 +2519,58 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/tui_gateway/test_gui_surface_toolsets.py",
+        "new_path": "tests/tools/test_web_tools_tavily.py",
         "old_mapped": "",
-        "new_mapped": "tests/tui_gateway/test_gui_surface_toolsets.py"
+        "new_mapped": "tests/tools/test_web_tools_tavily.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/tui_gateway/test_profiles_list_preferred_session.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tui_gateway/test_profiles_list_preferred_session.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/tui_gateway/test_tour_bridge_fail_fast.py",
+        "new_path": "tests/tui_gateway/test_profiles_list_worker_session.py",
         "old_mapped": "",
-        "new_mapped": "tests/tui_gateway/test_tour_bridge_fail_fast.py"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "tests/website/test_generate_llms_txt.py",
-        "old_mapped": "",
-        "new_mapped": "tests/website/test_generate_llms_txt.py"
+        "new_mapped": "tests/tui_gateway/test_profiles_list_worker_session.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/approval.py",
+        "new_path": "tests/tui_gateway/test_projects_rpc.py",
         "old_mapped": "",
-        "new_mapped": "tools/approval.py"
+        "new_mapped": "tests/tui_gateway/test_projects_rpc.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/browser_camofox.py",
+        "new_path": "tools/checkpoint_manager.py",
         "old_mapped": "",
-        "new_mapped": "tools/browser_camofox.py"
+        "new_mapped": "tools/checkpoint_manager.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/browser_tool.py",
+        "new_path": "tools/computer_use/schema.py",
         "old_mapped": "",
-        "new_mapped": "tools/browser_tool.py"
+        "new_mapped": "tools/computer_use/schema.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/budget_config.py",
+        "new_path": "tools/computer_use/tool.py",
         "old_mapped": "",
-        "new_mapped": "tools/budget_config.py"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "tools/close_preview_tool.py",
-        "old_mapped": "",
-        "new_mapped": "tools/close_preview_tool.py"
+        "new_mapped": "tools/computer_use/tool.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/focus_pane_tool.py",
+        "new_path": "tools/memory_tool.py",
         "old_mapped": "",
-        "new_mapped": "tools/focus_pane_tool.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tools/image_generation_tool.py",
-        "old_mapped": "",
-        "new_mapped": "tools/image_generation_tool.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tools/mcp_tool.py",
-        "old_mapped": "",
-        "new_mapped": "tools/mcp_tool.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tools/open_preview_tool.py",
-        "old_mapped": "",
-        "new_mapped": "tools/open_preview_tool.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tools/read_preview_tool.py",
-        "old_mapped": "",
-        "new_mapped": "tools/read_preview_tool.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tools/todo_tool.py",
-        "old_mapped": "",
-        "new_mapped": "tools/todo_tool.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tools/tool_backend_helpers.py",
-        "old_mapped": "",
-        "new_mapped": "tools/tool_backend_helpers.py"
+        "new_mapped": "tools/memory_tool.py"
       },
       {
         "status": "modified",
@@ -1211,20 +2582,6 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/transcription_tools.py",
-        "old_mapped": "",
-        "new_mapped": "tools/transcription_tools.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tools/tts_tool.py",
-        "old_mapped": "",
-        "new_mapped": "tools/tts_tool.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
         "new_path": "tools/web_tools.py",
         "old_mapped": "",
         "new_mapped": "tools/web_tools.py"
@@ -1232,9 +2589,16 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "toolsets.py",
+        "new_path": "tui_gateway/methods_config.py",
         "old_mapped": "",
-        "new_mapped": "toolsets.py"
+        "new_mapped": "tui_gateway/methods_config.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tui_gateway/methods_profiles.py",
+        "old_mapped": "",
+        "new_mapped": "tui_gateway/methods_profiles.py"
       },
       {
         "status": "modified",
@@ -1246,30 +2610,65 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "ui-tui/packages/nastech-ink/src/ink/ansi-transition.test.ts",
+        "new_path": "ui-tui/packages/nastech-ink/src/ink/components/App.tsx",
         "old_mapped": "",
-        "new_mapped": "ui-tui/packages/nastech-ink/src/ink/ansi-transition.test.ts"
+        "new_mapped": "ui-tui/packages/nastech-ink/src/ink/components/App.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "ui-tui/packages/nastech-ink/src/ink/ansi-transition.ts",
+        "new_path": "ui-tui/packages/nastech-ink/src/ink/ink.tsx",
         "old_mapped": "",
-        "new_mapped": "ui-tui/packages/nastech-ink/src/ink/ansi-transition.ts"
+        "new_mapped": "ui-tui/packages/nastech-ink/src/ink/ink.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "website/docs/reference/tools-reference.md",
+        "new_path": "ui-tui/packages/nastech-ink/src/ink/terminal.test.ts",
         "old_mapped": "",
-        "new_mapped": "website/docs/reference/tools-reference.md"
+        "new_mapped": "ui-tui/packages/nastech-ink/src/ink/terminal.test.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "website/docs/reference/toolsets-reference.md",
+        "new_path": "ui-tui/packages/nastech-ink/src/ink/terminal.ts",
         "old_mapped": "",
-        "new_mapped": "website/docs/reference/toolsets-reference.md"
+        "new_mapped": "ui-tui/packages/nastech-ink/src/ink/terminal.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/integrations/index.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/integrations/index.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/integrations/nastech-portal.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/integrations/nastech-portal.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/reference/environment-variables.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/reference/environment-variables.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/bot-mode.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/bot-mode.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/cli.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/cli.md"
       },
       {
         "status": "modified",
@@ -1281,6 +2680,34 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "website/docs/user-guide/desktop.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/desktop.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/features/browser.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/features/browser.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/features/built-in-plugins.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/features/built-in-plugins.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/features/computer-use.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/features/computer-use.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "website/docs/user-guide/features/image-generation.md",
         "old_mapped": "",
         "new_mapped": "website/docs/user-guide/features/image-generation.md"
@@ -1288,9 +2715,72 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "website/scripts/generate-llms-txt.py",
+        "new_path": "website/docs/user-guide/features/memory.md",
         "old_mapped": "",
-        "new_mapped": "website/scripts/generate-llms-txt.py"
+        "new_mapped": "website/docs/user-guide/features/memory.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/features/tool-gateway.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/features/tool-gateway.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/features/tts.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/features/tts.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/features/web-search.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/features/web-search.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/messaging/whatsapp-cloud.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/messaging/whatsapp-cloud.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/multi-connection-desktop.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/multi-connection-desktop.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/reference/environment-variables.md",
+        "old_mapped": "",
+        "new_mapped": "website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/reference/environment-variables.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/browser.md",
+        "old_mapped": "",
+        "new_mapped": "website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/browser.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/image-generation.md",
+        "old_mapped": "",
+        "new_mapped": "website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/image-generation.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/tool-gateway.md",
+        "old_mapped": "",
+        "new_mapped": "website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/tool-gateway.md"
       }
     ]
   },
@@ -1429,6 +2919,7 @@
     "tests/agent/transports/test_chat_completions.py",
     "tests/cli/test_cli_first_run_setup.py",
     "tests/cli/test_cli_provider_resolution.py",
+    "tests/cli/test_show_config_credential.py",
     "tests/docker/test_sqlite_runtime.py",
     "tests/gateway/test_discord_format.py",
     "tests/gateway/test_run_progress_topics.py",
@@ -1444,7 +2935,9 @@
     "tests/nastech_cli/test_nastech_auth_status_cache.py",
     "tests/nastech_cli/test_nastech_inference_url_validation.py",
     "tests/nastech_cli/test_nastech_portal_staging_allowlist.py",
+    "tests/nastech_cli/test_nastech_reasoning_metadata.py",
     "tests/nastech_cli/test_proxy.py",
+    "tests/nastech_cli/test_reasoning_caps_disk_cache.py",
     "tests/nastech_cli/test_sale_pricing.py",
     "tests/nastech_cli/test_web_oauth_dispatch.py",
     "tests/plugins/dashboard_auth/test_nastech_provider.py",
@@ -1559,45 +3052,47 @@
     "release"
   ],
   "verify": {
-    "total": 9813,
-    "passed": 9813,
-    "locked": 65,
+    "total": 9889,
+    "passed": 9889,
+    "locked": 66,
     "failed": [],
     "pass_ratio": 1.0
   },
   "brand": {
-    "total": 9813,
-    "renamed": 1340,
-    "rewritten": 9714,
+    "total": 9889,
+    "renamed": 1356,
+    "rewritten": 9789,
     "locked_copied": 57,
-    "binary_copied": 8,
+    "binary_copied": 9,
     "errors": []
   },
   "diff": {
-    "renamed": 1259,
+    "renamed": 1273,
     "rewritten": 0,
-    "identical": 8223,
-    "locked": 62,
+    "identical": 8281,
+    "locked": 63,
     "missing": 0
   },
   "scan": {
-    "total": 9867,
+    "total": 9943,
     "by_category": {
-      "text": 9744,
+      "text": 9819,
       "image": 93,
       "binary": 7,
       "audio": 5,
       "font": 13,
+      "archive": 1,
       "doc": 5
     },
     "by_format": {
-      "text": 9744,
+      "text": 9819,
       "jpeg": 7,
       "png": 78,
       "icns": 4,
       "ico": 8,
       "wav": 5,
       "woff2": 13,
+      "gzip": 1,
       "pdf": 5,
       "onnx": 1,
       "tflite": 1,
@@ -1607,9 +3102,10 @@
   },
   "fork": {
     "statuses": {
-      "identical": 9705,
-      "updated": 133,
-      "added": 29
+      "identical": 9468,
+      "updated": 393,
+      "upstream_deleted": 6,
+      "added": 82
     },
     "violations": 0,
     "preserved": 54,

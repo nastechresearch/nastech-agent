@@ -169,7 +169,7 @@ def _load_web_config() -> dict:
 # WebSearchProvider. Keep the two sets aligned by hand: if xai ever ships as
 # a registered provider, drop it here so the registry path takes over.
 _LEGACY_WEB_BACKENDS = frozenset(
-    {"parallel", "firecrawl", "tavily", "exa", "searxng", "brave-free", "ddgs", "xai"}
+    {"parallel", "firecrawl", "tavily", "exa", "searxng", "brave-free", "ddgs", "xai", "keenable"}
 )
 
 
@@ -262,6 +262,7 @@ def _get_backend() -> str:
         ("tavily", _has_env("TAVILY_API_KEY")),
         ("exa", _has_env("EXA_API_KEY")),
         ("parallel", _has_env("PARALLEL_API_KEY")),
+        ("keenable", _has_env("KEENABLE_API_KEY")),
         ("firecrawl", _has_env("FIRECRAWL_API_KEY") or _has_env("FIRECRAWL_API_URL")),
         ("firecrawl", _is_tool_gateway_ready()),
         ("searxng", _has_env("SEARXNG_URL")),
@@ -286,6 +287,32 @@ def _get_backend() -> str:
                 return provider.name
         except Exception as exc:  # noqa: BLE001 — a broken provider is skipped
             logger.debug("web provider %r.is_available() raised: %s", provider.name, exc)
+
+    # Keyless free-tier walk — zero credentials anywhere. Providers with a
+    # public anonymous endpoint (Parallel, Exa — see
+    # plugins/web/keyless_mcp.py) can still serve, unless the user disabled
+    # the tier via ``web.keyless_fallback: false``. Strictly last so it
+    # never pre-empts any keyed/importable backend above. Discovery must
+    # run first — this path is reachable from contexts that haven't loaded
+    # plugins yet (subprocess agent runs, delegate children, scripts).
+    try:
+        _ensure_web_plugins_loaded()
+        from agent.web_search_registry import _keyless_preference, _keyless_tier_enabled
+
+        if _keyless_tier_enabled():
+            for name in _keyless_preference():
+                provider = _registered_web_provider(name)
+                if provider is None:
+                    continue
+                try:
+                    if provider.is_keyless_available():
+                        return name
+                except Exception as exc:  # noqa: BLE001 — skip broken provider
+                    logger.debug(
+                        "web provider %r.is_keyless_available() raised: %s", name, exc
+                    )
+    except Exception as exc:  # noqa: BLE001 — registry optional; never fatal
+        logger.debug("keyless fallback walk failed: %s", exc)
 
     return "firecrawl"  # default (backward compat)
 
@@ -332,6 +359,14 @@ def _get_capability_backend(capability: str) -> str:
     return _get_backend()
 
 
+def _tavily_explicitly_configured() -> bool:
+    cfg = _load_web_config()
+    return any(
+        (cfg.get(key) or "").lower().strip() == "tavily"
+        for key in ("backend", "search_backend", "extract_backend")
+    )
+
+
 def _is_backend_available(backend: str) -> bool:
     """Return True when the selected backend is currently usable.
 
@@ -353,10 +388,12 @@ def _is_backend_available(backend: str) -> bool:
         return _has_env("EXA_API_KEY")
     if backend == "parallel":
         return _has_env("PARALLEL_API_KEY")
+    if backend == "keenable":
+        return _has_env("KEENABLE_API_KEY")
     if backend == "firecrawl":
         return check_firecrawl_api_key()
     if backend == "tavily":
-        return _has_env("TAVILY_API_KEY")
+        return _has_env("TAVILY_API_KEY") or _tavily_explicitly_configured()
     if backend == "searxng":
         return _has_env("SEARXNG_URL")
     if backend == "brave-free":
@@ -416,6 +453,7 @@ def _web_requires_env() -> list[str]:
         "EXA_API_KEY",
         "PARALLEL_API_KEY",
         "TAVILY_API_KEY",
+        "KEENABLE_API_KEY",
         "FIRECRAWL_API_KEY",
         "FIRECRAWL_API_URL",
         "FIRECRAWL_GATEWAY_URL",
@@ -1132,6 +1170,42 @@ async def web_extract_tool(
 
 
 # Convenience function to check Firecrawl credentials
+def _provider_is_ready(provider) -> bool:
+    """Return True when *provider* reports readiness without raising.
+
+    ``get_active_*_provider()`` intentionally returns an explicitly configured
+    backend even when ``is_available()`` is False so the dispatcher can emit a
+    precise missing-credential error. Tool/doctor readiness gates must still
+    require a true availability probe — otherwise ``nastech doctor`` paints a
+    green ✓ for a backend that cannot run (issue #78412).
+
+    A provider that can serve anonymously (``is_keyless_available()`` — the
+    Exa/Parallel free tier) IS ready: keyless mode is a working state, not a
+    misconfiguration.
+    """
+    if provider is None:
+        return False
+    try:
+        if provider.is_available():
+            return True
+    except Exception as exc:  # noqa: BLE001 — broken provider == not ready
+        logger.debug(
+            "web provider %r.is_available() raised during readiness check: %s",
+            getattr(provider, "name", provider),
+            exc,
+        )
+        return False
+    try:
+        return bool(provider.is_keyless_available())
+    except Exception as exc:  # noqa: BLE001 — broken provider == not ready
+        logger.debug(
+            "web provider %r.is_keyless_available() raised during readiness check: %s",
+            getattr(provider, "name", provider),
+            exc,
+        )
+        return False
+
+
 def check_web_api_key() -> bool:
     """Check whether the configured web backend is available.
 
@@ -1151,24 +1225,28 @@ def check_web_api_key() -> bool:
     # unlike _get_backend() the probe order is irrelevant.
     if any(_is_backend_available(backend) for backend in _LEGACY_WEB_BACKENDS):
         return True
-    # Any plugin-registered provider the registry considers active for either
-    # capability. Delegating to the registry's own availability-filtered
-    # resolvers keeps a single authority for "is a custom provider usable"
-    # rather than re-implementing the walk here.
+    # Plugin-registered path: the active-provider resolvers return an explicit
+    # config hit even when credentials are missing (so the tool can print a
+    # precise "set FOO_API_KEY" error). Readiness still requires a true
+    # availability probe — keyed (is_available) OR keyless-capable
+    # (is_keyless_available; the Exa/Parallel anonymous free tier serves
+    # zero-credential installs, so those count as ready). Discovery must run
+    # first — check_fn fires at tool-registration time, before any dispatch
+    # has populated the registry.
     try:
+        _ensure_web_plugins_loaded()
         from agent.web_search_registry import (
             get_active_search_provider,
             get_active_extract_provider,
         )
 
         return (
-            get_active_search_provider() is not None
-            or get_active_extract_provider() is not None
+            _provider_is_ready(get_active_search_provider())
+            or _provider_is_ready(get_active_extract_provider())
         )
     except Exception as exc:  # noqa: BLE001 — registry optional; never fatal
         logger.debug("web provider registry availability check failed: %s", exc)
         return False
-
 
 if __name__ == "__main__":
     """
@@ -1192,7 +1270,10 @@ if __name__ == "__main__":
         elif backend == "parallel":
             print("   Using Parallel API (https://parallel.ai)")
         elif backend == "tavily":
-            print("   Using Tavily API (https://tavily.com)")
+            if _has_env("TAVILY_API_KEY"):
+                print("   Using Tavily API (https://tavily.com)")
+            else:
+                print("   Using Tavily keyless (https://docs.tavily.com/documentation/keyless)")
         elif backend == "searxng":
             print(f"   Using SearXNG (search only): {_env_value('SEARXNG_URL')}")
         elif backend == "brave-free":

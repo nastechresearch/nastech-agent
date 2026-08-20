@@ -211,6 +211,7 @@ export const en: Translations = {
     swapSidebarSides: 'Swap sidebar sides',
     hideRightSidebar: 'Hide right sidebar',
     showRightSidebar: 'Show right sidebar',
+    unreadSessions: count => (count === 1 ? '1 unread session' : `${count} unread sessions`),
     muteHaptics: 'Mute haptics',
     unmuteHaptics: 'Unmute haptics',
     openSettings: 'Open settings',
@@ -522,8 +523,9 @@ export const en: Translations = {
       terminalFontPreview: 'Glyph preview',
       terminalFontReset: 'Use default',
       translucencyTitle: 'Window Translucency',
-      translucencyDesc: 'See your desktop through the whole window, text and all.',
-      translucencyGlassDesc: 'Matte glass: the desktop shows through as a smooth blur while text stays sharp.',
+      translucencyDesc: 'See your desktop through the whole window, text and all. Tuned separately for light and dark.',
+      translucencyGlassDesc:
+        'Matte glass: the desktop shows through as a smooth blur while text stays sharp. Tuned separately for light and dark.',
       translucencyModeClear: 'Clear',
       translucencyModeGlass: 'Glass',
       translucencyTintTitle: 'Tint',
@@ -1126,8 +1128,7 @@ export const en: Translations = {
       useBackend: 'Use this backend',
       nastechIncluded: 'Included with a Nastech subscription — sign in to Nastech Portal to activate.',
       nastechAuthNeededTitle: 'Sign in to Nastech Portal',
-      nastechAuthNeededMessage: provider =>
-        `${provider} is saved but won't activate until you sign in to Nastech Portal.`,
+      nastechAuthNeededMessage: provider => `${provider} is saved but won't activate until you sign in to Nastech Portal.`,
       nastechAuthSignIn: 'Sign in',
       nastechAuthDoneTitle: 'Nastech Portal connected',
       nastechAuthDoneMessage: 'Your subscription backends are now active.',
@@ -2254,6 +2255,7 @@ export const en: Translations = {
     endShort: 'End',
     stopDictation: 'Stop dictation',
     transcribingDictation: 'Transcribing dictation',
+    voiceControls: 'Voice',
     voiceDictation: 'Voice dictation',
     speakReplies: 'Read replies aloud',
     stopSpeakingReplies: 'Stop reading replies aloud',
@@ -2511,6 +2513,14 @@ export const en: Translations = {
     pidLabel: pid => `PID ${pid}`,
     technicalDetails: 'Technical details',
     notNow: 'Not now',
+    clientAlsoBehindTitle: 'Desktop app is behind',
+    clientAlsoBehindMessage:
+      'The backend is up to date, but this desktop app is still on an older version. Update it to pick up the latest fixes.',
+    clientAlsoBehindAction: 'Update desktop app',
+    everythingDispatched: 'Update dispatched',
+    everythingSkipped: 'Skipped',
+    everythingRowFailed: 'Update failed',
+    everythingFanoutFailedTitle: 'Couldn’t update other instances',
     applyStatus: {
       preparing: 'Updating backend…',
       pulling: 'Backend updating…',
@@ -2623,8 +2633,7 @@ export const en: Translations = {
       xai: { short: 'Grok models', description: 'Direct access to xAI Grok models.' },
       local: {
         short: 'self-hosted',
-        description:
-          'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
+        description: 'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
       }
     },
     backToSignIn: 'Back to sign in',

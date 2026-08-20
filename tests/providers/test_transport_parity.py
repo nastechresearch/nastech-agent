@@ -105,7 +105,7 @@ class TestOpenRouterParity:
 
 
 class TestNastechParity:
-    """Nastech: product tags, reasoning, omit when disabled."""
+    """Nastech: product tags, reasoning passthrough (disable included)."""
 
     def test_tags(self, transport):
         from agent.portal_tags import nastech_portal_tags
