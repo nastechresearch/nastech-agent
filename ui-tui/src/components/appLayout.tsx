@@ -1,8 +1,8 @@
 // Importing the apps barrel registers the reference widget apps at startup.
 import '../sdk/apps/index.js'
 
-import { AlternateScreen, Box, NoSelect, ScrollBox, Text } from '@nastech/ink'
 import { useStore } from '@nanostores/react'
+import { AlternateScreen, Box, NoSelect, ScrollBox, Text } from '@nastech/ink'
 import { Fragment, memo, useEffect, useMemo, useRef } from 'react'
 
 import { useGateway } from '../app/gatewayContext.js'
