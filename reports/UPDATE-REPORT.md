@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `044acf2bf700b8452e903f035406091146eb0245`
+- upstream sha : `f43eabee5f36e11448086ee8ee17c499958e81bf`
 - source       : `https://github.com/Nastechresearch/nastech-agent.git`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -45,124 +45,19 @@
 
 ## Direct upstream tree delta
 
-- complete: +35 ~77 -5 ↪0
-- MODIFIED `CONTRIBUTING.es.md`
-- MODIFIED `CONTRIBUTING.md`
-- MODIFIED `SECURITY.es.md`
-- MODIFIED `SECURITY.md`
-- MODIFIED `agent/agent_init.py`
-- MODIFIED `agent/agent_runtime_helpers.py`
-- MODIFIED `agent/tool_executor.py`
+- complete: +0 ~12 -0 ↪0
 - MODIFIED `apps/desktop/electron/backend-ownership.test.ts`
-- MODIFIED `apps/desktop/electron/backend-ownership.ts`
-- MODIFIED `apps/desktop/electron/main.ts`
-- MODIFIED `apps/desktop/electron/parent-process-identity.test.ts`
-- MODIFIED `apps/desktop/electron/parent-process-identity.ts`
-- ADDED `apps/desktop/src/app/chat/right-rail/preview-act.test.ts`
-- ADDED `apps/desktop/src/app/chat/right-rail/preview-act.ts`
-- ADDED `apps/desktop/src/app/chat/right-rail/preview-drive.ts`
-- ADDED `apps/desktop/src/app/chat/right-rail/preview-input.ts`
-- ADDED `apps/desktop/src/app/chat/right-rail/preview-mind.ts`
-- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-nav.ts`
-- ADDED `apps/desktop/src/app/chat/right-rail/preview-nudge.ts`
-- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-pane.tsx`
-- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-reader.ts`
-- ADDED `apps/desktop/src/app/chat/right-rail/preview-script-runner.ts`
-- DELETED `apps/desktop/src/app/chat/right-rail/preview-tour-runner.ts`
-- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-tour.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/desktop-bridge.ts`
-- MODIFIED `apps/desktop/src/lib/chat-messages/types.ts`
-- ADDED `apps/desktop/src/lib/preview-act/act-in-page.test.ts`
-- ADDED `apps/desktop/src/lib/preview-act/act-in-page.ts`
-- ADDED `apps/desktop/src/lib/preview-act/identity.ts`
-- ADDED `apps/desktop/src/lib/preview-act/naming.test.ts`
-- ADDED `apps/desktop/src/lib/preview-act/naming.ts`
-- ADDED `apps/desktop/src/lib/preview-act/types.ts`
-- ADDED `apps/desktop/src/lib/preview-act/visibility.ts`
-- ADDED `apps/desktop/src/lib/preview-act/watch-in-page.test.ts`
-- ADDED `apps/desktop/src/lib/preview-act/watch-in-page.ts`
+- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-act.test.ts`
+- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-act.ts`
+- MODIFIED `apps/desktop/src/lib/preview-act/act-in-page.ts`
+- MODIFIED `apps/desktop/src/lib/preview-act/naming.ts`
+- MODIFIED `apps/desktop/src/lib/preview-act/types.ts`
+- MODIFIED `apps/desktop/src/lib/preview-act/visibility.ts`
+- MODIFIED `apps/desktop/src/lib/preview-act/watch-in-page.test.ts`
+- MODIFIED `apps/desktop/src/lib/preview-act/watch-in-page.ts`
 - MODIFIED `apps/desktop/src/plugins/nastech-bots/plugin.js`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-adopt-before-mint.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/group-chat.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/hide-bot-chats.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/roster-preview.test.mjs`
-- DELETED `apps/desktop/src/plugins/nastech-bots/tests/session-workspace.test.mjs`
-- MODIFIED `cli.py`
-- ADDED `contributors/emails/fattchris@users.noreply.github.com`
-- MODIFIED `cron/scheduler.py`
-- MODIFIED `docs/relay-connector-contract.md`
-- MODIFIED `gateway/mirror.py`
-- MODIFIED `gateway/relay/adapter.py`
-- MODIFIED `gateway/relay/descriptor.py`
-- MODIFIED `gateway/run.py`
-- MODIFIED `nastech_cli/_startup_fast.py`
-- MODIFIED `nastech_cli/commands.py`
-- MODIFIED `nastech_cli/config.py`
-- MODIFIED `nastech_cli/config_defaults.py`
-- MODIFIED `nastech_cli/console_engine.py`
-- MODIFIED `nastech_cli/main.py`
-- ADDED `nastech_cli/process_identity.py`
-- MODIFIED `nastech_cli/subcommands/update.py`
-- DELETED `nastech_cli/subcommands/version.py`
-- MODIFIED `nastech_cli/tips.py`
-- MODIFIED `nastech_cli/update_cmd.py`
-- MODIFIED `nastech_cli/web_server.py`
-- MODIFIED `nix/checks.nix`
-- MODIFIED `run_agent.py`
-- MODIFIED `scripts/desktop-update/posix.sh`
-- MODIFIED `scripts/desktop-update/windows.ps1`
-- MODIFIED `tests/cli/test_cli_init.py`
-- MODIFIED `tests/cli/test_cli_status_command.py`
-- ADDED `tests/cli/test_command_palette.py`
-- ADDED `tests/cli/test_model_picker_filter.py`
-- DELETED `tests/cli/test_surrogate_sanitization.py`
-- ADDED `tests/cron/test_cron_thread_seed_dm_keying.py`
-- MODIFIED `tests/cron/test_scheduler.py`
-- MODIFIED `tests/gateway/test_scale_to_zero_watcher.py`
-- ADDED `tests/nastech_cli/test_composer_placeholder.py`
-- MODIFIED `tests/nastech_cli/test_pre_command_hook.py`
-- ADDED `tests/nastech_cli/test_process_identity.py`
-- ADDED `tests/nastech_cli/test_resolve_turn_limit.py`
-- MODIFIED `tests/nastech_cli/test_startup_plugin_gating.py`
-- MODIFIED `tests/nastech_cli/test_subcommands_batch.py`
-- MODIFIED `tests/nastech_cli/test_update_autostash.py`
-- ADDED `tests/nastech_cli/test_update_fetch_failure_classifier.py`
-- ADDED `tests/nastech_cli/test_update_handoff_backend_reap.py`
-- MODIFIED `tests/nastech_cli/test_update_shim_self_lock.py`
-- ADDED `tests/nastech_cli/test_update_stale_module_purge.py`
-- ADDED `tests/relay/test_relay_format_hints.py`
-- ADDED `tests/relay/test_relay_inchannel_continuable.py`
-- MODIFIED `tests/run_agent/test_run_agent.py`
-- MODIFIED `tests/test_desktop_update_shim_progress.py`
-- ADDED `tests/tools/test_annotate_preview_tool.py`
-- ADDED `tests/tools/test_drive_preview_tool.py`
-- ADDED `tests/tools/test_web_keyless_rescue.py`
-- DELETED `tests/tools/test_website_policy.py`
-- MODIFIED `tests/tui_gateway/test_gui_surface_toolsets.py`
-- ADDED `tools/annotate_preview_tool.py`
-- MODIFIED `tools/cronjob_tools.py`
-- ADDED `tools/drive_preview_tool.py`
-- MODIFIED `tools/web_tools.py`
-- MODIFIED `toolsets.py`
-- MODIFIED `tui_gateway/methods_prompt.py`
-- MODIFIED `tui_gateway/methods_session.py`
-- MODIFIED `tui_gateway/server.py`
-- MODIFIED `website/docs/developer-guide/contributing.md`
-- MODIFIED `website/docs/getting-started/nix-setup.md`
-- MODIFIED `website/docs/getting-started/termux.md`
-- MODIFIED `website/docs/getting-started/updating.md`
-- MODIFIED `website/docs/reference/cli-commands.md`
-- MODIFIED `website/docs/reference/slash-commands.md`
-- MODIFIED `website/docs/reference/tools-reference.md`
-- MODIFIED `website/docs/reference/toolsets-reference.md`
-- MODIFIED `website/docs/user-guide/bot-mode.md`
-- MODIFIED `website/docs/user-guide/configuration.md`
-- MODIFIED `website/docs/user-guide/features/web-search.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer-guide/contributing.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/getting-started/nix-setup.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/getting-started/termux.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/getting-started/updating.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/reference/cli-commands.md`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/bot-meta-sync.test.mjs`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/hide-bots.test.mjs`
 
 ## Scan
 
@@ -176,7 +71,7 @@
 
 ## Fork check (vs nastech-agent)
 
-- 9710 identical, 228 updated (+0/-0 lines), 35 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 0 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+- 9961 identical, 12 updated (+0/-0 lines), 0 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 0 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - features: fork 51 -> branded 51
 
