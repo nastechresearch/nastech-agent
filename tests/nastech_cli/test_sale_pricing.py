@@ -88,7 +88,26 @@ def test_resolve_nastech_pricing_credentials_honors_inference_env_override(monke
     )
     api_key, base_url = models_mod._resolve_nastech_pricing_credentials()
     assert api_key == ""
-    assert base_url == "https://stg-inference-api.nastechresearch.github.io/v1"
+    # The bare origin, whichever form the override was written in: callers
+    # append their own path (``/v1/models``), so a suffix here would double up.
+    assert base_url == "https://stg-inference-api.nastechresearch.github.io"
+
+
+def test_resolve_nastech_pricing_credentials_normalizes_either_suffix(monkeypatch):
+    """``/v1`` on the override is optional and must not change the result."""
+    monkeypatch.setattr(
+        "nastech_cli.auth.resolve_nastech_runtime_credentials", lambda: None
+    )
+    for override in (
+        "https://stg-inference-api.nastechresearch.github.io",
+        "https://stg-inference-api.nastechresearch.github.io/",
+        "https://stg-inference-api.nastechresearch.github.io/v1",
+        "https://stg-inference-api.nastechresearch.github.io/v1/",
+    ):
+        monkeypatch.setenv("NASTECH_INFERENCE_BASE_URL", override)
+        assert models_mod._resolve_nastech_pricing_credentials()[1] == (
+            "https://stg-inference-api.nastechresearch.github.io"
+        )
 
 
 def test_a_failed_catalog_fetch_is_not_cached_forever(monkeypatch):

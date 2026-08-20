@@ -22,20 +22,13 @@ import { Codicon } from '@/components/ui/codicon'
 import { ColorSwatches } from '@/components/ui/color-swatches'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { CopyButton } from '@/components/ui/copy-button'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  preventCloseButtonAutoFocus
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { renameSession } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { PROFILE_SWATCHES } from '@/lib/profile-color'
 import { exportSession } from '@/lib/session-export'
-import { renameSession } from '@/nastech'
 import { activeGateway } from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
 import { $projectTree, moveSessionToProject, projectIdForCwd, projectRootCwd } from '@/store/projects'
@@ -580,7 +573,6 @@ function DeleteSessionDialog({ open, onOpenChange, onConfirm, sessionTitle }: De
       doneLabel={r.deleted}
       onClose={() => onOpenChange(false)}
       onConfirm={onConfirm}
-      onOpenAutoFocus={preventCloseButtonAutoFocus}
       open={open}
       title={r.deleteTitle}
     />

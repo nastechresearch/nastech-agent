@@ -439,17 +439,50 @@ function fallbackSelectionAfterHide(name) {
  *  setter is a no-op on already-hidden rows) and feature-detected: older
  *  gateways lack session.set_hidden and simply keep the rows visible. */
 function hideOwnedBotSessions() {
-  const canonical = Object.values($botMeta.get())
-    .map(m => m && m.chat)
-    .filter(Boolean)
+  const canonical = Object.entries($botMeta.get())
+    .map(([name, meta]) => ({ name, id: meta && meta.chat }))
+    .filter(entry => Boolean(entry.id))
   const rooms = Object.values($groupChats.get())
     .flatMap(room => Object.values(room?.sessions || {}))
     .filter(sid => Boolean(sid) && sid !== true)
-  const ids = [...new Set([...canonical, ...rooms])]
 
-  const known = Promise.all(
-    ids.map(sid =>
-      Promise.resolve(host.request('session.set_hidden', { session_id: sid, hidden: true })).catch(() => undefined)
+  // A stale local/server pointer must not be trusted merely because it looks
+  // like a session id. Resolve every canonical pointer through the backend and
+  // require the canonical Bot Chat title before the hide write. This is
+  // deliberately fail-closed: an unavailable/old gateway may leave an old
+  // Bot Chat visible, but it must never hide an unrelated user conversation.
+  const verifiedCanonical = Promise.resolve()
+    .then(() =>
+      host.request('profiles.list', {
+        include_sessions: true,
+        preferred_session_ids: Object.fromEntries(canonical.map(entry => [entry.name, entry.id]))
+      })
+    )
+    .then(res => {
+      const profiles = Array.isArray(res?.profiles) ? res.profiles : []
+      const valid = []
+
+      for (const entry of canonical) {
+        const profile = profiles.find(item => item?.name === entry.name)
+        const preferred = profile?.preferred_session
+        const ids = [preferred?.id, preferred?.resolved_id, preferred?.session_id, preferred?.session_key]
+          .filter(Boolean)
+          .map(String)
+
+        if (String(preferred?.title || '').trim() === 'Bot Chat' && ids.includes(String(entry.id))) {
+          valid.push(entry.id)
+        }
+      }
+
+      return valid
+    })
+    .catch(() => [])
+
+  const known = verifiedCanonical.then(validCanonical =>
+    Promise.all(
+      [...new Set([...validCanonical, ...rooms])].map(sid =>
+        Promise.resolve(host.request('session.set_hidden', { session_id: sid, hidden: true })).catch(() => undefined)
+      )
     )
   )
 
@@ -2936,6 +2969,53 @@ function botHandle(name, bot) {
   return (name || '').trim().toLowerCase() === 'default' ? 'nastech' : name
 }
 
+/** Taggable @-forms derived from a bot's friendly names — the core profile
+ *  display name (`nastech profile rename`) and the Bot Mode title. Free text
+ *  reduces to the mention charset two ways: slugified ("Research Buddy" →
+ *  research-buddy, the form autocomplete inserts) and collapsed
+ *  (researchbuddy). Reserved tokens are dropped so a bot renamed "Nastech"
+ *  can never hijack the primary profile's @nastech alias. */
+function mentionNameForms(value) {
+  const name = String(value || '').trim().toLowerCase()
+
+  if (!name) {
+    return []
+  }
+
+  const slug = name.replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '')
+  const collapsed = name.replace(/[^a-z0-9_-]+/g, '')
+
+  return [...new Set([slug, collapsed])].filter(
+    form => /^[a-z0-9][a-z0-9_-]*$/.test(form) && !['all', 'everyone', 'user', 'default', 'nastech'].includes(form)
+  )
+}
+
+/** Every friendly (renameable) name a roster row carries: the Bot Mode title
+ *  (server-synced via ui_meta, locally stored, or persisted on a durable
+ *  group descriptor) and the core profile display_name — in displayName's
+ *  precedence order. Remote rows never borrow local meta (two `default`s
+ *  must not share a title). */
+function botFriendlyNames(bot) {
+  const localTitle = !bot?.remoteSource && typeof $botMeta !== 'undefined' ? $botMeta.get()?.[bot?.name]?.title : null
+
+  return [bot?.ui_meta?.['nastech-bots']?.title, localTitle, bot?.title, bot?.display_name]
+}
+
+/** The tag autocomplete inserts for a bot: the renamed (friendly) slug when
+ *  the user gave the bot a real name, otherwise the profile @handle. The
+ *  resolvers accept both, so older muscle memory keeps working. */
+function botMentionTag(bot) {
+  for (const friendly of botFriendlyNames(bot)) {
+    const forms = mentionNameForms(friendly)
+
+    if (forms.length) {
+      return forms[0]
+    }
+  }
+
+  return botHandle(bot?.name, bot)
+}
+
 function isActiveRosterBot(bot, active) {
   const activeName = String(active?.name || 'default').trim() || 'default'
   const activeId = String(active?.connectionId || '').trim()
@@ -2972,6 +3052,15 @@ function resolveRosterMentions(text, roster, active = {}) {
 
     if (bot.handle) {
       forms.add(String(bot.handle).toLowerCase())
+    }
+
+    // Renamed bots are taggable by their friendly names too — the core
+    // profile display_name and the Bot Mode title (issue: renaming a bot
+    // didn't change what you @-tag it with).
+    for (const friendly of botFriendlyNames(bot)) {
+      for (const form of mentionNameForms(friendly)) {
+        forms.add(form)
+      }
     }
 
     for (const form of forms) {
@@ -3276,12 +3365,19 @@ async function openStoredBotChat(name, storedId, summary) {
     typeof summary?.message_count === 'number' && Number.isFinite(summary.message_count)
   const expectHistory = hasAuthoritativeCount ? summary.message_count > 0 : true
 
+  // A profile backend that just woke up can lose the hydration-timeout race
+  // even though the session is fine (nastech-agent#89617) — clicking Retry
+  // succeeds because the backend is warm by then. retryHydrationTimeoutOnce
+  // asks the SDK layer to retry that same wait internally, BEFORE it arms the
+  // core stranded-session overlay: a plugin-side retry can't do this because
+  // only host.openSession sees the resume-exhausted latch that overlay reads.
   await host.openSession(storedId, {
     profile: name,
     intent: 'main',
     awaitHydration: true,
     expectHistory,
-    keepAllProfilesScope: false
+    keepAllProfilesScope: true,
+    retryHydrationTimeoutOnce: true
   })
 
   return storedId
@@ -3321,7 +3417,7 @@ function createCanonicalChat(name) {
 
     if (sid && typeof host.openSession === 'function') {
       try {
-        await host.openSession(sid, { profile: name, intent: 'main', keepAllProfilesScope: false })
+        await host.openSession(sid, { profile: name, intent: 'main', keepAllProfilesScope: true })
         opened = true
       } catch {
         // The stored row may not exist until the kickoff persists it. Retry
@@ -3336,7 +3432,7 @@ function createCanonicalChat(name) {
         await host.request('prompt.submit', { session_id: runtime, text: 'Hey, tell me about yourself!' })
 
         if (!opened && sid && typeof host.openSession === 'function') {
-          await host.openSession(sid, { profile: name, intent: 'main', keepAllProfilesScope: false })
+          await host.openSession(sid, { profile: name, intent: 'main', keepAllProfilesScope: true })
         }
       } catch {
         // The chat already exists. Keep the pin so the next click
@@ -3356,19 +3452,28 @@ function createCanonicalChat(name) {
  *
  *  Identity rules (nastech-agent#88200 — the row must open the session its
  *  preview describes):
- *  - grandfather: no pin + existing history adopts the previewed session
+ *  - grandfather: no pin + an existing Bot Chat adopts the previewed session
  *    (`history`, the roster's last_session for this bot) instead of minting
- *    a new empty chat;
+ *    a new empty chat. Ordinary user conversations are never adopted;
+ *    `last_session` is only a recency hint, not an ownership proof;
  *  - a live pin is verified through the backend's precise preferred_session
  *    resolver (hidden rows still resolve; compression lineages resolve to
  *    the live tip) — never inferred from a paginated, hidden-excluding
  *    session.list window, which misjudged real hidden pins as gone;
  *  - transient lookup failures keep the pin: try the stored id as-is, and
  *    only a rejected open enters recovery. */
+function isCanonicalBotChatHistory(history) {
+  const rootTitle = String(history?.root_title || '').trim()
+  const title = String(history?.title || '').trim()
+  return rootTitle === 'Bot Chat' || (!rootTitle && title === 'Bot Chat')
+}
+
 async function openBotCanonicalChat(name, pinned, history) {
   if (!pinned) {
-    // Grandfather: adopt the conversation the row already previews.
-    const adoptId = history?.id
+    // Grandfather only an actual Bot Chat. `last_session` is merely the most
+    // recent row for the profile; adopting it blindly can claim an unrelated
+    // user conversation and the hide sweep would then hide that conversation.
+    const adoptId = isCanonicalBotChatHistory(history) ? history.id : null
     if (adoptId && typeof host.openSession === 'function') {
       await openStoredBotChat(name, adoptId, history)
       saveBotMeta(name, { chat: adoptId })
@@ -3404,7 +3509,7 @@ async function openBotCanonicalChat(name, pinned, history) {
     return openStoredBotChat(name, pinned, history)
   }
 
-  if (preferred) {
+  if (preferred && isCanonicalBotChatHistory(preferred)) {
     try {
       await openStoredBotChat(name, preferred.resolved_id || preferred.id, preferred)
       return pinned
@@ -3417,9 +3522,19 @@ async function openBotCanonicalChat(name, pinned, history) {
     }
   }
 
+  if (preferred) {
+    // The stored pointer resolved to a real session, but not to Bot Mode's
+    // plumbing session. Treat it as corrupted metadata rather than opening or
+    // hiding the user's ordinary conversation.
+    await saveBotMeta(name, { chat: null })
+    return createCanonicalChat(name)
+  }
+
   // Definitively gone (db reset, or the lineage was rewritten past
   // recovery): re-anchor on the previewed session when there is one.
-  const recoveryId = history?.id
+  // A previewed row is safe to re-anchor only when it is Bot Mode plumbing.
+  // Otherwise a stale pin must not steal the profile's ordinary latest chat.
+  const recoveryId = isCanonicalBotChatHistory(history) ? history.id : null
   if (recoveryId && typeof host.openSession === 'function') {
     await openStoredBotChat(name, recoveryId, history)
     saveBotMeta(name, { chat: recoveryId })
@@ -3638,15 +3753,24 @@ function groupChatMemberBots(group, roster, metaByName) {
  *  source's row may become remote after a connection switch, so retaining it
  *  here is what keeps the same room intact across machines. */
 function durableGroupChatMembers(bots) {
-  return (bots || []).map(bot => ({
-    name: bot.name,
-    handle: bot.handle || bot.name,
-    connectionId: bot.connectionId,
-    connectionKind: bot.connectionKind,
-    connectionLabel: bot.connectionLabel,
-    remoteSource: true,
-    sourceScoped: true
-  }))
+  return (bots || []).map(bot => {
+    // Keep the friendly identity on the stored descriptor: after a
+    // connection switch the live roster row may be gone, and renamed-tag
+    // mentions must still resolve against the persisted member.
+    const title = String(botRosterMeta(bot, $botMeta.get())?.title || bot.ui_meta?.['nastech-bots']?.title || bot.title || '').trim()
+
+    return {
+      name: bot.name,
+      handle: bot.handle || bot.name,
+      ...(title ? { title } : {}),
+      ...(bot.display_name ? { display_name: bot.display_name } : {}),
+      connectionId: bot.connectionId,
+      connectionKind: bot.connectionKind,
+      connectionLabel: bot.connectionLabel,
+      remoteSource: true,
+      sourceScoped: true
+    }
+  })
 }
 
 /** Existing group names, alphabetical — feeds the Manage-groups dialog. */
@@ -3714,6 +3838,15 @@ function parseGroupChatMentions(text, members) {
         ? [title.toLowerCase(), title.toLowerCase().replace(/[\s_-]+/g, ''), title.split(/\s+/)[0].toLowerCase()]
         : [])
     ])
+
+    // Renamed members answer to their friendly names too (profile
+    // display_name and Bot Mode title), in slugged and collapsed forms —
+    // the same tags the roster autocomplete inserts.
+    for (const friendly of botFriendlyNames(member)) {
+      for (const form of mentionNameForms(friendly)) {
+        forms.add(form)
+      }
+    }
 
     for (const form of forms) {
       if (form) {
@@ -4788,17 +4921,33 @@ function botActivitySession(bot) {
   return (preferred.last_active || 0) >= (last.last_active || 0) ? preferred : last
 }
 
+/** Worker liveness window: kanban/tool workers heartbeat last_activity_at
+ *  at least every 60s while running (agent/session_activity.py), so a
+ *  worker whose stamp is older than this is finished or stalled. Wider
+ *  than ACTIVE_WINDOW_S to bridge one missed heartbeat. */
+const WORKER_ACTIVE_WINDOW_S = 150
+
+/** True while this bot's freshest kanban/tool worker looks alive. Workers
+ *  never surface in conversation lists, so without this a profile grinding
+ *  through a 30-minute kanban task reads idle ("3 hr ago") the whole time
+ *  (nastech-agent#90268). Older gateways omit worker_session — always false. */
+function workerActiveAt(bot, now = Date.now()) {
+  const ts = bot?.worker_session?.last_active || 0
+  return Boolean(ts && now / 1000 - ts < WORKER_ACTIVE_WINDOW_S)
+}
+
 /** Bots that are working right now: the profile the gateway is running a
- *  turn for (busy), plus any bot whose last message landed inside the
- *  liveness window. Pure — output follows the input roster's order, so
- *  presence never reorders or hides the normal list. */
+ *  turn for (busy), any bot whose last message landed inside the liveness
+ *  window, plus any bot with a live kanban/tool worker. Pure — output
+ *  follows the input roster's order, so presence never reorders or hides
+ *  the normal list. */
 function activeBots(roster, activeProfile, gatewayState, now = Date.now()) {
   return (roster || []).filter(bot => {
     const busyTurn = !bot.remoteSource && bot.name === activeProfile && gatewayState === 'busy'
     const last = botActivitySession(bot)?.last_active || 0
     const inWindow = Boolean(last && now / 1000 - last < ACTIVE_WINDOW_S)
 
-    return busyTurn || inWindow
+    return busyTurn || inWindow || workerActiveAt(bot, now)
   })
 }
 
@@ -4831,9 +4980,15 @@ function BotRow({ bot, onDelete, onEdit, onGroup }) {
   // last_session alone shows "6d ago" on a bot you just messaged.
   const previewSession = bot.preferred_session || last
   const activitySession = botActivitySession(bot)
-  const activeNow = Boolean(
-    activitySession?.last_active && Date.now() / 1000 - activitySession.last_active < ACTIVE_WINDOW_S
-  )
+  // A live kanban/tool worker counts as activity (#90268): pulse + fresh
+  // age while it runs, falling back to chat activity when it ends.
+  const workerActive = workerActiveAt(bot)
+  const activeNow =
+    workerActive ||
+    Boolean(activitySession?.last_active && Date.now() / 1000 - activitySession.last_active < ACTIVE_WINDOW_S)
+  const rowAgeTs = workerActive
+    ? Math.max(activitySession?.last_active || 0, bot.worker_session?.last_active || 0)
+    : activitySession?.last_active || 0
   // Work pose only when this bot is actually doing something: the active
   // profile while the gateway is busy, or a bot that wrote within the
   // liveness window. Not every bot whenever the gateway is busy.
@@ -5011,13 +5166,13 @@ function BotRow({ bot, onDelete, onEdit, onGroup }) {
               activeNow
                 ? jsx('span', {
                     className: 'nastech-bots-pulse size-1.5 shrink-0 rounded-full bg-(--ui-accent,#4f9cf9)',
-                    title: 'Active in the last 90s'
+                    title: workerActive ? 'Working on a task right now' : 'Active in the last 90s'
                   })
                 : null,
-              activitySession
+              rowAgeTs
                 ? jsx('span', {
                     className: 'shrink-0 text-[0.6875rem] text-(--ui-text-quaternary)',
-                    children: relativeTime(activitySession.last_active * 1000)
+                    children: relativeTime(rowAgeTs * 1000)
                   })
                 : null
             ]
@@ -7845,7 +8000,7 @@ async function openProfileSession(botName, session, gatewayGeneration) {
     typeof session?.message_count === 'number' && Number.isFinite(session.message_count)
   const expectHistory = hasAuthoritativeCount ? session.message_count > 0 : Boolean(session?.preview)
 
-  await host.openSession(id, { profile, awaitHydration: true, expectHistory, keepAllProfilesScope: false })
+  await host.openSession(id, { profile, awaitHydration: true, expectHistory, keepAllProfilesScope: true })
   if (gatewayGeneration !== $sessionsGatewayGeneration.get()) return
   $botSelectedSessions.set({ ...$botSelectedSessions.get(), [profile]: id })
 }
@@ -8577,14 +8732,26 @@ function GroupMentionInput({ members, onChange, value, ...inputProps }) {
 
     for (const member of members) {
       const handle = String(member.handle || botHandle(member.name, member) || '').trim()
+      const display = displayName(member, botRosterMeta(member, allMeta))
+      // Renamed members complete on their friendly tag; parser resolves both.
+      const tag = String(botMentionTag(member) || handle).trim()
 
-      if (!handle || (token.query && !handle.toLowerCase().startsWith(token.query))) {
+      if (!tag) {
+        continue
+      }
+
+      if (
+        token.query &&
+        !tag.toLowerCase().startsWith(token.query) &&
+        !(handle && handle.toLowerCase().startsWith(token.query)) &&
+        !display.toLowerCase().startsWith(token.query)
+      ) {
         continue
       }
 
       options.push({
-        handle,
-        meta: displayName(member, botRosterMeta(member, allMeta))
+        handle: tag,
+        meta: display
       })
     }
   }
@@ -9367,6 +9534,16 @@ function GroupChatWorkspace({ group, members, onBack }) {
  *  disband (or the room view's own Back) can retire the tab it opened. */
 const groupChatMainTabs = new Map()
 
+/** The in-panel room is the FALLBACK surface, not a second copy: it renders
+ *  only while no main-window tab owns the group. On desktops with the door
+ *  the room already lives in a main tab, and painting it here too produced
+ *  two live panes with independent drafts driving one shared engine (#89788).
+ *  The selection atom stays set either way so the roster row still
+ *  highlights. */
+function shouldRenderGroupChatInPane(group) {
+  return Boolean(group && !groupChatMainTabs.has(group))
+}
+
 function closeGroupChatMainTab(group) {
   const close = groupChatMainTabs.get(group)
 
@@ -9656,7 +9833,7 @@ function BotsPane() {
 
   const groupChatMembers = groupChatName ? groupChatMemberBots(groupChatName, roster, allMeta) : []
 
-  if (groupChatName && groupChatMembers.length) {
+  if (shouldRenderGroupChatInPane(groupChatName) && groupChatMembers.length) {
     return jsx(GroupChatWorkspace, { group: groupChatName, members: groupChatMembers })
   }
 
@@ -10018,17 +10195,25 @@ export default {
             }
 
             const handle = botHandle(profile.name, profile)
+            const display = displayName(profile, $botMeta.get()[profile.name])
+            // Renamed bots complete on their friendly name — the tag is the
+            // renamed slug when one exists, the profile handle otherwise.
+            const tag = botMentionTag(profile)
 
-            if (q && !handle.toLowerCase().startsWith(q)) {
+            if (
+              q &&
+              !tag.toLowerCase().startsWith(q) &&
+              !handle.toLowerCase().startsWith(q) &&
+              !display.toLowerCase().startsWith(q)
+            ) {
               continue
             }
 
-            const display = displayName(profile, $botMeta.get()[profile.name])
             const source = profile.connectionLabel ? ` · ${profile.connectionLabel}` : ''
 
             items.push({
-              insert: `@${handle}`,
-              display: `@${handle}`,
+              insert: `@${tag}`,
+              display: `@${tag}`,
               meta: `Bot · ${display}${source}`
             })
           }
@@ -10306,30 +10491,14 @@ export default {
           let mentionedBots = roster ? resolveRosterMentions(text, roster, live) : []
 
           if (!roster) {
-            let names = []
             try {
               const res = await host.request('profiles.list', { include_sessions: false })
-              names = (res?.profiles ?? []).map(p => p.name)
+              // Same resolver as the cached path — renamed bots (display_name
+              // / ui_meta title) stay taggable when the roster cache is cold.
+              mentionedBots = resolveRosterMentions(text, res?.profiles ?? [], live).map(bot => ({ ...bot, remoteSource: false }))
             } catch {
               return draft
             }
-
-            const prose = text.replace(/```[\s\S]*?```/g, ' ').replace(/`[^`\n]*`/g, ' ')
-            const mentioned = []
-
-            for (const match of prose.matchAll(/(^|\s)@([a-z0-9][a-z0-9_-]*)/gi)) {
-              let name = match[2].toLowerCase()
-
-              if (name === 'nastech' && !names.includes('nastech') && names.includes('default')) {
-                name = 'default'
-              }
-
-              if (names.includes(name) && name !== live.name && !mentioned.includes(name)) {
-                mentioned.push(name)
-              }
-            }
-
-            mentionedBots = mentioned.map(name => ({ name }))
           }
 
           if (!mentionedBots.length) {

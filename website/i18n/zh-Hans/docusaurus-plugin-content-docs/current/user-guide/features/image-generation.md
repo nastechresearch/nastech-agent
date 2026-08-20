@@ -59,9 +59,11 @@ nastech tools
 
 ```yaml
 image_gen:
+  provider: fal                 # 选 Nastech Subscription 时为 `nastech`
   model: fal-ai/flux-2/klein/9b
-  use_gateway: false            # 使用 Nastech Subscription 时为 true
 ```
+
+`image_gen.provider` 是唯一的选择键：`nastech` 走托管网关，厂商名（如 `fal`）走直连。运行时始终按该选择路由——`provider: nastech` 时 `.env` 里的 `FAL_KEY` 会被忽略；`provider: fal` 而缺少 `FAL_KEY` 会直接报错并提示运行 `nastech tools`，不会静默回退。（旧的 `use_gateway` 键已废弃，读取时 `true` 等同于 `nastech`。）
 
 ### GPT-Image 画质档位
 

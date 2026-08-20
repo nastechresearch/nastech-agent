@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router'
 import { codiconIcon } from '@/components/ui/codicon'
 import { KbdCombo } from '@/components/ui/kbd'
 import { Tip } from '@/components/ui/tooltip'
+import { getNastechConfigDefaults, getNastechConfigRecord, saveNastechConfig } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import {
@@ -27,8 +28,8 @@ import {
 import { isEditableTarget } from '@/lib/keybinds/combo'
 import { typeToFocusChar } from '@/lib/keybinds/composer-focus-keys'
 import { cn } from '@/lib/utils'
-import { getNastechConfigDefaults, getNastechConfigRecord, saveNastechConfig } from '@/nastech'
 import { $commandPaletteOpen, openCommandPalettePage } from '@/store/command-palette'
+import { confirm } from '@/store/confirm'
 import { bindingsFor } from '@/store/keybinds'
 import { notifyError } from '@/store/notifications'
 
@@ -147,7 +148,13 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
   }
 
   const resetConfig = async () => {
-    if (!window.confirm(t.settings.resetConfirm)) {
+    const ok = await confirm({
+      confirmLabel: t.settings.resetToDefaults,
+      destructive: true,
+      title: t.settings.resetConfirm
+    })
+
+    if (!ok) {
       return
     }
 

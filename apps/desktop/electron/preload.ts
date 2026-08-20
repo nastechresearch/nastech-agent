@@ -75,7 +75,10 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     setIgnoreMouse: ignore => ipcRenderer.send('nastech:hud:ignore-mouse', ignore),
     moveBy: delta => ipcRenderer.send('nastech:hud:move-by', delta),
     setBounds: bounds => ipcRenderer.send('nastech:hud:set-bounds', bounds),
-    setVibrancy: on => ipcRenderer.invoke('nastech:hud:vibrancy', on),
+    // Whether the band covers the window below the bar. Main pairs it with the
+    // user's translucency setting to decide the native frost (macOS vibrancy /
+    // Windows 11 DWM backdrop) — see hudFrostFor.
+    setFrost: showing => ipcRenderer.invoke('nastech:hud:frost', showing),
     // The HUD tells main which session it is on; main hands that back to the
     // app window when the HUD closes, so the app can re-home onto it.
     setSession: sessionId => ipcRenderer.send('nastech:hud:session', sessionId),
@@ -152,7 +155,8 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     setLastUsed: id => ipcRenderer.invoke('nastech:connections:set-last-used', id),
     test: id => ipcRenderer.invoke('nastech:connections:test', id),
     // Fan out `nastech update` to every eligible registered connection.
-    updateAll: () => ipcRenderer.invoke('nastech:connections:update-all'),
+    // Optional excludeIds skips rows the caller updates through another path.
+    updateAll: options => ipcRenderer.invoke('nastech:connections:update-all', options),
     // Registry lifecycle push (main → renderer): a connection was removed or
     // materially edited, so secondaries scoped to it must be disposed (and,
     // for edits, re-dialed at the new target).
