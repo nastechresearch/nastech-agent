@@ -41,6 +41,7 @@ You need at least one way to connect to an LLM. Use `nastech model` to switch pr
 | **OpenCode Zen** | `OPENCODE_ZEN_API_KEY` in `~/.nastech/.env` (provider: `opencode-zen`) |
 | **CommandCode** | `COMMANDCODE_API_KEY` in `~/.nastech/.env` (provider: `commandcode`, alias: `commandcode-chat`; Claude models via `commandcode-anthropic`, alias: `commandcode-claude`). Works with GOAT/Pro/Max/Provider plans (not the $1 Go plan — no API access). |
 | **OpenCode Go** | `OPENCODE_GO_API_KEY` in `~/.nastech/.env` (provider: `opencode-go`) |
+| **OpenCode Free** | Keyless — no API key or account needed (provider: `opencode-free`, aliases: `free`, `opencode_free`). Select via `nastech model` or `/model free`; requests are sent anonymously |
 | **DeepSeek** | `DEEPSEEK_API_KEY` in `~/.nastech/.env` (provider: `deepseek`) |
 | **Hugging Face** | `HF_TOKEN` in `~/.nastech/.env` (provider: `huggingface`, aliases: `hf`) |
 | **Google / Gemini** | `GOOGLE_API_KEY` (or `GEMINI_API_KEY`) in `~/.nastech/.env` (provider: `gemini`) |
