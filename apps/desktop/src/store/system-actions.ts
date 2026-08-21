@@ -1,7 +1,7 @@
 import { atom } from 'nanostores'
 
-import { getActionStatus, restartGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
+import { getActionStatus, restartGateway } from '@/nastech'
 import { notifyError } from '@/store/notifications'
 import type { ActionResponse } from '@/types/nastech'
 
