@@ -20,6 +20,7 @@ describe('billingDialogCopy', () => {
     const copy = billingDialogCopy(
       makeBlock({ is_nastech: true, provider: 'nastech', provider_label: 'Nastech Portal' })
     )
+
     expect(copy.title).toContain('Nastech')
     expect(copy.confirmLabel).toBe('Top up')
     expect(copy.cancelLabel).toBe('Dismiss')
