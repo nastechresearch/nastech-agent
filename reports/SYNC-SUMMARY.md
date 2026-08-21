@@ -6,85 +6,84 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 103 commits affecting 1287 files.
-- **Source revision:** `40643cbaf9b7`.
-- **Previous source revision:** `f43eabee5f36`.
+- **Changes incorporated:** 55 commits affecting 1291 files.
+- **Source revision:** `fcbd1076a938`.
+- **Previous source revision:** `40643cbaf9b7`.
 
 ## Technical coverage
 
-- **.dockerignore/:** 1 changed files.
-- **.github/:** 5 changed files.
-- **agent/:** 7 changed files.
-- **apps/:** 80 changed files.
-- **cli.py/:** 1 changed files.
-- **contributors/:** 6 changed files.
+- **.env.example/:** 2 changed files.
+- **agent/:** 20 changed files.
+- **apps/:** 58 changed files.
+- **contributors/:** 3 changed files.
 - **cron/:** 2 changed files.
-- **docker/:** 3 changed files.
-- **gateway/:** 18 changed files.
-- **nastech_cli/:** 24 changed files.
-- **package-lock.json/:** 1 changed files.
-- **plugins/:** 3 changed files.
-- **scripts/:** 4 changed files.
-- **skills/:** 1 changed files.
-- **tests/:** 48 changed files.
-- **tools/:** 10 changed files.
-- **tui_gateway/:** 2 changed files.
-- **web/:** 3 changed files.
-- **website/:** 10 changed files.
+- **nastech_cli/:** 34 changed files.
+- **plugins/:** 9 changed files.
+- **pyproject.toml/:** 1 changed files.
+- **run_agent.py/:** 2 changed files.
+- **scripts/:** 1 changed files.
+- **tests/:** 62 changed files.
+- **tui_gateway/:** 3 changed files.
+- **uv.lock/:** 1 changed files.
+- **website/:** 11 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(update): structured update receipts + post-update fleet version verification
-- feat(bot-mode): durable room identity + full gateway fan-out for group-room sync
-- feat(cron): per-job reasoning_effort override in job definitions
-- feat(desktop,web): enable the React Compiler in both renderer builds
-- feat(opencode): sync Zen/Go catalogs — Ox Alpha stealth model, Grok routing, new free tier
-- feat(gateway): GATEWAY_RELAY_ALLOW_DIRECT_PLATFORMS opt-out for relay-exclusive mode
-- feat(desktop): a connector consent card that knows nothing about connectors
-- feat(desktop): resolve a site's own favicon in the main process
-- feat(desktop): let plugins switch the theme, and document the theme surface (#91018)
-- feat(desktop): let plugins switch the theme from outside React
+- feat: keyless providers count as authenticated everywhere — opencode-free appears in /model and desktop pickers with zero setup
+- feat(update): nastech update --plan — read-only fleet inventory + plan phase in every update
+- feat(cron): cron agents now run with memory enabled like every other agent
+- feat: keyless flag on the provider catalog — GUI contract tests exempt anonymous providers
+- feat: opencode-free is fully keyless — no env var, no account, anonymous wire
+- feat(providers): add OpenCode Free provider with keyed auth and opencode User-Agent
+- feat: stealth/ox-alpha free model in the OpenRouter catalog
 
 ### Reliability and fixes
 
-- fix(gateway): scope draft-final finalize skip to fresh persistent sends
-- fix(telegram): preserve rich finals after DM drafts
-- fix(docker): stage2 API_SERVER_KEY bootstrap no longer depends on .env existing (OOF-285) (#88926)
-- fix(update): resolve code identity by reading .git directly — no subprocess
-- fix(bot-mode): stabilize sync entry identity across gateway round-trips
-- fix(gateway): serialize shared bot room updates
-- fix(desktop): hydrate shared bot room previews
-- fix(desktop): sync bot room previews through profiles
-- fix(cli): read multiplex topology from the default root in enroll warning
-- fix(cli): warn when gateway enroll writes relay URLs to a secondary multiplex profile
-- fix(gateway): classify relay routing stamps as process-global deployment config
-- fix(runtime): per-model api_mode + /v1 healing for custom OpenCode-family providers
-- 44 additional reliability and fixes updates are included in this verified snapshot.
+- fix(native_compaction): preserve compression summary messages during pre-checkpoint pruning
+- fix: catalog drift sync — dead free slugs out, live OpenRouter free models in, ox-alpha-free on Go
+- fix(bot-mode): durableGroupChatRooms drops tombstones and roomId on the remote-merge persist path
+- fix(desktop): order-independent selection guard, layer-hint scoping, honest compositor receipt
+- fix: lazy session-states import is best-effort under partial module mocks
+- fix: break session-states import cycle via lazy import in reconnectSecondary
+- fix(desktop): stale running arcs clear on gateway reconnect (#53902, #73082)
+- fix: delist UA-gated free models from opencode-free — big-pickle and mimo-v2.5-free 429 every non-opencode client
+- fix(update): restart all macOS launchd gateways on nastech update
+- fix(update): every begun update receipt is now persisted — command-boundary finalization
+- fix: foreground priority for background review cancel timeout
+- fix(agent): synchronize background review cancellation
+- 14 additional reliability and fixes updates are included in this verified snapshot.
+
+### Performance
+
+- perf(desktop): harden the spinner strip and tighten status invalidation
+- perf(desktop): composite-clean spinner strip, selection guard, swap-overlay ticker
+- perf(desktop): compositor-only glyph spinner (no per-tick DOM mutation)
+- perf(desktop): move settled-preview derivation off the message root
+- perf(desktop): finish scoping streaming-status invalidation (data-streaming leaf, root isRunning)
+- perf(desktop): scope streaming-status invalidation below message root
+- perf(desktop): idle renderers stop burning CPU on infinite CSS animations (#53902, #73082)
 
 ### Documentation
 
-- docs(telegram): rich_drafts controls draft rendering, not the draft transport
-- docs(bot-mode): group rooms sync across Desktops and gateways
-- docs: document the desktop plugin SDK theme surface
-- docs: add guide for managing Nastech Cloud via the Portal MCP server
+- docs: opencode-free in provider choice lists (cli-commands, aux providers, fallback table)
 
 ### Improvements
 
-- test(bot-mode): drop unused stub param flagged by eslint
-- Merge pull request #69829 from Nastechresearch/docs/nastech-cloud-mcp
-- Merge pull request #91237 from Nastechresearch/fix/relay-env-exclusive-messaging
-- test(gateway): pin config/registration relay-URL agreement under multiplex scope
-- chore: map contributor email for Lesnak1
-- test(update): Windows progress self-test survives transient /progress socket stalls
-- refactor(cron): keep reasoning_effort off the model-facing cronjob tool schema
-- test(cron): scrub tracker references from reasoning-effort test docstring
-- test(relay): expiry-notice assertion yields for the fire-and-forget ack task
-- fmt(js): `npm run fix` on merge (#91256)
-- test(gateway): cover profile-scoped relay stamps, log levels, marker cleanup
-- chore: map contributor email for @zhongwater123
-- 21 additional improvements updates are included in this verified snapshot.
+- chore: release v0.20.5 (2026.8.19)
+- test(desktop): exercise the spinner CSS and the invalidation scope for real
+- Merge pull request #91401 from kshitijk4poor/refactor/dedupe-telegram-mock
+- refactor: remove 27 duplicate _ensure_telegram_mock() copies from gateway tests
+- chore: map contributor email for paultaki
+- test(gateway): re-pin _get_service_pids tests to the label-derived locate + prefix-scan union
+- refactor: use request_hard_interrupt for review cancellation
+- chore: add qixuancao to AUTHOR_MAP
+- refactor(agent): simplify background review run state
+- chore: map contributor email for vinsew
+- test(prompt_caching): home empty-tools fallback test in TestPromptCachePlan
+- refactor(prompt_caching): shallow strip copy, exact-count guards, dedupe idempotency tests
+- 2 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

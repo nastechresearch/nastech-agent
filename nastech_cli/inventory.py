@@ -691,9 +691,25 @@ def _filter_explicit_provider_rows(rows: list[dict], ctx: ConfigContext) -> list
             if _raw_config_has_enabled_moa_preset():
                 kept.append(row)
             continue
+        if _provider_is_keyless(slug):
+            # Keyless providers (opencode-free) require no configuration at
+            # all — there is nothing to "explicitly configure", and hiding
+            # them would defeat their purpose (zero-setup discoverability).
+            kept.append(row)
+            continue
         if is_provider_explicitly_configured(slug):
             kept.append(row)
     return kept
+
+
+def _provider_is_keyless(slug: str) -> bool:
+    """True when the provider's Nastech overlay declares it keyless."""
+    try:
+        from nastech_cli.providers import NASTECH_OVERLAYS
+        overlay = NASTECH_OVERLAYS.get(slug)
+        return bool(overlay is not None and getattr(overlay, "keyless", False))
+    except Exception:
+        return False
 
 
 def _raw_config_has_enabled_moa_preset() -> bool:

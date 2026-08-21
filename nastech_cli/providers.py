@@ -41,6 +41,7 @@ class NastechOverlay:
     extra_env_vars: Tuple[str, ...] = ()  # env vars models.dev doesn't list
     base_url_override: str = ""           # override if models.dev URL is wrong/missing
     base_url_env_var: str = ""            # env var for user-custom base URL
+    keyless: bool = False                 # served anonymously — no credential exists to configure
 
 
 NASTECH_OVERLAYS: Dict[str, NastechOverlay] = {
@@ -155,6 +156,12 @@ NASTECH_OVERLAYS: Dict[str, NastechOverlay] = {
         transport="openai_chat",
         is_aggregator=True,
         base_url_env_var="OPENCODE_GO_BASE_URL",
+    ),
+    "opencode-free": NastechOverlay(
+        transport="openai_chat",
+        is_aggregator=True,
+        base_url_override="https://opencode.ai/zen/v1",
+        keyless=True,
     ),
     "kilo": NastechOverlay(
         transport="openai_chat",
@@ -332,6 +339,10 @@ ALIASES: Dict[str, str] = {
     "go": "opencode-go",
     "opencode-go-sub": "opencode-go",
 
+    # opencode-free
+    "free": "opencode-free",
+    "opencode_free": "opencode-free",
+
     # kilo (models.dev ID for KiloCode)
     "kilocode": "kilo",
     "kilo-code": "kilo",
@@ -427,6 +438,7 @@ _LABEL_OVERRIDES: Dict[str, str] = {
     "vertex": "Google Vertex AI",
     "ollama-cloud": "Ollama Cloud",
     "xai-oauth": "xAI Grok OAuth (SuperGrok / Premium+)",
+    "opencode-free": "OpenCode Free",
 }
 
 
