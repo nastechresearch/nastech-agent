@@ -11,6 +11,7 @@ import { formatMessageTimestamp } from '@/components/assistant-ui/thread/timesta
 import { Button } from '@/components/ui/button'
 import { Codicon } from '@/components/ui/codicon'
 import { OverflowTip, Tip } from '@/components/ui/tooltip'
+import type { SessionInfo } from '@/nastech'
 import { type Translations, useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
 import { pathLeaf } from '@/lib/display-path'
@@ -23,7 +24,6 @@ import { handoffOriginSource, sessionSourceLabel } from '@/lib/session-source'
 import { coarseElapsed } from '@/lib/time'
 import { useStoreSelector } from '@/lib/use-session-slice'
 import { cn } from '@/lib/utils'
-import type { SessionInfo } from '@/nastech'
 import { $sidebarRowMeta } from '@/store/layout'
 import { normalizeProfileKey } from '@/store/profile'
 import { $projects } from '@/store/projects'
@@ -405,9 +405,13 @@ function SidebarSessionRowImpl({
         <SidebarRowBody
           // Every trailing figure lives in the actions slot, which the row
           // measures — so the title needs a gap from it and nothing else. Hover
-          // changes what you can see in that slot, never how wide it is.
+          // changes what you can see in that slot, never how wide it is. The
+          // card has no such column to clear (its cluster is INSIDE the body,
+          // ending at the shell's own trailing inset), and keeping the gap
+          // would pull the header in past every line below it.
           className={cn(
-            'z-0 pr-2',
+            'z-0',
+            card && 'pr-0',
             branchStem && 'pl-3.5',
             // The card is a grid with ONE spacing knob: --card-gap. Every row
             // gap is gap-y-(--card-gap); the title/preview group opts out

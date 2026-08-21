@@ -40,6 +40,10 @@ ui-tui/packages/nastech-ink/dist/
 # Environment files
 .env
 .env.*
+# ...but keep the template: docker/stage2-hook.sh seeds $NASTECH_HOME/.env from
+# /opt/nastech/.env.example on first boot (OOF-285 — excluding it silently broke
+# first-boot .env seeding and the API_SERVER_KEY generation that depends on it).
+!.env.example
 
 # IDE
 .vscode/
@@ -98,7 +102,6 @@ plans/
 .plans/
 
 # Repo-level dotfiles that are git-only or dev-tooling config
-.env.example
 .envrc
 .gitattributes
 .hadolint.yaml
