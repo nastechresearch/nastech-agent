@@ -723,6 +723,7 @@ const sidebars: SidebarsConfig = {
         'guides/team-telegram-assistant',
         'guides/python-library',
         'guides/use-mcp-with-nastech',
+        'guides/manage-nastech-cloud-with-mcp',
         'guides/use-soul-with-nastech',
         'guides/use-voice-mode-with-nastech',
         'guides/automate-with-cron',

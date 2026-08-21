@@ -8,19 +8,27 @@ const pluginSource = readFileSync(new URL('../plugin.js', import.meta.url), 'utf
 /** Load the plugin in a vm with a scripted cli.exec so member turns are
  *  deterministic. `turnScript(profile, prompt)` returns the member's reply
  *  text (or throws to simulate a failed turn). */
-function load(turnScript, { busyUntilResumeCall, clarifyUntilResumeCall, approvalUntilResumeCall } = {}) {
+function load(turnScript, { busyUntilResumeCall, clarifyUntilResumeCall, approvalUntilResumeCall, conflictOnce = false, deferredTimers = false } = {}) {
   const values = new Map()
   const atom = initial => {
-    const slot = { get: () => values.get(slot), set: value => values.set(slot, value) }
+    const slot = { get: () => values.get(slot), set: value => {
+      if (process.env.TRACE_ATOM && value && typeof value === 'object' && value.Grind) {
+        console.error('ATOM SET Grind stranded=', JSON.stringify(value.Grind.stranded), new Error().stack.split('\n').slice(2,5).join(' | '))
+      }
+      values.set(slot, value)
+    } }
     values.set(slot, initial)
     return slot
   }
   const calls = []
   const clarifyResponds = []
   const approvalResponds = []
+  const requests = []
   const sessions = new Map()
   const runtimeToStored = new Map()
   const titleToStored = new Map()
+  const sharedUiMeta = {}
+  const uiMetaRevisions = {}
   let sessionSequence = 0
   // busyUntilResumeCall[profile] = N: this profile's session.resume reports
   // inflight/running for its first N calls, then flips to done — simulating
@@ -28,6 +36,7 @@ function load(turnScript, { busyUntilResumeCall, clarifyUntilResumeCall, approva
   // unbounded real-time wait if a caller polls it (used to exercise the
   // stranded/busy-responder guard).
   const resumeCallCounts = new Map()
+  let injectedConflict = false
 
   const resolveSession = (profile, target) => {
     const stored = runtimeToStored.get(target) || (sessions.has(target) ? target : titleToStored.get(`${profile}::${target}`))
@@ -36,6 +45,10 @@ function load(turnScript, { busyUntilResumeCall, clarifyUntilResumeCall, approva
   const context = {
     atom,
     setTimeout: fn => {
+      if (deferredTimers) {
+        setImmediate(fn)
+        return 1
+      }
       fn()
       return 0
     },
@@ -45,6 +58,65 @@ function load(turnScript, { busyUntilResumeCall, clarifyUntilResumeCall, approva
     document: { getElementById: () => null, createElement: () => ({}), head: { appendChild: () => undefined } },
     host: {
       request: async (method, params) => {
+        requests.push({ method, params })
+        if (method === 'profiles.list') {
+          return {
+            profiles: [
+              {
+                name: 'default',
+                ui_meta: { ...sharedUiMeta },
+                ui_meta_revisions: { ...uiMetaRevisions }
+              }
+            ]
+          }
+        }
+        if (method === 'profiles.configure') {
+          if (conflictOnce && !injectedConflict) {
+            injectedConflict = true
+            sharedUiMeta['nastech-bots-groups'] = {
+              version: 2,
+              rooms: {
+                Shared: {
+                  revision: 1,
+                  log: [{ id: 'writer-a:1', from: { kind: 'user', name: 'You' }, text: 'alpha', at: 1 }],
+                  members: [{ name: 'alpha' }]
+                }
+              }
+            }
+            uiMetaRevisions['nastech-bots-groups'] = 1
+            return {
+              applied: {
+                ui_meta: false,
+                ui_meta_conflicts: { 'nastech-bots-groups': { expected: 0, actual: 1 } },
+                ui_meta_revisions: { 'nastech-bots-groups': 1 }
+              }
+            }
+          }
+          const expected = params.ui_meta_expected_revisions || null
+          if (expected) {
+            for (const key of Object.keys(params.ui_meta || {})) {
+              if ((uiMetaRevisions[key] || 0) !== expected[key]) {
+                return {
+                  applied: {
+                    ui_meta: false,
+                    ui_meta_conflicts: {
+                      [key]: { expected: expected[key], actual: uiMetaRevisions[key] || 0 }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          for (const [key, value] of Object.entries(params.ui_meta || {})) {
+            if (value === null) {
+              delete sharedUiMeta[key]
+            } else {
+              sharedUiMeta[key] = value
+            }
+            uiMetaRevisions[key] = (uiMetaRevisions[key] || 0) + 1
+          }
+          return { applied: { ui_meta: true, ui_meta_revisions: { ...uiMetaRevisions } } }
+        }
         if (method === 'session.create') {
           sessionSequence += 1
           const stored = `sid-${params.profile}-${sessionSequence}`
@@ -124,7 +196,7 @@ function load(turnScript, { busyUntilResumeCall, clarifyUntilResumeCall, approva
     .replace(/^import .* from 'react\/jsx-runtime'\r?\n/m, '')
     .replace('export default {', 'globalThis.plugin = {')
     .concat(
-      '\nglobalThis.__gc = { sendToGroupChat, runGroupChatRounds, harvestStrandedGroupReply, resolveGroupResponders, parseGroupChatMentions, rotateGroupSpeakers, isGroupPassText, formatGroupChatLine, buildGroupChatTurnPrompt, trimGroupChatLog, disbandGroupChat, updateGroupChat, openGroupChat, closeGroupChatMainTab, shouldRenderGroupChatInPane, syncGroupClarify, clearGroupClarify, answerGroupClarify, $groupClarify, $groupChats, $groupNeedsYou, $groupChatWorkspace, $groupMainTabsRev, $botMeta, GROUP_CHAT_MAX_ROUNDS, GROUP_CHAT_MAX_MESSAGES };\n'
+      '\nglobalThis.__gc = { sendToGroupChat, runGroupChatRounds, harvestStrandedGroupReply, resolveGroupResponders, parseGroupChatMentions, rotateGroupSpeakers, isGroupPassText, formatGroupChatLine, buildGroupChatTurnPrompt, trimGroupChatLog, groupChatSyncSnapshot, groupChatGatewayJsonSize, mergeGroupChatSyncSnapshots, mergeRemoteGroupChatSnapshotIntoRooms, scheduleGroupChatServerSync, disbandGroupChat, renameGroupChat, updateGroupChat, ensureGroupChatSession, uniqueGroupChatName, liveGroupChatNames, openGroupChat, closeGroupChatMainTab, shouldRenderGroupChatInPane, syncGroupClarify, clearGroupClarify, answerGroupClarify, $groupClarify, $groupChats, $groupNeedsYou, $groupChatWorkspace, $groupMainTabsRev, $botMeta, GROUP_CHAT_MAX_ROUNDS, GROUP_CHAT_MAX_MESSAGES };\n'
     )
   vm.runInNewContext(source, context, { filename: 'plugin.js' })
   const storageWrites = new Map()
@@ -132,7 +204,7 @@ function load(turnScript, { busyUntilResumeCall, clarifyUntilResumeCall, approva
     storage: { get: () => null, set: (key, value) => storageWrites.set(key, value) },
     register: () => undefined
   })
-  return { ...context.__gc, approvalResponds, calls, clarifyResponds, host: context.host, sessions, storageWrites }
+  return { ...context.__gc, approvalResponds, calls, clarifyResponds, host: context.host, requests, sessions, storageWrites, sharedUiMeta, uiMetaRevisions }
 }
 
 const MEMBERS = [{ name: 'research', title: '' }, { name: 'builder', title: '' }, { name: 'ops', title: 'The Ops' }]
@@ -324,6 +396,88 @@ test('concurrent groups sharing one member keep sessions, deltas, and context is
   assert.equal(betaSession.messages.some(message => String(message.content).includes('ALPHA_ONLY')), false)
 })
 
+test('recreating a same-name group after disband mints fresh member sessions', async () => {
+  const gc = load(() => '(pass)')
+  const member = { name: 'research', title: '' }
+
+  // First incarnation of the room.
+  gc.updateGroupChat('Alpha', r => {
+    r.roomId = 'r-one'
+    return r
+  })
+  const first = await gc.ensureGroupChatSession('Alpha', member)
+
+  // Disband: the room record is gone; the member's gateway session survives.
+  const rooms = { ...gc.$groupChats.get() }
+  delete rooms.Alpha
+  gc.$groupChats.set(rooms)
+
+  // Recreate under the same display name with a freshly minted roomId.
+  gc.updateGroupChat('Alpha', r => {
+    r.roomId = 'r-two'
+    return r
+  })
+  const second = await gc.ensureGroupChatSession('Alpha', member)
+
+  assert.notEqual(first.stored, second.stored, 'the recreated room must not resume the old member session')
+  assert.equal(gc.sessions.get(first.stored).title, 'Group: r-one')
+  assert.equal(gc.sessions.get(second.stored).title, 'Group: r-two')
+})
+
+test('group session titles are pinned to the roomId, with a legacy fallback to the display name', async () => {
+  const gc = load(() => '(pass)')
+
+  // Rooms persisted before roomIds keep name-based titles so their existing
+  // "Group: <name>" sessions keep resolving after an upgrade.
+  gc.updateGroupChat('Legacy', r => r)
+  const legacy = await gc.ensureGroupChatSession('Legacy', { name: 'research', title: '' })
+  assert.equal(gc.sessions.get(legacy.stored).title, 'Group: Legacy')
+
+  // New rooms pin the title to the immutable roomId, never the display name.
+  gc.updateGroupChat('New', r => {
+    r.roomId = 'r-abc'
+    return r
+  })
+  const fresh = await gc.ensureGroupChatSession('New', { name: 'research', title: '' })
+  assert.equal(gc.sessions.get(fresh.stored).title, 'Group: r-abc')
+})
+
+test('same-name group dedup reserves suffix length at the 64-char cap', () => {
+  const gc = load(() => '(pass)')
+
+  assert.equal(gc.uniqueGroupChatName('Team', new Set(['Other'])), 'Team')
+
+  // Slicing the joined string would chop the " 2"/" 3" suffix off a
+  // max-length base and collide with the original forever.
+  const base = 'x'.repeat(64)
+  const taken = new Set([base, `${base.slice(0, 62)} 2`])
+
+  const next = gc.uniqueGroupChatName(base, taken)
+
+  assert.notEqual(next, base)
+  assert.equal(next.length, 64)
+  assert.equal(next, `${base.slice(0, 62)} 3`)
+})
+
+test('roomId persists with the room record and survives disband of other rooms', async () => {
+  const gc = load(() => '(pass)')
+
+  gc.updateGroupChat('Keep', r => {
+    r.roomId = 'r-keep'
+    return r
+  })
+  gc.updateGroupChat('Gone', r => {
+    r.roomId = 'r-gone'
+    return r
+  })
+
+  await gc.disbandGroupChat('Gone', [{ name: 'builder' }])
+
+  const durable = gc.storageWrites.get('group-chats')
+  assert.equal(durable.Keep.roomId, 'r-keep', 'roomId survives disband of another room')
+  assert.ok(!('Gone' in durable), 'disbanded room not persisted')
+})
+
 test('needs-you: a member reply mentioning @user badges the group; user send clears it', async () => {
   const gc = load(profile => (profile === 'research' ? 'Blocked on billing access — @user which account?' : '(pass)'))
 
@@ -352,7 +506,7 @@ test('turn transport is gateway-native (session RPCs) and hostile text rides ver
   assert.equal(call.prompt.includes('hello "there" `whoami` $(id)'), true)
   // The per-group session is created with the room title.
   assert.match(pluginSource, /title,\n/)
-  assert.match(pluginSource, /const title = `Group: \$\{group\}`/)
+  assert.match(pluginSource, /const title = `Group: \$\{room\.roomId \|\| group\}`/)
 })
 
 test('log trimming keeps watermarks consistent', () => {
@@ -362,6 +516,534 @@ test('log trimming keeps watermarks consistent', () => {
   assert.equal(trimmed.length, 96)
   assert.equal(watermarks.research, 150 - 104)
   assert.equal(watermarks.builder, 0)
+})
+
+test('group room messages and members mirror through bounded gateway profile metadata', async () => {
+  const gc = load(() => '(pass)')
+  const members = [
+    { name: 'research', handle: 'research' },
+    { name: 'builder', handle: 'builder' }
+  ]
+  gc.sendToGroupChat('Research', members, 'What changed?')
+  for (let i = 0; i < 200 && (gc.$groupChats.get().Research || {}).running; i++) {
+    await new Promise(resolve => setImmediate(resolve))
+  }
+
+  const configure = gc.requests.filter(call => call.method === 'profiles.configure').at(-1)
+  assert.ok(configure, 'room updates are mirrored to the gateway')
+  assert.equal(configure.params.name, 'default')
+  const envelope = configure.params.ui_meta['nastech-bots-groups']
+  assert.equal(envelope.version, 3)
+  const researchKey = Object.keys(envelope.rooms).find(key => envelope.rooms[key].name === 'Research')
+  assert.ok(researchKey, 'Research room present under its durable key')
+  assert.equal(envelope.rooms[researchKey].log[0].text, 'What changed?')
+  assert.equal(JSON.stringify(envelope.rooms[researchKey].members.map(member => member.name)), JSON.stringify(['research', 'builder']))
+  assert.ok(gc.groupChatGatewayJsonSize(envelope) <= 48000)
+})
+
+test('group gateway mirror is size bounded and favors recent messages', () => {
+  const gc = load(() => '(pass)')
+  const long = 'x'.repeat(5000)
+  const snapshot = gc.groupChatSyncSnapshot({
+    Large: {
+      log: Array.from({ length: 100 }, (_, index) => ({
+        from: { kind: index % 2 ? 'member' : 'user', name: index % 2 ? 'research' : 'You' },
+        text: `${index}:${long}`,
+        at: index
+      }))
+    }
+  })
+
+  assert.ok(gc.groupChatGatewayJsonSize(snapshot) <= 48000)
+  assert.ok(snapshot.rooms['name:Large'].log.length <= 16)
+  assert.match(snapshot.rooms['name:Large'].log.at(-1).text, /^99:/)
+  assert.ok(snapshot.rooms['name:Large'].log.at(-1).text.length <= 1200)
+})
+
+test('group gateway mirror preserves threads and budgets escaped Unicode', () => {
+  const gc = load(() => '(pass)')
+  const snapshot = gc.groupChatSyncSnapshot({
+    Unicode: {
+      log: Array.from({ length: 16 }, (_, index) => ({
+        from: { kind: 'member', name: 'research' },
+        text: `message ${index} ${'🧠'.repeat(1200)}`,
+        at: index,
+        thread: `thread-${index}`
+      }))
+    }
+  })
+
+  assert.ok(gc.groupChatGatewayJsonSize(snapshot) <= 48000)
+  assert.equal(snapshot.rooms['name:Unicode'].log.at(-1).thread, 'thread-15')
+})
+
+test('empty runtime rooms are omitted from the gateway mirror', () => {
+  const gc = load(() => '(pass)')
+  const snapshot = gc.groupChatSyncSnapshot({
+    Disbanded: { log: [], members: [{ name: 'research' }] }
+  })
+
+  assert.deepEqual(Object.keys(snapshot.rooms), [])
+})
+
+test('an empty hydrate cannot erase a shared gateway room mirror', () => {
+  const gc = load(() => '(pass)')
+  const before = gc.requests.length
+
+  gc.scheduleGroupChatServerSync({})
+
+  assert.equal(gc.requests.length, before)
+})
+
+test('an explicit final-room disband may clear the gateway room mirror', async () => {
+  const gc = load(() => '(pass)')
+
+  gc.scheduleGroupChatServerSync({}, { allowEmpty: true, deletedRooms: ['Research'] })
+  await new Promise(resolve => setImmediate(resolve))
+
+  const configure = gc.requests.filter(call => call.method === 'profiles.configure').at(-1)
+  assert.deepEqual(Object.keys(configure.params.ui_meta['nastech-bots-groups'].rooms), [])
+  assert.ok(configure.params.ui_meta['nastech-bots-groups'].deleted['name:Research'] > 0)
+})
+
+test('pull-before-push merge preserves disjoint rooms, messages, and members', () => {
+  const gc = load(() => '(pass)')
+  const merged = gc.mergeGroupChatSyncSnapshots(
+    {
+      version: 1,
+      rooms: {
+        Shared: {
+          log: [{ from: { kind: 'user', name: 'You' }, text: 'remote', at: 1, thread: 'one' }],
+          members: [{ name: 'research', handle: 'research' }]
+        },
+        RemoteOnly: {
+          log: [{ from: { kind: 'member', name: 'ops' }, text: 'kept', at: 2 }],
+          members: [{ name: 'ops' }]
+        }
+      }
+    },
+    {
+      version: 1,
+      rooms: {
+        Shared: {
+          log: [{ from: { kind: 'member', name: 'builder' }, text: 'local', at: 3, thread: 'one' }],
+          members: [{ name: 'builder', handle: 'builder' }]
+        }
+      }
+    }
+  )
+
+  assert.equal(JSON.stringify(merged.rooms['name:Shared'].log.map(entry => entry.text)), JSON.stringify(['remote', 'local']))
+  assert.equal(JSON.stringify(merged.rooms['name:Shared'].members.map(member => member.name)), JSON.stringify(['research', 'builder']))
+  assert.equal(merged.rooms['name:RemoteOnly'].log[0].text, 'kept')
+})
+
+test('gateway projection hydrates a cold Desktop without dropping local runtime fields', () => {
+  const gc = load(() => '(pass)')
+  const merged = gc.mergeRemoteGroupChatSnapshotIntoRooms(
+    {
+      rooms: {
+        Shared: {
+          log: [
+            { from: { kind: 'user', name: 'You' }, text: 'remote question', at: 10, thread: 'thread-1' },
+            { from: { kind: 'member', name: 'research' }, text: 'remote answer', at: 20, thread: 'thread-1' }
+          ],
+          members: [{ name: 'research', connectionId: 'mini', sourceScoped: true }]
+        }
+      }
+    },
+    {
+      Local: {
+        log: [{ from: { kind: 'user', name: 'You' }, text: 'local', at: 5, thread: 'thread-local' }],
+        watermarks: { builder: 1 },
+        sessions: { builder: 'session-1' },
+        members: [{ name: 'builder' }],
+        epoch: 7,
+        running: true
+      }
+    }
+  )
+
+  assert.equal(
+    JSON.stringify(merged.Shared.log.map(entry => entry.text)),
+    JSON.stringify(['remote question', 'remote answer'])
+  )
+  assert.equal(merged.Shared.members[0].remoteSource, true)
+  assert.equal(merged.Local.sessions.builder, 'session-1')
+  assert.equal(merged.Local.epoch, 7)
+  assert.equal(merged.Local.running, true)
+})
+
+test('room deletion tombstone wins over stale history but not a later recreation', () => {
+  const gc = load(() => '(pass)')
+  const stale = gc.mergeGroupChatSyncSnapshots(
+    {
+      version: 2,
+      rooms: { Research: { revision: 1, log: [{ id: 'old', from: { kind: 'user', name: 'You' }, text: 'old', at: 10 }] } }
+    },
+    { version: 2, rooms: {}, deleted: { Research: 2 } }
+  )
+  assert.equal(stale.rooms['name:Research'], undefined)
+  assert.equal(stale.deleted['name:Research'], 2)
+
+  const recreated = gc.mergeGroupChatSyncSnapshots(stale, {
+    version: 2,
+    rooms: { Research: { revision: 3, log: [{ id: 'new', from: { kind: 'user', name: 'You' }, text: 'new', at: 1 }] } }
+  })
+  assert.equal(recreated.rooms['name:Research'].log[0].text, 'new')
+  assert.equal(recreated.deleted, undefined)
+})
+
+test('gateway revisions, not device clocks, order room deletion and recreation', () => {
+  const gc = load(() => '(pass)')
+  const merged = gc.mergeGroupChatSyncSnapshots(
+    {
+      version: 2,
+      rooms: {
+        ClockSkewed: {
+          revision: 8,
+          log: [{ id: 'future-clock', from: { kind: 'user', name: 'You' }, text: 'old', at: 9999999999999 }]
+        }
+      }
+    },
+    { version: 2, rooms: {}, deleted: { ClockSkewed: 9 } }
+  )
+
+  assert.equal(merged.rooms['name:ClockSkewed'], undefined)
+  assert.equal(merged.deleted['name:ClockSkewed'], 9)
+})
+
+test('a conflicting writer can merge the winner and preserve both stable message ids', () => {
+  const gc = load(() => '(pass)')
+  const winner = {
+    version: 2,
+    rooms: {
+      Shared: {
+        revision: 1,
+        log: [{ id: 'writer-a:1', from: { kind: 'user', name: 'You' }, text: 'alpha', at: 100 }],
+        members: [{ name: 'alpha' }]
+      }
+    }
+  }
+  const loserRetry = gc.mergeGroupChatSyncSnapshots(
+    winner,
+    {
+      version: 2,
+      rooms: {
+        Shared: {
+          revision: 0,
+          log: [{ id: 'writer-b:1', from: { kind: 'member', name: 'beta' }, text: 'beta', at: 1 }],
+          members: [{ name: 'beta' }]
+        }
+      }
+    },
+    { changedRooms: ['Shared'], writeRevision: 2 }
+  )
+
+  assert.equal(
+    JSON.stringify(loserRetry.rooms['name:Shared'].log.map(entry => entry.id).sort()),
+    JSON.stringify(['writer-a:1', 'writer-b:1'])
+  )
+  assert.equal(loserRetry.rooms['name:Shared'].revision, 2)
+})
+
+test('sync worker retries a gateway CAS conflict and publishes the merged room', async () => {
+  const gc = load(() => '(pass)', { conflictOnce: true, deferredTimers: true })
+  gc.$groupChats.set({
+    Shared: {
+      log: [{ id: 'writer-b:1', from: { kind: 'member', name: 'beta' }, text: 'beta', at: 2 }],
+      members: [{ name: 'beta' }],
+      watermarks: {},
+      sessions: {},
+      syncRevision: 0
+    }
+  })
+
+  gc.scheduleGroupChatServerSync(gc.$groupChats.get(), { changedRooms: ['Shared'] })
+  for (let i = 0; i < 20 && (gc.uiMetaRevisions['nastech-bots-groups'] || 0) < 2; i++) {
+    await new Promise(resolve => setImmediate(resolve))
+  }
+
+  const stored = gc.sharedUiMeta['nastech-bots-groups']
+  assert.equal(gc.uiMetaRevisions['nastech-bots-groups'], 2)
+  assert.equal(
+    JSON.stringify(stored.rooms['name:Shared'].log.map(entry => entry.id).sort()),
+    JSON.stringify(['writer-a:1', 'writer-b:1'])
+  )
+  assert.equal(
+    gc.requests.filter(call => call.method === 'profiles.configure').length,
+    2
+  )
+})
+
+test('read-back does not clobber a newer local room edit queued during an in-flight write', () => {
+  const gc = load(() => '(pass)')
+  const merged = gc.mergeRemoteGroupChatSnapshotIntoRooms(
+    {
+      version: 2,
+      rooms: {
+        Shared: {
+          revision: 5,
+          log: [{ id: 'remote', from: { kind: 'user', name: 'You' }, text: 'remote message', at: 1 }],
+          members: [{ name: 'old-member' }],
+          image: 'data:image/png;base64,old'
+        }
+      }
+    },
+    {
+      Shared: {
+        syncRevision: 4,
+        log: [{ id: 'local', from: { kind: 'user', name: 'You' }, text: 'local message', at: 2 }],
+        members: [{ name: 'new-member' }],
+        image: 'data:image/png;base64,new'
+      }
+    },
+    { preserveRooms: ['Shared'] }
+  )
+
+  assert.equal(JSON.stringify(merged.Shared.members.map(member => member.name)), JSON.stringify(['new-member']))
+  assert.equal(merged.Shared.image, 'data:image/png;base64,new')
+  assert.equal(merged.Shared.syncRevision, 4)
+  assert.equal(
+    JSON.stringify(merged.Shared.log.map(entry => entry.id).sort()),
+    JSON.stringify(['local', 'remote'])
+  )
+})
+
+test('rename publishes a new room plus old-name tombstone and cold hydrate cannot resurrect it', () => {
+  const gc = load(() => '(pass)')
+  const before = {
+    version: 2,
+    rooms: {
+      Old: {
+        revision: 4,
+        log: [{ id: 'turn-1', from: { kind: 'user', name: 'You' }, text: 'history', at: 10 }],
+        members: [{ name: 'research' }],
+        image: 'data:image/png;base64,room'
+      }
+    }
+  }
+  const after = gc.mergeGroupChatSyncSnapshots(
+    before,
+    {
+      version: 2,
+      rooms: {
+        New: {
+          revision: 4,
+          log: before.rooms.Old.log,
+          members: before.rooms.Old.members,
+          image: before.rooms.Old.image
+        }
+      }
+    },
+    { changedRooms: ['New'], deletedRooms: ['Old'], writeRevision: 5 }
+  )
+  const hydrated = gc.mergeRemoteGroupChatSnapshotIntoRooms(after, {})
+
+  assert.equal(after.rooms['name:Old'], undefined)
+  assert.equal(after.deleted['name:Old'], 5)
+  assert.equal(after.rooms['name:New'].revision, 5)
+  assert.equal(after.rooms['name:New'].image, 'data:image/png;base64,room')
+  assert.equal(hydrated.Old, undefined)
+  assert.equal(hydrated.New.log[0].text, 'history')
+  assert.equal(hydrated.New.image, 'data:image/png;base64,room')
+})
+
+test('room identity class: rename with a roomId is a same-key field update, never delete+create', () => {
+  const gc = load(() => '(pass)')
+  const before = {
+    version: 3,
+    rooms: {
+      'id:room-42': {
+        name: 'Old',
+        roomId: 'room-42',
+        revision: 4,
+        log: [{ id: 'turn-1', from: { kind: 'user', name: 'You' }, text: 'history', at: 10 }],
+        members: [{ name: 'research' }]
+      }
+    }
+  }
+  const after = gc.mergeGroupChatSyncSnapshots(
+    before,
+    {
+      version: 3,
+      rooms: {
+        'id:room-42': { ...before.rooms['id:room-42'], name: 'New' }
+      }
+    },
+    { changedRooms: ['id:room-42'], writeRevision: 5 }
+  )
+
+  // Same durable key, new display name, no tombstone needed at all.
+  assert.equal(Object.keys(after.rooms).length, 1)
+  assert.equal(after.rooms['id:room-42'].name, 'New')
+  assert.equal(after.rooms['id:room-42'].revision, 5)
+  assert.equal(after.deleted, undefined)
+
+  // A lagging gateway still holding the OLD name under the same id cannot
+  // resurrect it: same key, lower revision, identity follows the winner.
+  const lagged = gc.mergeGroupChatSyncSnapshots(before, after)
+  assert.equal(lagged.rooms['id:room-42'].name, 'New')
+})
+
+test('room identity class: id tombstones are final even against a higher-revision lagging copy', () => {
+  const gc = load(() => '(pass)')
+  const merged = gc.mergeGroupChatSyncSnapshots(
+    {
+      version: 3,
+      // A gateway that was OFFLINE during the disband still carries the room
+      // with a high revision from busy pre-disband traffic.
+      rooms: {
+        'id:room-9': {
+          name: 'Zombie',
+          roomId: 'room-9',
+          revision: 40,
+          log: [{ id: 'stale', from: { kind: 'user', name: 'You' }, text: 'stale', at: 1 }]
+        }
+      }
+    },
+    { version: 3, rooms: {}, deleted: { 'id:room-9': 3 } }
+  )
+
+  assert.equal(merged.rooms['id:room-9'], undefined, 'disbanded id-keyed room stays dead')
+  assert.equal(merged.deleted['id:room-9'], 3, 'tombstone survives for other lagging gateways')
+
+  // Same-name RECREATION is unaffected: the new room minted a fresh id.
+  const recreated = gc.mergeGroupChatSyncSnapshots(merged, {
+    version: 3,
+    rooms: {
+      'id:room-10': {
+        name: 'Zombie',
+        roomId: 'room-10',
+        revision: 1,
+        log: [{ id: 'fresh', from: { kind: 'user', name: 'You' }, text: 'fresh', at: 2 }]
+      }
+    }
+  })
+  assert.equal(recreated.rooms['id:room-10'].log[0].text, 'fresh')
+  assert.equal(recreated.rooms['id:room-9'], undefined)
+})
+
+test('room identity class: cold hydrate follows a remote rename via roomId instead of duplicating', () => {
+  const gc = load(() => '(pass)')
+  const merged = gc.mergeRemoteGroupChatSnapshotIntoRooms(
+    {
+      version: 3,
+      rooms: {
+        'id:room-7': {
+          name: 'Renamed',
+          roomId: 'room-7',
+          revision: 6,
+          log: [{ id: 'm1', from: { kind: 'user', name: 'You' }, text: 'hello', at: 1 }],
+          members: [{ name: 'research' }]
+        }
+      }
+    },
+    {
+      // Local copy still under the pre-rename display name, same roomId.
+      Original: {
+        roomId: 'room-7',
+        syncRevision: 5,
+        log: [{ id: 'm1', from: { kind: 'user', name: 'You' }, text: 'hello', at: 1 }],
+        watermarks: {},
+        sessions: { research: 'sid-1' },
+        members: [{ name: 'research' }]
+      }
+    }
+  )
+
+  assert.equal(merged.Original, undefined, 'old display name is re-keyed, not duplicated')
+  assert.equal(merged.Renamed.roomId, 'room-7')
+  assert.equal(merged.Renamed.sessions.research, 'sid-1', 'runtime fields survive the re-key')
+})
+
+test('room identity class: renaming an id-keyed room via the rename job shape never tombstones it', () => {
+  const gc = load(() => '(pass)')
+  const remote = {
+    version: 3,
+    rooms: {
+      'id:room-3': {
+        name: 'Old',
+        roomId: 'room-3',
+        revision: 2,
+        log: [{ id: 'h1', from: { kind: 'user', name: 'You' }, text: 'history', at: 5 }],
+        members: [{ name: 'research' }]
+      }
+    }
+  }
+  // Exactly what renameGroupChat schedules: changed [new], deleted [old].
+  const after = gc.mergeGroupChatSyncSnapshots(
+    remote,
+    {
+      version: 3,
+      rooms: {
+        'id:room-3': { ...remote.rooms['id:room-3'], name: 'New' }
+      }
+    },
+    { changedRooms: ['New'], deletedRooms: ['Old'], writeRevision: 3 }
+  )
+  assert.ok(after.rooms['id:room-3'], 'renamed room survives its own rename job')
+  assert.equal(after.rooms['id:room-3'].name, 'New')
+  assert.equal(after.deleted?.['id:room-3'], undefined, 'no id tombstone for a same-id rename')
+  // A residual name:Old tombstone is correct — it retires stale v2/legacy
+  // copies of this room that older clients published under the name key.
+  assert.equal(after.deleted?.['name:Old'], 3)
+
+  // Hydrate path: the pull that races the rename write must not delete the
+  // locally re-keyed record just because the remote copy still says Old.
+  const merged = gc.mergeRemoteGroupChatSnapshotIntoRooms(remote, {
+    New: {
+      roomId: 'room-3',
+      syncRevision: 2,
+      log: remote.rooms['id:room-3'].log,
+      watermarks: {},
+      sessions: { research: 'sid-9' },
+      members: [{ name: 'research' }]
+    }
+  }, { preserveRooms: ['New'], deletedRooms: ['Old'] })
+  assert.ok(merged.New, 'locally renamed room survives a stale-name pull')
+  assert.equal(merged.New.sessions.research, 'sid-9')
+  assert.equal(merged.Old, undefined)
+})
+
+test('fan-out class: a room write is mirrored to every reachable default-profile gateway', async () => {
+  const gc = load(() => '(pass)', { deferredTimers: true })
+  const remoteRequests = []
+  gc.host.profileRoutes = async () => [
+    { connectionId: 'gw-a', profile: 'default' },
+    { connectionId: 'gw-b', profile: 'default' },
+    { connectionId: 'gw-b', profile: 'other' }
+  ]
+  gc.host.requestProfile = async (route, method) => {
+    remoteRequests.push({ connectionId: route.connectionId, method })
+    if (method === 'profiles.list') {
+      return { profiles: [{ name: 'default', ui_meta: {}, ui_meta_revisions: {} }] }
+    }
+    if (method === 'profiles.configure') {
+      return { applied: { ui_meta: true, ui_meta_revisions: { 'nastech-bots-groups': 1 } } }
+    }
+    return {}
+  }
+
+  gc.$groupChats.set({
+    Shared: {
+      log: [{ id: 'w1', from: { kind: 'user', name: 'You' }, text: 'hi', at: 1 }],
+      members: [{ name: 'research' }],
+      watermarks: {},
+      sessions: {},
+      syncRevision: 0
+    }
+  })
+  gc.scheduleGroupChatServerSync(gc.$groupChats.get(), { changedRooms: ['Shared'] })
+  for (let i = 0; i < 60 && remoteRequests.filter(r => r.method === 'profiles.configure').length < 2; i++) {
+    await new Promise(resolve => setImmediate(resolve))
+  }
+
+  const configured = new Set(
+    remoteRequests.filter(r => r.method === 'profiles.configure').map(r => r.connectionId)
+  )
+  assert.ok(configured.has('gw-a'), 'gateway A received the room mirror')
+  assert.ok(configured.has('gw-b'), 'gateway B received the room mirror')
 })
 
 test('source contract: workspace + main-window door + prompt rules are wired', () => {
@@ -471,6 +1153,13 @@ test('source contract: active group styling suppresses bot styling', () => {
   assert.match(pluginSource, /active: groupChatName === row\.name/)
 })
 
+test('source contract: group roster rows expose a confirmed Delete Group action', () => {
+  assert.match(pluginSource, /function GroupRow\(\{ active, group, members, needsYou, onOpen, onDisband \}\)/)
+  assert.match(pluginSource, /children: 'Delete Group'/)
+  assert.match(pluginSource, /title: 'Delete group chat\?'/)
+  assert.match(pluginSource, /await disbandGroupChat\(deletingGroup\.name, deletingGroup\.members\)/)
+})
+
 test('disband: removes only this membership, room log, workspace, and needs-you state', async () => {
   const gc = load(() => '(pass)')
 
@@ -553,8 +1242,23 @@ test('disband: a running room leaves an epoch-bumped empty tombstone so in-fligh
   assert.equal(tomb.log.length, 0)
   assert.equal(tomb.running, false)
   assert.equal(tomb.epoch, 4, 'epoch bumped so the loop bails at its member boundary')
+  assert.equal(tomb.tombstone, true, 'flagged so persistence and name-dedup skip it')
   const durable = gc.storageWrites.get('group-chats')
   assert.ok(!durable || !('Live' in (durable || {})), 'tombstone is never persisted')
+
+  // Regression (#90028 live E2E): updateGroupChat persists the WHOLE atom
+  // map — an unrelated room write while the tombstone lingers must not
+  // smuggle the tombstone into durable storage, and the disbanded name must
+  // be immediately reusable (uniqueGroupChatName would suffix it otherwise).
+  gc.updateGroupChat('Other', room => {
+    room.log.push({ at: Date.now(), from: { kind: 'user' }, text: 'x', thread: 't' })
+    return room
+  })
+  const durable2 = gc.storageWrites.get('group-chats')
+  assert.ok(durable2 && 'Other' in durable2, 'real room persists')
+  assert.ok(!('Live' in durable2), 'tombstone excluded from later whole-map writes')
+  assert.equal(gc.uniqueGroupChatName('Live', new Set(gc.liveGroupChatNames())), 'Live',
+    'disbanded name is immediately reusable — tombstone does not hold it')
 })
 
 test('source contract: workspace header offers disband behind a ConfirmDialog', () => {
@@ -766,8 +1470,10 @@ test('source contract: the working line names the member on turn', () => {
 })
 
 test('source contract: creating a group with a taken name mints a fresh room, never reopens the old log', () => {
-  assert.match(pluginSource, /const taken = new Set\(Object\.keys\(\$groupChats\.get\(\)\)\)/)
-  assert.match(pluginSource, /while \(taken\.has\(`\$\{groupName\} \$\{n\}`\)\)/)
+  assert.match(pluginSource, /const taken = new Set\(liveGroupChatNames\(\)\)/)
+  assert.match(pluginSource, /const groupName = uniqueGroupChatName\(base, taken\)/)
+  assert.match(pluginSource, /const roomId = mintGroupRoomId\(\)/)
+  assert.match(pluginSource, /room\.roomId = roomId/)
 })
 
 test('turn prompt: results are full quality — only chatter is asked to stay short', () => {

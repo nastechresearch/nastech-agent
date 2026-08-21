@@ -236,6 +236,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   openPreviewInBrowser: url => ipcRenderer.invoke('nastech:openPreviewInBrowser', url),
   reachPreviewUrl: url => ipcRenderer.invoke('nastech:preview:reach', url),
   fetchLinkTitle: url => ipcRenderer.invoke('nastech:fetchLinkTitle', url),
+  resolveFavicon: url => ipcRenderer.invoke('nastech:resolveFavicon', url),
   sanitizeWorkspaceCwd: cwd => ipcRenderer.invoke('nastech:workspace:sanitize', cwd),
   settings: {
     getDefaultProjectDir: () => ipcRenderer.invoke('nastech:setting:defaultProjectDir:get'),

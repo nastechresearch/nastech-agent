@@ -482,9 +482,18 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "anthropic/claude-sonnet-4.6",
         "openai/gpt-5.4",
     ],
+    # Synced against https://opencode.ai/docs/zen/ + live GET /zen/v1/models
+    # (2026-08-20). Zen/Go are _LIVE_FIRST_PICKER_PROVIDERS, so this list is a
+    # discovery floor — live entries lead in the picker and stale curated
+    # names never pollute the top.
     "opencode-zen": [
+        "x-preview-f-free",  # "Ox Alpha" stealth model — free, 1M ctx, ZDR
+        "kimi-k3",
         "kimi-k2.5",
         "kimi-k2.6",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
         "gpt-5.5",
         "gpt-5.5-pro",
         "gpt-5.4-pro",
@@ -503,6 +512,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "gpt-5-codex",
         "gpt-5-nano",
         "claude-fable-5",
+        "claude-opus-5",
         "claude-sonnet-5",
         "claude-opus-4-8",
         "claude-opus-4-7",
@@ -513,9 +523,16 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "claude-sonnet-4-5",
         "claude-sonnet-4",
         "claude-haiku-4-5",
+        "gemini-3.7-flash",
+        "gemini-3.6-flash",
         "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
         "gemini-3.1-pro",
         "gemini-3-flash",
+        "grok-4.6",
+        "grok-4.5",
+        "grok-build-0.1",
+        "muse-spark-1.2",
         "minimax-m3",
         "minimax-m2.7",
         "minimax-m2.5",
@@ -526,20 +543,28 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "deepseek-v4-pro",
         "deepseek-v4-flash",
         "deepseek-v4-flash-free",
+        "qwen3.7-max",
         "qwen3.7-plus",
         "qwen3.6-plus",
         "qwen3.5-plus",
-        "grok-build-0.1",
         "big-pickle",
         "mimo-v2.5-free",
-        "north-mini-code-free",
+        "hy3-free",
+        "laguna-s-2.1-free",
         "nemotron-3-ultra-free",
+        "nemotron-3.5-lightning-free",
+        "muse-spark-1.2-contributor-free",
     ],
+    # Synced against https://opencode.ai/docs/go/ + live GET /zen/go/v1/models
+    # (2026-08-20).
     "opencode-go": [
         "kimi-k3",
         "kimi-k2.7-code",
         "kimi-k2.6",
         "kimi-k2.5",
+        "gpt-5.6-luna",
+        "grok-4.5",
+        "glm-5.3",
         "glm-5.2",
         "glm-5.1",
         "glm-5",
@@ -552,10 +577,14 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "minimax-m2.5",
         "deepseek-v4-pro",
         "deepseek-v4-flash",
+        "qwen3.8-max",
         "qwen3.7-max",
         "qwen3.7-plus",
         "qwen3.6-plus",
         "qwen3.5-plus",
+        "hy3",
+        "hy3-preview",
+        "muse-spark-1.2-contributor",
     ],
     "kilocode": [
         "anthropic/claude-opus-4.6",
@@ -5242,16 +5271,46 @@ def azure_foundry_model_api_mode(model_name: Optional[str]) -> Optional[str]:
     return None
 
 
+def opencode_provider_family(provider_id: Optional[str]) -> Optional[str]:
+    """Resolve a provider id to its OpenCode family, or None.
+
+    Returns ``"opencode-zen"`` or ``"opencode-go"`` for the built-in
+    providers AND for custom providers whose name extends a family slug
+    (e.g. ``opencode-go-bridge`` pointing at ``https://opencode.ai/zen/go/v1``,
+    issue #85589). Matching is case-insensitive. Custom family providers
+    need the same per-model api_mode routing and /v1 base-url normalization
+    as the built-ins — this predicate is the single owner of that
+    family-membership question; do not re-implement it inline.
+
+    ``opencode-go`` is checked before ``opencode-zen`` but the two slugs are
+    not prefixes of each other, so order is cosmetic.
+    """
+    raw = str(provider_id or "").strip().lower()
+    if not raw:
+        return None
+    canonical = normalize_provider(provider_id)
+    if canonical in {"opencode-zen", "opencode-go"}:
+        return canonical
+    if raw.startswith("opencode-go"):
+        return "opencode-go"
+    if raw.startswith("opencode-zen"):
+        return "opencode-zen"
+    return None
+
+
 def normalize_opencode_model_id(provider_id: Optional[str], model_id: Optional[str]) -> str:
     """Normalize OpenCode config IDs to the bare model slug used in API requests."""
-    provider = normalize_provider(provider_id)
+    family = opencode_provider_family(provider_id)
     current = str(model_id or "").strip()
-    if not current or provider not in {"opencode-zen", "opencode-go"}:
+    if not current or family is None:
         return current
 
-    prefix = f"{provider}/"
-    if current.lower().startswith(prefix):
+    prefix = f"{provider_id}/" if provider_id else f"{family}/"
+    if current.lower().startswith(prefix.lower()):
         return current[len(prefix):]
+    fallback_prefix = f"{family}/"
+    if current.lower().startswith(fallback_prefix.lower()):
+        return current[len(fallback_prefix):]
     return current
 
 
@@ -5260,8 +5319,9 @@ def opencode_model_api_mode(provider_id: Optional[str], model_id: Optional[str])
 
     OpenCode routes different models behind different API surfaces:
 
-    - GPT-5 / Codex models on Zen use ``/v1/responses``
-    - GPT models on Go (gpt-5.6-luna) use ``/v1/responses``
+    - GPT-5 / Codex / Grok models on Zen use ``/v1/responses``
+    - GPT / Grok models on Go (gpt-5.6-luna, grok-4.5) use ``/v1/responses``
+    - Muse Spark on Go and Zen uses ``/v1/responses`` (chat/completions 503s)
     - Claude models on Zen use ``/v1/messages``
     - MiniMax and Qwen models on Go use ``/v1/messages``
     - GLM / Kimi / DeepSeek / MiMo on Go use ``/v1/chat/completions``
@@ -5272,16 +5332,21 @@ def opencode_model_api_mode(provider_id: Optional[str], model_id: Optional[str])
     This follows the published OpenCode docs for Zen and Go endpoints
     (https://opencode.ai/docs/zen/ and https://opencode.ai/docs/go/).
     """
-    provider = normalize_provider(provider_id)
+    family = opencode_provider_family(provider_id)
     normalized = normalize_opencode_model_id(provider_id, model_id).lower()
     if not normalized:
         return "chat_completions"
 
-    if provider == "opencode-go":
-        if normalized.startswith("gpt-"):
-            # GPT models on Go (gpt-5.6-luna) are served via /v1/responses
-            # per the published Go endpoint table, same as GPT on Zen:
-            # https://opencode.ai/docs/go/#endpoints
+    if family == "opencode-go":
+        if normalized.startswith("gpt-") or normalized.startswith("grok-"):
+            # GPT and Grok models on Go (gpt-5.6-luna, grok-4.5) are served
+            # via /v1/responses per the published Go endpoint table, same as
+            # GPT/Grok on Zen: https://opencode.ai/docs/go/#endpoints
+            return "codex_responses"
+        if normalized.startswith("muse-spark"):
+            # Muse Spark (standard + contributor) is Responses-only on Go.
+            # /v1/chat/completions returns HTTP 503 with an empty assistant
+            # message; /v1/responses completes. See opencode.ai/docs/go.
             return "codex_responses"
         if normalized.startswith("minimax-"):
             return "anthropic_messages"
@@ -5291,10 +5356,17 @@ def opencode_model_api_mode(provider_id: Optional[str], model_id: Optional[str])
             return "anthropic_messages"
         return "chat_completions"
 
-    if provider == "opencode-zen":
+    if family == "opencode-zen":
         if normalized.startswith("claude-"):
             return "anthropic_messages"
-        if normalized.startswith("gpt-"):
+        if normalized.startswith("gpt-") or normalized.startswith("grok-"):
+            # GPT-5/Codex and all Grok models on Zen (grok-4.6, grok-4.5,
+            # grok-build-0.1) are served via /v1/responses per the Zen
+            # endpoint table.
+            return "codex_responses"
+        if normalized.startswith("muse-spark"):
+            # Standard Muse Spark on Zen is served via /v1/responses:
+            # https://opencode.ai/docs/zen/#endpoints
             return "codex_responses"
         if normalized.startswith("qwen"):
             # Qwen models on Zen moved to /v1/messages per the published
@@ -5329,8 +5401,7 @@ def normalize_opencode_base_url(
     url = str(base_url or "").strip().rstrip("/")
     if not url:
         return url
-    provider = normalize_provider(provider_id)
-    if provider not in {"opencode-zen", "opencode-go"}:
+    if opencode_provider_family(provider_id) is None:
         return url
 
     import re as _re
