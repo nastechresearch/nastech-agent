@@ -39,7 +39,7 @@ jobs:
   os-tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +48,9 @@ jobs:
             runner: macos-latest
             marker: macos_only
           - name: Windows-only tests
-            runner: windows-latest-32-core
+            # Standard public hosted Windows runner; preserve the same marker
+            # and test selection without requiring a larger-runner pool.
+            runner: windows-latest
             marker: windows_only
     steps:
       - name: Checkout code
