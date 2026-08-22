@@ -2,8 +2,8 @@ import { type ConnectionState, type GatewayEvent, registryBackendScopeKey, resol
 import { atom } from 'nanostores'
 
 import type { NastechConnection } from '@/global'
-import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
 import { NastechGateway, setApiRequestConnection } from '@/nastech'
+import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
 import { markNativeNotifyBaseline } from '@/store/notify-baseline'
 import { setConnection, setGatewayState } from '@/store/session'
 

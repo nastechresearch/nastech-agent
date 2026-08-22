@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Codicon } from '@/components/ui/codicon'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
+import { getGlobalModelOptions } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { Check, ChevronDown, ChevronLeft, KeyRound, Loader2 } from '@/lib/icons'
 import { isProviderSetupErrorMessage } from '@/lib/provider-setup-errors'
 import { cn } from '@/lib/utils'
-import { getGlobalModelOptions } from '@/nastech'
 import { $desktopBoot, type DesktopBootState } from '@/store/boot'
 import {
   $desktopOnboarding,
@@ -308,6 +308,10 @@ export function DesktopOnboardingOverlay({
         bare && leaving ? '[transition-delay:660ms]' : '',
         leaving ? 'pointer-events-none opacity-0' : 'opacity-100'
       )}
+      // Masks the whole app until onboarding finishes — must stay filled under
+      // window glass or the shell shows through. Contract:
+      // `[data-glass-opaque]` in styles.css.
+      data-glass-opaque=""
     >
       <div
         className={cn(

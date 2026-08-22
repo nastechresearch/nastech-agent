@@ -10,14 +10,6 @@ import { WIDGET_SHELL_CLASS } from '@/components/chat/widget-shell'
 import { Button } from '@/components/ui/button'
 import { Codicon } from '@/components/ui/codicon'
 import { Input } from '@/components/ui/input'
-import { useI18n } from '@/i18n'
-import { triggerHaptic } from '@/lib/haptics'
-import { AlertCircle, CheckCircle2, Loader2 } from '@/lib/icons'
-import { brandFor, brandGlyphStyle } from '@/lib/mcp-brands'
-import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
-import { directoryEntry } from '@/lib/mcp-directory'
-import { prettyName } from '@/lib/text'
-import { cn } from '@/lib/utils'
 import {
   addMcpServer,
   authMcpServer,
@@ -30,6 +22,14 @@ import {
   removeMcpServer,
   setMcpServerEnabled
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import { triggerHaptic } from '@/lib/haptics'
+import { AlertCircle, CheckCircle2, Loader2 } from '@/lib/icons'
+import { brandFor, brandGlyphStyle } from '@/lib/mcp-brands'
+import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
+import { directoryEntry } from '@/lib/mcp-directory'
+import { prettyName } from '@/lib/text'
+import { cn } from '@/lib/utils'
 import { $gateway } from '@/store/gateway'
 import { clearMcpSetupRequest, type McpSetupOutcome, sessionMcpSetupRequest } from '@/store/mcp-setup'
 import { notifyError } from '@/store/notifications'

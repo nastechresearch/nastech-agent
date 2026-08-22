@@ -103,6 +103,13 @@ export const ja = defineLocale({
       signOutAndSignIn: 'サインアウトして再サインイン',
       remoteFailureHint:
         '「ゲートウェイ設定」でゲートウェイの URL とサインインを確認するか、ローカルゲートウェイに切り替えてください。',
+      cloudDownTitle: 'Nastech Cloud エージェントが停止しています',
+      cloudDownDescription:
+        'このゲートウェイが接続している Nastech 管理のクラウドエージェントがサーバーエラーを返しています。ここから再起動することはできません。ステータスを確認するか、ローカルゲートウェイに切り替えるか、サポートに連絡してください。',
+      cloudDownHint:
+        '下のボタンから Nastech Portal（インスタンスの状態と操作）を開くか、Discord でサポートを受けられます。',
+      cloudDownCheckPortal: 'Portal のステータスを確認',
+      cloudDownDiscord: 'Discord でサポートを受ける',
       hideRecentLogs: '最近のログを非表示',
       showRecentLogs: '最近のログを表示',
       signedInTitle: 'サインインしました',
@@ -202,6 +209,30 @@ export const ja = defineLocale({
     openBilling: '請求を開く',
     addCredits: 'クレジットを追加',
     dismiss: '閉じる'
+  },
+
+  sendDiagnostics: {
+    title: 'Nastech に診断情報を送信',
+    privacyNotice:
+      'デバッグバンドルを Nastech 内部ストレージにアップロードします（公開ペーストではありません）。システム情報（OS、バージョン、プロバイダー、設定済み API キーの種類 — キー自体は含まれません）と、エージェント/ゲートウェイ/デスクトップの完全なログ（各最大 512 KB。会話内容、ツール出力、ファイルパスを含む可能性が高い）が含まれます。シークレットはアップロード前にマスクされます。閲覧できるのは Nastech スタッフと許可された Discord モデレーターのみで、14 日後に自動削除されます。',
+    upload: 'アップロード',
+    uploading: 'アップロード中…',
+    cancel: 'キャンセル',
+    close: '閉じる',
+    copyLink: 'リンクをコピー',
+    uploadIdFallback: id => `表示リンクが返されませんでした — サポートにアップロード ID ${id} をお伝えください`,
+    doneTitle: '診断情報を送信しました',
+    doneDescription:
+      'バンドルは非公開でアップロードされました。サポートスレッドで以下のリンクを共有すると、チームがログを確認できます。',
+    failedTitle: 'アップロードに失敗しました',
+    failedHint:
+      'ターミナルから `nastech debug share --nastech` を実行するか、`nastech debug share --local` でアップロードせずにレポートを表示することもできます。',
+    handoffLead: '続きは次の場所で:',
+    links: {
+      github: 'GitHub Issues',
+      portal: 'Nastech Portal サポート',
+      discord: 'Discord'
+    }
   },
 
   titlebar: {
@@ -340,6 +371,11 @@ export const ja = defineLocale({
       sessionDensityCompact: 'コンパクト',
       sessionDensityComfortable: '標準',
       sessionDensityDetailed: '詳細',
+      tabStripTitle: 'タブバー',
+      tabStripDesc: 'ゾーンの上にタブを表示します。自動ではペインが1つのときに隠します。',
+      tabStripAuto: '自動',
+      tabStripAlways: '常に表示',
+      tabStripNever: '表示しない',
       terminalFontTitle: 'ターミナルフォント',
       terminalFontDesc:
         'Desktop のターミナルで使用するインストール済みフォントを選びます。Nerd Font は Powerlevel10k とシェルアイコンを表示できます。空欄では内蔵の JetBrains Mono を使用します。',
@@ -1044,8 +1080,7 @@ export const ja = defineLocale({
       activeBackend: '使用中',
       activeBackendHint: 'これが現在アクティブなバックエンドです',
       useBackend: 'このバックエンドを使う',
-      nastechIncluded:
-        'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
+      nastechIncluded: 'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
       nastechAuthNeededTitle: 'Nastech Portal にサインイン',
       nastechAuthNeededMessage: provider =>
         `${provider} は保存されましたが、Nastech Portal にサインインするまで有効になりません。`,
@@ -2160,8 +2195,7 @@ export const ja = defineLocale({
     done: '完了',
     applyingBody:
       'Nastech アップデーターが独自のウィンドウで引き継ぎ、完了後に自動的に Nastech を再度開きます。更新中はご自分で Nastech を開き直さないでください。',
-    applyingBodyBackend:
-      'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
+    applyingBodyBackend: 'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
     applyingClose: 'このウィンドウは更新中に閉じ、その後 Nastech が自動的に再度開きます。',
     errorTitle: '更新が完了しませんでした',
     errorBody: 'ご安心ください。何も失われていません。今すぐ再試行できます。',
@@ -2638,8 +2672,8 @@ export const ja = defineLocale({
   },
 
   zones: {
-    showHeader: 'ヘッダーを表示',
-    hideHeader: 'ヘッダーを隠す',
+    showTabStrip: 'タブを表示',
+    hideTabStrip: 'タブを隠す',
     showStripTab: title => `${title} を表示`,
     hideStripTab: title => `${title} を隠す`,
     lastTabKeptTitle: '最後のタブは残ります',
@@ -2728,6 +2762,24 @@ export const ja = defineLocale({
       branchNewChat: '新しいチャットでブランチ',
       react: 'リアクション',
       dismissError: 'エラーを閉じる',
+      errorLayers: {
+        auth: '認証エラー',
+        billing: 'クレジット不足',
+        disk: 'ディスク容量不足',
+        endpoint: 'カスタムエンドポイントのエラー',
+        gateway: 'ゲートウェイのエラー',
+        generic: 'ターンが失敗しました',
+        provider: 'プロバイダーのエラー',
+        runtime: 'ローカルランタイムのエラー',
+        streaming: 'ストリーミング接続のエラー'
+      },
+      errorRetry: '再試行',
+      errorSwitchProvider: 'プロバイダーを切り替え',
+      errorOpenLogs: 'ログを開く',
+      errorOpenLogsFailed: 'ログフォルダを開けませんでした',
+      errorOpenDesktopLogs: 'デスクトップのログを開く',
+      errorCopyDiagnostics: 'エラー詳細をコピー',
+      errorSendDiagnostics: '診断情報を送信',
       filesChanged: count => `${count} 件のファイルを変更`,
       reviewChanges: 'レビュー',
       readAloudFailed: '読み上げに失敗しました',

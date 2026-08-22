@@ -269,6 +269,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   revealPath: targetPath => ipcRenderer.invoke('nastech:fs:reveal', targetPath),
   openDir: dirPath => ipcRenderer.invoke('nastech:fs:openDir', dirPath),
   desktopPluginsRoot: () => ipcRenderer.invoke('nastech:fs:desktopPluginsRoot'),
+  logsRoot: () => ipcRenderer.invoke('nastech:fs:logsRoot'),
   agentPluginsRoot: () => ipcRenderer.invoke('nastech:fs:agentPluginsRoot'),
   renamePath: (targetPath, newName) => ipcRenderer.invoke('nastech:fs:rename', targetPath, newName),
   writeTextFile: (filePath, content) => ipcRenderer.invoke('nastech:fs:writeText', filePath, content),
