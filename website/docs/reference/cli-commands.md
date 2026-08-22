@@ -930,7 +930,7 @@ nastech debug share --local      # Print report to terminal (no upload)
 nastech backup [options]
 ```
 
-Create a zip archive of your Nastech configuration, skills, sessions, and data. The backup excludes the nastech-agent codebase itself.
+Create a zip archive of your Nastech configuration, skills, sessions, and data. The backup excludes the nastech-agent codebase itself, and it does not nest earlier backup artifacts (`backups/`, `state-snapshots/`) — each of those already contains its own copy of `state.db`.
 
 | Option | Description |
 |--------|-------------|

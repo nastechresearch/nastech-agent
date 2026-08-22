@@ -2977,29 +2977,44 @@ print(','.join(scripts))
     Write-Success "All dependencies installed"
 }
 
+function Install-NastechCommandLaunchers {
+    param(
+        [Parameter(Mandatory=$true)] [string]$Root
+    )
+
+    # Expose ONLY the Nastech launchers on PATH -- never the whole
+    # venv\Scripts directory. Requiring nastech.exe before creating bin keeps
+    # the PATH stage from reporting success with an unusable command.
+    $scriptsDir = Join-Path $Root "venv\Scripts"
+    $requiredSource = Join-Path $scriptsDir "nastech.exe"
+    if (-not (Test-Path -LiteralPath $requiredSource -PathType Leaf)) {
+        throw "Cannot set up the nastech command: required launcher not found: $requiredSource"
+    }
+
+    $nastechBin = Join-Path $Root "bin"
+    New-Item -ItemType Directory -Force -Path $nastechBin | Out-Null
+    foreach ($launcher in @("nastech.exe", "nastech-acp.exe")) {
+        $src = Join-Path $scriptsDir $launcher
+        if (Test-Path -LiteralPath $src -PathType Leaf) {
+            Copy-Item -Force -LiteralPath $src -Destination (Join-Path $nastechBin $launcher)
+        }
+    }
+
+    $requiredDestination = Join-Path $nastechBin "nastech.exe"
+    if (-not (Test-Path -LiteralPath $requiredDestination -PathType Leaf)) {
+        throw "Cannot set up the nastech command: launcher was not installed: $requiredDestination"
+    }
+    return $nastechBin
+}
+
 function Set-PathVariable {
     Write-Info "Setting up nastech command..."
     
     if ($NoVenv) {
         $nastechBin = "$InstallDir"
     } else {
-        # Expose ONLY the nastech launchers on PATH -- never the whole
-        # venv\Scripts directory. venv\Scripts contains python.exe /
-        # pythonw.exe / pip.exe, and putting it on the user PATH silently
-        # hijacks the `python` command in every terminal on the machine
-        # (#83797): unrelated projects start resolving python to Nastech'
-        # runtime interpreter. A dedicated bin dir with copies of the
-        # launcher exes keeps `nastech` globally available without
-        # shadowing anything. (Launcher exes embed the venv interpreter
-        # path, so they work from any location and survive updates.)
         $nastechBin = "$InstallDir\bin"
-        New-Item -ItemType Directory -Force -Path $nastechBin | Out-Null
-        foreach ($launcher in @("nastech.exe", "nastech-acp.exe")) {
-            $src = "$InstallDir\venv\Scripts\$launcher"
-            if (Test-Path $src) {
-                Copy-Item -Force $src "$nastechBin\$launcher"
-            }
-        }
+        Install-NastechCommandLaunchers -Root $InstallDir | Out-Null
     }
     
     $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")

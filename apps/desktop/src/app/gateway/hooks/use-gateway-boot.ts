@@ -2,10 +2,10 @@ import { isGatewayReauthRequired, resolveGatewayWsUrl } from '@nastech/shared'
 import { useEffect, useRef } from 'react'
 
 import type { NastechConnection } from '@/global'
+import { NastechGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd } from '@/lib/desktop-fs'
 import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
-import { NastechGateway } from '@/nastech'
 import {
   $desktopBoot,
   applyDesktopBootProgress,

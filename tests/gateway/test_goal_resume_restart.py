@@ -34,8 +34,23 @@ def nastech_home(tmp_path, monkeypatch):
     home.mkdir()
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     monkeypatch.setenv("NASTECH_HOME", str(home))
+    # get_nastech_home() prefers the context-local override over the env
+    # var, so a set_nastech_home_override() leaked by ANY earlier test in
+    # this xdist worker would silently point the goals DB at a dead tmp
+    # dir and make resume enqueue nothing (CI-only flake). Pin the
+    # override to THIS home so the fixture is immune to leaks.
+    from nastech_constants import (
+        reset_nastech_home_override,
+        set_nastech_home_override,
+    )
+
+    token = set_nastech_home_override(str(home))
     goals._DB_CACHE.clear()
     yield home
+    try:
+        reset_nastech_home_override(token)
+    except Exception:
+        pass
     goals._DB_CACHE.clear()
 
 

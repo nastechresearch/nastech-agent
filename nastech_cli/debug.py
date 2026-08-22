@@ -986,6 +986,12 @@ def _run_debug_share_nastech(args, *, log_lines: int, redact: bool) -> None:
         "\nShare this private link with the Nastech team — only Nastech staff "
         "(via Google login) can open it."
     )
+    print(
+        "\nPick up the discussion in:\n"
+        "  GitHub Issues        https://github.com/NastechResearch/nastech-agent/issues\n"
+        "  Nastech Portal Support  https://portal.nastechresearch.github.io/help\n"
+        "  Discord              https://discord.gg/NastechResearch"
+    )
 
 
 def run_debug_delete(args):

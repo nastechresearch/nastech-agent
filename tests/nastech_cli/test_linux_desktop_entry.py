@@ -88,6 +88,67 @@ def test_exec_falls_back_to_interpreter_module(tmp_path, xdg_home, monkeypatch):
     assert Path(exec_line.split(" ")[0]).is_absolute()
 
 
+# #90292: the shell installer's bash wrapper makes argv[0] the repo `nastech`
+# python script whose `#!/usr/bin/env python3` shebang resolves to the SYSTEM
+# interpreter when the DE spawns the .desktop entry → ModuleNotFoundError,
+# silent (Terminal=false). The Exec line must prefix sys.executable for any
+# resolved bin that is a python script escaping the running venv.
+def test_exec_prefixes_interpreter_for_env_shebang_python_script(tmp_path, xdg_home, monkeypatch):
+    import sys
+
+    root = _make_project(tmp_path)
+    nastech_bin = tmp_path / "bin" / "nastech"
+    nastech_bin.parent.mkdir()
+    nastech_bin.write_text("#!/usr/bin/env python3\nimport nastech_cli\n", encoding="utf-8")
+    nastech_bin.chmod(0o755)
+    monkeypatch.setattr("nastech_cli.relaunch.resolve_nastech_bin", lambda: str(nastech_bin))
+    monkeypatch.setattr(lde, "refresh_desktop_databases", lambda _dir: [])
+
+    entry = lde.install_desktop_entry(root)
+    exec_line = _parse(entry.read_text(encoding="utf-8"))["Exec"]
+
+    interpreter = str(Path(sys.executable).resolve())
+    assert exec_line.split(" ")[0].strip('"') == interpreter
+    assert str(nastech_bin) in exec_line
+    assert exec_line.endswith("desktop")
+
+
+def test_exec_leaves_shell_wrapper_launchers_alone(tmp_path, xdg_home, monkeypatch):
+    root = _make_project(tmp_path)
+    nastech_bin = tmp_path / "bin" / "nastech"
+    nastech_bin.parent.mkdir()
+    nastech_bin.write_text('#!/bin/bash\nexec /opt/nastech/venv/bin/python "$@"\n', encoding="utf-8")
+    nastech_bin.chmod(0o755)
+    monkeypatch.setattr("nastech_cli.relaunch.resolve_nastech_bin", lambda: str(nastech_bin))
+    monkeypatch.setattr(lde, "refresh_desktop_databases", lambda _dir: [])
+
+    entry = lde.install_desktop_entry(root)
+    exec_line = _parse(entry.read_text(encoding="utf-8"))["Exec"]
+
+    # A bash wrapper execs the venv python itself — no interpreter prefix.
+    assert exec_line == f"{nastech_bin} desktop"
+
+
+def test_exec_leaves_venv_shebang_scripts_alone(tmp_path, xdg_home, monkeypatch):
+    import sys
+
+    root = _make_project(tmp_path)
+    nastech_bin = tmp_path / "bin" / "nastech"
+    nastech_bin.parent.mkdir()
+    interpreter = str(Path(sys.executable).resolve())
+    nastech_bin.write_text(f"#!{interpreter}\nimport nastech_cli\n", encoding="utf-8")
+    nastech_bin.chmod(0o755)
+    monkeypatch.setattr("nastech_cli.relaunch.resolve_nastech_bin", lambda: str(nastech_bin))
+    monkeypatch.setattr(lde, "refresh_desktop_databases", lambda _dir: [])
+
+    entry = lde.install_desktop_entry(root)
+    exec_line = _parse(entry.read_text(encoding="utf-8"))["Exec"]
+
+    # Console-script with the venv's own interpreter in the shebang: correct
+    # as-is, prefixing would only add noise.
+    assert exec_line == f"{nastech_bin} desktop"
+
+
 def test_install_is_idempotent_and_skips_cache_refresh(tmp_path, xdg_home, monkeypatch):
     root = _make_project(tmp_path)
     monkeypatch.setattr("nastech_cli.relaunch.resolve_nastech_bin", lambda: "/usr/bin/nastech")
