@@ -27,11 +27,11 @@ concurrency:
 jobs:
   bootstrap-installer:
     name: cargo test (bootstrap installer)
-    # cargo builds codegen units and test binaries in parallel across the
-    # cores. This lane also builds the crate from the start when Cargo.toml
-    # changes.
-    runs-on: ubuntu-latest-32-core
-    timeout-minutes: 30
+    # Cargo still builds and tests the same installer crate, but on the
+    # standard public hosted runner available to this repository. Compilation
+    # uses the available cores; the longer timeout preserves resource headroom.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: apps/bootstrap-installer/src-tauri
