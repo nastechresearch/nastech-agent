@@ -1,9 +1,9 @@
 # actionlint knows only GitHub-hosted runner labels. An org admin names the
 # larger runners. Each one therefore reads as "unknown runner label" and hides
 # the real findings, unless this file declares it.
+#
+# Nastech runs on standard hosted runners only — no larger runners are
+# configured for this org, so any `-core` label queues forever. Keep this list
+# empty unless org admins actually name a custom runner.
 self-hosted-runner:
-  labels:
-    - ubuntu-latest-96-core
-    - ubuntu-latest-32-core
-    - ubuntu-latest-32-arm-core
-    - windows-latest-32-core
+  labels: []
