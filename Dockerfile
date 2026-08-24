@@ -298,7 +298,7 @@ RUN uv pip install --no-cache-dir --no-deps -e "."
 USER root
 RUN mkdir -p /opt/nastech/bin && \
     cp /opt/nastech/docker/nastech-exec-shim.sh /opt/nastech/bin/nastech && \
-    chmod 0755 /opt/nastech/bin/nastech && \
+    chmod 0755 /opt/nastech /opt/nastech/bin/nastech && \
     printf 'docker\n' > /opt/nastech/.install_method
 # The ``.install_method`` stamp is baked next to the running code (the install
 # tree), NOT into $NASTECH_HOME. $NASTECH_HOME (/opt/data) is a shared data

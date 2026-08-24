@@ -30,10 +30,8 @@ jobs:
     # cargo builds codegen units and test binaries in parallel across the
     # cores. This lane also builds the crate from the start when Cargo.toml
     # changes.
-    runs-on: ubuntu-latest
-    # cargo parallelism scales with cores; standard hosted runners have 4,
-    # so allow more wall clock than the larger-runner budget.
-    timeout-minutes: 45
+    runs-on: ubuntu-latest-32-core
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: apps/bootstrap-installer/src-tauri

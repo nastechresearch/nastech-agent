@@ -52,10 +52,10 @@ jobs:
     if: needs.detect.outputs.nix == 'true'
     # The build compiles the package and its whole dependency closure, so this
     # takes minutes and not seconds when the cache misses. `nix flake check`
-    # builds 21 checks, and --max-jobs defaults to the core count — 4 on a
-    # standard hosted runner, so allow extra wall clock for a cold store.
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
+    # builds 21 checks, and --max-jobs defaults to the core count. It uses the
+    # wider runner with no more configuration.
+    runs-on: ubuntu-latest-32-core
+    timeout-minutes: 60
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

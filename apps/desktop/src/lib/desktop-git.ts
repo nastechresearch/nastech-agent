@@ -7,6 +7,7 @@ import type {
   NastechReviewList,
   NastechReviewShipInfo
 } from '@/global'
+import { nastechApi } from '@/nastech'
 
 import { desktopFsProfile, isDesktopFsRemoteMode } from './desktop-fs'
 
@@ -25,7 +26,7 @@ function desktopApi<T>(path: string, body?: Record<string, unknown>): Promise<T>
     throw new Error('Nastech Desktop bridge is unavailable')
   }
 
-  return desktop.api<T>(
+  return nastechApi<T>(
     body ? { body, method: 'POST', path, profile: desktopFsProfile() } : { path, profile: desktopFsProfile() }
   )
 }
