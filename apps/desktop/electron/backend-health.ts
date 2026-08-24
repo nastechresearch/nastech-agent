@@ -38,6 +38,10 @@ export interface NastechReadyOptions {
 export const REMOTE_SESSION_EXPIRED_MESSAGE =
   'Your remote gateway session has expired. Open Settings → Gateway and click "Sign in" again.'
 
+export const REMOTE_UNSIGNED_OAUTH_MESSAGE =
+  'Remote Nastech gateway uses OAuth, but you are not signed in. ' +
+  'Open Settings → Gateway and click "Sign in", or switch back to Local.'
+
 /**
  * True for HTTP 502/503/504 from the backend — a server-side fault, not a
  * connectivity or auth issue. These keep polling in the readiness loop but,
@@ -196,6 +200,19 @@ export function makeReauthRequiredError(detail?: string): Error {
   if (detail) {
     error.detail = detail
   }
+
+  return error
+}
+
+/**
+ * No native token and no live cookie: boot cannot self-heal. Must carry
+ * `isReauthRequired` so startNastech latches; `needsOauthLogin` alone only
+ * drives Sign in copy and would retry after #88070, hiding the overlay.
+ */
+export function makeUnsignedOauthError(): Error {
+  const error = new Error(REMOTE_UNSIGNED_OAUTH_MESSAGE) as any
+  error.needsOauthLogin = true
+  error.isReauthRequired = true
 
   return error
 }

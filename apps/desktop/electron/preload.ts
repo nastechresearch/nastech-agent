@@ -196,6 +196,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     set: maxMb => ipcRenderer.invoke('nastech:data-url-read-max:set', maxMb)
   },
   readFileText: filePath => ipcRenderer.invoke('nastech:readFileText', filePath),
+  readPluginSource: (filePath: string) => ipcRenderer.invoke('nastech:readPluginSource', filePath),
   selectPaths: options => ipcRenderer.invoke('nastech:selectPaths', options),
   selectSavePath: options => ipcRenderer.invoke('nastech:selectSavePath', options),
   writeClipboard: text => ipcRenderer.invoke('nastech:writeClipboard', text),

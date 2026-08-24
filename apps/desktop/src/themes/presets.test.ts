@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { BUILTIN_THEME_LIST, DEFAULT_TYPOGRAPHY, EMOJI_FALLBACK } from './presets'
+import {
+  BUILTIN_THEME_LIST,
+  BUILTIN_THEMES,
+  DEFAULT_SKIN_NAME,
+  DEFAULT_TYPOGRAPHY,
+  EMOJI_FALLBACK,
+  nastechAltTheme
+} from './presets'
 
 // #40364: none of the UI text/mono fonts carry emoji glyphs, so every font
 // stack must end with a color-emoji fallback or emoji render as tofu on
@@ -29,5 +36,17 @@ describe('theme typography emoji fallback (#40364)', () => {
     expect(EMOJI_FALLBACK).toContain('Apple Color Emoji')
     expect(EMOJI_FALLBACK).toContain('Segoe UI Emoji')
     expect(EMOJI_FALLBACK).toContain('Noto Color Emoji')
+  })
+})
+
+// The pre-GitHub Nastech palette stays available as nastech-alt; the default name
+// still means GitHub chrome + brand blue.
+describe('nastech-alt is the retired Nastech, not the default', () => {
+  it('is registered under its own name and leaves nastech as the default', () => {
+    expect(DEFAULT_SKIN_NAME).toBe('nastech')
+    expect(BUILTIN_THEMES['nastech-alt']).toBe(nastechAltTheme)
+    expect(BUILTIN_THEMES.nastech).not.toBe(nastechAltTheme)
+    expect(nastechAltTheme.darkColors?.background).toBe('#0D2F86')
+    expect(BUILTIN_THEMES.nastech.darkColors?.background).not.toBe(nastechAltTheme.darkColors?.background)
   })
 })

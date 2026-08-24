@@ -200,6 +200,7 @@ Nastech uses separate lightweight models for side tasks. Each task has its own p
 | MCP | MCP helper operations | `auxiliary.mcp` |
 | Approval | Smart command-approval classification | `auxiliary.approval` |
 | Title Generation | Session title summaries | `auxiliary.title_generation` |
+| Review | `/review` reviewer subagent (full agent, not a single LLM call) | `auxiliary.review` |
 | Triage Specifier | `nastech kanban specify` / dashboard ✨ button — fleshes out a one-liner triage task into a real spec | `auxiliary.triage_specifier` |
 
 ### Auto-Detection Chain
