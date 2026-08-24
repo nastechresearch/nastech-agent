@@ -6,101 +6,79 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 367 commits affecting 1323 files.
-- **Source revision:** `c584d15cdc31`.
-- **Previous source revision:** `261a4efb90d7`.
+- **Changes incorporated:** 162 commits affecting 1334 files.
+- **Source revision:** `057dcdf236f8`.
+- **Previous source revision:** `c584d15cdc31`.
 
 ## Technical coverage
 
-- **.dockerignore/:** 1 changed files.
-- **.gitignore/:** 4 changed files.
-- **acp_adapter/:** 1 changed files.
-- **agent/:** 60 changed files.
-- **apps/:** 533 changed files.
-- **cli-config.yaml.example/:** 2 changed files.
-- **cli.py/:** 5 changed files.
-- **contributors/:** 35 changed files.
-- **cron/:** 21 changed files.
-- **default.tar.gz/:** 1 changed files.
-- **gateway/:** 31 changed files.
-- **log.txt/:** 1 changed files.
-- **nastech_cli/:** 104 changed files.
-- **nastech_state.py/:** 10 changed files.
-- **nastech_state_common.py/:** 5 changed files.
-- **nastech_state_portability.py/:** 2 changed files.
-- **nastech_state_schema.py/:** 3 changed files.
-- **nastech_state_search.py/:** 2 changed files.
-- **package-lock.json/:** 1 changed files.
-- **plugins/:** 2 changed files.
-- **run_agent.py/:** 5 changed files.
-- **scripts/:** 7 changed files.
-- **sqlite_leak_fix.png/:** 1 changed files.
-- **tests/:** 267 changed files.
-- **tools/:** 50 changed files.
+- **Dockerfile/:** 1 changed files.
+- **agent/:** 26 changed files.
+- **apps/:** 182 changed files.
+- **batch_runner.py/:** 2 changed files.
+- **cli.py/:** 7 changed files.
+- **contributors/:** 11 changed files.
+- **cron/:** 10 changed files.
+- **gateway/:** 22 changed files.
+- **nastech_cli/:** 37 changed files.
+- **nastech_constants.py/:** 2 changed files.
+- **nastech_state.py/:** 7 changed files.
+- **nastech_state_portability.py/:** 1 changed files.
+- **plugins/:** 6 changed files.
+- **run_agent.py/:** 9 changed files.
+- **scripts/:** 5 changed files.
+- **tests/:** 108 changed files.
+- **tools/:** 20 changed files.
 - **tui_gateway/:** 33 changed files.
 - **ui-tui/:** 3 changed files.
-- **web/:** 1 changed files.
-- **website/:** 27 changed files.
+- **web/:** 3 changed files.
+- **website/:** 7 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(bots): typed failure reasons reach the sending agent on A2A calls (#93091)
-- feat(bots): retry session policy — resume transient turns, compress-and-resume on context overflow (#93091 item 5)
-- feat: every subagent's prompt embeds the workspace's project context files
-- feat: /review briefing embeds the workspace's project context files
-- feat: /review briefing carries the parent's loaded skills
-- feat: review slot appears in every aux-model picker (desktop, dashboard, CLI)
-- feat(desktop): OAuth sign-in for registry connections; keep profile picks on the browsed source (#92194)
-- feat: /review command — independent reviewer subagent on every surface
-- feat(desktop): bring the old Nastech palette back as Nastech Alt
-- feat(bot-mode): per-profile turn lock — concurrent deliveries queue instead of racing (#93091)
-- feat(bot-mode): push-notified relay drain with poll backstop (#93091)
-- feat(bot-mode): envelope TTL + offline fast-fail for bot relay (#93091 item 2)
-- 16 additional new capabilities updates are included in this verified snapshot.
+- feat(shared): heartbeat and socket-generation invalidation in JsonRpcGatewayClient
+- feat(gateway): add gateway.ping heartbeat wire contract
+- feat(cron): add explicit one-shot re-arm
+- feat(desktop): HUD game-overlay mode
 
 ### Reliability and fixes
 
-- fix(classifier): 429 quota walls route to billing across providers; reset signals stay rate-limited
-- fix(state): reap only proven database holders
-- fix(state): recover FTS after orphan holder deferrals
-- fix(auth): rotate credentials for named custom providers after 401/429
-- fix(auth): canonicalize configured provider display names
-- fix(auth): preserve configured provider compatibility
-- fix(auth): normalize configured provider pool keys
-- fix(gateway): stop multiplex allowlist leak and bot-relay python -c injection
-- fix(dashboard): name the exact gate trigger in fail-closed refusals
-- fix(dashboard): secure loopback public URL proxy mode
-- fix(state): stop rebuilding the whole FTS index on every open when the trigram tokenizer is missing
-- fix(telegram): watchdog silent long-poll death via last getUpdates progress (#92991)
-- 220 additional reliability and fixes updates are included in this verified snapshot.
-
-### Performance
-
-- perf(bluebubbles): move attachment reads off the event loop
+- fix(desktop): polish HUD movement and resizing on X11
+- fix(desktop): add a HUD layout reset control
+- fix(desktop): keep the Linux HUD clickable and recoverable
+- fix(desktop): debounce and re-verify zoom on Linux Wayland
+- fix(desktop): move the Linux HUD with a native compositor drag
+- fix(mcp): resolve tool-call timeouts via the unified deadline layer (#85125 2g)
+- fix(cron): share liveness helper with CLI and extend it to cronjob list
+- fix(cron): surface gateway liveness in cronjob tool results (#87033)
+- fix(tui): heartbeat and bounded reconnect for silent WebSocket drops
+- fix(desktop-update): use the system default browser for the update shim
+- fix(desktop): hold a per-turn socket lease so group-chat member turns survive the runtime-session reaper (#93602)
+- fix(desktop): scope branch-opens-primary to the currently selected session
+- 91 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs: dashboard ws keepalive + orphan-reap grace config keys
-- docs: make the mutate-then-persist marker contract explicit (#92231 review)
-- docs: record why the reap grace window exists in the reaper docstring
+- docs(desktop): document Linux and Wayland HUD behavior
+- docs(auth): correct the SameSite contract in the cookie source docs
 
 ### Improvements
 
-- test(bots): turn-lock fake Proc gains stdout/stderr attrs
-- chore: map e-macgregor contributor email
-- chore: map contributor email for cxxCoolStar
-- chore: add contributor email mapping for jackijianxa
-- chore: map contributor emails for ring-2 salvage (A2chitect, c-pompa)
-- harden(adoption): review findings — exact-id donors only, divergence guard, honest donor_retired
-- fmt(js): `npm run fix` on merge (#93429)
-- chore: map wingkwong contributor email
-- test(cua): pin PATH-preservation contract, not byte equality
-- chore: map UniversePeak contributor email
-- test(cron): e2e regression — scrubbed child env resolves bare nastech under minimal parent PATH
-- test(agent): drain truncation warnings before and after each prompt-builder test
-- 91 additional improvements updates are included in this verified snapshot.
+- Merge pull request #93830 from kshitijk4poor/fix/85125-2g-mcp-timeout-resolution
+- Merge pull request #93826 from kshitijk4poor/fix/85125-2f-telegram-deadline-migration
+- refactor(telegram): migrate _await_with_thread_deadline onto agent.deadline.run_bounded_async (#85125 2f)
+- refactor(cron): parameterize liveness warning plurality, drop fragile string replace
+- Merge pull request #93793 from Nastechresearch/salv/autospeak-test-93540
+- test: drop unused param in group-turn lease mock (lint)
+- Merge pull request #93773 from kshitijk4poor/fix/codex-sdk-transform-bypass-93650-v2
+- Merge pull request #93784 from Nastechresearch/salv/81234-retry-carrier
+- test(desktop): pin auto-speak silence across an Edge TTS fallback id rewrite
+- test(terminal): harden watch_patterns lifetime cap — delivered-only counting, Nth-delivery promotion, docstring
+- test(bot-relay): match delivery CLI by basename in argv filters
+- test(model_metadata): lock in max_tokens last-resort fallback + cache self-heal
+- 41 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
