@@ -8,7 +8,8 @@ import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 // "Desktop IPC bridge is unavailable"). No reply means no glass, which degrades
 // to an ordinary opaque window rather than a page thinned over nothing.
 const translucencySupport = ipcRenderer.sendSync('nastech:translucency:support')
-const hudNativeDrag = ipcRenderer.sendSync('nastech:hud:native-drag') === true
+const hudWindowing = ipcRenderer.sendSync('nastech:hud:windowing')
+const hudNativeDrag = hudWindowing?.nativeDrag === true
 
 contextBridge.exposeInMainWorld('nastechDesktop', {
   glassSupported: translucencySupport?.glass === true,
@@ -72,6 +73,12 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   // window; `onChanged` keeps every window's toggle truthful.
   hud: {
     nativeDrag: hudNativeDrag,
+    windowing: {
+      clientPlacement: hudWindowing?.clientPlacement !== false,
+      controlDrag: hudWindowing?.controlDrag === true,
+      nativeDrag: hudNativeDrag,
+      workspaceTransfer: hudWindowing?.workspaceTransfer === true
+    },
     open: request => ipcRenderer.invoke('nastech:hud:open', request),
     close: () => ipcRenderer.invoke('nastech:hud:close'),
     setIgnoreMouse: ignore => ipcRenderer.send('nastech:hud:ignore-mouse', ignore),

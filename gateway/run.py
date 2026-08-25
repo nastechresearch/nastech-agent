@@ -1823,6 +1823,16 @@ _TOOL_MEDIA_RE = re.compile(
 )
 
 
+# Shared with cron delivery and gateway background tasks — the repair must
+# run on every surface that feeds a final response into media extraction.
+# Canonical names live in gateway.media_repair (same retirement of private
+# aliases as the agent.replay_cleanup import above).
+from gateway.media_repair import (  # noqa: E402
+    repair_explicit_computer_use_media_paths,
+    tool_name_by_call_id as _tool_name_by_call_id,
+)
+
+
 def _collect_auto_append_media_tags(
     messages: List[Dict[str, Any]],
     history_offset: int = 0,
@@ -1854,16 +1864,7 @@ def _collect_auto_append_media_tags(
     else:
         new_messages = messages
 
-    tool_name_by_call_id: Dict[str, str] = {}
-    for msg in new_messages:
-        if msg.get("role") != "assistant":
-            continue
-        for call in msg.get("tool_calls") or []:
-            call_id = call.get("id") or call.get("call_id")
-            fn = call.get("function") or {}
-            name = str(fn.get("name") or call.get("name") or "")
-            if call_id and name:
-                tool_name_by_call_id[str(call_id)] = name
+    tool_name_by_call_id = _tool_name_by_call_id(new_messages)
 
     media_tags: List[str] = []
     has_voice_directive = False
@@ -1918,7 +1919,7 @@ def _collect_history_media_paths(agent_history: List[Dict[str, Any]]) -> set:
     shape caused repeated delivery when the model echoed a previous MEDIA tag.
     """
     paths: set = set()
-    tool_name_by_call_id: Dict[str, str] = {}
+    tool_name_by_call_id = _tool_name_by_call_id(agent_history)
 
     def _add_text_media_paths(content: str) -> None:
         for match in _TOOL_MEDIA_RE.finditer(content):
@@ -1932,14 +1933,6 @@ def _collect_history_media_paths(agent_history: List[Dict[str, Any]]) -> set:
         media_files, _ = BasePlatformAdapter.extract_media(content)
         paths.update(path for path, _is_voice in media_files)
 
-    for msg in agent_history:
-        if msg.get("role") == "assistant":
-            for call in msg.get("tool_calls") or []:
-                cid = call.get("id") or call.get("call_id")
-                fn = call.get("function") or {}
-                name = str(fn.get("name") or call.get("name") or "")
-                if cid and name:
-                    tool_name_by_call_id[str(cid)] = name
     for msg in agent_history:
         role = msg.get("role")
         if role == "assistant":
@@ -2411,11 +2404,11 @@ if _config_path.exists():
                         os.environ[_env_var] = str(_val)
         # Compression config is read directly from config.yaml by run_agent.py
         # and auxiliary_client.py — no env var bridging needed.
-        # Auxiliary model/direct-endpoint overrides (vision, web_extract,
+        # Auxiliary model/direct-endpoint overrides (vision,
         # approval, plus any plugin-registered auxiliary tasks).
         # Each task has provider/model/base_url/api_key; bridge non-default
         # values to env vars named AUXILIARY_<KEY_UPPER>_*. The legacy
-        # hard-coded list (vision/web_extract/approval) is replaced by a
+        # hard-coded list (vision/approval) is replaced by a
         # dynamic loop so plugin-registered tasks benefit from the same
         # config→env bridging without core knowing about each one.
         _auxiliary_cfg = _cfg.get("auxiliary", {})
@@ -2423,7 +2416,7 @@ if _config_path.exists():
             # Built-in tasks that previously had explicit env-var bridging.
             # Kept here as the canonical bridged set; plugin tasks are added
             # below via the plugin auxiliary registry.
-            _aux_bridged_keys = {"vision", "web_extract", "approval"}
+            _aux_bridged_keys = {"vision", "approval"}
             try:
                 from nastech_cli.plugins import get_plugin_auxiliary_tasks
                 for _entry in get_plugin_auxiliary_tasks():
@@ -6429,6 +6422,20 @@ class TurnRunner:
             except Exception:
                 pass
             reset_current_session_key(_approval_session_token)
+        # Canonicalize an explicitly emitted computer-use screenshot path at
+        # the common result boundary. The streaming finalizer below and the
+        # normal non-streaming delivery path must see the same response;
+        # repairing only during later media scanning leaves streaming with the
+        # model-mangled path and a rejected attachment.
+        if isinstance(result, dict):
+            _result_final = result.get("final_response")
+            if isinstance(_result_final, str):
+                result["final_response"] = repair_explicit_computer_use_media_paths(
+                    _result_final,
+                    result.get("messages", []),
+                    history_offset=len(agent_history),
+                )
+
         ctx.result_holder[0] = result
 
         # Signal the stream consumer that the agent is done. Pass the
@@ -22779,6 +22786,15 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             response = result.get("final_response", "") if result else ""
             if not response and result and result.get("error"):
                 response = f"Error: {result['error']}"
+
+            # Background tasks start a fresh conversation (no prior history),
+            # so history_offset=0: every message in the run belongs to this
+            # turn. Mirrors the repair on the main turn path.
+            if response:
+                response = repair_explicit_computer_use_media_paths(
+                    response,
+                    result.get("messages", []),
+                )
 
             # Extract media files from the response
             if response:

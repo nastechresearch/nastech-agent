@@ -1,10 +1,10 @@
 ---
 sidebar_position: 1
-title: "Quickstart"
+title: "Nastech Agent Quickstart"
 description: "Your first conversation with Nastech Agent — from install to chatting in under 5 minutes"
 ---
 
-# Quickstart
+# Nastech Agent Quickstart
 
 This guide gets you from zero to a working Nastech setup that survives real use. Install, choose a provider, verify a working chat, and know exactly what to do when something breaks.
 

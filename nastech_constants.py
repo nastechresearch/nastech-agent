@@ -1022,7 +1022,13 @@ def secure_parent_dir(path: Path) -> None:
     prevent catastrophic host bricking when ``NASTECH_HOME`` or other path
     env vars resolve to an unexpected location.
 
-    See https://github.com/NastechResearch/nastech-agent/issues/25821.
+    Also refuses to chmod the nastech-agent install tree (the directory this
+    module lives in, and anything below it): restricting the install dir to
+    0700 locks the runtime user out of traversing it when it does not own
+    the dir, as in the Docker image. A warning is logged when this happens.
+
+    See https://github.com/NastechResearch/nastech-agent/issues/25821 and
+    https://github.com/NastechResearch/nastech-agent/pull/93050.
     """
     parent = path.parent.resolve()
     # Refuse root and its direct children (/usr, /home, /var, /tmp, …).
@@ -1032,6 +1038,19 @@ def secure_parent_dir(path: Path) -> None:
     # traversal in Docker (UID 10000) and any other install where the
     # runtime user doesn't own the install dir. See #25821, #93050.
     if parent == _INSTALL_ROOT or _INSTALL_ROOT in parent.parents:
+        # A credential file inside the install tree usually means NASTECH_HOME
+        # resolved somewhere unexpected — surface it instead of skipping
+        # silently, since this same misconfiguration previously caused
+        # production lockouts.
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Not restricting permissions on %s: it is inside the "
+            "nastech-agent install directory (%s). Credential files are "
+            "normally stored under the nastech home directory instead.",
+            parent,
+            _INSTALL_ROOT,
+        )
         return
     try:
         os.chmod(parent, 0o700)

@@ -6,79 +6,81 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 162 commits affecting 1334 files.
-- **Source revision:** `057dcdf236f8`.
-- **Previous source revision:** `c584d15cdc31`.
+- **Changes incorporated:** 96 commits affecting 1335 files.
+- **Source revision:** `4c1f53be10d0`.
+- **Previous source revision:** `057dcdf236f8`.
 
 ## Technical coverage
 
-- **Dockerfile/:** 1 changed files.
-- **agent/:** 26 changed files.
-- **apps/:** 182 changed files.
-- **batch_runner.py/:** 2 changed files.
-- **cli.py/:** 7 changed files.
-- **contributors/:** 11 changed files.
-- **cron/:** 10 changed files.
-- **gateway/:** 22 changed files.
-- **nastech_cli/:** 37 changed files.
+- **agent/:** 25 changed files.
+- **apps/:** 149 changed files.
+- **cli-config.yaml.example/:** 1 changed files.
+- **cli.py/:** 1 changed files.
+- **contributors/:** 5 changed files.
+- **cron/:** 2 changed files.
+- **gateway/:** 9 changed files.
+- **nastech_cli/:** 20 changed files.
 - **nastech_constants.py/:** 2 changed files.
-- **nastech_state.py/:** 7 changed files.
-- **nastech_state_portability.py/:** 1 changed files.
-- **plugins/:** 6 changed files.
-- **run_agent.py/:** 9 changed files.
-- **scripts/:** 5 changed files.
-- **tests/:** 108 changed files.
-- **tools/:** 20 changed files.
-- **tui_gateway/:** 33 changed files.
-- **ui-tui/:** 3 changed files.
-- **web/:** 3 changed files.
-- **website/:** 7 changed files.
+- **plugins/:** 10 changed files.
+- **run_agent.py/:** 3 changed files.
+- **tests/:** 61 changed files.
+- **tools/:** 28 changed files.
+- **tui_gateway/:** 7 changed files.
+- **ui-tui/:** 2 changed files.
+- **web/:** 1 changed files.
+- **website/:** 27 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(shared): heartbeat and socket-generation invalidation in JsonRpcGatewayClient
-- feat(gateway): add gateway.ping heartbeat wire contract
-- feat(cron): add explicit one-shot re-arm
-- feat(desktop): HUD game-overlay mode
+- feat(gateway): warn when a Docker sandbox MEDIA path fails translation
+- feat(browser): make snapshot threshold configurable
+- feat: browser snapshots drop LLM summarization — truncate-and-store like web_extract; auxiliary.web_extract slot removed
+- feat(terminal): pluggable terminal environment backends via plugin registry
+- feat(desktop): add Settings toggle for vibe hearts
+- feat(tui-gateway): seq-stamped event replay for lossless desktop reconnect
+- feat(desktop): let the in-app browser hold more than one tab
+- feat(desktop): make Cmd/Ctrl+L focus the composer from anywhere
 
 ### Reliability and fixes
 
-- fix(desktop): polish HUD movement and resizing on X11
-- fix(desktop): add a HUD layout reset control
-- fix(desktop): keep the Linux HUD clickable and recoverable
-- fix(desktop): debounce and re-verify zoom on Linux Wayland
-- fix(desktop): move the Linux HUD with a native compositor drag
-- fix(mcp): resolve tool-call timeouts via the unified deadline layer (#85125 2g)
-- fix(cron): share liveness helper with CLI and extend it to cronjob list
-- fix(cron): surface gateway liveness in cronjob tool results (#87033)
-- fix(tui): heartbeat and bounded reconnect for silent WebSocket drops
-- fix(desktop-update): use the system default browser for the update shim
-- fix(desktop): hold a per-turn socket lease so group-chat member turns survive the runtime-session reaper (#93602)
-- fix(desktop): scope branch-opens-primary to the currently selected session
-- 91 additional reliability and fixes updates are included in this verified snapshot.
+- fix(approval): machine-readable outcome parity on the gateway tails + sudo human-wait exclusion (#85125 2e)
+- fix(gateway): widen computer-use media path repair to sibling surfaces
+- fix(curator): tell the background reviewer to read before it writes
+- fix(background-review): teach review prompts the enforced read-before-write handshake
+- fix: follow-up for salvaged PR #93985 — cache key, snapshot, dead code
+- fix(memory): keep OpenViking identity operations consistent
+- fix(memory): scope OpenViking user cache to connection
+- fix(memory): emit explicit-uid OpenViking URIs resolved from system status
+- fix(memory): migrate OpenViking URIs to the viking://~ home alias
+- fix(skills): preserve review marks across contexts
+- fix(gateway): resolve session-scoped Docker sandboxes for MEDIA delivery (#93950)
+- fix(fallback): surface provider transitions and primary recovery
+- 39 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(desktop): document Linux and Wayland HUD behavior
-- docs(auth): correct the SameSite contract in the cookie source docs
+- docs(gemini): update to use latest gemini models
+- docs: note httpcore pin dependency in _enable_happy_eyeballs
+- docs: add operator remediation for install dirs locked to 0700 by older images
+- docs: update secure_parent_dir docstring and caller comments for the install-tree exclusion
 
 ### Improvements
 
-- Merge pull request #93830 from kshitijk4poor/fix/85125-2g-mcp-timeout-resolution
-- Merge pull request #93826 from kshitijk4poor/fix/85125-2f-telegram-deadline-migration
-- refactor(telegram): migrate _await_with_thread_deadline onto agent.deadline.run_bounded_async (#85125 2f)
-- refactor(cron): parameterize liveness warning plurality, drop fragile string replace
-- Merge pull request #93793 from Nastechresearch/salv/autospeak-test-93540
-- test: drop unused param in group-turn lease mock (lint)
-- Merge pull request #93773 from kshitijk4poor/fix/codex-sdk-transform-bypass-93650-v2
-- Merge pull request #93784 from Nastechresearch/salv/81234-retry-carrier
-- test(desktop): pin auto-speak silence across an Edge TTS fallback id rewrite
-- test(terminal): harden watch_patterns lifetime cap — delivered-only counting, Nth-delivery promotion, docstring
-- test(bot-relay): match delivery CLI by basename in argv filters
-- test(model_metadata): lock in max_tokens last-resort fallback + cache self-heal
-- 41 additional improvements updates are included in this verified snapshot.
+- Merge pull request #94568 from kshitijk4poor/fix/85125-2e-approval-outcome-parity-v2
+- Merge pull request #94536 from kshitijk4poor/salvage/94439-computer-use-media-path
+- refactor(gateway): retire private repair alias per replay_cleanup precedent
+- chore: map contributor email for salvage attribution
+- refactor(gateway): unify computer-use repair call sites after review
+- chore: map contributor email for salvage attribution
+- test(curator): assert the instruction through the delivered prompt, not the source
+- test(gateway): accept session_key kwarg in media resend dedup stubs
+- test(telegram): cover send() waiting for reconnect after a network blip
+- test(teams): cover connect when the namespace exists but App is unbound
+- test(desktop): stop the syntax-diff mock factory from leaking unhandled rejections (#94415)
+- test: opted-out profile seeding now exercises the essential-only sync subprocess
+- 21 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
