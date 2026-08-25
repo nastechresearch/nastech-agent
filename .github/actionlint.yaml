@@ -3,7 +3,7 @@
 # the real findings, unless this file declares it.
 self-hosted-runner:
   labels:
-    - ubuntu-latest-96-core
-    - ubuntu-latest-32-core
-    - ubuntu-latest-32-arm-core
-    - windows-latest-32-core
+    - ubuntu-latest
+    - ubuntu-latest
+    - ubuntu-24.04-arm
+    - windows-latest
