@@ -930,7 +930,8 @@ export const zhHant = defineLocale({
       disableTool: tool => `停用 ${tool}`,
       noOutput: '尚無輸出。',
       deepLinkTitle: '新增 MCP 伺服器？',
-      deepLinkDescription: '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
+      deepLinkDescription:
+        '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
       deepLinkStdioWarning: '此伺服器會使用下方所示指令在你的電腦上執行本機程序。僅在信任其來源時繼續。',
       deepLinkConfirm: '新增伺服器',
       deepLinkNameInvalid: '名稱須為 1-64 個字母、數字、點、連字號或底線。',
