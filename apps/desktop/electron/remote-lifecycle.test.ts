@@ -1050,7 +1050,8 @@ test('spawnRemoteDashboard removes a token file when upload reporting fails', as
   ])
 
   await assert.rejects(
-    () => spawnRemoteDashboard(ssh, { nastechPath: '/x/nastech', profile: '', token: 'tok', ownershipId: OWNERSHIP_ID }),
+    () =>
+      spawnRemoteDashboard(ssh, { nastechPath: '/x/nastech', profile: '', token: 'tok', ownershipId: OWNERSHIP_ID }),
     /channel closed/
   )
   assert.ok(ssh.calls.some(command => /rm -f .*\.token/.test(command)))
