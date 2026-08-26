@@ -171,6 +171,24 @@ export function backendScopeKey(connectionId: null | string | undefined, profile
   return `conn:${connection}::${profileKey}`
 }
 
+/**
+ * Inverse of backendScopeKey(): recover (connectionId, profile) from a pool
+ * key. A bare profile key (the local/primary scope) maps to a null
+ * connectionId. Used by the post-resume rebuild path (#93910) to re-dial a
+ * retired pool entry through the same claim-guarded ensure path a renderer
+ * would use.
+ */
+export function parseBackendScopeKey(key: string): { connectionId: null | string; profile: string } {
+  const value = String(key ?? '').trim()
+  const match = /^conn:(.+?)::(.+)$/.exec(value)
+
+  if (!match) {
+    return { connectionId: null, profile: value || 'default' }
+  }
+
+  return { connectionId: match[1], profile: match[2] }
+}
+
 /** All pool keys owned by a connection share this prefix (used to stop them on remove). */
 export function backendScopePrefix(connectionId: string): string {
   return `conn:${String(connectionId).trim()}::`
@@ -395,6 +413,22 @@ export async function reuseMatchingPrimarySshBackend({
   }
 
   return descriptor
+}
+
+/**
+ * Whether a registry-scoped request names the already-running primary backend.
+ * Main uses this before opening a pooled registry backend so the registry's
+ * primary SSH/remote source cannot spawn a second isolated server for the same
+ * descriptor.
+ */
+export function registrySourceOwnsPrimaryBackend(
+  registry: ConnectionRegistry,
+  connectionId: null | string | undefined,
+  descriptor: ResolvedConnectionDescriptor
+): boolean {
+  const id = String(connectionId ?? '').trim()
+
+  return Boolean(id) && id === registry.primary && resolvedConnectionId(registry, descriptor) === id
 }
 
 function normalizedSshTarget(route: { host?: unknown; port?: unknown; user?: unknown }): null | string {

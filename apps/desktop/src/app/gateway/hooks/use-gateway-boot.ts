@@ -3,11 +3,11 @@ import { useEffect, useRef } from 'react'
 
 import { shouldApplyPostBootProgressError } from '@/components/boot-failure-reauth'
 import type { NastechConnection } from '@/global'
+import { NastechGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd } from '@/lib/desktop-fs'
 import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
-import { withTimeout } from '@/lib/with-timeout'
-import { NastechGateway } from '@/nastech'
+import { BACKEND_BOOT_WAIT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
 import {
   $desktopBoot,
   applyDesktopBootProgress,
@@ -16,6 +16,7 @@ import {
   resumeDesktopBootForRetry,
   setDesktopBootStep
 } from '@/store/boot'
+import { resetBackgroundPollingGuard } from '@/store/composer-status'
 import {
   $gateway,
   activeGatewayConnectionId,
@@ -54,8 +55,10 @@ import {
   $activeSessionId,
   $connection,
   $currentCwd,
+  $selectedStoredSessionId,
   $sessions,
   ensureDefaultWorkspaceCwd,
+  forgetSessionOwnerHintsForConnection,
   setConnection,
   setCurrentBranch,
   setCurrentCwd,
@@ -63,6 +66,7 @@ import {
 } from '@/store/session'
 import {
   $attentionSessionIds,
+  $sessionOwnerHoldRevision,
   $sessionTiles,
   $workingSessionIds,
   foregroundSessionScopes,
@@ -124,9 +128,7 @@ const BOOT_RETRY_BASE_DELAY_MS = 2_000
 const RECONNECT_ATTEMPT_TIMEOUT_MS = 20_000
 
 /** Registry identity whose runtimes died with the primary connection. */
-export function primaryRuntimeConnectionId(
-  connection: Pick<NastechConnection, 'connectionId' | 'mode'>
-): null | string {
+export function primaryRuntimeConnectionId(connection: Pick<NastechConnection, 'connectionId' | 'mode'>): null | string {
   const connectionId = connection.connectionId?.trim()
 
   if (connectionId) {
@@ -343,6 +345,11 @@ export function useGatewayBoot({
         resetTileRuntimeBindings(
           primaryRuntimeConnectionId(conn) ?? { liveConnectionIds: liveSecondaryConnectionIds() }
         )
+        // The status-stack poll guard latches session ids the OLD runtime
+        // reported gone (4001). A respawned backend re-mints runtimes, so
+        // those ids may be live again after re-resume — clear the latch with
+        // the same lifetime as the runtime bindings it shadows.
+        resetBackgroundPollingGuard()
         // Same staleness, other half: pre-reconnect busy flags are keyed by
         // those dead runtime ids and would never receive their terminal
         // busy:false — clear them or the sidebar running arc lies forever
@@ -539,7 +546,16 @@ export function useGatewayBoot({
 
         // Same override rule as boot(): a profile-pinned helper window stays
         // on its pinned profile's backend across a soft switch.
-        const conn = await desktop.getConnection(windowProfileOverride() ?? undefined)
+        // Bounded for the same reason as attemptReconnect() (#93454): a wedged
+        // main-process round-trip must not latch $gatewaySwitching stuck —
+        // the `finally` below only runs once this promise settles. Uses the
+        // shared backend-boot budget rather than the reconnect budget because
+        // ensureBackend may cold-spawn a pooled helper backend here.
+        const conn = await withTimeout(
+          desktop.getConnection(windowProfileOverride() ?? undefined),
+          BACKEND_BOOT_WAIT_TIMEOUT_MS,
+          'Timed out reconnecting to Nastech backend'
+        )
 
         if (!ownsSwitch()) {
           return
@@ -674,6 +690,15 @@ export function useGatewayBoot({
     // (connectionId, profile) keep-set so two sources exposing the same
     // profile name (every source has a 'default') can't collide.
     configureGatewayRegistry({
+      // The primary socket has no secondary entry to carry registry identity.
+      // Electron's published active descriptor is authoritative after boot;
+      // a true legacy primary has no connectionId and remains unqualified.
+      activeConnectionId: () => $connection.get()?.connectionId ?? null,
+      // Every dispose path in the registry (live-work pruner AND the
+      // refcount-0 request leases) spares a socket a mounted tile, the
+      // primary thread or a just-created session's owner hold is bound to
+      // (#93892).
+      foregroundScopes: foregroundSessionScopes,
       onActiveConnectionChanged: publish,
       // Keep $activeGatewayProfile in lockstep with the registry's OWN record
       // of which profile the active socket serves. The registry is the only
@@ -771,7 +796,22 @@ export function useGatewayBoot({
         return
       }
 
+      // 'saved' is a pure registry-refresh push (new connection or label
+      // rename — #95393): no endpoint moved, so there is nothing to dispose,
+      // redial, or forget. The switcher's own onChanged listener re-pulls the
+      // registry snapshot for it.
+      if (payload.reason === 'saved') {
+        return
+      }
+
       disposeSecondariesForConnection(payload.connectionId, { redial: payload.reason === 'updated' })
+
+      if (payload.reason !== 'updated') {
+        // Nothing can dial the removed source again: drop the persisted exact
+        // owner hints naming it so its sessions are not pinned (fail-closed)
+        // to a route that no longer exists.
+        forgetSessionOwnerHintsForConnection(payload.connectionId)
+      }
     })
 
     const onOnline = () => void forceReconnectNow()
@@ -823,6 +863,11 @@ export function useGatewayBoot({
         keep.add(scope)
       }
 
+      // A just-created session's owner hold and every open pane's owner ride
+      // in through foregroundSessionScopes above; the registry ALSO reads that
+      // set itself (its `foregroundScopes` hook) so the refcount-0 lease
+      // releases agree with this pruner. This recompute only has to RUN when
+      // they change — see the tile / selected session / hold subscriptions.
       pruneSecondaryGateways(keep)
     }
 
@@ -832,6 +877,8 @@ export function useGatewayBoot({
     const offSessionTiles = $sessionTiles.subscribe(() => recomputeKeptGateways())
     const offActiveProfile = $activeGatewayProfile.subscribe(() => recomputeKeptGateways())
     const offTiles = $sessionTiles.subscribe(() => recomputeKeptGateways())
+    const offSelectedSession = $selectedStoredSessionId.subscribe(() => recomputeKeptGateways())
+    const offSessionOwnerHolds = $sessionOwnerHoldRevision.subscribe(() => recomputeKeptGateways())
 
     const offWindowState = desktop.onWindowStateChanged?.(payload => {
       const current = $connection.get()
@@ -863,7 +910,15 @@ export function useGatewayBoot({
         // A profile-pinned helper window (the HUD) dials its target profile's
         // backend directly — ensureBackend spawns/reuses it from the pool.
         // Everything else keeps dialing the primary.
-        const conn = await desktop.getConnection(windowProfileOverride() ?? undefined)
+        // Bounded like the reconnect path (#93454): a wedged main-process
+        // round-trip must not hang "Starting Nastech…" forever. Initial boot
+        // rides out a full backend cold spawn, so it gets the shared 45s
+        // backend-boot budget, not the 20s reconnect budget.
+        const conn = await withTimeout(
+          desktop.getConnection(windowProfileOverride() ?? undefined),
+          BACKEND_BOOT_WAIT_TIMEOUT_MS,
+          'Timed out connecting to Nastech backend'
+        )
 
         if (cancelled) {
           return
@@ -1029,6 +1084,8 @@ export function useGatewayBoot({
       offSessionTiles()
       offActiveProfile()
       offTiles()
+      offSelectedSession()
+      offSessionOwnerHolds()
       window.removeEventListener('online', onOnline)
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onFocus)

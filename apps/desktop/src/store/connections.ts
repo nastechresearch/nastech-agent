@@ -2,7 +2,8 @@ import { atom, computed } from 'nanostores'
 
 import type { DesktopConnectionsRegistry } from '@/global'
 import { persistStringRecord, storedStringRecord } from '@/lib/storage'
-import { isTimeoutError, withTimeout } from '@/lib/with-timeout'
+import { BACKEND_BOOT_WAIT_TIMEOUT_MS, isTimeoutError, withTimeout } from '@/lib/with-timeout'
+import { $connectionsRegistry } from '@/store/connection-registry-state'
 import {
   beginGatewaySwitch,
   endGatewaySwitch,
@@ -13,6 +14,7 @@ import {
   $activeGatewayProfile,
   $newChatProfile,
   $showAllProfiles,
+  captureNewChatSource,
   ensureGatewayAgent,
   normalizeProfileKey,
   openGatewayAgent,
@@ -30,8 +32,13 @@ const LAST_PROFILE_STORAGE_KEY = 'nastech.desktop.lastProfileByConnection'
 const SWITCH_DIAL_TIMEOUT_MS = 20_000
 const SWITCH_COMMIT_TIMEOUT_MS = 20_000
 const SWITCH_REMEMBER_TIMEOUT_MS = 5_000
+// Matches the primary spawn budget: a healthy cold boot publishes well within
+// this; anything longer means the primary is not coming and the registry
+// restore should stop waiting for it. Shared constant so the boot-class
+// budgets can't drift apart (see with-timeout.ts).
+const BOOT_DESCRIPTOR_WAIT_TIMEOUT_MS = BACKEND_BOOT_WAIT_TIMEOUT_MS
 
-export const $connectionsRegistry = atom<DesktopConnectionsRegistry | null>(null)
+export { $connectionsRegistry } from '@/store/connection-registry-state'
 
 // Use only the resolved descriptor identity Electron publishes. `primary`
 // means the registry default, not necessarily the source this window is using;
@@ -134,6 +141,49 @@ async function rememberConnection(connectionId: string): Promise<void> {
 }
 
 /**
+ * The sidebar registry initializes in parallel with the primary gateway boot.
+ * Wait for main's resolved descriptor before deciding whether the preferred
+ * source needs a secondary dial. Otherwise a remote primary can be opened a
+ * second time through the registry while the identical primary SSH backend is
+ * still publishing its connection identity.
+ *
+ * Bounded: a primary that never publishes (spawn failure, dead SSH target)
+ * must not strand the registry restore forever — after the deadline the
+ * restore proceeds exactly as it did before this wait existed. The listener
+ * is always torn down so a late descriptor can't leak a dangling resolver.
+ */
+function waitForInitialConnection(): Promise<void> {
+  if ($connection.get()) {
+    return Promise.resolve()
+  }
+
+  let unlisten: (() => void) | undefined
+
+  const published = new Promise<void>(resolve => {
+    unlisten = $connection.listen(connection => {
+      if (!connection) {
+        return
+      }
+
+      unlisten?.()
+      resolve()
+    })
+  })
+
+  return withTimeout(
+    published,
+    BOOT_DESCRIPTOR_WAIT_TIMEOUT_MS,
+    'Timed out waiting for the primary connection descriptor'
+  ).catch(error => {
+    unlisten?.()
+
+    if (!isTimeoutError(error)) {
+      throw error
+    }
+  })
+}
+
+/**
  * Load the registry once for Sessions and restore the last successfully used
  * source. Later registry refreshes stay side-effect free, so editing Settings
  * in another window never changes the active workspace.
@@ -146,6 +196,7 @@ export async function initializeConnectionsRegistry(): Promise<DesktopConnection
   }
 
   restoreAttempted = true
+  await waitForInitialConnection()
 
   // Residual drift: a window can be live on a source the registry cannot name
   // (a v1-configured remote that reconciliation has not repaired yet, e.g. a
@@ -245,6 +296,10 @@ export async function selectConnection(connectionId: string): Promise<void> {
   if (pendingTarget === null && currentConnectionId === connectionId && currentProfile === targetProfile) {
     $showAllProfiles.set(false)
     $newChatProfile.set(targetProfile)
+    // A connection switch is a new-chat intent on THAT source: keep the
+    // registry identity with the profile so the next create names local::x /
+    // <source>::x exactly, never a bare profile string.
+    captureNewChatSource()
     requestFreshSession()
     await rememberConnection(connectionId)
 
@@ -359,6 +414,7 @@ export async function selectConnection(connectionId: string): Promise<void> {
       }
 
       $newChatProfile.set(targetProfile)
+      captureNewChatSource()
       requestFreshSession()
       await refreshActiveProfile()
     }

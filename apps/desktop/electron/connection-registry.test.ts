@@ -28,6 +28,7 @@ import {
   reconcileAppliedGlobalConnection,
   reconcileRegistryDrift,
   REGISTRY_VERSION,
+  registrySourceOwnsPrimaryBackend,
   rememberSshEnumeration,
   removeConnection,
   resolvedConnectionId,
@@ -236,6 +237,29 @@ test('primary SSH reuse rejects a descriptor with a different remote Nastech pat
     }),
     null
   )
+})
+
+test('registry primary reuses a matching primary backend descriptor', () => {
+  const registry = normalizeRegistry({
+    version: REGISTRY_VERSION,
+    primary: 'nastech-vps',
+    launchMode: 'primary',
+    lastUsed: 'nastech-vps',
+    connections: [
+      { id: LOCAL_CONNECTION_ID, kind: 'local', label: 'This device' },
+      { id: 'nastech-vps', kind: 'ssh', label: 'Nastech VPS', host: 'nastech-vps' }
+    ]
+  })
+
+  const descriptor = {
+    connectionId: 'nastech-vps',
+    mode: 'remote' as const,
+    remoteKind: 'ssh' as const,
+    ssh: { host: 'nastech-vps' }
+  }
+
+  assert.equal(registrySourceOwnsPrimaryBackend(registry, 'nastech-vps', descriptor), true)
+  assert.equal(registrySourceOwnsPrimaryBackend(registry, LOCAL_CONNECTION_ID, descriptor), false)
 })
 
 test('resolvedConnectionId identifies local and migrated remote descriptors', () => {
