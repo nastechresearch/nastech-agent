@@ -14,7 +14,7 @@ vi.mock('@/components/pane-shell/tree/store', async () => {
   return { $narrowViewport: atom(false) }
 })
 vi.mock('@/contrib/events', () => ({ onGatewayEvent: vi.fn() }))
-vi.mock('@/nastech', () => ({ deleteProfile: vi.fn(), getLogs: vi.fn(), getStatus: vi.fn() }))
+vi.mock('@/nastech', () => ({ deleteProfile: vi.fn(), getLogs: vi.fn(), getStatus: vi.fn(), nastechApi: vi.fn() }))
 vi.mock('@/store/notifications', () => ({ notify: vi.fn(), notifyError: vi.fn() }))
 vi.mock('@/store/system-actions', () => ({ runGatewayRestart: vi.fn() }))
 vi.mock('@/store/session', async () => {
@@ -105,9 +105,10 @@ vi.mock('@/store/gateway', async () => {
 
 const { host } = await import('./index')
 const { openSession: openSessionCore } = await import('@/app/open-session')
-const { deleteProfile } = await import('@/nastech')
+const { deleteProfile, nastechApi } = await import('@/nastech')
 
 const {
+  activeGatewayConnectionId,
   openGatewayForAgent,
   openGatewayForProfile,
   requestGatewayForAgent,
@@ -152,6 +153,7 @@ const profile = (name: string): ProfileInfo => ({
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.mocked(activeGatewayConnectionId).mockReturnValue('local')
   $activeGatewayProfile.set('remote-worker')
   $gatewaySwapTarget.set(null)
   setMockAtom($focusedRuntimeId, null)
@@ -187,6 +189,18 @@ describe('connection-aware plugin host APIs', () => {
     // The rail paints from $profiles; skipping the refresh leaves a stale
     // badge whose click hot-loops against the deletion guard (#88769).
     expect(refreshProfiles).toHaveBeenCalled()
+  })
+
+  it('pins an ambient SSH profile delete to the active connection and target profile', async () => {
+    vi.mocked(activeGatewayConnectionId).mockReturnValue('ssh-vps')
+
+    await host.deleteProfile('worker')
+
+    expect(retireLocalProfileGateways).not.toHaveBeenCalled()
+    expect(deleteProfile).toHaveBeenCalledWith('worker', {
+      connectionId: 'ssh-vps',
+      profile: 'worker'
+    })
   })
 
   it('refreshes the profile inventory before asking Electron for routes', async () => {
@@ -252,6 +266,43 @@ describe('connection-aware plugin host APIs', () => {
     expect(requestGatewayForAgent).toHaveBeenCalledWith('source-a', 'remote-worker', 'profiles.list', {
       include_sessions: true
     })
+    expect(requestGatewayForProfile).not.toHaveBeenCalled()
+  })
+
+  it('reads and hides persisted sessions through the source primary without activating the profile', async () => {
+    const route = {
+      connectionId: 'source-a',
+      mode: 'remote' as const,
+      profile: 'remote-worker',
+      targetProfile: 'backend-worker'
+    }
+
+    vi.mocked(nastechApi)
+      .mockResolvedValueOnce({ sessions: [{ id: 'bot-chat', profile: 'backend-worker', title: 'Bot Chat' }] })
+      .mockResolvedValueOnce({ ok: true, hidden: true })
+
+    await expect(host.listPersistedSessions(route, { profile: 'backend-worker', limit: 200 })).resolves.toMatchObject({
+      sessions: [{ id: 'bot-chat' }]
+    })
+    await expect(
+      host.setPersistedSessionHidden(route, { sessionId: 'bot-chat', profile: 'backend-worker', hidden: true })
+    ).resolves.toMatchObject({ ok: true, hidden: true })
+
+    expect(nastechApi).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        connectionId: 'source-a',
+        path: expect.stringContaining('/api/profiles/sessions?')
+      })
+    )
+    expect(nastechApi).toHaveBeenNthCalledWith(2, {
+      connectionId: 'source-a',
+      path: '/api/sessions/bot-chat',
+      method: 'PATCH',
+      body: { hidden: true, profile: 'backend-worker' }
+    })
+    expect(vi.mocked(nastechApi).mock.calls.every(([request]) => !('profile' in request))).toBe(true)
+    expect(requestGatewayForAgent).not.toHaveBeenCalled()
     expect(requestGatewayForProfile).not.toHaveBeenCalled()
   })
 

@@ -3,10 +3,10 @@ import { atom } from 'nanostores'
 import type * as React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import type { SessionInfo } from '@/nastech'
 import { createClientSessionState } from '@/lib/chat-runtime'
 import type * as ChatRuntime from '@/lib/chat-runtime'
 import type * as Time from '@/lib/time'
-import type { SessionInfo } from '@/nastech'
 import type * as ComposerStatusStore from '@/store/composer-status'
 import type * as SessionStore from '@/store/session'
 import { clearAllSessionStates, publishSessionState } from '@/store/session-states'
@@ -231,6 +231,10 @@ describe('SidebarSessionRow running arc', () => {
 })
 
 describe('SidebarSessionRow', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('keeps an aria-label on the kebab without wrapping it in a Tip', () => {
     render(
       <SidebarSessionRow
@@ -322,6 +326,17 @@ describe('SidebarSessionRow', () => {
   })
 
   it('exposes the exact session time through a focusable Tip trigger', () => {
+    // Pin the clock before deriving the timestamp.  The assertion below is
+    // about the *composition* of the label (relative age + absolute time),
+    // but "5 minutes ago" only falls on today when the run does not straddle
+    // local midnight.  Between 00:00 and 00:05 the row correctly renders
+    // "Yesterday at 11:5x PM" and this test failed for a day boundary it was
+    // never written to exercise.  Only `Date` is faked, so the component's
+    // own timers (the running arc, the tooltip open delay) keep running for
+    // real.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 2, 5, 12, 0, 0))
+
     const startedAt = Math.floor(Date.now() / 1000) - 5 * 60
 
     render(

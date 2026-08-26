@@ -239,7 +239,14 @@
         "CFBundleName": "Nastech",
         "NSAudioCaptureUsageDescription": "Nastech uses audio capture for voice conversations.",
         "NSCameraUsageDescription": "Nastech uses the camera when a plugin or feature you enable requests it.",
-        "NSMicrophoneUsageDescription": "Nastech uses the microphone for voice input and voice conversations."
+        "NSMicrophoneUsageDescription": "Nastech uses the microphone for voice input and voice conversations.",
+        "NSCalendarsUsageDescription": "Nastech needs access to Calendar to provide requested meeting and scheduling support.",
+        "NSCalendarsFullAccessUsageDescription": "Nastech needs full access to Calendar to read and manage events when explicitly requested.",
+        "NSRemindersUsageDescription": "Nastech needs access to Reminders to provide requested personal-assistant and scheduling support.",
+        "NSRemindersFullAccessUsageDescription": "Nastech needs full access to Reminders to read and manage reminders when explicitly requested.",
+        "NSScreenCaptureUsageDescription": "Nastech captures the screen when you ask the agent to screenshot or record it.",
+        "NSLocalNetworkUsageDescription": "Nastech connects to devices on your local network when a plugin or feature you enable requests it.",
+        "NSAppleMusicUsageDescription": "Nastech accesses your music library when a plugin or feature you enable requests it."
       },
       "gatekeeperAssess": false,
       "hardenedRuntime": true,

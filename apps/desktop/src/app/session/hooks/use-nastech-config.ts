@@ -1,9 +1,9 @@
 import { type MutableRefObject, useCallback, useRef, useState } from 'react'
 
 import { setTerminalFontFamilyFromConfig } from '@/app/right-sidebar/terminal/terminal-font'
+import { getNastechConfig, getNastechConfigDefaults } from '@/nastech'
 import { BUILTIN_PERSONALITIES, normalizePersonalityValue, personalityNamesFromConfig } from '@/lib/chat-runtime'
 import { normalize } from '@/lib/text'
-import { getNastechConfig, getNastechConfigDefaults } from '@/nastech'
 import { setDisplayTimestampsFromConfig } from '@/store/display-timestamps'
 import {
   getComposerSelectionGeneration,
@@ -56,7 +56,7 @@ export function useNastechConfig({ activeSessionIdRef }: NastechConfigOptions) {
   const profileRefreshEpochRef = useRef(0)
 
   const refreshNastechConfig = useCallback(
-    async (force = false) => {
+    async (force = false, shouldPublish: () => boolean = () => true) => {
       if (force) {
         profileRefreshEpochRef.current += 1
       }
@@ -67,13 +67,19 @@ export function useNastechConfig({ activeSessionIdRef }: NastechConfigOptions) {
       try {
         const [config, defaults] = await Promise.all([getNastechConfig(), getNastechConfigDefaults().catch(() => ({}))])
 
-        if (profileRefreshEpochRef.current !== profileRefreshEpoch) {
+        const canPublish = () => profileRefreshEpochRef.current === profileRefreshEpoch && shouldPublish()
+
+        if (!canPublish()) {
           return
         }
 
         const personality = normalizePersonalityValue(
           typeof config.display?.personality === 'string' ? config.display.personality : ''
         )
+
+        if (!canPublish()) {
+          return
+        }
 
         setIntroPersonality(personality)
         // Active sessions keep their per-session value; standalone falls back to config.
@@ -94,6 +100,10 @@ export function useNastechConfig({ activeSessionIdRef }: NastechConfigOptions) {
         // reseeded below: picker rows and preset application resolve "the
         // default" from here, so a manual model pick must not leave them
         // rendering/applying Nastech' built-in medium over the user's config.
+        if (!canPublish()) {
+          return
+        }
+
         setDefaultReasoningEffort(reasoning)
 
         const shouldSeedComposer =
@@ -102,16 +112,38 @@ export function useNastechConfig({ activeSessionIdRef }: NastechConfigOptions) {
           (force || getCurrentModelSource() !== 'manual')
 
         if (shouldSeedComposer) {
+          if (!canPublish()) {
+            return
+          }
+
           setCurrentReasoningEffort(reasoning)
           setCurrentFastMode(FAST_TIERS.has(tier.toLowerCase()))
         }
 
+        if (!canPublish()) {
+          return
+        }
+
         setCurrentServiceTier(prev => (activeSessionIdRef.current ? prev : tier))
+
+        if (!canPublish()) {
+          return
+        }
 
         setVoiceMaxRecordingSeconds(recordingLimit(config.voice?.max_recording_seconds))
         setSttEnabled(config.stt?.enabled !== false)
+
+        if (!canPublish()) {
+          return
+        }
+
         setDisplayTimestampsFromConfig(config.display?.timestamps)
         setTerminalFontFamilyFromConfig(config.terminal?.font_family)
+
+        if (!canPublish()) {
+          return
+        }
+
         applyAutoSpeakFromConfig(config)
         applyVoiceStopPhraseFromConfig(config)
         applyThinkingSoundFromConfig(config)
