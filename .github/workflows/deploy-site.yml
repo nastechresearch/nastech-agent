@@ -178,6 +178,17 @@ jobs:
         run: |
           mkdir -p _site/docs
           cp -r website/build/* _site/docs/
+          # The docs build is staged under /docs/, while installers and legacy
+          # links are intentionally published at the project root.
+          cp scripts/install.sh _site/install.sh
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=./docs/">
+          <link rel="canonical" href="./docs/">
+          <title>Nastech Agent</title>
+          <p><a href="./docs/">Open Nastech Agent documentation</a></p>
+          HTML
           # llms.txt / llms-full.txt are also published at the site root
           # (https://nastechresearch.github.io/nastech-agent/llms.txt) because some
           # agents and IDE plugins probe the classic root-level path rather

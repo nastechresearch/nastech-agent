@@ -1389,6 +1389,7 @@ def _probe_remote_backend(env_type: str) -> str | None:
                 "docker_extra_args": config.get("docker_extra_args", []),
                 "docker_shm_size": config.get("docker_shm_size", "1g"),
                 "docker_persist_across_processes": config.get("docker_persist_across_processes", True),
+                "docker_shared_container_key": config.get("docker_shared_container_key", ""),
                 "docker_orphan_reaper": config.get("docker_orphan_reaper", True),
             }
 
@@ -2276,72 +2277,6 @@ def _build_skills_system_prompt_inner(
             _SKILLS_PROMPT_CACHE.popitem(last=False)
 
     return result
-
-
-def build_nastech_subscription_prompt(valid_tool_names: "set[str] | None" = None) -> str:
-    """Build a compact Nastech subscription capability block for the system prompt."""
-    try:
-        from nastech_cli.nastech_subscription import get_nastech_subscription_features
-        from tools.tool_backend_helpers import managed_nastech_tools_enabled
-    except Exception as exc:
-        logger.debug("Failed to import Nastech subscription helper: %s", exc)
-        return ""
-
-    if not managed_nastech_tools_enabled():
-        return ""
-
-    valid_names = set(valid_tool_names or set())
-    relevant_tool_names = {
-        "web_search",
-        "web_extract",
-        "browser_navigate",
-        "browser_snapshot",
-        "browser_click",
-        "browser_type",
-        "browser_scroll",
-        "browser_console",
-        "browser_press",
-        "browser_get_images",
-        "browser_vision",
-        "image_generate",
-        "text_to_speech",
-        "terminal",
-        "process",
-        "execute_code",
-    }
-
-    if valid_names and not (valid_names & relevant_tool_names):
-        return ""
-
-    features = get_nastech_subscription_features()
-
-    def _status_line(feature) -> str:
-        if feature.managed_by_nastech:
-            return f"- {feature.label}: active via Nastech subscription"
-        if feature.active:
-            current = feature.current_provider or "configured provider"
-            return f"- {feature.label}: currently using {current}"
-        if feature.included_by_default and features.nastech_auth_present:
-            return f"- {feature.label}: included with Nastech subscription, not currently selected"
-        if feature.key == "modal" and features.nastech_auth_present:
-            return f"- {feature.label}: optional via Nastech subscription"
-        return f"- {feature.label}: not currently available"
-
-    lines = [
-        "# Nastech Subscription",
-        "Nastech subscription includes managed web tools (Firecrawl), image generation (FAL), OpenAI TTS, OpenAI Whisper STT, and browser automation (Browser Use) by default. Modal execution is optional.",
-        "Current capability status:",
-    ]
-    lines.extend(_status_line(feature) for feature in features.items())
-    lines.extend(
-        [
-            "When a Nastech-managed feature is active, do not ask the user for Firecrawl, FAL, OpenAI TTS, OpenAI Whisper, or Browser-Use API keys.",
-            "If the user is not subscribed and asks for a capability that Nastech subscription would unlock or simplify, suggest Nastech subscription as one option alongside direct setup or local alternatives.",
-            "Do not mention subscription unless the user asks about it or it directly solves the current missing capability.",
-            "Useful commands: nastech setup, nastech setup tools, nastech setup terminal, nastech status.",
-        ]
-    )
-    return "\n".join(lines)
 
 
 # =========================================================================

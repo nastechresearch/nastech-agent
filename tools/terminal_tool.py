@@ -1203,13 +1203,11 @@ def _maybe_reap_docker_orphans(container_config: Dict[str, Any]) -> None:
     max_age = lifetime * 2
 
     try:
-        from tools.environments.docker import (
-            reap_orphan_containers, _get_active_profile_name,
-        )
+        from tools.environments.docker import reap_orphan_containers, _container_identity
     except ImportError:
         return
     try:
-        profile = _get_active_profile_name()
+        profile = _container_identity(container_config.get("docker_shared_container_key", ""))
         removed = reap_orphan_containers(
             max_age_seconds=max_age, profile_filter=profile,
         )
@@ -1407,6 +1405,39 @@ def _docker_session_isolation_enabled() -> bool:
     return _session_isolation_enabled()
 
 
+def _docker_persistent_profile_scoped() -> bool:
+    """True when the persistent Docker container is shared per PROFILE.
+
+    The product contract for ``TERMINAL_ENV=docker`` +
+    ``container_persistent: true`` is ONE long-lived container per Nastech
+    profile, shared by every session of that profile (CLI, gateway chats,
+    WebUI). Commit a270c4ade added a session-key fallback to
+    :func:`_resolve_container_task_id` to stop cross-profile SSH environment
+    reuse, but the fallback wasn't backend-gated, so persistent Docker
+    silently fragmented into one container per gateway session (#93950 was
+    downstream damage from that). This predicate gates the resolver back to
+    profile scoping for exactly this backend/mode; SSH and other backends
+    keep the session-scoped cache key that fixed the original leak.
+    """
+    _ensure_terminal_env_bridged()
+    if os.getenv("TERMINAL_ENV", "local") != "docker":
+        return False
+    return os.getenv("TERMINAL_CONTAINER_PERSISTENT", "true").lower() in {"true", "1", "yes"}
+
+
+def _current_session_profile() -> str:
+    """Return the active session's Nastech profile name, or "" when unset.
+
+    Same lookup discipline as :func:`_current_session_key`: the ContextVar
+    (bound per message by the gateway, per session by the WebUI streaming
+    layer) with the ``get_session_env`` os.environ fallback for CLI, cron,
+    and test processes.
+    """
+    from gateway.session_context import get_session_env
+
+    return get_session_env("NASTECH_SESSION_PROFILE", "")
+
+
 _ISOLATION_OVERRIDE_KEYS = frozenset({
     "docker_image", "modal_image", "singularity_image",
     "daytona_image", "env_type",
@@ -1474,7 +1505,33 @@ def _resolve_container_task_id(task_id: Optional[str]) -> str:
     # would otherwise collapse to the shared "default" key (notably SSH).
     session_key = _current_session_key()
     if session_key:
+        # Persistent Docker is PROFILE-scoped by contract: one long-lived
+        # container shared by every session of the profile. Key it by profile
+        # (not session) so gateway chats, CLI, and WebUI all land in the same
+        # container and sandbox. The bare "profile:default" key stays literally
+        # "default" so CLI mode (no session key at all) and gateway sessions of
+        # the default profile share the SAME container — CLI's historical key
+        # IS the default profile's container.
+        if _docker_persistent_profile_scoped():
+            # Explicit opt-in: trusted profiles configuring the same
+            # terminal.docker_shared_container_key share ONE container/cache
+            # slot (and sandbox dir) regardless of profile name (#84671).
+            shared = os.getenv("TERMINAL_DOCKER_SHARED_CONTAINER_KEY", "").strip()
+            if shared:
+                return f"shared:{shared}"
+            profile = _current_session_profile() or "default"
+            if profile == "default":
+                return "default"
+            return f"profile:{profile}"
         return f"session:{session_key}"
+    # CLI/no-session path: honour the shared-container opt-in here too, or a
+    # CLI run of a keyed profile would land in "default" while its gateway
+    # sessions land in "shared:<key>" — splitting the very container the
+    # setting exists to unify.
+    if _docker_persistent_profile_scoped():
+        shared = os.getenv("TERMINAL_DOCKER_SHARED_CONTAINER_KEY", "").strip()
+        if shared:
+            return f"shared:{shared}"
     return "default"
 
 
@@ -1819,6 +1876,9 @@ def _get_env_config() -> Dict[str, Any]:
         "docker_persist_across_processes": os.getenv(
             "TERMINAL_DOCKER_PERSIST_ACROSS_PROCESSES", "true"
         ).lower() in {"true", "1", "yes"},
+        "docker_shared_container_key": os.getenv(
+            "TERMINAL_DOCKER_SHARED_CONTAINER_KEY", ""
+        ).strip(),
         # Startup orphan reaper for nastech-tagged containers left behind by
         # crashed / SIGKILL'd previous processes that bypassed atexit.
         # Conservative: only sweeps Exited containers older than 2× the
@@ -1876,6 +1936,7 @@ def _container_config_from_config(config: Dict[str, Any]) -> dict:
         "docker_shm_size": config.get("docker_shm_size", "1g"),
         "docker_network": config.get("docker_network", True),
         "docker_persist_across_processes": config.get("docker_persist_across_processes", True),
+        "docker_shared_container_key": config.get("docker_shared_container_key", ""),
         "docker_orphan_reaper": config.get("docker_orphan_reaper", True),
     }
 
@@ -1951,6 +2012,7 @@ def _create_environment(env_type: str, image: str, cwd: str, timeout: int,
                 False if session_scoped
                 else cc.get("docker_persist_across_processes", True)
             ),
+            shared_container_key=cc.get("docker_shared_container_key", ""),
             shm_size=cc.get("docker_shm_size", "1g"),
         )
         # Marker read by is_persistent_env(): a session-scoped container

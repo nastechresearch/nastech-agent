@@ -548,12 +548,28 @@ box.
 
 For the strongest guarantee — a certificate-anchored identity, the same
 mechanism yabai/skhd users rely on — create a self-signed code-signing
-certificate once and tell Nastech to use it:
+certificate once and tell Nastech to use it. The one-shot command does
+everything (creates the certificate in your login keychain, grants `codesign`
+access, writes the config, and re-signs the packaged app):
+
+```bash
+nastech desktop --setup-tcc-identity
+```
+
+Or do it manually:
 
 1. Keychain Access → Certificate Assistant → **Create a Certificate…**
 2. Name: `Nastech Local Signing`, Identity Type: *Self-Signed Root*,
    Certificate Type: **Code Signing**.
-3. `nastech config set desktop.macos_signing_identity "Nastech Local Signing"`
+3. In Keychain Access, double-click the new certificate → **Trust** → set
+   **Code Signing** to *Always Trust* (an imported self-signed certificate is
+   not a valid signing identity until it is trusted for code signing —
+   `security find-identity -v -p codesigning` should list it afterwards).
+4. `nastech config set desktop.macos_signing_identity "Nastech Local Signing"`
+
+Use `--identity <name>` with the command to create/use a differently named
+certificate (default: `Nastech Local Signing`). The command is idempotent —
+re-run it after updates to re-point the config and re-sign the rebuilt app.
 
 The next update re-signs the rebuilt app with that certificate; every TCC grant
 survives. No Apple Developer account is required. Notarized release builds are

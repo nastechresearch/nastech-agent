@@ -17,7 +17,6 @@ from agent.prompt_builder import (
     _find_git_root,
     _strip_yaml_frontmatter,
     build_skills_system_prompt,
-    build_nastech_subscription_prompt,
     build_context_files_prompt,
     CONTEXT_FILE_MAX_CHARS,
     _dynamic_context_file_max_chars,
@@ -35,7 +34,6 @@ from agent.prompt_builder import (
     PLATFORM_HINTS,
     WSL_ENVIRONMENT_HINT,
 )
-from nastech_cli.nastech_subscription import NastechFeatureState, NastechSubscriptionFeatures
 
 
 @pytest.fixture(autouse=True)
@@ -380,69 +378,6 @@ class TestBuildSkillsSystemPrompt:
 
         second = build_skills_system_prompt()
         assert "cached-skill" not in second
-
-
-
-
-
-class TestBuildNastechSubscriptionPrompt:
-    def test_includes_active_subscription_features(self, monkeypatch):
-        monkeypatch.setattr("tools.tool_backend_helpers.managed_nastech_tools_enabled", lambda: True)
-        monkeypatch.setattr(
-            "nastech_cli.nastech_subscription.get_nastech_subscription_features",
-            lambda config=None: NastechSubscriptionFeatures(
-                subscribed=True,
-                nastech_auth_present=True,
-                provider_is_nastech=True,
-                features={
-                    "web": NastechFeatureState("web", "Web tools", True, True, True, True, False, True, "firecrawl"),
-                    "image_gen": NastechFeatureState("image_gen", "Image generation", True, True, True, True, False, True, "Nastech Subscription"),
-                    "video_gen": NastechFeatureState("video_gen", "Video generation", False, False, False, False, False, False, ""),
-                    "tts": NastechFeatureState("tts", "OpenAI TTS", True, True, True, True, False, True, "OpenAI TTS"),
-                    "stt": NastechFeatureState("stt", "Speech-to-text", True, True, True, True, False, True, "OpenAI Whisper"),
-                    "browser": NastechFeatureState("browser", "Browser automation", True, True, True, True, False, True, "Browser Use"),
-                    "modal": NastechFeatureState("modal", "Modal execution", False, True, False, False, False, True, "local"),
-                },
-            ),
-        )
-
-        prompt = build_nastech_subscription_prompt({"web_search", "browser_navigate"})
-
-        assert "Browser Use" in prompt
-        assert "Modal execution is optional" in prompt
-        assert "do not ask the user for Firecrawl, FAL, OpenAI TTS, OpenAI Whisper, or Browser-Use API keys" in prompt
-
-    def test_non_subscriber_prompt_includes_relevant_upgrade_guidance(self, monkeypatch):
-        monkeypatch.setattr("tools.tool_backend_helpers.managed_nastech_tools_enabled", lambda: True)
-        monkeypatch.setattr(
-            "nastech_cli.nastech_subscription.get_nastech_subscription_features",
-            lambda config=None: NastechSubscriptionFeatures(
-                subscribed=False,
-                nastech_auth_present=False,
-                provider_is_nastech=False,
-                features={
-                    "web": NastechFeatureState("web", "Web tools", True, False, False, False, False, True, ""),
-                    "image_gen": NastechFeatureState("image_gen", "Image generation", True, False, False, False, False, True, ""),
-                    "video_gen": NastechFeatureState("video_gen", "Video generation", False, False, False, False, False, False, ""),
-                    "tts": NastechFeatureState("tts", "OpenAI TTS", True, False, False, False, False, True, ""),
-                    "stt": NastechFeatureState("stt", "Speech-to-text", True, False, False, False, False, True, ""),
-                    "browser": NastechFeatureState("browser", "Browser automation", True, False, False, False, False, True, ""),
-                    "modal": NastechFeatureState("modal", "Modal execution", False, False, False, False, False, True, ""),
-                },
-            ),
-        )
-
-        prompt = build_nastech_subscription_prompt({"image_generate"})
-
-        assert "suggest Nastech subscription as one option" in prompt
-        assert "Do not mention subscription unless" in prompt
-
-    def test_feature_flag_off_returns_empty_prompt(self, monkeypatch):
-        monkeypatch.setattr("tools.tool_backend_helpers.managed_nastech_tools_enabled", lambda: False)
-
-        prompt = build_nastech_subscription_prompt({"web_search"})
-
-        assert prompt == ""
 
 
 # =========================================================================

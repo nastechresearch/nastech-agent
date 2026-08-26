@@ -1,12 +1,12 @@
 import { resolveGatewayWsUrl } from '@nastech/shared'
 
+import { getApiRequestConnection, getApiRequestProfile, speakText } from '@/nastech'
 import {
   cutSentences,
   directTtsConfig,
   type DirectTtsConfig,
   synthesizeSpeechClientDirect
 } from '@/lib/voice-client-direct'
-import { getApiRequestConnection, getApiRequestProfile, speakText } from '@/nastech'
 import {
   $voicePlayback,
   setVoicePlaybackState,
