@@ -732,10 +732,7 @@ describe('buildManageSubscriptionUrl', () => {
 
   it('omits the plan param when no tier is given', () => {
     expect(
-      buildManageSubscriptionUrl(
-        { org_id: 'org_123', portal_url: 'https://portal.nastechresearch.github.io/billing' },
-        null
-      )
+      buildManageSubscriptionUrl({ org_id: 'org_123', portal_url: 'https://portal.nastechresearch.github.io/billing' }, null)
     ).toBe('https://portal.nastechresearch.github.io/manage-subscription?org_id=org_123')
   })
 

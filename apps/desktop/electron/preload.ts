@@ -214,6 +214,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   },
   profile: {
     get: () => ipcRenderer.invoke('nastech:profile:get'),
+    remember: name => ipcRenderer.invoke('nastech:profile:remember', name),
     set: name => ipcRenderer.invoke('nastech:profile:set', name)
   },
   api: request => ipcRenderer.invoke('nastech:api', request),
@@ -267,6 +268,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   openExternal: url => ipcRenderer.invoke('nastech:openExternal', url),
   openPreviewInBrowser: url => ipcRenderer.invoke('nastech:openPreviewInBrowser', url),
   reachPreviewUrl: url => ipcRenderer.invoke('nastech:preview:reach', url),
+  setActiveConnectionRoute: route => ipcRenderer.send('nastech:connection:active-route', route),
   fetchLinkTitle: url => ipcRenderer.invoke('nastech:fetchLinkTitle', url),
   resolveFavicon: url => ipcRenderer.invoke('nastech:resolveFavicon', url),
   sanitizeWorkspaceCwd: cwd => ipcRenderer.invoke('nastech:workspace:sanitize', cwd),

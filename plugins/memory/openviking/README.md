@@ -78,6 +78,9 @@ profile's `.env`:
 When `OPENVIKING_API_KEY` is set, Nastech lets OpenViking derive account/user
 identity from the key. In local or trusted deployments without an API key,
 Nastech sends `OPENVIKING_ACCOUNT` and `OPENVIKING_USER` as identity headers.
+Nastech also sends `User-Agent: openviking-memory-nastech/<version>` on
+OpenViking requests. This standard harness identifier contains the Nastech
+version, but no per-user identifier, and does not add a separate request.
 
 ## Tools
 

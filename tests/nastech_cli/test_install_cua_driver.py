@@ -239,6 +239,46 @@ class TestInstallCuaDriverUpgrade:
 
         info.assert_not_called()
 
+    def test_quiet_refresh_closes_stdin_and_honors_custom_timeout(self):
+        """A background refresh must neither wait on a hidden prompt nor
+        inherit the explicit install command's 11-minute ceiling."""
+        import subprocess
+        from unittest.mock import MagicMock
+
+        from nastech_cli import tools_config
+
+        fake_proc = MagicMock()
+        fake_proc.pid = 1
+        fake_proc.returncode = 0
+        fake_proc.communicate.return_value = ("", None)
+
+        with patch(
+                 "subprocess.run",
+                 return_value=MagicMock(returncode=0, stderr=""),
+             ), \
+             patch("subprocess.Popen", return_value=fake_proc) as popen, \
+             patch.object(
+                 tools_config.shutil,
+                 "which",
+                 return_value="/usr/local/bin/cua-driver",
+             ), \
+             patch.object(tools_config, "_clear_stale_cua_install_lock"), \
+             patch.object(
+                 tools_config,
+                 "_repair_cua_driver_autostart_windows",
+                 return_value=True,
+             ), \
+             patch.object(tools_config, "_print_info"), \
+             patch.object(tools_config, "_print_success"):
+            assert tools_config._run_cua_driver_installer(
+                label="Refreshing",
+                verbose=False,
+                installer_timeout=120,
+            ) is True
+
+        assert popen.call_args.kwargs["stdin"] is subprocess.DEVNULL
+        fake_proc.communicate.assert_called_once_with(timeout=120)
+
     def test_upgrade_can_suppress_installer_progress(self):
         from nastech_cli import tools_config
 
@@ -507,29 +547,17 @@ class TestRequireConfirmedUpdate:
             for call in info.call_args_list
         )
 
-    @pytest.mark.skipif(
-        sys.platform == "win32",
-        reason="automatic Windows updates must not launch an interactive installer",
-    )
-    def test_confirmed_update_still_runs_installer_on_posix(self):
+    def test_confirmed_update_runs_installer_bounded(self):
+        """Every platform: a positively confirmed newer release runs the
+        installer in unattended-safe mode (background ceiling). On Windows
+        the actual command adds -NoAutoStart and the preflights guard the
+        launch (covered by their own test classes below)."""
         state = {"current_version": "0.5.0", "latest_version": "0.6.0",
                  "update_available": True}
         ok, runner, _ = self._install(state, require_confirmed=True)
         assert ok is True
         runner.assert_called_once()
-
-    @pytest.mark.windows_only
-    def test_windows_confirmed_update_defers_interactive_installer(self):
-        state = {"current_version": "0.5.0", "latest_version": "0.6.0",
-                 "update_available": True}
-        ok, runner, info = self._install(state, require_confirmed=True)
-
-        assert ok is True
-        runner.assert_not_called()
-        assert any(
-            "computer-use install --upgrade" in call.args[0]
-            for call in info.call_args_list
-        )
+        assert runner.call_args.kwargs["installer_timeout"] == 120
 
     @pytest.mark.windows_only
     def test_windows_incompatible_driver_defers_interactive_repair(self):
@@ -1049,6 +1077,10 @@ class TestInstallerTimeoutKillsProcessGroup:
         parent.kill.assert_called_once_with()
         fake_proc.kill.assert_not_called()
         assert fake_proc.communicate.call_count == 2
+        assert (
+            fake_proc.communicate.call_args_list[1].kwargs["timeout"]
+            == tools_config._CUA_INSTALLER_DRAIN_GRACE
+        )
 
     @pytest.mark.windows_only
     def test_windows_tree_enumeration_failure_falls_back_to_direct_kill(self):
@@ -1079,6 +1111,189 @@ class TestInstallerTimeoutKillsProcessGroup:
         assert ok is False
         fake_proc.kill.assert_called_once_with()
         assert fake_proc.communicate.call_count == 2
+
+
+class TestInstallerTimeoutDrainIsBounded:
+    """The drain that follows the timeout kill must carry its own deadline.
+
+    ``_kill_installer_tree`` is best-effort: every ``psutil.Error`` it can hit
+    is logged at debug level and stepped over, so the tree it leaves behind
+    can still contain a live process — on Windows, most concretely, an
+    ``install.ps1`` that self-elevated through ``Start-Process -Verb RunAs``
+    and cannot be killed from a medium-integrity parent. That survivor holds
+    the ``stdout=PIPE`` write handle it inherited, so reading to EOF is
+    reading for something that will not happen, and ``_CUA_INSTALLER_TIMEOUT``
+    stops being a ceiling (#87703).
+
+    Asserted through the ``timeout`` kwarg rather than by timing: a test that
+    proved the hang by hanging would be the same defect wearing a test's name.
+    """
+
+    def test_drain_grace_is_short_relative_to_the_run_ceiling(self):
+        from nastech_cli import tools_config
+
+        # This is a grace period for a pipe that a live process is holding
+        # open, not a second budget for the install itself — the install is
+        # already over by the time it is used.
+        assert 0 < tools_config._CUA_INSTALLER_DRAIN_GRACE
+        assert (
+            tools_config._CUA_INSTALLER_DRAIN_GRACE
+            < tools_config._CUA_INSTALLER_TIMEOUT / 10
+        )
+
+    @pytest.mark.linux_only
+    def test_post_kill_drain_passes_a_deadline(self):
+        """``linux_only``: reaches the timeout handler through the real POSIX
+        ``killpg`` branch, so the drain under test is the one this lane runs.
+        """
+        import subprocess
+        from unittest.mock import MagicMock
+        from nastech_cli import tools_config
+
+        fake_proc = MagicMock()
+        fake_proc.pid = 12345
+        fake_proc.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="x", timeout=1),
+            ("", None),
+        ]
+
+        with patch("subprocess.run", return_value=MagicMock(returncode=0, stderr="")), \
+             patch("subprocess.Popen", return_value=fake_proc), \
+             patch.object(tools_config.os, "getpgid", return_value=99999, create=True), \
+             patch.object(tools_config.os, "killpg", create=True), \
+             patch.object(tools_config, "_clear_stale_cua_install_lock"), \
+             patch.object(tools_config, "_print_warning"), \
+             patch.object(tools_config, "_print_info"):
+            ok = tools_config._run_cua_driver_installer(label="Refreshing", verbose=False)
+
+        assert ok is False
+        assert fake_proc.communicate.call_count == 2
+        drain_timeout = fake_proc.communicate.call_args_list[1].kwargs.get("timeout")
+        assert drain_timeout is not None, (
+            "the post-kill drain was issued without a deadline, so a survivor "
+            "of the kill can hold it open indefinitely"
+        )
+        assert drain_timeout == tools_config._CUA_INSTALLER_DRAIN_GRACE
+
+    @pytest.mark.linux_only
+    def test_verbose_path_drains_under_the_same_deadline(self):
+        """The streaming install has the same handler and had the same hole.
+
+        Its child inherits the console rather than a pipe, so the stall is
+        harder to hit there, but the two branches should not be allowed to
+        drift on a rule this small.
+        """
+        import subprocess
+        from unittest.mock import MagicMock
+        from nastech_cli import tools_config
+
+        fake_proc = MagicMock()
+        fake_proc.pid = 12345
+        fake_proc.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="x", timeout=1),
+            ("", None),
+        ]
+
+        with patch("subprocess.run", return_value=MagicMock(returncode=0, stderr="")), \
+             patch("subprocess.Popen", return_value=fake_proc), \
+             patch.object(tools_config.os, "getpgid", return_value=99999, create=True), \
+             patch.object(tools_config.os, "killpg", create=True), \
+             patch.object(tools_config, "_clear_stale_cua_install_lock"), \
+             patch.object(tools_config, "_print_warning"), \
+             patch.object(tools_config, "_print_info"), \
+             patch.object(tools_config, "_print_success"):
+            ok = tools_config._run_cua_driver_installer(label="Installing", verbose=True)
+
+        assert ok is False
+        assert fake_proc.communicate.call_count == 2
+        drain_timeout = fake_proc.communicate.call_args_list[1].kwargs.get("timeout")
+        assert drain_timeout is not None, (
+            "the streaming path's drain was issued without a deadline"
+        )
+        assert drain_timeout == tools_config._CUA_INSTALLER_DRAIN_GRACE
+
+    @pytest.mark.windows_only
+    def test_unkillable_elevated_descendant_does_not_stall_the_drain(self):
+        """The reported scenario, with the kill refused exactly where it is.
+
+        ``install.ps1`` self-elevates, so the descendant is High-IL and
+        ``child.kill()`` raises ``AccessDenied`` — which the tree-kill catches
+        and logs, by design. The survivor is then still holding the pipe, and
+        the drain is the only thing standing between that and an indefinite
+        hang.
+        """
+        import psutil
+        import subprocess
+        from unittest.mock import MagicMock
+        from nastech_cli import tools_config
+
+        child = MagicMock()
+        child.kill.side_effect = psutil.AccessDenied(pid=999)
+        parent = MagicMock()
+        parent.children.return_value = [child]
+
+        fake_proc = MagicMock()
+        fake_proc.pid = 12345
+        fake_proc.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="powershell", timeout=1),
+            ("", None),
+        ]
+
+        with patch("subprocess.Popen", return_value=fake_proc), \
+             patch("psutil.Process", return_value=parent), \
+             patch.object(tools_config, "_clear_stale_cua_install_lock"), \
+             patch.object(tools_config, "_print_warning"), \
+             patch.object(tools_config, "_print_info"):
+            ok = tools_config._run_cua_driver_installer(
+                label="Refreshing", verbose=False
+            )
+
+        assert ok is False
+        # The refused child kill must not abort the rest of the sweep.
+        parent.kill.assert_called_once_with()
+        drain_timeout = fake_proc.communicate.call_args_list[1].kwargs.get("timeout")
+        assert drain_timeout is not None, (
+            "a High-IL descendant survived the kill and the drain was issued "
+            "without a deadline, which is the reported hang"
+        )
+        assert drain_timeout == tools_config._CUA_INSTALLER_DRAIN_GRACE
+
+    @pytest.mark.windows_only
+    def test_drain_that_times_out_still_surfaces_the_run_timeout(self):
+        """A guardrail, not a regression test — it passes without the fix too.
+
+        What it pins is that the drain's own ``TimeoutExpired`` must not be
+        the one that escapes: the caller has to see the original run timeout
+        so the existing manual re-run hint prints and ``nastech update``
+        unwinds. That is the behaviour a future refactor of the drain is most
+        likely to break silently.
+        """
+        import subprocess
+        from unittest.mock import MagicMock
+        from nastech_cli import tools_config
+
+        parent = MagicMock()
+        parent.children.return_value = []
+
+        fake_proc = MagicMock()
+        fake_proc.pid = 12345
+        fake_proc.communicate.side_effect = [
+            subprocess.TimeoutExpired(cmd="powershell", timeout=660),
+            subprocess.TimeoutExpired(cmd="powershell", timeout=15),
+        ]
+
+        with patch("subprocess.Popen", return_value=fake_proc), \
+             patch("psutil.Process", return_value=parent), \
+             patch.object(tools_config, "_clear_stale_cua_install_lock"), \
+             patch.object(tools_config, "_print_warning") as warn, \
+             patch.object(tools_config, "_print_info"):
+            ok = tools_config._run_cua_driver_installer(
+                label="Refreshing", verbose=False
+            )
+
+        assert ok is False
+        warned = " ".join(str(c.args[0]) for c in warn.call_args_list if c.args)
+        assert "timed out after" in warned
 
 
 @pytest.mark.linux_only
@@ -1451,3 +1666,95 @@ class TestCuaVersionSummary:
     def test_empty_output_stays_empty(self):
         assert self._summary("") == ""
         assert self._summary("   \n  \n") == ""
+
+
+class TestUnattendedRefreshPreflights:
+    """Unattended refreshes (installer_timeout set) fail FAST instead of
+    eating the ceiling: a held install lock or an unreachable release host
+    skips the run in seconds. Explicit installs (installer_timeout=None)
+    bypass both preflights — a human is watching upstream's own recovery.
+    """
+
+    def _run(self, installer_timeout, lock_held=False, reachable=True,
+             system="Linux"):
+        from unittest.mock import MagicMock
+
+        from nastech_cli import tools_config
+
+        proc = MagicMock()
+        proc.communicate.return_value = ("ok", None)
+        proc.returncode = 0
+
+        with patch("platform.system", return_value=system), \
+             patch.object(tools_config, "_cua_install_lock_held",
+                          return_value=lock_held) as lock_probe, \
+             patch.object(tools_config, "_cua_release_endpoint_reachable",
+                          return_value=reachable) as net_probe, \
+             patch.object(tools_config, "_clear_stale_cua_install_lock"), \
+             patch.object(tools_config.shutil, "which",
+                          side_effect=lambda n: "/x/" + n), \
+             patch.object(tools_config.subprocess, "run",
+                          return_value=SimpleNamespace(
+                              returncode=0, stdout="", stderr="")), \
+             patch.object(tools_config.subprocess, "Popen",
+                          return_value=proc) as popen, \
+             patch.object(tools_config, "_print_success"), \
+             patch.object(tools_config, "_print_warning"), \
+             patch.object(tools_config, "_print_info") as info:
+            ok = tools_config._run_cua_driver_installer(
+                label="Refreshing",
+                verbose=False,
+                show_progress=False,
+                installer_timeout=installer_timeout,
+            )
+        return ok, popen, info, lock_probe, net_probe
+
+    def test_held_lock_skips_unattended_run(self):
+        ok, popen, info, _, _ = self._run(120, lock_held=True)
+        assert ok is False
+        popen.assert_not_called()
+        assert any("install lock is held" in c.args[0]
+                   for c in info.call_args_list)
+
+    def test_unreachable_host_skips_unattended_run(self):
+        ok, popen, info, _, _ = self._run(120, reachable=False)
+        assert ok is False
+        popen.assert_not_called()
+        assert any("unreachable" in c.args[0] for c in info.call_args_list)
+
+    def test_explicit_install_bypasses_preflights(self):
+        """installer_timeout=None (explicit `computer-use install --upgrade`):
+        neither probe runs; upstream's own lock recovery stays in charge."""
+        ok, popen, _, lock_probe, net_probe = self._run(None)
+        lock_probe.assert_not_called()
+        net_probe.assert_not_called()
+        popen.assert_called_once()
+        assert ok is True
+
+    def test_clean_preflights_run_installer(self):
+        ok, popen, _, lock_probe, net_probe = self._run(120)
+        lock_probe.assert_called_once()
+        net_probe.assert_called_once()
+        popen.assert_called_once()
+        assert ok is True
+
+    def test_windows_unattended_command_passes_noautostart(self):
+        """The unattended Windows command must invoke install.ps1 with
+        -NoAutoStart — Register-CuaDriverAutostart is the only branch that
+        self-elevates (UAC)."""
+        ok, popen, _, _, _ = self._run(120, system="Windows")
+        assert ok is True
+        cmd = popen.call_args.args[0]
+        joined = " ".join(cmd)
+        assert "-NoAutoStart" in joined
+        assert "scriptblock" in joined
+
+    def test_windows_explicit_command_keeps_plain_oneliner(self):
+        """Explicit installs keep upstream's documented `irm | iex` shape
+        (autostart re-registration included — human present for UAC)."""
+        ok, popen, _, _, _ = self._run(None, system="Windows")
+        assert ok is True
+        cmd = popen.call_args.args[0]
+        joined = " ".join(cmd)
+        assert "-NoAutoStart" not in joined
+        assert "| iex" in joined

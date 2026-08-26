@@ -3,8 +3,8 @@ import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { $terminalFontFamily, setTerminalFontFamilyFromConfig } from '@/app/right-sidebar/terminal/terminal-font'
-import { persistString } from '@/lib/storage'
 import { getNastechConfig } from '@/nastech'
+import { persistString } from '@/lib/storage'
 import {
   $currentCwd,
   $currentFastMode,
@@ -118,6 +118,33 @@ describe('useNastechConfig refreshNastechConfig', () => {
 
     expect($currentReasoningEffort.get()).toBe('high')
     expect($currentFastMode.get()).toBe(false)
+  })
+
+  it('does not publish config after its switch loses ownership', async () => {
+    const staleConfig = deferred<Awaited<ReturnType<typeof getNastechConfig>>>()
+    vi.mocked(getNastechConfig).mockReturnValueOnce(staleConfig.promise)
+    const { result } = renderHook(() => useNastechConfig({ activeSessionIdRef: { current: null } }))
+    let ownsSwitch = true
+
+    let refresh!: Promise<void>
+    act(() => {
+      refresh = result.current.refreshNastechConfig(false, () => ownsSwitch)
+    })
+
+    ownsSwitch = false
+    staleConfig.resolve({
+      agent: { reasoning_effort: 'high', service_tier: 'priority' },
+      terminal: { font_family: 'MesloLGS NF' }
+    } as Awaited<ReturnType<typeof getNastechConfig>>)
+
+    await act(async () => {
+      await refresh
+    })
+
+    expect($defaultReasoningEffort.get()).toBe('')
+    expect($currentReasoningEffort.get()).toBe('')
+    expect($currentFastMode.get()).toBe(false)
+    expect($terminalFontFamily.get()).toBe('')
   })
 
   it('does not let an older profile config overwrite a newer profile', async () => {

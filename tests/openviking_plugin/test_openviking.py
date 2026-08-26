@@ -9,6 +9,7 @@ from typing import Any, cast
 from urllib.parse import parse_qs, urlparse
 
 import plugins.memory.openviking as openviking_plugin
+from nastech_cli import __version__ as _NASTECH_VERSION
 from plugins.memory.openviking import OpenVikingMemoryProvider
 
 
@@ -781,6 +782,10 @@ class TestOpenVikingAutoRecallPrefetch:
             for headers in records["headers"]
         ]
         assert all(headers.get("x-openviking-actor-peer") == "nastech" for headers in normalized_headers)
+        assert all(
+            headers.get("user-agent") == f"openviking-memory-nastech/{_NASTECH_VERSION}"
+            for headers in normalized_headers
+        )
         assert all(headers.get("x-openviking-account") == "acct" for headers in normalized_headers)
         assert all(headers.get("x-openviking-user") == "user" for headers in normalized_headers)
 

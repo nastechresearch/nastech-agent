@@ -7011,6 +7011,38 @@ def _cmd_update_impl(args, gateway_mode: bool):
         print()
         print(f"✓ Code updated!{_branch_head_suffix(git_cmd, _m().PROJECT_ROOT)}")
 
+        # ── macOS TCC stale-grant notice (#86385) ──────────────────────
+        # Locally-built desktop bundles are re-signed on every update. With the
+        # post-#73681 identifier-pinned DR, new grants survive rebuilds — but a
+        # grant made to a pre-fix binary stays stale: the System Settings toggle
+        # shows ON while macOS re-prompts on every capture, and the modern prompt
+        # has no Allow button, so users loop. One line of guidance after update
+        # tells affected users how to complete the one-time re-grant.
+        if sys.platform == "darwin" and had_desktop_app_before_update:
+            print()
+            print(
+                "  ℹ macOS: if Nastech re-prompts for permissions you already "
+                "granted (toggle shows ON), the stored grant is stale — run "
+                "`tccutil reset ScreenCapture com.nastechresearch.nastech` (repeat "
+                "per affected service), toggle it ON in System Settings, then "
+                "fully quit & relaunch once."
+            )
+
+        # ── macOS TCC anchor (issue #85345) ────────────────────────────
+        # uv-managed interpreters move on every patch bump, orphaning macOS
+        # TCC grants and re-triggering the permission-prompt storm.  Pin a
+        # real-file copy of the interpreter inside the venv so the TCC client
+        # path stays stable across updates.  Best-effort only; the doctor
+        # check re-applies it if this runs from pre-fix code.
+        try:
+            from nastech_cli.macos_tcc_anchor import ensure_tcc_anchor
+
+            tcc_anchored = ensure_tcc_anchor(_m().PROJECT_ROOT)
+            if tcc_anchored is not None:
+                print(f"  ✓ macOS TCC anchor: interpreter pinned at {tcc_anchored}")
+        except Exception as _tcc_exc:
+            logger.debug("macOS TCC anchor refresh failed: %s", _tcc_exc)
+
         # ── Post-update state.db integrity guard (#68474) ─────────────────
         # Verify that state.db survived the update intact.  If the live file
         # is now corrupted (zeroed, missing header, integrity failure),

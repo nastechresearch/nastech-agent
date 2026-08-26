@@ -186,7 +186,7 @@ declare global {
       sshResolveHost: (host: string) => Promise<DesktopSshResolveResult>
       probeConnectionConfig: (remoteUrl: string) => Promise<DesktopConnectionProbeResult>
       oauthLoginConnectionConfig: (remoteUrl: string) => Promise<DesktopOauthLoginResult>
-      oauthLogoutConnectionConfig: (remoteUrl?: string) => Promise<DesktopOauthLogoutResult>
+      oauthLogoutConnectionConfig: (remoteUrl: string) => Promise<DesktopOauthLogoutResult>
       // Nastech Cloud: one portal login powers discovery + silent per-agent
       // sign-in (cloud-auto-discovery Phase 3).
       cloud: {
@@ -198,6 +198,9 @@ declare global {
       }
       profile: {
         get: () => Promise<DesktopActiveProfile>
+        // Persists the profile used on the next Desktop launch without
+        // interrupting the live gateway workspace switch.
+        remember: (name: string | null) => Promise<DesktopActiveProfile>
         // Persists the desktop's profile choice and relaunches the local
         // backend under the new NASTECH_HOME (reloads the window). Pass null to
         // clear the preference.
@@ -415,6 +418,13 @@ declare global {
         write: (id: string, data: string) => Promise<boolean>
       }
       reachPreviewUrl?: (url: string) => Promise<string>
+      setActiveConnectionRoute?: (
+        route: {
+          connectionId?: null | string
+          profile?: string
+          registryScoped?: boolean
+        } | null
+      ) => void
       onClosePreviewRequested?: (callback: () => void) => () => void
       onPreviewNav?: (callback: (command: 'back' | 'forward' | 'reload') => void) => () => void
       onOpenFolderRequested?: (callback: () => void) => () => void
