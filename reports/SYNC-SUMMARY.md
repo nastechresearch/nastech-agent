@@ -6,69 +6,68 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 134 commits affecting 1343 files.
-- **Source revision:** `f0c0c986c4cb`.
-- **Previous source revision:** `f751a8c5467c`.
+- **Changes incorporated:** 65 commits affecting 1346 files.
+- **Source revision:** `86ae906e88b2`.
+- **Previous source revision:** `f0c0c986c4cb`.
 
 ## Technical coverage
 
-- **.github/:** 2 changed files.
-- **agent/:** 7 changed files.
-- **apps/:** 316 changed files.
-- **contributors/:** 18 changed files.
-- **gateway/:** 5 changed files.
-- **nastech_cli/:** 22 changed files.
-- **plugins/:** 3 changed files.
-- **tests/:** 35 changed files.
-- **tests-js/:** 5 changed files.
-- **tools/:** 4 changed files.
+- **.mailmap/:** 1 changed files.
+- **agent/:** 3 changed files.
+- **apps/:** 119 changed files.
+- **contributors/:** 9 changed files.
+- **cron/:** 4 changed files.
+- **gateway/:** 4 changed files.
+- **locales/:** 17 changed files.
+- **nastech_cli/:** 9 changed files.
+- **nastech_state.py/:** 1 changed files.
+- **skills/:** 1 changed files.
+- **tests/:** 32 changed files.
+- **tools/:** 12 changed files.
 - **tui_gateway/:** 1 changed files.
-- **website/:** 5 changed files.
+- **website/:** 2 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(openviking): identify Nastech requests
-- feat(desktop): add NSScreenCaptureUsageDescription to macOS bundle
-- feat(update): unattended-safe cua-driver refresh with fail-fast preflights
+- feat(cron): import-error cron failures now name gateway code skew and the one-command fix (#95294 part 3)
 
 ### Reliability and fixes
 
-- fix(computer_use): disable embedded daemon overlay
-- fix(desktop): clicking a bot no longer burns a model turn on a fake user prompt
-- fix(desktop): drop unused registryGatewayWsUrl import left by the header-binding refactor rebase
-- fix(desktop): recover remote sessions after gateway restart
-- fix(desktop): log when Windows remote SSH skip teardown
-- fix(desktop): terminate owned SSH serve backends on quit
-- fix(desktop): clarify primary SSH reuse failures
-- fix(desktop): reuse migrated primary SSH backend
-- fix(desktop): scope registered ssh primary gateway
-- fix(desktop): treat ticket 401 as sign-in when native tokens are unreadable
-- fix(desktop): refresh remote WebSocket header cache recency
-- fix(desktop): bind headers to scoped WebSocket URL
-- 86 additional reliability and fixes updates are included in this verified snapshot.
+- fix(desktop): skip macOS TCC-protected media dirs in git repo scan
+- fix(terminal): tolerate macOS TCC PermissionError in _safe_getcwd
+- fix(computer_use): pitch background-FIRST (not background-only) in schema, prompt block, and skill
+- fix(desktop): single-owner backend dial claim in Electron main (#90812)
+- fix(desktop): revalidate pooled remote/SSH backends on power resume (#93910)
+- fix(gateway): redeliver transient failures after reconnect
+- fix(desktop): poll-guard reset is fire-and-forget off the redial path
+- fix(desktop): isolate the poll-guard reset import + sort-imports lint
+- fix(desktop): republish the connections registry to renderers after every successful save (#95393)
+- fix(desktop): release reconnect-orphaned warm transcripts once their authoritative state settles
+- fix(desktop): harden the dead-session poll guard per #94950 review
+- fix(desktop): stop the status-stack poll storming a dead session with 4001s
+- 29 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs: document the no_overlay auto-detect and new Linux X11 default
-- docs(bootstrap): correct marker_owned_by_self justification for current live_marker_owner semantics
+- docs(cron): describe widened continuable scope (origin fallback + explicit opt-in)
 
 ### Improvements
 
-- test: pin overlay policy off in embedded-daemon socket/ack contract test
-- refactor(cron): halve the cronjob tool schema (2,234 → 1,070 tokens/call) without losing guidance (#95287)
-- fmt(js): `npm run fix` on merge (#95365)
-- chore: map contributor email for salvaged PR #88544
-- refactor(codex): route transports _pair_ids through shared fc_ canonicalization
-- refactor(codex): extract shared fc_->call_ canonicalization helper
-- test(desktop): pass the pin-write fence into the Show-all order assertion
-- test(desktop): lock pin upgrade to server-authoritative pull
-- chore: contributor email mappings for salvage class-4
-- test(desktop): profile-door dial failure now rejects (post-#81165 contract) — #92265 invariant unchanged
-- test(desktop): cover bot reconciliation runtime lifecycle
-- fmt(js): `npm run fix` on merge (#95329)
-- 19 additional improvements updates are included in this verified snapshot.
+- fmt(js): `npm run fix` on merge (#95511)
+- chore: map contributor email for wiseconnex
+- test: loosen frozen bare-verdict dict in cua_0_9 sibling test to decision contract
+- refactor(computer_use): diet schema + delete prompt block (~1.4K tok/call); remove max_elements, ladder moves to response verdicts
+- test(gateway): prove delivered rows are never reclaimed by the reconnect sweep
+- chore: map justinjohnson25600 and BrunoBza contributor emails
+- refactor(checkpoints): call the size-cap predicate instead of restating it
+- chore: map contributor email for notkisk
+- Merge pull request #95477 from kshitijk4poor/chore/mailmap-kshitijk4poor
+- chore: mailmap kshitijkapoorr@gmail.com to kshitijk4poor's canonical noreply
+- test: assert omitted attach_to_session stays absent from formatted list output
+- chore: map kshitijkapoorr@gmail.com to kshitijk4poor in contributors/emails
+- 10 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

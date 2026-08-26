@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `f0c0c986c4cbca01ff3550126ecdee5a6b5a7e13`
+- upstream sha : `86ae906e88b280215067c5f9726f2f8cec6178b3`
 - source       : `https://github.com/Nastechresearch/nastech-agent.git`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -31,9 +31,9 @@
 
 ## Brand
 
-- total files : 10349
-- renamed     : 1430 (folders and file names)
-- text-rewritten : 10251
+- total files : 10379
+- renamed     : 1433 (folders and file names)
+- text-rewritten : 10281
 - locked-copied  : 56
 - binary-copied  : 8
 - owned assets   : 34 (our logo/banner/mascot override upstream)
@@ -45,196 +45,158 @@
 
 ## Direct upstream tree delta
 
-- complete: +41 ~134 -0 ↪0
-- MODIFIED `agent/codex_responses_adapter.py`
-- MODIFIED `agent/context_compressor.py`
-- MODIFIED `agent/conversation_compression.py`
-- MODIFIED `agent/transports/codex.py`
-- ADDED `apps/bootstrap-installer/src-tauri/Info.plist`
-- ADDED `apps/bootstrap-installer/src-tauri/entitlements.plist`
-- MODIFIED `apps/bootstrap-installer/src-tauri/src/update.rs`
-- MODIFIED `apps/bootstrap-installer/src-tauri/tauri.conf.json`
-- MODIFIED `apps/desktop/DESIGN.md`
-- ADDED `apps/desktop/electron/backend-release-gate.test.ts`
-- ADDED `apps/desktop/electron/backend-release-gate.ts`
-- ADDED `apps/desktop/electron/backend-release-gate.windows-live.test.ts`
-- MODIFIED `apps/desktop/electron/connection-apply.test.ts`
-- MODIFIED `apps/desktop/electron/connection-apply.ts`
+- complete: +30 ~107 -0 ↪0
+- MODIFIED `.mailmap`
+- MODIFIED `agent/prompt_builder.py`
+- MODIFIED `agent/system_prompt.py`
+- ADDED `apps/desktop/electron/backend-dial-claim.test.ts`
+- ADDED `apps/desktop/electron/backend-dial-claim.ts`
 - MODIFIED `apps/desktop/electron/connection-registry.test.ts`
 - MODIFIED `apps/desktop/electron/connection-registry.ts`
-- MODIFIED `apps/desktop/electron/desktop-remote-route.test.ts`
-- MODIFIED `apps/desktop/electron/entitlements.mac.plist`
+- MODIFIED `apps/desktop/electron/git-repo-scan.test.ts`
+- MODIFIED `apps/desktop/electron/git-repo-scan.ts`
+- MODIFIED `apps/desktop/electron/hardening.test.ts`
 - MODIFIED `apps/desktop/electron/main.ts`
-- MODIFIED `apps/desktop/electron/native-auth-decisions.test.ts`
-- MODIFIED `apps/desktop/electron/native-auth-decisions.ts`
-- MODIFIED `apps/desktop/electron/native-oauth.test.ts`
-- MODIFIED `apps/desktop/electron/native-oauth.ts`
-- MODIFIED `apps/desktop/electron/plugin-profile-routes.test.ts`
-- MODIFIED `apps/desktop/electron/plugin-profile-routes.ts`
-- MODIFIED `apps/desktop/electron/preload.ts`
-- MODIFIED `apps/desktop/electron/primary-backend-startup.test.ts`
-- MODIFIED `apps/desktop/electron/primary-backend-startup.ts`
-- MODIFIED `apps/desktop/electron/profile-session-routing.test.ts`
-- MODIFIED `apps/desktop/electron/profile-session-routing.ts`
-- MODIFIED `apps/desktop/electron/remote-lifecycle.test.ts`
-- MODIFIED `apps/desktop/electron/remote-lifecycle.ts`
-- MODIFIED `apps/desktop/electron/remote-liveness.test.ts`
+- ADDED `apps/desktop/electron/power-resume-remote-revalidation.test.ts`
 - MODIFIED `apps/desktop/electron/remote-liveness.ts`
-- ADDED `apps/desktop/electron/remote-ws-headers.test.ts`
-- ADDED `apps/desktop/electron/remote-ws-headers.ts`
-- MODIFIED `apps/desktop/electron/ssh-bootstrap-coordinator.test.ts`
-- MODIFIED `apps/desktop/electron/ssh-bootstrap-coordinator.ts`
-- ADDED `apps/desktop/electron/terminal-ipc.test.ts`
-- MODIFIED `apps/desktop/electron/terminal-ipc.ts`
-- ADDED `apps/desktop/electron/window-connection-route.test.ts`
-- ADDED `apps/desktop/electron/window-connection-route.ts`
-- MODIFIED `apps/desktop/package.json`
-- MODIFIED `apps/desktop/src/app/chat/session-tile-actions.test.ts`
-- MODIFIED `apps/desktop/src/app/chat/session-tile-actions.ts`
-- MODIFIED `apps/desktop/src/app/chat/session-tile.tsx`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/session-index.test.ts`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/session-row.test.tsx`
-- MODIFIED `apps/desktop/src/app/contrib/hooks/use-session-tile-delegate.test.ts`
+- ADDED `apps/desktop/src/api/sessions.test.ts`
+- MODIFIED `apps/desktop/src/api/sessions.ts`
+- MODIFIED `apps/desktop/src/app/chat/composer/status-stack/index.tsx`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/connection-switcher.test.tsx`
 - MODIFIED `apps/desktop/src/app/contrib/hooks/use-session-tile-delegate.ts`
+- ADDED `apps/desktop/src/app/contrib/session-rpc-dispatcher.test.ts`
+- ADDED `apps/desktop/src/app/contrib/session-rpc-dispatcher.ts`
+- MODIFIED `apps/desktop/src/app/contrib/wiring-routing.test.ts`
+- MODIFIED `apps/desktop/src/app/contrib/wiring-routing.ts`
 - MODIFIED `apps/desktop/src/app/contrib/wiring.tsx`
 - MODIFIED `apps/desktop/src/app/gateway/hooks/use-gateway-boot.test.tsx`
 - MODIFIED `apps/desktop/src/app/gateway/hooks/use-gateway-boot.ts`
-- MODIFIED `apps/desktop/src/app/gateway/hooks/use-gateway-request.test.ts`
-- MODIFIED `apps/desktop/src/app/gateway/hooks/use-gateway-request.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-nastech-config.test.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-nastech-config.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/index.test.tsx`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/index.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-route-resume.test.tsx`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-route-resume.ts`
+- ADDED `apps/desktop/src/app/session/hooks/profile-rail-fresh-chat-owner.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/slash.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/submit.ts`
 - MODIFIED `apps/desktop/src/app/session/hooks/use-session-actions.test.tsx`
 - MODIFIED `apps/desktop/src/app/session/hooks/use-session-actions/index.ts`
 - MODIFIED `apps/desktop/src/app/session/hooks/use-session-actions/utils.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-session-list-actions.test.tsx`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-session-list-actions.ts`
 - MODIFIED `apps/desktop/src/app/session/hooks/use-session-state-cache.test.tsx`
-- MODIFIED `apps/desktop/src/app/settings/gateway-settings.test.ts`
-- MODIFIED `apps/desktop/src/app/settings/gateway-settings.tsx`
-- MODIFIED `apps/desktop/src/app/shell/model-catalog-menu.tsx`
-- MODIFIED `apps/desktop/src/app/shell/model-menu-panel.tsx`
-- MODIFIED `apps/desktop/src/components/assistant-ui/thread/user-edit-composer.tsx`
-- MODIFIED `apps/desktop/src/components/boot-failure-overlay.test.tsx`
-- MODIFIED `apps/desktop/src/components/boot-failure-overlay.tsx`
-- MODIFIED `apps/desktop/src/components/ui/tooltip.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-session-state-cache.ts`
+- MODIFIED `apps/desktop/src/app/session/session-state-cache.test.ts`
+- MODIFIED `apps/desktop/src/app/session/session-state-cache.ts`
 - MODIFIED `apps/desktop/src/global.d.ts`
-- ADDED `apps/desktop/src/lib/connection-scoped.test.ts`
-- MODIFIED `apps/desktop/src/lib/connection-scoped.ts`
-- MODIFIED `apps/desktop/src/lib/json-rpc-gateway-recovery.test.ts`
-- MODIFIED `apps/desktop/src/lib/model-options.test.ts`
-- MODIFIED `apps/desktop/src/lib/model-options.ts`
-- ADDED `apps/desktop/src/lib/with-timeout.test.ts`
-- ADDED `apps/desktop/src/lib/with-timeout.ts`
+- ADDED `apps/desktop/src/lib/session-owner-stamp.ts`
+- MODIFIED `apps/desktop/src/lib/with-timeout.ts`
+- ADDED `apps/desktop/src/plugins/accent/plugin.js`
 - MODIFIED `apps/desktop/src/plugins/nastech-bots/plugin.js`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-creation.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-registry.test.mjs`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/hide-bot-chats.runtime.test.ts`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/hide-bot-chats.test.mjs`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/roster-query-retry.test.mjs`
-- MODIFIED `apps/desktop/src/sdk/index.ts`
-- MODIFIED `apps/desktop/src/sdk/profile-routing.test.ts`
+- ADDED `apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-adopt-on-conflict.test.mjs`
+- ADDED `apps/desktop/src/plugins/kanban/plugin.js`
+- MODIFIED `apps/desktop/src/store/composer-status.test.ts`
+- MODIFIED `apps/desktop/src/store/composer-status.ts`
+- ADDED `apps/desktop/src/store/connection-registry-state.ts`
 - MODIFIED `apps/desktop/src/store/connections.test.ts`
 - MODIFIED `apps/desktop/src/store/connections.ts`
 - MODIFIED `apps/desktop/src/store/gateway-connection-lifecycle.test.ts`
-- MODIFIED `apps/desktop/src/store/gateway-connection-scope.test.ts`
-- MODIFIED `apps/desktop/src/store/gateway-profile-request.test.ts`
-- ADDED `apps/desktop/src/store/gateway-secondary-open-check.test.ts`
-- MODIFIED `apps/desktop/src/store/gateway-shared-remote.test.ts`
-- MODIFIED `apps/desktop/src/store/gateway-switch.test.ts`
-- MODIFIED `apps/desktop/src/store/gateway-switch.ts`
-- ADDED `apps/desktop/src/store/gateway.test.ts`
+- ADDED `apps/desktop/src/store/gateway-foreground-retention.test.ts`
 - MODIFIED `apps/desktop/src/store/gateway.ts`
-- MODIFIED `apps/desktop/src/store/layout-connection-scope.test.ts`
-- MODIFIED `apps/desktop/src/store/layout.ts`
 - MODIFIED `apps/desktop/src/store/profile-agent-activation.test.ts`
-- MODIFIED `apps/desktop/src/store/profile-select-source.test.ts`
-- ADDED `apps/desktop/src/store/profile-switch-failure.test.ts`
-- MODIFIED `apps/desktop/src/store/profile.test.ts`
 - MODIFIED `apps/desktop/src/store/profile.ts`
-- ADDED `apps/desktop/src/store/session-pin-connection-scope.test.ts`
+- MODIFIED `apps/desktop/src/store/projects.test.ts`
+- MODIFIED `apps/desktop/src/store/projects.ts`
+- ADDED `apps/desktop/src/store/session-owner-resolution.test.ts`
+- ADDED `apps/desktop/src/store/session-owner-resolution.ts`
 - MODIFIED `apps/desktop/src/store/session-request-router.test.ts`
 - MODIFIED `apps/desktop/src/store/session-request-router.ts`
-- MODIFIED `apps/desktop/src/store/session-states-reconnect.test.ts`
-- MODIFIED `apps/desktop/src/store/session-states-scopes.test.ts`
-- MODIFIED `apps/desktop/src/store/session-states.test.ts`
+- ADDED `apps/desktop/src/store/session-states-foreground-scopes.test.ts`
+- MODIFIED `apps/desktop/src/store/session-states-runtime-map.test.ts`
 - MODIFIED `apps/desktop/src/store/session-states.ts`
 - MODIFIED `apps/desktop/src/store/session.test.ts`
 - MODIFIED `apps/desktop/src/store/session.ts`
-- MODIFIED `apps/shared/src/json-rpc-gateway.ts`
-- ADDED `contributors/emails/1244224501@qq.com`
-- ADDED `contributors/emails/Fernstaedtmarco@gmail.com`
-- ADDED `contributors/emails/RaviTharuma@users.noreply.github.com`
-- ADDED `contributors/emails/bash@opencode.itc.local`
-- ADDED `contributors/emails/contact@kavyro.com`
-- ADDED `contributors/emails/getkolt@gmail.com`
-- ADDED `contributors/emails/glass.garrett15@protonmail.com`
-- ADDED `contributors/emails/jaimemarques93@icloud.com`
-- ADDED `contributors/emails/jr@trustcyber.ca`
-- ADDED `contributors/emails/kgparadzayi@gmail.com`
-- ADDED `contributors/emails/koltyj@users.noreply.github.com`
-- ADDED `contributors/emails/reinelt@rt-experts.de`
-- ADDED `contributors/emails/tom@spoct.com`
-- ADDED `contributors/emails/travisjstockton@gmail.com`
-- ADDED `contributors/emails/ulysse.trin@hotmail.fr`
-- ADDED `contributors/emails/victornogu80@gmail.com`
-- ADDED `contributors/emails/yl.tilly.everhome@gmail.com`
-- ADDED `contributors/emails/zhangyswx@163.com`
+- MODIFIED `apps/desktop/src/store/updates.test.ts`
+- ADDED `contributors/emails/BrunoBza@users.noreply.github.com`
+- ADDED `contributors/emails/claw.8op8q@8alias.com`
+- ADDED `contributors/emails/codexbt1@gmail.com`
+- ADDED `contributors/emails/dimar@wiseconnex.com`
+- ADDED `contributors/emails/justinjohnson25600@users.noreply.github.com`
+- ADDED `contributors/emails/kshitijkapoorr@gmail.com`
+- ADDED `contributors/emails/michaelweisman@Michaels-Mac-Studio.local`
+- ADDED `contributors/emails/projetsjsl@gmail.com`
+- ADDED `contributors/emails/salahxd99@gmail.com`
+- MODIFIED `cron/scheduler.py`
+- MODIFIED `gateway/delivery_ledger.py`
+- MODIFIED `gateway/platforms/base.py`
 - MODIFIED `gateway/run.py`
+- MODIFIED `gateway/slash_commands.py`
+- MODIFIED `nastech_cli/banner.py`
+- MODIFIED `nastech_cli/cli_commands_mixin.py`
 - MODIFIED `nastech_cli/config_defaults.py`
-- MODIFIED `nastech_cli/doctor.py`
-- ADDED `nastech_cli/macos_tcc_anchor.py`
-- MODIFIED `nastech_cli/main.py`
-- MODIFIED `nastech_cli/tools_config.py`
-- MODIFIED `nastech_cli/update_cmd.py`
-- MODIFIED `nastech_cli/web_models.py`
-- MODIFIED `nastech_cli/web_routers/sessions.py`
-- MODIFIED `plugins/memory/openviking/README.md`
-- MODIFIED `plugins/memory/openviking/__init__.py`
-- MODIFIED `tests-js/desktop-mac-entitlements.test.ts`
-- ADDED `tests-js/desktop-mac-usage-descriptions.test.ts`
-- MODIFIED `tests/agent/test_codex_responses_adapter.py`
-- MODIFIED `tests/agent/test_context_compressor.py`
-- MODIFIED `tests/computer_use/test_cua_no_overlay.py`
+- MODIFIED `nastech_cli/macos_tcc_anchor.py`
+- MODIFIED `nastech_cli/managed_uv.py`
+- MODIFIED `nastech_cli/web_server.py`
+- MODIFIED `nastech_state.py`
+- MODIFIED `locales/af.yaml`
+- MODIFIED `locales/ar.yaml`
+- MODIFIED `locales/de.yaml`
+- MODIFIED `locales/en.yaml`
+- MODIFIED `locales/es.yaml`
+- MODIFIED `locales/fr.yaml`
+- MODIFIED `locales/ga.yaml`
+- MODIFIED `locales/hu.yaml`
+- MODIFIED `locales/it.yaml`
+- MODIFIED `locales/ja.yaml`
+- MODIFIED `locales/ko.yaml`
+- MODIFIED `locales/pt.yaml`
+- MODIFIED `locales/ru.yaml`
+- MODIFIED `locales/tr.yaml`
+- MODIFIED `locales/uk.yaml`
+- MODIFIED `locales/zh-hant.yaml`
+- MODIFIED `locales/zh.yaml`
+- MODIFIED `skills/autonomous-ai-agents/computer-use/SKILL.md`
+- ADDED `tests/cron/test_cron_import_error_skew_hint.py`
+- MODIFIED `tests/cron/test_cron_relay_delivery_guards.py`
+- ADDED `tests/cron/test_mirror_origin_fallback.py`
+- MODIFIED `tests/cron/test_scheduler.py`
+- MODIFIED `tests/gateway/test_delivery_ledger.py`
+- MODIFIED `tests/gateway/test_delivery_ledger_producer.py`
 - MODIFIED `tests/gateway/test_multiplex_adapter_registry.py`
-- MODIFIED `tests/gateway/test_multiplex_session_db_profile_scope.py`
-- MODIFIED `tests/nastech_cli/test_doctor.py`
-- MODIFIED `tests/nastech_cli/test_gui_command.py`
-- MODIFIED `tests/nastech_cli/test_install_cua_driver.py`
-- ADDED `tests/nastech_cli/test_macos_tcc_anchor.py`
+- MODIFIED `tests/gateway/test_platform_reconnect.py`
+- ADDED `tests/nastech_cli/test_dashboard_spawn_executable.py`
+- MODIFIED `tests/nastech_cli/test_macos_tcc_anchor.py`
+- MODIFIED `tests/nastech_cli/test_managed_uv.py`
+- MODIFIED `tests/nastech_cli/test_update_check.py`
 - MODIFIED `tests/nastech_cli/test_web_server.py`
-- MODIFIED `tests/openviking_plugin/test_openviking.py`
-- MODIFIED `tests/plugins/memory/test_openviking_provider.py`
-- ADDED `tests/test_session_delete_profile_isolation.py`
+- ADDED `tests/nastech_state/test_canonical_title_guard.py`
+- MODIFIED `tests/test_tui_gateway_server.py`
+- MODIFIED `tests/tools/test_checkpoint_manager.py`
+- MODIFIED `tests/tools/test_computer_use.py`
+- MODIFIED `tests/tools/test_computer_use_browser_authorization.py`
 - MODIFIED `tests/tools/test_computer_use_cua_0_10_permissions.py`
-- MODIFIED `tests/tools/test_delegate_control_actions.py`
-- MODIFIED `tests/tui_gateway/test_profiles_list_canonical_session.py`
+- MODIFIED `tests/tools/test_computer_use_cua_0_9.py`
+- MODIFIED `tests/tools/test_computer_use_delivery_ladder.py`
+- MODIFIED `tests/tools/test_cronjob_tools.py`
+- ADDED `tests/tools/test_safe_getcwd_permission_error.py`
+- MODIFIED `tests/tools/test_send_message_plugin_extensibility.py`
+- MODIFIED `tools/checkpoint_manager.py`
+- MODIFIED `tools/computer_use/__init__.py`
 - MODIFIED `tools/computer_use/cua_backend.py`
+- MODIFIED `tools/computer_use/schema.py`
+- MODIFIED `tools/computer_use/tool.py`
 - MODIFIED `tools/cronjob_tools.py`
-- MODIFIED `tools/process_registry.py`
-- MODIFIED `tui_gateway/methods_profiles.py`
-- MODIFIED `website/docs/user-guide/configuration.md`
-- MODIFIED `website/docs/user-guide/desktop.md`
+- MODIFIED `tools/terminal_tool.py`
+- MODIFIED `tui_gateway/server.py`
 - MODIFIED `website/docs/user-guide/features/computer-use.md`
-- MODIFIED `website/docs/user-guide/features/delegation.md`
-- MODIFIED `website/docs/user-guide/features/memory-providers.md`
+- MODIFIED `website/docs/user-guide/features/cron.md`
 
 ## Scan
 
-10403 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10281]
+10433 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10311]
 
 
 ## Diff
 
-1343 renamed, 0 rewritten, 8662 identical, 61 locked, 0 missing, 34 owned, 249 reconciled
+1346 renamed, 0 rewritten, 8689 identical, 61 locked, 0 missing, 34 owned, 249 reconciled
 
 
 ## Fork check (vs nastech-agent)
 
-- 10096 identical, 266 updated (+0/-0 lines), 41 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 0 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+- 10154 identical, 249 updated (+0/-0 lines), 30 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 0 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - features: fork 51 -> branded 51
 

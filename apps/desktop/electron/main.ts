@@ -45,6 +45,7 @@ import {
 } from './backend-claim'
 import { dashboardFallbackArgs, sourceDeclaresServe } from './backend-command'
 import { createBackendConnectionState } from './backend-connection-state'
+import { BackendDialClaims } from './backend-dial-claim'
 import { buildDesktopBackendEnv, nastechManagedNodePathEntries, normalizeNastechHomeRoot } from './backend-env'
 import {
   isReauthRequiredError,
@@ -131,8 +132,10 @@ import {
   migrateV1ToRegistry,
   normalizeConnectionInput,
   normalizeRegistry,
+  parseBackendScopeKey,
   reconcileAppliedGlobalConnection,
   reconcileRegistryDrift,
+  registrySourceOwnsPrimaryBackend,
   rememberSshEnumeration,
   removeConnection,
   resolvedConnectionId,
@@ -287,11 +290,13 @@ import { createQuickEntryShortcut, quickEntryWindowBounds, sanitizeQuickEntrySet
 import { type ActiveWork, mergeActiveWork, normalizeActiveWork, quitPromptFor } from './quit-guard'
 import * as remoteLifecycle from './remote-lifecycle'
 import {
+  attachPowerResumeRemoteRevalidation,
   ensureHealthyPooledRemoteBackendForDispatch,
   RemoteLivenessTracker,
   RemoteRevalidationCoordinator,
   revalidatePooledRemoteBackends,
-  revalidateRemoteConnection
+  revalidateRemoteConnection,
+  revalidateSuspectPooledRemoteBackends
 } from './remote-liveness'
 import {
   applyRemoteRequestHeaders,
@@ -1341,6 +1346,12 @@ const backendConnectionState = createBackendConnectionState<ReturnType<typeof sp
 const remoteLiveness = new RemoteLivenessTracker()
 const remoteRevalidation = new RemoteRevalidationCoordinator()
 const registryDispatchRevalidation = new RemoteRevalidationCoordinator()
+// Single-owner reconnect/dial claim (#90812): reconnectGateway()'s in-flight
+// lock is per-renderer, so two windows racing one wake can both invoke the
+// backend ensure IPC and double-dial a pooled SSH backend. Main owns backend
+// lifecycles, so concurrent dials for one (connectionId, profile) scope
+// coalesce here — the second caller awaits the first spawn's result.
+const backendDialClaims = new BackendDialClaims()
 // True while connection-config:apply soft-rehomes the primary — suppresses the
 // backend-exit toast so an intentional kill doesn't look like a crash.
 let softRehomeInProgress = false
@@ -4568,8 +4579,7 @@ function createActiveBackend(backendArgs) {
 function resolveNastechBackend(backendArgs) {
   // 1. Explicit override -- NASTECH_DESKTOP_NASTECH_ROOT points at a developer
   //    checkout. Honour it as-is (no bootstrap; the user is driving).
-  const overrideRoot =
-    process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
+  const overrideRoot = process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
 
   if (overrideRoot && isNastechSourceRoot(overrideRoot)) {
     const backend = createPythonBackend(overrideRoot, `Nastech source at ${overrideRoot}`, backendArgs)
@@ -6356,6 +6366,15 @@ function registerPowerResumeListeners() {
     powerMonitor.on('on-battery', () => broadcastBatteryState(true))
     powerMonitor.on('on-ac', () => broadcastBatteryState(false))
     onBatteryPower = powerMonitor.isOnBatteryPower()
+    // Pooled remote/SSH backends are also suspect after a wake (#93910): the
+    // renderer nudge above only re-drives the PRIMARY socket, while pooled
+    // tunnels have no renderer loop of their own. Bounded + coalesced inside;
+    // never a hot loop.
+    attachPowerResumeRemoteRevalidation({
+      log: rememberLog,
+      powerMonitor,
+      revalidate: () => revalidateSuspectPoolAfterResume()
+    })
   } catch {
     // powerMonitor is unavailable before app 'ready' on some platforms; the
     // caller registers after 'ready', so this should not normally throw.
@@ -9088,6 +9107,14 @@ async function saveRegistryConnection(input: any = {}) {
   if (existing && connectionDialFieldsChanged(existing, entry)) {
     await stopRegistryConnectionBackends(entry.id)
     broadcastConnectionsChanged({ connectionId: entry.id, reason: 'updated' })
+  } else {
+    // Every OTHER successful save (a brand-new connection, a label rename)
+    // must still republish the registry snapshot, or windows that didn't
+    // perform the save — and the switcher menu fed by $connectionsRegistry —
+    // keep painting the stale list until reload (#95393). 'saved' is a pure
+    // registry-refresh signal: no sockets moved, so listeners must not
+    // dispose or redial anything for it.
+    broadcastConnectionsChanged({ connectionId: entry.id, reason: 'saved' })
   }
 
   return sanitizeRegistryConnection(entry)
@@ -10330,7 +10357,7 @@ function sendConnectionApplied() {
 // scoped to that connection. Without this, a removed remote/cloud source keeps
 // its renderer WebSocket open and streaming as a ghost, and an edited one
 // keeps talking to the OLD endpoint until idle-reap.
-function broadcastConnectionsChanged(payload: { connectionId: string; reason: 'removed' | 'updated' }) {
+function broadcastConnectionsChanged(payload: { connectionId: string; reason: 'removed' | 'saved' | 'updated' }) {
   for (const win of BrowserWindow.getAllWindows()) {
     const { webContents } = win
 
@@ -10570,6 +10597,24 @@ async function ensureRegistryBackend(connectionId, profile) {
       ...primary,
       profile: profileKey,
       connectionId: id
+    }
+  }
+
+  // The v1 primary and the registry primary can describe the same remote
+  // backend beyond the SSH-fingerprint path above (cloud/url remotes have no
+  // ssh -G identity). Reuse the already-running primary when the registry
+  // resolves its live descriptor back to this exact source id; otherwise one
+  // Desktop window starts two isolated servers whose transient runtime ids
+  // are not interchangeable.
+  if (id === registry.primary && source.kind !== 'local' && source.kind !== 'ssh') {
+    const primaryDescriptor = await ensureBackend(profile)
+
+    if (registrySourceOwnsPrimaryBackend(registry, id, primaryDescriptor)) {
+      return {
+        ...primaryDescriptor,
+        profile: profileKey,
+        connectionId: id
+      }
     }
   }
 
@@ -13053,7 +13098,12 @@ function createWindow() {
 }
 
 ipcMain.handle('nastech:connection', async (_event, profile) => {
-  const connection = await ensureBackend(profile)
+  // Coalesce concurrent renderer dials for one profile scope (#90812): the
+  // renderer-side reconnect lock is per-window, so two windows waking at once
+  // both land here. The claim key mirrors ensureBackend()'s own profile
+  // normalization so every spelling of the primary coalesces onto one dial.
+  const profileKey = profile && String(profile).trim() ? String(profile).trim() : primaryProfileKey()
+  const connection = await backendDialClaims.run(backendScopeKey(null, profileKey), () => ensureBackend(profile))
   const connectionId = resolvedConnectionId(readDesktopConnectionsRegistry(), connection)
 
   return connectionId ? { ...connection, connectionId } : connection
@@ -13067,7 +13117,10 @@ ipcMain.handle('nastech:connection:for', async (_event, payload) => {
   const { connectionId, profile } = payload && typeof payload === 'object' ? (payload as any) : ({} as any)
   const registry = readDesktopConnectionsRegistry()
   const id = String(connectionId || '').trim() || registry.primary
-  const connection = await ensureRegistryBackend(id, profile)
+  // Same single-owner claim as 'nastech:connection', keyed by the composite
+  // (connectionId, profile) scope (#90812): concurrent registry dials for one
+  // scope share the first spawn instead of bootstrapping duplicate remotes.
+  const connection = await backendDialClaims.run(backendScopeKey(id, profile), () => ensureRegistryBackend(id, profile))
 
   return { ...connection, connectionId: id, registryScoped: true }
 })
@@ -13158,6 +13211,50 @@ function revalidatePool() {
     stopBackend: stopPoolBackend,
     tracker: remoteLiveness
   })
+}
+
+// Re-dial one retired pool key through the SAME claim-guarded ensure path a
+// renderer dial takes (#90812), so a resume-driven rebuild and a concurrent
+// renderer reconnect coalesce onto one spawn instead of racing.
+function redialPoolBackendAfterResume(poolKey: string) {
+  const { connectionId, profile } = parseBackendScopeKey(poolKey)
+
+  return backendDialClaims.run(poolKey, () =>
+    connectionId ? ensureRegistryBackend(connectionId, profile) : ensureBackend(profile)
+  )
+}
+
+// Identity for coalescing post-resume sweeps in the shared revalidation
+// coordinator: overlapping resume/unlock/network-restore kicks join the one
+// in-flight sweep instead of stacking probes.
+const suspectPoolSweepScope = {}
+
+// Sleep/wake recovery for POOLED remote/SSH backends (#93910). The primary
+// renderer socket already has wake-path probe/reconnect nudges, but pooled
+// descriptors (Bots pane, secondary connections) kept serving dead SSH
+// tunnels after macOS resume: no child 'exit' fires for a remote, and the
+// background failure-streak policy takes several rounds to drop one. On
+// resume every pooled remote is suspect — probe each once (bounded), tear
+// down the dead ones (pool entry + SSH bootstrap + tunnel/master) and rebuild
+// them through the claim-guarded dial path.
+function revalidateSuspectPoolAfterResume() {
+  return remoteRevalidation.run(suspectPoolSweepScope, () =>
+    revalidateSuspectPooledRemoteBackends({
+      entries: backendPool.entries(),
+      log: rememberLog,
+      probe: (connection, path, options) => fetchJsonForBackend(connection, path, options),
+      rebuild: poolKey => redialPoolBackendAfterResume(poolKey),
+      retire: async poolKey => {
+        await stopPoolBackend(poolKey)
+        // The pool key doubles as the SSH scope for registry SSH backends and
+        // resolves through sshScopeKey() for bare-profile remotes; both
+        // teardown calls no-op when the scope holds no SSH state.
+        await sshBootstrapCoordinator.cancelAndWait(poolKey)
+        await teardownSshConnection(poolKey)
+      },
+      tracker: remoteLiveness
+    })
+  )
 }
 
 ipcMain.handle('nastech:backend:touch', async (_event, profile) => {

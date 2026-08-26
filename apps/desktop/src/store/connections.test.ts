@@ -70,6 +70,7 @@ vi.mock('@/store/profile', () => ({
   $activeGatewayProfile,
   $newChatProfile,
   $showAllProfiles,
+  captureNewChatSource: vi.fn(),
   ensureGatewayAgent,
   normalizeProfileKey: (name: null | string | undefined) => (name ?? '').trim() || 'default',
   openGatewayAgent,
@@ -722,16 +723,50 @@ describe('selectConnection', () => {
     }
   })
 
-  it('boot-time restore leaves "All profiles" browse mode on (#93197)', async () => {
-    // Fresh boot: nothing active yet, registry restores last-used. The
-    // persisted showAllProfiles=true must survive the silent restore.
+  it('waits for the primary descriptor before restoring a source at boot', async () => {
+    // The sidebar mounts while the primary gateway is still booting. Dialing
+    // the preferred source before its descriptor is published can create a
+    // second SSH backend for the exact same registered connection.
     list.mockResolvedValueOnce({ ...registry, lastUsed: 'homelab', launchMode: 'last-used' })
     $showAllProfiles.set(true)
 
-    await initializeConnectionsRegistry()
+    const restoring = initializeConnectionsRegistry()
 
-    expect(ensureGatewayAgent).toHaveBeenCalledWith('homelab', 'default', expect.anything())
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(openGatewayAgent).not.toHaveBeenCalled()
+    expect(ensureGatewayAgent).not.toHaveBeenCalled()
+
+    $connection.set({ connectionId: 'homelab', mode: 'remote' })
+    await restoring
+
+    expect(openGatewayAgent).not.toHaveBeenCalled()
+    expect(ensureGatewayAgent).not.toHaveBeenCalled()
+    expect(setLastUsed).toHaveBeenCalledWith('homelab')
     expect($showAllProfiles.get()).toBe(true)
+  })
+
+  it('boot restore proceeds after the descriptor wait deadline (bounded wait)', async () => {
+    // A primary that never publishes (spawn failure, dead SSH target) must
+    // not strand the registry restore forever: after the deadline the restore
+    // runs exactly as it did before the wait existed.
+    vi.useFakeTimers()
+
+    try {
+      list.mockResolvedValueOnce({ ...registry, lastUsed: 'homelab', launchMode: 'last-used' })
+
+      const restoring = initializeConnectionsRegistry()
+
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(ensureGatewayAgent).not.toHaveBeenCalled()
+
+      // Descriptor never arrives; deadline elapses.
+      await vi.advanceTimersByTimeAsync(60_000)
+      await restoring
+
+      expect(ensureGatewayAgent).toHaveBeenCalledWith('homelab', 'default', expect.anything())
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('a user-initiated source switch still collapses "All profiles"', async () => {
