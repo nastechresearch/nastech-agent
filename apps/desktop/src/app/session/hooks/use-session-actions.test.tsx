@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NO_PROJECT_ID } from '@/app/chat/sidebar/projects/workspace-groups'
 import { $terminalTakeover, setTerminalTakeover } from '@/app/right-sidebar/store'
 import { noteActiveTreeGroup, revealTreePane } from '@/components/pane-shell/tree/store'
+import { createClientSessionState } from '@/lib/chat-runtime'
 import {
   deleteSession,
   getAllSessionMessages,
@@ -17,7 +18,6 @@ import {
   type SessionResumeResponse,
   setSessionArchived
 } from '@/nastech'
-import { createClientSessionState } from '@/lib/chat-runtime'
 import { $clarifyRequests, clearClarifyRequest, setClarifyRequest } from '@/store/clarify'
 import { clearSessionDraft, stashSessionDraft, takeSessionDraft } from '@/store/composer'
 import { requestGatewayForAgent, requestGatewayForProfile } from '@/store/gateway'
