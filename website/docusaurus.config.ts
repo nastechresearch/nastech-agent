@@ -8,7 +8,7 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   url: 'https://nastechresearch.github.io',
-  baseUrl: '/nastech-agent/',
+  baseUrl: '/nastech-agent/docs/',
 
   organizationName: 'NastechResearch',
   projectName: 'nastech-agent',

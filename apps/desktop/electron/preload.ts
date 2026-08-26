@@ -29,6 +29,13 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   openSessionWindow: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openSession', sessionId, opts),
   openSessionInTerminal: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openInTerminal', sessionId, opts),
   openWindow: () => ipcRenderer.invoke('nastech:window:openInstance'),
+  openBrowserWindow: tabId => ipcRenderer.invoke('nastech:window:openBrowser', tabId),
+  onBrowserPopoutClosed: callback => {
+    const listener = (_event, tabId) => callback(tabId)
+    ipcRenderer.on('nastech:browser-popout:closed', listener)
+
+    return () => ipcRenderer.removeListener('nastech:browser-popout:closed', listener)
+  },
   claimAmbientCue: key => ipcRenderer.invoke('nastech:ambient:claim', key),
   wakeIndicator: {
     getState: () => ipcRenderer.invoke('nastech:wake-indicator:get'),
@@ -165,6 +172,10 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   saveConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:save', payload),
   applyConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:apply', payload),
   testConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:test', payload),
+  // Opt-in OS-keychain encryption for stored gateway secrets (default off —
+  // see secret-storage-policy.ts). get never touches the OS keychain.
+  getSecretStorageEncryption: () => ipcRenderer.invoke('nastech:secret-storage:get'),
+  setSecretStorageEncryption: (on: boolean) => ipcRenderer.invoke('nastech:secret-storage:set', on),
   // v2 multi-connection registry: named agent sources (local / remote / cloud / ssh).
   connections: {
     list: () => ipcRenderer.invoke('nastech:connections:list'),

@@ -33,9 +33,13 @@ import threading
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from typing import Any, Callable, Dict, List, Optional
 
-from agent.memory_provider import MemoryProvider
+from agent.memory_provider import MemoryProvider, PRE_COMPRESS_CHECKPOINT_API_VERSION
 from agent.skill_commands import extract_user_instruction_from_skill_message
 from tools.registry import tool_error
+
+# Providers that predate the checkpoint-API attribute are implicitly on the
+# historical best-effort contract (API v1).
+_LEGACY_PRE_COMPRESS_API_VERSION = 1
 
 logger = logging.getLogger(__name__)
 
@@ -1056,16 +1060,69 @@ class MemoryManager:
                     provider.name, e,
                 )
 
-    def on_pre_compress(self, messages: List[Dict[str, Any]]) -> str:
+    def supports_pre_compress_checkpoint(
+        self,
+        api_version: int = PRE_COMPRESS_CHECKPOINT_API_VERSION,
+    ) -> bool:
+        """Return whether an active provider guarantees checkpoint API support."""
+        for provider in self._providers:
+            try:
+                provider_version = int(
+                    getattr(
+                        provider,
+                        "pre_compress_checkpoint_api_version",
+                        _LEGACY_PRE_COMPRESS_API_VERSION,
+                    )
+                )
+            except (TypeError, ValueError):
+                continue
+            if provider_version >= api_version:
+                return True
+        return False
+
+    def on_pre_compress(
+        self,
+        messages: List[Dict[str, Any]],
+        *,
+        evidence_messages: Optional[List[Dict[str, Any]]] = None,
+        require_checkpoint: bool = False,
+        checkpoint_api_version: int = PRE_COMPRESS_CHECKPOINT_API_VERSION,
+    ) -> str:
         """Notify all providers before context compression.
 
         Returns combined text from providers to include in the compression
         summary prompt. Empty string if no provider contributes.
+
+        ``messages`` is the raw transcript — the historical (API v1)
+        contract every existing provider receives unchanged.
+        ``evidence_messages`` is the host-normalized direct-evidence list
+        handed only to providers that opted into checkpoint API v2+; when
+        omitted, v2 providers receive the raw list too.
+
+        When ``require_checkpoint`` is true, at least one provider
+        advertising the requested checkpoint API must return successfully;
+        its exception is propagated so the caller can preserve the
+        uncompressed transcript.
         """
         parts = []
+        checkpoint_succeeded = False
         for provider in self._providers:
             try:
-                result = provider.on_pre_compress(messages)
+                provider_version = int(
+                    getattr(
+                        provider,
+                        "pre_compress_checkpoint_api_version",
+                        _LEGACY_PRE_COMPRESS_API_VERSION,
+                    )
+                )
+            except (TypeError, ValueError):
+                provider_version = _LEGACY_PRE_COMPRESS_API_VERSION
+            is_checkpoint_provider = provider_version >= checkpoint_api_version
+            provider_messages = messages
+            if is_checkpoint_provider and evidence_messages is not None:
+                provider_messages = evidence_messages
+            try:
+                result = provider.on_pre_compress(provider_messages)
                 if result and result.strip():
                     parts.append(result)
             except Exception as e:
@@ -1073,6 +1130,16 @@ class MemoryManager:
                     "Memory provider '%s' on_pre_compress failed: %s",
                     provider.name, e,
                 )
+                if require_checkpoint and is_checkpoint_provider:
+                    raise
+            else:
+                if is_checkpoint_provider:
+                    checkpoint_succeeded = True
+        if require_checkpoint and not checkpoint_succeeded:
+            raise RuntimeError(
+                "No active memory provider completed pre-compress checkpoint "
+                f"API v{checkpoint_api_version}"
+            )
         return "\n\n".join(parts)
 
     @staticmethod

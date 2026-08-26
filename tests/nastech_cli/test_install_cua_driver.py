@@ -6,8 +6,9 @@ must:
 
 * Be supported-platform-only — no-op silently elsewhere so ``nastech update``
   can call it unconditionally without warning unsupported-platform users.
-* Re-run the installer even when the binary is already on PATH (this is the
-  fix for the "we only pulled cua-driver once on enable" complaint).
+* Re-run the installer for explicit upgrades even when the binary is already
+  on PATH (this is the fix for the "we only pulled cua-driver once on enable"
+  complaint). Automatic Windows updates defer because the installer can prompt.
 * For ``upgrade=False``, keep compatible installations, repair old or
   incomplete installations, and install when missing.
 
@@ -439,7 +440,8 @@ class TestRequireConfirmedUpdate:
     still reinstall when the check can't answer.
     """
 
-    def _install(self, check_state, require_confirmed):
+    def _install(self, check_state, require_confirmed, contract_status=None,
+                 binary_missing=False):
         """Drive ``install_cua_driver`` on the host, whatever it is.
 
         The old signature took a ``system`` string and faked
@@ -453,17 +455,25 @@ class TestRequireConfirmedUpdate:
 
         from nastech_cli import tools_config
 
+        _which_names = {"curl", "powershell"}
+        if not binary_missing:
+            _which_names.add("cua-driver")
         with patch.object(tools_config.shutil, "which",
                           side_effect=lambda n: "/x/" + n
-                          if n in {"cua-driver", "curl", "powershell"} else None), \
+                          if n in _which_names else None), \
              patch.object(tools_config, "_resolved_cua_driver_cmd",
-                          return_value="/x/cua-driver"), \
+                          return_value=None if binary_missing
+                          else "/x/cua-driver"), \
              patch.object(tools_config, "_cua_install_target_writable",
                           return_value=True), \
              patch.object(
                  tools_config,
                  "_cua_driver_contract_status",
-                 return_value={"ready": True, "version": "0.20.0", "reason": ""},
+                 return_value=contract_status or {
+                     "ready": True,
+                     "version": "0.20.0",
+                     "reason": "",
+                 },
              ), \
              patch("tools.computer_use.cua_backend.cua_driver_update_check",
                    return_value=check_state), \
@@ -497,10 +507,79 @@ class TestRequireConfirmedUpdate:
             for call in info.call_args_list
         )
 
-    def test_confirmed_update_still_runs_installer(self):
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="automatic Windows updates must not launch an interactive installer",
+    )
+    def test_confirmed_update_still_runs_installer_on_posix(self):
         state = {"current_version": "0.5.0", "latest_version": "0.6.0",
                  "update_available": True}
         ok, runner, _ = self._install(state, require_confirmed=True)
+        assert ok is True
+        runner.assert_called_once()
+
+    @pytest.mark.windows_only
+    def test_windows_confirmed_update_defers_interactive_installer(self):
+        state = {"current_version": "0.5.0", "latest_version": "0.6.0",
+                 "update_available": True}
+        ok, runner, info = self._install(state, require_confirmed=True)
+
+        assert ok is True
+        runner.assert_not_called()
+        assert any(
+            "computer-use install --upgrade" in call.args[0]
+            for call in info.call_args_list
+        )
+
+    @pytest.mark.windows_only
+    def test_windows_incompatible_driver_defers_interactive_repair(self):
+        incompatible = {
+            "ready": False,
+            "version": "0.19.3",
+            "reason": "Nastech computer use requires cua-driver 0.20.0 or newer",
+        }
+        ok, runner, info = self._install(
+            None,
+            require_confirmed=True,
+            contract_status=incompatible,
+        )
+
+        assert ok is False
+        runner.assert_not_called()
+        assert any(
+            "computer-use install --upgrade" in call.args[0]
+            for call in info.call_args_list
+        )
+
+    @pytest.mark.windows_only
+    def test_windows_missing_binary_defers_interactive_install(self):
+        """Driver enabled but never installed (or wiped by a failed install):
+        the automatic update must not launch install.ps1 either — this path
+        reached the installer before the top-level guard (#94296 review)."""
+        ok, runner, info = self._install(
+            None,
+            require_confirmed=True,
+            binary_missing=True,
+        )
+
+        assert ok is False
+        runner.assert_not_called()
+        assert any(
+            "computer-use install --upgrade" in call.args[0]
+            for call in info.call_args_list
+        )
+
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="POSIX installers are non-interactive; missing binary installs",
+    )
+    def test_posix_missing_binary_still_installs(self):
+        ok, runner, _ = self._install(
+            None,
+            require_confirmed=True,
+            binary_missing=True,
+        )
+
         assert ok is True
         runner.assert_called_once()
 
@@ -518,7 +597,11 @@ class TestRequireConfirmedUpdate:
         assert ok is True
         runner.assert_called_once()
 
-    def test_incompatible_driver_repairs_despite_indeterminate_check(self):
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="automatic Windows updates must not launch an interactive repair",
+    )
+    def test_incompatible_driver_repairs_on_posix_despite_indeterminate_check(self):
         """Nastech' own version floor is the confirmation. When the installed
         driver fails the runtime contract, the `nastech update` refresh must
         repair it even though ``check-update`` can't confirm a newer release
@@ -1106,13 +1189,7 @@ class TestConfirmedVersionPinning:
     """
 
     def _install(self, check_state):
-        """Host-agnostic: version pinning is string handling, not an OS branch.
-
-        The old ``platform.system`` → "Windows" fake was incidental — the
-        pin flows into ``CUA_DRIVER_RS_VERSION`` identically on every host
-        (both upstream installers honour it), and this test never reaches the
-        installer anyway because ``_run_cua_driver_installer`` is mocked.
-        """
+        """Version pinning also applies to explicit installer runs."""
         from unittest.mock import MagicMock
 
         from nastech_cli import tools_config
@@ -1139,7 +1216,7 @@ class TestConfirmedVersionPinning:
              patch.object(tools_config, "_print_warning"), \
              patch.object(tools_config, "_print_info"):
             ok = tools_config.install_cua_driver(
-                upgrade=True, require_confirmed_update=True
+                upgrade=True, require_confirmed_update=False
             )
         return ok, runner
 

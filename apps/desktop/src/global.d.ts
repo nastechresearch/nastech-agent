@@ -63,6 +63,11 @@ declare global {
       // renders the complete app against the shared backend, so the user can run
       // multiple GUI windows at once.
       openWindow: () => Promise<{ ok: boolean; error?: string }>
+      // Pop the in-app Browser (webview + address bar) into its own OS window.
+      // `tabId` is the `$previewTabs` id; closing the window fires
+      // `onBrowserPopoutClosed` so the caller can dock the tab again.
+      openBrowserWindow: (tabId: string) => Promise<{ ok: boolean; error?: string }>
+      onBrowserPopoutClosed: (callback: (tabId: string) => void) => () => void
       // Claim a one-shot cross-window ambient cue (turn-end sound / spoken
       // reply). Resolves true for the first window to claim a key, false for
       // peers — so N open windows don't all fire the same cue.
@@ -145,6 +150,11 @@ declare global {
       saveConnectionConfig: (payload: DesktopConnectionConfigInput) => Promise<DesktopConnectionConfig>
       applyConnectionConfig: (payload: DesktopConnectionConfigInput) => Promise<DesktopConnectionConfig>
       testConnectionConfig: (payload: DesktopConnectionConfigInput) => Promise<DesktopConnectionTestResult>
+      // Opt-in OS-keychain encryption for stored gateway secrets (default
+      // off). `get` never touches the OS keychain; `set` re-encodes stored
+      // secrets and can throw when the keychain is unusable.
+      getSecretStorageEncryption: () => Promise<{ on: boolean }>
+      setSecretStorageEncryption: (on: boolean) => Promise<{ on: boolean }>
       // v2 multi-connection registry: named agent sources, all persisted
       // together (local + any number of remote/cloud/ssh instances).
       connections: {
