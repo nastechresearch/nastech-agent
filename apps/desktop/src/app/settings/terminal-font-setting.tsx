@@ -8,8 +8,8 @@ import {
 } from '@/app/right-sidebar/terminal/terminal-font'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { saveNastechConfig } from '@/nastech'
 import { useI18n } from '@/i18n'
+import { saveNastechConfig } from '@/nastech'
 import { notifyError } from '@/store/notifications'
 import type { NastechConfigRecord } from '@/types/nastech'
 
