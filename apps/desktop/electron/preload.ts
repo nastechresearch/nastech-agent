@@ -185,6 +185,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     setLaunchMode: mode => ipcRenderer.invoke('nastech:connections:set-launch-mode', mode),
     setLastUsed: id => ipcRenderer.invoke('nastech:connections:set-last-used', id),
     test: id => ipcRenderer.invoke('nastech:connections:test', id),
+    updateManaged: id => ipcRenderer.invoke('nastech:connections:update-managed', id),
     // Fan out `nastech update` to every eligible registered connection.
     // Optional excludeIds skips rows the caller updates through another path.
     updateAll: options => ipcRenderer.invoke('nastech:connections:update-all', options),

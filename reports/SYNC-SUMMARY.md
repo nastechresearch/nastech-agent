@@ -6,83 +6,77 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 144 commits affecting 1360 files.
-- **Source revision:** `790e1eb6bd57`.
-- **Previous source revision:** `86ae906e88b2`.
+- **Changes incorporated:** 103 commits affecting 1370 files.
+- **Source revision:** `ef46ec03e114`.
+- **Previous source revision:** `790e1eb6bd57`.
 
 ## Technical coverage
 
-- **Dockerfile/:** 1 changed files.
-- **agent/:** 12 changed files.
-- **apps/:** 170 changed files.
-- **contributors/:** 9 changed files.
-- **docs/:** 1 changed files.
-- **evals/:** 8 changed files.
-- **gateway/:** 14 changed files.
-- **locales/:** 51 changed files.
-- **nastech_cli/:** 63 changed files.
-- **package-lock.json/:** 1 changed files.
-- **package.json/:** 1 changed files.
-- **plugins/:** 8 changed files.
-- **tests/:** 84 changed files.
-- **tools/:** 12 changed files.
-- **tui_gateway/:** 1 changed files.
-- **website/:** 15 changed files.
+- **.github/:** 9 changed files.
+- **agent/:** 5 changed files.
+- **apps/:** 115 changed files.
+- **cli-config.yaml.example/:** 1 changed files.
+- **contributors/:** 4 changed files.
+- **gateway/:** 7 changed files.
+- **nastech_cli/:** 41 changed files.
+- **plugins/:** 4 changed files.
+- **scripts/:** 7 changed files.
+- **tests/:** 81 changed files.
+- **tools/:** 20 changed files.
+- **tui_gateway/:** 19 changed files.
+- **website/:** 7 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat: MiniMax H3 Max joins the FAL video picker (t2v + i2v)
-- feat(update): image/package-managed installs refuse in-place updates through one shared gate (#91277 Phase 3)
-- feat(update): bake authoritative image provenance into the Docker image
-- feat(kanban): carry the review handoff summary into the wake turn
-- feat(agent): fold an agent-as-provider's own tool work back into the turn
-- feat(gateway): updaters pause gateways over the control socket instead of tree-killing them (#92091 step 2)
-- feat(desktop): fleet profile rail — every registered gateway's agents on one strip
-- feat(update): network-bound serve backends survive nastech update on their recorded endpoints (#63206)
-- feat(models): add z-ai/glm-5.3-flash to OpenRouter and Nastech Portal catalogs
-- feat(compression): lean tail retention is the default — compaction keeps 10-25K verbatim, not 100-240K
-- feat(macos): one-switch Full Disk Access guidance in doctor and setup
-- feat(deadline): SuspectableBackend protocol — mark timed-out backends suspect
+- feat(relay): stamp slack unfurl_links/unfurl_media onto outbound frame metadata (gateway-directed)
+- feat(slack): add link unfurl controls
+- feat(desktop): Managed updates section drives per-connection SSH updates
+- feat(browser): close-with-approval flow for Windows real-profile (toggle arms, agent asks, blocked if still locked) [proof do-not-merge]
+- feat(browser): consented auto-close of a running browser for Windows real-profile [proof workflow do-not-merge]
+- feat(browser): real-profile browsing via agent-browser copy + browser-use CDP
+- feat(browser): consent-gated real default-Chromium profile for local browsing + local_browser arg
+- feat(desktop): wire managed SSH update engine into main process
+- feat(desktop): managed SSH remote update engine — extracted from #93042
+- feat(chat-plane): trace_id + turn telemetry, transient-delta split, seq-namespace epoch
+- feat(gateway): slim WS-only server — remove FastAPI/uvicorn from desktop boot path
 
 ### Reliability and fixes
 
-- fix(update): pause SCM-supervised Windows gateway services before venv mutation
-- fix(update): conservative outcomes + serve-ledger coverage for fresh restart recovery
-- fix(update): persist fresh recovery outcome
-- fix(update): persist per-profile recovery outcomes
-- fix(update): verify fresh restart recovery results
-- fix(update): recover aborted gateway restart in a fresh process
-- fix(update): sweep aborted-fetch tmp_pack debris before it corrupts the pack directory (#93732)
-- fix(deps): bump the nanoid@^3 override past GHSA-2v37-7h3g-55p8 (#91931)
-- fix(cli): note pre_restart_pids' per-PID data model gap, pin the matching-start_time path
-- fix(cli): guard the post-update fleet check against PID reuse
-- fix(update): feed Windows gateway relaunch outcome into fleet reconciliation
-- fix: harden claim-release guard for bare test doubles; repoint source-pinning test at the impl
-- 72 additional reliability and fixes updates are included in this verified snapshot.
+- fix(mcp): un-invert the stdio children liveness check (#94335)
+- fix(nastech_cli): surface fail-closed config write refusals cleanly
+- fix(nastech_cli): stop config set/unset from wiping user overrides on invalid YAML
+- fix(compression): preserve terminal lifecycle for lock skips
+- fix(compression): suppress duplicate completion notices
+- fix(config): preserve lossy decimal values as strings
+- fix(relay): fall back to descriptor platform for unfurl stamping
+- fix(slack): coerce string unfurl knobs on the native plane
+- fix(relay): coerce string unfurl knobs and disable Slack draft streaming
+- fix(slack): preserve unfurl controls during streaming
+- fix(slack): honor unfurl controls for media captions
+- fix(relay): restore voice-note STT — wire media[] MIMEs, message_type "voice", and a User-Agent for CDN downloads (#95274)
+- 45 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs: image provenance marker and the shared refusal gate (#91277 Phase 3)
-- docs: serve/dashboard backends in the update flow, --plan, and --status (#63206)
-- docs: /snapshot restore live-safety behavior
+- docs(slack): note caption ordering and streaming fallback for unfurl knobs
 
 ### Improvements
 
-- refactor(clarify): schema diet + single questions[] interface (880 → 335 tok/call, −62%) (#95907)
-- fmt(js): `npm run fix` on merge (#95924)
-- chore: map contributor emails
-- refactor(skills): skill_manage 924 → 518 tok/call — dedup diet, retire 'edit', unadvertise curator-only absorbed_into (#95697)
-- fmt(js): `npm run fix` on merge (#95861)
-- fmt(js): `npm run fix` on merge (#95858)
-- desktop: remove js vestiges
-- test: re-pin refusal exit codes and gate patch points to the shared contract
-- Merge pull request #91716 from Nastechresearch/fix/scale-to-zero-no-pointless-quiesce
-- chore: map contributor email for salvage of #88470
-- refactor(acp): share one OpenAI bridge between the ACP clients
-- chore: contributor mappings for #95633/#95652 salvage
-- 33 additional improvements updates are included in this verified snapshot.
+- test(mcp): absorb watcher-consumer and fail-open liveness cases from #94521/#94661
+- chore: map paulapsp157@gmail.com -> Aoshi-Dev (PR #96003 salvage)
+- test(nastech_cli): make test_default_path pass on native Windows
+- test(nastech_cli): align malformed YAML set/unset expectations with RuntimeError
+- refactor(compression): fold review follow-ups on #71488 salvage
+- test(compression): cover failed in-place split status
+- Merge pull request #96118 from kshitijk4poor/revert/94245
+- Revert "Merge pull request #94245 from kshitijk4poor/feat/gw-event-replay"
+- Merge pull request #94245 from kshitijk4poor/feat/gw-event-replay
+- test(relay): cover media-lane unfurl stamping and descriptor fallback
+- chore(contributors): map potatosaladx@gmail.com to potatosalad (attribution for salvaged #79436/#81128 commits)
+- test(slack): cover default and split unfurl behavior
+- 22 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

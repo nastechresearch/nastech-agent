@@ -287,6 +287,235 @@ def _migrate_sibling_profile_configs() -> list[tuple[str, int, int]]:
         logger.debug("Sibling profile enumeration failed: %s", exc)
     return migrated
 
+def _check_and_apply_config_migration(
+    *,
+    assume_yes: bool = False,
+    gateway_mode: bool = False,
+    pre_update_snapshot_id: str | None = None,
+) -> None:
+    """Check and apply configuration migrations on an update completion path (#91360).
+
+    CRITICAL: ``check_config_version`` and ``migrate_config`` must use
+    freshly-reloaded modules, not the ``sys.modules`` cache (see
+    ``_reload_config_modules``). This must run on EVERY update completion
+    path — the normal post-pull path, the venv-repair retry and the
+    Node-deps repair on the ``commit_count == 0`` "Already up to date"
+    branch — so an interrupted update that previously pulled new code does
+    not strand the user on an older config version.
+    """
+    print()
+    print("→ Checking configuration for new options...")
+
+    # Reload config modules BEFORE any config reads so get_missing_*,
+    # check_config_version, and migrate_config all use the updated code.
+    _reload_config_modules()
+
+    from nastech_cli.config import (
+        get_missing_env_vars,
+        get_missing_config_fields,
+    )
+
+    # Defensive (#91360): this helper runs on repair/retry completion paths
+    # too — a config-check failure must not break an otherwise-successful
+    # update. Log, point at the manual command, and return.
+    try:
+        missing_env = get_missing_env_vars(required_only=True)
+        missing_config = get_missing_config_fields()
+        current_ver, latest_ver = _run_config_check_fresh()
+    except Exception as exc:
+        logger.debug("Config check during update failed: %s", exc)
+        print("  ⚠️  Could not check config version.")
+        print("     Run 'nastech config migrate' to check manually.")
+        return
+
+    has_new_options = bool(missing_env or missing_config)
+    version_bump_only = (
+        not has_new_options and current_ver < latest_ver
+    )
+    needs_migration = has_new_options or current_ver < latest_ver
+
+    if version_bump_only:
+        # Nothing for the user to fill in — only the config format version
+        # changed (new defaults already merge in transparently). Asking
+        # "configure new options now?" here is misleading: saying yes just
+        # bumps the version and looks like a no-op (issue: ScottFive /
+        # Tt2021). Apply it silently and say what actually happened.
+        print()
+        print(
+            f"  ℹ Updating config format (v{current_ver} → v{latest_ver})…"
+        )
+        try:
+            _mig_results = _run_migrate_config_fresh(
+                interactive=False, quiet=True
+            )
+            print("  ✓ Config format updated (no new settings to configure)")
+            # quiet=True also mutes migration steps that RESET or REMOVE an
+            # existing setting (e.g. the v33→v34 personality reset from
+            # #81946, which records its note only in the results dict).
+            # Re-surface those notes so an unattended update never silently
+            # changes user configuration (#86656). In this branch
+            # missing_config is empty, so config_added can only contain
+            # migration-step mutations, not missing-key listings.
+            for _note in _mig_results.get("config_added") or []:
+                print(f"  ℹ {_note}")
+            for _warn in _mig_results.get("warnings") or []:
+                print(f"  ⚠️  {_warn}")
+        except Exception as _mig_err:
+            print(f"  ⚠️  Config format update failed: {_mig_err}")
+            print("     Run 'nastech config migrate' to retry.")
+    elif needs_migration:
+        print()
+        # Show WHAT changed, not just a count, so the user can make an
+        # informed yes/no decision (previously the prompt named nothing).
+        def _print_items(items, label, key, fallback_key=None):
+            if not items:
+                return
+            print(f"  {label}:")
+            shown = items[:8]
+            for it in shown:
+                if isinstance(it, dict):
+                    name = it.get(key) or (fallback_key and it.get(fallback_key)) or "?"
+                    desc = (it.get("description") or "").strip()
+                else:
+                    # Defensive: some callers/mocks pass bare name strings.
+                    name = str(it)
+                    desc = ""
+                if desc:
+                    print(f"      • {name} — {desc}")
+                else:
+                    print(f"      • {name}")
+            extra = len(items) - len(shown)
+            if extra > 0:
+                print(f"      … and {extra} more")
+
+        if missing_env:
+            print(
+                f"  ⚠️  {len(missing_env)} new required setting(s) need configuration"
+            )
+            _print_items(missing_env, "New settings", "name")
+        if missing_config:
+            print(f"  ℹ️  {len(missing_config)} new config option(s) available")
+            _print_items(missing_config, "New options", "key")
+
+        print()
+        if assume_yes:
+            print(
+                "  ℹ --yes: auto-applying config migration (skipping API-key prompts)."
+            )
+            response = "y"
+        elif gateway_mode:
+            response = (
+                _gateway_prompt(
+                    "Would you like to configure new options now? [Y/n]", "n"
+                )
+                .strip()
+                .lower()
+            )
+        elif not (sys.stdin.isatty() and sys.stdout.isatty()):
+            print("  ℹ Non-interactive session — applying safe config migrations.")
+            response = "auto"
+        else:
+            try:
+                response = (
+                    input("Would you like to configure them now? [Y/n]: ")
+                    .strip()
+                    .lower()
+                )
+            except EOFError:
+                response = "n"
+            except UnicodeDecodeError:
+                # input() can raise this when the terminal encoding can't
+                # decode the byte sequence (e.g. a non-UTF-8 locale, or an
+                # embedded terminal). Without this, the exception escapes
+                # here and crashes the update at this prompt.
+                print(
+                    "  ⚠ Could not read input (encoding issue). Skipping. "
+                    "Run 'nastech config migrate' manually to configure."
+                )
+                response = "n"
+
+        if response in {"", "y", "yes", "auto"}:
+            print()
+            # Gateway mode, --yes, and non-interactive update contexts
+            # (dashboard / web server actions) cannot prompt for API keys.
+            # Still run the non-interactive migration pass before restarting
+            # so new default config fields and version bumps are written
+            # before the freshly updated gateway validates config at startup.
+            interactive_migration = not (
+                gateway_mode or assume_yes or response == "auto"
+            )
+            results = _run_migrate_config_fresh(interactive=interactive_migration, quiet=False)
+
+            if results["env_added"] or results["config_added"]:
+                print()
+                print("✓ Configuration updated!")
+            if (gateway_mode or assume_yes or response == "auto") and missing_env:
+                print("  ℹ API keys require manual entry: nastech config migrate")
+        else:
+            print()
+            print("Skipped. Run 'nastech config migrate' later to configure.")
+    else:
+        print("  ✓ Configuration is up to date")
+
+    # Fleet-wide config migration (#91277 Phase 2; #20438 earliest report,
+    # #54926, #79048): the shared checkout serves EVERY profile, but the
+    # migration above only touched the active profile's config.yaml.
+    # Sibling profiles kept their old _config_version and silently
+    # drifted (field repro: sibling gateway restarted onto new code but
+    # stayed at config v33 vs v37). Run the same NON-INTERACTIVE safe
+    # migration for every sibling profile home, scoped via the
+    # context-local NASTECH_HOME override (never os.environ — other
+    # threads must not see it).
+    try:
+        _migrated_siblings = _migrate_sibling_profile_configs()
+        for _name, _from_ver, _to_ver in _migrated_siblings:
+            print(
+                f"  ✓ Profile '{_name}': config format updated "
+                f"(v{_from_ver} → v{_to_ver})"
+            )
+    except Exception as exc:
+        logger.debug("Sibling config migration failed: %s", exc)
+
+    # Safety net: config-version migrations have been observed to leave
+    # cron/jobs.json valid-but-empty, silently dropping every scheduled
+    # job (issue #34600). The desktop scheduler can also overwrite with
+    # its own small set, causing partial loss (issue #52144). If the
+    # live file now has fewer jobs than the pre-update snapshot, restore
+    # it and warn loudly.
+    try:
+        from nastech_cli.backup import restore_cron_jobs_if_emptied
+
+        cron_restore = restore_cron_jobs_if_emptied(pre_update_snapshot_id)
+        if cron_restore:
+            print()
+            print(
+                "  ⚠️  cron/jobs.json lost jobs during this update — "
+                f"restored {cron_restore['job_count']} job(s) from "
+                f"pre-update snapshot {cron_restore['snapshot_id']}."
+            )
+    except Exception as exc:
+        # Never let the cron safety net break an otherwise-good update.
+        logger.debug("Cron jobs auto-restore check failed: %s", exc)
+
+    # #66140: run the same cron-jobs safety net for every sibling
+    # profile against ITS OWN pre-update snapshot (same-generation by
+    # construction — both taken by this run).
+    try:
+        from nastech_cli.backup import restore_cron_jobs_all_profiles
+
+        for _restored in restore_cron_jobs_all_profiles(
+            _LAST_SIBLING_SNAPSHOTS
+        ):
+            print()
+            print(
+                f"  ⚠️  Profile '{_restored['profile']}': cron/jobs.json "
+                f"lost jobs during this update — restored "
+                f"{_restored['job_count']} job(s) from pre-update "
+                f"snapshot {_restored['snapshot_id']}."
+            )
+    except Exception as exc:
+        logger.debug("Sibling cron auto-restore check failed: %s", exc)
+
 
 # Critical files that Nastech must be able to import immediately after an
 # update/install. Most are imported on every CLI startup; ``web_server.py``
@@ -2605,6 +2834,309 @@ def _write_lazy_refresh_incomplete_marker() -> None:
     """Drop the interrupted lazy-refresh breadcrumb. Never raises."""
     _write_marker_file(_m()._lazy_refresh_marker_path(), label="lazy-refresh-incomplete")
 
+
+# ``fleet_restart_pending`` lives under NASTECH_HOME (not next to the venv).
+# The existing ``.update-incomplete`` / ``.lazy-refresh-incomplete`` markers
+# gate dependency/venv repair; this one is the fleet-restart obligation after
+# a git pull that advanced HEAD (#95294). Cleared only when the restart phase
+# completes or there were no running services to restart.
+_FLEET_RESTART_PENDING_NAME = "fleet_restart_pending"
+
+
+def _fleet_restart_pending_marker_path() -> Path:
+    """NASTECH_HOME breadcrumb for a pull that has not yet restarted the fleet."""
+    return get_nastech_home() / _FLEET_RESTART_PENDING_NAME
+
+
+def _write_fleet_restart_pending_marker(*, expected_sha: str = "") -> None:
+    """Drop the pull→restart obligation breadcrumb. Never raises."""
+    path = _fleet_restart_pending_marker_path()
+    if _m()._pytest_owns_live_checkout(path.parent):
+        logger.debug("Skipping fleet-restart-pending marker under pytest (live checkout)")
+        return
+    try:
+        lines = [f"started={_time.time()}", f"pid={os.getpid()}"]
+        if expected_sha:
+            lines.append(f"expected_sha={expected_sha}")
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except OSError as exc:
+        logger.debug("Could not write fleet-restart-pending marker: %s", exc)
+
+
+def _clear_fleet_restart_pending_marker() -> None:
+    """Remove the pull→restart obligation breadcrumb. Never raises."""
+    _m()._clear_marker_file(
+        _fleet_restart_pending_marker_path(), label="fleet-restart-pending"
+    )
+
+
+def _current_checkout_sha() -> str | None:
+    """Current on-disk checkout HEAD, or None if it cannot be resolved."""
+    try:
+        from nastech_cli.build_info import get_code_identity
+
+        sha = (get_code_identity(refresh=True) or {}).get("sha")
+        return str(sha) if sha else None
+    except Exception:
+        return _capture_head_sha(["git"], _m().PROJECT_ROOT)
+
+
+def _receipt_looks_unfinished(receipt: dict) -> bool:
+    """True when *receipt* is from an update that did not finish cleanly."""
+    if receipt.get("stop_reason"):
+        return True
+    exit_code = receipt.get("exit_code")
+    if exit_code not in (0, None):
+        return True
+    outcome = receipt.get("outcome")
+    if outcome in ("failed", "partial", "running"):
+        return True
+    gateway_restart = receipt.get("gateway_restart")
+    if isinstance(gateway_restart, dict) and gateway_restart.get("incomplete"):
+        return True
+    return False
+
+
+def _receipt_reports_stale_runtime(expected_sha: str | None = None) -> bool:
+    """True when ``update_receipts/latest.json`` records a runtime SHA skew.
+
+    ``plan.runtimes[].code_sha`` is captured *before* the pull of that run,
+    so a successful update's receipt always shows pre-update runtime SHAs.
+    Those must not retrigger a restart on the next invocation. Use the
+    post-restart ``fleet`` matrix when present; fall back to the plan only
+    for an unfinished receipt (interrupt / failed / incomplete restart) —
+    the #95294 smoking-gun shape.
+    """
+    try:
+        from nastech_cli.update_receipt import read_latest_receipt
+
+        receipt = read_latest_receipt()
+    except Exception:
+        receipt = None
+    if not isinstance(receipt, dict):
+        return False
+    if not expected_sha:
+        expected_sha = _current_checkout_sha()
+    if not expected_sha:
+        return False
+
+    def _sha_mismatch(code_sha) -> bool:
+        return bool(code_sha) and str(code_sha) != str(expected_sha)
+
+    fleet = receipt.get("fleet")
+    if isinstance(fleet, list) and fleet:
+        for entry in fleet:
+            if not isinstance(entry, dict):
+                continue
+            if entry.get("state") == "stale":
+                return True
+            if _sha_mismatch(entry.get("code_sha")):
+                return True
+        return False
+
+    if not _receipt_looks_unfinished(receipt):
+        return False
+    plan = receipt.get("plan")
+    if not isinstance(plan, dict):
+        return False
+    for runtime in plan.get("runtimes") or []:
+        if isinstance(runtime, dict) and _sha_mismatch(runtime.get("code_sha")):
+            return True
+    return False
+
+
+def _pending_fleet_restart_needed() -> bool:
+    """True when a prior pull still owes the fleet a restart (#95294)."""
+    try:
+        if _fleet_restart_pending_marker_path().is_file():
+            return True
+    except OSError:
+        pass
+    return _receipt_reports_stale_runtime()
+
+
+def _warn_pending_fleet_restart(*, startup: bool = False) -> None:
+    """Print the specific interrupted-update fleet-restart warning."""
+    stream = sys.stderr if startup else sys.stdout
+    print(
+        "⚠ A previous `nastech update` pulled new code but did not "
+        "restart running gateways.",
+        file=stream,
+    )
+    print(
+        "  Gateways may still be serving pre-update modules (mixed sys.modules).",
+        file=stream,
+    )
+    if startup:
+        print(
+            "  Run `nastech update` or `nastech gateway restart`.",
+            file=stream,
+        )
+
+
+def _warn_pending_fleet_restart_on_startup() -> None:
+    """Cheap CLI-startup hint. Never restarts; never raises."""
+    try:
+        if not _pending_fleet_restart_needed():
+            return
+        _warn_pending_fleet_restart(startup=True)
+    except Exception:
+        pass
+
+
+def _restart_systemd_gateway_units_best_effort(failed: list) -> None:
+    """Best-effort ``systemctl restart`` of every nastech-gateway/serve unit."""
+    for scope, scope_cmd in (
+        ("user", ["systemctl", "--user"]),
+        ("system", ["systemctl"]),
+    ):
+        try:
+            result = subprocess.run(
+                scope_cmd
+                + [
+                    "list-units",
+                    "nastech-gateway*",
+                    "nastech-serve*",
+                    "--plain",
+                    "--no-legend",
+                    "--no-pager",
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+        if result.returncode != 0:
+            continue
+
+        def process_unit(svc_name: str, _scope=scope, _cmd=scope_cmd) -> None:
+            restart_cmd = list(_cmd) + ["--no-ask-password", "restart", svc_name]
+            if (
+                _scope == "system"
+                and hasattr(os, "geteuid")
+                and os.geteuid() != 0  # windows-footgun: ok — systemd path, Linux-only
+            ):
+                restart_cmd = ["sudo", "-n"] + restart_cmd
+            subprocess.run(
+                restart_cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=30,
+            )
+
+        def on_timeout(svc_name: str, exc: subprocess.TimeoutExpired) -> None:
+            failed.append(svc_name)
+
+        _for_each_systemd_gateway_unit(
+            result.stdout,
+            process_unit=process_unit,
+            on_unit_timeout=on_timeout,
+        )
+
+
+def _run_pending_fleet_restart() -> bool:
+    """Catch-up restart for gateways left on pre-update code (#95294).
+
+    Returns True when restart completed or no services were running.
+    Returns False if restart was incomplete. Never raises.
+    """
+    print("→ Restarting gateways left on pre-update code...")
+    try:
+        _m()._purge_stale_nastech_modules()
+    except Exception:
+        pass
+    try:
+        from nastech_cli.gateway import (
+            find_gateway_pids,
+            is_macos,
+            is_windows,
+            kill_gateway_processes,
+            supports_systemd_services,
+            _wait_for_gateway_exit,
+        )
+    except Exception as exc:
+        _warn_gateway_restart_phase_aborted(exc, None)
+        return False
+
+    try:
+        pids = list(find_gateway_pids(all_profiles=True))
+    except Exception as exc:
+        logger.debug("Pending fleet restart: gateway probe failed: %s", exc)
+        pids = None
+
+    if pids == []:
+        print("  ✓ No running gateways — nothing to restart.")
+        return True
+
+    failed: list = []
+    try:
+        if supports_systemd_services():
+            _restart_systemd_gateway_units_best_effort(failed)
+        if is_macos():
+            restarted: list = []
+            try:
+                _restart_macos_launchd_gateways(restarted, failed, 45.0)
+            except Exception as exc:
+                logger.debug("Pending fleet restart: launchd failed: %s", exc)
+                failed.append("launchd")
+        if is_windows():
+            try:
+                from nastech_cli import gateway_windows
+
+                if gateway_windows.is_installed():
+                    gateway_windows.restart()
+            except Exception as exc:
+                logger.debug("Pending fleet restart: Windows failed: %s", exc)
+                failed.append("windows-gateway")
+        leftover: list = []
+        try:
+            leftover = list(find_gateway_pids(all_profiles=True))
+        except Exception:
+            leftover = list(pids or [])
+        if leftover:
+            try:
+                kill_gateway_processes(all_profiles=True)
+                _wait_for_gateway_exit(timeout=5.0, force_after=None)
+            except Exception as exc:
+                logger.debug("Pending fleet restart: PID stop failed: %s", exc)
+        if failed:
+            _warn_incomplete_gateway_fleet_restart(failed)
+            return False
+        print("  ✓ Pending fleet restart completed.")
+        return True
+    except Exception as exc:
+        surviving = None
+        try:
+            surviving = list(find_gateway_pids(all_profiles=True))
+        except Exception:
+            surviving = pids
+        _warn_gateway_restart_phase_aborted(exc, surviving)
+        return False
+
+
+def _apply_pending_fleet_restart_catchup() -> None:
+    """On an already-up-to-date ``nastech update``, finish a skipped restart.
+
+    No-op when nothing is pending. Exits 1 when the catch-up restart is
+    incomplete so automation does not treat the fleet as healthy.
+    """
+    if not _pending_fleet_restart_needed():
+        return
+    print()
+    _warn_pending_fleet_restart()
+    print("→ Running the pending fleet restart...")
+    if _run_pending_fleet_restart():
+        _clear_fleet_restart_pending_marker()
+        return
+    print("  ⚠ Fleet restart incomplete. Recover with: nastech gateway restart")
+    sys.exit(1)
+
+
 def _format_concurrent_instances_message(
     matches: list[tuple[int, str]], scripts_dir: Path
 ) -> str:
@@ -3133,7 +3665,13 @@ def _record_npm_lockfile_hash(nastech_root: Path) -> None:
     except OSError:
         logger.debug("Could not write npm lockfile hash cache")
 
-def _repair_node_deps_on_current_checkout(print_completion) -> None:
+def _repair_node_deps_on_current_checkout(
+    print_completion,
+    *,
+    assume_yes: bool = False,
+    gateway_mode: bool = False,
+    pre_update_snapshot_id: str | None = None,
+) -> None:
     """Repair Node deps on the ``commit_count == 0`` path (#77211).
 
     A current checkout does not imply healthy Node deps: a previous npm
@@ -3158,6 +3696,11 @@ def _repair_node_deps_on_current_checkout(print_completion) -> None:
     # _update_node_dependencies call site; it staleness-checks internally,
     # so this is a no-op when nothing changed.
     _m()._build_web_ui(_m().PROJECT_ROOT / "web")
+    _check_and_apply_config_migration(
+        assume_yes=assume_yes,
+        gateway_mode=gateway_mode,
+        pre_update_snapshot_id=pre_update_snapshot_id,
+    )
     print_completion("✓ Already up to date!")
 
 
@@ -7397,12 +7940,22 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 healthy_after, detail_after = _venv_core_imports_healthy()
                 if healthy_after:
                     print("✓ Dependencies repaired!")
+                    _check_and_apply_config_migration(
+                        assume_yes=assume_yes,
+                        gateway_mode=gateway_mode,
+                        pre_update_snapshot_id=pre_update_snapshot_id,
+                    )
                     _print_update_completion("✓ Update complete!")
                 else:
                     print(f"⚠ Venv still unhealthy after repair: {detail_after}")
                     print("  Close all Nastech windows/gateways and re-run: nastech update")
             else:
-                _repair_node_deps_on_current_checkout(_print_update_completion)
+                _repair_node_deps_on_current_checkout(
+                    _print_update_completion,
+                    assume_yes=assume_yes,
+                    gateway_mode=gateway_mode,
+                    pre_update_snapshot_id=pre_update_snapshot_id,
+                )
             if runtime_repaired is not None and not _m()._is_windows():
                 print()
                 print(
@@ -7414,6 +7967,11 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 )
                 print("  Restart each of them to pick up the repaired runtime.")
             _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
+            # Git is current, but a prior pull may still owe the fleet a
+            # restart (#95294). Catch up even on the "Already up to date"
+            # path — that early return is what left the gateway on stale
+            # code for two days.
+            _apply_pending_fleet_restart_catchup()
             return
 
         if commit_count > 0:
@@ -7653,6 +8211,13 @@ def _cmd_update_impl(args, gateway_mode: bool):
             )
             _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
             sys.exit(1)
+
+        # #95294: HEAD advanced; running gateways still serve pre-pull
+        # modules until the restart phase below. Any interrupt between here
+        # and a completed (or no-op) restart leaves this marker so the next
+        # ``nastech update`` can catch up even when git is already up to date.
+        # Distinct from ``.update-incomplete`` (venv/install repair).
+        _write_fleet_restart_pending_marker(expected_sha=post_pull_sha or "")
 
         # Clear stale .pyc bytecode cache — prevents ImportError on gateway
         # restart when updated source references names that didn't exist in
@@ -8053,224 +8618,12 @@ def _cmd_update_impl(args, gateway_mode: bool):
         except Exception:
             pass  # honcho plugin not installed or not configured
 
-        # Check for config migrations.
-        #
-        # CRITICAL: check_config_version and migrate_config must use
-        # freshly-reloaded modules, not the sys.modules cache. The
-        # ``nastech update`` process is the PRE-pull Python process — its
-        # ``sys.modules`` cache holds the OLD ``nastech_cli.config`` and
-        # ``nastech_cli.config_migrations`` from before ``git pull`` updated
-        # the source files. A function-level ``from nastech_cli.config import
-        # check_config_version`` returns the cached module, so
-        # ``DEFAULT_CONFIG["_config_version"]`` is the OLD value and
-        # ``check_config_version()`` reports ``(33, 33)`` — "up to date" —
-        # even though the freshly-pulled code has v34 with a migration to
-        # run. The personality reset migration (#81946) was silently skipped
-        # this way, leaving ``display.personality: kawaii`` active after
-        # updates that should have reset it.
-        print()
-        print("→ Checking configuration for new options...")
-
-        # Reload config modules BEFORE any config reads so get_missing_*,
-        # check_config_version, and migrate_config all use the updated code.
-        _reload_config_modules()
-
-        from nastech_cli.config import (
-            get_missing_env_vars,
-            get_missing_config_fields,
+        # Check for config migrations (#91360).
+        _check_and_apply_config_migration(
+            assume_yes=assume_yes,
+            gateway_mode=gateway_mode,
+            pre_update_snapshot_id=pre_update_snapshot_id,
         )
-
-        missing_env = get_missing_env_vars(required_only=True)
-        missing_config = get_missing_config_fields()
-        current_ver, latest_ver = _run_config_check_fresh()
-
-        has_new_options = bool(missing_env or missing_config)
-        version_bump_only = (
-            not has_new_options and current_ver < latest_ver
-        )
-        needs_migration = has_new_options or current_ver < latest_ver
-
-        if version_bump_only:
-            # Nothing for the user to fill in — only the config format version
-            # changed (new defaults already merge in transparently). Asking
-            # "configure new options now?" here is misleading: saying yes just
-            # bumps the version and looks like a no-op (issue: ScottFive /
-            # Tt2021). Apply it silently and say what actually happened.
-            print()
-            print(
-                f"  ℹ Updating config format (v{current_ver} → v{latest_ver})…"
-            )
-            try:
-                _mig_results = _run_migrate_config_fresh(
-                    interactive=False, quiet=True
-                )
-                print("  ✓ Config format updated (no new settings to configure)")
-                # quiet=True also mutes migration steps that RESET or REMOVE an
-                # existing setting (e.g. the v33→v34 personality reset from
-                # #81946, which records its note only in the results dict).
-                # Re-surface those notes so an unattended update never silently
-                # changes user configuration (#86656). In this branch
-                # missing_config is empty, so config_added can only contain
-                # migration-step mutations, not missing-key listings.
-                for _note in _mig_results.get("config_added") or []:
-                    print(f"  ℹ {_note}")
-                for _warn in _mig_results.get("warnings") or []:
-                    print(f"  ⚠️  {_warn}")
-            except Exception as _mig_err:
-                print(f"  ⚠️  Config format update failed: {_mig_err}")
-                print("     Run 'nastech config migrate' to retry.")
-        elif needs_migration:
-            print()
-            # Show WHAT changed, not just a count, so the user can make an
-            # informed yes/no decision (previously the prompt named nothing).
-            def _print_items(items, label, key, fallback_key=None):
-                if not items:
-                    return
-                print(f"  {label}:")
-                shown = items[:8]
-                for it in shown:
-                    if isinstance(it, dict):
-                        name = it.get(key) or (fallback_key and it.get(fallback_key)) or "?"
-                        desc = (it.get("description") or "").strip()
-                    else:
-                        # Defensive: some callers/mocks pass bare name strings.
-                        name = str(it)
-                        desc = ""
-                    if desc:
-                        print(f"      • {name} — {desc}")
-                    else:
-                        print(f"      • {name}")
-                extra = len(items) - len(shown)
-                if extra > 0:
-                    print(f"      … and {extra} more")
-
-            if missing_env:
-                print(
-                    f"  ⚠️  {len(missing_env)} new required setting(s) need configuration"
-                )
-                _print_items(missing_env, "New settings", "name")
-            if missing_config:
-                print(f"  ℹ️  {len(missing_config)} new config option(s) available")
-                _print_items(missing_config, "New options", "key")
-
-            print()
-            if assume_yes:
-                print(
-                    "  ℹ --yes: auto-applying config migration (skipping API-key prompts)."
-                )
-                response = "y"
-            elif gateway_mode:
-                response = (
-                    _gateway_prompt(
-                        "Would you like to configure new options now? [Y/n]", "n"
-                    )
-                    .strip()
-                    .lower()
-                )
-            elif not (sys.stdin.isatty() and sys.stdout.isatty()):
-                print("  ℹ Non-interactive session — applying safe config migrations.")
-                response = "auto"
-            else:
-                try:
-                    response = (
-                        input("Would you like to configure them now? [Y/n]: ")
-                        .strip()
-                        .lower()
-                    )
-                except EOFError:
-                    response = "n"
-                except UnicodeDecodeError:
-                    # input() can raise this when the terminal encoding can't
-                    # decode the byte sequence (e.g. a non-UTF-8 locale, or an
-                    # embedded terminal). Without this, the exception escapes
-                    # here and crashes the update at this prompt.
-                    print(
-                        "  ⚠ Could not read input (encoding issue). Skipping. "
-                        "Run 'nastech config migrate' manually to configure."
-                    )
-                    response = "n"
-
-            if response in {"", "y", "yes", "auto"}:
-                print()
-                # Gateway mode, --yes, and non-interactive update contexts
-                # (dashboard / web server actions) cannot prompt for API keys.
-                # Still run the non-interactive migration pass before restarting
-                # so new default config fields and version bumps are written
-                # before the freshly updated gateway validates config at startup.
-                interactive_migration = not (
-                    gateway_mode or assume_yes or response == "auto"
-                )
-                results = _run_migrate_config_fresh(interactive=interactive_migration, quiet=False)
-
-                if results["env_added"] or results["config_added"]:
-                    print()
-                    print("✓ Configuration updated!")
-                if (gateway_mode or assume_yes or response == "auto") and missing_env:
-                    print("  ℹ API keys require manual entry: nastech config migrate")
-            else:
-                print()
-                print("Skipped. Run 'nastech config migrate' later to configure.")
-        else:
-            print("  ✓ Configuration is up to date")
-
-        # Fleet-wide config migration (#91277 Phase 2; #20438 earliest report,
-        # #54926, #79048): the shared checkout serves EVERY profile, but the
-        # migration above only touched the active profile's config.yaml.
-        # Sibling profiles kept their old _config_version and silently
-        # drifted (field repro: sibling gateway restarted onto new code but
-        # stayed at config v33 vs v37). Run the same NON-INTERACTIVE safe
-        # migration for every sibling profile home, scoped via the
-        # context-local NASTECH_HOME override (never os.environ — other
-        # threads must not see it).
-        try:
-            _migrated_siblings = _migrate_sibling_profile_configs()
-            for _name, _from_ver, _to_ver in _migrated_siblings:
-                print(
-                    f"  ✓ Profile '{_name}': config format updated "
-                    f"(v{_from_ver} → v{_to_ver})"
-                )
-        except Exception as exc:
-            logger.debug("Sibling config migration failed: %s", exc)
-
-        # Safety net: config-version migrations have been observed to leave
-        # cron/jobs.json valid-but-empty, silently dropping every scheduled
-        # job (issue #34600). The desktop scheduler can also overwrite with
-        # its own small set, causing partial loss (issue #52144). If the
-        # live file now has fewer jobs than the pre-update snapshot, restore
-        # it and warn loudly.
-        try:
-            from nastech_cli.backup import restore_cron_jobs_if_emptied
-
-            cron_restore = restore_cron_jobs_if_emptied(pre_update_snapshot_id)
-            if cron_restore:
-                print()
-                print(
-                    "  ⚠️  cron/jobs.json lost jobs during this update — "
-                    f"restored {cron_restore['job_count']} job(s) from "
-                    f"pre-update snapshot {cron_restore['snapshot_id']}."
-                )
-        except Exception as exc:
-            # Never let the cron safety net break an otherwise-good update.
-            logger.debug("Cron jobs auto-restore check failed: %s", exc)
-
-        # #66140: run the same cron-jobs safety net for every sibling
-        # profile against ITS OWN pre-update snapshot (same-generation by
-        # construction — both taken by this run).
-        try:
-            from nastech_cli.backup import restore_cron_jobs_all_profiles
-
-            for _restored in restore_cron_jobs_all_profiles(
-                _LAST_SIBLING_SNAPSHOTS
-            ):
-                print()
-                print(
-                    f"  ⚠️  Profile '{_restored['profile']}': cron/jobs.json "
-                    f"lost jobs during this update — restored "
-                    f"{_restored['job_count']} job(s) from pre-update "
-                    f"snapshot {_restored['snapshot_id']}."
-                )
-        except Exception as exc:
-            logger.debug("Sibling cron auto-restore check failed: %s", exc)
 
         _print_update_summary(
             node_failures=node_failures,
@@ -9531,7 +9884,10 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # Code update itself succeeded, but at least one gateway still
             # runs pre-update modules — surface that as a failed update so
             # automation / operators do not treat the fleet as healthy.
+            # Leave ``fleet_restart_pending`` in place so the next
+            # ``nastech update`` still runs the catch-up restart.
             sys.exit(1)
+        _clear_fleet_restart_pending_marker()
 
     except _shim_quarantine_error_type() as e:
         # Fail-closed shim contention (#87331): strict quarantine refused
@@ -9618,21 +9974,36 @@ def _fleet_probe_expected_runtimes(
       cannot prove nothing was running; same contract as
       ``_restart_phase_failure_is_incomplete``, #78574).
     * the pre-update plan inventoried ≥1 runtime.
-    * the Windows pause/resume token carries paused ``profiles`` or
-      ``unmapped`` entries — ``_pause_windows_gateways_for_update`` /
-      ``_resume_windows_gateways_after_update`` populate NEITHER
-      ``restarted_services`` NOR ``killed_pids``, which is exactly why the
-      original ``(restarted_services or killed_pids)`` guard never fires on
-      Windows.
 
-    The same condition gates the 2.0s settle sleep: a freshly resumed Windows
-    gateway needs the settle window to rewrite ``gateway_state.json`` just
-    like a systemd-restarted one.
+    ``windows_resume_token`` is deliberately EXCLUDED (#93406 residual). The
+    pause/resume token is bookkeeping for ``_pause_windows_gateways_for_update``
+    / ``_resume_windows_gateways_after_update`` — it is not a runtime
+    inventory, and its entries do not correspond to rows
+    ``collect_fleet_versions()`` is capable of returning:
+
+    * ``unmapped`` entries (Scheduled-Task gateways) never publish
+      ``gateway_state.json`` rows at all, and
+    * a paused profile gateway is resumed as a DETACHED relaunch that may not
+      republish its identity within the probe window.
+
+    Counting the token therefore made ``_fleet_rows_expected`` True on every
+    Windows update that had paused a gateway, the probe's polling window ran
+    out with zero rows on a perfectly healthy update, and verification
+    reported "no rows … verification incomplete" and exited 1 after a long
+    silent wait. Expected-runtimes must key only on signals that map to rows
+    the probe can actually see; a genuinely live pre-update Windows gateway
+    is already covered by ``pre_restart_pids`` and the plan inventory. The
+    parameter stays in the signature so the call site keeps passing the token
+    (cheap, explicit, and the docstring is where the exclusion is explained).
+
+    The same condition gates the 2.0s settle sleep: a freshly restarted
+    gateway needs the settle window to rewrite ``gateway_state.json``.
 
     Note this keys ONLY on zero-rows-despite-expected-runtimes.  A non-empty
     snapshot — including rows in ``unknown`` state — is still judged solely by
     ``print_fleet_version_matrix``.
     """
+    del windows_resume_token  # excluded on purpose — see docstring (#93406)
     if restarted_services or killed_pids:
         return True
     if pre_restart_pids is None or pre_restart_pids:
@@ -9642,13 +10013,6 @@ def _fleet_probe_expected_runtimes(
             return True
     except Exception:
         pass
-    if isinstance(windows_resume_token, dict) and (
-        windows_resume_token.get("profiles")
-        or windows_resume_token.get("unmapped")
-        or windows_resume_token.get("services")
-        or windows_resume_token.get("expected_services")
-    ):
-        return True
     return False
 
 
