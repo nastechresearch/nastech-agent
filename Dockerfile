@@ -311,7 +311,11 @@ RUN mkdir -p /opt/nastech/bin && \
 # `s6-setuidgid nastech` in its run script. If NASTECH_UID is unset, services
 # run as the default nastech user (UID 10000).
 
-# ---------- Bake build-time git revision ----------
+# ---------- Bake image provenance + build-time git revision ----------
+# The versioned, non-secret provenance marker is the authoritative runtime
+# signal that this filesystem came from an immutable image.  It deliberately
+# lives outside both /opt/nastech (which operators sometimes bind-mount as a
+# checkout) and /opt/data (the mutable NASTECH_HOME volume).
 # .dockerignore excludes .git, so `git rev-parse HEAD` from inside the
 # container always returns nothing — meaning `nastech dump` reports
 # "(unknown)" and the startup banner drops its `· upstream <sha>` suffix.
@@ -324,14 +328,18 @@ RUN mkdir -p /opt/nastech/bin && \
 # banner.get_git_banner_state() try the baked SHA first, then fall back
 # to live `git rev-parse` for source installs (unchanged behaviour).
 #
-# The arg is optional — local `docker build` without --build-arg simply
-# omits the file, and the runtime falls back to live-git lookup.  CI
+# The arg is optional — local `docker build` without --build-arg omits the
+# SHA file (and records a null provenance revision), so build-info falls back
+# to live-git lookup.  CI
 # (.github/workflows/docker.yml) passes ${{ github.sha }} so
 # every published image has it.
 ARG NASTECH_GIT_SHA=
-RUN if [ -n "${NASTECH_GIT_SHA}" ]; then \
+RUN set -eu; \
+    if [ -n "${NASTECH_GIT_SHA}" ]; then \
         printf '%s\n' "${NASTECH_GIT_SHA}" > /opt/nastech/.nastech_build_sha; \
-    fi
+    fi; \
+    mkdir -p /etc/nastech; \
+    NASTECH_GIT_SHA="${NASTECH_GIT_SHA}" python3 -c 'import json, os, pathlib, tomllib; project = tomllib.loads(pathlib.Path("/opt/nastech/pyproject.toml").read_text(encoding="utf-8"))["project"]; marker = pathlib.Path("/etc/nastech/image-provenance.json"); marker.write_text(json.dumps({"schema": 1, "deployment_kind": "image", "manager": "docker", "image": "nastechresearch/nastech-agent", "version": project["version"], "revision": os.environ.get("NASTECH_GIT_SHA") or None}, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8"); marker.chmod(0o444)'
 
 # ---------- s6-overlay service wiring ----------
 # Static services declared at build time: main-nastech + dashboard.

@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 
-import { toChatMessages } from '@/lib/chat-messages'
 import { getLatestSessionMessages, PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
-import { $sessions, knownSessionOwner } from '@/store/session'
+import { toChatMessages } from '@/lib/chat-messages'
+import { knownSessionOwner, ownerLookupSessionRows } from '@/store/session'
 import { requestForSessionProfile, type SessionOwnerScope } from '@/store/session-request-router'
 import { publishSessionState, sessionTileOwnerRoute, setSessionTileDelegate } from '@/store/session-states'
 import type { SessionResumeResponse } from '@/types/nastech'
@@ -80,7 +80,7 @@ export function useSessionTileDelegate({
     const ownerForStoredSession = async (storedSessionId: string): Promise<SessionOwnerScope> => {
       const owner =
         sessionTileOwnerRoute(storedSessionId) ??
-        knownSessionOwner($sessions.get(), storedSessionId) ??
+        knownSessionOwner(ownerLookupSessionRows(), storedSessionId) ??
         (await resolveSessionOwner(storedSessionId))
 
       return owner

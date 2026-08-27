@@ -6,68 +6,83 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 65 commits affecting 1346 files.
-- **Source revision:** `86ae906e88b2`.
-- **Previous source revision:** `f0c0c986c4cb`.
+- **Changes incorporated:** 144 commits affecting 1360 files.
+- **Source revision:** `790e1eb6bd57`.
+- **Previous source revision:** `86ae906e88b2`.
 
 ## Technical coverage
 
-- **.mailmap/:** 1 changed files.
-- **agent/:** 3 changed files.
-- **apps/:** 119 changed files.
+- **Dockerfile/:** 1 changed files.
+- **agent/:** 12 changed files.
+- **apps/:** 170 changed files.
 - **contributors/:** 9 changed files.
-- **cron/:** 4 changed files.
-- **gateway/:** 4 changed files.
-- **locales/:** 17 changed files.
-- **nastech_cli/:** 9 changed files.
-- **nastech_state.py/:** 1 changed files.
-- **skills/:** 1 changed files.
-- **tests/:** 32 changed files.
+- **docs/:** 1 changed files.
+- **evals/:** 8 changed files.
+- **gateway/:** 14 changed files.
+- **locales/:** 51 changed files.
+- **nastech_cli/:** 63 changed files.
+- **package-lock.json/:** 1 changed files.
+- **package.json/:** 1 changed files.
+- **plugins/:** 8 changed files.
+- **tests/:** 84 changed files.
 - **tools/:** 12 changed files.
 - **tui_gateway/:** 1 changed files.
-- **website/:** 2 changed files.
+- **website/:** 15 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(cron): import-error cron failures now name gateway code skew and the one-command fix (#95294 part 3)
+- feat: MiniMax H3 Max joins the FAL video picker (t2v + i2v)
+- feat(update): image/package-managed installs refuse in-place updates through one shared gate (#91277 Phase 3)
+- feat(update): bake authoritative image provenance into the Docker image
+- feat(kanban): carry the review handoff summary into the wake turn
+- feat(agent): fold an agent-as-provider's own tool work back into the turn
+- feat(gateway): updaters pause gateways over the control socket instead of tree-killing them (#92091 step 2)
+- feat(desktop): fleet profile rail — every registered gateway's agents on one strip
+- feat(update): network-bound serve backends survive nastech update on their recorded endpoints (#63206)
+- feat(models): add z-ai/glm-5.3-flash to OpenRouter and Nastech Portal catalogs
+- feat(compression): lean tail retention is the default — compaction keeps 10-25K verbatim, not 100-240K
+- feat(macos): one-switch Full Disk Access guidance in doctor and setup
+- feat(deadline): SuspectableBackend protocol — mark timed-out backends suspect
 
 ### Reliability and fixes
 
-- fix(desktop): skip macOS TCC-protected media dirs in git repo scan
-- fix(terminal): tolerate macOS TCC PermissionError in _safe_getcwd
-- fix(computer_use): pitch background-FIRST (not background-only) in schema, prompt block, and skill
-- fix(desktop): single-owner backend dial claim in Electron main (#90812)
-- fix(desktop): revalidate pooled remote/SSH backends on power resume (#93910)
-- fix(gateway): redeliver transient failures after reconnect
-- fix(desktop): poll-guard reset is fire-and-forget off the redial path
-- fix(desktop): isolate the poll-guard reset import + sort-imports lint
-- fix(desktop): republish the connections registry to renderers after every successful save (#95393)
-- fix(desktop): release reconnect-orphaned warm transcripts once their authoritative state settles
-- fix(desktop): harden the dead-session poll guard per #94950 review
-- fix(desktop): stop the status-stack poll storming a dead session with 4001s
-- 29 additional reliability and fixes updates are included in this verified snapshot.
+- fix(update): pause SCM-supervised Windows gateway services before venv mutation
+- fix(update): conservative outcomes + serve-ledger coverage for fresh restart recovery
+- fix(update): persist fresh recovery outcome
+- fix(update): persist per-profile recovery outcomes
+- fix(update): verify fresh restart recovery results
+- fix(update): recover aborted gateway restart in a fresh process
+- fix(update): sweep aborted-fetch tmp_pack debris before it corrupts the pack directory (#93732)
+- fix(deps): bump the nanoid@^3 override past GHSA-2v37-7h3g-55p8 (#91931)
+- fix(cli): note pre_restart_pids' per-PID data model gap, pin the matching-start_time path
+- fix(cli): guard the post-update fleet check against PID reuse
+- fix(update): feed Windows gateway relaunch outcome into fleet reconciliation
+- fix: harden claim-release guard for bare test doubles; repoint source-pinning test at the impl
+- 72 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(cron): describe widened continuable scope (origin fallback + explicit opt-in)
+- docs: image provenance marker and the shared refusal gate (#91277 Phase 3)
+- docs: serve/dashboard backends in the update flow, --plan, and --status (#63206)
+- docs: /snapshot restore live-safety behavior
 
 ### Improvements
 
-- fmt(js): `npm run fix` on merge (#95511)
-- chore: map contributor email for wiseconnex
-- test: loosen frozen bare-verdict dict in cua_0_9 sibling test to decision contract
-- refactor(computer_use): diet schema + delete prompt block (~1.4K tok/call); remove max_elements, ladder moves to response verdicts
-- test(gateway): prove delivered rows are never reclaimed by the reconnect sweep
-- chore: map justinjohnson25600 and BrunoBza contributor emails
-- refactor(checkpoints): call the size-cap predicate instead of restating it
-- chore: map contributor email for notkisk
-- Merge pull request #95477 from kshitijk4poor/chore/mailmap-kshitijk4poor
-- chore: mailmap kshitijkapoorr@gmail.com to kshitijk4poor's canonical noreply
-- test: assert omitted attach_to_session stays absent from formatted list output
-- chore: map kshitijkapoorr@gmail.com to kshitijk4poor in contributors/emails
-- 10 additional improvements updates are included in this verified snapshot.
+- refactor(clarify): schema diet + single questions[] interface (880 → 335 tok/call, −62%) (#95907)
+- fmt(js): `npm run fix` on merge (#95924)
+- chore: map contributor emails
+- refactor(skills): skill_manage 924 → 518 tok/call — dedup diet, retire 'edit', unadvertise curator-only absorbed_into (#95697)
+- fmt(js): `npm run fix` on merge (#95861)
+- fmt(js): `npm run fix` on merge (#95858)
+- desktop: remove js vestiges
+- test: re-pin refusal exit codes and gate patch points to the shared contract
+- Merge pull request #91716 from Nastechresearch/fix/scale-to-zero-no-pointless-quiesce
+- chore: map contributor email for salvage of #88470
+- refactor(acp): share one OpenAI bridge between the ACP clients
+- chore: contributor mappings for #95633/#95652 salvage
+- 33 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

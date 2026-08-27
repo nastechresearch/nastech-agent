@@ -2,6 +2,7 @@ import { LOCAL_CONNECTION_ID } from '@nastech/shared'
 import { atom, batch, computed } from 'nanostores'
 
 import type { NastechConnection } from '@/global'
+import { getProfiles, nastechApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { invalidateProfileScopedQueries } from '@/lib/query-client'
 import {
   arraysEqual,
@@ -13,7 +14,6 @@ import {
   storedStringRecord
 } from '@/lib/storage'
 import { withTimeout } from '@/lib/with-timeout'
-import { getProfiles, nastechApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { invalidateCronModelImpactScopeState } from '@/store/cron-model-impact-scope'
 import {
   $gateway,
@@ -368,6 +368,16 @@ $activeGatewayProfile.subscribe(value => {
 // profile's backend), else null. Drives the chat's "waking up <profile>" loader
 // so a lazy spawn doesn't read as a hang. Single-profile users never swap.
 export const $gatewaySwapTarget = atom<string | null>(null)
+
+// Profile whose wake resolved PAINT-FIRST while the active-profile gate was
+// still unsatisfied (#89843): on a shared-remote connection every profile is
+// legitimately served through the primary socket, so $activeGatewayProfile
+// never moves to the bot's profile and the old gate burned the whole 20s
+// hydration budget with the transcript already painted. The stored history is
+// shown immediately instead; this atom drives the subtle "Syncing…" affordance
+// until the gate catches up (or the next wake supersedes it). Null when no
+// paint-first wake is outstanding.
+export const $hydrationSyncProfile = atom<string | null>(null)
 
 // ── Hover-intent backend pre-warm ───────────────────────────────────────────
 // A cold switch to a profile whose pool backend isn't running pays the full
