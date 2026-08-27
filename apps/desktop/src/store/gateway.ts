@@ -2,8 +2,8 @@ import { type ConnectionState, type GatewayEvent, registryBackendScopeKey, resol
 import { atom } from 'nanostores'
 
 import type { NastechConnection } from '@/global'
-import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
 import { NastechGateway, setApiRequestConnection } from '@/nastech'
+import { reconnectBackoffDelayMs } from '@/lib/reconnect-backoff'
 import { markNativeNotifyBaseline } from '@/store/notify-baseline'
 import { setConnection, setGatewayState } from '@/store/session'
 
@@ -261,6 +261,17 @@ export function setPrimaryGateway(gateway: NastechGateway | null, profile = 'def
 }
 
 export function setPrimaryGatewayConnectionId(connectionId: null | string | undefined): void {
+  // Hardening for #95628: while the active route is a secondary scope, the
+  // window is looking at a NON-primary socket — any connection id flowing
+  // through presentation-layer code at that moment describes the secondary,
+  // not the primary. Accepting it would relabel the primary socket, so every
+  // ambient API/WebSocket helper (and new-session routing) silently lands on
+  // the wrong backend. The primary's own identity is (re)published by its
+  // boot/reconnect path, which runs with the primary route active.
+  if (!isActivePrimary()) {
+    return
+  }
+
   g.primaryConnectionId = (connectionId ?? '').trim() || null
 
   if (g.activeKey === g.primaryProfile) {

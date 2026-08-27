@@ -24,11 +24,11 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { CopyButton } from '@/components/ui/copy-button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { renameSession } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { PROFILE_SWATCHES } from '@/lib/profile-color'
 import { exportSession } from '@/lib/session-export'
-import { renameSession } from '@/nastech'
 import { activeGateway } from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
 import { $projectTree, moveSessionToProject, projectIdForCwd, projectRootCwd } from '@/store/projects'
@@ -44,7 +44,7 @@ import {
   setSessions
 } from '@/store/session'
 import { $sessionColorOverrides, setSessionColorOverride } from '@/store/session-color'
-import { $sessionTiles } from '@/store/session-states'
+import { $sessionTiles, closeAllOpenSessionTiles } from '@/store/session-states'
 import { ackStoredSessionId } from '@/store/session-unread'
 import { canOpenSessionInTerminal, canOpenSessionWindow, openSessionInTerminal } from '@/store/windows'
 
@@ -415,6 +415,10 @@ function useSessionActions({
                   label: t.zones.closeAll,
                   onSelect: () => {
                     triggerHaptic('selection')
+                    // Persist-close session tiles before dismissing the
+                    // remaining tree panes, or Bot Mode rehydrates them
+                    // from the shared tile bucket (#94137).
+                    closeAllOpenSessionTiles(tabPaneId)
                     closeAllTreeTabs(tabPaneId)
                   }
                 })
