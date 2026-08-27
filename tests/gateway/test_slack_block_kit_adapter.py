@@ -66,6 +66,20 @@ class TestSendMessageBlocks:
         assert "blocks" not in kwargs
         assert kwargs["text"]  # plain text still sent
 
+    @pytest.mark.asyncio
+    async def test_unfurl_config_suppresses_previews_without_changing_link_text(self):
+        adapter, client = _make_adapter(
+            {"unfurl_links": False, "unfurl_media": False}
+        )
+        content = "[Nastech](https://example.com/nastech)"
+
+        await adapter.send("C1", content)
+
+        kwargs = client.chat_postMessage.await_args.kwargs
+        assert kwargs["text"] == "<https://example.com/nastech|Nastech>"
+        assert kwargs["unfurl_links"] is False
+        assert kwargs["unfurl_media"] is False
+
 
     @pytest.mark.asyncio
     async def test_enabled_but_unrenderable_falls_back_to_text(self):

@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `790e1eb6bd576261e6b9e70fcfe4fbdf17f866bb`
+- upstream sha : `ef46ec03e11452eab74e261147668fb64a3d9fd3`
 - source       : `https://github.com/Nastechresearch/nastech-agent.git`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -31,9 +31,9 @@
 
 ## Brand
 
-- total files : 10435
-- renamed     : 1447 (folders and file names)
-- text-rewritten : 10337
+- total files : 10462
+- renamed     : 1457 (folders and file names)
+- text-rewritten : 10364
 - locked-copied  : 56
 - binary-copied  : 8
 - owned assets   : 34 (our logo/banner/mascot override upstream)
@@ -45,267 +45,162 @@
 
 ## Direct upstream tree delta
 
-- complete: +60 ~182 -4 ↪0
-- MODIFIED `Dockerfile`
-- ADDED `agent/acp_openai_bridge.py`
-- MODIFIED `agent/agent_init.py`
-- MODIFIED `agent/background_review.py`
+- complete: +30 ~108 -3 ↪0
 - MODIFIED `agent/context_compressor.py`
-- MODIFIED `agent/conversation_loop.py`
-- MODIFIED `agent/copilot_acp_client.py`
-- MODIFIED `agent/deadline.py`
-- ADDED `agent/provider_projection.py`
-- MODIFIED `apps/bootstrap-installer/src-tauri/Cargo.toml`
-- MODIFIED `apps/bootstrap-installer/src-tauri/src/update.rs`
-- ADDED `apps/desktop/e2e/fleet-profile-rail.spec.ts`
-- ADDED `apps/desktop/e2e/group-to-local-bot-handoff.spec.ts`
-- ADDED `apps/desktop/electron/app-icon.test.ts`
-- ADDED `apps/desktop/electron/app-icon.ts`
-- MODIFIED `apps/desktop/electron/connection-registry.test.ts`
-- MODIFIED `apps/desktop/electron/connection-registry.ts`
-- MODIFIED `apps/desktop/electron/desktop-remote-route.test.ts`
-- MODIFIED `apps/desktop/electron/desktop-remote-route.ts`
+- MODIFIED `agent/conversation_compression.py`
+- MODIFIED `agent/file_safety.py`
+- MODIFIED `apps/desktop/electron/backend-dial-claim.test.ts`
 - MODIFIED `apps/desktop/electron/main.ts`
-- ADDED `apps/desktop/electron/oauth-partition.test.ts`
-- ADDED `apps/desktop/electron/oauth-partition.ts`
+- ADDED `apps/desktop/electron/managed-ssh-update.test.ts`
+- ADDED `apps/desktop/electron/managed-ssh-update.ts`
+- MODIFIED `apps/desktop/electron/pool-eviction.test.ts`
+- MODIFIED `apps/desktop/electron/preload.ts`
 - MODIFIED `apps/desktop/electron/remote-lifecycle.test.ts`
 - MODIFIED `apps/desktop/electron/remote-lifecycle.ts`
-- ADDED `apps/desktop/electron/renderer-load-error-page.test.ts`
-- ADDED `apps/desktop/electron/renderer-load-error-page.ts`
-- MODIFIED `apps/desktop/electron/window-renderer-lifecycle.test.ts`
-- MODIFIED `apps/desktop/electron/window-renderer-lifecycle.ts`
-- MODIFIED `apps/desktop/src/api/profiles.ts`
-- MODIFIED `apps/desktop/src/app/chat/chat-swap-overlay.tsx`
-- MODIFIED `apps/desktop/src/app/chat/composer/attachments.test.tsx`
-- MODIFIED `apps/desktop/src/app/chat/index.test.tsx`
-- MODIFIED `apps/desktop/src/app/chat/index.tsx`
-- MODIFIED `apps/desktop/src/app/chat/session-tile-actions.ts`
-- ADDED `apps/desktop/src/app/chat/sidebar/connection-glyph.tsx`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/connection-switcher.tsx`
-- ADDED `apps/desktop/src/app/chat/sidebar/fleet-rail.test.ts`
-- ADDED `apps/desktop/src/app/chat/sidebar/fleet-rail.ts`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/index.tsx`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/profile-rail-connect.test.tsx`
-- ADDED `apps/desktop/src/app/chat/sidebar/profile-rail-fleet.test.tsx`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/profile-switcher.tsx`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/projects/workspace-groups.test.ts`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/projects/workspace-groups.ts`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/session-actions-menu.test.tsx`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/session-actions-menu.tsx`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/sessions-section.tsx`
-- ADDED `apps/desktop/src/app/chat/sidebar/use-fleet-roster.ts`
-- MODIFIED `apps/desktop/src/app/chat/sidebar/virtual-session-list.tsx`
-- MODIFIED `apps/desktop/src/app/contrib/hooks/use-background-sync.test.ts`
-- MODIFIED `apps/desktop/src/app/contrib/hooks/use-background-sync.ts`
-- MODIFIED `apps/desktop/src/app/contrib/hooks/use-session-tile-delegate.ts`
-- MODIFIED `apps/desktop/src/app/contrib/session-rpc-dispatcher.test.ts`
-- MODIFIED `apps/desktop/src/app/contrib/session-rpc-dispatcher.ts`
-- MODIFIED `apps/desktop/src/app/contrib/wiring.tsx`
+- MODIFIED `apps/desktop/electron/ssh-bootstrap-coordinator.ts`
+- MODIFIED `apps/desktop/electron/windows-remote-lifecycle.test.ts`
+- MODIFIED `apps/desktop/electron/windows-remote-lifecycle.ts`
+- ADDED `apps/desktop/src/api/plugins.test.ts`
+- MODIFIED `apps/desktop/src/api/plugins.ts`
 - MODIFIED `apps/desktop/src/app/gateway/hooks/use-gateway-boot.test.tsx`
 - MODIFIED `apps/desktop/src/app/gateway/hooks/use-gateway-boot.ts`
-- MODIFIED `apps/desktop/src/app/profiles/delete-profile-dialog.tsx`
-- MODIFIED `apps/desktop/src/app/profiles/rename-profile-dialog.tsx`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/session-info.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-model-controls.test.tsx`
+- MODIFIED `apps/desktop/src/app/gateway/hooks/use-gateway-request.test.ts`
+- MODIFIED `apps/desktop/src/app/gateway/hooks/use-gateway-request.ts`
 - MODIFIED `apps/desktop/src/app/session/hooks/use-model-controls.ts`
-- MODIFIED `apps/desktop/src/components/assistant-ui/clarify-tool.test.tsx`
-- MODIFIED `apps/desktop/src/components/assistant-ui/clarify-tool.tsx`
-- MODIFIED `apps/desktop/src/components/assistant-ui/markdown-text.artifacts.test.tsx`
-- MODIFIED `apps/desktop/src/components/assistant-ui/thread/message-parts.tsx`
-- MODIFIED `apps/desktop/src/components/assistant-ui/thread/streaming.test.tsx`
-- MODIFIED `apps/desktop/src/components/pane-shell/tree/renderer/tree-group.tsx`
-- ADDED `apps/desktop/src/hover-variant.test.ts`
-- MODIFIED `apps/desktop/src/i18n/ar.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-session-actions/index.ts`
+- MODIFIED `apps/desktop/src/app/settings/constants.ts`
+- MODIFIED `apps/desktop/src/app/settings/gateway-settings.test.tsx`
+- MODIFIED `apps/desktop/src/app/settings/gateway-settings.tsx`
+- ADDED `apps/desktop/src/app/settings/managed-updates-section.tsx`
+- MODIFIED `apps/desktop/src/app/shell/model-menu-panel.test.tsx`
+- MODIFIED `apps/desktop/src/app/shell/model-menu-panel.tsx`
+- MODIFIED `apps/desktop/src/global.d.ts`
 - MODIFIED `apps/desktop/src/i18n/en.ts`
-- MODIFIED `apps/desktop/src/i18n/ja.ts`
 - MODIFIED `apps/desktop/src/i18n/types.ts`
-- MODIFIED `apps/desktop/src/i18n/zh-hant.ts`
 - MODIFIED `apps/desktop/src/i18n/zh.ts`
-- DELETED `apps/desktop/src/plugins/accent/plugin.js`
+- ADDED `apps/desktop/src/lib/gateway-liveness-policy.test.ts`
+- ADDED `apps/desktop/src/lib/gateway-liveness-policy.ts`
+- ADDED `apps/desktop/src/lib/guarded-model-switch.ts`
+- MODIFIED `apps/desktop/src/lib/model-options.test.ts`
+- MODIFIED `apps/desktop/src/lib/model-options.ts`
+- MODIFIED `apps/desktop/src/lib/voice-playback.routing.test.ts`
+- MODIFIED `apps/desktop/src/lib/voice-playback.ts`
+- MODIFIED `apps/desktop/src/lib/with-timeout.ts`
 - MODIFIED `apps/desktop/src/plugins/nastech-bots/plugin.js`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/active-now-strip.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/bots-home.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-creation.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/canonical-chat-registry.test.mjs`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/group-to-local-bot-handoff.test.mjs`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/legacy-member-normalize.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/remote-routing-races.test.mjs`
-- DELETED `apps/desktop/src/plugins/kanban/plugin.js`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/activity-toasts.test.mjs`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/bot-attention-badge.test.mjs`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/embed-skills-view.test.mjs`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/group-activity.test.mjs`
+- ADDED `apps/desktop/src/plugins/nastech-bots/tests/model-picker-settle.test.mjs`
+- ADDED `apps/desktop/src/plugins/nastech-bots/tests/model-switch-confirm.test.mjs`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/multi-source-roster.test.mjs`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/roster-groups.test.mjs`
 - MODIFIED `apps/desktop/src/sdk/index.ts`
 - MODIFIED `apps/desktop/src/sdk/profile-routing.test.ts`
-- MODIFIED `apps/desktop/src/store/connections.test.ts`
-- MODIFIED `apps/desktop/src/store/connections.ts`
-- MODIFIED `apps/desktop/src/store/cron-model-impact.test.ts`
-- MODIFIED `apps/desktop/src/store/cron-model-impact.ts`
-- ADDED `apps/desktop/src/store/fleet-roster.ts`
-- MODIFIED `apps/desktop/src/store/gateway-connection-scope.test.ts`
+- MODIFIED `apps/desktop/src/store/gateway-activation-prune-lease.test.ts`
 - MODIFIED `apps/desktop/src/store/gateway.test.ts`
 - MODIFIED `apps/desktop/src/store/gateway.ts`
-- MODIFIED `apps/desktop/src/store/onboarding.ts`
+- ADDED `apps/desktop/src/store/managed-updates.test.ts`
+- ADDED `apps/desktop/src/store/managed-updates.ts`
+- MODIFIED `apps/desktop/src/store/profile-select-source.test.ts`
 - MODIFIED `apps/desktop/src/store/profile.ts`
-- MODIFIED `apps/desktop/src/store/session-states.test.ts`
-- MODIFIED `apps/desktop/src/store/session-states.ts`
-- MODIFIED `apps/desktop/src/store/session.test.ts`
-- MODIFIED `apps/desktop/src/store/session.ts`
-- MODIFIED `apps/desktop/src/styles.css`
-- MODIFIED `apps/desktop/src/types/nastech.ts`
-- ADDED `contributors/emails/Finn763@users.noreply.github.com`
-- ADDED `contributors/emails/alex.gazzillo@gmail.com`
-- ADDED `contributors/emails/alexander.prendota@gmail.com`
-- ADDED `contributors/emails/caseyrussell1976@gmail.com`
-- ADDED `contributors/emails/epeterpanz@gmail.com`
-- ADDED `contributors/emails/etzelvon@users.noreply.github.com`
-- ADDED `contributors/emails/nastech@lift-off.co.uk`
-- ADDED `contributors/emails/laroberts@hchb.com`
-- ADDED `contributors/emails/takealook97@naver.com`
-- MODIFIED `docs/kanban/multi-gateway.md`
-- ADDED `evals/session_search_schema/README.md`
-- ADDED `evals/session_search_schema/fixtures.py`
-- ADDED `evals/session_search_schema/report.py`
-- ADDED `evals/session_search_schema/results/pr95570/openai_gpt-5.6-luna.jsonl`
-- ADDED `evals/session_search_schema/results/pr95570/openai_gpt-5.6-terra.jsonl`
-- ADDED `evals/session_search_schema/results/pr95570/qwen_qwen3-coder-30b-a3b-instruct.jsonl`
-- ADDED `evals/session_search_schema/runner.py`
-- ADDED `evals/session_search_schema/tasks.py`
-- MODIFIED `gateway/control_socket.py`
-- MODIFIED `gateway/kanban_watchers.py`
+- MODIFIED `apps/desktop/src/store/transcript-tail-cache.test.ts`
+- MODIFIED `apps/desktop/src/store/transcript-tail-cache.ts`
+- MODIFIED `cli-config.yaml.example`
+- ADDED `contributors/emails/fred0m@users.noreply.github.com`
+- ADDED `contributors/emails/paulapsp157@gmail.com`
+- ADDED `contributors/emails/potatosaladx@gmail.com`
+- ADDED `contributors/emails/veeman961@gmail.com`
+- MODIFIED `gateway/relay/adapter.py`
+- MODIFIED `gateway/relay/media.py`
+- MODIFIED `gateway/relay/ws_transport.py`
 - MODIFIED `gateway/run.py`
-- MODIFIED `gateway/scale_to_zero.py`
-- MODIFIED `gateway/slash_commands.py`
-- MODIFIED `gateway/status.py`
+- MODIFIED `nastech_cli/approval_mode.py`
 - MODIFIED `nastech_cli/backup.py`
-- MODIFIED `nastech_cli/banner.py`
-- MODIFIED `nastech_cli/cli_commands_mixin.py`
+- MODIFIED `nastech_cli/browser_connect.py`
 - MODIFIED `nastech_cli/config.py`
 - MODIFIED `nastech_cli/config_defaults.py`
-- MODIFIED `nastech_cli/dashboard_procs.py`
-- MODIFIED `nastech_cli/doctor.py`
-- MODIFIED `nastech_cli/gateway.py`
-- MODIFIED `nastech_cli/gitlock.py`
-- ADDED `nastech_cli/image_provenance.py`
-- DELETED `nastech_cli/macos_tcc_anchor.py`
+- MODIFIED `nastech_cli/console_engine.py`
 - MODIFIED `nastech_cli/main.py`
-- MODIFIED `nastech_cli/memory_setup.py`
-- MODIFIED `nastech_cli/models.py`
 - MODIFIED `nastech_cli/process_identity.py`
-- MODIFIED `nastech_cli/setup.py`
 - MODIFIED `nastech_cli/update_cmd.py`
-- ADDED `nastech_cli/update_contract.py`
-- MODIFIED `nastech_cli/update_inventory.py`
-- MODIFIED `nastech_cli/update_receipt.py`
-- ADDED `nastech_cli/update_restart_recovery.py`
-- MODIFIED `nastech_cli/web_routers/mcp.py`
+- MODIFIED `nastech_cli/web_routers/profiles.py`
+- MODIFIED `nastech_cli/web_routers/tools.py`
 - MODIFIED `nastech_cli/web_server.py`
-- MODIFIED `locales/af.yaml`
-- MODIFIED `locales/ar.yaml`
-- MODIFIED `locales/de.yaml`
-- MODIFIED `locales/en.yaml`
-- MODIFIED `locales/es.yaml`
-- MODIFIED `locales/fr.yaml`
-- MODIFIED `locales/ga.yaml`
-- MODIFIED `locales/hu.yaml`
-- MODIFIED `locales/it.yaml`
-- MODIFIED `locales/ja.yaml`
-- MODIFIED `locales/ko.yaml`
-- MODIFIED `locales/pt.yaml`
-- MODIFIED `locales/ru.yaml`
-- MODIFIED `locales/tr.yaml`
-- MODIFIED `locales/uk.yaml`
-- MODIFIED `locales/zh-hant.yaml`
-- MODIFIED `locales/zh.yaml`
-- MODIFIED `package-lock.json`
-- MODIFIED `package.json`
-- MODIFIED `plugins/memory/supermemory/__init__.py`
 - MODIFIED `plugins/platforms/slack/adapter.py`
-- MODIFIED `plugins/video_gen/fal/__init__.py`
-- ADDED `tests/agent/test_acp_openai_bridge.py`
-- ADDED `tests/agent/test_acp_provider_rails.py`
-- ADDED `tests/agent/test_background_review_tool_call_guard.py`
-- MODIFIED `tests/agent/test_compression_small_ctx_threshold_floor.py`
-- MODIFIED `tests/agent/test_context_compressor.py`
-- MODIFIED `tests/agent/test_context_compressor_summary_continuity.py`
-- MODIFIED `tests/agent/test_deadline.py`
-- ADDED `tests/agent/test_provider_projection.py`
-- ADDED `tests/desktop/test_bots_chat_live_append.py`
-- ADDED `tests/desktop/test_bots_chat_stream_rekey.py`
-- ADDED `tests/gateway/test_control_socket_pause.py`
-- ADDED `tests/gateway/test_kanban_changes_requested_notifier.py`
-- MODIFIED `tests/gateway/test_kanban_notifier.py`
-- MODIFIED `tests/gateway/test_scale_to_zero_watcher.py`
+- MODIFIED `scripts/desktop-update/posix.sh`
+- MODIFIED `scripts/desktop-update/windows.ps1`
+- ADDED `tests/agent/test_compaction_ops_notification_anchor.py`
+- MODIFIED `tests/agent/test_compression_concurrent_fork.py`
+- MODIFIED `tests/gateway/relay/test_relay_media.py`
+- ADDED `tests/gateway/relay/test_relay_slack_unfurl.py`
+- ADDED `tests/gateway/relay/test_wire_voice_media.py`
+- MODIFIED `tests/gateway/test_compression_progress_notices.py`
 - MODIFIED `tests/gateway/test_slack.py`
-- MODIFIED `tests/gateway/test_slack_mention.py`
-- ADDED `tests/gateway/test_slack_unfurl_duplicate_turn.py`
-- MODIFIED `tests/gateway/test_status.py`
-- MODIFIED `tests/nastech_cli/test_backup.py`
-- MODIFIED `tests/nastech_cli/test_cmd_update_apt.py`
-- MODIFIED `tests/nastech_cli/test_cmd_update_docker.py`
+- MODIFIED `tests/gateway/test_slack_block_kit_adapter.py`
+- MODIFIED `tests/gateway/test_slack_native_streaming.py`
+- MODIFIED `tests/gateway/test_slack_sdk_response.py`
+- ADDED `tests/nastech_cli/test_browser_connect_default_chromium.py`
 - MODIFIED `tests/nastech_cli/test_config.py`
-- MODIFIED `tests/nastech_cli/test_dashboard_lifecycle_flags.py`
-- MODIFIED `tests/nastech_cli/test_fleet_matrix_down_state.py`
-- MODIFIED `tests/nastech_cli/test_gateway.py`
-- ADDED `tests/nastech_cli/test_gitlock_tmp_packs.py`
-- ADDED `tests/nastech_cli/test_macos_fda_guidance.py`
-- DELETED `tests/nastech_cli/test_macos_tcc_anchor.py`
-- ADDED `tests/nastech_cli/test_mcp_catalog_env_boundary.py`
-- MODIFIED `tests/nastech_cli/test_memory_setup.py`
-- ADDED `tests/nastech_cli/test_memory_setup_env_denylist.py`
-- MODIFIED `tests/nastech_cli/test_restart_plan_reconciliation.py`
-- ADDED `tests/nastech_cli/test_serve_runtime_inventory.py`
-- MODIFIED `tests/nastech_cli/test_ssh_ownership_endpoint.py`
-- ADDED `tests/nastech_cli/test_tcc_anchor_revert.py`
-- MODIFIED `tests/nastech_cli/test_update_cold_start_gateway_liveness.py`
-- MODIFIED `tests/nastech_cli/test_update_concurrent_quarantine.py`
-- ADDED `tests/nastech_cli/test_update_contract.py`
+- MODIFIED `tests/nastech_cli/test_config_set_coercion.py`
+- MODIFIED `tests/nastech_cli/test_console_engine.py`
+- ADDED `tests/nastech_cli/test_mcp_helper_ledger.py`
+- MODIFIED `tests/nastech_cli/test_set_config_value.py`
+- ADDED `tests/nastech_cli/test_update_config_migration_on_current.py`
+- ADDED `tests/nastech_cli/test_update_config_migration_on_current_checkout.py`
 - MODIFIED `tests/nastech_cli/test_update_fleet_check_fail_closed.py`
-- MODIFIED `tests/nastech_cli/test_update_receipt.py`
-- ADDED `tests/nastech_cli/test_update_restart_recovery.py`
-- MODIFIED `tests/nastech_cli/test_update_stale_dashboard.py`
-- ADDED `tests/nastech_cli/test_update_state_autorestore.py`
-- MODIFIED `tests/nastech_cli/test_web_server.py`
-- MODIFIED `tests/nastech_cli/test_windows_gateway_cold_start_desktop_lifecycle.py`
-- ADDED `tests/nastech_cli/test_windows_update_restart_reconciliation.py`
-- MODIFIED `tests/run_agent/test_compression_persistence.py`
-- MODIFIED `tests/tools/test_checkpoint_manager.py`
-- MODIFIED `tests/tools/test_clarify_tool.py`
-- ADDED `tests/tools/test_macos_protected_search.py`
-- MODIFIED `tests/tools/test_mcp_parked_self_probe.py`
-- MODIFIED `tests/tools/test_mcp_reconnect_log_hygiene.py`
-- MODIFIED `tests/tools/test_mcp_reconnect_retry_reset.py`
-- MODIFIED `tests/tools/test_mcp_tool.py`
-- ADDED `tests/tui_gateway/test_deferred_model_switch_confirm.py`
-- MODIFIED `tools/checkpoint_manager.py`
-- MODIFIED `tools/clarify_tool.py`
+- ADDED `tests/nastech_cli/test_update_fleet_probe_resume_token.py`
+- ADDED `tests/nastech_cli/test_update_fleet_restart_pending.py`
+- ADDED `tests/nastech_cli/test_web_server_executor_isolation.py`
+- ADDED `tests/nastech_state/test_named_profile_session_db.py`
+- MODIFIED `tests/run_agent/test_413_compression.py`
+- MODIFIED `tests/run_agent/test_codex_app_server_compaction.py`
+- MODIFIED `tests/test_desktop_update_windows_pipe_drain.py`
+- MODIFIED `tests/test_desktop_update_windows_python_handoff.py`
+- MODIFIED `tests/tools/test_browser_extension_router_wiring.py`
+- MODIFIED `tests/tools/test_browser_open_timeout.py`
+- ADDED `tests/tools/test_browser_real_profile.py`
+- MODIFIED `tests/tools/test_code_execution.py`
+- MODIFIED `tests/tools/test_computer_use.py`
+- DELETED `tests/tools/test_computer_use_browser_authorization.py`
+- DELETED `tests/tools/test_computer_use_browser_contract_020.py`
+- MODIFIED `tests/tools/test_computer_use_cua_0_10_permissions.py`
+- MODIFIED `tests/tools/test_computer_use_cua_0_9.py`
+- ADDED `tests/tools/test_mcp_stdio_children_dead.py`
+- MODIFIED `tests/tools/test_notify_on_complete.py`
+- MODIFIED `tests/tools/test_watch_patterns.py`
+- ADDED `tests/tui_gateway/test_compression_config_hot_reload.py`
+- ADDED `tests/tui_gateway/test_profiles_configure_model_guard.py`
+- MODIFIED `tools/browser_tool.py`
+- MODIFIED `tools/browser_use_cli.py`
+- MODIFIED `tools/code_execution_tool.py`
+- MODIFIED `tools/computer_use/backend.py`
+- DELETED `tools/computer_use/browser_route.py`
+- MODIFIED `tools/computer_use/cua_backend.py`
+- MODIFIED `tools/computer_use/schema.py`
+- MODIFIED `tools/computer_use/tool.py`
 - MODIFIED `tools/environments/base.py`
-- MODIFIED `tools/environments/local.py`
-- MODIFIED `tools/file_operations.py`
-- MODIFIED `tools/file_tools.py`
 - MODIFIED `tools/mcp_tool.py`
-- MODIFIED `tools/session_search_tool.py`
-- MODIFIED `tools/skill_manager_tool.py`
+- MODIFIED `tools/process_registry.py`
+- MODIFIED `tools/terminal_tool.py`
+- MODIFIED `tui_gateway/methods_profiles.py`
 - MODIFIED `tui_gateway/server.py`
-- MODIFIED `website/docs/developer-guide/context-compression-and-caching.md`
-- MODIFIED `website/docs/getting-started/updating.md`
-- MODIFIED `website/docs/reference/cli-commands.md`
-- MODIFIED `website/docs/reference/slash-commands.md`
-- MODIFIED `website/docs/user-guide/configuration.md`
-- MODIFIED `website/docs/user-guide/desktop.md`
-- MODIFIED `website/docs/user-guide/features/kanban.md`
-- MODIFIED `website/docs/user-guide/multi-connection-desktop.md`
-- MODIFIED `website/static/api/model-catalog.json`
+- MODIFIED `website/docs/user-guide/features/browser.md`
+- MODIFIED `website/docs/user-guide/messaging/slack.md`
 
 ## Scan
 
-10489 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10367]
+10516 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10394]
 
 
 ## Diff
 
-1360 renamed, 0 rewritten, 8730 identical, 61 locked, 0 missing, 34 owned, 250 reconciled
+1370 renamed, 0 rewritten, 8747 identical, 61 locked, 0 missing, 34 owned, 250 reconciled
 
 
 ## Fork check (vs nastech-agent)
 
-- 10116 identical, 312 updated (+0/-0 lines), 60 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+- 10235 identical, 251 updated (+0/-0 lines), 30 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 0 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - features: fork 51 -> branded 51
 
