@@ -631,12 +631,27 @@ def _notify_session_boundary(
         pass
 
 
+_SESSION_OWNERSHIP_UNAVAILABLE = (
+    "Nastech could not safely reserve this session. Try again."
+)
+
+_AUTOMATIC_SESSION_END_REASONS = frozenset({
+    "ws_orphan_reap",
+    "ws_disconnect",
+    "idle_timeout",
+    "lru_evict",
+    "tui_shutdown",
+})
+
+
 def _claim_active_session_slot(
     session_key: str,
     *,
     live_session_id: str,
     surface: str = "tui",
+    profile_home: str | Path | None = None,
 ) -> tuple[Any, str | None]:
+    track_liveness = str(surface or "").strip().lower() == "desktop"
     try:
         from nastech_cli.active_sessions import try_acquire_active_session
 
@@ -645,10 +660,16 @@ def _claim_active_session_slot(
             surface=surface,
             config=_load_cfg(),
             metadata={"live_session_id": live_session_id},
+            registry_home=profile_home,
+            track_liveness=track_liveness,
         )
     except Exception as exc:
         logger.warning("Failed to claim active session slot: %s", exc)
-        return None, None
+        return (
+            (None, _SESSION_OWNERSHIP_UNAVAILABLE)
+            if track_liveness
+            else (None, None)
+        )
 
 
 def _ensure_active_session_slot(sid: str, session: dict) -> str | None:
@@ -671,6 +692,7 @@ def _ensure_active_session_slot(sid: str, session: dict) -> str | None:
         str(session.get("session_key") or ""),
         live_session_id=sid,
         surface=_session_source(session),
+        profile_home=session.get("profile_home"),
     )
     if limit_message is not None:
         return limit_message
@@ -678,16 +700,89 @@ def _ensure_active_session_slot(sid: str, session: dict) -> str | None:
     return None
 
 
-def _release_active_session_slot(session: dict | None) -> None:
-    if not session:
-        return
-    lease = session.pop("active_session_lease", None)
+def _release_active_session_lease(lease) -> bool:
     if lease is None:
+        return True
+    attempts = 3 if getattr(lease, "track_liveness", False) else 1
+    for attempt in range(attempts):
+        try:
+            lease.release()
+            break
+        except Exception:
+            if attempt + 1 >= attempts:
+                logger.warning("Failed to release active session slot", exc_info=True)
+                return False
+            time.sleep(0.05 * (attempt + 1))
+    released = getattr(lease, "released", True)
+    enabled = getattr(lease, "enabled", True)
+    return bool(released or not enabled)
+
+
+def _release_active_session_slot(session: dict | None) -> bool:
+    if not session:
+        return True
+    lease = session.get("active_session_lease")
+    if _release_active_session_lease(lease):
+        if session.get("active_session_lease") is lease:
+            session.pop("active_session_lease", None)
+        return True
+    return False
+
+
+@contextlib.contextmanager
+def _other_runtime_lease_guard(session_id: str, session: dict):
+    """Release this runtime and lock sibling ownership through the DB write."""
+    lease = session.get("active_session_lease")
+    try:
+        from nastech_cli.active_sessions import (
+            active_session_liveness_guard,
+            release_active_session_liveness_guard,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Failed to load active session ownership guard; preserving session %s: %s",
+            session_id,
+            exc,
+        )
+        yield True
+        return
+
+    last_error: Exception | None = None
+    stack = contextlib.ExitStack()
+    for attempt in range(3):
+        try:
+            if lease is not None and getattr(lease, "enabled", False):
+                guard = release_active_session_liveness_guard(lease, session_id)
+            else:
+                guard = active_session_liveness_guard(
+                    session_id, registry_home=session.get("profile_home")
+                )
+            active = stack.enter_context(guard)
+            break
+        except Exception as exc:
+            stack.close()
+            stack = contextlib.ExitStack()
+            last_error = exc
+            if attempt < 2:
+                time.sleep(0.05 * (attempt + 1))
+    else:
+        logger.warning(
+            "Failed to inspect active session leases; preserving session %s: %s",
+            session_id,
+            last_error,
+        )
+        yield True
         return
     try:
-        lease.release()
-    except Exception:
-        logger.debug("Failed to release active session slot", exc_info=True)
+        yield active
+    finally:
+        stack.close()
+        if (
+            lease is not None
+            and getattr(lease, "released", False)
+            and session.get("active_session_lease") is lease
+        ):
+            session.pop("active_session_lease", None)
 
 
 def _transfer_active_session_slot(
@@ -713,6 +808,9 @@ def _transfer_active_session_slot(
     except Exception:
         logger.debug("Failed to transfer active session slot", exc_info=True)
 
+    if getattr(lease, "track_liveness", False):
+        return False
+
     # Fallback: the in-place transfer could not move the lease (entry pruned /
     # pid-check transiently failed). Reserve the new slot BEFORE releasing the
     # old one, so a concurrent gateway at the session cap cannot grab the freed
@@ -722,6 +820,7 @@ def _transfer_active_session_slot(
         new_session_id,
         live_session_id=sid,
         surface=_session_source(session),
+        profile_home=session.get("profile_home"),
     )
     if new_lease is not None:
         old_lease = session.pop("active_session_lease", None)
@@ -796,7 +895,14 @@ def _finalize_session(session: dict | None, end_reason: str = "tui_close") -> No
     if history_ready is not None and not history_ready.is_set():
         session["resume_history_error"] = "session resume cancelled"
         history_ready.set()
-    _release_active_session_slot(session)
+    _desktop_automatic_cleanup = bool(
+        end_reason in _AUTOMATIC_SESSION_END_REASONS
+        and _session_source(session).strip().lower() == "desktop"
+    )
+    # Automatic Desktop cleanup removes its lease inside the lock-held lifecycle
+    # guard below. Explicit close and non-Desktop paths keep force/end semantics.
+    if not _desktop_automatic_cleanup:
+        _release_active_session_slot(session)
     stop_event = session.get("_notif_stop")
     if stop_event is not None:
         stop_event.set()
@@ -864,27 +970,42 @@ def _finalize_session(session: dict | None, end_reason: str = "tui_close") -> No
     # Use session_id (from agent.session_id) not session_key — after compression,
     # session_key may be stale (the ended parent) while session_id is the live
     # continuation. Fix for #20001.
-    _tui_owns_lifecycle = True
-    if session_id:
-        try:
-            # End the row in the *session's* profile state.db (app-global
-            # remote mode), not the launch profile's shared handle.
-            with _session_db(session) as db:
-                if db is not None:
-                    # Don't end gateway-originated sessions — the gateway owns
-                    # their lifecycle.  The TUI is a viewer, not the owner.
-                    # Ending a gateway session in state.db triggers a Groundhog
-                    # Day routing loop: the gateway's #54878 self-heal detects
-                    # the stale entry, recovers to the parent session, context
-                    # compression splits back to the reaped child, and the cycle
-                    # repeats on every inbound message.  (#60609)
-                    row = db.get_session(session_id)
-                    source = (row or {}).get("source", "")
-                    _tui_owns_lifecycle = not _is_gateway_owned_source(source)
-                    if _tui_owns_lifecycle:
-                        db.end_session(session_id, end_reason)
-        except Exception:
-            pass
+    if _desktop_automatic_cleanup and not session_id:
+        _release_active_session_slot(session)
+    _lifecycle_guard = (
+        _other_runtime_lease_guard(session_id, session)
+        if _desktop_automatic_cleanup and session_id
+        else contextlib.nullcontext(False)
+    )
+    with _lifecycle_guard as _other_runtime_owns_lifecycle:
+        _tui_owns_lifecycle = not _other_runtime_owns_lifecycle
+        if _other_runtime_owns_lifecycle:
+            logger.info(
+                "Preserving session %s during %s: another backend owns an active lease",
+                session_id,
+                end_reason,
+            )
+        if session_id:
+            try:
+                # End the row in the *session's* profile state.db (app-global
+                # remote mode), not the launch profile's shared handle.
+                with _session_db(session) as db:
+                    if db is not None:
+                        # Don't end gateway-originated sessions — the gateway owns
+                        # their lifecycle.  The TUI is a viewer, not the owner.
+                        # Ending a gateway session in state.db triggers a Groundhog
+                        # Day routing loop: the gateway's #54878 self-heal detects
+                        # the stale entry, recovers to the parent session, context
+                        # compression splits back to the reaped child, and the cycle
+                        # repeats on every inbound message.  (#60609)
+                        row = db.get_session(session_id)
+                        source = (row or {}).get("source", "")
+                        if _is_gateway_owned_source(source):
+                            _tui_owns_lifecycle = False
+                        elif _tui_owns_lifecycle:
+                            db.end_session(session_id, end_reason)
+            except Exception:
+                pass
 
     # A session's in-flight async delegations end WITH the session (#55578):
     # once nobody owns the return address, a still-running background subagent
@@ -1374,9 +1495,8 @@ def _close_sessions_for_transport(
     transport, *, end_reason: str = "ws_disconnect"
 ) -> tuple[int, int]:
     """On transport disconnect, reap the sessions that opted into
-    close_on_disconnect (sidecar/dashboard) immediately via the unified
-    ``_close_session_by_id`` path, and re-point the rest back to stdio so later
-    emits don't hit a dead socket.
+    close_on_disconnect (sidecar/dashboard) immediately and re-point the rest
+    at the detached transport so later emits don't hit a dead socket.
 
     Non-flagged detached sessions are handed to the grace-windowed WS-orphan
     reaper (``_schedule_ws_orphan_reap``): a quick reconnect / session.resume
@@ -1391,47 +1511,57 @@ def _close_sessions_for_transport(
     reaped = 0
     detached = 0
     for sid, session in owned:
-        if session.get("close_on_disconnect"):
-            _close_session_by_id(sid, end_reason=end_reason)
-            reaped += 1
-        else:
-            # Point detached sessions at the drop sentinel (NOT real stdio) so
-            # _ws_session_is_orphaned recognizes them and the grace-reap can
-            # actually fire; a standalone `nastech --tui` keeps real _stdio.
-            # UNLESS another window still shows the session: multi-window
-            # pop-outs all register as viewers, so on disconnect re-bind the
-            # session to the most recent surviving viewer instead of
-            # stranding the original window on the sentinel (#83716).
-            viewers = session.get("viewers")
-            if viewers:
-                viewers.pop(transport, None)
-            # Revalidate under the sessions lock before stomping (#77129):
-            # between the owned-sessions snapshot above and this write, a
-            # concurrent session.resume can rebind the session to a NEW live
-            # transport. Stomping it back onto the drop sentinel here would
-            # knock an attached client into detached state and arm an orphan
-            # reap against a session that has a live owner. If the transport
-            # already moved on to a different live transport, this disconnect
-            # has nothing left to tear down — skip the park AND the reap.
+        claimed_for_teardown = None
+        should_schedule_reap = False
+        # A session.resume fast-path rebinds its live session while holding
+        # _session_resume_lock. Take that lock before re-checking the snapshot
+        # so a reconnect cannot move the transport between this check and the
+        # close/detach ownership claim. Keep the slow teardown below both locks.
+        with _session_resume_lock:
             with _sessions_lock:
-                current = session.get("transport")
-                if (
-                    current is not transport
-                    and current is not None
-                    and not _transport_is_dead(current)
-                ):
+                current = _sessions.get(sid)
+                if current is not session:
                     continue
-                remaining = [
-                    (ts, v)
-                    for v, ts in (viewers or {}).items()
-                    if v is not transport and not _transport_is_dead(v)
-                ]
-                if remaining:
-                    remaining.sort(key=lambda kv: kv[0])
-                    session["transport"] = remaining[-1][1]
+                if current.get("transport") is not transport:
+                    # The reconnect owns this session now. Drop only the old
+                    # viewer registration; it must not affect the new owner.
+                    viewers = current.get("viewers")
+                    if viewers:
+                        viewers.pop(transport, None)
                     continue
-                session["transport"] = _detached_ws_transport
-                session.pop("_client_gone_interrupt_requested", None)
+                if current.get("close_on_disconnect"):
+                    claimed_for_teardown = _pop_session_by_id(sid)
+                else:
+                    # Point detached sessions at the drop sentinel (NOT real
+                    # stdio) so _ws_session_is_orphaned recognizes them and
+                    # the grace-reap can actually fire; a standalone
+                    # `nastech --tui` keeps real _stdio. UNLESS another window
+                    # still shows the session: multi-window pop-outs all
+                    # register as viewers, so on disconnect re-bind the
+                    # session to the most recent surviving viewer instead of
+                    # stranding the original window on the sentinel (#83716).
+                    viewers = current.get("viewers")
+                    if viewers:
+                        viewers.pop(transport, None)
+                    remaining = [
+                        (ts, viewer_transport)
+                        for viewer_transport, ts in (viewers or {}).items()
+                        if (
+                            viewer_transport is not transport
+                            and not _transport_is_dead(viewer_transport)
+                        )
+                    ]
+                    if remaining:
+                        remaining.sort(key=lambda item: item[0])
+                        current["transport"] = remaining[-1][1]
+                    else:
+                        current["transport"] = _detached_ws_transport
+                        current.pop("_client_gone_interrupt_requested", None)
+                        should_schedule_reap = True
+        if claimed_for_teardown is not None:
+            if _teardown_popped_session(claimed_for_teardown, end_reason=end_reason):
+                reaped += 1
+        elif should_schedule_reap:
             detached += 1
             try:
                 _schedule_ws_orphan_reap(sid)
@@ -1872,6 +2002,13 @@ def _sweep_orphaned_session_rows() -> list[str]:
     process still holds in memory (e.g. a ``session.resume`` during the
     startup grace window) are excluded so the sweep never races a
     mid-reconnect client.
+
+    Cross-backend liveness (#94895): when one ``state.db`` is shared by
+    N serve / gateway processes, each registered a heartbeat row in
+    ``gateway_heartbeats``. The sweep refuses to close a row that any
+    live backend (heartbeat refreshed within ``2 * TTL``) could
+    plausibly own — see ``SessionDB.sweep_orphaned_sessions`` for the
+    exact predicate.
     """
     db = _get_db()
     if db is None:
@@ -1892,6 +2029,138 @@ def _sweep_orphaned_session_rows() -> list[str]:
             ", ".join(swept),
         )
     return swept
+
+
+# ── Cross-backend heartbeat (#94895) ───────────────────────────────────
+# Each serve / gateway process registers a heartbeat row in
+# ``gateway_heartbeats`` so the startup orphan sweep can tell "row owned
+# by a live but idle backend" from "row truly orphaned".  Without this,
+# the first process to restart in a multi-backend topology reaped every
+# inactive row — including those held by the other N−1 still-running
+# processes (the #94895 reporter saw 473 sessions disappear in one shot).
+#
+# Refresh cadence: every HEARTBEAT_REFRESH_S (default 60s — much shorter
+# than the default 6h session TTL so a refresh always lands inside the
+# staleness window).  The heartbeat is removed at process exit so a
+# graceful shutdown doesn't leave a stale row behind.  A crashed process
+# leaves its row until the heartbeat ages out of the staleness window,
+# at which point the sweep treats it as dead.
+
+_HEARTBEAT_REFRESH_S = float(
+    os.environ.get("NASTECH_GATEWAY_HEARTBEAT_REFRESH_S") or 60.0
+)
+_HEARTBEAT_REFRESH_S = max(0.0, _HEARTBEAT_REFRESH_S)
+
+_heartbeat_refresher_started = False
+_heartbeat_refresher_lock = threading.Lock()
+
+
+def _backend_id_for_this_process() -> str:
+    """Stable identity for this process's heartbeat row (#94895).
+
+    Includes pid AND a startup-time nonce so a PID-reuse respawn cannot
+    inherit the dead predecessor's heartbeat and protect truly orphaned
+    sessions.  The pid is kept for human readability in diagnostics.
+    """
+    nonce = getattr(_backend_id_for_this_process, "_nonce", None)
+    if nonce is None:
+        import secrets as _secrets
+
+        nonce = _secrets.token_hex(4)
+        try:
+            setattr(_backend_id_for_this_process, "_nonce", nonce)
+        except AttributeError:  # pragma: no cover - defensive
+            pass
+    return f"{_current_profile_name()}@{os.uname().nodename if hasattr(os, 'uname') else 'host'}:{os.getpid()}:{nonce}"
+
+
+def _refresh_backend_heartbeat() -> None:
+    """Refresh this backend's heartbeat row (#94895). No-op when DB unavailable."""
+    db = _get_db()
+    if db is None:
+        return
+    try:
+        db.register_backend_heartbeat(
+            backend_id=_backend_id_for_this_process(),
+            pid=os.getpid(),
+            started_at=_gateway_started_at(),
+            profile=_current_profile_name(),
+            host=(os.uname().nodename if hasattr(os, "uname") else "host"),
+        )
+    except Exception:
+        logger.debug("backend heartbeat refresh failed", exc_info=True)
+
+
+def _gateway_started_at() -> float:
+    """Wall-clock time when this process started. Module-import time is
+    a good-enough proxy: the heartbeat refresher runs after the gateway
+    is fully wired up.
+    """
+    started = getattr(_gateway_started_at, "_t", None)
+    if started is None:
+        started = time.time()
+        try:
+            setattr(_gateway_started_at, "_t", started)
+        except AttributeError:  # pragma: no cover
+            pass
+    return started
+
+
+def _heartbeat_refresher_loop(stop_event: threading.Event) -> None:
+    """Background loop that refreshes the heartbeat on a fixed cadence."""
+    while not stop_event.is_set():
+        try:
+            _refresh_backend_heartbeat()
+        except Exception:
+            logger.debug("heartbeat refresh loop iteration failed", exc_info=True)
+        stop_event.wait(_HEARTBEAT_REFRESH_S)
+
+
+def _start_backend_heartbeat_refresher() -> None:
+    """Register this backend and start the refresher thread (#94895).
+
+    Called once per process from both gateway entry points.  The first
+    refresh writes the row immediately so even a very fast crash leaves
+    a fresh-enough row that other backends can see.  Repeat calls are
+    no-ops.  The refresher thread is only spawned when
+    ``_HEARTBEAT_REFRESH_S > 0`` — a refresh interval of zero means
+    "register the row once, never refresh" (the row ages out naturally
+    after the heartbeat staleness window).
+    """
+    global _heartbeat_refresher_started
+    with _heartbeat_refresher_lock:
+        if _heartbeat_refresher_started:
+            return
+        _heartbeat_refresher_started = True
+    # Write a row synchronously so the sweep run later in this same
+    # process can see ourselves in the heartbeat table too.  Without
+    # this, exclude_ids would have to cover every local session — a
+    # regression in the strict-ownership case the heartbeat exists to fix.
+    try:
+        _refresh_backend_heartbeat()
+    except Exception:
+        logger.debug("initial backend heartbeat write failed", exc_info=True)
+    if _HEARTBEAT_REFRESH_S <= 0:
+        return
+    stop_event = threading.Event()
+
+    def _atexit_clear():
+        stop_event.set()
+        try:
+            db = _get_db()
+            if db is not None:
+                db.clear_backend_heartbeat(_backend_id_for_this_process())
+        except Exception:
+            pass
+
+    atexit.register(_atexit_clear)
+    thread = threading.Thread(
+        target=_heartbeat_refresher_loop,
+        args=(stop_event,),
+        name="nastech-gateway-heartbeat",
+        daemon=True,
+    )
+    thread.start()
 
 
 def _schedule_startup_orphan_sweep() -> None:

@@ -17,6 +17,15 @@ database:
   # Optional WAL sizing pragmas (integers). Unset = SQLite defaults.
   # wal_autocheckpoint: 1000     # pages between automatic checkpoints
   # journal_size_limit: 67108864 # cap the WAL/journal file size in bytes
+  #
+  # Durability level for every state.db connection: OFF, NORMAL, FULL, EXTRA
+  # (or 0-3). Unset leaves SQLite's default, which is baked in at compile time
+  # (SQLITE_DEFAULT_WAL_SYNCHRONOUS) and therefore differs between the bundled
+  # interpreter, a distro python3 and a Homebrew one. Set it if you need to
+  # know which one you are running rather than infer it. On macOS this is a
+  # floor, not a pin: values below FULL are refused because Darwin's fsync()
+  # does not guarantee write ordering, while EXTRA is honored normally.
+  # synchronous: FULL
 
 # =============================================================================
 # Runtime Limits
@@ -1859,6 +1868,16 @@ updates:
 #   # default — works on Fly.io out of the box).
 #   #
 #   #   public_url: "https://example.com/nastech"
+#   #
+#   # Reverse proxies connecting from another container or host are not
+#   # trusted by default. Add only the proxy's exact IP address, or a bounded
+#   # CIDR for a dedicated proxy network, so X-Forwarded-Proto and
+#   # X-Forwarded-For can be honored. Loopback is always trusted. Wildcards
+#   # and /0 networks are rejected.
+#   #
+#   #   trusted_proxies:
+#   #     - "172.20.0.5"
+#   #     # - "172.20.0.0/24"  # dedicated network, if the IP is dynamic
 #
 # -----------------------------------------------------------------------------
 # Self-hosted OIDC dashboard auth (generic OpenID Connect — Authentik,

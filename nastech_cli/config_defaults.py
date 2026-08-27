@@ -1569,6 +1569,10 @@ DEFAULT_CONFIG = {
             "telegram": {"streaming": True},
             "discord": {"streaming": False},
             "slack": {"streaming": False},
+            # WeCom uses native streaming (msgtype: "stream") via
+            # aibot_respond_msg — opt in by default so the WeCom client
+            # renders the typing animation and cumulative content updates.
+            "wecom": {"streaming": True},
         },
         # Gateway runtime-metadata footer appended to the FINAL message of a turn
         # (disabled by default to keep replies minimal). When enabled, renders
@@ -1629,6 +1633,11 @@ DEFAULT_CONFIG = {
         # Set this to True to re-enable the surfaces with the understanding
         # that the numbers are a local lower-bound estimate, not billing.
         "show_token_analytics": False,
+        # IP addresses or bounded CIDR networks of reverse proxies allowed to
+        # supply X-Forwarded-Proto / X-Forwarded-For. Loopback remains trusted
+        # automatically. Wildcards and /0 networks are rejected so arbitrary
+        # clients cannot spoof their scheme or source address.
+        "trusted_proxies": [],
         # WebSocket keepalive for the dashboard/desktop web server (#79635).
         # Applied to NON-loopback binds only: loopback always disables the
         # protocol ping (see nastech_cli/web_server.py — an event-loop stall

@@ -1,88 +1,109 @@
 {
   "number": 1,
   "dir": "Nastech-Update#1",
-  "upstream_sha": "5fc308a70719a83cccdbba4c0e39c23f5a8239d5",
+  "upstream_sha": "0dfba37b11ff2ca908ae2df85b55f4f4c9b7fd8b",
   "nastech_url": "https://github.com/Nastechresearch/nastech-agent.git",
   "source_provenance": {
     "remote_url": "https://github.com/Nastechresearch/nastech-agent.git",
-    "fetched_at": "2026-08-27T12:46:48+00:00",
+    "fetched_at": "2026-08-27T18:11:39+00:00",
     "acquisition": "fresh-direct-clone",
-    "baseline_sha": "ef46ec03e11452eab74e261147668fb64a3d9fd3"
+    "baseline_sha": "5fc308a70719a83cccdbba4c0e39c23f5a8239d5"
   },
   "commit_subjects": [
-    "chore: release v0.20.6 (2026.8.27)",
-    "fix(deadline): remove the dead second SuspectableBackend class shadowing the Phase 3a Protocol",
-    "fix(gateway): preserve exception type when error string is empty (#78183)",
-    "fix(serve): review follow-ups \u2014 never-raise sentinel fallback, DEVNULL stderr in split-stream test",
-    "fix(serve): widen fd-1 sentinel write to BACKEND_PORT_IN_USE sibling site",
-    "chore(contributors): map me@kitsonkelly.com -> kitsonk",
-    "fix(serve): announce READY sentinel on fd 1, not the redirected sys.stdout",
-    "refactor(browser_exec): schema diet 803->663 tok/call, A/B-gated; eval harness runs on Windows + Nastech auth (#96300)",
-    "fix(agent): honor explicit free OpenRouter models",
-    "fix(models): delist openrouter/elephant-alpha (no longer served by OpenRouter)",
-    "feat(models): add GLM-5.3-Flash to z.ai and OpenCode Go pickers",
-    "chore(contributors): map aydinhrrs@gmail.com -> RibatTRW",
-    "test(desktop/bots): drop unused prompt params in empty-sentinel harness (lint)",
-    "fix(desktop,bots): render \"(empty)\" sentinel as a friendly message in group chat",
-    "test(desktop/bots): pin harvestStrandedGroupReply's rescued-delivery path",
-    "fix(desktop/bots): keep a substantive group reply after a synthetic (pass)",
-    "test(desktop): lock the Stop button to room.running and the stop primitive",
-    "feat(desktop): Stop button for a running group-chat round (#94570)",
-    "fix(desktop): real stop primitive for group-chat rounds (#91868, #94569)",
-    "fix(nastech_cli): scope hook timeouts and fail closed on pre_tool_call",
-    "fix(browser): inline windows-footgun annotation for os.kill(pid, 0) (#85125 CI)",
-    "fix(browser): psutil.pid_exists liveness probe \u2014 Windows footgun (#85125 CI)",
-    "fix(browser): suspect-session recycle + wedged-daemon tree-kill on timeout (#85125 3b-browser/4c)",
-    "fix(browser): reset sessions after command timeout",
-    "fix(cron): widen the lock-first liveness check to 'nastech cron status'",
-    "test(cron): pin lock-first liveness + harden lock-probe failure",
-    "fix(cron): trust the gateway runtime lock for builtin-ticker liveness",
-    "chore: contributor email mapping for ekzhang",
-    "fix: follow-up for salvaged PRs #93250 + #96234",
-    "feat(models): add Inkling free models to OpenRouter catalog",
-    "fmt(js): `npm run fix` on merge (#96263)",
-    "fix(bots): label cap-forced drive exits distinctly from consensus settle (#94478)",
-    "fix(bots): bound continuation rounds + index-order mention tracking (#94755 review)",
-    "fix(bots): drive cited member after an unanswered @mention handoff",
-    "desktop: fix two managed-SSH-spawn bugs that break every fresh remote backend",
-    "feat(models): add minimax/minimax-m3:free to OpenRouter picker (#96234)",
-    "fix(tui-gateway): unset semantics for every live-adopted compression/model key",
-    "fix(serve): bounded flush-on-SIGTERM + periodic incremental session flush",
-    "feat(desktop): read-only stored-transcript resume + legacy owner-backfill trigger (#94724)",
-    "feat(sessions): one-shot single-match owner backfill for legacy NULL-profile rows (#94724)",
-    "feat(desktop): browser_exec rows use the leading # comment as their title, matching CLI/TUI (#96093)",
-    "fix(approval): enforce explicit timeout on smart-approval guardian call and log its outcome",
-    "fix(cron): tree-kill script timeout descendants via agent.deadline.kill_process_tree",
-    "Merge pull request #86412 from kshitijk4poor/salvage/83225-overflow-clamp",
-    "Merge pull request #93794 from kshitijk4poor/salvage/83964-conformance-harness",
-    "fix(approval): fail closed when the deadline import is unavailable; log clamp engagement",
-    "fix(approval): clamp approvals.timeout at the config-read chokepoint (#83220)",
-    "fix(agent): clamp authorization gate lock timeout to prevent OverflowError on macOS",
-    "fix(conformance): make the journal-mode matrix honest \u2014 steer the child resolver, audit the effective mode",
-    "test(conformance): crash/resume persistence cells \u2014 Phase 1 skeleton (#80921)"
+    "fix(dashboard): trust configured reverse proxies (#94126)",
+    "fix(tui-gateway): spare durable rows while a sibling backend holds them",
+    "fix(cli): keep Desktop liveness leases when the session cap is off",
+    "chore: suppress posix-gated os.kill probe in footgun scan; map rodrigogs in AUTHOR_MAP",
+    "test(gateway): adapt witness-composition harness to the SIGUSR1 in-place drain path",
+    "docs+test(gateway): pin Windows witness-absent behavior and the probe-budget math",
+    "fix(gateway): disarm the heartbeat writer in _stop_loop_liveness_guards",
+    "refactor(gateway): simplify witness-probe ambiguity arms; sweep stale tick-socket nodes; clean test tempdirs",
+    "test: short tmp_path for loop-tick witness sockets (macOS AF_UNIX limit)",
+    "fix(gateway): a single tick-socket miss must not authorize the wedge kill",
+    "fix(gateway): interlock the stale-heartbeat wedge verdict with a loop-scheduling witness",
+    "fix(gateway): the loop watchdog's own heartbeat can freeze the loop it watches",
+    "fix(state.db): cross-backend heartbeat gates orphan sweep",
+    "test(model): cover numeric YAML provider keys in picker and CRUD",
+    "fix(model): coerce YAML integer provider names before picker/CRUD",
+    "fmt(js): `npm run fix` on merge (#96506)",
+    "test(desktop): cover Voxtral JSON unwrap on client-direct STT",
+    "fix(desktop): unwrap Mistral Voxtral JSON in client-direct STT",
+    "fix(desktop): retain remote owner after session resume",
+    "fix(desktop): recover cloud auth through portal (#96170)",
+    "review: tighten pre-call gate comment; drop redundant _ReadyAdapter test stub",
+    "fix(mcp): signal reconnect from the mid-call fast-fail site too + regression tests",
+    "fix(mcp): correct inverted liveness check in _stdio_children_dead",
+    "chore: map contributor email for deadczarvc",
+    "fix(update): valid --ignored=matching mode; rename-only path split; shared preserve constant",
+    "fix(update): gitignored user files also block the ZIP overlay",
+    "fix(gemini): embed images in Gemini 3.x functionResponse.parts for multimodal tool results",
+    "docs(cron): comment accuracy \u2014 booking is fail-open on probe errors; cross-ref status vocabulary",
+    "fix(cron): verify a persisted final assistant message before booking complete",
+    "docs(cron): pin the manual_run_at comparison as intentionally string-exact",
+    "test(cron): stale hand-edit without manual marker still re-anchors",
+    "fix(cron): preserve recurring manual run intent",
+    "test(gateway): end-to-end rendered-unit coverage for the cron drain floor",
+    "test(gateway): cover TimeoutStopSec including the cron drain floor",
+    "fix(gateway): size systemd TimeoutStopSec from the full stop budget",
+    "docs: document the database section (journal_mode, synchronastech, WAL sizing)",
+    "docs(state): call the macOS synchronastech rule a floor, not a pin",
+    "fix(state): make state.db synchronastech configurable on every platform",
+    "fix(state): warn when an existing database's journal_mode is flipped to WAL",
+    "fix(state): warn when configured journal_mode=delete is overridden by on-disk WAL",
+    "feat(plugins): wire plugin platform handlers into a2a, buzz, and qqbot adapters",
+    "feat(plugins): generalize native platform handler registration to every gateway platform",
+    "feat(plugins): let plugins register Telegram PTB handlers via ctx.register_telegram_handler",
+    "fix(tui-gateway): claim disconnect sessions before teardown",
+    "refactor(delegate_task): tasks-only interface + depth-derived delegation (1,201 \u2192 773 tok/call, \u221236%) (#96424)",
+    "fix: keep original entry object on same-id recovery \u2014 preserve live state (review follow-up)",
+    "fix(gateway): keep sessions.json entry when startup recovery succeeds with same session id",
+    "polish: reuse launchd domain probe, fast-observe in wedged tests, blank-line cleanup",
+    "fix: verify launchd replacement PID before trusting KeepAlive (review follow-up)",
+    "chore: map joby@ellingtonlife.com -> gijoby (PR #91354 salvage)",
+    "fix(gateway): use SIGUSR1 graceful restart on launchd, not bare SIGTERM",
+    "fix(gateway): rebase launchd --replace removal onto main",
+    "fix: scope /approve-/deny direct-send confirmations to native-streaming adapters; drop leftover debug log; refresh WeCom docs",
+    "fix(wecom): eliminate duplicate + split bubbles in native streaming",
+    "feat(wecom): native reply streaming (per-turn isolation, dedup-safe delivery, interaction boundaries)",
+    "fix(send_message): cross-loop dispatch to live WeCom adapter",
+    "feat(gateway): per-platform streaming config default for WeCom",
+    "chore: map contributor email for @crazyhulk",
+    "refactor(skills): move publish-site to optional-skills",
+    "feat(skills): publish-site \u2014 versioned website publishing to GitHub/Cloudflare/Netlify Pages",
+    "refactor: trim verbose comment on _EMPTY_SESSION_WHERE",
+    "docs(sessions): name the reachable ordinal-0 rewind path in the #95868 guards",
+    "fix(sessions): don't let the empty-session sweep delete an archived transcript",
+    "refactor(cron): extract _get_session_db_timeout alongside sibling timeout resolvers",
+    "fix(cron): open the session store only after wake-gate and validation early-returns",
+    "fix(kanban): close half-open tracked connection when busy_timeout PRAGMA fails"
   ],
   "changed_areas": {
-    "agent": 7,
-    "apps": 43,
-    "contributors": 7,
-    "cron": 1,
-    "evals": 2,
-    "gateway": 4,
-    "nastech_cli": 20,
-    "nastech_state.py": 1,
+    "agent": 1,
+    "apps": 7,
+    "cli-config.yaml.example": 3,
+    "contributors": 6,
+    "cron": 6,
+    "gateway": 28,
+    "nastech_cli": 24,
+    "nastech_state.py": 7,
+    "nastech_state_common.py": 1,
+    "model_tools.py": 1,
+    "optional-skills": 1,
+    "plugins": 25,
     "pyproject.toml": 1,
-    "tests": 33,
-    "tools": 9,
-    "tui_gateway": 2,
+    "skills": 3,
+    "tests": 68,
+    "tools": 5,
+    "tui_gateway": 5,
     "uv.lock": 1,
-    "website": 6
+    "website": 14
   },
   "source_delta": {
-    "baseline_sha": "ef46ec03e11452eab74e261147668fb64a3d9fd3",
+    "baseline_sha": "5fc308a70719a83cccdbba4c0e39c23f5a8239d5",
     "complete": true,
     "counts": {
-      "added": 26,
-      "modified": 65,
+      "added": 24,
+      "modified": 106,
       "deleted": 0,
       "renamed": 0
     },
@@ -126,65 +147,16 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "agent/auxiliary_client.py",
+        "new_path": "agent/gemini_native_adapter.py",
         "old_mapped": "",
-        "new_mapped": "agent/auxiliary_client.py"
+        "new_mapped": "agent/gemini_native_adapter.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "agent/deadline.py",
+        "new_path": "apps/desktop/src/app/session/hooks/use-prompt-actions/index.test.tsx",
         "old_mapped": "",
-        "new_mapped": "agent/deadline.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "agent/model_metadata.py",
-        "old_mapped": "",
-        "new_mapped": "agent/model_metadata.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "agent/reasoning_timeouts.py",
-        "old_mapped": "",
-        "new_mapped": "agent/reasoning_timeouts.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "agent/tool_executor.py",
-        "old_mapped": "",
-        "new_mapped": "agent/tool_executor.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/electron/remote-lifecycle.test.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/electron/remote-lifecycle.test.ts"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/electron/remote-lifecycle.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/electron/remote-lifecycle.ts"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/api/sessions.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/api/sessions.ts"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/app/contrib/hooks/use-session-tile-delegate.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/contrib/hooks/use-session-tile-delegate.ts"
+        "new_mapped": "apps/desktop/src/app/session/hooks/use-prompt-actions/index.test.tsx"
       },
       {
         "status": "modified",
@@ -196,205 +168,86 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/app/session/hooks/use-session-actions/index.ts",
+        "new_path": "apps/desktop/src/components/boot-failure-overlay.test.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/app/session/hooks/use-session-actions/index.ts"
+        "new_mapped": "apps/desktop/src/components/boot-failure-overlay.test.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/components/assistant-ui/tool/fallback-model.test.ts",
+        "new_path": "apps/desktop/src/components/boot-failure-overlay.tsx",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/components/assistant-ui/tool/fallback-model.test.ts"
+        "new_mapped": "apps/desktop/src/components/boot-failure-overlay.tsx"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/components/assistant-ui/tool/fallback-model/format.ts",
+        "new_path": "apps/desktop/src/lib/voice-client-direct.test.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/components/assistant-ui/tool/fallback-model/format.ts"
+        "new_mapped": "apps/desktop/src/lib/voice-client-direct.test.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/components/assistant-ui/tool/fallback-model/index.ts",
+        "new_path": "apps/desktop/src/lib/voice-client-direct.ts",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/components/assistant-ui/tool/fallback-model/index.ts"
+        "new_mapped": "apps/desktop/src/lib/voice-client-direct.ts"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/i18n/ar.ts",
+        "new_path": "cli-config.yaml.example",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/i18n/ar.ts"
+        "new_mapped": "cli-config.yaml.example"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/i18n/en.ts",
+        "new_path": "contributors/emails/Finn763@users.noreply.github.com",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/i18n/en.ts"
+        "new_mapped": "contributors/emails/Finn763@users.noreply.github.com"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "contributors/emails/hjharris1@gmail.com",
+        "old_mapped": "",
+        "new_mapped": "contributors/emails/hjharris1@gmail.com"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "contributors/emails/joby@ellingtonlife.com",
+        "old_mapped": "",
+        "new_mapped": "contributors/emails/joby@ellingtonlife.com"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "contributors/emails/lawrenncecharlotte@gmail.com",
+        "old_mapped": "",
+        "new_mapped": "contributors/emails/lawrenncecharlotte@gmail.com"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "contributors/emails/rodrigo.smscom@gmail.com",
+        "old_mapped": "",
+        "new_mapped": "contributors/emails/rodrigo.smscom@gmail.com"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "contributors/emails/wansui@bilibili.com",
+        "old_mapped": "",
+        "new_mapped": "contributors/emails/wansui@bilibili.com"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "apps/desktop/src/i18n/ja.ts",
+        "new_path": "cron/jobs.py",
         "old_mapped": "",
-        "new_mapped": "apps/desktop/src/i18n/ja.ts"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/i18n/types.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/i18n/types.ts"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/i18n/zh-hant.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/i18n/zh-hant.ts"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/i18n/zh.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/i18n/zh.ts"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "apps/desktop/src/lib/legacy-session-owner-backfill.test.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/lib/legacy-session-owner-backfill.test.ts"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "apps/desktop/src/lib/legacy-session-owner-backfill.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/lib/legacy-session-owner-backfill.ts"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/lib/session-owner-stamp.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/lib/session-owner-stamp.ts"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/plugin.js",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/plugin.js"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/94478-mention-settle.test.mjs",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/94478-mention-settle.test.mjs"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/group-chat-empty-sentinel.test.mjs",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/group-chat-empty-sentinel.test.mjs"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/group-chat.test.mjs",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/group-chat.test.mjs"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/group-stop-thread.test.mjs",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/group-stop-thread.test.mjs"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/group-turn-lease.test.mjs",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/group-turn-lease.test.mjs"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "apps/desktop/src/plugins/nastech-bots/tests/unaddressed-mentions.test.mjs",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/plugins/nastech-bots/tests/unaddressed-mentions.test.mjs"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "apps/desktop/src/store/read-only-transcript.test.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/read-only-transcript.test.ts"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "apps/desktop/src/store/read-only-transcript.ts",
-        "old_mapped": "",
-        "new_mapped": "apps/desktop/src/store/read-only-transcript.ts"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "contributors/emails/92573950+RelaxJonh@users.noreply.github.com",
-        "old_mapped": "",
-        "new_mapped": "contributors/emails/92573950+RelaxJonh@users.noreply.github.com"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "contributors/emails/aydinhrrs@gmail.com",
-        "old_mapped": "",
-        "new_mapped": "contributors/emails/aydinhrrs@gmail.com"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "contributors/emails/dante32683@users.noreply.github.com",
-        "old_mapped": "",
-        "new_mapped": "contributors/emails/dante32683@users.noreply.github.com"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "contributors/emails/ekzhang1@gmail.com",
-        "old_mapped": "",
-        "new_mapped": "contributors/emails/ekzhang1@gmail.com"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "contributors/emails/magnus.lundstedt@infidyne.com",
-        "old_mapped": "",
-        "new_mapped": "contributors/emails/magnus.lundstedt@infidyne.com"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "contributors/emails/me@kitsonkelly.com",
-        "old_mapped": "",
-        "new_mapped": "contributors/emails/me@kitsonkelly.com"
-      },
-      {
-        "status": "added",
-        "old_path": "",
-        "new_path": "contributors/emails/supotato-ipj@users.noreply.github.com",
-        "old_mapped": "",
-        "new_mapped": "contributors/emails/supotato-ipj@users.noreply.github.com"
+        "new_mapped": "cron/jobs.py"
       },
       {
         "status": "modified",
@@ -406,16 +259,23 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "evals/browser_use/orchestrate.py",
+        "new_path": "gateway/display_config.py",
         "old_mapped": "",
-        "new_mapped": "evals/browser_use/orchestrate.py"
+        "new_mapped": "gateway/display_config.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "evals/browser_use/single_run.py",
+        "new_path": "gateway/platforms/api_server.py",
         "old_mapped": "",
-        "new_mapped": "evals/browser_use/single_run.py"
+        "new_mapped": "gateway/platforms/api_server.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/platforms/base.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/platforms/base.py"
       },
       {
         "status": "modified",
@@ -427,9 +287,37 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "gateway/platforms/msgraph_webhook.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/platforms/msgraph_webhook.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "gateway/platforms/qqbot/adapter.py",
         "old_mapped": "",
         "new_mapped": "gateway/platforms/qqbot/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/platforms/signal.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/platforms/signal.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/platforms/webhook.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/platforms/webhook.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/platforms/weixin.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/platforms/weixin.py"
       },
       {
         "status": "modified",
@@ -448,16 +336,65 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/__init__.py",
+        "new_path": "gateway/restart.py",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/__init__.py"
+        "new_mapped": "gateway/restart.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/auth.py",
+        "new_path": "gateway/run.py",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/auth.py"
+        "new_mapped": "gateway/run.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/session.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/session.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/shutdown_forensics.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/shutdown_forensics.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/shutdown_watchdog.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/shutdown_watchdog.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/slash_commands.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/slash_commands.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "gateway/stream_consumer.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/stream_consumer.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/active_sessions.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/active_sessions.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/config.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/config.py"
       },
       {
         "status": "modified",
@@ -469,16 +406,30 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/cron.py",
+        "new_path": "nastech_cli/gateway.py",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/cron.py"
+        "new_mapped": "nastech_cli/gateway.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/models.py",
+        "new_path": "nastech_cli/inventory.py",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/models.py"
+        "new_mapped": "nastech_cli/inventory.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/kanban_db.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/kanban_db.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "nastech_cli/model_switch.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_cli/model_switch.py"
       },
       {
         "status": "modified",
@@ -490,16 +441,9 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "nastech_cli/setup.py",
+        "new_path": "nastech_cli/update_cmd.py",
         "old_mapped": "",
-        "new_mapped": "nastech_cli/setup.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "nastech_cli/web_models.py",
-        "old_mapped": "",
-        "new_mapped": "nastech_cli/web_models.py"
+        "new_mapped": "nastech_cli/update_cmd.py"
       },
       {
         "status": "modified",
@@ -525,6 +469,181 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "nastech_state_common.py",
+        "old_mapped": "",
+        "new_mapped": "nastech_state_common.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "model_tools.py",
+        "old_mapped": "",
+        "new_mapped": "model_tools.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "optional-skills/web-development/publish-site/SKILL.md",
+        "old_mapped": "",
+        "new_mapped": "optional-skills/web-development/publish-site/SKILL.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/a2a/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/a2a/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/buzz/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/buzz/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/dingtalk/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/dingtalk/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/discord/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/discord/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/email/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/email/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/feishu/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/feishu/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/google_chat/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/google_chat/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/homeassistant/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/homeassistant/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/irc/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/irc/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/line/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/line/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/matrix/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/matrix/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/mattermost/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/mattermost/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/ntfy/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/ntfy/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/photon/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/photon/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/raft/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/raft/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/simplex/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/simplex/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/slack/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/slack/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/sms/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/sms/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/teams/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/teams/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/telegram/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/telegram/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/wecom/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/wecom/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "plugins/platforms/whatsapp/adapter.py",
+        "old_mapped": "",
+        "new_mapped": "plugins/platforms/whatsapp/adapter.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "pyproject.toml",
         "old_mapped": "",
         "new_mapped": "pyproject.toml"
@@ -532,198 +651,331 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/agent/test_auxiliary_client.py",
+        "new_path": "tests/agent/test_gemini_native_adapter.py",
         "old_mapped": "",
-        "new_mapped": "tests/agent/test_auxiliary_client.py"
+        "new_mapped": "tests/agent/test_gemini_native_adapter.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tests/agent/test_deadline.py",
+        "new_path": "tests/cron/test_due_stale_cron_edit.py",
         "old_mapped": "",
-        "new_mapped": "tests/agent/test_deadline.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/agent/test_reasoning_stale_timeout_floor.py",
-        "old_mapped": "",
-        "new_mapped": "tests/agent/test_reasoning_stale_timeout_floor.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/agent/test_subagent_stop_hook.py",
-        "old_mapped": "",
-        "new_mapped": "tests/agent/test_subagent_stop_hook.py"
+        "new_mapped": "tests/cron/test_due_stale_cron_edit.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/conformance/persistence/README.md",
+        "new_path": "tests/cron/test_scheduler_completion_verification.py",
         "old_mapped": "",
-        "new_mapped": "tests/conformance/persistence/README.md"
+        "new_mapped": "tests/cron/test_scheduler_completion_verification.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/cron/test_sessiondb_init_hang.py",
+        "old_mapped": "",
+        "new_mapped": "tests/cron/test_sessiondb_init_hang.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/conformance/persistence/__init__.py",
+        "new_path": "tests/gateway/test_approval_boundary.py",
         "old_mapped": "",
-        "new_mapped": "tests/conformance/persistence/__init__.py"
+        "new_mapped": "tests/gateway/test_approval_boundary.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_cron_drain_floor.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_cron_drain_floor.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_display_config.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_display_config.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_loop_liveness_watchdog.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_loop_liveness_watchdog.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_per_platform_streaming_defaults.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_per_platform_streaming_defaults.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_platform_base.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_platform_base.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/conformance/persistence/_harness.py",
+        "new_path": "tests/gateway/test_platform_plugin_handlers.py",
         "old_mapped": "",
-        "new_mapped": "tests/conformance/persistence/_harness.py"
+        "new_mapped": "tests/gateway/test_platform_plugin_handlers.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_session_store_stale_prune.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_session_store_stale_prune.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/conformance/persistence/test_cell1_prefix_durability.py",
+        "new_path": "tests/gateway/test_stream_consumer_tool_progress.py",
         "old_mapped": "",
-        "new_mapped": "tests/conformance/persistence/test_cell1_prefix_durability.py"
+        "new_mapped": "tests/gateway/test_stream_consumer_tool_progress.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/conformance/persistence/test_cell2_consume_once.py",
+        "new_path": "tests/gateway/test_stream_consumer_wecom_native.py",
         "old_mapped": "",
-        "new_mapped": "tests/conformance/persistence/test_cell2_consume_once.py"
+        "new_mapped": "tests/gateway/test_stream_consumer_wecom_native.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/gateway/test_wecom.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_wecom.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/conformance/persistence/test_cell3_rotation_atomicity.py",
+        "new_path": "tests/gateway/test_wecom_double_send.py",
         "old_mapped": "",
-        "new_mapped": "tests/conformance/persistence/test_cell3_rotation_atomicity.py"
+        "new_mapped": "tests/gateway/test_wecom_double_send.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/conformance/persistence/test_cells_wave2_stubs.py",
+        "new_path": "tests/gateway/test_wecom_per_turn.py",
         "old_mapped": "",
-        "new_mapped": "tests/conformance/persistence/test_cells_wave2_stubs.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/cron/test_87033_cronjob_gateway_liveness.py",
-        "old_mapped": "",
-        "new_mapped": "tests/cron/test_87033_cronjob_gateway_liveness.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/cron/test_cron_script.py",
-        "old_mapped": "",
-        "new_mapped": "tests/cron/test_cron_script.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/gateway/test_bluebubbles.py",
-        "old_mapped": "",
-        "new_mapped": "tests/gateway/test_bluebubbles.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/gateway/test_qqbot.py",
-        "old_mapped": "",
-        "new_mapped": "tests/gateway/test_qqbot.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_model_validation.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_model_validation.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_plugins.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_plugins.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/nastech_cli/test_serve_port_in_use.py",
-        "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_serve_port_in_use.py"
+        "new_mapped": "tests/gateway/test_wecom_per_turn.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/nastech_cli/test_session_owner_backfill.py",
+        "new_path": "tests/gateway/test_wecom_stream_dup_fix.py",
         "old_mapped": "",
-        "new_mapped": "tests/nastech_cli/test_session_owner_backfill.py"
+        "new_mapped": "tests/gateway/test_wecom_stream_dup_fix.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_active_sessions.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_active_sessions.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_dashboard_auth_gate.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_dashboard_auth_gate.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_gateway_service.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_gateway_service.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_inventory.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_inventory.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_kanban_db.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_kanban_db.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_model_switch_custom_providers.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_model_switch_custom_providers.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_provider_config_validation.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_provider_config_validation.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_update_wedged_gateway.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_update_wedged_gateway.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_update_zip_fallback_guards.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_update_zip_fallback_guards.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_web_server.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_web_server.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/tools/test_approval_timeout_overflow.py",
+        "new_path": "tests/nastech_state/test_94895_orphan_sweep_cross_backend.py",
         "old_mapped": "",
-        "new_mapped": "tests/tools/test_approval_timeout_overflow.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/tools/test_browser_open_timeout.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tools/test_browser_open_timeout.py"
+        "new_mapped": "tests/nastech_state/test_94895_orphan_sweep_cross_backend.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/tools/test_browser_suspect_recycle.py",
+        "new_path": "tests/nastech_state/test_empty_sweep_archived_transcript_95868.py",
         "old_mapped": "",
-        "new_mapped": "tests/tools/test_browser_suspect_recycle.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/tools/test_smart_approval_policy.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tools/test_smart_approval_policy.py"
-      },
-      {
-        "status": "modified",
-        "old_path": "",
-        "new_path": "tests/tui_gateway/test_compression_config_hot_reload.py",
-        "old_mapped": "",
-        "new_mapped": "tests/tui_gateway/test_compression_config_hot_reload.py"
+        "new_mapped": "tests/nastech_state/test_empty_sweep_archived_transcript_95868.py"
       },
       {
         "status": "added",
         "old_path": "",
-        "new_path": "tests/tui_gateway/test_serve_exit_flush.py",
+        "new_path": "tests/skills/test_publish_site_skill.py",
         "old_mapped": "",
-        "new_mapped": "tests/tui_gateway/test_serve_exit_flush.py"
+        "new_mapped": "tests/skills/test_publish_site_skill.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/approval.py",
+        "new_path": "tests/test_journal_mode_config.py",
         "old_mapped": "",
-        "new_mapped": "tools/approval.py"
+        "new_mapped": "tests/test_journal_mode_config.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/test_journal_mode_upgrade_warning.py",
+        "old_mapped": "",
+        "new_mapped": "tests/test_journal_mode_upgrade_warning.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/test_state_synchronastech_pragma.py",
+        "old_mapped": "",
+        "new_mapped": "tests/test_state_synchronastech_pragma.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/browser_tool.py",
+        "new_path": "tests/test_tui_gateway_server.py",
         "old_mapped": "",
-        "new_mapped": "tools/browser_tool.py"
+        "new_mapped": "tests/test_tui_gateway_server.py"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "tools/browser_use_cli.py",
+        "new_path": "tests/tools/test_delegate.py",
         "old_mapped": "",
-        "new_mapped": "tools/browser_use_cli.py"
+        "new_mapped": "tests/tools/test_delegate.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/tools/test_delegate_batch_validation.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tools/test_delegate_batch_validation.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/tools/test_delegate_control_actions.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tools/test_delegate_control_actions.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/tools/test_delegate_output_schema.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tools/test_delegate_output_schema.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/tools/test_mcp_stdio_fastfail_reconnect.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tools/test_mcp_stdio_fastfail_reconnect.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/tools/test_send_message_cross_loop.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tools/test_send_message_cross_loop.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/tui_gateway/test_94895_backend_heartbeat.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tui_gateway/test_94895_backend_heartbeat.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/tui_gateway/test_cross_process_orphan_ownership.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tui_gateway/test_cross_process_orphan_ownership.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tools/delegate_tool.py",
+        "old_mapped": "",
+        "new_mapped": "tools/delegate_tool.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tools/mcp_tool.py",
+        "old_mapped": "",
+        "new_mapped": "tools/mcp_tool.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tools/send_message_tool.py",
+        "old_mapped": "",
+        "new_mapped": "tools/send_message_tool.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tui_gateway/entry.py",
+        "old_mapped": "",
+        "new_mapped": "tui_gateway/entry.py"
       },
       {
         "status": "modified",
@@ -735,6 +987,13 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "tui_gateway/ws.py",
+        "old_mapped": "",
+        "new_mapped": "tui_gateway/ws.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "uv.lock",
         "old_mapped": "",
         "new_mapped": "uv.lock"
@@ -742,23 +1001,58 @@
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "website/docs/user-guide/features/hooks.md",
+        "new_path": "website/docs/developer-guide/plugins/index.md",
         "old_mapped": "",
-        "new_mapped": "website/docs/user-guide/features/hooks.md"
+        "new_mapped": "website/docs/developer-guide/plugins/index.md"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "website/docs/user-guide/features/plugins.md",
+        "new_path": "website/docs/reference/optional-skills-catalog.md",
         "old_mapped": "",
-        "new_mapped": "website/docs/user-guide/features/plugins.md"
+        "new_mapped": "website/docs/reference/optional-skills-catalog.md"
       },
       {
         "status": "modified",
         "old_path": "",
-        "new_path": "website/static/api/model-catalog.json",
+        "new_path": "website/docs/user-guide/configuration.md",
         "old_mapped": "",
-        "new_mapped": "website/static/api/model-catalog.json"
+        "new_mapped": "website/docs/user-guide/configuration.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/docker.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/docker.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/features/web-dashboard.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/features/web-dashboard.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/messaging/wecom.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/messaging/wecom.md"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "website/docs/user-guide/skills/optional/web-development/web-development-publish-site.md",
+        "old_mapped": "",
+        "new_mapped": "website/docs/user-guide/skills/optional/web-development/web-development-publish-site.md"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "website/sidebars.ts",
+        "old_mapped": "",
+        "new_mapped": "website/sidebars.ts"
       }
     ]
   },
@@ -1044,31 +1338,31 @@
     "release"
   ],
   "verify": {
-    "total": 10488,
-    "passed": 10488,
+    "total": 10512,
+    "passed": 10512,
     "locked": 64,
     "failed": [],
     "pass_ratio": 1.0
   },
   "brand": {
-    "total": 10488,
-    "renamed": 1462,
-    "rewritten": 10390,
+    "total": 10512,
+    "renamed": 1464,
+    "rewritten": 10414,
     "locked_copied": 56,
     "binary_copied": 8,
     "errors": []
   },
   "diff": {
-    "renamed": 1375,
+    "renamed": 1377,
     "rewritten": 0,
-    "identical": 8767,
+    "identical": 8789,
     "locked": 61,
     "missing": 0
   },
   "scan": {
-    "total": 10542,
+    "total": 10566,
     "by_category": {
-      "text": 10420,
+      "text": 10444,
       "image": 92,
       "binary": 7,
       "audio": 5,
@@ -1076,7 +1370,7 @@
       "doc": 5
     },
     "by_format": {
-      "text": 10420,
+      "text": 10444,
       "jpeg": 6,
       "png": 78,
       "icns": 4,
@@ -1092,10 +1386,10 @@
   },
   "fork": {
     "statuses": {
-      "identical": 10451,
-      "updated": 64,
+      "identical": 10283,
+      "updated": 258,
       "locked": 1,
-      "added": 26
+      "added": 24
     },
     "violations": 0,
     "preserved": 54,

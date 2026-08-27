@@ -87,6 +87,39 @@ sandboxes
 where the limit cannot be changed, startup continues without changing the
 limit.
 
+## Database Settings
+
+The `database:` section controls how Nastech opens its SQLite state database
+(`state.db`), which stores sessions, messages, and gateway routing:
+
+```yaml
+database:
+  # Journal mode for state.db: wal (default) or delete.
+  # Use delete on filesystems where WAL is unsafe (network mounts, some
+  # virtiofs setups). Note: an existing on-disk WAL database is never
+  # live-downgraded — Nastech keeps WAL and logs an error telling you the
+  # configured delete did not apply. To convert an existing database, stop
+  # every process using it and run a one-time offline
+  # `PRAGMA journal_mode=DELETE` on the file.
+  journal_mode: wal
+
+  # Durability level for every state.db connection: OFF, NORMAL, FULL,
+  # EXTRA (or 0-3). Unset leaves SQLite's compile-time default, which
+  # differs between interpreter builds. On macOS this is a floor, not a
+  # pin: values below FULL are refused to protect against Darwin fsync
+  # reordering; EXTRA is honored.
+  # synchronous: FULL
+
+  # Optional WAL sizing pragmas (integers). Unset = SQLite defaults.
+  # wal_autocheckpoint: 1000     # pages between automatic checkpoints
+  # journal_size_limit: 67108864 # cap the WAL/journal size in bytes
+```
+
+Nastech also warns (once per process per database) when an existing
+database's on-disk journal mode is silently flipped to WAL on open — for
+example a database an operator had manually converted to `delete` — and
+names `database.journal_mode` as the setting that makes the choice stick.
+
 ## Environment Variable Substitution
 
 You can reference environment variables in `config.yaml` using `${VAR_NAME}` syntax:
@@ -2597,6 +2630,7 @@ dashboard:
   theme: "default"            # "default" | "midnight" | "ember" | "mono" | "cyberpunk" | "rose"
   show_token_analytics: false # Re-enable the (local-estimate-only) token/cost analytics surfaces
   public_url: ""              # Full public authority for OAuth redirect_uri (env: NASTECH_DASHBOARD_PUBLIC_URL)
+  trusted_proxies: []         # Proxy IPs/CIDRs allowed to supply X-Forwarded-* headers
   oauth:                      # Portal OAuth gate (engaged with --host and not --insecure)
     client_id: ""             # agent:{instance_id} — Portal provisions this
     portal_url: ""            # blank → plugin default (production Portal)
@@ -2618,6 +2652,7 @@ dashboard:
 - `theme` — dashboard visual theme.
 - `show_token_analytics` — off by default. The Analytics page and token/cost figures are a **local lower-bound estimate** (they exclude auxiliary calls, retries, fallbacks, and cache writes), so they can read far below the provider bill. Set `true` only if you understand they're not billing.
 - `public_url` — when set, this is the complete authority (scheme + host + optional path prefix) the OAuth `redirect_uri` is built from. Set it for deploys behind reverse proxies that don't reliably forward `X-Forwarded-*` headers. Leave empty to use proxy-header reconstruction.
+- `trusted_proxies` — IP addresses or bounded CIDR networks allowed to supply `X-Forwarded-Proto` and `X-Forwarded-For`. Loopback remains trusted automatically. Configure this when the TLS reverse proxy connects from another container or host. Prefer the proxy's exact IP; use a small dedicated network only when its address is dynamic. Wildcards and `/0` networks are rejected.
 - `oauth` / `basic_auth` / `drain_auth` — auth provider config read by the bundled dashboard-auth plugins. The drain secret itself is **not** set here; it's provisioned via the `NASTECH_DASHBOARD_DRAIN_SECRET` env var. See [Web Dashboard](/user-guide/features/web-dashboard) for full auth setup.
 - `ws_ping_interval` / `ws_ping_timeout` — WebSocket keepalive tuning for non-loopback binds (loopback connections never ping). Raise these on high-latency links (Tailscale, distant SSH tunnels) where the 20 s defaults can manufacture spurious 1006 disconnects.
 - `ws_orphan_reap_grace_s` — how long a WS-detached session waits before the orphan reaper collects it. Raise alongside the keepalive values if clients reconnect slowly. (`NASTECH_TUI_WS_ORPHAN_REAP_GRACE_S` remains as an internal override.)
