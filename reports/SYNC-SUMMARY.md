@@ -6,77 +6,70 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 103 commits affecting 1370 files.
-- **Source revision:** `ef46ec03e114`.
-- **Previous source revision:** `790e1eb6bd57`.
+- **Changes incorporated:** 50 commits affecting 1375 files.
+- **Source revision:** `5fc308a70719`.
+- **Previous source revision:** `ef46ec03e114`.
 
 ## Technical coverage
 
-- **.github/:** 9 changed files.
-- **agent/:** 5 changed files.
-- **apps/:** 115 changed files.
-- **cli-config.yaml.example/:** 1 changed files.
-- **contributors/:** 4 changed files.
-- **gateway/:** 7 changed files.
-- **nastech_cli/:** 41 changed files.
-- **plugins/:** 4 changed files.
-- **scripts/:** 7 changed files.
-- **tests/:** 81 changed files.
-- **tools/:** 20 changed files.
-- **tui_gateway/:** 19 changed files.
-- **website/:** 7 changed files.
+- **agent/:** 7 changed files.
+- **apps/:** 43 changed files.
+- **contributors/:** 7 changed files.
+- **cron/:** 1 changed files.
+- **evals/:** 2 changed files.
+- **gateway/:** 4 changed files.
+- **nastech_cli/:** 20 changed files.
+- **nastech_state.py/:** 1 changed files.
+- **pyproject.toml/:** 1 changed files.
+- **tests/:** 33 changed files.
+- **tools/:** 9 changed files.
+- **tui_gateway/:** 2 changed files.
+- **uv.lock/:** 1 changed files.
+- **website/:** 6 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(relay): stamp slack unfurl_links/unfurl_media onto outbound frame metadata (gateway-directed)
-- feat(slack): add link unfurl controls
-- feat(desktop): Managed updates section drives per-connection SSH updates
-- feat(browser): close-with-approval flow for Windows real-profile (toggle arms, agent asks, blocked if still locked) [proof do-not-merge]
-- feat(browser): consented auto-close of a running browser for Windows real-profile [proof workflow do-not-merge]
-- feat(browser): real-profile browsing via agent-browser copy + browser-use CDP
-- feat(browser): consent-gated real default-Chromium profile for local browsing + local_browser arg
-- feat(desktop): wire managed SSH update engine into main process
-- feat(desktop): managed SSH remote update engine — extracted from #93042
-- feat(chat-plane): trace_id + turn telemetry, transient-delta split, seq-namespace epoch
-- feat(gateway): slim WS-only server — remove FastAPI/uvicorn from desktop boot path
+- feat(models): add GLM-5.3-Flash to z.ai and OpenCode Go pickers
+- feat(desktop): Stop button for a running group-chat round (#94570)
+- feat(models): add Inkling free models to OpenRouter catalog
+- feat(models): add minimax/minimax-m3:free to OpenRouter picker (#96234)
+- feat(desktop): read-only stored-transcript resume + legacy owner-backfill trigger (#94724)
+- feat(sessions): one-shot single-match owner backfill for legacy NULL-profile rows (#94724)
+- feat(desktop): browser_exec rows use the leading # comment as their title, matching CLI/TUI (#96093)
 
 ### Reliability and fixes
 
-- fix(mcp): un-invert the stdio children liveness check (#94335)
-- fix(nastech_cli): surface fail-closed config write refusals cleanly
-- fix(nastech_cli): stop config set/unset from wiping user overrides on invalid YAML
-- fix(compression): preserve terminal lifecycle for lock skips
-- fix(compression): suppress duplicate completion notices
-- fix(config): preserve lossy decimal values as strings
-- fix(relay): fall back to descriptor platform for unfurl stamping
-- fix(slack): coerce string unfurl knobs on the native plane
-- fix(relay): coerce string unfurl knobs and disable Slack draft streaming
-- fix(slack): preserve unfurl controls during streaming
-- fix(slack): honor unfurl controls for media captions
-- fix(relay): restore voice-note STT — wire media[] MIMEs, message_type "voice", and a User-Agent for CDN downloads (#95274)
-- 45 additional reliability and fixes updates are included in this verified snapshot.
-
-### Documentation
-
-- docs(slack): note caption ordering and streaming fallback for unfurl knobs
+- fix(deadline): remove the dead second SuspectableBackend class shadowing the Phase 3a Protocol
+- fix(gateway): preserve exception type when error string is empty (#78183)
+- fix(serve): review follow-ups — never-raise sentinel fallback, DEVNULL stderr in split-stream test
+- fix(serve): widen fd-1 sentinel write to BACKEND_PORT_IN_USE sibling site
+- fix(serve): announce READY sentinel on fd 1, not the redirected sys.stdout
+- fix(agent): honor explicit free OpenRouter models
+- fix(models): delist openrouter/elephant-alpha (no longer served by OpenRouter)
+- fix(desktop,bots): render "(empty)" sentinel as a friendly message in group chat
+- fix(desktop/bots): keep a substantive group reply after a synthetic (pass)
+- fix(desktop): real stop primitive for group-chat rounds (#91868, #94569)
+- fix(nastech_cli): scope hook timeouts and fail closed on pre_tool_call
+- fix(browser): inline windows-footgun annotation for os.kill(pid, 0) (#85125 CI)
+- 17 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Improvements
 
-- test(mcp): absorb watcher-consumer and fail-open liveness cases from #94521/#94661
-- chore: map paulapsp157@gmail.com -> Aoshi-Dev (PR #96003 salvage)
-- test(nastech_cli): make test_default_path pass on native Windows
-- test(nastech_cli): align malformed YAML set/unset expectations with RuntimeError
-- refactor(compression): fold review follow-ups on #71488 salvage
-- test(compression): cover failed in-place split status
-- Merge pull request #96118 from kshitijk4poor/revert/94245
-- Revert "Merge pull request #94245 from kshitijk4poor/feat/gw-event-replay"
-- Merge pull request #94245 from kshitijk4poor/feat/gw-event-replay
-- test(relay): cover media-lane unfurl stamping and descriptor fallback
-- chore(contributors): map potatosaladx@gmail.com to potatosalad (attribution for salvaged #79436/#81128 commits)
-- test(slack): cover default and split unfurl behavior
-- 22 additional improvements updates are included in this verified snapshot.
+- chore: release v0.20.6 (2026.8.27)
+- chore(contributors): map me@kitsonkelly.com -> kitsonk
+- refactor(browser_exec): schema diet 803->663 tok/call, A/B-gated; eval harness runs on Windows + Nastech auth (#96300)
+- chore(contributors): map aydinhrrs@gmail.com -> RibatTRW
+- test(desktop/bots): drop unused prompt params in empty-sentinel harness (lint)
+- test(desktop/bots): pin harvestStrandedGroupReply's rescued-delivery path
+- test(desktop): lock the Stop button to room.running and the stop primitive
+- test(cron): pin lock-first liveness + harden lock-probe failure
+- chore: contributor email mapping for ekzhang
+- fmt(js): `npm run fix` on merge (#96263)
+- desktop: fix two managed-SSH-spawn bugs that break every fresh remote backend
+- Merge pull request #86412 from kshitijk4poor/salvage/83225-overflow-clamp
+- 2 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
