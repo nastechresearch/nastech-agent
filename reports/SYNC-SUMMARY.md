@@ -6,70 +6,82 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 50 commits affecting 1375 files.
-- **Source revision:** `5fc308a70719`.
-- **Previous source revision:** `ef46ec03e114`.
+- **Changes incorporated:** 66 commits affecting 1377 files.
+- **Source revision:** `0dfba37b11ff`.
+- **Previous source revision:** `5fc308a70719`.
 
 ## Technical coverage
 
-- **agent/:** 7 changed files.
-- **apps/:** 43 changed files.
-- **contributors/:** 7 changed files.
-- **cron/:** 1 changed files.
-- **evals/:** 2 changed files.
-- **gateway/:** 4 changed files.
-- **nastech_cli/:** 20 changed files.
-- **nastech_state.py/:** 1 changed files.
+- **agent/:** 1 changed files.
+- **apps/:** 7 changed files.
+- **cli-config.yaml.example/:** 3 changed files.
+- **contributors/:** 6 changed files.
+- **cron/:** 6 changed files.
+- **gateway/:** 28 changed files.
+- **model_tools.py/:** 1 changed files.
+- **nastech_cli/:** 24 changed files.
+- **nastech_state.py/:** 7 changed files.
+- **nastech_state_common.py/:** 1 changed files.
+- **optional-skills/:** 1 changed files.
+- **plugins/:** 25 changed files.
 - **pyproject.toml/:** 1 changed files.
-- **tests/:** 33 changed files.
-- **tools/:** 9 changed files.
-- **tui_gateway/:** 2 changed files.
+- **skills/:** 3 changed files.
+- **tests/:** 68 changed files.
+- **tools/:** 5 changed files.
+- **tui_gateway/:** 5 changed files.
 - **uv.lock/:** 1 changed files.
-- **website/:** 6 changed files.
+- **website/:** 14 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(models): add GLM-5.3-Flash to z.ai and OpenCode Go pickers
-- feat(desktop): Stop button for a running group-chat round (#94570)
-- feat(models): add Inkling free models to OpenRouter catalog
-- feat(models): add minimax/minimax-m3:free to OpenRouter picker (#96234)
-- feat(desktop): read-only stored-transcript resume + legacy owner-backfill trigger (#94724)
-- feat(sessions): one-shot single-match owner backfill for legacy NULL-profile rows (#94724)
-- feat(desktop): browser_exec rows use the leading # comment as their title, matching CLI/TUI (#96093)
+- feat(plugins): wire plugin platform handlers into a2a, buzz, and qqbot adapters
+- feat(plugins): generalize native platform handler registration to every gateway platform
+- feat(plugins): let plugins register Telegram PTB handlers via ctx.register_telegram_handler
+- feat(wecom): native reply streaming (per-turn isolation, dedup-safe delivery, interaction boundaries)
+- feat(gateway): per-platform streaming config default for WeCom
+- feat(skills): publish-site — versioned website publishing to GitHub/Cloudflare/Netlify Pages
 
 ### Reliability and fixes
 
-- fix(deadline): remove the dead second SuspectableBackend class shadowing the Phase 3a Protocol
-- fix(gateway): preserve exception type when error string is empty (#78183)
-- fix(serve): review follow-ups — never-raise sentinel fallback, DEVNULL stderr in split-stream test
-- fix(serve): widen fd-1 sentinel write to BACKEND_PORT_IN_USE sibling site
-- fix(serve): announce READY sentinel on fd 1, not the redirected sys.stdout
-- fix(agent): honor explicit free OpenRouter models
-- fix(models): delist openrouter/elephant-alpha (no longer served by OpenRouter)
-- fix(desktop,bots): render "(empty)" sentinel as a friendly message in group chat
-- fix(desktop/bots): keep a substantive group reply after a synthetic (pass)
-- fix(desktop): real stop primitive for group-chat rounds (#91868, #94569)
-- fix(nastech_cli): scope hook timeouts and fail closed on pre_tool_call
-- fix(browser): inline windows-footgun annotation for os.kill(pid, 0) (#85125 CI)
-- 17 additional reliability and fixes updates are included in this verified snapshot.
+- fix(dashboard): trust configured reverse proxies (#94126)
+- fix(tui-gateway): spare durable rows while a sibling backend holds them
+- fix(cli): keep Desktop liveness leases when the session cap is off
+- fix(gateway): disarm the heartbeat writer in _stop_loop_liveness_guards
+- fix(gateway): a single tick-socket miss must not authorize the wedge kill
+- fix(gateway): interlock the stale-heartbeat wedge verdict with a loop-scheduling witness
+- fix(gateway): the loop watchdog's own heartbeat can freeze the loop it watches
+- fix(state.db): cross-backend heartbeat gates orphan sweep
+- fix(model): coerce YAML integer provider names before picker/CRUD
+- fix(desktop): unwrap Mistral Voxtral JSON in client-direct STT
+- fix(desktop): retain remote owner after session resume
+- fix(desktop): recover cloud auth through portal (#96170)
+- 23 additional reliability and fixes updates are included in this verified snapshot.
+
+### Documentation
+
+- docs(cron): comment accuracy — booking is fail-open on probe errors; cross-ref status vocabulary
+- docs(cron): pin the manual_run_at comparison as intentionally string-exact
+- docs: document the database section (journal_mode, synchronastech, WAL sizing)
+- docs(state): call the macOS synchronastech rule a floor, not a pin
+- docs(sessions): name the reachable ordinal-0 rewind path in the #95868 guards
 
 ### Improvements
 
-- chore: release v0.20.6 (2026.8.27)
-- chore(contributors): map me@kitsonkelly.com -> kitsonk
-- refactor(browser_exec): schema diet 803->663 tok/call, A/B-gated; eval harness runs on Windows + Nastech auth (#96300)
-- chore(contributors): map aydinhrrs@gmail.com -> RibatTRW
-- test(desktop/bots): drop unused prompt params in empty-sentinel harness (lint)
-- test(desktop/bots): pin harvestStrandedGroupReply's rescued-delivery path
-- test(desktop): lock the Stop button to room.running and the stop primitive
-- test(cron): pin lock-first liveness + harden lock-probe failure
-- chore: contributor email mapping for ekzhang
-- fmt(js): `npm run fix` on merge (#96263)
-- desktop: fix two managed-SSH-spawn bugs that break every fresh remote backend
-- Merge pull request #86412 from kshitijk4poor/salvage/83225-overflow-clamp
-- 2 additional improvements updates are included in this verified snapshot.
+- chore: suppress posix-gated os.kill probe in footgun scan; map rodrigogs in AUTHOR_MAP
+- test(gateway): adapt witness-composition harness to the SIGUSR1 in-place drain path
+- docs+test(gateway): pin Windows witness-absent behavior and the probe-budget math
+- refactor(gateway): simplify witness-probe ambiguity arms; sweep stale tick-socket nodes; clean test tempdirs
+- test: short tmp_path for loop-tick witness sockets (macOS AF_UNIX limit)
+- test(model): cover numeric YAML provider keys in picker and CRUD
+- fmt(js): `npm run fix` on merge (#96506)
+- test(desktop): cover Voxtral JSON unwrap on client-direct STT
+- review: tighten pre-call gate comment; drop redundant _ReadyAdapter test stub
+- chore: map contributor email for deadczarvc
+- test(cron): stale hand-edit without manual marker still re-anchors
+- test(gateway): end-to-end rendered-unit coverage for the cron drain floor
+- 8 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

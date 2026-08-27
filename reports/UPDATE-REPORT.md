@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `5fc308a70719a83cccdbba4c0e39c23f5a8239d5`
+- upstream sha : `0dfba37b11ff2ca908ae2df85b55f4f4c9b7fd8b`
 - source       : `https://github.com/Nastechresearch/nastech-agent.git`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -31,9 +31,9 @@
 
 ## Brand
 
-- total files : 10488
-- renamed     : 1462 (folders and file names)
-- text-rewritten : 10390
+- total files : 10512
+- renamed     : 1464 (folders and file names)
+- text-rewritten : 10414
 - locked-copied  : 56
 - binary-copied  : 8
 - owned assets   : 34 (our logo/banner/mascot override upstream)
@@ -45,112 +45,151 @@
 
 ## Direct upstream tree delta
 
-- complete: +26 ~65 -0 ↪0
-- MODIFIED `agent/auxiliary_client.py`
-- MODIFIED `agent/deadline.py`
-- MODIFIED `agent/model_metadata.py`
-- MODIFIED `agent/reasoning_timeouts.py`
-- MODIFIED `agent/tool_executor.py`
-- MODIFIED `apps/desktop/electron/remote-lifecycle.test.ts`
-- MODIFIED `apps/desktop/electron/remote-lifecycle.ts`
-- MODIFIED `apps/desktop/src/api/sessions.ts`
-- MODIFIED `apps/desktop/src/app/contrib/hooks/use-session-tile-delegate.ts`
+- complete: +24 ~106 -0 ↪0
+- MODIFIED `agent/gemini_native_adapter.py`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/index.test.tsx`
 - MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/submit.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-session-actions/index.ts`
-- MODIFIED `apps/desktop/src/components/assistant-ui/tool/fallback-model.test.ts`
-- MODIFIED `apps/desktop/src/components/assistant-ui/tool/fallback-model/format.ts`
-- MODIFIED `apps/desktop/src/components/assistant-ui/tool/fallback-model/index.ts`
-- MODIFIED `apps/desktop/src/i18n/ar.ts`
-- MODIFIED `apps/desktop/src/i18n/en.ts`
-- MODIFIED `apps/desktop/src/i18n/ja.ts`
-- MODIFIED `apps/desktop/src/i18n/types.ts`
-- MODIFIED `apps/desktop/src/i18n/zh-hant.ts`
-- MODIFIED `apps/desktop/src/i18n/zh.ts`
-- ADDED `apps/desktop/src/lib/legacy-session-owner-backfill.test.ts`
-- ADDED `apps/desktop/src/lib/legacy-session-owner-backfill.ts`
-- MODIFIED `apps/desktop/src/lib/session-owner-stamp.ts`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/plugin.js`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/94478-mention-settle.test.mjs`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/group-chat-empty-sentinel.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/group-chat.test.mjs`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/group-stop-thread.test.mjs`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/tests/group-turn-lease.test.mjs`
-- ADDED `apps/desktop/src/plugins/nastech-bots/tests/unaddressed-mentions.test.mjs`
-- ADDED `apps/desktop/src/store/read-only-transcript.test.ts`
-- ADDED `apps/desktop/src/store/read-only-transcript.ts`
-- ADDED `contributors/emails/92573950+RelaxJonh@users.noreply.github.com`
-- ADDED `contributors/emails/aydinhrrs@gmail.com`
-- ADDED `contributors/emails/dante32683@users.noreply.github.com`
-- ADDED `contributors/emails/ekzhang1@gmail.com`
-- ADDED `contributors/emails/magnus.lundstedt@infidyne.com`
-- ADDED `contributors/emails/me@kitsonkelly.com`
-- ADDED `contributors/emails/supotato-ipj@users.noreply.github.com`
+- MODIFIED `apps/desktop/src/components/boot-failure-overlay.test.tsx`
+- MODIFIED `apps/desktop/src/components/boot-failure-overlay.tsx`
+- MODIFIED `apps/desktop/src/lib/voice-client-direct.test.ts`
+- MODIFIED `apps/desktop/src/lib/voice-client-direct.ts`
+- MODIFIED `cli-config.yaml.example`
+- MODIFIED `contributors/emails/Finn763@users.noreply.github.com`
+- ADDED `contributors/emails/hjharris1@gmail.com`
+- ADDED `contributors/emails/joby@ellingtonlife.com`
+- ADDED `contributors/emails/lawrenncecharlotte@gmail.com`
+- ADDED `contributors/emails/rodrigo.smscom@gmail.com`
+- ADDED `contributors/emails/wansui@bilibili.com`
+- MODIFIED `cron/jobs.py`
 - MODIFIED `cron/scheduler.py`
-- MODIFIED `evals/browser_use/orchestrate.py`
-- MODIFIED `evals/browser_use/single_run.py`
+- MODIFIED `gateway/display_config.py`
+- MODIFIED `gateway/platforms/api_server.py`
+- MODIFIED `gateway/platforms/base.py`
 - MODIFIED `gateway/platforms/bluebubbles.py`
+- MODIFIED `gateway/platforms/msgraph_webhook.py`
 - MODIFIED `gateway/platforms/qqbot/adapter.py`
+- MODIFIED `gateway/platforms/signal.py`
+- MODIFIED `gateway/platforms/webhook.py`
+- MODIFIED `gateway/platforms/weixin.py`
 - MODIFIED `gateway/platforms/whatsapp_cloud.py`
 - MODIFIED `gateway/platforms/yuanbao.py`
-- MODIFIED `nastech_cli/__init__.py`
-- MODIFIED `nastech_cli/auth.py`
+- MODIFIED `gateway/restart.py`
+- MODIFIED `gateway/run.py`
+- MODIFIED `gateway/session.py`
+- MODIFIED `gateway/shutdown_forensics.py`
+- MODIFIED `gateway/shutdown_watchdog.py`
+- MODIFIED `gateway/slash_commands.py`
+- MODIFIED `gateway/stream_consumer.py`
+- MODIFIED `nastech_cli/active_sessions.py`
+- MODIFIED `nastech_cli/config.py`
 - MODIFIED `nastech_cli/config_defaults.py`
-- MODIFIED `nastech_cli/cron.py`
-- MODIFIED `nastech_cli/models.py`
+- MODIFIED `nastech_cli/gateway.py`
+- MODIFIED `nastech_cli/inventory.py`
+- MODIFIED `nastech_cli/kanban_db.py`
+- MODIFIED `nastech_cli/model_switch.py`
 - MODIFIED `nastech_cli/plugins.py`
-- MODIFIED `nastech_cli/setup.py`
-- MODIFIED `nastech_cli/web_models.py`
+- MODIFIED `nastech_cli/update_cmd.py`
 - MODIFIED `nastech_cli/web_routers/sessions.py`
 - MODIFIED `nastech_cli/web_server.py`
 - MODIFIED `nastech_state.py`
+- MODIFIED `nastech_state_common.py`
+- MODIFIED `model_tools.py`
+- ADDED `optional-skills/web-development/publish-site/SKILL.md`
+- MODIFIED `plugins/platforms/a2a/adapter.py`
+- MODIFIED `plugins/platforms/buzz/adapter.py`
+- MODIFIED `plugins/platforms/dingtalk/adapter.py`
+- MODIFIED `plugins/platforms/discord/adapter.py`
+- MODIFIED `plugins/platforms/email/adapter.py`
+- MODIFIED `plugins/platforms/feishu/adapter.py`
+- MODIFIED `plugins/platforms/google_chat/adapter.py`
+- MODIFIED `plugins/platforms/homeassistant/adapter.py`
+- MODIFIED `plugins/platforms/irc/adapter.py`
+- MODIFIED `plugins/platforms/line/adapter.py`
+- MODIFIED `plugins/platforms/matrix/adapter.py`
+- MODIFIED `plugins/platforms/mattermost/adapter.py`
+- MODIFIED `plugins/platforms/ntfy/adapter.py`
+- MODIFIED `plugins/platforms/photon/adapter.py`
+- MODIFIED `plugins/platforms/raft/adapter.py`
+- MODIFIED `plugins/platforms/simplex/adapter.py`
+- MODIFIED `plugins/platforms/slack/adapter.py`
+- MODIFIED `plugins/platforms/sms/adapter.py`
+- MODIFIED `plugins/platforms/teams/adapter.py`
+- MODIFIED `plugins/platforms/telegram/adapter.py`
+- MODIFIED `plugins/platforms/wecom/adapter.py`
+- MODIFIED `plugins/platforms/whatsapp/adapter.py`
 - MODIFIED `pyproject.toml`
-- MODIFIED `tests/agent/test_auxiliary_client.py`
-- MODIFIED `tests/agent/test_deadline.py`
-- MODIFIED `tests/agent/test_reasoning_stale_timeout_floor.py`
-- MODIFIED `tests/agent/test_subagent_stop_hook.py`
-- ADDED `tests/conformance/persistence/README.md`
-- ADDED `tests/conformance/persistence/__init__.py`
-- ADDED `tests/conformance/persistence/_harness.py`
-- ADDED `tests/conformance/persistence/test_cell1_prefix_durability.py`
-- ADDED `tests/conformance/persistence/test_cell2_consume_once.py`
-- ADDED `tests/conformance/persistence/test_cell3_rotation_atomicity.py`
-- ADDED `tests/conformance/persistence/test_cells_wave2_stubs.py`
-- MODIFIED `tests/cron/test_87033_cronjob_gateway_liveness.py`
-- MODIFIED `tests/cron/test_cron_script.py`
-- MODIFIED `tests/gateway/test_bluebubbles.py`
-- MODIFIED `tests/gateway/test_qqbot.py`
-- MODIFIED `tests/nastech_cli/test_model_validation.py`
-- MODIFIED `tests/nastech_cli/test_plugins.py`
-- MODIFIED `tests/nastech_cli/test_serve_port_in_use.py`
-- ADDED `tests/nastech_cli/test_session_owner_backfill.py`
-- ADDED `tests/tools/test_approval_timeout_overflow.py`
-- MODIFIED `tests/tools/test_browser_open_timeout.py`
-- ADDED `tests/tools/test_browser_suspect_recycle.py`
-- MODIFIED `tests/tools/test_smart_approval_policy.py`
-- MODIFIED `tests/tui_gateway/test_compression_config_hot_reload.py`
-- ADDED `tests/tui_gateway/test_serve_exit_flush.py`
-- MODIFIED `tools/approval.py`
-- MODIFIED `tools/browser_tool.py`
-- MODIFIED `tools/browser_use_cli.py`
+- MODIFIED `tests/agent/test_gemini_native_adapter.py`
+- MODIFIED `tests/cron/test_due_stale_cron_edit.py`
+- ADDED `tests/cron/test_scheduler_completion_verification.py`
+- MODIFIED `tests/cron/test_sessiondb_init_hang.py`
+- ADDED `tests/gateway/test_approval_boundary.py`
+- MODIFIED `tests/gateway/test_cron_drain_floor.py`
+- MODIFIED `tests/gateway/test_display_config.py`
+- MODIFIED `tests/gateway/test_loop_liveness_watchdog.py`
+- MODIFIED `tests/gateway/test_per_platform_streaming_defaults.py`
+- MODIFIED `tests/gateway/test_platform_base.py`
+- ADDED `tests/gateway/test_platform_plugin_handlers.py`
+- MODIFIED `tests/gateway/test_session_store_stale_prune.py`
+- ADDED `tests/gateway/test_stream_consumer_tool_progress.py`
+- ADDED `tests/gateway/test_stream_consumer_wecom_native.py`
+- MODIFIED `tests/gateway/test_wecom.py`
+- ADDED `tests/gateway/test_wecom_double_send.py`
+- ADDED `tests/gateway/test_wecom_per_turn.py`
+- ADDED `tests/gateway/test_wecom_stream_dup_fix.py`
+- MODIFIED `tests/nastech_cli/test_active_sessions.py`
+- MODIFIED `tests/nastech_cli/test_dashboard_auth_gate.py`
+- MODIFIED `tests/nastech_cli/test_gateway_service.py`
+- MODIFIED `tests/nastech_cli/test_inventory.py`
+- MODIFIED `tests/nastech_cli/test_kanban_db.py`
+- MODIFIED `tests/nastech_cli/test_model_switch_custom_providers.py`
+- MODIFIED `tests/nastech_cli/test_provider_config_validation.py`
+- MODIFIED `tests/nastech_cli/test_update_wedged_gateway.py`
+- MODIFIED `tests/nastech_cli/test_update_zip_fallback_guards.py`
+- MODIFIED `tests/nastech_cli/test_web_server.py`
+- ADDED `tests/nastech_state/test_94895_orphan_sweep_cross_backend.py`
+- ADDED `tests/nastech_state/test_empty_sweep_archived_transcript_95868.py`
+- ADDED `tests/skills/test_publish_site_skill.py`
+- MODIFIED `tests/test_journal_mode_config.py`
+- ADDED `tests/test_journal_mode_upgrade_warning.py`
+- ADDED `tests/test_state_synchronastech_pragma.py`
+- MODIFIED `tests/test_tui_gateway_server.py`
+- MODIFIED `tests/tools/test_delegate.py`
+- MODIFIED `tests/tools/test_delegate_batch_validation.py`
+- MODIFIED `tests/tools/test_delegate_control_actions.py`
+- MODIFIED `tests/tools/test_delegate_output_schema.py`
+- ADDED `tests/tools/test_mcp_stdio_fastfail_reconnect.py`
+- ADDED `tests/tools/test_send_message_cross_loop.py`
+- ADDED `tests/tui_gateway/test_94895_backend_heartbeat.py`
+- ADDED `tests/tui_gateway/test_cross_process_orphan_ownership.py`
+- MODIFIED `tools/delegate_tool.py`
+- MODIFIED `tools/mcp_tool.py`
+- MODIFIED `tools/send_message_tool.py`
+- MODIFIED `tui_gateway/entry.py`
 - MODIFIED `tui_gateway/server.py`
+- MODIFIED `tui_gateway/ws.py`
 - MODIFIED `uv.lock`
-- MODIFIED `website/docs/user-guide/features/hooks.md`
-- MODIFIED `website/docs/user-guide/features/plugins.md`
-- MODIFIED `website/static/api/model-catalog.json`
+- MODIFIED `website/docs/developer-guide/plugins/index.md`
+- MODIFIED `website/docs/reference/optional-skills-catalog.md`
+- MODIFIED `website/docs/user-guide/configuration.md`
+- MODIFIED `website/docs/user-guide/docker.md`
+- MODIFIED `website/docs/user-guide/features/web-dashboard.md`
+- MODIFIED `website/docs/user-guide/messaging/wecom.md`
+- ADDED `website/docs/user-guide/skills/optional/web-development/web-development-publish-site.md`
+- MODIFIED `website/sidebars.ts`
 
 ## Scan
 
-10542 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10420]
+10566 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10444]
 
 
 ## Diff
 
-1375 renamed, 0 rewritten, 8767 identical, 61 locked, 0 missing, 34 owned, 251 reconciled
+1377 renamed, 0 rewritten, 8789 identical, 61 locked, 0 missing, 34 owned, 251 reconciled
 
 
 ## Fork check (vs nastech-agent)
 
-- 10451 identical, 64 updated (+0/-0 lines), 26 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+- 10283 identical, 258 updated (+0/-0 lines), 24 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - features: fork 51 -> branded 51
 

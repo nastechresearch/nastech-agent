@@ -3984,6 +3984,40 @@ def _get_media_send_timeout() -> int:
     return _DEFAULT_MEDIA_SEND_TIMEOUT
 
 
+def _get_session_db_timeout() -> float:
+    """Resolve the bound on run_job's SessionDB init from env/config.
+
+    Mirrors the ``script_timeout_seconds`` resolution pattern: the
+    NASTECH_CRON_SESSION_DB_TIMEOUT env var wins, then
+    ``cron.session_db_timeout_seconds`` in config.yaml (present in
+    DEFAULT_CONFIG, so ``load_config()``'s deep-merge supplies it), then
+    10s. Unlike the sibling timeouts, 0 is meaningful (unlimited — legacy
+    behavior, opt-in for debugging), so values are passed through untouched.
+    """
+    env_value = os.getenv("NASTECH_CRON_SESSION_DB_TIMEOUT", "").strip()
+    if env_value:
+        try:
+            return float(env_value)
+        except (ValueError, TypeError):
+            logger.warning(
+                "Invalid NASTECH_CRON_SESSION_DB_TIMEOUT=%r; using config/default",
+                env_value,
+            )
+
+    try:
+        cfg = load_config() or {}
+        cron_cfg = cfg.get("cron", {}) if isinstance(cfg, dict) else {}
+        configured = cron_cfg.get("session_db_timeout_seconds")
+        if configured is not None:
+            return float(configured)
+    except Exception as exc:
+        logger.debug(
+            "Failed to load cron.session_db_timeout_seconds from config: %s", exc
+        )
+
+    return 10.0
+
+
 def _read_windows_pyvenv_cfg(venv_dir: Path) -> dict[str, str]:
     cfg_path = venv_dir / "pyvenv.cfg"
     try:
@@ -5602,81 +5636,12 @@ def run_job(
     # ---------------------------------------------------------------
     from run_agent import AIAgent
 
-    # Initialize SQLite session store so cron job messages are persisted
-    # and discoverable via session_search (same pattern as gateway/run.py).
-    #
-    # Bounded with its own timeout (separate from NASTECH_CRON_TIMEOUT, which
-    # only watches the agent's run_conversation below): SessionDB.__init__
-    # opens/migrates state.db synchronously and has no timeout of its own
-    # against a wedged sqlite3.connect (e.g. a stale flock left by a crashed
-    # sibling process). An unbounded hang here is invisible to every other
-    # cron safeguard, because it happens BEFORE _submit_with_guard's future
-    # exists — the finally block that releases the job from
-    # _running_job_ids never runs, so the job stays wedged "running" until
-    # the whole gateway process is restarted, silently skipping every
-    # scheduled fire in between with "already running — skipping".
-    _session_db = None
-    try:
-        from nastech_state import SessionDB
-
-        # Resolve timeout: env override → config.yaml → default 10s.
-        # Mirrors the script_timeout_seconds resolution pattern.
-        _session_db_timeout: float | None = None
-        _raw_env_timeout = os.getenv("NASTECH_CRON_SESSION_DB_TIMEOUT", "").strip()
-        if _raw_env_timeout:
-            try:
-                _session_db_timeout = float(_raw_env_timeout)
-            except (ValueError, TypeError):
-                logger.warning(
-                    "Invalid NASTECH_CRON_SESSION_DB_TIMEOUT=%r; using config/default",
-                    _raw_env_timeout,
-                )
-        if _session_db_timeout is None:
-            try:
-                from nastech_cli.config import load_config
-                _cfg = load_config() or {}
-                _cron_cfg = _cfg.get("cron", {}) if isinstance(_cfg, dict) else {}
-                _configured = _cron_cfg.get("session_db_timeout_seconds")
-                if _configured is not None:
-                    _session_db_timeout = float(_configured)
-            except Exception as exc:
-                logger.debug(
-                    "Failed to load cron.session_db_timeout_seconds from config: %s",
-                    exc,
-                )
-        if _session_db_timeout is None:
-            _session_db_timeout = 10.0
-
-        if _session_db_timeout > 0:
-            _session_db_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-            _session_db_future = _session_db_pool.submit(SessionDB)
-            try:
-                _session_db = _session_db_future.result(timeout=_session_db_timeout)
-            except concurrent.futures.TimeoutError:
-                # The worker is abandoned (shutdown below doesn't wait for it).
-                # If SessionDB() later completes inside it, the future's result
-                # would be orphaned and its SQLite FDs (.db, WAL, SHM) leak
-                # until process exit.  Register a done-callback that retrieves
-                # and closes any eventual late result (#72782).
-                _session_db_future.add_done_callback(_close_late_session_db_result)
-                raise
-            finally:
-                # Don't wait for a wedged connect() to unwind — abandon the
-                # worker thread (same pattern as the agent inactivity timeout
-                # further down) rather than blocking shutdown on it too.
-                _session_db_pool.shutdown(wait=False)
-        else:
-            # 0 = unlimited (legacy behavior, opt-in for debugging)
-            _session_db = SessionDB()
-    except concurrent.futures.TimeoutError:
-        logger.error(
-            "Job '%s': SessionDB init did not return within %.0fs — proceeding "
-            "without a session store for this run instead of blocking it "
-            "forever",
-            job.get("id", "?"), _session_db_timeout,
-        )
-    except Exception as e:
-        logger.debug("Job '%s': SQLite session store not available: %s", job.get("id", "?"), e)
+    # NOTE: the SQLite session store used to be initialized here, BEFORE the
+    # wake-gate and prompt-validation early returns below. Every gated run
+    # (``wakeAgent: false``, blocked prompt) opened state.db and returned
+    # without reaching the finally that closes it, relying on GC to release
+    # the handle. Init now happens inside the main try, right before the
+    # agent is constructed — after every early-return path (#96290).
 
     # Wake-gate: if this job has a pre-check script, run it BEFORE building
     # the prompt so a ``{"wakeAgent": false}`` response can short-circuit
@@ -5848,6 +5813,7 @@ def run_job(
     _cron_session_var = _VAR_MAP["NASTECH_CRON_SESSION"]
     _cron_session_token = None
     _non_dispatcher_token = None
+    _session_db = None
     try:
         if not _cwd_lock_acquired:
             # Fail closed (#79768): running without the lock would let a
@@ -6363,6 +6329,57 @@ def run_job(
                 job_id, _mcp_exc,
             )
 
+        # Initialize the SQLite session store so cron job messages are
+        # persisted and discoverable via session_search (same pattern as
+        # gateway/run.py) — only now, after every early-return path
+        # (wake-gate, prompt validation, drift skip) has passed, so a gated
+        # run never opens state.db just to abandon the handle (#96290).
+        #
+        # Bounded with its own timeout (separate from NASTECH_CRON_TIMEOUT,
+        # which only watches the agent's run_conversation below):
+        # SessionDB.__init__ opens/migrates state.db synchronously and has no
+        # timeout of its own against a wedged sqlite3.connect (e.g. a stale
+        # flock left by a crashed sibling process). An unbounded hang here
+        # would wedge the job's worker thread, so the init is bounded and a
+        # timeout proceeds without a session store instead of blocking the
+        # run forever.
+        _session_db_timeout = _get_session_db_timeout()
+        try:
+            from nastech_state import SessionDB
+
+            if _session_db_timeout > 0:
+                _session_db_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+                _session_db_future = _session_db_pool.submit(SessionDB)
+                try:
+                    _session_db = _session_db_future.result(timeout=_session_db_timeout)
+                except concurrent.futures.TimeoutError:
+                    # The worker is abandoned (shutdown below doesn't wait for
+                    # it). If SessionDB() later completes inside it, the
+                    # future's result would be orphaned and its SQLite FDs
+                    # (.db, WAL, SHM) leak until process exit.  Register a
+                    # done-callback that retrieves and closes any eventual
+                    # late result (#72782).
+                    _session_db_future.add_done_callback(_close_late_session_db_result)
+                    raise
+                finally:
+                    # Don't wait for a wedged connect() to unwind — abandon the
+                    # worker thread (same pattern as the agent inactivity
+                    # timeout further down) rather than blocking shutdown on
+                    # it too.
+                    _session_db_pool.shutdown(wait=False)
+            else:
+                # 0 = unlimited (legacy behavior, opt-in for debugging)
+                _session_db = SessionDB()
+        except concurrent.futures.TimeoutError:
+            logger.error(
+                "Job '%s': SessionDB init did not return within %.0fs — proceeding "
+                "without a session store for this run instead of blocking it "
+                "forever",
+                job.get("id", "?"), _session_db_timeout,
+            )
+        except Exception as e:
+            logger.debug("Job '%s': SQLite session store not available: %s", job.get("id", "?"), e)
+
         agent = AIAgent(
             model=model,
             api_key=runtime.get("api_key"),
@@ -6804,9 +6821,43 @@ def run_job(
                             break
                     except (Exception, KeyboardInterrupt):
                         continue
+            # Verified completion booking (#93820): the run may only be
+            # recorded as cron_complete when the session's LAST message row is
+            # a real assistant reply — a plain answer or the [SILENT] sentinel
+            # (both are assistant-text rows, so both classify as 'complete').
+            # A turn that died after a tool call, mid-API-wait, or without any
+            # assistant text leaves the last row as a tool result / pending
+            # call / user prompt and must not surface as a healthy run.
+            # session_lifecycle_statuses is the existing cost-bounded
+            # classifier for exactly this shape. Only a POSITIVELY recognized
+            # pathological status (see the status vocabulary in
+            # nastech_state's session_lifecycle_statuses docstring — keep the
+            # tuple below in sync when it grows) downgrades the booking: an
+            # unknown value (newer classifier shape, test doubles) keeps the
+            # historical reason, and so does a failed probe — the booking
+            # itself is FAIL-OPEN on probe errors, because classification is
+            # best-effort metadata and must not mislabel a healthy run.
+            _end_reason = "cron_complete"
+            try:
+                _statuses = _session_db.session_lifecycle_statuses(
+                    [_final_cron_session_id]
+                )
+                _lifecycle = _statuses.get(_final_cron_session_id)
+                if _lifecycle in ("interrupted", "error", "empty"):
+                    _end_reason = "cron_incomplete_no_output"
+                    logger.warning(
+                        "Job '%s': session ended without a final assistant "
+                        "message (lifecycle=%s) — booking run as %s",
+                        job_id, _lifecycle, _end_reason,
+                    )
+            except (Exception, KeyboardInterrupt) as e:
+                logger.debug(
+                    "Job '%s': session lifecycle classification failed: %s",
+                    job_id, e,
+                )
             try:
                 _session_db.end_session(
-                    _final_cron_session_id, "cron_complete"
+                    _final_cron_session_id, _end_reason
                 )
             except (Exception, KeyboardInterrupt) as e:
                 logger.debug("Job '%s': failed to end session: %s", job_id, e)
