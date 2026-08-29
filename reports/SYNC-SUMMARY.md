@@ -6,15 +6,15 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 282 commits affecting 1403 files.
-- **Source revision:** `10e93c6ab958`.
+- **Changes incorporated:** 283 commits affecting 1403 files.
+- **Source revision:** `1d8946b40b93`.
 - **Previous source revision:** `0dfba37b11ff`.
 
 ## Technical coverage
 
 - **.github/:** 3 changed files.
 - **.superpowers/:** 2 changed files.
-- **agent/:** 83 changed files.
+- **agent/:** 87 changed files.
 - **apps/:** 567 changed files.
 - **cli-config.yaml.example/:** 2 changed files.
 - **cli.py/:** 3 changed files.
@@ -35,7 +35,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 - **scripts/:** 18 changed files.
 - **setup-nastech.sh/:** 1 changed files.
 - **skills/:** 1 changed files.
-- **tests/:** 181 changed files.
+- **tests/:** 182 changed files.
 - **tests-js/:** 6 changed files.
 - **tools/:** 72 changed files.
 - **toolsets.py/:** 2 changed files.
@@ -64,6 +64,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ### Reliability and fixes
 
+- fix(prompt-caching): tool-using sessions no longer 400 behind LiteLLM Anthropic proxies (#89886)
 - fix(skills): drop redundant identical-strings guard and its vacuous tests
 - fix(skills): make skill_manage patch failures recoverable instead of a dead end
 - fix(desktop): preserve streamed assistant text and unify atomic persistence (#95514)
@@ -75,8 +76,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 - fix(desktop): let HUD prompts take clicks on solid X11
 - fix(agent): count only substantive auxiliary progress
 - fix(teams): allowlist-gate BF attachment auth, stream downloads under media cap, lock token refresh
-- fix(teams): dot-anchor Bot Framework host check, log dropped BF images, tests
-- 137 additional reliability and fixes updates are included in this verified snapshot.
+- 138 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Performance
 

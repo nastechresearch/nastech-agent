@@ -1,15 +1,16 @@
 {
   "number": 1,
   "dir": "Nastech-Update#1",
-  "upstream_sha": "10e93c6ab958c7ec61cfc4416f4d4459e72ca8a7",
+  "upstream_sha": "1d8946b40b9333a7fda81be890be31771a312d4f",
   "nastech_url": "https://github.com/Nastechresearch/nastech-agent.git",
   "source_provenance": {
     "remote_url": "https://github.com/Nastechresearch/nastech-agent.git",
-    "fetched_at": "2026-08-29T06:21:49+00:00",
+    "fetched_at": "2026-08-29T06:51:40+00:00",
     "acquisition": "fresh-direct-clone",
     "baseline_sha": "0dfba37b11ff2ca908ae2df85b55f4f4c9b7fd8b"
   },
   "commit_subjects": [
+    "fix(prompt-caching): tool-using sessions no longer 400 behind LiteLLM Anthropic proxies (#89886)",
     "fix(skills): drop redundant identical-strings guard and its vacuous tests",
     "test(skills): cover the patch recovery loop end to end",
     "fix(skills): make skill_manage patch failures recoverable instead of a dead end",
@@ -296,7 +297,7 @@
   "changed_areas": {
     ".github": 3,
     ".superpowers": 2,
-    "agent": 83,
+    "agent": 87,
     "apps": 567,
     "cli-config.yaml.example": 2,
     "cli.py": 3,
@@ -317,7 +318,7 @@
     "scripts": 18,
     "setup-nastech.sh": 1,
     "skills": 1,
-    "tests": 181,
+    "tests": 182,
     "tests-js": 6,
     "tools": 72,
     "toolsets.py": 2,
@@ -330,8 +331,8 @@
     "baseline_sha": "0dfba37b11ff2ca908ae2df85b55f4f4c9b7fd8b",
     "complete": true,
     "counts": {
-      "added": 212,
-      "modified": 317,
+      "added": 213,
+      "modified": 318,
       "deleted": 87,
       "renamed": 1
     },
@@ -483,6 +484,13 @@
         "new_path": "agent/message_sanitization.py",
         "old_mapped": "",
         "new_mapped": "agent/message_sanitization.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "agent/moa_loop.py",
+        "old_mapped": "",
+        "new_mapped": "agent/moa_loop.py"
       },
       {
         "status": "modified",
@@ -3609,6 +3617,13 @@
       {
         "status": "added",
         "old_path": "",
+        "new_path": "tests/agent/test_litellm_tool_part_cache_markers.py",
+        "old_mapped": "",
+        "new_mapped": "tests/agent/test_litellm_tool_part_cache_markers.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
         "new_path": "tests/agent/test_native_preflight_estimate.py",
         "old_mapped": "",
         "new_mapped": "tests/agent/test_native_preflight_estimate.py"
@@ -4976,16 +4991,16 @@
     "release"
   ],
   "verify": {
-    "total": 10637,
-    "passed": 10637,
+    "total": 10638,
+    "passed": 10638,
     "locked": 64,
     "failed": [],
     "pass_ratio": 1.0
   },
   "brand": {
-    "total": 10637,
+    "total": 10638,
     "renamed": 1491,
-    "rewritten": 10539,
+    "rewritten": 10540,
     "locked_copied": 56,
     "binary_copied": 8,
     "errors": []
@@ -4993,14 +5008,14 @@
   "diff": {
     "renamed": 1403,
     "rewritten": 0,
-    "identical": 8887,
+    "identical": 8888,
     "locked": 61,
     "missing": 0
   },
   "scan": {
-    "total": 10691,
+    "total": 10692,
     "by_category": {
-      "text": 10569,
+      "text": 10570,
       "image": 92,
       "binary": 7,
       "audio": 5,
@@ -5008,7 +5023,7 @@
       "doc": 5
     },
     "by_format": {
-      "text": 10569,
+      "text": 10570,
       "jpeg": 6,
       "png": 78,
       "icns": 4,
@@ -5024,11 +5039,11 @@
   },
   "fork": {
     "statuses": {
-      "identical": 10029,
-      "updated": 447,
+      "identical": 10028,
+      "updated": 448,
       "upstream_deleted": 88,
       "locked": 2,
-      "added": 213
+      "added": 214
     },
     "violations": 0,
     "preserved": 54,
