@@ -12,10 +12,10 @@
  * the other just learned.
  */
 
+import { getNastechConfigRecord, type McpTestResult, testMcpServer } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { classifyProbe, freshProbe, probeCache, probeKey } from '@/lib/mcp-probe-cache'
 import { getServers } from '@/lib/mcp-servers'
-import { getNastechConfigRecord, type McpTestResult, testMcpServer } from '@/nastech'
 import { notify } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $gatewayState } from '@/store/session'

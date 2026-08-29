@@ -6,110 +6,94 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 283 commits affecting 1403 files.
-- **Source revision:** `1d8946b40b93`.
-- **Previous source revision:** `0dfba37b11ff`.
+- **Changes incorporated:** 73 commits affecting 1406 files.
+- **Source revision:** `360761c8cf50`.
+- **Previous source revision:** `1d8946b40b93`.
 
 ## Technical coverage
 
-- **.github/:** 3 changed files.
-- **.superpowers/:** 2 changed files.
-- **agent/:** 87 changed files.
-- **apps/:** 567 changed files.
+- **.env.example/:** 3 changed files.
+- **acp_adapter/:** 1 changed files.
+- **agent/:** 25 changed files.
+- **apps/:** 14 changed files.
 - **cli-config.yaml.example/:** 2 changed files.
-- **cli.py/:** 3 changed files.
-- **contributors/:** 21 changed files.
-- **cron/:** 18 changed files.
-- **eslint.config.shared.mjs/:** 2 changed files.
-- **gateway/:** 7 changed files.
-- **nastech_cli/:** 38 changed files.
-- **nastech_constants.py/:** 4 changed files.
-- **nastech_logging.py/:** 1 changed files.
-- **nastech_state.py/:** 9 changed files.
-- **optional-skills/:** 6 changed files.
-- **package-lock.json/:** 2 changed files.
-- **package.json/:** 2 changed files.
-- **plugins/:** 11 changed files.
-- **pyproject.toml/:** 2 changed files.
-- **run_agent.py/:** 7 changed files.
-- **scripts/:** 18 changed files.
-- **setup-nastech.sh/:** 1 changed files.
-- **skills/:** 1 changed files.
-- **tests/:** 182 changed files.
-- **tests-js/:** 6 changed files.
-- **tools/:** 72 changed files.
-- **toolsets.py/:** 2 changed files.
-- **tui_gateway/:** 12 changed files.
-- **ui-tui/:** 9 changed files.
-- **uv.lock/:** 1 changed files.
-- **website/:** 15 changed files.
+- **cli.py/:** 1 changed files.
+- **contributors/:** 6 changed files.
+- **gateway/:** 18 changed files.
+- **locales/:** 34 changed files.
+- **nastech_cli/:** 23 changed files.
+- **optional-skills/:** 7 changed files.
+- **plugins/:** 14 changed files.
+- **providers/:** 2 changed files.
+- **skills/:** 3 changed files.
+- **tests/:** 58 changed files.
+- **tools/:** 3 changed files.
+- **tui_gateway/:** 1 changed files.
+- **ui-tui/:** 5 changed files.
+- **website/:** 66 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(cli): render Ghostty-level pets in the interactive pane
-- feat(pet): gate Unicode placeholders to kitty and Ghostty
-- feat(desktop): export, import, rename and delete a board from the switcher
-- feat(desktop): PluginOs gains native save/open file pickers
-- feat(kanban): board export/import REST endpoints
-- feat(kanban): export and import a whole board as a portable archive
-- feat(a2a): client tools config-gated — disabled unless enabled (−561 tok/call on unconfigured installs) (#97421)
-- feat(skill_manage): operations[] is the call — each op names its skill; atomic with cross-skill rollback (#97295)
-- feat(agent): context size anchors on provider-reported usage — estimation shrinks to the last turn
-- feat: session temp root moves off tmpfs /tmp to ~/.nastech/cache/terminal by default; auto-pruned after 72h
-- feat: expose terminal.temp_dir to redirect session temp root off tmpfs
-- feat(cli/tui): -q now seeds a live interactive session; prompts submit literally
-- 18 additional new capabilities updates are included in this verified snapshot.
+- feat:add hy4-preview model and tokenplan provider
+- feat(providers): add Nebius Token Factory provider
+- feat(providers): send Nastech-agent User-Agent on Router requests
+- feat(providers): add Ramp Router (router.com) provider plugin
+- feat: /btw now answers side questions with conversation context; /background renamed to /bg
+- feat(todo): nested subtasks via optional parent field
+- feat(system_prompt): two-line conversation clock — anchored start + rebuild-day line (salvages #96224) (#97930)
+- feat(prompt): default identity rewritten as a behavior spec — sizing rule, named prohibitions, anti-sycophancy, earned depth; exploration-thrift line deliberately removed (models under-explore) (#97926)
+- feat(optional-skills): add decision-questionnaire — turn a blocked decision into an async questionnaire
+- feat(optional-skills): add setup-wizard-generator — bash wizard for human-only setup steps
+- feat(skills): rename grill-me to plan-interrogation, fold in frontier-rounds interview mechanic
+- feat(desktop): Download button on preview file cards — save any delivered file via the authenticated backend bridge (works local and remote) (#97816)
+- 1 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(prompt-caching): tool-using sessions no longer 400 behind LiteLLM Anthropic proxies (#89886)
-- fix(skills): drop redundant identical-strings guard and its vacuous tests
-- fix(skills): make skill_manage patch failures recoverable instead of a dead end
-- fix(desktop): preserve streamed assistant text and unify atomic persistence (#95514)
-- fix(desktop): make gateway file saves failure-atomic so a failed download never destroys an existing file
-- fix(bedrock): recover from server-side cachePoint rejections per placement
-- fix(cache): over-length caller prompt_cache_key no longer 400s Chat Completions requests
-- fix(caching): prevent whitespace-only text blocks in prompt cache prefix splits
-- fix(desktop): open HUD links in the system browser
-- fix(desktop): let HUD prompts take clicks on solid X11
-- fix(agent): count only substantive auxiliary progress
-- fix(teams): allowlist-gate BF attachment auth, stream downloads under media cap, lock token refresh
-- 138 additional reliability and fixes updates are included in this verified snapshot.
-
-### Performance
-
-- perf(state): route 39 pure-read SessionDB methods off the writer lock + gate
-- perf: skip dict copy for non-compression auxiliary calls
-- perf(compression): add guarded fast summary lane
+- fix: drop duplicate hy4-preview context entry — main's 1_048_576 wins
+- fix:update test info
+- fix(nebius): route effort through canonical clamp_effort — hand-rolled map inverted the ladder
+- fix(nebius): request verbose model metadata
+- fix(router): pytest guard on caps warmer + debug log in fail-open efforts lookup
+- fix: re-derive the live busy text mode after a non-profile /busy change
+- fix(gateway): apply busy mode per profile
+- fix: route /insights through /nastech on Slack
+- fix: use event.get_command_args() and add persistence tests
+- fix: make /busy command available on gateway platforms
+- fix(update): ignore unrelated transitional SCM services
+- fix: name the preserved snapshot path in the ROLLBACK FAILED payload
+- 19 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(update): --yes help states the fork-upstream prompt is skipped, not accepted
-- docs(bots): name the room budget as the seam the limits PRs hook
-- docs: reconcile positional pairing with shared _classify_tool_call_orphans (#97167) — classifier docstring reflects its remaining consumer; empty-id filter note updated
-- docs(skills): document programmatic-write scope cut in skills_guard module docstring
-- docs(desktop): record why the Bots-home new-chat refusal is gone
-- docs: relay-fronted cron delivery + manual-run gateway forward (troubleshooting)
-- docs(skills): keep optional-skills catalog scoped to the agentmail row
-- docs(skills): regen agentmail optional page + catalog row
+- docs: surface Tencent TokenPlan + hy4-preview across provider docs
+- docs: surface Nebius Token Factory across user-facing provider docs
+- docs: surface Ramp Router across user-facing provider docs
+- docs: chat-completions is now a compat shim on Router, not a 404
+- docs(commands): clarify busy gateway behavior
+- docs: align busy command references
+- docs(test): clarify busy scope coverage
+- docs(user-stories): drop the Tokyo itinerary entry
+- docs(user-stories): add 65 new community stories
+- docs: note the MEASURED_1H_PROVIDERS exception in effective_cache_ttl's docstring
 
 ### Improvements
 
-- test(skills): cover the patch recovery loop end to end
-- refactor(desktop-tools): consolidate preview + project, diet the desktop_ui suite (3,861 → 2,293 tok/call, −41%) (#97659)
-- fmt(js): `npm run fix` on merge (#97713)
-- test(cache): pin the prompt-cache scope isolation invariant for per-response session ids
-- chore: map eric.maddox@outlook.com -> ericmaddox (attribution for #97618)
-- fmt(js): `npm run fix` on merge (#97706)
-- refactor: fold simplify-code review findings into #96667 salvage
-- test: pin fence/TTFP semantics for substantive-progress gating (#96667 salvage)
-- Merge pull request #97676 from kshitijk4poor/fix/pattern-c-reader-offload
-- fmt(js): `npm run fix` on merge (#97642)
-- fmt(js): `npm run fix` on merge (#97638)
-- test(desktop): follow the model and path menu labels to sentence case
-- 80 additional improvements updates are included in this verified snapshot.
+- test(nebius): align catalog tests with current fetch_models contract
+- test(nebius): expect verbose model catalog URL
+- review: host-resolved efforts, ladder-validated ingest, deduped catalog
+- Merge pull request #97912 from kshitijk4poor/chore/author-map-provider-salvages
+- test: assert /update dispatch via the handler table, not getsource
+- refactor(gateway): share plain command dispatch
+- test(gateway): verify routed busy persistence
+- chore: map abdi.moya@gmail.com -> AxDSan, sam@odio.email -> srosro (attribution for #97875)
+- fmt(js): `npm run fix` on merge (#97946)
+- refactor(prompt): platform-hint diet — 7 heavies compressed, −657 tok across the map (facts probe-pinned) (#97899)
+- chore: map provider-salvage contributor emails to GitHub logins
+- fmt(js): `npm run fix` on merge (#97896)
+- 7 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

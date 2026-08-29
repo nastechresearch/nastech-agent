@@ -260,7 +260,7 @@ nastech uninstall            Uninstall Nastech
 /stop                Kill background processes
 /rollback [N]        Restore filesystem checkpoint
 /snapshot [sub]      Create or restore state snapshots of Nastech config/state (CLI)
-/background <prompt> Run prompt in background
+/bg <prompt> Run prompt in background
 /queue <prompt>      Queue for next turn
 /steer <prompt>      Inject a message after the next tool call without interrupting
 /agents (/tasks)     Show active agents and running tasks
@@ -279,7 +279,7 @@ nastech uninstall            Uninstall Nastech
 /verbose             Cycle: off → new → all → verbose
 /voice [on|off|tts]  Voice mode
 /yolo                Toggle approval bypass
-/busy [sub]          Control what Enter does while Nastech is working (CLI)
+/busy [sub]          Control how messages behave while Nastech works (CLI + gateway)
                      (subcommands: queue, steer, interrupt, status)
 /indicator [style]   Pick the TUI busy-indicator style (CLI)
                      (styles: kaomoji, emoji, unicode, ascii)

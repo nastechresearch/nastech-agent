@@ -416,6 +416,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/skills/optional/devops/devops-nastech-s6-container-supervision',
                     'user-guide/skills/optional/devops/devops-inference-sh-cli',
                     'user-guide/skills/optional/devops/devops-pinggy-tunnel',
+                    'user-guide/skills/optional/devops/devops-setup-wizard-generator',
                     'user-guide/skills/optional/devops/devops-watchers',
                   ],
                 },
@@ -551,6 +552,7 @@ const sidebars: SidebarsConfig = {
                   collapsed: true,
                   items: [
                     'user-guide/skills/optional/productivity/productivity-canvas',
+                    'user-guide/skills/optional/productivity/productivity-decision-questionnaire',
                     'user-guide/skills/optional/productivity/productivity-here-now',
                     'user-guide/skills/optional/productivity/productivity-memento-flashcards',
                     'user-guide/skills/optional/productivity/productivity-shop',
@@ -600,6 +602,7 @@ const sidebars: SidebarsConfig = {
                   collapsed: true,
                   items: [
                     'user-guide/skills/optional/software-development/software-development-code-wiki',
+                    'user-guide/skills/optional/software-development/software-development-grill-me',
                     'user-guide/skills/optional/software-development/software-development-rest-graphql-debug',
                     'user-guide/skills/optional/software-development/software-development-subagent-driven-development',
                   ],
