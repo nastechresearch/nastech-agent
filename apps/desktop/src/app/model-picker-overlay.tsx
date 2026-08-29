@@ -2,8 +2,8 @@ import { useStore } from '@nanostores/react'
 
 import type { ModelSelection } from '@/app/shell/model-menu-panel'
 import { ModelPickerDialog } from '@/components/model-picker'
-import type { NastechGateway } from '@/nastech'
 import { useStoreSelector } from '@/lib/use-session-slice'
+import type { NastechGateway } from '@/nastech'
 import {
   $activeSessionId,
   $currentModel,
