@@ -301,7 +301,7 @@ Then in Slack:
 ### Legacy `/nastech <subcommand>` still works
 
 For backward compatibility with older manifests, you can still type
-`/nastech btw run the tests` — Nastech routes it the same way as `/btw
+`/nastech bg run the tests` — Nastech routes it the same way as `/bg
 run the tests`. Free-form questions also work: `/nastech what's the
 weather?` is treated as a regular message.
 

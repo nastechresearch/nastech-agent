@@ -162,6 +162,14 @@ _HYGIENE_COOLDOWN_LADDER_MULTIPLIERS = (1, 3, 9)
 # retry is cheap and still recovers within a session.
 _HYGIENE_COOLDOWN_MAX_SECONDS = 3600.0
 
+# Flat retry-after recorded when a hygiene compression is ABANDONED because
+# the turn-hold budget expired while the summary was still streaming (not a
+# failure — the compressor was healthy, we just could not keep holding the
+# user's turn). Spaces out re-attempts so sustained traffic does not spawn,
+# hold, and cancel a fresh compressor on every single turn; deliberately
+# outside the failure-streak ladder above.
+_HYGIENE_TURNHOLD_RETRY_SECONDS = 60.0
+
 
 def _hygiene_cooldown_for_failure(
     gateway,
@@ -2198,6 +2206,18 @@ class MultiplexConfigError(RuntimeError):
 
 class SecondaryPortBindingConfigError(MultiplexConfigError):
     """A secondary profile conflicts with the multiplexer's shared listener."""
+
+
+class HygieneTurnHoldExceeded(Exception):
+    """The hygiene-compression turn-hold budget elapsed while the summary
+    model was still streaming progress.
+
+    This is an availability boundary, not a failure: the compressor is
+    healthy, but the current user turn cannot wait any longer. It must NOT
+    be routed through the idle-timeout failure path (which stamps
+    AGENT_COMPRESSION_TIMEOUT, sends a "no output" message, and advances
+    the failure cooldown ladder).
+    """
 
 
 def _multiplex_profile_homes(config: object) -> list[tuple[str, "Path"]]:
@@ -17133,6 +17153,32 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         "moa": "Agent is running — wait or /stop first, then run /moa.",
     }
 
+    def _gateway_plain_command_handlers(self):
+        """Return ordinary slash handlers shared by idle and busy dispatch."""
+        return {
+            "status": self._handle_status_command,
+            "context": self._handle_context_command,
+            "restart": self._handle_restart_command,
+            "approve": self._handle_approve_command,
+            "deny": self._handle_deny_command,
+            "pause": self._handle_pause_command,
+            "agents": self._handle_agents_command,
+            "bg": self._handle_background_command,
+            "btw": self._handle_btw_command,
+            "kanban": self._handle_kanban_command,
+            "subgoal": self._handle_subgoal_command,
+            "heartbeat": self._handle_heartbeat_command,
+            "busy": self._handle_busy_command,
+            "yolo": self._handle_yolo_command,
+            "verbose": self._handle_verbose_command,
+            "footer": self._handle_footer_command,
+            "help": self._handle_help_command,
+            "commands": self._handle_commands_command,
+            "profile": self._handle_profile_command,
+            "update": self._handle_update_command,
+            "version": self._handle_version_command,
+        }
+
     async def _dispatch_busy_slash_command(
         self, event: MessageEvent, cmd_def, quick_key: str, source,
     ):
@@ -17173,27 +17219,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 return reject_text
 
         if policy in ("dispatch", "interrupt_then_dispatch"):
-            plain = {
-                "status": self._handle_status_command,
-                "context": self._handle_context_command,
-                "restart": self._handle_restart_command,
-                "approve": self._handle_approve_command,
-                "deny": self._handle_deny_command,
-                "pause": self._handle_pause_command,
-                "agents": self._handle_agents_command,
-                "background": self._handle_background_command,
-                "kanban": self._handle_kanban_command,
-                "subgoal": self._handle_subgoal_command,
-                "heartbeat": self._handle_heartbeat_command,
-                "yolo": self._handle_yolo_command,
-                "verbose": self._handle_verbose_command,
-                "footer": self._handle_footer_command,
-                "help": self._handle_help_command,
-                "commands": self._handle_commands_command,
-                "profile": self._handle_profile_command,
-                "update": self._handle_update_command,
-                "version": self._handle_version_command,
-            }.get(name)
+            plain = self._gateway_plain_command_handlers().get(name)
             if plain is not None:
                 return await plain(event)
             logger.warning(
@@ -18297,8 +18323,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     canonical = _cmd_def.name if _cmd_def else command
                     break
 
-        if canonical == "pause":
-            return await self._handle_pause_command(event)
+        plain_handler = self._gateway_plain_command_handlers().get(canonical)
+        if plain_handler is not None:
+            return await plain_handler(event)
 
         if canonical == "new":
             if await asyncio.to_thread(self._is_telegram_topic_root_lobby, source):
@@ -18319,42 +18346,21 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         if canonical == "topic":
             return await self._handle_topic_command(event)
         
-        if canonical == "help":
-            return await self._handle_help_command(event)
-
         if canonical == "start":
             logger.info("Ignoring /start platform ping for session %s", _quick_key)
             return ""
 
-        if canonical == "commands":
-            return await self._handle_commands_command(event)
-        
-        if canonical == "profile":
-            return await self._handle_profile_command(event)
-
         if canonical == "whoami":
             return await self._handle_whoami_command(event)
-
-        if canonical == "status":
-            return await self._handle_status_command(event)
 
         if canonical == "egress":
             from nastech_cli.proxy_cli import format_status_text
 
             return format_status_text()
 
-        if canonical == "context":
-            return await self._handle_context_command(event)
-
-        if canonical == "agents":
-            return await self._handle_agents_command(event)
-
         if canonical == "platform":
             return await self._handle_platform_command(event)
 
-        if canonical == "restart":
-            return await self._handle_restart_command(event)
-        
         if canonical == "stop":
             return await self._handle_stop_command(event)
         
@@ -18426,15 +18432,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         if canonical == "fast":
             return await self._handle_fast_command(event)
 
-        if canonical == "verbose":
-            return await self._handle_verbose_command(event)
-
-        if canonical == "footer":
-            return await self._handle_footer_command(event)
-
-        if canonical == "yolo":
-            return await self._handle_yolo_command(event)
-
         if canonical == "approvals":
             return await self._handle_approvals_command(event)
 
@@ -18446,9 +18443,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         if canonical == "personality":
             return await self._handle_personality_command(event)
-
-        if canonical == "kanban":
-            return await self._handle_kanban_command(event)
 
         if canonical == "suggestions":
             return await self._handle_suggestions_command(event)
@@ -18534,18 +18528,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         if canonical == "bundles":
             return await self._handle_bundles_command(event)
 
-        if canonical == "approve":
-            return await self._handle_approve_command(event)
-
-        if canonical == "deny":
-            return await self._handle_deny_command(event)
-
-        if canonical == "update":
-            return await self._handle_update_command(event)
-
-        if canonical == "version":
-            return await self._handle_version_command(event)
-
         if canonical == "debug":
             return await self._handle_debug_command(event)
 
@@ -18566,9 +18548,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
 
         if canonical == "diff":
             return await self._handle_diff_command(event)
-
-        if canonical == "background":
-            return await self._handle_background_command(event)
 
         if canonical == "queue":
             queue_payload = event.get_command_args().strip()
@@ -18600,8 +18579,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         if canonical == "loop":
             return await self._handle_loop_command(event)
 
-        if canonical == "heartbeat":
-            return await self._handle_heartbeat_command(event)
         if canonical == "refine":
             return await self._handle_refine_command(event)
         if canonical == "review":
@@ -18642,9 +18619,6 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 event._moa_disable_after_turn = True
             except Exception:
                 return "Failed to prepare MoA turn."
-
-        if canonical == "subgoal":
-            return await self._handle_subgoal_command(event)
 
         if canonical == "voice":
             return await self._handle_voice_command(event)
@@ -20165,6 +20139,14 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             _hyg_hard_msg_limit = 5000
             _hyg_timeout_seconds = 30.0
             _hyg_total_ceiling_seconds = 600.0
+            # Max wall-clock the user's TURN is held waiting on hygiene
+            # compression before the gateway stops waiting and proceeds on the
+            # uncompressed transcript (#TKT-0029). The compressor keeps running
+            # detached; its commit is fenced (revoke_commit_admission) so a
+            # stale result can never clobber turns appended after the wait was
+            # abandoned. Capped well below typical transport idle-timeouts
+            # (Telegram ~30s) so the wire never goes silent long enough to sever.
+            _hyg_max_turn_hold_seconds = 10.0
             _hyg_failure_cooldown_seconds = 300.0
             _hyg_config_context_length = None
             _hyg_provider = None
@@ -20232,6 +20214,14 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                         _hyg_total_ceiling_seconds = max(
                             _hyg_total_ceiling_seconds, _hyg_timeout_seconds,
                         )
+                        _raw_turn_hold = _comp_cfg.get("hygiene_max_turn_hold_seconds")
+                        if _raw_turn_hold is not None:
+                            try:
+                                _parsed = float(_raw_turn_hold)
+                                if _parsed > 0:
+                                    _hyg_max_turn_hold_seconds = _parsed
+                            except (TypeError, ValueError):
+                                pass
                         _raw_cooldown = _comp_cfg.get("hygiene_failure_cooldown_seconds")
                         if _raw_cooldown is not None:
                             try:
@@ -20523,6 +20513,31 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                                 - _hyg_commit_fence.seconds_since_progress(),
                                                 0.005,
                                             )
+                                            # Bounded turn-hold (#TKT-0029): cap
+                                            # this slice at the remaining
+                                            # turn-hold budget so the wait is
+                                            # re-evaluated against
+                                            # _hyg_max_turn_hold_seconds at
+                                            # least that often — otherwise a
+                                            # continuously-streaming worker
+                                            # (which keeps the inactivity slice
+                                            # large) would hold the turn until
+                                            # the total ceiling before the
+                                            # budget check ever runs.
+                                            _turn_hold_remaining = (
+                                                _hyg_max_turn_hold_seconds
+                                                - (time.monotonic() - _hyg_wait_started)
+                                            )
+                                            if _turn_hold_remaining <= 0:
+                                                # Budget already exhausted —
+                                                # force an immediate timeout so
+                                                # the abandonment path below runs.
+                                                _slice = 0.005
+                                            else:
+                                                _slice = min(
+                                                    _slice,
+                                                    max(_turn_hold_remaining, 0.005),
+                                                )
                                             try:
                                                 _compressed, _ = await asyncio.wait_for(
                                                     asyncio.shield(_hyg_future),
@@ -20532,6 +20547,38 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                             except asyncio.TimeoutError:
                                                 _hyg_waited = time.monotonic() - _hyg_wait_started
                                                 _idle = _hyg_commit_fence.seconds_since_progress()
+                                                # Bounded turn-hold (#TKT-0029):
+                                                # never hold the user's TURN
+                                                # longer than
+                                                # _hyg_max_turn_hold_seconds,
+                                                # even if the summary model is
+                                                # still streaming. Past the
+                                                # budget we stop waiting and
+                                                # fall through to the timeout
+                                                # path below, which revokes
+                                                # commit admission and proceeds
+                                                # on the uncompressed
+                                                # transcript — the wire never
+                                                # stays silent long enough to
+                                                # trip a transport idle-timeout.
+                                                if (
+                                                    _hyg_waited
+                                                    >= _hyg_max_turn_hold_seconds
+                                                ):
+                                                    logger.info(
+                                                        "Session hygiene compression for "
+                                                        "session %s exceeded the turn-hold "
+                                                        "budget (%.1fs >= %.1fs) — "
+                                                        "abandoning inline wait, proceeding "
+                                                        "without compression this turn",
+                                                        session_entry.session_id,
+                                                        _hyg_waited,
+                                                        _hyg_max_turn_hold_seconds,
+                                                    )
+                                                    raise HygieneTurnHoldExceeded(
+                                                        f"turn-hold budget {_hyg_max_turn_hold_seconds:.1f}s "
+                                                        f"elapsed after {_hyg_waited:.1f}s"
+                                                    )
                                                 if (
                                                     _idle < _hyg_timeout_seconds
                                                     and _hyg_waited < _hyg_total_ceiling_seconds
@@ -20547,6 +20594,96 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                                     )
                                                     continue
                                                 raise
+                                    except HygieneTurnHoldExceeded:
+                                        # Turn-hold expiry is an availability boundary,
+                                        # not a failure. The compressor is healthy and
+                                        # still streaming; we simply cannot hold the
+                                        # current user turn any longer. Share the safe
+                                        # mechanics (fence, release, defer, proceed
+                                        # uncompressed) but with distinct provenance,
+                                        # user message, and NO failure-cooldown
+                                        # increment.
+                                        _cancelled = None
+                                        while _cancelled is None:
+                                            if _hyg_commit_fence.commit_in_flight:
+                                                _cancelled = False
+                                                break
+                                            _cancelled = (
+                                                _hyg_commit_fence.try_cancel_before_commit()
+                                            )
+                                            if _cancelled is None:
+                                                await asyncio.sleep(0.025)
+                                        if not _cancelled:
+                                            # NOTE: bounded overshoot by design.
+                                            # The turn can be held past
+                                            # _hyg_max_turn_hold_seconds by up to the
+                                            # commit duration (summary apply + storage
+                                            # write). Aborting mid-commit would corrupt
+                                            # the message-store transaction — the
+                                            # overshoot is the cheaper failure mode.
+                                            # Do NOT "fix" this into a mid-commit
+                                            # cancellation.
+                                            _compressed, _ = await _hyg_future
+                                        else:
+                                            _hyg_commit_fence.release_cancelled_compression_lock()
+                                            self._defer_agent_cleanup_until_future_done(
+                                                _hyg_future,
+                                                _hyg_agent,
+                                                context="session hygiene turn-hold",
+                                            )
+                                            _hyg_cleanup_deferred = True
+                                            # Short, NON-escalating retry-after. Without
+                                            # it, every subsequent turn re-spawns a fresh
+                                            # compressor, holds it for the turn-hold
+                                            # budget, and cancels it again — a per-turn
+                                            # summary-model token burn that never commits
+                                            # under sustained traffic. This is deliberately
+                                            # NOT _hygiene_cooldown_for_failure: the
+                                            # compressor is healthy, so the failure streak
+                                            # must not advance (behavior witness below);
+                                            # only the flat retry spacing is recorded.
+                                            _record_hygiene_cooldown(
+                                                self, session_entry.session_id,
+                                                _HYGIENE_TURNHOLD_RETRY_SECONDS,
+                                                "hygiene compression deferred: "
+                                                "turn-hold budget expired while the "
+                                                "summary was still streaming",
+                                            )
+                                            from agent.session_activity import (
+                                                ActivityProvenance,
+                                            )
+                                            _stamp_hygiene_compression_provenance(
+                                                _hyg_agent,
+                                                "session hygiene compression turn-hold",
+                                                ActivityProvenance.AGENT_COMPRESSION_TURNHOLD,
+                                                "hygiene compression turn-hold "
+                                                "activity stamp failed",
+                                            )
+                                            logger.info(
+                                                "Session hygiene compression for session %s "
+                                                "exceeded turn-hold budget (%.1fs); "
+                                                "proceeding without compression this turn",
+                                                session_entry.session_id,
+                                                time.monotonic() - _hyg_wait_started,
+                                            )
+                                            _turnhold_msg = t(
+                                                "gateway.compress.turnhold_deferred"
+                                            )
+                                            try:
+                                                _adapter = self._adapter_for_source(source)
+                                                if _adapter and source.chat_id:
+                                                    await _adapter.send(
+                                                        source.chat_id,
+                                                        _turnhold_msg,
+                                                        metadata=_hyg_meta,
+                                                    )
+                                            except Exception as _werr:
+                                                logger.warning(
+                                                    "Failed to deliver compression-turnhold "
+                                                    "notice to user: %s",
+                                                    _werr,
+                                                )
+                                            raise
                                     except asyncio.TimeoutError:
                                         _cancelled = None
                                         while _cancelled is None:
@@ -23239,6 +23376,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                             chat_id=event.source.chat_id,
                             audio_path=media_path,
                             metadata=_thread_meta,
+                            is_voice=is_voice,
                         )
                     elif ext in _VIDEO_EXTS:
                         await adapter.send_video(
@@ -23572,6 +23710,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                                 chat_id=source.chat_id,
                                 audio_path=media_path,
                                 metadata=_thread_metadata,
+                                is_voice=_is_voice,
                             )
                         elif _ext in _VIDEO_EXTS:
                             await adapter.send_video(

@@ -322,7 +322,7 @@ NASTECH_LOG_LEVEL=debug nastech gateway
 在不阻塞会话的情况下运行长时间操作：
 
 ```
-/background Analyze all files in the archive
+/bg Analyze all files in the archive
 ```
 
 ### 跨平台消息
