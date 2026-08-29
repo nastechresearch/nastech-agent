@@ -382,6 +382,15 @@ DEFAULT_CONFIG = {
         # preserves the historical error + traceback behavior.
         "degraded_mode": "warn",
         "cwd": ".",  # Use current directory
+        # Root directory for Nastech' terminal session temp files (background
+        # logs/pid/exit files, code-execution sandboxes, etc.). When empty,
+        # Nastech uses TMPDIR/TMP/TEMP if set, otherwise a managed dir on real
+        # storage at NASTECH_HOME/cache/terminal (auto-pruned after 72h) — NOT
+        # tmpfs /tmp, which is RAM-capped and small on many distros (e.g.
+        # Arch-based setups) and fills up under load. Set this to redirect
+        # session temp anywhere else; must be an absolute POSIX path that
+        # exists. User-set paths are never auto-pruned.
+        "temp_dir": "",
         # Terminal font family for the desktop app's embedded xterm.js terminal.
         # When set (e.g. "'CaskaydiaCoveNerdFont', 'JetBrains Mono', monospace"),
         # the desktop terminal uses this as the CSS font-family value, with the
@@ -1135,6 +1144,10 @@ DEFAULT_CONFIG = {
             "timeout": 120,        # seconds — compression summarises large contexts; increase for local models
             "extra_body": {},
             "reasoning_effort": "",  # per-task thinking level: none|minimal|low|medium|high|xhigh|max|ultra (empty = provider default)
+            # Guarded fast lane: only honored with a concrete provider/model
+            # and an explicit ``reasoning_effort: none`` certification.
+            # Zero preserves the historic uncapped compression request.
+            "max_output_tokens": 0,
         },
         # Note: session_search no longer uses an auxiliary LLM (PR #27590 —
         # single-shape tool returns DB content directly). The old
@@ -2864,6 +2877,38 @@ DEFAULT_CONFIG = {
         # Env scrubbing (strips *_API_KEY, *_TOKEN, *_SECRET, ...) and the
         # tool whitelist apply identically in both modes.
         "mode": "project",
+        # Kernel lifetime:
+        #   per-call (default) — a fresh child process per execute_code call;
+        #     no state carries over. Today's behavior.
+        #   session            — one persistent kernel per (session owner,
+        #     mode, interpreter, cwd, tool-set): variables, imports, and
+        #     loaded data survive across calls AND across the user turns of
+        #     one conversation (the owner is the conversation's approval
+        #     session key; delegated subagent sessions get their own).
+        #     Kernels are disposed with their session (session clear/new),
+        #     reaped after kernel_idle_timeout seconds idle, and capped at
+        #     max_session_kernels live children process-wide (LRU evicted).
+        #     A timed-out or interrupted cell kills the kernel (state lost,
+        #     next call starts fresh), and the child environment is frozen
+        #     at kernel spawn — pass reset=true after changing env
+        #     passthrough. Tool RPC authority is rebound to each cell: a
+        #     later cell's tool calls run under that cell's approval and
+        #     session context, never the first cell's. Security scrubbing,
+        #     the tool whitelist, and output redaction are identical in
+        #     both modes. NOTE for per-script static policy (see
+        #     check_execute_code_guard): a persistent namespace lets cell
+        #     N+1 reach objects cell N created, which a single-cell static
+        #     scan cannot see — the runtime RPC boundary (allow-list, call
+        #     budget, per-cell authority) is the operative cross-cell
+        #     enforcement in this mode.
+        # kernel_mode is retired: session kernels are always on for local
+        # execution. Remote terminal backends still run per-call — their
+        # file-based RPC path has no kernel host yet (tracked follow-up,
+        # not a design limit). A leftover kernel_mode key in user config
+        # is ignored.
+        # Lifecycle bounds for session kernels.
+        "kernel_idle_timeout": 1800,
+        "max_session_kernels": 4,
     },
 
     # Tool Search (progressive disclosure for large tool surfaces).
@@ -3697,8 +3742,8 @@ DEFAULT_CONFIG = {
         # macOS only: allow launching an UNSIGNED (ad-hoc / TeamIdentifier
         # not set) CuaDriver.app for the private-session daemon. The default
         # (false) fails closed unless the bundle is signed with the official
-        # cua-driver identity (com.trycua.driver / team 4YEC26S9KF). Enable
-        # only when developing the driver locally from source.
+        # cua-driver identity (com.trycua.driver / an official signing team).
+        # Enable only when developing the driver locally from source.
         "allow_unsigned_driver": False,
         # Pre-authorize existing-profile browser attachment in standard mode
         # (cua-driver's trusted-launcher `--grant existing-profile`). When

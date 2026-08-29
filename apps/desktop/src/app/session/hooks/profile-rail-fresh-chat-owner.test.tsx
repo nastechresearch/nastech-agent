@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import { type GatewayEvent, registryBackendScopeKey } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { act, cleanup, render, waitFor } from '@testing-library/react'
 import { useEffect, useMemo, useRef } from 'react'
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
@@ -318,6 +318,7 @@ function Harness({
     selectedStoredSessionId,
     selectedStoredSessionIdRef: cache.selectedStoredSessionIdRef,
     sessionStateByRuntimeIdRef: cache.sessionStateByRuntimeIdRef,
+    holdSessionTranscriptView: cache.holdSessionTranscriptView,
     syncSessionStateToView: cache.syncSessionStateToView,
     updateSessionState: cache.updateSessionState
   })

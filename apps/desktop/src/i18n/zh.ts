@@ -574,6 +574,11 @@ export const zh: Translations = {
       introSplashDesc: '空白对话中显示的字标和提示语。',
       reactionsTitle: '消息回应',
       reactionsDesc: 'iMessage 风格的表情回应 — 你可以给消息添加回应，Nastech 也能回应你的消息。',
+      tipsTitle: '应用内提示',
+      tipsDesc: '指向应用某处的小气泡：空闲时偶尔出现，需要时 Nastech 也会给你一条。关掉一条就不再出现。',
+      tipsReset: (count: number) => `恢复 ${count} 条已关闭的提示`,
+      toursTitle: '引导导览',
+      toursDesc: '让 Nastech 带你熟悉应用：调暗界面并逐步高亮每个位置。',
       composerPopoutTitle: '悬浮输入框',
       composerPopoutDesc: '允许将输入框拖出底部停靠区。关闭后，输入框会锁定在底部。',
       vibeHeartsTitle: '心情爱心',
@@ -2081,6 +2086,7 @@ export const zh: Translations = {
     defaultBadge: '默认',
     rename: '重命名',
     renameMenu: '重命名…',
+    exportMenu: '导出…',
     editSoul: '编辑 SOUL.md…',
     copySetup: '复制安装命令',
     copying: '复制中…',
@@ -2385,7 +2391,7 @@ export const zh: Translations = {
       removeFolder: '移除',
       create: '创建',
       menu: '操作',
-      menuRename: '重命名',
+      menuRename: '重命名…',
       menuAppearance: '外观',
       noColor: '无颜色',
       menuAddFolder: '添加文件夹',
@@ -2452,7 +2458,7 @@ export const zh: Translations = {
       copyId: '复制 ID',
       export: '导出',
       branchFrom: '分支',
-      rename: '重命名',
+      rename: '重命名…',
       archive: '归档',
       newWindow: '新窗口',
       openInTerminal: '在终端中打开',
@@ -3600,6 +3606,52 @@ export const zh: Translations = {
       systemNote: platform => `↻ 已移交到 ${platform} — 随时可在此处恢复。`,
       failed: error => `移交失败：${error}`,
       timedOut: '等待网关超时。`nastech gateway` 是否正在运行？'
+    }
+  },
+
+  tips: {
+    close: '不再显示这条提示',
+    items: {
+      'new-session': {
+        title: '从头开始',
+        text: '新对话拥有独立的上下文、终端和工作目录。'
+      },
+      skills: {
+        title: '教一次就够',
+        text: '技能是一组说明文件，Nastech 会在需要时自行加载。'
+      },
+      messaging: {
+        title: '离开电脑也能用',
+        text: '接入 Telegram、Discord、Slack 等 — 同一个智能体，同一份记忆。'
+      },
+      artifacts: {
+        title: 'Nastech 做过的一切',
+        text: '所有会话里的图片、文件和链接，都汇总在这里。'
+      },
+      cron: {
+        title: '会自己运行的任务',
+        text: '让一条提示按小时、按夜间，或按 cron 表达式定时执行。'
+      },
+      'command-palette': {
+        title: '一个输入框搞定一切',
+        text: '会话、设置、技能和命令都能从命令面板找到。'
+      },
+      profiles: {
+        title: '配置文件彼此独立',
+        text: '每个都是独立的 Nastech — 自己的密钥、记忆和会话。'
+      },
+      'composer-mentions': {
+        title: '附件与命令',
+        text: '输入 @ 把文件带入对话，输入 / 运行命令。'
+      },
+      'model-switch': {
+        title: '对话中随时换模型',
+        text: '模型名称就是按钮。工作性质变了就换一个。'
+      },
+      'right-pane': {
+        title: '工作面板',
+        text: '文件、终端、审阅和内置浏览器都在侧边面板里。'
+      }
     }
   },
 

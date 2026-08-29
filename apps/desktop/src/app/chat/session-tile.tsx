@@ -30,11 +30,11 @@ import { findGroupOfPane } from '@/components/pane-shell/tree/model'
 import { $layoutTree, closeTreePane, moveTreePane, setTreeGroupTabStrip } from '@/components/pane-shell/tree/store'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { transcribeAudio } from '@/nastech'
 import { useI18n } from '@/i18n'
 import type { ChatMessage } from '@/lib/chat-messages'
 import { NEW_SESSION_TITLE, sessionTitle } from '@/lib/chat-runtime'
 import { transcribeAudioClientDirect } from '@/lib/voice-client-direct'
-import { transcribeAudio } from '@/nastech'
 import { createComposerAttachmentScope, draftTitleFor } from '@/store/composer'
 import { $pinnedSessionIds, pinSession, unpinSession } from '@/store/layout'
 import { $activeGatewayProfile } from '@/store/profile'
@@ -646,8 +646,6 @@ export function WorkspaceTabMenu({ children }: { children: React.ReactElement })
  *  `$sessions`). Tiles dock against main on the chosen edge, flex width. */
 export const watchSessionTiles = paneMirror<SessionTile>({
   source: $sessionTiles,
-  workspaceMode: tile => tile.workspaceMode ?? 'sessions',
-  workspaceOwnerKey: tile => tile.workspaceOwnerKey,
   // $projectTree: a tile whose session is older than the recents page resolves
   // its title through the tree, which loads after the tiles register. (The tab's
   // status dot subscribes to color/state itself, so it needs no `also` entry.)

@@ -32,20 +32,21 @@ import {
 import { FloatingPet } from '@/components/pet/floating-pet'
 import { RemoteDisplayBanner } from '@/components/remote-display-banner'
 import { SendDiagnosticsHost } from '@/components/send-diagnostics-dialog'
+import { TipHost } from '@/components/tips'
 import { emitGatewayEvent } from '@/contrib/events'
+import { getLatestSessionMessages } from '@/nastech'
 import { type ChatMessage, chatMessageText, preserveLocalAssistantErrors, toChatMessages } from '@/lib/chat-messages'
 import { isMessagingSource } from '@/lib/session-source'
 import { latestSessionTodos } from '@/lib/todos'
 import { activateWakeIndicator } from '@/lib/wake-indicator'
 import { playWakeSound } from '@/lib/wake-sound'
-import { getLatestSessionMessages } from '@/nastech'
 import { $billingSettingsRequest } from '@/store/billing-block'
 import { $desktopBoot } from '@/store/boot'
 import { requestVoiceConversationStart } from '@/store/composer'
 import { $activeConnectionId } from '@/store/connections'
 import { $cronReviewRequest, setCronFocusJobId } from '@/store/cron'
 import { $pinnedSessionIds, pinSession, restoreWorktree, unpinSession } from '@/store/layout'
-import { notify, notifyError } from '@/store/notifications'
+import { notifyError } from '@/store/notifications'
 import { $previewTarget } from '@/store/preview'
 import {
   $activeGatewayProfile,
@@ -114,9 +115,9 @@ import { SessionSwitcher } from '../session-switcher'
 import { useBackgroundQueueDrain } from '../session/hooks/use-background-queue-drain'
 import { useContextSuggestions } from '../session/hooks/use-context-suggestions'
 import { useCwdActions } from '../session/hooks/use-cwd-actions'
+import { useNastechConfig } from '../session/hooks/use-nastech-config'
 import { useMessageStream } from '../session/hooks/use-message-stream'
 import { useModelControls } from '../session/hooks/use-model-controls'
-import { useNastechConfig } from '../session/hooks/use-nastech-config'
 import { usePreviewRouting } from '../session/hooks/use-preview-routing'
 import { usePromptActions } from '../session/hooks/use-prompt-actions'
 import { useRouteResume } from '../session/hooks/use-route-resume'
@@ -275,6 +276,7 @@ export function ContribWiring({ children }: { children: ReactNode }) {
     activeSessionIdRef,
     ensureSessionState,
     getRuntimeIdForStoredSession,
+    holdSessionTranscriptView,
     resetViewSync,
     runtimeIdByStoredSessionIdRef,
     selectedStoredSessionIdRef,
@@ -493,6 +495,7 @@ export function ContribWiring({ children }: { children: ReactNode }) {
     ensureSessionState,
     getRouteToken,
     getRoutedStoredSessionId,
+    holdSessionTranscriptView,
     navigate,
     onFreshDraftRouteIntent: clearRoutedSessionIntent,
     requestGateway,
@@ -874,24 +877,17 @@ export function ContribWiring({ children }: { children: ReactNode }) {
   // the sidebar until its first message persists a turn and a refresh surfaces
   // it — Cursor-style. Every click opens a fresh "New session" tab (multiple
   // empty tabs are fine since none touch the session list).
+  //
+  // Bot Mode aims the "+" at the selected bot's own profile. Anything short of
+  // an exact route — a group chat's `blocked` target, an orphaned roster row —
+  // falls THROUGH to the ordinary session rather than refusing: the main strip
+  // carries plain session tabs alongside bot chats, so a "+" there must never
+  // be dead just because the sidebar's current selection has nowhere to route.
   const openNewSessionTab = useCallback(() => {
-    const workspaceMode = $workspaceMode.get()
     const workspaceOwnerKey = $workspaceOwnerKey.get()
     const workspaceNewSessionTarget = $workspaceNewSessionTarget.get()
 
-    if (workspaceMode === 'bots') {
-      if (workspaceNewSessionTarget?.kind !== 'route' || !workspaceOwnerKey) {
-        notify({
-          kind: 'info',
-          message:
-            workspaceNewSessionTarget?.kind === 'blocked'
-              ? workspaceNewSessionTarget.message
-              : 'Select a Bot or group first.'
-        })
-
-        return
-      }
-
+    if ($workspaceMode.get() === 'bots' && workspaceNewSessionTarget?.kind === 'route' && workspaceOwnerKey) {
       void openNewSessionTile('center', {
         listed: false,
         route: workspaceNewSessionTarget.route,
@@ -1252,6 +1248,11 @@ export function ContribWiring({ children }: { children: ReactNode }) {
       {/* Petdex floating mascot — renders nothing unless installed + enabled.
           Never in the HUD: that window is the chat bar and nothing else. */}
       {!isHudWindow() && !isBrowserWindow() && <FloatingPet />}
+
+      {/* In-app tips. Renders nothing until the app is quiet and has something
+          to point at, and nothing at all once they're off or all retired. The
+          HUD and browser windows have none of the surfaces a tip talks about. */}
+      {!isHudWindow() && !isBrowserWindow() && <TipHost />}
 
       {/* Single persistent xterm host chasing the terminal pane's slot rect.
           The HUD has no terminal pane, so it has nothing to chase. */}

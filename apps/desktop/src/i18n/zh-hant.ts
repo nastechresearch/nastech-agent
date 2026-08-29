@@ -400,6 +400,11 @@ export const zhHant = defineLocale({
       introSplashDesc: '空白對話中顯示的字標和提示語。',
       reactionsTitle: '訊息回應',
       reactionsDesc: 'iMessage 風格的表情回應 — 你可以對訊息做出回應，Nastech 也能回應你的訊息。',
+      tipsTitle: '應用程式內提示',
+      tipsDesc: '指向應用程式某處的小氣泡：閒置時偶爾出現，需要時 Nastech 也會給你一則。關掉一則就不再出現。',
+      tipsReset: (count: number) => `復原 ${count} 則已關閉的提示`,
+      toursTitle: '導覽',
+      toursDesc: '讓 Nastech 帶你認識應用程式：調暗畫面並逐步標示每個位置。',
       composerPopoutTitle: '懸浮輸入框',
       composerPopoutDesc: '允許將輸入框拖出底部停靠區。關閉後，輸入框會鎖定在底部。',
       vibeHeartsTitle: '心情愛心',
@@ -934,8 +939,7 @@ export const zhHant = defineLocale({
       disableTool: tool => `停用 ${tool}`,
       noOutput: '尚無輸出。',
       deepLinkTitle: '新增 MCP 伺服器？',
-      deepLinkDescription:
-        '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
+      deepLinkDescription: '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
       deepLinkStdioWarning: '此伺服器會使用下方所示指令在你的電腦上執行本機程序。僅在信任其來源時繼續。',
       deepLinkConfirm: '新增伺服器',
       deepLinkNameInvalid: '名稱須為 1-64 個字母、數字、點、連字號或底線。',
@@ -1526,6 +1530,7 @@ export const zhHant = defineLocale({
     defaultBadge: '預設',
     rename: '重新命名',
     renameMenu: '重新命名…',
+    exportMenu: '匯出…',
     editSoul: '編輯 SOUL.md…',
     copySetup: '複製安裝指令',
     copying: '複製中…',
@@ -1827,7 +1832,7 @@ export const zhHant = defineLocale({
       removeFolder: '移除',
       create: '建立',
       menu: '動作',
-      menuRename: '重新命名',
+      menuRename: '重新命名…',
       menuAppearance: '外觀',
       noColor: '無顏色',
       menuAddFolder: '新增資料夾',
@@ -1886,7 +1891,7 @@ export const zhHant = defineLocale({
       copyId: '複製 ID',
       export: '匯出',
       branchFrom: '分支',
-      rename: '重新命名',
+      rename: '重新命名…',
       archive: '封存',
       newWindow: '新視窗',
       openInTerminal: '在終端機中開啟',
@@ -2962,6 +2967,52 @@ export const zhHant = defineLocale({
     boundaryDesc: '此檢視遇到意外錯誤。您的聊天和設定是安全的。',
     reloadWindow: '重新載入視窗',
     openLogs: '開啟記錄'
+  },
+
+  tips: {
+    close: '不再顯示這則提示',
+    items: {
+      'new-session': {
+        title: '從頭開始',
+        text: '新對話擁有獨立的上下文、終端機與工作目錄。'
+      },
+      skills: {
+        title: '教一次就夠',
+        text: '技能是一組說明檔，Nastech 會在需要時自行載入。'
+      },
+      messaging: {
+        title: '離開電腦也能用',
+        text: '接上 Telegram、Discord、Slack 等 — 同一個代理，同一份記憶。'
+      },
+      artifacts: {
+        title: 'Nastech 做過的一切',
+        text: '所有工作階段的圖片、檔案與連結，都彙整在這裡。'
+      },
+      cron: {
+        title: '會自己執行的工作',
+        text: '讓一則提示按小時、按夜間，或依 cron 運算式定時執行。'
+      },
+      'command-palette': {
+        title: '一個輸入框搞定一切',
+        text: '工作階段、設定、技能與指令都能從命令選單找到。'
+      },
+      profiles: {
+        title: '設定檔彼此獨立',
+        text: '每個都是獨立的 Nastech — 自己的金鑰、記憶與工作階段。'
+      },
+      'composer-mentions': {
+        title: '附件與指令',
+        text: '輸入 @ 把檔案帶入對話，輸入 / 執行指令。'
+      },
+      'model-switch': {
+        title: '對話中隨時換模型',
+        text: '模型名稱就是按鈕。工作性質變了就換一個。'
+      },
+      'right-pane': {
+        title: '工作面板',
+        text: '檔案、終端機、審閱與內建瀏覽器都在側邊面板裡。'
+      }
+    }
   },
 
   ui: {

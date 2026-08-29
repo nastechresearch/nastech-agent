@@ -640,6 +640,37 @@ def is_terminal_job(job: Dict[str, Any]) -> bool:
     return job.get("state") in {"completed", "error"}
 
 
+def _is_recoverable_error_job(job: Dict[str, Any]) -> bool:
+    """True for a recurring job stuck in ``state=error``.
+
+    ``state=error`` is set ONLY on a cron/interval job when
+    ``compute_next_run()`` fails to produce a next occurrence (e.g. the
+    ``croniter`` package is missing, or a malformed schedule) — see
+    ``_mark_job_run_locked``'s issue #16265 comment: recurring jobs must
+    NEVER be silently disabled. Unlike ``state=completed`` (a one-shot
+    that genuinely has no more occurrences, ever), an error-state
+    recurring job still has a schedule with future occurrences once the
+    underlying issue resolves — it is stuck pending a ``next_run_at``
+    recompute, not truly done.
+
+    ``is_terminal_job()`` treats both states identically, which is correct
+    for blocking bare reactivation through ``update_job`` on a genuinely
+    completed job, but wrong here: it also blocks the due-scan's own
+    ``next_run_at`` self-heal (``_get_due_jobs_locked`` already recomputes
+    it for ``cron``/``interval`` jobs, but never reaches that code), the
+    at-most-once pre-advance (``advance_next_runs``), the dispatch claim
+    (``_claim_job_for_fire_locked``), and manual recovery (``resume_job``)
+    — wedging the job forever with no exit except deleting and recreating
+    it. Callers that need "is this job truly done" should keep using
+    ``is_terminal_job()`` alone; callers that need "can this job still
+    reach a future occurrence" should exclude this case.
+    """
+    return (
+        job.get("state") == "error"
+        and (job.get("schedule") or {}).get("kind") in {"cron", "interval"}
+    )
+
+
 def _secure_dir(path: Path):
     """Set directory to owner-only access (0700). No-op on Windows."""
     try:
@@ -695,11 +726,46 @@ def _preserve_file_ownership(path: Path, before: Optional[os.stat_result]) -> No
         )
 
 
+def _is_named_profile_path(path: Path) -> bool:
+    """Return True if *path* is inside a named profile home.
+
+    Named profiles live under ``<nastech_home>/profiles/<name>/``.  The
+    default profile lives at ``<nastech_home>`` directly (no ``profiles``
+    parent), as do custom ``NASTECH_HOME`` paths outside ``~/.nastech``.
+
+    Checks both the resolved path (handles symlinks in the parent chain)
+    and the raw path (catches symlinked profile homes whose resolve()
+    target no longer contains ``profiles``).
+    """
+    try:
+        if "profiles" in path.resolve().parts:
+            return True
+    except (OSError, RuntimeError):
+        pass
+    return "profiles" in path.parts
+
+
+def _ensure_cron_dir(cron_dir: Path) -> None:
+    """Create a cron directory without resurrecting a deleted profile home.
+
+    Named profiles are created by the profile lifecycle, not cron.  A stale
+    multiplex scheduler may still hold a path to a deleted profile after the
+    user removes it; ``parents=False`` makes that race fail closed
+    (FileNotFoundError) instead of silently restoring the directory tree.
+    Default and custom Nastech homes keep ``parents=True`` so first-run
+    directory creation still works.
+    """
+    if _is_named_profile_path(cron_dir):
+        cron_dir.mkdir(exist_ok=True)
+        return
+    cron_dir.mkdir(parents=True, exist_ok=True)
+
+
 def ensure_dirs():
     """Ensure cron directories exist with secure permissions."""
     store = _current_cron_store()
-    store.cron_dir.mkdir(parents=True, exist_ok=True)
-    store.output_dir.mkdir(parents=True, exist_ok=True)
+    _ensure_cron_dir(store.cron_dir)
+    _ensure_cron_dir(store.output_dir)
     _secure_dir(store.cron_dir)
     _secure_dir(store.output_dir)
 
@@ -1051,7 +1117,7 @@ def _record_persisted_error_recovery(job: Dict[str, Any], previous_next_run: str
     del _persisted_error_recoveries_recent[:-_PERSISTED_ERROR_RECOVERY_HISTORY]
     try:
         path = _current_cron_store().cron_dir / "persisted_error_recoveries.jsonl"
-        path.parent.mkdir(parents=True, exist_ok=True)
+        _ensure_cron_dir(path.parent)
         with open(path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry) + "\n")
     except Exception as exc:  # never let telemetry break a tick
@@ -2267,10 +2333,14 @@ def update_job(job_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]
             previous_inference_axes = _normalized_inference_axes(job)
             updated = _apply_skill_fields({**job, **updates})
 
-            if is_terminal_job(job) and (
-                updated.get("state") not in {"completed", "error"}
-                or updated.get("enabled") is True
-                or updated.get("next_run_at") is not None
+            if (
+                is_terminal_job(job)
+                and not _is_recoverable_error_job(job)
+                and (
+                    updated.get("state") not in {"completed", "error"}
+                    or updated.get("enabled") is True
+                    or updated.get("next_run_at") is not None
+                )
             ):
                 raise ValueError(
                     f"Cannot activate terminal cron job '{job.get('name', job_id)}' "
@@ -2364,10 +2434,14 @@ def update_job(job_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]
                     )
                 updated["next_run_at"] = next_run
 
-            if is_terminal_job(job) and (
-                updated.get("state") not in {"completed", "error"}
-                or updated.get("enabled") is True
-                or updated.get("next_run_at") is not None
+            if (
+                is_terminal_job(job)
+                and not _is_recoverable_error_job(job)
+                and (
+                    updated.get("state") not in {"completed", "error"}
+                    or updated.get("enabled") is True
+                    or updated.get("next_run_at") is not None
+                )
             ):
                 raise ValueError(
                     f"Cannot activate terminal cron job '{job.get('name', job_id)}' "
@@ -2421,8 +2495,18 @@ def resume_job(job_id: str) -> Optional[Dict[str, Any]]:
     )
 
 
-def trigger_job(job_id: str) -> Optional[Dict[str, Any]]:
-    """Schedule a job to run on the next scheduler tick. Accepts a job ID or name."""
+def trigger_job(
+    job_id: str, extra_prompt: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
+    """Schedule a job to run on the next scheduler tick. Accepts a job ID or name.
+
+    ``extra_prompt``: optional transient per-run context for the manual fire
+    (from ``cronjob(action='run', prompt=...)`` forwarded through the gateway
+    api_server). Stamped as ``manual_run_prompt`` alongside ``manual_run_at``
+    and consumed by ``run_one_job`` for that single fire only —
+    ``mark_job_run`` clears it, so it never persists into the job definition
+    or later scheduled fires.
+    """
     job = resolve_job_ref(job_id)
     if not job:
         return None
@@ -2446,6 +2530,9 @@ def trigger_job(job_id: str) -> Optional[Dict[str, Any]]:
             # Persist run-now intent alongside the arbitrary instant so cron
             # expression/TZ repair guards do not mistake it for stale state.
             "manual_run_at": manual_run_at,
+            # Transient run context rides with the run-now intent (None
+            # clears any stale prompt from a previous trigger).
+            "manual_run_prompt": (extra_prompt or None),
         },
     )
 
@@ -2698,6 +2785,9 @@ def _mark_job_run_locked(
                 now = _nastech_now().isoformat()
                 job["last_run_at"] = now
                 job.pop("manual_run_at", None)
+                # The transient manual-run context is single-fire: whatever
+                # run just completed consumed it (or superseded it).
+                job.pop("manual_run_prompt", None)
                 job["last_status"] = status or ("ok" if success else "error")
                 job["last_error"] = error if not success else None
                 # A healthy run means the configuration validates again — drop
@@ -3052,7 +3142,7 @@ def advance_next_runs(job_ids) -> int:
         for job in jobs:
             if job["id"] not in ids:
                 continue
-            if is_terminal_job(job):
+            if is_terminal_job(job) and not _is_recoverable_error_job(job):
                 continue
             kind = job.get("schedule", {}).get("kind")
             if kind not in {"cron", "interval"}:
@@ -3153,7 +3243,7 @@ def _claim_job_for_fire_locked(
         for job in jobs:
             if job["id"] != job_id:
                 continue
-            if is_terminal_job(job):
+            if is_terminal_job(job) and not _is_recoverable_error_job(job):
                 return False
             # enabled + pause markers must both clear — a half-paused record
             # (enabled=true, state=paused/paused_at set) must not claim. An
@@ -3453,7 +3543,7 @@ def _get_due_jobs_locked() -> List[Dict[str, Any]]:
         # job this tick" so healthy siblings still run and their recovered
         # state still reaches save_jobs() below.
         try:
-            if is_terminal_job(job):
+            if is_terminal_job(job) and not _is_recoverable_error_job(job):
                 continue
             if not job.get("enabled", True):
                 continue
@@ -3914,7 +4004,7 @@ def save_job_output(job_id: str, output: str):
     """Save job output to file."""
     ensure_dirs()
     job_output_dir = _job_output_dir(job_id)
-    job_output_dir.mkdir(parents=True, exist_ok=True)
+    _ensure_cron_dir(job_output_dir)
     _secure_dir(job_output_dir)
 
     timestamp = _nastech_now().strftime("%Y-%m-%d_%H-%M-%S")
