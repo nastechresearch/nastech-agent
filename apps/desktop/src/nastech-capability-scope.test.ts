@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
-  getMcpCatalog,
   getNastechConfigRecord,
+  getMcpCatalog,
   getSkillContent,
   getSkills,
   getToolsets,

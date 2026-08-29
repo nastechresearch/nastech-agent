@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `10e93c6ab958c7ec61cfc4416f4d4459e72ca8a7`
+- upstream sha : `1d8946b40b9333a7fda81be890be31771a312d4f`
 - source       : `https://github.com/Nastechresearch/nastech-agent.git`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -31,9 +31,9 @@
 
 ## Brand
 
-- total files : 10637
+- total files : 10638
 - renamed     : 1491 (folders and file names)
-- text-rewritten : 10539
+- text-rewritten : 10540
 - locked-copied  : 56
 - binary-copied  : 8
 - owned assets   : 34 (our logo/banner/mascot override upstream)
@@ -45,7 +45,7 @@
 
 ## Direct upstream tree delta
 
-- complete: +212 ~317 -87 ↪1
+- complete: +213 ~318 -87 ↪1
 - MODIFIED `.github/workflows/installer-tests.yml`
 - MODIFIED `agent/agent_init.py`
 - MODIFIED `agent/agent_runtime_helpers.py`
@@ -62,6 +62,7 @@
 - MODIFIED `agent/file_safety.py`
 - MODIFIED `agent/image_routing.py`
 - MODIFIED `agent/message_sanitization.py`
+- MODIFIED `agent/moa_loop.py`
 - MODIFIED `agent/model_metadata.py`
 - MODIFIED `agent/pet/render.py`
 - MODIFIED `agent/prompt_cache_boundary.py`
@@ -508,6 +509,7 @@
 - ADDED `tests/agent/test_fast_compression_lane.py`
 - MODIFIED `tests/agent/test_file_safety_cross_profile.py`
 - MODIFIED `tests/agent/test_image_routing.py`
+- ADDED `tests/agent/test_litellm_tool_part_cache_markers.py`
 - ADDED `tests/agent/test_native_preflight_estimate.py`
 - MODIFIED `tests/agent/test_pet_engine.py`
 - MODIFIED `tests/agent/test_prompt_cache_boundary.py`
@@ -666,17 +668,17 @@
 
 ## Scan
 
-10691 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10569]
+10692 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10570]
 
 
 ## Diff
 
-1403 renamed, 0 rewritten, 8887 identical, 61 locked, 0 missing, 34 owned, 252 reconciled
+1403 renamed, 0 rewritten, 8888 identical, 61 locked, 0 missing, 34 owned, 252 reconciled
 
 
 ## Fork check (vs nastech-agent)
 
-- 10029 identical, 447 updated (+0/-0 lines), 213 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 2 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+- 10028 identical, 448 updated (+0/-0 lines), 214 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 2 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - features: fork 51 -> branded 51
 
