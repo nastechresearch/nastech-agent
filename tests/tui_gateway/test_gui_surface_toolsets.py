@@ -19,16 +19,15 @@ from toolsets import TOOLSETS, resolve_toolset
 
 GUI_TOOLS = {
     "annotate_preview",
-    "close_preview",
+    "desktop_preview",
     "drive_preview",
     "close_terminal",
     "focus_pane",
-    "open_preview",
-    "read_preview",
     "read_terminal",
     "read_window_below",
     "react_to_message",
     "setup_mcp",
+    "tip",
     "tour",
 }
 

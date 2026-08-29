@@ -55,6 +55,7 @@ from nastech_cli.cli_agent_setup_mixin import CLIAgentSetupMixin
 from nastech_cli.cli_commands_mixin import CLICommandsMixin
 from nastech_cli.cli_billing_mixin import CLIBillingMixin
 from agent.interrupt_compat import request_hard_interrupt
+from agent.pet import render as pet_render
 
 # prompt_toolkit for fixed input area TUI
 from prompt_toolkit.history import FileHistory
@@ -4998,6 +4999,53 @@ class _VoiceInputMessage:
         return self.text
 
 
+class _SeededQueryMessage:
+    """Sentinel wrapper for a ``-q/--query`` prompt seeded into an
+    interactive session.
+
+    When ``nastech chat -q "…"`` runs on a real TTY, the query is submitted as
+    the first turn of a normal interactive session instead of the legacy
+    answer-and-exit single-query mode. The prompt is arbitrary user text (an
+    OS launcher, a desktop integration, a script) — it must be treated
+    LITERALLY: no slash-command routing, no ``!`` shell dispatch, no
+    file-drop detection. This sentinel marks the seeded first message so
+    ``process_loop`` skips those dispatchers for it (and only it).
+    """
+
+    __slots__ = ("text", "images")
+
+    def __init__(self, text: str, images=None):
+        self.text = text or ""
+        self.images = list(images or [])
+
+    def __str__(self) -> str:
+        return self.text
+
+
+def _should_seed_interactive(query, image, quiet: bool, oneshot: bool) -> bool:
+    """Whether a ``-q/--image`` invocation should seed an interactive session.
+
+    New default (Aug 2026): on a real TTY, ``chat -q`` submits the prompt as
+    the first turn of a normal interactive session (parity with other coding
+    agents' seeded launches — e.g. Omarchy's prompted agent terminals).
+
+    The legacy answer-and-exit behavior is preserved for every automation
+    surface:
+      - ``--oneshot`` on the chat subcommand (explicit legacy opt-in)
+      - ``-Q/--quiet`` (machine-readable single-query contract)
+      - any non-TTY stdin/stdout (kanban workers, cron, pipes, A2A)
+    ``-z/--oneshot`` at the top level never reaches this path at all.
+    """
+    if not (query or image):
+        return False
+    if oneshot or quiet:
+        return False
+    try:
+        return bool(sys.stdin.isatty() and sys.stdout.isatty())
+    except Exception:
+        return False
+
+
 class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
     """
     Interactive CLI for the Nastech Agent.
@@ -5005,7 +5053,12 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
     Provides a REPL interface with rich formatting, command history,
     and tool execution capabilities.
     """
-    
+
+    # Seeded -q handoff from main() → run() (see _should_seed_interactive):
+    # run() re-creates _pending_input, so the seeded first message rides in
+    # on this attribute and is enqueued after the fresh queue exists.
+    _seeded_first_message: Optional["_SeededQueryMessage"] = None
+
     def __init__(
         self,
         model: str = None,
@@ -5542,15 +5595,18 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._command_running = False
         self._command_blocks_input = False
         self._command_status = ""
-        # Petdex mascot (opt-in via display.pet). The base CLI mirrors the TUI's
-        # PetPane: a half-block sprite above the prompt that reacts to agent
-        # activity. Lazily resolved; an invalidate timer drives the animation.
+        # Petdex mascot (opt-in via display.pet). Kitty/Ghostty use Unicode
+        # placeholders plus out-of-band image transmission; other terminals
+        # use the truecolor half-block fallback.
         self._pet_renderer = None  # agent.pet.render.PetRenderer | None
         self._pet_slug: str = ""
         self._pet_enabled: bool = False
         self._pet_cols: int = 18
         self._pet_scale: float = 0.7
         self._pet_frames_cache: dict = {}  # state -> list[grid]
+        self._pet_kitty_cache: dict = {}  # state -> kitty placeholder payload
+        self._pet_kitty_image_id: int = 0
+        self._pet_kitty_pending: str = ""
         self._pet_frame_idx: int = 0
         self._pet_lock = threading.Lock()
         self._pet_cfg_checked: float = 0.0
@@ -5761,6 +5817,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         if getattr(self, "_terminal_io_broken", False):
             return
         _replay_output_history()
+        self._pet_queue_kitty_frame()
         try:
             app.invalidate()
         except OSError as exc:
@@ -5979,6 +6036,8 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 pass
         if new_width is not None:
             self._last_resize_width = new_width
+        if width_changed:
+            self._pet_queue_kitty_frame()
         original_on_resize()
         self._schedule_status_bar_unsuppress(app)
 
@@ -6725,15 +6784,23 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
 
     # ── Petdex mascot (base-CLI pet pane) ───────────────────────────────
     #
-    # Parity with the TUI: a half-block sprite rendered as a prompt_toolkit
-    # window above the prompt, reacting to agent state and animated by a timer
-    # that calls ``app.invalidate()``. Half-blocks only — the crisp Kitty image
-    # protocol can't coexist with prompt_toolkit's patch_stdout output layer
-    # (raw image escapes get swallowed/mangled), so we use truecolor styled
-    # text, which prompt_toolkit renders natively in any 24-bit terminal.
+    # Parity with the TUI: a sprite in a prompt_toolkit window above the
+    # prompt. Kitty/Ghostty use Unicode placeholders — prompt_toolkit owns
+    # the measurable grid; image bytes go out-of-band as a virtual placement
+    # via after_render + write_raw (cursor untouched). WezTerm/iTerm/sixel
+    # stay on half-blocks: they are not placeholder-capable.
 
     _PET_FRAME_INTERVAL = 0.16
     _PET_CFG_INTERVAL = 2.5
+
+    def _pet_clear_runtime(self) -> None:
+        """Drop renderer + queued Kitty state. Caller holds ``_pet_lock``."""
+        self._pet_enabled = False
+        self._pet_renderer = None
+        self._pet_frames_cache.clear()
+        self._pet_kitty_cache.clear()
+        self._pet_kitty_pending = ""
+        self._pet_kitty_image_id = 0
 
     def _pet_resolve_config(self) -> None:
         """(Re)resolve the active pet from config — picks up live enable/disable/
@@ -6743,7 +6810,6 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         """
         try:
             from agent.pet import constants, store
-            from agent.pet.render import PetRenderer
             from nastech_cli.config import load_config
 
             cfg = load_config()
@@ -6756,43 +6822,48 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             slug = str(pet_cfg.get("slug", "") or "")
             scale = float(pet_cfg.get("scale", constants.DEFAULT_SCALE) or constants.DEFAULT_SCALE)
             cols = constants.resolve_cols(scale, pet_cfg.get("unicode_cols", 0))
+            configured_mode = str(pet_cfg.get("render_mode", "auto") or "auto").lower()
+            # Placeholders only on kitty/Ghostty. WezTerm speaks kitty APC but
+            # not U+10EEEE — detect_terminal_graphics() still returns kitty
+            # there, which is why this gate is narrower.
+            use_kitty = configured_mode in ("", "auto", "kitty") and pet_render.supports_kitty_placeholders()
+            renderer_mode = "kitty" if use_kitty else "unicode"
 
-            if not enabled:
+            if not enabled or configured_mode == "off":
                 with self._pet_lock:
-                    self._pet_enabled = False
-                    self._pet_renderer = None
-                    self._pet_frames_cache.clear()
+                    self._pet_clear_runtime()
                 return
 
             pet = store.resolve_active_pet(slug)
             if pet is None or not pet.exists:
                 with self._pet_lock:
-                    self._pet_enabled = False
-                    self._pet_renderer = None
-                    self._pet_frames_cache.clear()
+                    self._pet_clear_runtime()
                 return
 
             with self._pet_lock:
-                # Rebuild only when the resolved pet or geometry changes.
+                # Rebuild only when the resolved pet, mode, or geometry changes.
                 if (
                     self._pet_renderer is None
                     or self._pet_slug != pet.slug
                     or self._pet_cols != cols
                     or self._pet_scale != scale
+                    or self._pet_renderer.mode != renderer_mode
                 ):
-                    self._pet_renderer = PetRenderer(
-                        str(pet.spritesheet), mode="unicode", scale=scale, unicode_cols=cols
+                    self._pet_renderer = pet_render.PetRenderer(
+                        str(pet.spritesheet), mode=renderer_mode, scale=scale, unicode_cols=cols
                     )
                     self._pet_slug = pet.slug
                     self._pet_cols = cols
                     self._pet_scale = scale
                     self._pet_frames_cache.clear()
+                    self._pet_kitty_cache.clear()
+                    self._pet_kitty_pending = ""
+                    self._pet_kitty_image_id = pet_render.kitty_image_id(pet.slug)
                     self._pet_frame_idx = 0
                 self._pet_enabled = True
         except Exception:
             with self._pet_lock:
-                self._pet_enabled = False
-                self._pet_renderer = None
+                self._pet_clear_runtime()
 
     def _pet_flash(self, state: str, secs: float = 1.6) -> None:
         """Briefly force a transient reaction (wave/jump/failed) before resting."""
@@ -6867,12 +6938,79 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._pet_frames_cache[state] = grids
         return grids
 
+    def _pet_kitty_payload_for(self, state: str) -> dict | None:
+        """Return and cache a Kitty virtual-placeholder payload for *state*."""
+        with self._pet_lock:
+            cached = self._pet_kitty_cache.get(state)
+            if cached is not None:
+                return cached
+            renderer = self._pet_renderer
+            image_id = self._pet_kitty_image_id
+            if renderer is None or renderer.mode != "kitty":
+                return None
+        try:
+            # PNG encoding is outside _pet_lock: first visit of a state must
+            # not stall the prompt under the lock.
+            payload = renderer.kitty_payload(state, image_id=image_id)
+        except Exception:
+            payload = None
+        if payload is not None:
+            payload = {**payload, "image_id": image_id}
+            with self._pet_lock:
+                if self._pet_renderer is renderer and self._pet_kitty_image_id == image_id:
+                    self._pet_kitty_cache[state] = payload
+        return payload
+
+    def _pet_queue_kitty_frame(self, state: str | None = None) -> None:
+        """Queue one virtual Kitty frame for the next prompt_toolkit render.
+
+        No-op when the pet pane was never initialized (``__new__`` fixtures
+        and ``_force_full_redraw`` / resize recovery on a pet-less CLI).
+        """
+        if not getattr(self, "_pet_enabled", False):
+            return
+        if state is None:
+            state = self._derive_pet_state()
+        payload = self._pet_kitty_payload_for(state)
+        if not payload or not payload.get("frames"):
+            return
+        with self._pet_lock:
+            if self._pet_renderer is not None and self._pet_renderer.mode == "kitty":
+                self._pet_kitty_pending = payload["frames"][self._pet_frame_idx % len(payload["frames"])]
+
+    def _pet_flush_kitty_frame(self, app) -> None:
+        """Write a queued APC after prompt_toolkit has finished its screen diff."""
+        with self._pet_lock:
+            frame = self._pet_kitty_pending
+            self._pet_kitty_pending = ""
+        if not frame:
+            return
+        try:
+            # U=1/q=2 leaves the cursor and input stream untouched.
+            app.output.write_raw(frame)
+            app.output.flush()
+        except (OSError, ValueError):
+            pass
+
     def _pet_fragments(self):
         """Return prompt_toolkit FormattedText for the current pet frame, or []."""
         with self._pet_lock:
             if not self._pet_enabled or self._pet_renderer is None:
                 return []
             state = self._derive_pet_state()
+            kitty = self._pet_renderer.mode == "kitty"
+        if kitty:
+            payload = self._pet_kitty_payload_for(state)
+            if not payload:
+                return []
+            color = pet_render.kitty_color_hex(payload["image_id"])
+            frags = []
+            for y, row in enumerate(payload["placeholder"]):
+                if y:
+                    frags.append(("", "\n"))
+                frags.append((f"fg:{color}", row))
+            return frags
+        with self._pet_lock:
             grids = self._pet_frames_for(state)
             if not grids:
                 return []
@@ -6904,7 +7042,13 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         with self._pet_lock:
             if not self._pet_enabled or self._pet_renderer is None:
                 return 0
-            grids = self._pet_frames_for(self._derive_pet_state())
+            state = self._derive_pet_state()
+            kitty = self._pet_renderer.mode == "kitty"
+        if kitty:
+            payload = self._pet_kitty_payload_for(state)
+            return int(payload.get("rows", 0)) if payload else 0
+        with self._pet_lock:
+            grids = self._pet_frames_for(state)
             if not grids or not grids[0]:
                 return 0
             return len(grids[0])
@@ -6924,6 +7068,9 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 continue
             with self._pet_lock:
                 self._pet_frame_idx += 1
+                kitty = self._pet_renderer is not None and self._pet_renderer.mode == "kitty"
+            if kitty:
+                self._pet_queue_kitty_frame()
             app = getattr(self, "_app", None)
             if app is not None:
                 try:
@@ -6939,6 +7086,10 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         if self._pet_anim_running:
             return
         self._pet_resolve_config()
+        with self._pet_lock:
+            kitty = self._pet_enabled and self._pet_renderer is not None and self._pet_renderer.mode == "kitty"
+        if kitty:
+            self._pet_queue_kitty_frame()
         self._pet_anim_running = True
         self._pet_anim_thread = threading.Thread(target=self._pet_anim_loop, daemon=True)
         self._pet_anim_thread.start()
@@ -17741,6 +17892,13 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._agent_running = False
         self._pending_input = queue.Queue()     # For normal input (commands + new queries)
         self._interrupt_queue = queue.Queue()   # For messages typed while agent is running
+        # Seeded -q handoff: main() can't put directly into _pending_input
+        # (this reinit would discard it), so the seeded first message rides
+        # in on an attribute and is enqueued into the fresh queue here.
+        _seed_msg = getattr(self, "_seeded_first_message", None)
+        if _seed_msg is not None:
+            self._seeded_first_message = None
+            self._pending_input.put(_seed_msg)
         # See constructor note. Mirrored here for the run() path that skips
         # the earlier __init__ branch.
         self._last_turn_interrupted = False
@@ -19426,10 +19584,10 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             wrap_lines=True,
         )
 
-        # Petdex mascot — right-aligned half-block sprite above the prompt,
-        # mirroring the TUI's PetPane. Collapses to height 0 when no pet is
-        # enabled, so it's a no-op for everyone else. The _pet_anim_loop thread
-        # advances frames + invalidates; align=RIGHT pins it to the edge.
+        # Petdex mascot — right-aligned Kitty placeholder or half-block sprite
+        # above the prompt. Collapses to height 0 when no pet is enabled.
+        # The animation thread queues virtual Kitty frames; after_render
+        # writes them out-of-band while prompt_toolkit owns the placeholder grid.
         self._pet_widget = Window(
             content=FormattedTextControl(self._pet_fragments),
             height=self._pet_widget_height,
@@ -20216,7 +20374,17 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         # in _strip_leaked_terminal_responses still guards residual leaks.
         _cpr_disabled_output = _select_classic_cli_pt_output(sys.stdout)
 
-        # Create the application
+        # Kitty placeholders encode their image id in exact foreground RGB, so
+        # placeholder-capable terminals (kitty/Ghostty) use 24-bit color for
+        # the whole prompt_toolkit application — quantizing only that pane
+        # is not supported. WezTerm is excluded: it is not placeholder-capable.
+        # ColorDepth is imported here (not at module load) so tests that stub
+        # ``prompt_toolkit`` as a MagicMock can still import cli.
+        color_depth_kw = {}
+        if pet_render.supports_kitty_placeholders():
+            from prompt_toolkit.output import ColorDepth
+
+            color_depth_kw = {"color_depth": ColorDepth.DEPTH_24_BIT}
         app = Application(
             layout=layout,
             key_bindings=kb,
@@ -20224,6 +20392,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             full_screen=False,
             mouse_support=False,
             **({"output": _cpr_disabled_output} if _cpr_disabled_output is not None else {}),
+            **color_depth_kw,
             # Read from display.cli_refresh_interval (default 0 = disabled).
             # When non-zero, prompt_toolkit redraws the UI on this cadence
             # during idle, keeping wall-clock status-bar read-outs ticking.
@@ -20245,6 +20414,7 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             **({'cursor': _STEADY_CURSOR} if _STEADY_CURSOR is not None else {}),
         )
         _disable_prompt_toolkit_cpr_warning(app)
+        app.after_render += self._pet_flush_kitty_frame
         self._app = app  # Store reference for clarify_callback
 
         # ── Fix ghost status-bar lines on terminal resize ──────────────
@@ -20376,6 +20546,19 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     if is_voice_input:
                         user_input = user_input.text
 
+                    # Seeded -q prompts arrive wrapped in _SeededQueryMessage:
+                    # arbitrary launcher/script text that must be submitted
+                    # LITERALLY — skip slash routing, ! shell dispatch, and
+                    # file-drop detection for this one message.
+                    is_seeded_query = isinstance(user_input, _SeededQueryMessage)
+                    if is_seeded_query:
+                        seeded = user_input
+                        user_input = (
+                            (seeded.text, seeded.images)
+                            if seeded.images
+                            else seeded.text
+                        )
+
                     if not user_input:
                         continue
 
@@ -20403,8 +20586,13 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                         continue
                     
                     # Check for commands — but detect dragged/pasted file paths first.
-                    # See _detect_file_drop() for details.
-                    _file_drop = _detect_file_drop(user_input) if isinstance(user_input, str) else None
+                    # See _detect_file_drop() for details. Seeded -q prompts are
+                    # literal text: no file-drop detection, no !/slash dispatch.
+                    _file_drop = (
+                        _detect_file_drop(user_input)
+                        if isinstance(user_input, str) and not is_seeded_query
+                        else None
+                    )
                     if _file_drop:
                         _drop_path = _file_drop["path"]
                         _remainder = _file_drop["remainder"]
@@ -20436,12 +20624,18 @@ class NastechCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     # turn is spent. See handle_bang_shell().
                     if (
                         not _file_drop
+                        and not is_seeded_query
                         and isinstance(user_input, str)
                         and self.handle_bang_shell(user_input)
                     ):
                         continue
 
-                    if not _file_drop and isinstance(user_input, str) and _looks_like_slash_command(user_input):
+                    if (
+                        not _file_drop
+                        and not is_seeded_query
+                        and isinstance(user_input, str)
+                        and _looks_like_slash_command(user_input)
+                    ):
                         _cprint(f"\n⚙️  {user_input}")
                         try:
                             if not self.process_command(user_input):
@@ -21045,6 +21239,7 @@ def _run_kanban_goal_loop_q(cli: "NastechCLI", first_response: str) -> None:
 def main(
     query: str = None,
     q: str = None,
+    oneshot: bool = False,
     image: str = None,
     toolsets: str = None,
     skills: str | list[str] | tuple[str, ...] = None,
@@ -21073,8 +21268,12 @@ def main(
     Nastech Agent CLI - Interactive AI Assistant
     
     Args:
-        query: Single query to execute (then exit). Alias: -q
+        query: Query to run. On a real TTY this seeds an interactive session
+            (submitted literally as the first turn); with --oneshot/-Q or a
+            non-TTY it answers and exits. Alias: -q
         q: Shorthand for --query
+        oneshot: With -q: force the legacy answer-and-exit single-query mode
+            even on a TTY.
         image: Optional local image path to attach to a single query
         toolsets: Comma-separated list of toolsets to enable (e.g., "web,terminal")
         skills: Comma-separated or repeated list of skills to preload for the session
@@ -21404,6 +21603,21 @@ def main(
     
     # Handle single query mode
     if query or image:
+        # NEW DEFAULT (Aug 2026): on a real TTY, a -q/--image invocation
+        # seeds a normal interactive session with the prompt as the first
+        # turn, submitted LITERALLY (no slash/! dispatch). Legacy
+        # answer-and-exit behavior is kept for --oneshot, -Q, and every
+        # non-TTY invocation (kanban/cron/pipes) — see
+        # _should_seed_interactive().
+        if _should_seed_interactive(query, image, quiet, oneshot):
+            seeded_query, seeded_images = _collect_query_images(query, image)
+            logger.info(
+                "Seeding interactive session with -q prompt (%d chars, %d images)",
+                len(seeded_query or ""), len(seeded_images),
+            )
+            cli._seeded_first_message = _SeededQueryMessage(seeded_query, seeded_images)
+            cli.run()
+            return
         # One-shot mode: no between-turns MCP late-binding refresh, so the
         # agent must wait the full MCP cold-start bound before its first
         # (and only) tool snapshot. See #51316.

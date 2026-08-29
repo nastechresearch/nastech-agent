@@ -187,12 +187,14 @@ import { createFirstRunSetupGate } from './first-run-setup-gate'
 import { registerFsIpc } from './fs-ipc'
 import {
   filenameFromContentDisposition,
+  fsPumpDeps,
   gatewayFilePath,
   gatewayFileRequestPaths,
   isNotFoundError,
   parseDataUrlToBuffer,
   pumpStreamToFile,
-  resolveGatewayFileBackend
+  resolveGatewayFileBackend,
+  writeBufferToFile
 } from './gateway-file-download'
 import { probeGatewayWebSocket } from './gateway-ws-probe'
 import { registerGitIpc } from './git-ipc'
@@ -4634,8 +4636,7 @@ function createActiveBackend(backendArgs) {
 function resolveNastechBackend(backendArgs) {
   // 1. Explicit override -- NASTECH_DESKTOP_NASTECH_ROOT points at a developer
   //    checkout. Honour it as-is (no bootstrap; the user is driving).
-  const overrideRoot =
-    process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
+  const overrideRoot = process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
 
   if (overrideRoot && isNastechSourceRoot(overrideRoot)) {
     const backend = createPythonBackend(overrideRoot, `Nastech source at ${overrideRoot}`, backendArgs)
@@ -7710,10 +7711,9 @@ async function finalizeGatewayDownload(res, statusCode, headers, ctx: any = {}) 
   }
 
   try {
-    await pumpStreamToFile(res, result.filePath, {
-      createWriteStream: (destPath: string) => fs.createWriteStream(destPath),
-      unlink: (destPath: string) => fs.promises.unlink(destPath)
-    })
+    // Failure-atomic: exclusive temp create beside the destination, rename into
+    // place only once the body is complete (#96597).
+    await pumpStreamToFile(res, result.filePath, fsPumpDeps())
   } catch (error) {
     ctx.abort?.()
     throw error
@@ -7865,7 +7865,9 @@ async function saveGatewayFileViaDataUrl(
     return { canceled: true, saved: false }
   }
 
-  await fs.promises.writeFile(result.filePath, buffer)
+  // Same failure-atomic contract as the streaming path: a direct writeFile
+  // truncates an existing destination before the write completes (#96597).
+  await writeBufferToFile(buffer, result.filePath, fsPumpDeps())
 
   return { path: result.filePath, saved: true }
 }
@@ -13534,6 +13536,11 @@ function spawnHudWindow(sessionId, profile) {
     // `nastech:hud:set-bounds`, which flips resizable on for the call — the
     // same pattern the pet overlay uses for its wheel-scale.
     resizable: false,
+    // macOS AppKit's constrainFrameRect clamps setBounds to the current
+    // display unless this is on. The HUD is moved by renderer-driven
+    // setBounds (not a native titlebar drag), so without it the bar cannot
+    // be dragged onto another monitor. No-op on Windows/Linux.
+    enableLargerThanScreen: true,
     movable: true,
     minimizable: false,
     maximizable: false,

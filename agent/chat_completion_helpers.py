@@ -513,15 +513,9 @@ def estimate_request_context_tokens(api_payload: Any) -> int:
 
 
 def _is_openai_codex_backend(agent) -> bool:
-    base_url_lower = str(getattr(agent, "_base_url_lower", "") or "")
-    base_url_hostname = str(getattr(agent, "_base_url_hostname", "") or "")
-    return (
-        getattr(agent, "provider", None) == "openai-codex"
-        or (
-            base_url_hostname == "chatgpt.com"
-            and "/backend-api/codex" in base_url_lower
-        )
-    )
+    from agent.codex_responses_adapter import classify_responses_route
+
+    return classify_responses_route(agent).is_codex_backend
 
 
 def openai_codex_stale_timeout_floor(est_tokens: int) -> float:
@@ -964,6 +958,7 @@ def _dispatch_nonstreaming_api_request(agent, api_kwargs: dict, *, make_client):
             invalidate_runtime_client,
             is_stale_connection_error,
             normalize_converse_response,
+            recover_from_cache_point_rejection,
         )
         region = api_kwargs.pop("__bedrock_region__", "us-east-1")
         api_kwargs.pop("__bedrock_converse__", None)
@@ -971,6 +966,15 @@ def _dispatch_nonstreaming_api_request(agent, api_kwargs: dict, *, make_client):
         try:
             raw_response = client.converse(**api_kwargs)
         except Exception as _bedrock_exc:
+            # A model that refuses cachePoint in one section (Nova rejects it
+            # inside toolConfig.tools, #97281) fails every turn otherwise —
+            # drop that marker and resend before surfacing the error.
+            _retry_kwargs = recover_from_cache_point_rejection(
+                _bedrock_exc, api_kwargs
+            )
+            if _retry_kwargs is not None:
+                raw_response = client.converse(**_retry_kwargs)
+                return normalize_converse_response(raw_response)
             # Evict the cached client on stale-connection failures
             # so the outer retry loop builds a fresh client/pool.
             if is_stale_connection_error(_bedrock_exc):
@@ -1878,18 +1882,11 @@ def build_api_kwargs(agent, api_messages: list, tools_for_api: list | None = Non
 
     if agent.api_mode == "codex_responses":
         _ct = agent._get_transport()
-        is_github_responses = (
-            base_url_host_matches(agent.base_url, "models.github.ai")
-            or base_url_host_matches(agent.base_url, "githubcopilot.com")
+        from agent.codex_responses_adapter import classify_responses_route
+
+        is_codex_backend, is_xai_responses, is_github_responses = (
+            classify_responses_route(agent)
         )
-        is_codex_backend = (
-            agent.provider == "openai-codex"
-            or (
-                agent._base_url_hostname == "chatgpt.com"
-                and "/backend-api/codex" in agent._base_url_lower
-            )
-        )
-        is_xai_responses = agent.provider in {"xai", "xai-oauth"} or agent._base_url_hostname == "api.x.ai"
         _msgs_for_codex = agent._prepare_messages_for_non_vision_model(api_messages)
 
         # Native server-side compaction (gpt-5.6 on direct OpenAI API /
@@ -3451,6 +3448,7 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                     is_stale_connection_error,
                     is_streaming_access_denied_error,
                     normalize_converse_response,
+                    recover_from_cache_point_rejection,
                     stream_converse_with_callbacks,
                 )
                 intercepted_events = []
@@ -3464,6 +3462,17 @@ def interruptible_streaming_api_call(agent, api_kwargs: dict, *, on_first_delta=
                     try:
                         raw_response = client.converse_stream(**final_kwargs)
                     except Exception as _bedrock_exc:
+                        # Bedrock refuses a cachePoint block in one section for
+                        # some families (Nova: toolConfig.tools, #97281) and
+                        # fails the whole request. Drop that marker and reopen
+                        # the stream inside the same Relay attempt.
+                        _retry_kwargs = recover_from_cache_point_rejection(
+                            _bedrock_exc, final_kwargs
+                        )
+                        if _retry_kwargs is not None:
+                            return client.converse_stream(**_retry_kwargs).get(
+                                "stream", []
+                            )
                         # InvokeModel-only policies cannot open a stream. Keep
                         # the fallback inside the same managed Relay attempt so
                         # the real provider request and terminal response still
