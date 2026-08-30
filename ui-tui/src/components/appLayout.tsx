@@ -1,8 +1,8 @@
 // Importing the apps barrel registers the reference widget apps at startup.
 import '../sdk/apps/index.js'
 
-import { useStore } from '@nanostores/react'
 import { AlternateScreen, Box, NoSelect, ScrollBox, Text } from '@nastech/ink'
+import { useStore } from '@nanostores/react'
 import { Fragment, memo, useEffect, useMemo, useRef } from 'react'
 
 import { useGateway } from '../app/gatewayContext.js'
@@ -506,6 +506,7 @@ const StatusRulePane = memo(function StatusRulePane({
         sessionStartedAt={status.sessionStartedAt}
         sessionTitle={status.sessionTitle}
         status={ui.status}
+        statusBarFields={ui.statusBarFields}
         statusColor={status.statusColor}
         t={ui.theme}
         turnStartedAt={status.turnStartedAt}

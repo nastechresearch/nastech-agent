@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   nastech:
     tags: [skills, authoring, nastech-agent, conventions, skill-md]
-    related_skills: [plan, requesting-code-review]
+    related_skills: [requesting-code-review]
 ---
 
 # Authoring Nastech-Agent Skills (in-repo)

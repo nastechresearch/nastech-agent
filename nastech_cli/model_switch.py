@@ -620,6 +620,7 @@ class ModelSwitchResult:
     api_key: str = ""
     base_url: str = ""
     api_mode: str = ""
+    request_overrides: Optional[dict] = None
     error_message: str = ""
     warning_message: str = ""
     provider_label: str = ""
@@ -1496,6 +1497,7 @@ def switch_model(
     from nastech_cli.runtime_provider import resolve_runtime_provider
 
     resolved_alias = ""
+    request_overrides: dict = {}
     new_model = raw_input.strip()
     target_provider = current_provider
     resolved_moa_preset = False
@@ -2183,6 +2185,22 @@ def switch_model(
     if nastech_warn:
         warnings.append(nastech_warn)
 
+    # Carry the switched provider's request_overrides (e.g. a custom_providers
+    # ``extra_body`` such as chat_template_kwargs) so a ``/model`` switch to a
+    # custom provider applies it on the gateway, matching the default-provider
+    # path. resolve_runtime_provider surfaces these for named custom providers.
+    request_overrides = None
+    try:
+        from nastech_cli.runtime_provider import (
+            _get_named_custom_provider,
+            _custom_provider_request_overrides,
+        )
+        _cp_for_ro = _get_named_custom_provider(target_provider)
+        if _cp_for_ro:
+            request_overrides = _custom_provider_request_overrides(_cp_for_ro) or None
+    except Exception:
+        request_overrides = None
+
     # --- Build result ---
     return ModelSwitchResult(
         success=True,
@@ -2192,6 +2210,7 @@ def switch_model(
         api_key=api_key,
         base_url=base_url,
         api_mode=api_mode,
+        request_overrides=dict(request_overrides or {}),
         warning_message=" | ".join(warnings) if warnings else "",
         provider_label=provider_label,
         resolved_via_alias=resolved_alias,

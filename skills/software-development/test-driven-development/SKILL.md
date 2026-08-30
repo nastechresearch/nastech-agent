@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   nastech:
     tags: [testing, tdd, development, quality, red-green-refactor]
-    related_skills: [systematic-debugging, plan, subagent-driven-development]
+    related_skills: [systematic-debugging, subagent-driven-development]
 ---
 
 # Test-Driven Development (TDD)

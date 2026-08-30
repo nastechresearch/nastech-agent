@@ -4,9 +4,9 @@ import type {
   CustomEndpointUpdate,
   CustomEndpointValidationResponse,
   EnvVarInfo,
-  LogsResponse,
   NastechConfig,
   NastechConfigRecord,
+  LogsResponse,
   OAuthPollResponse,
   OAuthProvidersResponse,
   OAuthStartResponse,
@@ -93,6 +93,18 @@ export function getNastechConfigSchema(profile?: null | string): Promise<ConfigS
 export function saveNastechConfig(config: NastechConfigRecord, profile?: null | string): Promise<{ ok: boolean }> {
   return nastechApi<{ ok: boolean }>({
     ...profileScoped(profile),
+    path: '/api/config',
+    method: 'PUT',
+    body: { config }
+  })
+}
+
+/** Capability-scoped counterpart of saveNastechConfig — writes the config of
+ *  the profile/connection the Capabilities scope selector points at (possibly
+ *  on another registered gateway), mirroring getNastechConfigRecord. */
+export function saveNastechConfigRecord(config: NastechConfigRecord, profile?: ProfileScope): Promise<{ ok: boolean }> {
+  return window.nastechDesktop.api<{ ok: boolean }>({
+    ...capabilityScoped(profile),
     path: '/api/config',
     method: 'PUT',
     body: { config }
