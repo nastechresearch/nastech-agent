@@ -173,14 +173,43 @@ browser:
 When enabled, Nastech copies your default browser's **active** profile — the one
 you actually browse (`Local State → profile.last_used`), with its cookies, saved
 logins, and preferences — into a managed snapshot under
-`~/.nastech/browser-profile/<browser>/`, then drives that snapshot with its
-packaged Chromium. Your live browser profile is **never opened directly**: the
+`~/.nastech/browser-profile/<browser>/`, then launches your **real browser
+binary** on that snapshot and attaches its browsing engine to it. Launching the
+real binary (instead of a bundled Chromium with mock-keychain switches) is what
+keeps OS-encrypted cookies decryptable — on macOS, Chrome cookies are encrypted
+through the Keychain, and a mock-keychain launch would silently drop every one
+of them, opening signed out. Your live browser profile is **never opened
+directly**: the
 snapshot is a separate directory, so it doesn't fight your running browser for
 the profile lock and it sidesteps Chrome 136+'s block on remote-debugging the
 default profile directory. The auth files (cookies/logins/preferences) are
 re-synced from your real profile whenever a fresh session is launched, so logins
 you do in your own browser show up in the agent's session. Only the active
 profile is copied — other Chrome profiles are never snapshotted.
+
+The snapshot browser runs **headless** — it drives your profile in the
+background with no visible window and never steals focus, so you can keep
+working while the agent tweets, fills forms, or scrapes on your behalf.
+(Headless here uses Chrome's *new* headless mode, which reads your normal
+cookie store, so your logins still load.) If you'd rather watch it work, the
+same [headed-mode](#headed-mode-visible-browser-window) toggle applies —
+`browser.headed: true` (or `AGENT_BROWSER_HEADED=1`) opens a visible window for
+real-profile browsing too. On a display-less host (servers, CI) it always runs
+headless regardless.
+
+If your browser has several profiles (say a work profile and a personal one)
+and you don't want "whichever profile you touched last" deciding the agent's
+identity, pin the snapshot source explicitly:
+
+```yaml
+# ~/.nastech/config.yaml
+browser:
+  use_real_profile: true
+  real_profile_pin: "Profile 2"   # directory name under the browser's user-data dir
+```
+
+A pin naming a profile directory that doesn't exist fails closed with a
+fixable message — it never silently falls back to the last-used profile.
 
 When you turn the toggle back off, Nastech deletes the snapshot store
 (`~/.nastech/browser-profile/`) on the next browser use, so the copied
@@ -206,7 +235,7 @@ losing unsaved tabs), then retries. If the profile is still locked after that
 to fully quit the browser — it won't loop or kill again on its own.
 :::
 
-- **Supported browsers:** Chrome, Edge, Brave, Chromium (whichever is your OS
+- **Supported browsers:** Chrome, Edge, Brave, Brave Origin, Chromium (whichever is your OS
   default). A non-Chromium default (e.g. Firefox) fails closed with a clear
   message rather than guessing.
 - **Works on any backend.** On a local backend it's automatic once the toggle
@@ -217,7 +246,9 @@ to fully quit the browser — it won't loop or kill again on its own.
 - **Security framing:** this is a consent-gated convenience, not an isolation
   boundary. A page the agent visits runs with your real logins, so only enable
   it when you want the agent acting as you. Off by default.
-- **Desktop:** toggle it in **Settings → Browser → Use My Real Browser Profile**.
+- **Desktop:** toggle it in **Capabilities → Tools → Browser → Use My Real
+  Browser Profile** (the switch sits above the backend options), or in
+  Settings → Config under the `browser` section.
 
 ### Camofox local mode
 
@@ -442,7 +473,7 @@ In the CLI, use:
 /browser disconnect              # Detach and return to cloud/local mode
 ```
 
-If a browser isn't already running with remote debugging, Nastech will attempt to auto-launch a supported Chromium-family browser with `--remote-debugging-port=9222`. Detection includes Brave, Google Chrome, Chromium, and Microsoft Edge, with common Linux install paths such as `/opt/brave-bin/brave` and `/snap/bin/brave`.
+If a browser isn't already running with remote debugging, Nastech will attempt to auto-launch a supported Chromium-family browser with `--remote-debugging-port=9222`. Detection includes Brave, Brave Origin/Nightly, Google Chrome, Chromium, and Microsoft Edge, with common Linux install paths and binary names such as `brave-origin`, `brave-origin-nightly`, `/opt/brave.com/brave-origin/brave-origin`, `/opt/brave.com/brave-origin-nightly/brave-origin`, `/opt/brave-bin/brave`, and `/snap/bin/brave`.
 
 :::tip
 To start a Chromium-family browser manually with CDP enabled, use a dedicated user-data-dir so the debug port actually comes up even if the browser is already running with your normal profile:

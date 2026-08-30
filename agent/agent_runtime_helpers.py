@@ -1486,6 +1486,7 @@ def try_recover_primary_transport(
             agent._transport_cache.clear()
         agent.api_key = rt["api_key"]
         agent._reasoning_echo_flag = rt.get("reasoning_echo_flag", False)
+        agent.request_overrides = dict(rt.get("request_overrides") or {})
 
         if agent.api_mode == "anthropic_messages":
             from agent.anthropic_adapter import build_anthropic_client
@@ -1748,6 +1749,7 @@ def restore_primary_runtime(agent) -> bool:
             agent._transport_cache.clear()
         agent.api_key = rt["api_key"]
         agent._reasoning_echo_flag = rt.get("reasoning_echo_flag", False)
+        agent.request_overrides = dict(rt.get("request_overrides") or {})
         agent._client_kwargs = dict(rt["client_kwargs"])
         agent._use_prompt_caching = rt["use_prompt_caching"]
         # Default to native layout when the restored snapshot predates the
@@ -2848,6 +2850,51 @@ def create_openai_client(agent, client_kwargs: dict, *, reason: str, shared: boo
     return client
 
 
+def _apply_switched_provider_request_overrides(agent, new_provider):
+    """Re-derive the switched-to provider's ``request_overrides`` onto a live agent.
+
+    A ``custom_providers`` entry can carry an ``extra_body`` (e.g.
+    ``chat_template_kwargs`` to toggle a local model's thinking). The gateway
+    rebuild path carries this via ``request_overrides``; an *in-place* swap
+    (CLI / TUI ``/model``) must re-derive it for the switched-to provider,
+    otherwise the previous provider's ``extra_body`` lingers.
+
+    The switched-to entry is matched by **provider key, base_url, and model** —
+    the same condition ``agent_init._merge_custom_provider_extra_body`` applies
+    at build time — via the shared ``_custom_provider_extra_body_for_agent``
+    matcher. Matching by name alone would let a *different* model selected at the
+    same named endpoint inherit an ``extra_body`` configured for another model.
+    A stale ``extra_body`` is always cleared when the switched-to provider/model
+    resolves none; non-provider overrides (``service_tier`` / ``speed`` from
+    ``/fast``) are preserved.
+    """
+    from agent.agent_init import _custom_provider_extra_body_for_agent
+
+    # Prefer the init-time cache (agent_init stores ``agent._custom_providers``
+    # right where it runs its own _merge_custom_provider_extra_body); fall back
+    # to a fresh load only if a caller built the agent without it.
+    custom_providers = getattr(agent, "_custom_providers", None)
+    if custom_providers is None:
+        try:
+            from nastech_cli.config import load_config, get_compatible_custom_providers
+            custom_providers = get_compatible_custom_providers(load_config())
+        except Exception:
+            custom_providers = []
+
+    new_extra_body = _custom_provider_extra_body_for_agent(
+        provider=new_provider,
+        model=getattr(agent, "model", "") or "",
+        base_url=getattr(agent, "base_url", "") or "",
+        custom_providers=custom_providers or [],
+    )
+
+    overrides = dict(getattr(agent, "request_overrides", {}) or {})
+    overrides.pop("extra_body", None)  # always drop the previous provider's extra_body
+    if new_extra_body:
+        overrides["extra_body"] = dict(new_extra_body)
+    agent.request_overrides = overrides
+
+
 def switch_model(agent, new_model, new_provider, api_key='', base_url='', api_mode=''):
     """Switch the model/provider in-place for a live agent.
 
@@ -3239,6 +3286,11 @@ def switch_model(agent, new_model, new_provider, api_key='', base_url='', api_mo
         "use_native_cache_layout": agent._use_native_cache_layout,
         "reasoning_config": dict(agent.reasoning_config) if getattr(agent, "reasoning_config", None) else None,
         "reasoning_echo_flag": getattr(agent, "_reasoning_echo_flag", False),
+        # Request-level overrides (extra_body etc.) must travel with the
+        # switched-to identity; without this, a post-switch transport
+        # recovery or fallback restore would resurrect the PRE-switch
+        # overrides via the stale init-time snapshot (#75091 seam).
+        "request_overrides": dict(getattr(agent, "request_overrides", {}) or {}),
         "compressor_model": getattr(_cc, "model", agent.model) if _cc else agent.model,
         "compressor_base_url": getattr(_cc, "base_url", agent.base_url) if _cc else agent.base_url,
         "compressor_api_key": getattr(_cc, "api_key", "") if _cc else "",
@@ -3277,6 +3329,13 @@ def switch_model(agent, new_model, new_provider, api_key='', base_url='', api_mo
         ]
     agent._fallback_chain = fallback_chain
     agent._fallback_model = fallback_chain[0] if fallback_chain else None
+
+    # Apply the switched-to provider's request_overrides (custom_providers
+    # extra_body, e.g. chat_template_kwargs). See helper for rationale.
+    try:
+        _apply_switched_provider_request_overrides(agent, new_provider)
+    except Exception:
+        logger.debug("switch_model: request_overrides re-derivation failed", exc_info=True)
 
     logger.info(
         "Model switched in-place: %s (%s) -> %s (%s)",

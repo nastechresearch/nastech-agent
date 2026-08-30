@@ -270,6 +270,14 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   setDisableF12: blocked => ipcRenderer.send('nastech:devtools:disable-f12', blocked),
   setPreviewShortcutActive: active => ipcRenderer.send('nastech:previewShortcutActive', Boolean(active)),
   openExternal: url => ipcRenderer.invoke('nastech:openExternal', url),
+  mcpOauth: {
+    // One-shot loopback listener for MCP OAuth against remote backends: bind
+    // on this machine, hand redirectUri to mcp.servers.oauth.start, then wait
+    // for the provider redirect and relay code/state via oauth.callback.
+    listen: () => ipcRenderer.invoke('nastech:mcp-oauth:listen'),
+    wait: (id, timeoutMs) => ipcRenderer.invoke('nastech:mcp-oauth:wait', id, timeoutMs),
+    cancel: id => ipcRenderer.invoke('nastech:mcp-oauth:cancel', id)
+  },
   openPreviewInBrowser: url => ipcRenderer.invoke('nastech:openPreviewInBrowser', url),
   reachPreviewUrl: url => ipcRenderer.invoke('nastech:preview:reach', url),
   setActiveConnectionRoute: route => ipcRenderer.send('nastech:connection:active-route', route),

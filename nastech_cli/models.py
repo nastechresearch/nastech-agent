@@ -641,16 +641,41 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
     # to https://dashscope-intl.aliyuncs.com/compatible-mode/v1 (OpenAI-compat)
     # or https://dashscope-intl.aliyuncs.com/apps/anthropic (Anthropic-compat).
     "alibaba": [
+        # Qwen 千问系列 (DashScope / Qwen Cloud)
+        "qwen3.8-max",
         "qwen3.7-max",
         "qwen3.7-plus",
         "qwen3.6-plus",
+        "qwen3.6-flash",
         "kimi-k2.5",
         "qwen3.5-plus",
         "qwen3-coder-plus",
         "qwen3-coder-next",
-        # Third-party models available on coding-intl
+        # Third-party models available on coding-intl / DashScope
+        "glm-5.2",
         "glm-5",
         "glm-4.7",
+        "deepseek-v4-pro",
+        "deepseek-v4-flash-0731",
+        "MiniMax-M2.5",
+    ],
+    # Alibaba DashScope (China) — same platform as alibaba, domestic endpoint
+    # (dashscope.aliyuncs.com); same catalog as the international tier.
+    "alibaba-cn": [
+        "qwen3.8-max",
+        "qwen3.7-max",
+        "qwen3.7-plus",
+        "qwen3.6-plus",
+        "qwen3.6-flash",
+        "kimi-k2.5",
+        "qwen3.5-plus",
+        "qwen3-coder-plus",
+        "qwen3-coder-next",
+        "glm-5.2",
+        "glm-5",
+        "glm-4.7",
+        "deepseek-v4-pro",
+        "deepseek-v4-flash-0731",
         "MiniMax-M2.5",
     ],
     # Alibaba Coding Plan — same platform as alibaba (DashScope coding-intl),
@@ -666,6 +691,57 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "glm-5",
         "glm-4.7",
         "MiniMax-M2.5",
+    ],
+    # Alibaba Coding Plan (China) — domestic coding endpoint
+    # (coding.dashscope.aliyuncs.com); same catalog as the international tier.
+    "alibaba-coding-plan-cn": [
+        "qwen3.7-plus",
+        "qwen3.6-plus",
+        "qwen3.5-plus",
+        "qwen3-max-2026-01-23",
+        "qwen3-coder-plus",
+        "qwen3-coder-next",
+        "kimi-k2.5",
+        "glm-5",
+        "glm-4.7",
+        "MiniMax-M2.5",
+    ],
+    # Alibaba Token Plan (Personal Edition) — dedicated token-plan endpoint
+    # (token-plan.ap-southeast-1.maas.aliyuncs.com), key tier `sk-sp-...`.
+    # Catalog verified against a live Token Plan subscription (2026-08-03).
+    "alibaba-token-plan": [
+        "qwen3.8-max-preview",
+        "qwen3.7-max",
+        "qwen3.7-plus",
+        "qwen3.6-plus",
+        "qwen3.6-flash",
+        "deepseek-v4-pro",
+        "deepseek-v4-flash",
+        "deepseek-v3.2",
+        "kimi-k2.7-code",
+        "kimi-k2.6",
+        "kimi-k2.5",
+        "glm-5.2",
+        "glm-5.1",
+        "glm-5",
+    ],
+    # Alibaba Token Plan (China) — domestic token-plan endpoint
+    # (token-plan.cn-beijing.maas.aliyuncs.com); same catalog as intl.
+    "alibaba-token-plan-cn": [
+        "qwen3.8-max-preview",
+        "qwen3.7-max",
+        "qwen3.7-plus",
+        "qwen3.6-plus",
+        "qwen3.6-flash",
+        "deepseek-v4-pro",
+        "deepseek-v4-flash",
+        "deepseek-v3.2",
+        "kimi-k2.7-code",
+        "kimi-k2.6",
+        "kimi-k2.5",
+        "glm-5.2",
+        "glm-5.1",
+        "glm-5",
     ],
     # Curated HF model list — only agentic models that map to OpenRouter defaults.
     "huggingface": [
@@ -1322,7 +1398,7 @@ PROVIDER_GROUPS: dict[str, tuple[str, str, list[str]]] = {
     "xai":      ("xAI Grok",        "Direct API or SuperGrok / Premium+ OAuth",        ["xai", "xai-oauth"]),
     "google":   ("Google Gemini",   "Google AI Studio (API key)",                     ["gemini"]),
     "openai":   ("OpenAI",          "ChatGPT/Codex subscription or direct OpenAI API", ["openai-codex", "openai-api"]),
-    "qwen":     ("Qwen",            "Qwen Cloud / DashScope, Coding Plan & Qwen CLI OAuth", ["alibaba", "alibaba-coding-plan", "qwen-oauth"]),
+    "qwen":     ("Qwen",            "Qwen Cloud / DashScope, Coding Plan, Token Plan & Qwen CLI OAuth", ["alibaba", "alibaba-cn", "alibaba-coding-plan", "alibaba-coding-plan-cn", "alibaba-token-plan", "alibaba-token-plan-cn", "qwen-oauth"]),
     "opencode": ("OpenCode",        "Zen pay-as-you-go, Go subscription, or free tier", ["opencode-zen", "opencode-go", "opencode-free"]),
     "copilot":  ("GitHub Copilot",  "GitHub token API or copilot --acp process",       ["copilot", "copilot-acp"]),
     "tencent":  ("Tencent Hy",      "Hy4 / Hy3 via TokenHub & TokenPlan", ["tencent-tokenhub", "tencent-tokenplan"]),
@@ -7059,6 +7135,41 @@ def validate_requested_model(
                         f"but exists in the curated catalog — accepted."
                     ),
                 }
+
+            # Nastech provider: also check the Portal's live
+            # /api/nastech/recommended-models feed. That feed can list a model
+            # (e.g. a newly-promoted free/paid recommendation) before it's
+            # been added to the hardcoded _PROVIDER_MODELS["nastech"] curated
+            # list or the docs-hosted catalog manifest has been rebuilt.
+            # `nastech chat` already accepts these models via
+            # union_with_portal_free/paid_recommendations() at model-list
+            # build time; this mirrors that same source of truth for the
+            # per-message /model validation path (messaging platform
+            # pickers, /model command), which previously only checked the
+            # curated catalog and rejected valid Portal-recommended models.
+            if normalized == "nastech":
+                try:
+                    portal_payload = fetch_nastech_recommended_models(
+                        _resolve_nastech_portal_url()
+                    )
+                    portal_model_names = {
+                        name.lower()
+                        for tier in ("freeRecommendedModels", "paidRecommendedModels")
+                        for entry in (portal_payload.get(tier) or [])
+                        if (name := _extract_model_name(entry))
+                    }
+                except Exception:
+                    portal_model_names = set()
+                if requested_for_lookup.lower() in portal_model_names:
+                    return {
+                        "accepted": True,
+                        "persist": True,
+                        "recognized": True,
+                        "message": (
+                            f"Note: `{requested}` was not found in the live /v1/models "
+                            f"listing but is a current Nastech Portal recommendation — accepted."
+                        ),
+                    }
 
         return {
             "accepted": False,
