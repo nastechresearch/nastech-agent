@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `cd2bd160579d5240e52d01e2f735da55ff4242ef`
+- upstream sha : `a9c783f21995723c812dcb2f8ae58bc6a4323e2f`
 - source       : `https://github.com/Nastechresearch/nastech-agent.git`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -31,9 +31,9 @@
 
 ## Brand
 
-- total files : 10750
-- renamed     : 1497 (folders and file names)
-- text-rewritten : 10652
+- total files : 10769
+- renamed     : 1499 (folders and file names)
+- text-rewritten : 10671
 - locked-copied  : 56
 - binary-copied  : 8
 - owned assets   : 34 (our logo/banner/mascot override upstream)
@@ -45,7 +45,7 @@
 
 ## Direct upstream tree delta
 
-- complete: +47 ~272 -4 ↪177
+- complete: +66 ~281 -4 ↪177
 - MODIFIED `.gitignore`
 - ADDED `SOUL.md`
 - MODIFIED `agent/agent_init.py`
@@ -64,12 +64,21 @@
 - MODIFIED `agent/turn_context.py`
 - MODIFIED `apps/desktop/electron/mcp-oauth-callback-ipc.test.ts`
 - MODIFIED `apps/desktop/src/global.d.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/group-chat-view.tsx`
+- ADDED `apps/desktop/src/plugins/nastech-bots/group-hold-status.test.tsx`
+- ADDED `apps/desktop/src/plugins/nastech-bots/group-hold-status.tsx`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/i18n.ts`
 - MODIFIED `cli-config.yaml.example`
 - MODIFIED `cli.py`
 - ADDED `contributors/emails/1290231+steveonjava@users.noreply.github.com`
 - ADDED `contributors/emails/ijnotion@pm.me`
+- ADDED `contributors/emails/itskaism@users.noreply.github.com`
+- ADDED `contributors/emails/yozamono@gmail.com`
 - MODIFIED `evals/compaction/results/SCORECARD-2026-08-15.md`
 - MODIFIED `evals/compaction/runner.py`
+- ADDED `gateway/hosted_room_discussion.py`
+- ADDED `gateway/hosted_room_driver.py`
+- ADDED `gateway/hosted_room_policy_checkpoint.py`
 - ADDED `gateway/hosted_room_replicas.py`
 - ADDED `gateway/hosted_rooms.py`
 - MODIFIED `gateway/run.py`
@@ -296,14 +305,20 @@
 - MODIFIED `tests/agent/test_system_prompt.py`
 - MODIFIED `tests/gateway/test_agent_cache.py`
 - ADDED `tests/gateway/test_codex_hygiene_compaction.py`
+- ADDED `tests/gateway/test_hosted_room_discussion.py`
+- ADDED `tests/gateway/test_hosted_room_driver.py`
+- ADDED `tests/gateway/test_hosted_room_gateway_lifecycle.py`
+- ADDED `tests/gateway/test_hosted_room_local_boundary.py`
 - ADDED `tests/gateway/test_hosted_room_replicas.py`
 - ADDED `tests/gateway/test_hosted_rooms.py`
+- ADDED `tests/gateway/test_hosted_rooms_read_path.py`
 - MODIFIED `tests/gateway/test_model_switch_persistence.py`
 - MODIFIED `tests/gateway/test_session_hygiene.py`
 - MODIFIED `tests/gateway/test_session_model_override_persistence.py`
 - ADDED `tests/gateway/test_subagent_failure_notice.py`
 - ADDED `tests/nastech_cli/test_install_identity.py`
 - MODIFIED `tests/nastech_cli/test_runtime_provider_resolution.py`
+- MODIFIED `tests/nastech_cli/test_web_server_boot_handshake.py`
 - MODIFIED `tests/plugins/platforms/photon/test_inbound.py`
 - MODIFIED `tests/run_agent/test_413_compression.py`
 - MODIFIED `tests/run_agent/test_fallback_reasoning_override.py`
@@ -321,22 +336,35 @@
 - ADDED `tests/test_compaction_prompt_rebuild.py`
 - MODIFIED `tests/test_compaction_tool_refresh.py`
 - MODIFIED `tests/tools/test_approval.py`
+- MODIFIED `tests/tools/test_async_delegation.py`
+- MODIFIED `tests/tools/test_bot_mode_dm.py`
 - MODIFIED `tests/tools/test_cron_approval_mode.py`
 - MODIFIED `tests/tools/test_delegate.py`
 - ADDED `tests/tools/test_delegate_capability_inheritance.py`
 - MODIFIED `tests/tools/test_process_registry.py`
 - MODIFIED `tests/tools/test_skill_manager_tool.py`
 - MODIFIED `tests/tools/test_skills_tool.py`
+- MODIFIED `tests/tui_gateway/test_auto_continue.py`
 - MODIFIED `tests/tui_gateway/test_compression_config_hot_reload.py`
 - ADDED `tests/tui_gateway/test_groups_methods.py`
 - ADDED `tests/tui_gateway/test_groups_replication_methods.py`
+- ADDED `tests/tui_gateway/test_hosted_room_driver_runtime.py`
+- ADDED `tests/tui_gateway/test_hosted_room_prompt_fence.py`
+- ADDED `tests/tui_gateway/test_hosted_room_server_rpc.py`
+- ADDED `tests/tui_gateway/test_hosted_room_service.py`
 - MODIFIED `tools/approval.py`
+- MODIFIED `tools/bot_mode_dm.py`
 - MODIFIED `tools/delegate_tool.py`
 - MODIFIED `tools/process_registry.py`
 - MODIFIED `tools/skill_manager_tool.py`
 - MODIFIED `tools/skills_tool.py`
+- ADDED `tui_gateway/hosted_room_driver.py`
+- ADDED `tui_gateway/hosted_room_server_rpc.py`
+- ADDED `tui_gateway/hosted_room_service.py`
 - MODIFIED `tui_gateway/methods_bot_relay.py`
 - ADDED `tui_gateway/methods_groups.py`
+- MODIFIED `tui_gateway/methods_prompt.py`
+- MODIFIED `tui_gateway/methods_session.py`
 - MODIFIED `tui_gateway/server.py`
 - MODIFIED `ui-tui/src/__tests__/appChromeStatusRule.test.tsx`
 - MODIFIED `website/docs/developer-guide/context-compression-and-caching.md`
@@ -549,17 +577,17 @@
 
 ## Scan
 
-10804 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10682]
+10823 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10701]
 
 
 ## Diff
 
-1408 renamed, 0 rewritten, 8993 identical, 61 locked, 0 missing, 34 owned, 254 reconciled
+1410 renamed, 0 rewritten, 9010 identical, 61 locked, 0 missing, 34 owned, 254 reconciled
 
 
 ## Fork check (vs nastech-agent)
 
-- 10308 identical, 271 updated (+0/-0 lines), 224 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+- 10299 identical, 280 updated (+0/-0 lines), 243 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - features: fork 51 -> branded 51
 

@@ -1,7 +1,7 @@
 # Nastech Gate Report #1
 
-- upstream sha : `cd2bd160579d5240e52d01e2f735da55ff4242ef`
-- parity       : 10750/10750 (100.0%), 64 locked-for-review
+- upstream sha : `a9c783f21995723c812dcb2f8ae58bc6a4323e2f`
+- parity       : 10769/10769 (100.0%), 64 locked-for-review
 - decision     : **PASS**
 
 ## Failed files
@@ -14,7 +14,7 @@ _none — every file is byte-identical to upstream after branding._
 
 ## Fork consistency (vs nastech-agent)
 
-10308 identical, 271 updated (+0/-0 lines), 224 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+10299 identical, 280 updated (+0/-0 lines), 243 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - identical files must stay byte-identical so the PR shows clean new commits
 - updated files are the real upstream delta; added lines must be brand-clean

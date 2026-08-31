@@ -418,9 +418,7 @@ async function driveAction(
 /** Flag a click the overlay intercepted, which would otherwise look like a page
  *  that simply ignored it. */
 function hitNote(hit?: { tag: string; trusted: boolean } | null): string | undefined {
-  return hit && hit.tag === 'NASTECH-WATCH'
-    ? 'The action overlay intercepted the click instead of the page.'
-    : undefined
+  return hit && hit.tag === 'NASTECH-WATCH' ? 'The action overlay intercepted the click instead of the page.' : undefined
 }
 
 /** How far a screenful is, whether there is anywhere to go, and a spot to wheel

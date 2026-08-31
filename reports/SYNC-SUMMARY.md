@@ -6,8 +6,8 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 59 commits affecting 1408 files.
-- **Source revision:** `cd2bd160579d`.
+- **Changes incorporated:** 68 commits affecting 1410 files.
+- **Source revision:** `a9c783f21995`.
 - **Previous source revision:** `26350357d76e`.
 
 ## Technical coverage
@@ -15,21 +15,21 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 - **.gitignore/:** 1 changed files.
 - **SOUL.md/:** 1 changed files.
 - **agent/:** 47 changed files.
-- **apps/:** 2 changed files.
+- **apps/:** 6 changed files.
 - **cli-config.yaml.example/:** 1 changed files.
 - **cli.py/:** 2 changed files.
-- **contributors/:** 2 changed files.
+- **contributors/:** 4 changed files.
 - **evals/:** 2 changed files.
-- **gateway/:** 15 changed files.
-- **nastech_cli/:** 10 changed files.
+- **gateway/:** 20 changed files.
+- **nastech_cli/:** 11 changed files.
 - **nastech_state.py/:** 1 changed files.
 - **optional-skills/:** 153 changed files.
 - **plugins/:** 10 changed files.
 - **run_agent.py/:** 4 changed files.
 - **skills/:** 38 changed files.
-- **tests/:** 74 changed files.
-- **tools/:** 11 changed files.
-- **tui_gateway/:** 6 changed files.
+- **tests/:** 92 changed files.
+- **tools/:** 14 changed files.
+- **tui_gateway/:** 15 changed files.
 - **ui-tui/:** 1 changed files.
 - **website/:** 208 changed files.
 
@@ -37,6 +37,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ### New capabilities
 
+- feat(bot-mode): run same-gateway Group Chats without Desktop
 - feat(delegation): surface config-level model_not_found notice in delegation batch reports
 - feat(bot-mode): Group Chats survive the authority gateway dying — log replication and fenced takeover
 - feat(bot-mode): replay pages carry authority lineage; pin byte-bounded replay
@@ -47,6 +48,11 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ### Reliability and fixes
 
+- fix(desktop): surface persistent group holds
+- fix(bot-mode): avoid inherited stdin on Windows
+- fix(tools): surface config-level model_not_found notices in delegation batch reports
+- fix(delegation): report failed children as failed, not completed
+- fix(bot-mode): cancel re-routes on worker races instead of failing disband
 - fix(delegation): pin failure-status edge cases and document exit_reason enum
 - fix(delegation): report provider-failed subagents as failed, not completed/max_iterations
 - fix(compression): keep estimate seam positional-compatible for monkeypatched estimators
@@ -54,15 +60,13 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 - fix: failed subagents now surface a clean error to the user (CLI + gateway)
 - fix(gateway): compact the live codex thread instead of no-op mirror rewrites (#73503)
 - fix(compression): scope worker-teardown grace to the total-ceiling path
-- fix(compression): transiently-blocked no-op is a soft defer, never exhaustion (#97488)
-- fix(compression): stamp durable backoff rows with strategy and failure kind (#96775 #97488)
-- fix(compression): tear down cancelled workers with bounded grace and discard superseded attempts (#97488)
-- fix(compression): persist stall-interrupted backoff on pre-commit cancel (#96775)
-- fix(compression): report total ceiling expiry accurately
-- 25 additional reliability and fixes updates are included in this verified snapshot.
+- 30 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Improvements
 
+- chore: map contributor email for @sambai-dev
+- chore: map contributor email for itskaism
+- test: adapt #97667 rejection-notice tests to the config-reading implementation on main
 - test: drop duplicate failed-flag regression test superseded by TestDelegateFailedChildStatus
 - test(compression): drop moot digest-loop tests; match stamped backoff errors
 - test(compression): pin attempt-lifecycle contracts (#97488 #96775)
@@ -72,10 +76,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 - refactor(skills): clarify _find_skill docstring, narrow _local_root except
 - refactor(skills): short-circuit bare-name match before resolve machinery
 - test: cron ContextVar-masking test now uses a chat platform
-- chore: map steveonjava contributor email (PR #94036/#97292 salvage)
-- chore: map ijnotion@pm.me -> james47kjv (PR #98008 salvage)
-- test(native-compaction): cover image-only retention with an interleaved assistant message
-- 3 additional improvements updates are included in this verified snapshot.
+- 6 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
