@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   nastech:
     tags: [Research, Arxiv, Papers, Academic, Science, API]
-    related_skills: [ocr-and-documents]
+    related_skills: [pdf]
 ---
 
 # arXiv Research

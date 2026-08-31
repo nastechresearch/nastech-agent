@@ -15,12 +15,12 @@ Use, configure, theme, extend, and orchestrate Nastech Agent.
 | | |
 |---|---|
 | Source | Bundled (installed by default) |
-| Path | `skills/autonomous-ai-agents/nastech-agent` |
-| Version | `3.1.0` |
+| Path | `skills/autonomous-ai-agents\nastech-agent` |
+| Version | `3.2.0` |
 | Author | Nastech Agent + Teknium |
 | License | MIT |
 | Platforms | linux, macos, windows |
-| Tags | `nastech`, `setup`, `configuration`, `multi-agent`, `spawning`, `cli`, `gateway`, `themes`, `skins`, `desktop-plugins`, `tui-widgets`, `petdex`, `development` |
+| Tags | `nastech`, `setup`, `configuration`, `multi-agent`, `spawning`, `cli`, `gateway`, `bots`, `bot-mode`, `features`, `themes`, `skins`, `desktop-plugins`, `tui-widgets`, `petdex`, `development` |
 | Related skills | [`claude-code`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-claude-code), [`codex`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex), [`opencode`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-opencode) |
 
 ## Reference: full SKILL.md
@@ -51,11 +51,13 @@ What makes Nastech different:
 
 This skill is a concise operating guide, not the complete source of truth for every Nastech feature. If a Nastech feature, command, or setting is not mentioned here or in a reference, do not treat that absence as evidence that it does not exist. Check the live repository and official docs before giving a negative answer.
 
-Good verification targets:
+Good verification targets, cheapest first:
 
+- **Every shipped feature, one line each: https://nastechresearch.github.io/nastech-agent/docs/llms.txt.** Start here for any "can Nastech do X?" or "how do I do X?" — it indexes the entire documentation set with a link to the page that answers. It is generated from the docs tree on every build, so it is never behind the product. Fetch it with `web_extract`, or `curl -s https://nastechresearch.github.io/nastech-agent/docs/llms.txt` when web tools are off. The whole documentation set in one file is at `/docs/llms-full.txt`.
 - CLI commands: `nastech --help`, `nastech <command> --help`, and `nastech_cli/main.py`
-- User documentation: https://nastechresearch.github.io/nastech-agent/docs/
 - Source tree: https://github.com/NastechResearch/nastech-agent
+
+Never answer "Nastech can't do that" from memory. Nastech ships far more than this skill body describes, and the index exists so a negative answer is always checkable.
 
 ## Quick Start
 
@@ -103,6 +105,8 @@ Profiles use `~/.nastech/profiles/<name>/` with the same layout. When a profile 
 
 | User wants... | Load |
 |---|---|
+| **Anything not listed below — "can Nastech do X?", "how do I set up X?"** | **https://nastechresearch.github.io/nastech-agent/docs/llms.txt** |
+| Bots that chat, run routines, or message each other; the Bots tab | docs: `/user-guide/bot-mode` |
 | CLI commands, subcommands, flags, "how do I run X" | `references/cli-reference.md` |
 | In-session slash commands | `references/slash-commands.md` |
 | Provider setup, API keys, OAuth | `references/providers-and-models.md` |
@@ -121,6 +125,11 @@ Profiles use `~/.nastech/profiles/<name>/` with the same layout. When a profile 
 | Contributing code: adding tools, slash commands, tests | `references/contributor-guide.md` |
 | delegate_task "capped at N" reports | `references/delegate-task-concurrency-diagnosis.md` |
 | "Can app X use my Nastech Portal subscription/OAuth?" | `references/portal-auth-for-third-party-apps.md` |
+| Connecting a messaging platform (Telegram, Discord, Slack, WhatsApp, …) | docs: `/user-guide/messaging` |
+
+The reference list above is not the feature list — it is the set of topics that
+need more than their docs page. For everything else Nastech ships, fetch
+`llms.txt` and it maps the question to the page that answers it.
 
 Two theming rules that hold even without loading the reference: **you apply skins yourself** (`nastech config set display.skin <name>` — every surface repaints live within ~a second; don't tell the user to run `/skin`), and **to tweak one color, edit the ACTIVE skin** (`nastech skin set <key> <hex>`) — never fork `default`, which drops the palette and resets the background.
 

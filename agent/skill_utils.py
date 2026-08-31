@@ -1018,6 +1018,13 @@ def extract_skill_conditions(frontmatter: Dict[str, Any]) -> Dict[str, List]:
         "requires_toolsets": nastech.get("requires_toolsets", []),
         "fallback_for_tools": nastech.get("fallback_for_tools", []),
         "requires_tools": nastech.get("requires_tools", []),
+        # Gateway-channel gate (maintainer-directed, skills-index slim):
+        # list of session platforms (e.g. ["msteams"]) the skill is FOR.
+        # Unlike top-level ``platforms:`` (host OS), this hides the skill
+        # from the index on every other channel — the teams-meeting
+        # pipeline has no business in a desktop or telegram session's
+        # index. Empty/absent = visible everywhere (backward compat).
+        "session_platforms": nastech.get("session_platforms", []),
     }
 
 

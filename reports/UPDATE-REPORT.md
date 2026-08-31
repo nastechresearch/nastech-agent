@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `26350357d76e4508c8df9304a3374bdc5a6f6220`
+- upstream sha : `cd2bd160579d5240e52d01e2f735da55ff4242ef`
 - source       : `https://github.com/Nastechresearch/nastech-agent.git`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -31,9 +31,9 @@
 
 ## Brand
 
-- total files : 10707
-- renamed     : 1495 (folders and file names)
-- text-rewritten : 10609
+- total files : 10750
+- renamed     : 1497 (folders and file names)
+- text-rewritten : 10652
 - locked-copied  : 56
 - binary-copied  : 8
 - owned assets   : 34 (our logo/banner/mascot override upstream)
@@ -45,286 +45,521 @@
 
 ## Direct upstream tree delta
 
-- complete: +45 ~216 -4 ↪0
+- complete: +47 ~272 -4 ↪177
+- MODIFIED `.gitignore`
+- ADDED `SOUL.md`
 - MODIFIED `agent/agent_init.py`
 - MODIFIED `agent/agent_runtime_helpers.py`
-- MODIFIED `agent/anthropic_adapter.py`
-- ADDED `agent/anthropic_credentials.py`
-- ADDED `agent/anthropic_endpoints.py`
-- ADDED `agent/anthropic_message_convert.py`
-- MODIFIED `agent/auxiliary_client.py`
-- MODIFIED `agent/background_review.py`
 - MODIFIED `agent/chat_completion_helpers.py`
+- MODIFIED `agent/context_compressor.py`
 - MODIFIED `agent/conversation_compression.py`
 - MODIFIED `agent/conversation_loop.py`
-- MODIFIED `agent/credential_persistence.py`
-- MODIFIED `agent/credential_pool.py`
-- ADDED `agent/plan_prompt.py`
-- MODIFIED `agent/side_question.py`
-- MODIFIED `apps/desktop/electron/main.ts`
-- ADDED `apps/desktop/electron/mcp-oauth-callback-ipc.test.ts`
-- ADDED `apps/desktop/electron/mcp-oauth-callback-ipc.ts`
-- MODIFIED `apps/desktop/electron/preload.ts`
-- MODIFIED `apps/desktop/src/api/config.ts`
-- MODIFIED `apps/desktop/src/app/chat/composer/status-stack/collapsed-indicator.test.tsx`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/tools.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/index.ts`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/todo-cleanup.test.tsx`
-- MODIFIED `apps/desktop/src/app/session/hooks/use-session-actions/index.ts`
-- ADDED `apps/desktop/src/app/settings/browser-real-profile-panel.test.tsx`
-- ADDED `apps/desktop/src/app/settings/browser-real-profile-panel.tsx`
-- MODIFIED `apps/desktop/src/app/settings/constants.ts`
-- MODIFIED `apps/desktop/src/app/skills/index.tsx`
-- MODIFIED `apps/desktop/src/components/chat/status-section.tsx`
+- MODIFIED `agent/message_sanitization.py`
+- MODIFIED `agent/model_metadata.py`
+- MODIFIED `agent/native_compaction.py`
+- MODIFIED `agent/prompt_builder.py`
+- MODIFIED `agent/skill_commands.py`
+- MODIFIED `agent/skill_utils.py`
+- MODIFIED `agent/system_prompt.py`
+- MODIFIED `agent/turn_context.py`
+- MODIFIED `apps/desktop/electron/mcp-oauth-callback-ipc.test.ts`
 - MODIFIED `apps/desktop/src/global.d.ts`
-- MODIFIED `apps/desktop/src/i18n/en.ts`
-- MODIFIED `apps/desktop/src/i18n/ja.ts`
-- MODIFIED `apps/desktop/src/i18n/types.ts`
-- MODIFIED `apps/desktop/src/i18n/zh-hant.ts`
-- MODIFIED `apps/desktop/src/i18n/zh.ts`
-- MODIFIED `apps/desktop/src/lib/chat-messages/types.ts`
-- MODIFIED `apps/desktop/src/lib/todos.test.ts`
-- MODIFIED `apps/desktop/src/lib/todos.ts`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/mcp-setup.tsx`
-- ADDED `apps/desktop/src/plugins/nastech-bots/relay-deliver-budget.test.ts`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/relay.ts`
-- MODIFIED `apps/desktop/src/sdk/index.ts`
-- MODIFIED `apps/desktop/src/sdk/profile-routing.test.ts`
-- MODIFIED `apps/desktop/src/store/todos.test.ts`
-- MODIFIED `apps/desktop/src/store/todos.ts`
-- MODIFIED `apps/desktop/src/types/nastech.ts`
-- MODIFIED `apps/shared/src/json-rpc-gateway.ts`
 - MODIFIED `cli-config.yaml.example`
 - MODIFIED `cli.py`
-- ADDED `contributors/emails/Cheri8014@163.com`
-- ADDED `contributors/emails/abtion@outlook.com`
-- ADDED `contributors/emails/adamfortuna1324@gmail.com`
-- ADDED `contributors/emails/brin@shadewaterlabs.com`
-- ADDED `contributors/emails/bsbofmusic@users.noreply.github.com`
-- ADDED `contributors/emails/fabiantax@hotmail.com`
-- ADDED `contributors/emails/fidiasfeliciano@MacBook-Pro.local`
-- ADDED `contributors/emails/icocode@users.noreply.github.com`
-- ADDED `contributors/emails/jason@runninwithitmarketing.com`
-- ADDED `contributors/emails/salch-cred@users.noreply.github.com`
-- ADDED `contributors/emails/yu_zhengbo@foxmail.com`
-- ADDED `contributors/emails/zane.chee.2023@scis.smu.edu.sg`
-- MODIFIED `cron/jobs.py`
-- MODIFIED `cron/scheduler.py`
-- MODIFIED `docker/SOUL.md`
-- MODIFIED `gateway/relay/adapter.py`
+- ADDED `contributors/emails/1290231+steveonjava@users.noreply.github.com`
+- ADDED `contributors/emails/ijnotion@pm.me`
+- MODIFIED `evals/compaction/results/SCORECARD-2026-08-15.md`
+- MODIFIED `evals/compaction/runner.py`
+- ADDED `gateway/hosted_room_replicas.py`
+- ADDED `gateway/hosted_rooms.py`
 - MODIFIED `gateway/run.py`
 - MODIFIED `gateway/slash_commands.py`
-- MODIFIED `nastech_cli/auth.py`
-- MODIFIED `nastech_cli/browser_connect.py`
-- MODIFIED `nastech_cli/cli_commands_mixin.py`
-- MODIFIED `nastech_cli/commands.py`
+- MODIFIED `nastech_cli/config.py`
 - MODIFIED `nastech_cli/config_defaults.py`
-- MODIFIED `nastech_cli/default_soul.py`
-- MODIFIED `nastech_cli/loops.py`
-- MODIFIED `nastech_cli/main.py`
+- ADDED `nastech_cli/install_identity.py`
 - MODIFIED `nastech_cli/model_switch.py`
-- MODIFIED `nastech_cli/models.py`
-- MODIFIED `nastech_cli/skills_hub.py`
-- MODIFIED `nastech_cli/tips.py`
+- MODIFIED `nastech_cli/runtime_provider.py`
 - MODIFIED `nastech_cli/web_server.py`
 - MODIFIED `nastech_state.py`
-- ADDED `optional-skills/creative/impeccable/SKILL.md`
-- MODIFIED `optional-skills/software-development/grill-me/SKILL.md`
-- MODIFIED `optional-skills/software-development/subagent-driven-development/SKILL.md`
-- MODIFIED `plugins/memory/mem0/README.md`
-- MODIFIED `plugins/memory/mem0/_backend.py`
-- ADDED `plugins/memory/mem0/_openai_llm.py`
-- MODIFIED `plugins/memory/mem0/_setup.py`
-- MODIFIED `plugins/model-providers/alibaba-coding-plan/__init__.py`
-- MODIFIED `plugins/model-providers/alibaba/__init__.py`
-- MODIFIED `plugins/model-providers/custom/__init__.py`
-- MODIFIED `plugins/platforms/discord/adapter.py`
-- MODIFIED `plugins/platforms/telegram/adapter.py`
-- ADDED `plugins/platforms/telegram/inline_picker.py`
+- RENAMED `skills/autonomous-ai-agents/merge-reconciler/SKILL.md` -> `optional-skills/autonomous-ai-agents/agent-merge-conflict-arbiter/SKILL.md`
+- RENAMED `skills/creative/ascii-art/SKILL.md` -> `optional-skills/creative/ascii-art/SKILL.md`
+- RENAMED `skills/creative/comfyui/SKILL.md` -> `optional-skills/creative/comfyui/SKILL.md`
+- RENAMED `skills/creative/comfyui/references/official-cli.md` -> `optional-skills/creative/comfyui/references/official-cli.md`
+- RENAMED `skills/creative/comfyui/references/rest-api.md` -> `optional-skills/creative/comfyui/references/rest-api.md`
+- RENAMED `skills/creative/comfyui/references/template-integrity.md` -> `optional-skills/creative/comfyui/references/template-integrity.md`
+- RENAMED `skills/creative/comfyui/references/workflow-format.md` -> `optional-skills/creative/comfyui/references/workflow-format.md`
+- RENAMED `skills/creative/comfyui/scripts/_common.py` -> `optional-skills/creative/comfyui/scripts/_common.py`
+- RENAMED `skills/creative/comfyui/scripts/auto_fix_deps.py` -> `optional-skills/creative/comfyui/scripts/auto_fix_deps.py`
+- RENAMED `skills/creative/comfyui/scripts/check_deps.py` -> `optional-skills/creative/comfyui/scripts/check_deps.py`
+- RENAMED `skills/creative/comfyui/scripts/comfyui_setup.sh` -> `optional-skills/creative/comfyui/scripts/comfyui_setup.sh`
+- RENAMED `skills/creative/comfyui/scripts/extract_schema.py` -> `optional-skills/creative/comfyui/scripts/extract_schema.py`
+- RENAMED `skills/creative/comfyui/scripts/fetch_logs.py` -> `optional-skills/creative/comfyui/scripts/fetch_logs.py`
+- RENAMED `skills/creative/comfyui/scripts/hardware_check.py` -> `optional-skills/creative/comfyui/scripts/hardware_check.py`
+- RENAMED `skills/creative/comfyui/scripts/health_check.py` -> `optional-skills/creative/comfyui/scripts/health_check.py`
+- RENAMED `skills/creative/comfyui/scripts/run_batch.py` -> `optional-skills/creative/comfyui/scripts/run_batch.py`
+- RENAMED `skills/creative/comfyui/scripts/run_workflow.py` -> `optional-skills/creative/comfyui/scripts/run_workflow.py`
+- RENAMED `skills/creative/comfyui/scripts/ws_monitor.py` -> `optional-skills/creative/comfyui/scripts/ws_monitor.py`
+- RENAMED `skills/creative/comfyui/tests/README.md` -> `optional-skills/creative/comfyui/tests/README.md`
+- RENAMED `skills/creative/comfyui/tests/conftest.py` -> `optional-skills/creative/comfyui/tests/conftest.py`
+- RENAMED `skills/creative/comfyui/tests/pytest.ini` -> `optional-skills/creative/comfyui/tests/pytest.ini`
+- RENAMED `skills/creative/comfyui/tests/test_check_deps.py` -> `optional-skills/creative/comfyui/tests/test_check_deps.py`
+- RENAMED `skills/creative/comfyui/tests/test_cloud_integration.py` -> `optional-skills/creative/comfyui/tests/test_cloud_integration.py`
+- RENAMED `skills/creative/comfyui/tests/test_common.py` -> `optional-skills/creative/comfyui/tests/test_common.py`
+- RENAMED `skills/creative/comfyui/tests/test_extract_schema.py` -> `optional-skills/creative/comfyui/tests/test_extract_schema.py`
+- RENAMED `skills/creative/comfyui/tests/test_run_workflow.py` -> `optional-skills/creative/comfyui/tests/test_run_workflow.py`
+- RENAMED `skills/creative/comfyui/workflows/README.md` -> `optional-skills/creative/comfyui/workflows/README.md`
+- RENAMED `skills/creative/comfyui/workflows/animatediff_video.json` -> `optional-skills/creative/comfyui/workflows/animatediff_video.json`
+- RENAMED `skills/creative/comfyui/workflows/flux_dev_txt2img.json` -> `optional-skills/creative/comfyui/workflows/flux_dev_txt2img.json`
+- RENAMED `skills/creative/comfyui/workflows/sd15_txt2img.json` -> `optional-skills/creative/comfyui/workflows/sd15_txt2img.json`
+- RENAMED `skills/creative/comfyui/workflows/sdxl_img2img.json` -> `optional-skills/creative/comfyui/workflows/sdxl_img2img.json`
+- RENAMED `skills/creative/comfyui/workflows/sdxl_inpaint.json` -> `optional-skills/creative/comfyui/workflows/sdxl_inpaint.json`
+- RENAMED `skills/creative/comfyui/workflows/sdxl_txt2img.json` -> `optional-skills/creative/comfyui/workflows/sdxl_txt2img.json`
+- RENAMED `skills/creative/comfyui/workflows/upscale_4x.json` -> `optional-skills/creative/comfyui/workflows/upscale_4x.json`
+- RENAMED `skills/creative/comfyui/workflows/wan_video_t2v.json` -> `optional-skills/creative/comfyui/workflows/wan_video_t2v.json`
+- RENAMED `skills/creative/excalidraw/SKILL.md` -> `optional-skills/creative/excalidraw/SKILL.md`
+- RENAMED `skills/creative/excalidraw/references/colors.md` -> `optional-skills/creative/excalidraw/references/colors.md`
+- RENAMED `skills/creative/excalidraw/references/dark-mode.md` -> `optional-skills/creative/excalidraw/references/dark-mode.md`
+- RENAMED `skills/creative/excalidraw/references/examples.md` -> `optional-skills/creative/excalidraw/references/examples.md`
+- RENAMED `skills/creative/excalidraw/scripts/upload.py` -> `optional-skills/creative/excalidraw/scripts/upload.py`
+- RENAMED `skills/creative/pretext/SKILL.md` -> `optional-skills/creative/pretext/SKILL.md`
+- RENAMED `skills/creative/pretext/references/patterns.md` -> `optional-skills/creative/pretext/references/patterns.md`
+- RENAMED `skills/creative/pretext/templates/donut-orbit.html` -> `optional-skills/creative/pretext/templates/donut-orbit.html`
+- RENAMED `skills/creative/pretext/templates/hello-orb-flow.html` -> `optional-skills/creative/pretext/templates/hello-orb-flow.html`
+- RENAMED `skills/creative/sketch/SKILL.md` -> `optional-skills/creative/sketch/SKILL.md`
+- RENAMED `skills/creative/touchdesigner-mcp/SKILL.md` -> `optional-skills/creative/touchdesigner-mcp/SKILL.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/3d-scene.md` -> `optional-skills/creative/touchdesigner-mcp/references/3d-scene.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/animation.md` -> `optional-skills/creative/touchdesigner-mcp/references/animation.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/audio-reactive.md` -> `optional-skills/creative/touchdesigner-mcp/references/audio-reactive.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/dat-scripting.md` -> `optional-skills/creative/touchdesigner-mcp/references/dat-scripting.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/external-data.md` -> `optional-skills/creative/touchdesigner-mcp/references/external-data.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/geometry-comp.md` -> `optional-skills/creative/touchdesigner-mcp/references/geometry-comp.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/glsl.md` -> `optional-skills/creative/touchdesigner-mcp/references/glsl.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/layout-compositor.md` -> `optional-skills/creative/touchdesigner-mcp/references/layout-compositor.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/mcp-tools.md` -> `optional-skills/creative/touchdesigner-mcp/references/mcp-tools.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/midi-osc.md` -> `optional-skills/creative/touchdesigner-mcp/references/midi-osc.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/network-patterns.md` -> `optional-skills/creative/touchdesigner-mcp/references/network-patterns.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/operator-tips.md` -> `optional-skills/creative/touchdesigner-mcp/references/operator-tips.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/operators.md` -> `optional-skills/creative/touchdesigner-mcp/references/operators.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/panel-ui.md` -> `optional-skills/creative/touchdesigner-mcp/references/panel-ui.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/particles.md` -> `optional-skills/creative/touchdesigner-mcp/references/particles.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/pitfalls.md` -> `optional-skills/creative/touchdesigner-mcp/references/pitfalls.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/postfx.md` -> `optional-skills/creative/touchdesigner-mcp/references/postfx.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/projection-mapping.md` -> `optional-skills/creative/touchdesigner-mcp/references/projection-mapping.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/python-api.md` -> `optional-skills/creative/touchdesigner-mcp/references/python-api.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/replicator.md` -> `optional-skills/creative/touchdesigner-mcp/references/replicator.md`
+- RENAMED `skills/creative/touchdesigner-mcp/references/troubleshooting.md` -> `optional-skills/creative/touchdesigner-mcp/references/troubleshooting.md`
+- RENAMED `skills/creative/touchdesigner-mcp/scripts/setup.sh` -> `optional-skills/creative/touchdesigner-mcp/scripts/setup.sh`
+- RENAMED `skills/mlops/evaluation/DESCRIPTION.md` -> `optional-skills/mlops/evaluation/DESCRIPTION.md`
+- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/SKILL.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/SKILL.md`
+- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/references/api-evaluation.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/references/api-evaluation.md`
+- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/references/benchmark-guide.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/references/benchmark-guide.md`
+- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/references/custom-tasks.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/references/custom-tasks.md`
+- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/references/distributed-eval.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/references/distributed-eval.md`
+- RENAMED `skills/mlops/evaluation/weights-and-biases/SKILL.md` -> `optional-skills/mlops/evaluation/weights-and-biases/SKILL.md`
+- RENAMED `skills/mlops/evaluation/weights-and-biases/references/artifacts.md` -> `optional-skills/mlops/evaluation/weights-and-biases/references/artifacts.md`
+- RENAMED `skills/mlops/evaluation/weights-and-biases/references/integrations.md` -> `optional-skills/mlops/evaluation/weights-and-biases/references/integrations.md`
+- RENAMED `skills/mlops/evaluation/weights-and-biases/references/sweeps.md` -> `optional-skills/mlops/evaluation/weights-and-biases/references/sweeps.md`
+- RENAMED `skills/mlops/inference/DESCRIPTION.md` -> `optional-skills/mlops/inference/DESCRIPTION.md`
+- RENAMED `skills/mlops/inference/llama-cpp/SKILL.md` -> `optional-skills/mlops/inference/llama-cpp/SKILL.md`
+- RENAMED `skills/mlops/inference/llama-cpp/references/advanced-usage.md` -> `optional-skills/mlops/inference/llama-cpp/references/advanced-usage.md`
+- RENAMED `skills/mlops/inference/llama-cpp/references/hub-discovery.md` -> `optional-skills/mlops/inference/llama-cpp/references/hub-discovery.md`
+- RENAMED `skills/mlops/inference/llama-cpp/references/optimization.md` -> `optional-skills/mlops/inference/llama-cpp/references/optimization.md`
+- RENAMED `skills/mlops/inference/llama-cpp/references/quantization.md` -> `optional-skills/mlops/inference/llama-cpp/references/quantization.md`
+- RENAMED `skills/mlops/inference/llama-cpp/references/server.md` -> `optional-skills/mlops/inference/llama-cpp/references/server.md`
+- RENAMED `skills/mlops/inference/llama-cpp/references/troubleshooting.md` -> `optional-skills/mlops/inference/llama-cpp/references/troubleshooting.md`
+- RENAMED `skills/mlops/inference/serving-llms-vllm/SKILL.md` -> `optional-skills/mlops/inference/serving-llms-vllm/SKILL.md`
+- RENAMED `skills/mlops/inference/serving-llms-vllm/references/optimization.md` -> `optional-skills/mlops/inference/serving-llms-vllm/references/optimization.md`
+- RENAMED `skills/mlops/inference/serving-llms-vllm/references/quantization.md` -> `optional-skills/mlops/inference/serving-llms-vllm/references/quantization.md`
+- RENAMED `skills/mlops/inference/serving-llms-vllm/references/server-deployment.md` -> `optional-skills/mlops/inference/serving-llms-vllm/references/server-deployment.md`
+- RENAMED `skills/mlops/inference/serving-llms-vllm/references/troubleshooting.md` -> `optional-skills/mlops/inference/serving-llms-vllm/references/troubleshooting.md`
+- RENAMED `skills/mlops/models/DESCRIPTION.md` -> `optional-skills/mlops/models/DESCRIPTION.md`
+- RENAMED `skills/mlops/huggingface-hub/SKILL.md` -> `optional-skills/mlops/models/huggingface-hub/SKILL.md`
+- RENAMED `skills/research/blogwatcher/SKILL.md` -> `optional-skills/research/blogwatcher/SKILL.md`
+- RENAMED `skills/research/research-paper-writing/SKILL.md` -> `optional-skills/research/research-paper-writing/SKILL.md`
+- RENAMED `skills/research/research-paper-writing/references/autoreason-methodology.md` -> `optional-skills/research/research-paper-writing/references/autoreason-methodology.md`
+- RENAMED `skills/research/research-paper-writing/references/checklists.md` -> `optional-skills/research/research-paper-writing/references/checklists.md`
+- RENAMED `skills/research/research-paper-writing/references/citation-workflow.md` -> `optional-skills/research/research-paper-writing/references/citation-workflow.md`
+- RENAMED `skills/research/research-paper-writing/references/experiment-patterns.md` -> `optional-skills/research/research-paper-writing/references/experiment-patterns.md`
+- RENAMED `skills/research/research-paper-writing/references/human-evaluation.md` -> `optional-skills/research/research-paper-writing/references/human-evaluation.md`
+- RENAMED `skills/research/research-paper-writing/references/paper-types.md` -> `optional-skills/research/research-paper-writing/references/paper-types.md`
+- RENAMED `skills/research/research-paper-writing/references/phase5-paper-drafting.md` -> `optional-skills/research/research-paper-writing/references/phase5-paper-drafting.md`
+- RENAMED `skills/research/research-paper-writing/references/reviewer-guidelines.md` -> `optional-skills/research/research-paper-writing/references/reviewer-guidelines.md`
+- RENAMED `skills/research/research-paper-writing/references/sources.md` -> `optional-skills/research/research-paper-writing/references/sources.md`
+- RENAMED `skills/research/research-paper-writing/references/writing-guide.md` -> `optional-skills/research/research-paper-writing/references/writing-guide.md`
+- RENAMED `skills/research/research-paper-writing/templates/README.md` -> `optional-skills/research/research-paper-writing/templates/README.md`
+- RENAMED `skills/research/research-paper-writing/templates/aaai2026/README.md` -> `optional-skills/research/research-paper-writing/templates/aaai2026/README.md`
+- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026-unified-supp.tex` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026-unified-supp.tex`
+- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026-unified-template.tex` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026-unified-template.tex`
+- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026.bib` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026.bib`
+- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026.bst` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026.bst`
+- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026.sty` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026.sty`
+- RENAMED `skills/research/research-paper-writing/templates/acl/README.md` -> `optional-skills/research/research-paper-writing/templates/acl/README.md`
+- RENAMED `skills/research/research-paper-writing/templates/acl/acl.sty` -> `optional-skills/research/research-paper-writing/templates/acl/acl.sty`
+- RENAMED `skills/research/research-paper-writing/templates/acl/acl_latex.tex` -> `optional-skills/research/research-paper-writing/templates/acl/acl_latex.tex`
+- RENAMED `skills/research/research-paper-writing/templates/acl/acl_lualatex.tex` -> `optional-skills/research/research-paper-writing/templates/acl/acl_lualatex.tex`
+- RENAMED `skills/research/research-paper-writing/templates/acl/acl_natbib.bst` -> `optional-skills/research/research-paper-writing/templates/acl/acl_natbib.bst`
+- RENAMED `skills/research/research-paper-writing/templates/acl/anthology.bib.txt` -> `optional-skills/research/research-paper-writing/templates/acl/anthology.bib.txt`
+- RENAMED `skills/research/research-paper-writing/templates/acl/custom.bib` -> `optional-skills/research/research-paper-writing/templates/acl/custom.bib`
+- RENAMED `skills/research/research-paper-writing/templates/acl/formatting.md` -> `optional-skills/research/research-paper-writing/templates/acl/formatting.md`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/README.md` -> `optional-skills/research/research-paper-writing/templates/colm2025/README.md`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.bib` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.bib`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.bst` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.bst`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.pdf` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.pdf`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.sty` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.sty`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.tex` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.tex`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/fancyhdr.sty` -> `optional-skills/research/research-paper-writing/templates/colm2025/fancyhdr.sty`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/math_commands.tex` -> `optional-skills/research/research-paper-writing/templates/colm2025/math_commands.tex`
+- RENAMED `skills/research/research-paper-writing/templates/colm2025/natbib.sty` -> `optional-skills/research/research-paper-writing/templates/colm2025/natbib.sty`
+- RENAMED `skills/research/research-paper-writing/templates/iclr2026/fancyhdr.sty` -> `optional-skills/research/research-paper-writing/templates/iclr2026/fancyhdr.sty`
+- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.bib` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.bib`
+- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.bst` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.bst`
+- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.pdf` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.pdf`
+- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.sty` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.sty`
+- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.tex` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.tex`
+- RENAMED `skills/research/research-paper-writing/templates/iclr2026/math_commands.tex` -> `optional-skills/research/research-paper-writing/templates/iclr2026/math_commands.tex`
+- RENAMED `skills/research/research-paper-writing/templates/iclr2026/natbib.sty` -> `optional-skills/research/research-paper-writing/templates/iclr2026/natbib.sty`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/algorithm.sty` -> `optional-skills/research/research-paper-writing/templates/icml2026/algorithm.sty`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/algorithmic.sty` -> `optional-skills/research/research-paper-writing/templates/icml2026/algorithmic.sty`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/example_paper.bib` -> `optional-skills/research/research-paper-writing/templates/icml2026/example_paper.bib`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/example_paper.pdf` -> `optional-skills/research/research-paper-writing/templates/icml2026/example_paper.pdf`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/example_paper.tex` -> `optional-skills/research/research-paper-writing/templates/icml2026/example_paper.tex`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/fancyhdr.sty` -> `optional-skills/research/research-paper-writing/templates/icml2026/fancyhdr.sty`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/icml2026.bst` -> `optional-skills/research/research-paper-writing/templates/icml2026/icml2026.bst`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/icml2026.sty` -> `optional-skills/research/research-paper-writing/templates/icml2026/icml2026.sty`
+- RENAMED `skills/research/research-paper-writing/templates/icml2026/icml_numpapers.pdf` -> `optional-skills/research/research-paper-writing/templates/icml2026/icml_numpapers.pdf`
+- RENAMED `skills/research/research-paper-writing/templates/neurips2025/Makefile` -> `optional-skills/research/research-paper-writing/templates/neurips2025/Makefile`
+- RENAMED `skills/research/research-paper-writing/templates/neurips2025/extra_pkgs.tex` -> `optional-skills/research/research-paper-writing/templates/neurips2025/extra_pkgs.tex`
+- RENAMED `skills/research/research-paper-writing/templates/neurips2025/main.tex` -> `optional-skills/research/research-paper-writing/templates/neurips2025/main.tex`
+- RENAMED `skills/research/research-paper-writing/templates/neurips2025/neurips.sty` -> `optional-skills/research/research-paper-writing/templates/neurips2025/neurips.sty`
+- RENAMED `skills/smart-home/DESCRIPTION.md` -> `optional-skills/smart-home/DESCRIPTION.md`
+- RENAMED `skills/smart-home/openhue/SKILL.md` -> `optional-skills/smart-home/openhue/SKILL.md`
+- MODIFIED `optional-skills/software-development/code-wiki/SKILL.md`
+- MODIFIED `plugins/platforms/photon/README.md`
+- MODIFIED `plugins/platforms/photon/adapter.py`
+- MODIFIED `plugins/platforms/photon/plugin.yaml`
+- MODIFIED `plugins/platforms/photon/sidecar/index.mjs`
+- MODIFIED `plugins/platforms/photon/sidecar/package-lock.json`
+- MODIFIED `plugins/platforms/photon/sidecar/package.json`
+- MODIFIED `plugins/platforms/photon/sidecar/patch-spectrum-mixed-attachments.mjs`
 - MODIFIED `run_agent.py`
-- MODIFIED `scripts/install.ps1`
-- MODIFIED `scripts/install.sh`
-- MODIFIED `skills/autonomous-ai-agents/computer-use/SKILL.md`
-- MODIFIED `skills/autonomous-ai-agents/nastech-agent/references/slash-commands.md`
-- MODIFIED `skills/research/research-paper-writing/SKILL.md`
-- MODIFIED `skills/software-development/nastech-agent-skill-authoring/SKILL.md`
-- DELETED `skills/software-development/plan/SKILL.md`
+- DELETED `skills/github/DESCRIPTION.md`
+- DELETED `skills/mlops/DESCRIPTION.md`
+- MODIFIED `skills/productivity/document-to-action-items/SKILL.md`
+- DELETED `skills/productivity/ocr-and-documents/DESCRIPTION.md`
+- MODIFIED `skills/productivity/pdf/SKILL.md`
+- RENAMED `skills/productivity/nano-pdf/SKILL.md` -> `skills/productivity/pdf/references/nano-pdf-editing.md`
+- RENAMED `skills/productivity/ocr-and-documents/SKILL.md` -> `skills/productivity/pdf/references/ocr-extraction.md`
+- RENAMED `skills/productivity/ocr-and-documents/scripts/extract_marker.py` -> `skills/productivity/pdf/scripts/extract_marker.py`
+- RENAMED `skills/productivity/ocr-and-documents/scripts/extract_pymupdf.py` -> `skills/productivity/pdf/scripts/extract_pymupdf.py`
+- MODIFIED `skills/productivity/pdf/scripts/pdf_page_image.py`
+- MODIFIED `skills/productivity/pdf/scripts/pdf_read.py`
+- DELETED `skills/productivity/session-librarian/SKILL.md`
+- MODIFIED `skills/productivity/teams-meeting-pipeline/SKILL.md`
+- MODIFIED `skills/research/arxiv/SKILL.md`
+- MODIFIED `skills/research/grounded-citations/SKILL.md`
+- MODIFIED `skills/research/grounded-citations/references/citation-formats.md`
+- RENAMED `skills/github/codebase-inspection/SKILL.md` -> `skills/software-development/codebase-inspection/SKILL.md`
+- ADDED `skills/software-development/github/SKILL.md`
+- RENAMED `skills/github/github-auth/SKILL.md` -> `skills/software-development/github/references/auth.md`
+- RENAMED `skills/github/github-pr-workflow/references/ci-troubleshooting.md` -> `skills/software-development/github/references/ci-troubleshooting.md`
+- RENAMED `skills/github/github-code-review/SKILL.md` -> `skills/software-development/github/references/code-review.md`
+- RENAMED `skills/github/github-pr-workflow/references/conventional-commits.md` -> `skills/software-development/github/references/conventional-commits.md`
+- RENAMED `skills/github/github-repo-management/references/github-api-cheatsheet.md` -> `skills/software-development/github/references/github-api-cheatsheet.md`
+- RENAMED `skills/github/github-issue-to-pr/SKILL.md` -> `skills/software-development/github/references/issue-to-pr.md`
+- RENAMED `skills/github/github-issues/SKILL.md` -> `skills/software-development/github/references/issues.md`
+- RENAMED `skills/github/github-pr-workflow/SKILL.md` -> `skills/software-development/github/references/pr-workflow.md`
+- RENAMED `skills/github/github-repo-management/SKILL.md` -> `skills/software-development/github/references/repo-management.md`
+- RENAMED `skills/github/github-code-review/references/review-output-template.md` -> `skills/software-development/github/references/review-output-template.md`
+- RENAMED `skills/github/github-auth/scripts/gh-env.sh` -> `skills/software-development/github/scripts/gh-env.sh`
+- RENAMED `skills/github/github-auth/scripts/git-credential-token.py` -> `skills/software-development/github/scripts/git-credential-token.py`
+- RENAMED `skills/github/github-issues/templates/bug-report.md` -> `skills/software-development/github/templates/bug-report.md`
+- RENAMED `skills/github/github-issues/templates/feature-request.md` -> `skills/software-development/github/templates/feature-request.md`
+- RENAMED `skills/github/github-pr-workflow/templates/pr-body-bugfix.md` -> `skills/software-development/github/templates/pr-body-bugfix.md`
+- RENAMED `skills/github/github-pr-workflow/templates/pr-body-feature.md` -> `skills/software-development/github/templates/pr-body-feature.md`
 - MODIFIED `skills/software-development/requesting-code-review/SKILL.md`
-- MODIFIED `skills/software-development/simplify-code/SKILL.md`
-- MODIFIED `skills/software-development/spike/SKILL.md`
-- MODIFIED `skills/software-development/systematic-debugging/SKILL.md`
-- MODIFIED `skills/software-development/test-driven-development/SKILL.md`
-- MODIFIED `tests/agent/test_anthropic_adapter.py`
-- ADDED `tests/agent/test_anthropic_borrowed_row_authority.py`
-- ADDED `tests/agent/test_anthropic_credential_persist_failure.py`
-- MODIFIED `tests/agent/test_anthropic_keychain.py`
-- ADDED `tests/agent/test_anthropic_oauth_stress.py`
-- ADDED `tests/agent/test_anthropic_spent_rotation_verdict.py`
-- MODIFIED `tests/agent/test_anthropic_token_scope_isolation.py`
-- MODIFIED `tests/agent/test_auxiliary_client.py`
-- MODIFIED `tests/agent/test_compression_rotation_state.py`
-- MODIFIED `tests/agent/test_credential_pool.py`
-- ADDED `tests/agent/test_credential_pool_anthropic_refresh_race.py`
-- MODIFIED `tests/agent/test_credential_pool_oat_authtype.py`
-- MODIFIED `tests/agent/test_credential_pool_oauth_writethrough.py`
-- MODIFIED `tests/agent/test_curator.py`
-- ADDED `tests/agent/test_plan_prompt.py`
-- MODIFIED `tests/agent/test_side_question.py`
-- MODIFIED `tests/agent/test_skill_todo_retention_parity.py`
-- ADDED `tests/agent/test_switch_model_request_overrides.py`
-- MODIFIED `tests/agent/transports/test_chat_completions.py`
-- MODIFIED `tests/cli/test_cli_background_status_indicator.py`
-- MODIFIED `tests/cli/test_cli_browser_connect.py`
-- MODIFIED `tests/cli/test_cli_status_bar.py`
-- ADDED `tests/cli/test_handoff_slow_dispatch_timeout.py`
-- MODIFIED `tests/conftest.py`
-- MODIFIED `tests/cron/test_claim_job_for_fire.py`
-- ADDED `tests/cron/test_cron_request_overrides.py`
-- MODIFIED `tests/cron/test_jobs.py`
-- MODIFIED `tests/cron/test_oneshot_dispatch_failure_run_claim.py`
-- MODIFIED `tests/cron/test_terminal_job_rearm.py`
-- MODIFIED `tests/gateway/relay/test_relay_slack_unfurl.py`
-- ADDED `tests/gateway/test_custom_provider_request_overrides.py`
-- MODIFIED `tests/gateway/test_gateway_platform_event_hook.py`
-- ADDED `tests/gateway/test_model_command_request_overrides.py`
-- MODIFIED `tests/gateway/test_telegram_channel_posts.py`
-- ADDED `tests/gateway/test_telegram_inline_picker.py`
-- MODIFIED `tests/gateway/test_telegram_lazy_install_typehandler.py`
-- MODIFIED `tests/gateway/test_telegram_network_reconnect.py`
-- MODIFIED `tests/gateway/test_telegram_status_update.py`
-- MODIFIED `tests/gateway/test_telegram_thread_fallback.py`
-- MODIFIED `tests/gateway/test_telegram_username_chat_id.py`
-- ADDED `tests/gateway/test_turn_request_overrides.py`
-- MODIFIED `tests/nastech_cli/test_api_key_providers.py`
-- ADDED `tests/nastech_cli/test_auth_store_lock_concurrent.py`
-- MODIFIED `tests/nastech_cli/test_browser_connect_default_chromium.py`
-- MODIFIED `tests/nastech_cli/test_commands.py`
-- MODIFIED `tests/nastech_cli/test_config.py`
-- MODIFIED `tests/nastech_cli/test_curator_pin_visibility.py`
-- MODIFIED `tests/nastech_cli/test_loops.py`
-- MODIFIED `tests/nastech_cli/test_model_validation.py`
-- MODIFIED `tests/nastech_cli/test_web_oauth_dispatch.py`
-- MODIFIED `tests/nastech_cli/test_web_server_cron_profiles.py`
-- DELETED `tests/nastech_cli/test_web_server_oauth_write.py`
-- MODIFIED `tests/plugins/memory/test_mem0_backend.py`
-- ADDED `tests/plugins/memory/test_mem0_backend_integration.py`
-- MODIFIED `tests/plugins/memory/test_mem0_setup.py`
-- MODIFIED `tests/plugins/model_providers/test_custom_profile.py`
-- MODIFIED `tests/providers/test_provider_profiles.py`
-- MODIFIED `tests/providers/test_transport_parity.py`
-- MODIFIED `tests/run_agent/test_background_review_toolset_restriction.py`
-- MODIFIED `tests/run_agent/test_codex_app_server_compaction.py`
-- MODIFIED `tests/run_agent/test_primary_runtime_restore.py`
-- MODIFIED `tests/run_agent/test_provider_fallback.py`
-- MODIFIED `tests/run_agent/test_run_agent.py`
-- MODIFIED `tests/test_hermetic_side_effect_guards.py`
-- MODIFIED `tests/test_timezone.py`
-- MODIFIED `tests/test_tui_gateway_server.py`
-- MODIFIED `tests/tools/test_browser_real_profile.py`
-- ADDED `tests/tools/test_browser_real_profile_pin.py`
-- MODIFIED `tests/tools/test_computer_use_cua_0_10_permissions.py`
-- MODIFIED `tests/tools/test_cronjob_tools.py`
+- ADDED `skills/web/DESCRIPTION.md`
+- RENAMED `skills/research/blocked-page-recovery/SKILL.md` -> `skills/web/blocked-page-recovery/SKILL.md`
+- RENAMED `skills/research/blocked-page-recovery/scripts/recover_page.py` -> `skills/web/blocked-page-recovery/scripts/recover_page.py`
+- MODIFIED `tests/agent/test_compress_context_progress_timeout.py`
+- ADDED `tests/agent/test_compression_attempt_lifecycle.py`
+- MODIFIED `tests/agent/test_compression_attempt_ownership.py`
+- MODIFIED `tests/agent/test_compression_concurrent_fork.py`
+- MODIFIED `tests/agent/test_compression_review_76354.py`
+- ADDED `tests/agent/test_compression_stall_interrupt_96775.py`
+- MODIFIED `tests/agent/test_context_compressor.py`
+- ADDED `tests/agent/test_estimator_parity_84371.py`
+- ADDED `tests/agent/test_lean_single_aux_call.py`
+- MODIFIED `tests/agent/test_native_preflight_estimate.py`
+- MODIFIED `tests/agent/test_plugin_prompt_sections.py`
+- MODIFIED `tests/agent/test_skill_commands.py`
+- ADDED `tests/agent/test_skill_session_platform_gate.py`
+- MODIFIED `tests/agent/test_system_prompt.py`
+- MODIFIED `tests/gateway/test_agent_cache.py`
+- ADDED `tests/gateway/test_codex_hygiene_compaction.py`
+- ADDED `tests/gateway/test_hosted_room_replicas.py`
+- ADDED `tests/gateway/test_hosted_rooms.py`
+- MODIFIED `tests/gateway/test_model_switch_persistence.py`
+- MODIFIED `tests/gateway/test_session_hygiene.py`
+- MODIFIED `tests/gateway/test_session_model_override_persistence.py`
+- ADDED `tests/gateway/test_subagent_failure_notice.py`
+- ADDED `tests/nastech_cli/test_install_identity.py`
+- MODIFIED `tests/nastech_cli/test_runtime_provider_resolution.py`
+- MODIFIED `tests/plugins/platforms/photon/test_inbound.py`
+- MODIFIED `tests/run_agent/test_413_compression.py`
+- MODIFIED `tests/run_agent/test_fallback_reasoning_override.py`
+- ADDED `tests/run_agent/test_in_place_persist_marker_98450.py`
+- MODIFIED `tests/run_agent/test_native_compaction.py`
+- ADDED `tests/run_agent/test_native_compaction_nontext_retention.py`
+- ADDED `tests/run_agent/test_native_compaction_switch_capabilities.py`
+- MODIFIED `tests/run_agent/test_run_agent_codex_responses.py`
+- MODIFIED `tests/run_agent/test_switch_model_context.py`
+- MODIFIED `tests/run_agent/test_switch_model_rollback.py`
+- RENAMED `tests/skills/test_merge_reconciler_skill.py` -> `tests/skills/test_agent_merge_conflict_arbiter_skill.py`
+- MODIFIED `tests/skills/test_comfyui_skill.py`
+- MODIFIED `tests/skills/test_github_credential_token.py`
+- RENAMED `tests/skills/test_github_issue_to_pr_skill.py` -> `tests/skills/test_github_skill.py`
+- ADDED `tests/test_compaction_prompt_rebuild.py`
+- MODIFIED `tests/test_compaction_tool_refresh.py`
+- MODIFIED `tests/tools/test_approval.py`
+- MODIFIED `tests/tools/test_cron_approval_mode.py`
 - MODIFIED `tests/tools/test_delegate.py`
-- ADDED `tests/tools/test_delegate_request_overrides.py`
-- MODIFIED `tests/tools/test_setup_mcp_tool.py`
-- MODIFIED `tests/tools/test_skill_bundle_provenance.py`
-- MODIFIED `tests/tools/test_skill_usage.py`
-- MODIFIED `tests/tools/test_skills_hub.py`
-- MODIFIED `tests/tools/test_subprocess_stdin_guard.py`
-- MODIFIED `tests/tools/test_threat_patterns.py`
-- MODIFIED `tests/tools/test_todo_tool.py`
-- MODIFIED `tests/tui_gateway/test_loop_command.py`
-- ADDED `tests/tui_gateway/test_mcp_oauth_client_callback.py`
-- ADDED `tests/tui_gateway/test_todo_state_events.py`
-- MODIFIED `tools/browser_tool.py`
-- MODIFIED `tools/computer_use/cua_backend.py`
-- MODIFIED `tools/cronjob_tools.py`
+- ADDED `tests/tools/test_delegate_capability_inheritance.py`
+- MODIFIED `tests/tools/test_process_registry.py`
+- MODIFIED `tests/tools/test_skill_manager_tool.py`
+- MODIFIED `tests/tools/test_skills_tool.py`
+- MODIFIED `tests/tui_gateway/test_compression_config_hot_reload.py`
+- ADDED `tests/tui_gateway/test_groups_methods.py`
+- ADDED `tests/tui_gateway/test_groups_replication_methods.py`
+- MODIFIED `tools/approval.py`
 - MODIFIED `tools/delegate_tool.py`
-- MODIFIED `tools/file_tools.py`
-- MODIFIED `tools/setup_mcp_tool.py`
-- MODIFIED `tools/skill_usage.py`
-- MODIFIED `tools/skills_guard.py`
-- MODIFIED `tools/skills_hub.py`
-- MODIFIED `tools/threat_patterns.py`
-- MODIFIED `tools/todo_tool.py`
-- MODIFIED `tui_gateway/mcp_oauth_sessions.py`
-- MODIFIED `tui_gateway/methods_prompt.py`
-- MODIFIED `tui_gateway/methods_session.py`
-- MODIFIED `tui_gateway/methods_tools.py`
+- MODIFIED `tools/process_registry.py`
+- MODIFIED `tools/skill_manager_tool.py`
+- MODIFIED `tools/skills_tool.py`
+- MODIFIED `tui_gateway/methods_bot_relay.py`
+- ADDED `tui_gateway/methods_groups.py`
 - MODIFIED `tui_gateway/server.py`
-- MODIFIED `ui-tui/README.md`
 - MODIFIED `ui-tui/src/__tests__/appChromeStatusRule.test.tsx`
-- MODIFIED `ui-tui/src/__tests__/statusRule.test.ts`
-- ADDED `ui-tui/src/__tests__/turnControllerTodos.test.ts`
-- MODIFIED `ui-tui/src/app/interfaces.ts`
-- MODIFIED `ui-tui/src/app/turnController.ts`
-- MODIFIED `ui-tui/src/app/uiStore.ts`
-- MODIFIED `ui-tui/src/app/useConfigSync.ts`
-- MODIFIED `ui-tui/src/components/appChrome.tsx`
-- MODIFIED `ui-tui/src/components/appLayout.tsx`
-- MODIFIED `ui-tui/src/components/todoPanel.tsx`
-- MODIFIED `ui-tui/src/gatewayTypes.ts`
-- MODIFIED `ui-tui/src/lib/todo.test.ts`
-- MODIFIED `ui-tui/src/lib/todo.ts`
-- MODIFIED `ui-tui/src/types.ts`
-- MODIFIED `web/src/lib/api.test.ts`
-- MODIFIED `web/src/lib/api.ts`
-- MODIFIED `website/docs/developer-guide/prompt-assembly.md`
-- MODIFIED `website/docs/integrations/providers.md`
-- MODIFIED `website/docs/reference/cli-commands.md`
+- MODIFIED `website/docs/developer-guide/context-compression-and-caching.md`
+- MODIFIED `website/docs/guides/delegation-patterns.md`
 - MODIFIED `website/docs/reference/environment-variables.md`
 - MODIFIED `website/docs/reference/optional-skills-catalog.md`
 - MODIFIED `website/docs/reference/skills-catalog.md`
-- MODIFIED `website/docs/reference/slash-commands.md`
 - MODIFIED `website/docs/user-guide/configuration.md`
-- MODIFIED `website/docs/user-guide/features/browser.md`
-- MODIFIED `website/docs/user-guide/features/computer-use.md`
-- MODIFIED `website/docs/user-guide/features/cron.md`
-- MODIFIED `website/docs/user-guide/features/curator.md`
+- MODIFIED `website/docs/user-guide/configuring-models.md`
 - MODIFIED `website/docs/user-guide/features/delegation.md`
-- MODIFIED `website/docs/user-guide/features/loops.md`
-- MODIFIED `website/docs/user-guide/features/mcp.md`
-- MODIFIED `website/docs/user-guide/features/memory.md`
-- MODIFIED `website/docs/user-guide/features/personality.md`
-- MODIFIED `website/docs/user-guide/features/skills.md`
-- MODIFIED `website/docs/user-guide/messaging/telegram.md`
-- MODIFIED `website/docs/user-guide/sessions.md`
+- MODIFIED `website/docs/user-guide/features/kanban.md`
+- MODIFIED `website/docs/user-guide/messaging/photon.md`
+- MODIFIED `website/docs/user-guide/security.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/apple/apple-apple-notes.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/apple/apple-apple-reminders.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/apple/apple-findmy.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/apple/apple-imessage.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-claude-code.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex.md`
 - MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-computer-use.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/research/research-research-paper-writing.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent.md`
+- ADDED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-merge-reconciler.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-opencode.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-architecture-diagram.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-ascii-video.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-baoyu-infographic.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-claude-design.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-design-md.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-humanizer.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-manim-video.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-p5js.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-popular-web-designs.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-songwriting-and-ai-music.md`
+- ADDED `website/docs/user-guide/skills/bundled/devops/devops-sdlc-review.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/email/email-email-inbox-triage.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/email/email-himalaya.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/media/media-gif-search.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/media/media-songsee.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/media/media-youtube-content.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/note-taking/note-taking-obsidian.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-airtable.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-box.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-document-to-action-items.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-docx.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-google-workspace.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-maps.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-meeting-action-items.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-notion.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-pdf.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-powerpoint.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-product-price-monitor.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-teams-meeting-pipeline.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-weekly-review-planning.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-xlsx.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/research/research-arxiv.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/research/research-competitor-news-monitor.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/research/research-grounded-citations.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/research/research-llm-wiki.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/social-media/social-media-xurl.md`
+- ADDED `website/docs/user-guide/skills/bundled/software-development/software-development-codebase-inspection.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-dogfood.md`
+- ADDED `website/docs/user-guide/skills/bundled/software-development/software-development-github.md`
 - MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-nastech-agent-skill-authoring.md`
-- DELETED `website/docs/user-guide/skills/bundled/software-development/software-development-plan.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-inspecting-nastech-desktop-dom.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-node-inspect-debugger.md`
+- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-python-debugpy.md`
 - MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-requesting-code-review.md`
 - MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-simplify-code.md`
 - MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-spike.md`
 - MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-systematic-debugging.md`
 - MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-test-driven-development.md`
-- ADDED `website/docs/user-guide/skills/optional/creative/creative-impeccable.md`
+- ADDED `website/docs/user-guide/skills/bundled/web/web-blocked-page-recovery.md`
+- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-antigravity-cli.md`
+- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-blackbox.md`
+- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-grok.md`
+- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-honcho.md`
+- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-openhands.md`
+- MODIFIED `website/docs/user-guide/skills/optional/blockchain/blockchain-evm.md`
+- MODIFIED `website/docs/user-guide/skills/optional/blockchain/blockchain-hyperliquid.md`
+- MODIFIED `website/docs/user-guide/skills/optional/blockchain/blockchain-solana.md`
+- MODIFIED `website/docs/user-guide/skills/optional/communication/communication-one-three-one-rule.md`
+- ADDED `website/docs/user-guide/skills/optional/creative/creative-ascii-art.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-audiocraft-audio-generation.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-baoyu-article-illustrator.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-baoyu-comic.md`
+- ADDED `website/docs/user-guide/skills/optional/creative/creative-comfyui.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-concept-diagrams.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-creative-ideation.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-draw-your-font.md`
+- ADDED `website/docs/user-guide/skills/optional/creative/creative-excalidraw.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-heartmula.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-hyperframes.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-impeccable.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-kanban-video-orchestrator.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-meme-generation.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-pixel-art.md`
+- ADDED `website/docs/user-guide/skills/optional/creative/creative-pretext.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-simple-english.md`
+- ADDED `website/docs/user-guide/skills/optional/creative/creative-sketch.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-social-media-content-calendar.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-tldraw-offline.md`
+- ADDED `website/docs/user-guide/skills/optional/creative/creative-touchdesigner-mcp.md`
+- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-unreal-mcp.md`
+- MODIFIED `website/docs/user-guide/skills/optional/data-science/data-science-jupyter-notebook.md`
+- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-actual-setup.md`
+- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-docker-management.md`
+- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-nastech-s6-container-supervision.md`
+- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-inference-sh-cli.md`
+- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-pinggy-tunnel.md`
+- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-setup-wizard-generator.md`
+- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-watchers.md`
+- MODIFIED `website/docs/user-guide/skills/optional/dogfood/dogfood-adversarial-ux-test.md`
+- MODIFIED `website/docs/user-guide/skills/optional/email/email-agentmail.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-3-statement-model.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-comps-analysis.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-dcf-model.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-excel-author.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-lbo-model.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-merger-model.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-polymarket.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-pptx-author.md`
+- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-stocks.md`
+- MODIFIED `website/docs/user-guide/skills/optional/gaming/gaming-minecraft-modpack-server.md`
+- MODIFIED `website/docs/user-guide/skills/optional/gaming/gaming-pokemon-player.md`
+- MODIFIED `website/docs/user-guide/skills/optional/health/health-fitness-nutrition.md`
+- MODIFIED `website/docs/user-guide/skills/optional/health/health-neuroskill-bci.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mcp/mcp-fastmcp.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mcp/mcp-mcp-oauth-remote-gateway.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mcp/mcp-mcporter.md`
+- MODIFIED `website/docs/user-guide/skills/optional/migration/migration-openclaw-migration.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-accelerate.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-chroma.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-clip.md`
+- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-evaluation-evaluating-llms-harness.md`
+- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-evaluation-weights-and-biases.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-faiss.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-flash-attention.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-guidance.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-huggingface-tokenizers.md`
+- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-inference-llama-cpp.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-inference-outlines.md`
+- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-inference-serving-llms-vllm.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-instructor.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-lambda-labs.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-llava.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-modal.md`
+- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-models-huggingface-hub.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-models-segment-anything-model.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-nemo-curator.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-obliteratus.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-peft.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-pinecone.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-pytorch-fsdp.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-pytorch-lightning.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-qdrant.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-research-dspy.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-saelens.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-simpo.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-slime.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-stable-diffusion.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-tensorrt-llm.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-torchtitan.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-training-axolotl.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-training-trl-fine-tuning.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-training-unsloth.md`
+- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-whisper.md`
+- MODIFIED `website/docs/user-guide/skills/optional/payments/payments-mpp-agent.md`
+- MODIFIED `website/docs/user-guide/skills/optional/payments/payments-stripe-link-cli.md`
+- MODIFIED `website/docs/user-guide/skills/optional/payments/payments-stripe-projects.md`
+- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-canvas.md`
+- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-decision-questionnaire.md`
+- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-here-now.md`
+- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-memento-flashcards.md`
+- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-shop.md`
+- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-shopify.md`
+- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-siyuan.md`
+- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-telephony.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-bioinformatics.md`
+- ADDED `website/docs/user-guide/skills/optional/research/research-blogwatcher.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-darwinian-evolver.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-domain-intel.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-drug-discovery.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-duckduckgo-search.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-gitnexus-explorer.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-osint-investigation.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-parallel-cli.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-pinecone-research.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-qmd.md`
+- ADDED `website/docs/user-guide/skills/optional/research/research-research-paper-writing.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-scrapling.md`
+- MODIFIED `website/docs/user-guide/skills/optional/research/research-searxng-search.md`
+- MODIFIED `website/docs/user-guide/skills/optional/security/security-1password.md`
+- MODIFIED `website/docs/user-guide/skills/optional/security/security-godmode.md`
+- MODIFIED `website/docs/user-guide/skills/optional/security/security-oss-forensics.md`
+- MODIFIED `website/docs/user-guide/skills/optional/security/security-sherlock.md`
+- MODIFIED `website/docs/user-guide/skills/optional/security/security-unbroker.md`
+- MODIFIED `website/docs/user-guide/skills/optional/security/security-web-pentest.md`
+- ADDED `website/docs/user-guide/skills/optional/smart-home/smart-home-openhue.md`
+- ADDED `website/docs/user-guide/skills/optional/software-development/software-development-ast-grep.md`
+- MODIFIED `website/docs/user-guide/skills/optional/software-development/software-development-code-wiki.md`
 - MODIFIED `website/docs/user-guide/skills/optional/software-development/software-development-grill-me.md`
+- MODIFIED `website/docs/user-guide/skills/optional/software-development/software-development-rest-graphql-debug.md`
 - MODIFIED `website/docs/user-guide/skills/optional/software-development/software-development-subagent-driven-development.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer-guide/prompt-assembly.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/reference/skills-catalog.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/reference/slash-commands.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/browser.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/personality.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/skills.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/skills/bundled/research/research-research-paper-writing.md`
-- DELETED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/skills/bundled/software-development/software-development-plan.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/skills/bundled/software-development/software-development-spike.md`
+- MODIFIED `website/docs/user-guide/skills/optional/web-development/web-development-cloudflare-temporary-deploy.md`
+- ADDED `website/docs/user-guide/skills/optional/web-development/web-development-har-derived-api-client.md`
+- MODIFIED `website/docs/user-guide/skills/optional/web-development/web-development-page-agent.md`
+- MODIFIED `website/docs/user-guide/skills/optional/web-development/web-development-publish-site.md`
+- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/kanban.md`
 - MODIFIED `website/sidebars.ts`
 
 ## Scan
 
-10761 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10639]
+10804 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10682]
 
 
 ## Diff
 
-1406 renamed, 0 rewritten, 8952 identical, 61 locked, 0 missing, 34 owned, 254 reconciled
+1408 renamed, 0 rewritten, 8993 identical, 61 locked, 0 missing, 34 owned, 254 reconciled
 
 
 ## Fork check (vs nastech-agent)
 
-- 10353 identical, 363 updated (+0/-0 lines), 45 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 0 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+- 10308 identical, 271 updated (+0/-0 lines), 224 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - features: fork 51 -> branded 51
 

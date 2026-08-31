@@ -162,6 +162,63 @@ _RECENT_SUBAGENTS_CAP = 200
 _recent_subagents: Dict[str, Dict[str, Any]] = {}
 
 
+# Terminal child statuses that mean "the subagent did NOT deliver a usable
+# result". Shared by the CLI spinner echo, the gateway failure notice, and
+# the parent-facing failure summary so every surface agrees on what counts
+# as a failure.
+SUBAGENT_FAILURE_STATUSES = frozenset({"failed", "error", "timeout"})
+
+
+def _clean_error_text(error: Any, max_chars: int = 200) -> str:
+    """Reduce an arbitrary error payload to one clean human-readable line.
+
+    Provider/SDK errors routinely arrive as multi-line tracebacks or JSON
+    walls. For a chat-facing notice we want the single most informative
+    line: the exception message (last line of a traceback) or the first
+    non-empty line otherwise, hard-capped in length.
+    """
+    text = str(error or "").strip()
+    if not text:
+        return ""
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    if not lines:
+        return ""
+    # A traceback's last line is the actual exception message.
+    line = lines[-1] if lines[0].startswith("Traceback") else lines[0]
+    if len(line) > max_chars:
+        line = line[: max_chars - 3] + "..."
+    return line
+
+
+def format_subagent_failure_line(
+    goal: Optional[str],
+    status: Optional[str],
+    error: Any = None,
+    duration_seconds: Any = None,
+) -> str:
+    """One clean, human-readable line describing a failed subagent.
+
+    Rendered directly to the user (CLI spinner echo, gateway platform
+    notice) — no JSON, no traceback, no internal field names. Example:
+
+        ⚠️ Subagent failed — "research competitor pricing": Error code: 404 —
+        model not found (after 12s)
+    """
+    goal_label = (goal or "").strip().replace("\n", " ")
+    if len(goal_label) > 60:
+        goal_label = goal_label[:57] + "..."
+    verb = "timed out" if status == "timeout" else "failed"
+    line = f"⚠️ Subagent {verb}"
+    if goal_label:
+        line += f' — "{goal_label}"'
+    err = _clean_error_text(error)
+    if err:
+        line += f": {err}"
+    if isinstance(duration_seconds, (int, float)) and duration_seconds > 0:
+        line += f" (after {round(duration_seconds)}s)"
+    return line
+
+
 def get_subagent_attribution(task_id: Optional[str]) -> Optional[Dict[str, Any]]:
     """Resolve a process task_id to its originating delegation, if any.
 
@@ -1460,6 +1517,21 @@ def _build_child_progress_callback(
             return
 
         if event_type == "subagent.complete":
+            # Failed child: echo one clean reason line into the CLI tree so
+            # the human sees WHY, not just a vanished branch. Gateway-side
+            # rendering happens in TurnRunner.progress_callback off the
+            # relayed event below.
+            if spinner and kwargs.get("status") in SUBAGENT_FAILURE_STATUSES:
+                _fail_line = format_subagent_failure_line(
+                    goal_label,
+                    kwargs.get("status"),
+                    error=kwargs.get("summary") or preview,
+                    duration_seconds=kwargs.get("duration_seconds"),
+                )
+                try:
+                    spinner.print_above(f" {prefix}├─ {_fail_line}")
+                except Exception as e:
+                    logger.debug("Spinner print_above failed: %s", e)
             _relay("subagent.complete", preview=preview, **kwargs)
             return
 
@@ -1567,6 +1639,30 @@ def _build_child_progress_callback(
 
 def _normalized_runtime_url(value: Any) -> str:
     return str(value or "").strip().rstrip("/")
+
+
+def _inherit_parent_capabilities(
+    parent_agent, override_provider, override_base_url
+) -> Optional[dict]:
+    """Return the parent's endpoint-trust capability map for a child, or None.
+
+    The trusted-proxy capability map (``agent.capabilities``, e.g.
+    ``openai_native_compaction`` from a custom_providers entry) is a trust
+    decision scoped to one provider+endpoint. A child inherits it ONLY when
+    it runs against the parent's exact route — any delegation override that
+    changes provider or base_url stays DEFAULT-DENY, matching the /model
+    switch posture (#94036/#97292).
+    """
+    if override_provider or override_base_url:
+        return None
+    parent_caps = getattr(parent_agent, "capabilities", None)
+    if not isinstance(parent_caps, dict):
+        return None
+    return {
+        key: value
+        for key, value in parent_caps.items()
+        if isinstance(key, str) and isinstance(value, bool)
+    }
 
 
 def _inherit_parent_base_url(parent_agent, fallback_base_url: Optional[str]) -> Optional[str]:
@@ -1786,6 +1882,16 @@ def _build_child_agent(
     if not override_base_url:
         effective_base_url = _inherit_parent_base_url(parent_agent, effective_base_url)
     effective_api_key = override_api_key or parent_api_key
+    # Same-class follow-up to #94036/#97292: the trusted-proxy capability map
+    # (`agent.capabilities`, e.g. ``openai_native_compaction`` from a
+    # custom_providers entry) is an endpoint-scoped trust decision. Children
+    # inherit it ONLY when they run against the parent's exact provider and
+    # base_url — a provider- or endpoint-changing delegation override stays
+    # DEFAULT-DENY, matching the /model switch posture. Without this, a child
+    # on the same trusted proxy silently falls back to local summarization.
+    child_capabilities = _inherit_parent_capabilities(
+        parent_agent, override_provider, override_base_url
+    )
     # Bug #20558 / PR #20563: api_mode must NOT be inherited when the child uses a
     # different provider than the parent — each provider has its own API surface
     # (e.g. MiniMax uses anthropic_messages, DeepSeek uses chat_completions).
@@ -1967,6 +2073,7 @@ def _build_child_agent(
                 api_key=effective_api_key,
                 model=effective_model,
                 provider=effective_provider,
+                capabilities=child_capabilities,
                 api_mode=effective_api_mode,
                 acp_command=effective_acp_command,
                 acp_args=effective_acp_args,
@@ -2472,7 +2579,27 @@ def _run_single_child(
 ) -> Dict[str, Any]:
     """
     Run a pre-built child agent. Called from within a thread.
-    Returns a structured result dict.
+    Returns a structured result dict with a ``status`` and ``exit_reason``
+    that are derived honestly from the child's structured completion fields.
+
+    ``status`` ∈ {``"completed"``, ``"interrupted"``, ``"failed"``}:
+        * ``"completed"``  — the child reached a normal finish (may still have
+          hit its iteration budget; see ``exit_reason``).
+        * ``"interrupted"`` — the child was interrupted (``interrupted=True``).
+        * ``"failed"``    — a structured failure (``failed=True`` or a non-empty
+          ``error``) or a summary-less/invalid terminal state.
+
+    ``exit_reason`` ∈ {``"completed"``, ``"max_iterations"``, ``"interrupted"``,
+    ``"error"``}:
+        * ``"completed"``       — normal finish.
+        * ``"max_iterations"``  — genuine per-child iteration-budget exhaustion
+          (``completed=False`` with no failure fields).
+        * ``"interrupted"``     — interrupted by the parent.
+        * ``"error"``           — provider rejection / terminal failure; NOT
+          budget exhaustion (this is the case #97655 fixed).
+
+    ``truncated`` is derived as ``exit_reason == "max_iterations"`` only, so the
+    parent-visible truncation flag stays truthful for all of the above.
     """
     child_start = time.monotonic()
 
@@ -3057,6 +3184,15 @@ def _run_single_child(
 
         if interrupted:
             status = "interrupted"
+        elif result.get("failed") or result.get("error"):
+            # A structured failure (provider rejection / terminal exception)
+            # must WIN over the summary-presence heuristic below. The child's
+            # conversation loop returns the error text as final_response, so an
+            # error-shaped summary would otherwise be labeled "completed" here
+            # despite completed=False. The heuristic is only a fallback for
+            # legacy/mock results that omit the structured failure fields.
+            # (Community report Aug 2026; #97655.)
+            status = "failed"
         elif summary and not _empty_sentinel:
             # A summary means the subagent produced usable output.
             # exit_reason ("completed" vs "max_iterations") already
@@ -3106,9 +3242,15 @@ def _run_single_child(
         # Determine exit reason
         if interrupted:
             exit_reason = "interrupted"
+        elif result.get("failed") or result.get("error"):
+            # Provider rejection / terminal failure. Do NOT report this as
+            # iteration-budget exhaustion — "max_iterations" is only truthful
+            # when the child actually hit its per-delegation iteration cap.
+            exit_reason = "error"
         elif completed:
             exit_reason = "completed"
         else:
+            # Genuine budget exhaustion: completed=False with no failure.
             exit_reason = "max_iterations"
 
         # Extract token counts (safe for mock objects)
@@ -3116,6 +3258,10 @@ def _run_single_child(
         _output_tokens = getattr(child, "session_completion_tokens", 0)
         _model = getattr(child, "model", None)
 
+        # --- result entry contract (see _run_single_child docstring) ---
+        # status ∈ {completed, interrupted, failed}
+        # exit_reason ∈ {completed, max_iterations, interrupted, error}
+        # truncated is exactly (exit_reason == "max_iterations").
         entry: Dict[str, Any] = {
             "task_index": task_index,
             "status": status,
@@ -4071,6 +4217,15 @@ def delegate_task(
                         icon = "✓" if status == "completed" else "✗"
                         remaining = n_tasks - completed_count
                         completion_line = f"{icon} [{idx+1}/{n_tasks}] {label}  ({dur}s)"
+                        # Failed/errored/timed-out children: say WHY on the
+                        # same line, cleaned to one short human-readable
+                        # fragment — a bare ✗ reads as "silently dropped".
+                        if status in SUBAGENT_FAILURE_STATUSES:
+                            _err_line = _clean_error_text(
+                                entry.get("error"), max_chars=120
+                            )
+                            if _err_line:
+                                completion_line += f" — {_err_line}"
                         if spinner_ref:
                             try:
                                 spinner_ref.print_above(completion_line)

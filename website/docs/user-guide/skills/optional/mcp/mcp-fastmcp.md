@@ -15,7 +15,7 @@ Build, test, and deploy Python MCP servers.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/mcp/fastmcp` |
-| Path | `optional-skills/mcp/fastmcp` |
+| Path | `optional-skills/mcp\fastmcp` |
 | Version | `1.0.0` |
 | Author | Nastech Agent |
 | License | MIT |

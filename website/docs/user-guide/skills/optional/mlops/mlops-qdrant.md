@@ -15,7 +15,7 @@ Vector search engine for production RAG systems.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/mlops/qdrant` |
-| Path | `optional-skills/mlops/qdrant` |
+| Path | `optional-skills/mlops\qdrant` |
 | Version | `1.0.1` |
 | Author | Orchestra Research |
 | License | MIT |
@@ -509,8 +509,8 @@ client = QdrantClient(
 
 ## References
 
-- **[Advanced Usage](https://github.com/NastechResearch/nastech-agent/blob/main/optional-skills/mlops/qdrant/references/advanced-usage.md)** - Distributed mode, hybrid search, recommendations
-- **[Troubleshooting](https://github.com/NastechResearch/nastech-agent/blob/main/optional-skills/mlops/qdrant/references/troubleshooting.md)** - Common issues, debugging, performance tuning
+- **[Advanced Usage](https://github.com/NastechResearch/nastech-agent/blob/main/optional-skills/mlops\qdrant/references/advanced-usage.md)** - Distributed mode, hybrid search, recommendations
+- **[Troubleshooting](https://github.com/NastechResearch/nastech-agent/blob/main/optional-skills/mlops\qdrant/references/troubleshooting.md)** - Common issues, debugging, performance tuning
 
 ## Resources
 
