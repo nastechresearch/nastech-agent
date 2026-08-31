@@ -150,7 +150,9 @@ describe('BootFailureOverlay', () => {
     const gatewayUrl = 'https://agent-1.agents.nastechresearch.github.io'
     const logout = vi.fn().mockResolvedValue({ ok: true, connected: false })
     const nativeLogin = vi.fn().mockResolvedValue({ ok: true, connected: false })
-    const cloudStatus = vi.fn().mockResolvedValue({ portalBaseUrl: 'https://portal.nastechresearch.github.io', signedIn: false })
+    const cloudStatus = vi
+      .fn()
+      .mockResolvedValue({ portalBaseUrl: 'https://portal.nastechresearch.github.io', signedIn: false })
 
     const cloudLogin = vi.fn().mockResolvedValue({
       ok: true,
