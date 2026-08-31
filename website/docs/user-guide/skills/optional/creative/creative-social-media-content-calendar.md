@@ -15,7 +15,7 @@ Plan multi-platform social campaigns: briefs to posting.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/creative/social-media-content-calendar` |
-| Path | `optional-skills/creative/social-media-content-calendar` |
+| Path | `optional-skills/creative\social-media-content-calendar` |
 | Version | `0.1.0` |
 | Author | Ben Barclay (benbarclay), Nastech Agent |
 | License | MIT |

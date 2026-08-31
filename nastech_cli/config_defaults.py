@@ -984,10 +984,11 @@ DEFAULT_CONFIG = {
                                       # the ChatGPT Codex backend; every other
                                       # route/model is unaffected. Nastech' local
                                       # compression stays armed as the fallback.
-        "codex_responses_compact_threshold": 200000,  # Server-side compaction trigger
-                                      # (input tokens). Clamped below the local
-                                      # compression threshold at request time so
-                                      # the server compacts before Nastech does.
+        "codex_responses_compact_threshold": None,  # Optional absolute server compaction
+                                      # trigger in input tokens. None follows the
+                                      # resolved local compression trigger with a
+                                      # safety margin. Explicit values only clamp
+                                      # downward so the server compacts first.
         "in_place": True,             # When True, compaction rewrites the message
                                       # list and rebuilds the system prompt WITHOUT
                                       # rotating the session id — the conversation
@@ -2520,6 +2521,16 @@ DEFAULT_CONFIG = {
     #             safe; mirrors cron_mode deny)
     #   approve — auto-approve all dangerous commands in single-query mode
     #
+    # unattended_mode — what to do when a session on an unattended
+    # programmatic platform (webhook, msgraph_webhook, api_server) hits a
+    # dangerous command. These surfaces bind a session platform like chat
+    # gateways do, but have no send_exec_approval and no /approve channel —
+    # a pending approval there just blocks for the full timeout with nobody
+    # to answer (#37284, #87509):
+    #   deny    — block the command instantly and let the agent find another
+    #             way (default, safe; mirrors cron_mode deny)
+    #   approve — auto-approve all dangerous commands on unattended platforms
+    #
     # timeout — seconds to wait for the user's approve/deny before failing
     # closed (deny). Shared by the CLI prompt and gateway/messaging waits.
     # Messaging approvals arrive as a push notification the user may not see
@@ -2530,6 +2541,7 @@ DEFAULT_CONFIG = {
         "timeout": 300,
         "cron_mode": "deny",
         "single_query_mode": "deny",
+        "unattended_mode": "deny",
         # Operator-customizable policy text for smart approvals. When
         # non-empty, this is appended to the smart-approval guardian's
         # SYSTEM prompt (trusted channel) as additional rules — e.g.

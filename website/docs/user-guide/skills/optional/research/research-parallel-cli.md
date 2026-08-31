@@ -15,7 +15,7 @@ Agent-native web search, deep research, and enrichment.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/research/parallel-cli` |
-| Path | `optional-skills/research/parallel-cli` |
+| Path | `optional-skills/research\parallel-cli` |
 | Version | `1.1.0` |
 | Author | Nastech Agent |
 | License | MIT |

@@ -15,7 +15,7 @@ Embed an in-page natural-language GUI copilot in web apps.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/web-development/page-agent` |
-| Path | `optional-skills/web-development/page-agent` |
+| Path | `optional-skills/web-development\page-agent` |
 | Version | `1.0.0` |
 | Author | Nastech Agent |
 | License | MIT |

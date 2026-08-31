@@ -15,7 +15,7 @@ Use live BCI cognitive and mood state from NeuroSkill.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/health/neuroskill-bci` |
-| Path | `optional-skills/health/neuroskill-bci` |
+| Path | `optional-skills/health\neuroskill-bci` |
 | Version | `1.0.0` |
 | Author | Nastech Agent + Nastech Research |
 | License | MIT |

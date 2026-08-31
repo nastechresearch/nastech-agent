@@ -15,7 +15,7 @@ Delegate coding tasks to the Blackbox AI multi-model CLI.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/autonomous-ai-agents/blackbox` |
-| Path | `optional-skills/autonomous-ai-agents/blackbox` |
+| Path | `optional-skills/autonomous-ai-agents\blackbox` |
 | Version | `1.0.1` |
 | Author | Nastech Agent (Nastech Research) |
 | License | MIT |

@@ -15,7 +15,7 @@ Pay HTTP 402 APIs via Machine Payments Protocol (MPP).
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/payments/mpp-agent` |
-| Path | `optional-skills/payments/mpp-agent` |
+| Path | `optional-skills/payments\mpp-agent` |
 | Version | `0.1.0` |
 | Author | Teknium (teknium1), Nastech Agent |
 | License | MIT |

@@ -15,7 +15,7 @@ Agent payments via Stripe Link — cards, SPT, approvals.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/payments/stripe-link-cli` |
-| Path | `optional-skills/payments/stripe-link-cli` |
+| Path | `optional-skills/payments\stripe-link-cli` |
 | Version | `0.1.0` |
 | Author | Teknium (teknium1), Nastech Agent |
 | License | MIT |

@@ -15,7 +15,7 @@ Read the live Nastech desktop DOM/CSS over CDP.
 | | |
 |---|---|
 | Source | Bundled (installed by default) |
-| Path | `skills/software-development/inspecting-nastech-desktop-dom` |
+| Path | `skills/software-development\inspecting-nastech-desktop-dom` |
 | Version | `1.0.0` |
 | Author | Nastech Agent |
 | License | MIT |
