@@ -1,15 +1,24 @@
 {
   "number": 1,
   "dir": "Nastech-Update#1",
-  "upstream_sha": "cd2bd160579d5240e52d01e2f735da55ff4242ef",
+  "upstream_sha": "a9c783f21995723c812dcb2f8ae58bc6a4323e2f",
   "nastech_url": "https://github.com/Nastechresearch/nastech-agent.git",
   "source_provenance": {
     "remote_url": "https://github.com/Nastechresearch/nastech-agent.git",
-    "fetched_at": "2026-08-31T04:51:51+00:00",
+    "fetched_at": "2026-08-31T05:51:17+00:00",
     "acquisition": "fresh-direct-clone",
     "baseline_sha": "26350357d76e4508c8df9304a3374bdc5a6f6220"
   },
   "commit_subjects": [
+    "fix(desktop): surface persistent group holds",
+    "chore: map contributor email for @sambai-dev",
+    "fix(bot-mode): avoid inherited stdin on Windows",
+    "chore: map contributor email for itskaism",
+    "test: adapt #97667 rejection-notice tests to the config-reading implementation on main",
+    "fix(tools): surface config-level model_not_found notices in delegation batch reports",
+    "fix(delegation): report failed children as failed, not completed",
+    "fix(bot-mode): cancel re-routes on worker races instead of failing disband",
+    "feat(bot-mode): run same-gateway Group Chats without Desktop",
     "test: drop duplicate failed-flag regression test superseded by TestDelegateFailedChildStatus",
     "fix(delegation): pin failure-status edge cases and document exit_reason enum",
     "feat(delegation): surface config-level model_not_found notice in delegation batch reports",
@@ -74,21 +83,21 @@
     ".gitignore": 1,
     "SOUL.md": 1,
     "agent": 47,
-    "apps": 2,
+    "apps": 6,
     "cli-config.yaml.example": 1,
     "cli.py": 2,
-    "contributors": 2,
+    "contributors": 4,
     "evals": 2,
-    "gateway": 15,
-    "nastech_cli": 10,
+    "gateway": 20,
+    "nastech_cli": 11,
     "nastech_state.py": 1,
     "optional-skills": 153,
     "plugins": 10,
     "run_agent.py": 4,
     "skills": 38,
-    "tests": 74,
-    "tools": 11,
-    "tui_gateway": 6,
+    "tests": 92,
+    "tools": 14,
+    "tui_gateway": 15,
     "ui-tui": 1,
     "website": 208
   },
@@ -96,8 +105,8 @@
     "baseline_sha": "26350357d76e4508c8df9304a3374bdc5a6f6220",
     "complete": true,
     "counts": {
-      "added": 47,
-      "modified": 272,
+      "added": 66,
+      "modified": 281,
       "deleted": 4,
       "renamed": 177
     },
@@ -267,6 +276,34 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/group-chat-view.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/group-chat-view.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/group-hold-status.test.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/group-hold-status.test.tsx"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/group-hold-status.tsx",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/group-hold-status.tsx"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "apps/desktop/src/plugins/nastech-bots/i18n.ts",
+        "old_mapped": "",
+        "new_mapped": "apps/desktop/src/plugins/nastech-bots/i18n.ts"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "cli-config.yaml.example",
         "old_mapped": "",
         "new_mapped": "cli-config.yaml.example"
@@ -293,6 +330,20 @@
         "new_mapped": "contributors/emails/ijnotion@pm.me"
       },
       {
+        "status": "added",
+        "old_path": "",
+        "new_path": "contributors/emails/itskaism@users.noreply.github.com",
+        "old_mapped": "",
+        "new_mapped": "contributors/emails/itskaism@users.noreply.github.com"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "contributors/emails/yozamono@gmail.com",
+        "old_mapped": "",
+        "new_mapped": "contributors/emails/yozamono@gmail.com"
+      },
+      {
         "status": "modified",
         "old_path": "",
         "new_path": "evals/compaction/results/SCORECARD-2026-08-15.md",
@@ -305,6 +356,27 @@
         "new_path": "evals/compaction/runner.py",
         "old_mapped": "",
         "new_mapped": "evals/compaction/runner.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "gateway/hosted_room_discussion.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/hosted_room_discussion.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "gateway/hosted_room_driver.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/hosted_room_driver.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "gateway/hosted_room_policy_checkpoint.py",
+        "old_mapped": "",
+        "new_mapped": "gateway/hosted_room_policy_checkpoint.py"
       },
       {
         "status": "added",
@@ -1891,6 +1963,34 @@
       {
         "status": "added",
         "old_path": "",
+        "new_path": "tests/gateway/test_hosted_room_discussion.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_hosted_room_discussion.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_hosted_room_driver.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_hosted_room_driver.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_hosted_room_gateway_lifecycle.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_hosted_room_gateway_lifecycle.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_hosted_room_local_boundary.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_hosted_room_local_boundary.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
         "new_path": "tests/gateway/test_hosted_room_replicas.py",
         "old_mapped": "",
         "new_mapped": "tests/gateway/test_hosted_room_replicas.py"
@@ -1901,6 +2001,13 @@
         "new_path": "tests/gateway/test_hosted_rooms.py",
         "old_mapped": "",
         "new_mapped": "tests/gateway/test_hosted_rooms.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/gateway/test_hosted_rooms_read_path.py",
+        "old_mapped": "",
+        "new_mapped": "tests/gateway/test_hosted_rooms_read_path.py"
       },
       {
         "status": "modified",
@@ -1943,6 +2050,13 @@
         "new_path": "tests/nastech_cli/test_runtime_provider_resolution.py",
         "old_mapped": "",
         "new_mapped": "tests/nastech_cli/test_runtime_provider_resolution.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/nastech_cli/test_web_server_boot_handshake.py",
+        "old_mapped": "",
+        "new_mapped": "tests/nastech_cli/test_web_server_boot_handshake.py"
       },
       {
         "status": "modified",
@@ -2066,6 +2180,20 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "tests/tools/test_async_delegation.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tools/test_async_delegation.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tests/tools/test_bot_mode_dm.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tools/test_bot_mode_dm.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "tests/tools/test_cron_approval_mode.py",
         "old_mapped": "",
         "new_mapped": "tests/tools/test_cron_approval_mode.py"
@@ -2108,6 +2236,13 @@
       {
         "status": "modified",
         "old_path": "",
+        "new_path": "tests/tui_gateway/test_auto_continue.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tui_gateway/test_auto_continue.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
         "new_path": "tests/tui_gateway/test_compression_config_hot_reload.py",
         "old_mapped": "",
         "new_mapped": "tests/tui_gateway/test_compression_config_hot_reload.py"
@@ -2127,11 +2262,46 @@
         "new_mapped": "tests/tui_gateway/test_groups_replication_methods.py"
       },
       {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/tui_gateway/test_hosted_room_driver_runtime.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tui_gateway/test_hosted_room_driver_runtime.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/tui_gateway/test_hosted_room_prompt_fence.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tui_gateway/test_hosted_room_prompt_fence.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/tui_gateway/test_hosted_room_server_rpc.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tui_gateway/test_hosted_room_server_rpc.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tests/tui_gateway/test_hosted_room_service.py",
+        "old_mapped": "",
+        "new_mapped": "tests/tui_gateway/test_hosted_room_service.py"
+      },
+      {
         "status": "modified",
         "old_path": "",
         "new_path": "tools/approval.py",
         "old_mapped": "",
         "new_mapped": "tools/approval.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tools/bot_mode_dm.py",
+        "old_mapped": "",
+        "new_mapped": "tools/bot_mode_dm.py"
       },
       {
         "status": "modified",
@@ -2162,6 +2332,27 @@
         "new_mapped": "tools/skills_tool.py"
       },
       {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tui_gateway/hosted_room_driver.py",
+        "old_mapped": "",
+        "new_mapped": "tui_gateway/hosted_room_driver.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tui_gateway/hosted_room_server_rpc.py",
+        "old_mapped": "",
+        "new_mapped": "tui_gateway/hosted_room_server_rpc.py"
+      },
+      {
+        "status": "added",
+        "old_path": "",
+        "new_path": "tui_gateway/hosted_room_service.py",
+        "old_mapped": "",
+        "new_mapped": "tui_gateway/hosted_room_service.py"
+      },
+      {
         "status": "modified",
         "old_path": "",
         "new_path": "tui_gateway/methods_bot_relay.py",
@@ -2174,6 +2365,20 @@
         "new_path": "tui_gateway/methods_groups.py",
         "old_mapped": "",
         "new_mapped": "tui_gateway/methods_groups.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tui_gateway/methods_prompt.py",
+        "old_mapped": "",
+        "new_mapped": "tui_gateway/methods_prompt.py"
+      },
+      {
+        "status": "modified",
+        "old_path": "",
+        "new_path": "tui_gateway/methods_session.py",
+        "old_mapped": "",
+        "new_mapped": "tui_gateway/methods_session.py"
       },
       {
         "status": "modified",
@@ -3925,31 +4130,31 @@
     "release"
   ],
   "verify": {
-    "total": 10750,
-    "passed": 10750,
+    "total": 10769,
+    "passed": 10769,
     "locked": 64,
     "failed": [],
     "pass_ratio": 1.0
   },
   "brand": {
-    "total": 10750,
-    "renamed": 1497,
-    "rewritten": 10652,
+    "total": 10769,
+    "renamed": 1499,
+    "rewritten": 10671,
     "locked_copied": 56,
     "binary_copied": 8,
     "errors": []
   },
   "diff": {
-    "renamed": 1408,
+    "renamed": 1410,
     "rewritten": 0,
-    "identical": 8993,
+    "identical": 9010,
     "locked": 61,
     "missing": 0
   },
   "scan": {
-    "total": 10804,
+    "total": 10823,
     "by_category": {
-      "text": 10682,
+      "text": 10701,
       "image": 92,
       "binary": 7,
       "audio": 5,
@@ -3957,7 +4162,7 @@
       "doc": 5
     },
     "by_format": {
-      "text": 10682,
+      "text": 10701,
       "jpeg": 6,
       "png": 78,
       "icns": 4,
@@ -3973,11 +4178,11 @@
   },
   "fork": {
     "statuses": {
-      "identical": 10308,
-      "updated": 271,
+      "identical": 10299,
+      "updated": 280,
       "locked": 1,
       "upstream_deleted": 181,
-      "added": 224
+      "added": 243
     },
     "violations": 0,
     "preserved": 54,

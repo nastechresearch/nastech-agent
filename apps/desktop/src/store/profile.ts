@@ -2,6 +2,7 @@ import { LOCAL_CONNECTION_ID } from '@nastech/shared'
 import { atom, batch, computed } from 'nanostores'
 
 import type { NastechConnection } from '@/global'
+import { getProfiles, nastechApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { invalidateProfileScopedQueries } from '@/lib/query-client'
 import {
   arraysEqual,
@@ -13,7 +14,6 @@ import {
   storedStringRecord
 } from '@/lib/storage'
 import { withTimeout } from '@/lib/with-timeout'
-import { getProfiles, nastechApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { invalidateCronModelImpactScopeState } from '@/store/cron-model-impact-scope'
 import {
   $gateway,
