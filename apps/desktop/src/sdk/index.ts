@@ -1207,9 +1207,18 @@ export const host = {
    *  `null` when the owner has nothing open. A roster click asks this before
    *  resolving the canonical chat, so the tabs the user left (and the ones
    *  they closed) are respected. Presentation only: no gateway activation,
-   *  no session create. Feature-detect on older desktops. */
-  focusOpenWorkspaceSession: (workspaceOwnerKey: string): null | string =>
-    focusWorkspaceOwnerSessionTile(workspaceOwnerKey),
+   *  no session create. Feature-detect on older desktops.
+   *
+   *  `isStaleTile` (nastech-agent#90102): the caller's reconciliation probe
+   *  against backend truth. The tile bucket is a Local Storage cache — a
+   *  persisted bot tile can name a session the backend has since superseded,
+   *  and fronting it pinned the roster click to a stale finished session
+   *  forever. Tiles the probe rejects are discarded (never fronted), so the
+   *  caller falls through to its authoritative open path. */
+  focusOpenWorkspaceSession: (
+    workspaceOwnerKey: string,
+    isStaleTile?: (tile: { storedSessionId: string; workspaceTabTitle?: string }) => boolean
+  ): null | string => focusWorkspaceOwnerSessionTile(workspaceOwnerKey, isStaleTile),
 
   /** Reactive on-screen visibility of a contributed pane: true while it is in
    *  the layout tree, not dismissed/hidden, its zone un-minimized, AND holding
@@ -1618,11 +1627,11 @@ export { triggerHaptic as haptic } from '@/lib/haptics'
 export * as icons from '@/lib/icons'
 export { type KeybindContribution, KEYBINDS_AREA } from '@/lib/keybinds/actions'
 export { formatModifierToken } from '@/lib/keybinds/combo'
+export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 /** A `Map` with a ceiling, for the module-level caches a plugin keeps across
  *  a renderer that stays open for days. Only for values that can be
  *  regenerated — eviction costs a recompute or a refetch, never correctness. */
 export { LruCache } from '@/lib/lru-cache'
-export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 /** The app's deterministic identity color for a name (profiles, assignees,
  *  authors), its translucent tag fill, and the curated picker swatches — so
  *  plugin-rendered identities read the same hue as everywhere else. The

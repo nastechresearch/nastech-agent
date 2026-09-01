@@ -21,10 +21,8 @@ import nastech_time
 
 
 def _reset_nastech_time_cache():
-    """Reset the nastech_time module cache (replacement for removed reset_cache)."""
-    nastech_time._cached_tz = None
-    nastech_time._cached_tz_name = None
-    nastech_time._cache_resolved = False
+    """Reset the nastech_time module cache."""
+    nastech_time.reset_cache()
 
 
 # =========================================================================
@@ -86,11 +84,86 @@ class TestGetTimezone:
         assert isinstance(tz, ZoneInfo)
         assert str(tz) == "Europe/London"
 
+    def test_cache_isolated_by_active_profile_config(self, tmp_path, monkeypatch):
+        """Switching NASTECH_HOME must not reuse another profile's timezone."""
+        first_home = tmp_path / "first"
+        second_home = tmp_path / "second"
+        first_home.mkdir()
+        second_home.mkdir()
+        (first_home / "config.yaml").write_text("timezone: Asia/Tokyo\n", encoding="utf-8")
+        (second_home / "config.yaml").write_text(
+            "timezone: America/New_York\n", encoding="utf-8"
+        )
+        monkeypatch.delenv("NASTECH_TIMEZONE", raising=False)
 
+        monkeypatch.setenv("NASTECH_HOME", str(first_home))
+        assert str(nastech_time.get_timezone()) == "Asia/Tokyo"
 
+        # Multiplexed profile runtime scopes switch NASTECH_HOME in one process.
+        monkeypatch.setenv("NASTECH_HOME", str(second_home))
+        assert str(nastech_time.get_timezone()) == "America/New_York"
+
+        # Switching BACK must return the first profile's zone (per-identity
+        # entries stay hot; no single-slot ping-pong).
+        monkeypatch.setenv("NASTECH_HOME", str(first_home))
+        assert str(nastech_time.get_timezone()) == "Asia/Tokyo"
+
+    def test_concurrent_profile_resolution_never_mixes_zones(
+        self, tmp_path, monkeypatch
+    ):
+        """Racing profile-scoped threads must never observe a foreign zone.
+
+        The multiplex cron ticker lets profile-A work (mark_job_run /
+        compute_next_run) overlap the ticker advancing to profile B. The
+        cache publication must be atomic per identity: identity A can never
+        be paired with profile B's ZoneInfo (#97905 review finding on
+        PR #92489).
+        """
+        import threading
+
+        from nastech_constants import (
+            reset_nastech_home_override,
+            set_nastech_home_override,
+        )
+
+        zones = {"a": "Asia/Tokyo", "b": "America/New_York"}
+        homes = {}
+        for key, zone in zones.items():
+            home = tmp_path / key
+            home.mkdir()
+            (home / "config.yaml").write_text(
+                f"timezone: {zone}\n", encoding="utf-8"
+            )
+            homes[key] = home
+        monkeypatch.delenv("NASTECH_TIMEZONE", raising=False)
+
+        errors = []
+        barrier = threading.Barrier(2)
+
+        def worker(key: str) -> None:
+            barrier.wait()
+            for _ in range(200):
+                token = set_nastech_home_override(str(homes[key]))
+                try:
+                    tz = nastech_time.get_timezone()
+                    if str(tz) != zones[key]:
+                        errors.append((key, str(tz)))
+                        return
+                finally:
+                    reset_nastech_home_override(token)
+
+        threads = [
+            threading.Thread(target=worker, args=(key,)) for key in zones
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert not errors, f"foreign timezone observed: {errors}"
 
 
 # =========================================================================
+
 # execute_code child env — TZ injection
 # =========================================================================
 

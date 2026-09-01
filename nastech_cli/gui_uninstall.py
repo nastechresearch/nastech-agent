@@ -147,12 +147,20 @@ def packaged_gui_app_paths() -> "list[Path]":
         data = os.environ.get("XDG_DATA_HOME")
         data_base = Path(data) if data else (home / ".local" / "share")
         paths += [
-            # The launcher entry `nastech desktop` installs. Its icon lives
-            # in the checkout, not in the installed app.
+            # The launcher entry `nastech desktop` installs. Its icon is
+            # also copied into the hicolor tree (see
+            # linux_desktop_entry._install_icon_to_hicolor) — remove
+            # every size dir the installer could have written.
             desktop_entry_path(),
             # Some packaged builds emit this casing.
             data_base / "applications" / "Nastech.desktop",
+            data_base / "icons" / "hicolor" / "scalable" / "apps" / "nastech.png",
         ]
+        # Fixed-size hicolor dirs: the icon is copied at its native size
+        # (read from the PNG header), so sweep the standard ones plus the
+        # 1024x1024 dir the shipped asset lands in.
+        for size in ("256x256", "512x512", "1024x1024"):
+            paths.append(data_base / "icons" / "hicolor" / size / "apps" / "nastech.png")
     return paths
 
 
@@ -230,7 +238,9 @@ def _remove_path(path: Path) -> bool:
     return False
 
 
-def uninstall_gui(nastech_home: "Path | None" = None, *, remove_userdata: bool = True) -> "list[Path]":
+def uninstall_gui(
+    nastech_home: "Path | None" = None, *, remove_userdata: bool = True
+) -> "list[Path]":
     """Remove the desktop GUI's artifacts, leaving the agent + user data intact.
 
     Removes:

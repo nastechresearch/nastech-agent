@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import Optional
 
 from nastech_cli.config import get_nastech_home
-from nastech_constants import venv_python_path
+from nastech_constants import get_default_nastech_root, venv_python_path
 
 logger = logging.getLogger(__name__)
 
@@ -598,6 +598,29 @@ def _editable_install_is_current(git_cmd, cwd, pre_pull_sha: str | None) -> bool
         return False
     return not result.stdout.strip()
 
+def _validate_python_files_syntax(
+    root, relpaths
+) -> tuple[bool, str | None, str | None]:
+    """Compile *relpaths* under *root* without writing bytecode into the tree."""
+    import py_compile
+    import tempfile
+
+    root = Path(root)
+    with tempfile.TemporaryDirectory(prefix="nastech-syntax-check-") as tmpdir:
+        for relpath in relpaths:
+            path = root / relpath
+            if not path.exists():
+                continue
+            cfile = Path(tmpdir) / (str(relpath).replace("/", "__") + "c")
+            try:
+                py_compile.compile(str(path), cfile=str(cfile), doraise=True)
+            except py_compile.PyCompileError as exc:
+                return False, str(path), str(exc)
+            except OSError as exc:
+                return False, str(path), f"could not read: {exc}"
+    return True, None, None
+
+
 def _validate_critical_files_syntax(root) -> tuple[bool, str | None, str | None]:
     """Compile each file in ``_UPDATE_CRITICAL_FILES`` to catch SyntaxErrors.
 
@@ -617,27 +640,7 @@ def _validate_critical_files_syntax(root) -> tuple[bool, str | None, str | None]
     Returns ``(ok, failing_path, error_message)``. ``ok=True`` means every
     file parsed cleanly.
     """
-    import py_compile
-    import tempfile
-
-    root = Path(root)
-    with tempfile.TemporaryDirectory(prefix="nastech-syntax-check-") as tmpdir:
-        for relpath in _UPDATE_CRITICAL_FILES:
-            path = root / relpath
-            if not path.exists():
-                # Missing file is suspicious but not necessarily fatal — a future
-                # refactor may legitimately remove one of these. Skip and move on.
-                continue
-            # Mirror the relative path under the tmpdir so two different
-            # files with the same basename don't collide on the cfile name.
-            cfile = Path(tmpdir) / (relpath.replace("/", "__") + "c")
-            try:
-                py_compile.compile(str(path), cfile=str(cfile), doraise=True)
-            except py_compile.PyCompileError as exc:
-                return False, str(path), str(exc)
-            except OSError as exc:
-                return False, str(path), f"could not read: {exc}"
-    return True, None, None
+    return _validate_python_files_syntax(root, _UPDATE_CRITICAL_FILES)
 
 
 # Modules imported on every agent startup. Unlike _UPDATE_CRITICAL_FILES (which
@@ -652,7 +655,9 @@ _UPDATE_CRITICAL_MODULES = (
 )
 
 
-def _validate_critical_modules_import(root) -> tuple[bool, str | None, str | None]:
+def _critical_module_import_failures(
+    root, *, report_runtime_errors: bool = False
+) -> dict[str, tuple[str, str]]:
     """Import each module in ``_UPDATE_CRITICAL_MODULES`` in a subprocess.
 
     ``_validate_critical_files_syntax`` only *parses* files, so it cannot see
@@ -675,12 +680,20 @@ def _validate_critical_modules_import(root) -> tuple[bool, str | None, str | Non
     different Python than the install's own, and probing the wrong
     interpreter would test a tree the user never runs.
 
-    Returns ``(ok, failing_module, error_message)``.
+    Returns every failing module in probe order. Generic import-time exceptions
+    remain tolerated by default because they can depend on local config or
+    environment. ``report_runtime_errors=True`` exposes them so a caller can
+    compare two states of the same checkout without an earlier failure masking
+    a later one.
     """
     from nastech_constants import FIRST_PARTY_MODULE_ROOTS
 
+    import secrets
+
+    marker = f"__NASTECH_IMPORT_HEALTH_{secrets.token_hex(16)}__"
     probe = (
-        "import importlib, sys\n"
+        "import importlib, json, sys\n"
+        "failures = []\n"
         "for name in %r:\n"
         "    try:\n"
         "        importlib.import_module(name)\n"
@@ -690,16 +703,23 @@ def _validate_critical_modules_import(root) -> tuple[bool, str | None, str | Non
         # The root set is injected from nastech_constants so this can't drift
         # from the hint the user is shown (they disagreed once already).
         "        missing = (getattr(exc, 'name', '') or '').split('.')[0]\n"
-        "        if missing in %r or missing.startswith('nastech_'):\n"
-        "            sys.stdout.write(name + '\\n' + str(exc))\n"
-        "            raise SystemExit(3)\n"
+        "        if missing in %r or missing.startswith('nastech_') or %r:\n"
+        "            failures.append((name, type(exc).__name__, str(exc)))\n"
         "    except ImportError as exc:\n"
-        "        sys.stdout.write(name + '\\n' + str(exc))\n"
-        "        raise SystemExit(3)\n"
-        "    except Exception:\n"
-        "        pass\n"  # non-import errors (config/env) aren't update breakage
-        "raise SystemExit(0)\n"
-        % (_UPDATE_CRITICAL_MODULES, tuple(sorted(FIRST_PARTY_MODULE_ROOTS)))
+        "        failures.append((name, type(exc).__name__, str(exc)))\n"
+        "    except Exception as exc:\n"
+        "        if %r:\n"
+        "            failures.append((name, type(exc).__name__, str(exc)))\n"
+        "    except BaseException as exc:\n"
+        "        failures.append((name, type(exc).__name__, str(exc)))\n"
+        "sys.stdout.write('\\n%s' + json.dumps(failures))\n"
+        % (
+            _UPDATE_CRITICAL_MODULES,
+            tuple(sorted(FIRST_PARTY_MODULE_ROOTS)),
+            report_runtime_errors,
+            report_runtime_errors,
+            marker,
+        )
     )
     try:
         interpreter = sys.executable
@@ -720,14 +740,59 @@ def _validate_critical_modules_import(root) -> tuple[bool, str | None, str | Non
             errors="replace",
             timeout=120,
         )
+    except subprocess.TimeoutExpired:
+        return {
+            "critical-module probe": (
+                "TimeoutExpired",
+                "timed out before reporting import health",
+            )
+        }
     except (OSError, subprocess.SubprocessError):
         # Can't run the probe — don't block the update on our own tooling.
-        return True, None, None
-    if result.returncode == 3:
-        parts = (result.stdout or "").split("\n", 1)
-        module = parts[0].strip() or "unknown"
-        detail = parts[1].strip() if len(parts) > 1 else ""
-        return False, module, detail
+        return {}
+    output = result.stdout or ""
+    if marker not in output:
+        return {
+            "critical-module probe": (
+                "ProbeTerminated",
+                "terminated before reporting import health "
+                f"(exit code {result.returncode})",
+            )
+        }
+    try:
+        import json
+
+        failures = json.loads(output.rsplit(marker, 1)[1])
+        if not isinstance(failures, list) or any(
+            not isinstance(item, list)
+            or len(item) != 3
+            or not all(isinstance(value, str) for value in item)
+            for item in failures
+        ):
+            raise ValueError("invalid import-health payload")
+        return {
+            str(module): (str(kind), str(detail))
+            for module, kind, detail in failures
+        }
+    except (TypeError, ValueError):
+        return {
+            "critical-module probe": (
+                "MalformedPayload",
+                "reported malformed import health data",
+            )
+        }
+
+
+def _validate_critical_modules_import(
+    root, *, report_runtime_errors: bool = False
+) -> tuple[bool, str | None, str | None]:
+    """Return the first critical-module import failure, if any."""
+    failures = _critical_module_import_failures(
+        root, report_runtime_errors=report_runtime_errors
+    )
+    if failures:
+        module = next(iter(failures))
+        return False, module, failures[module][1]
     return True, None, None
 
 def _gateway_prompt(prompt_text: str, default: str = "", timeout: float = 300.0) -> str:
@@ -1724,8 +1789,53 @@ def _update_complete_message(pre_version: str | None) -> str:
     if post_version:
         return f"✓ Update complete! (v{post_version})"
     return "✓ Update complete!"
- 
- 
+
+
+def _post_update_sqlite_runtime_status():
+    """Return whether the interpreter used after update has safe SQLite."""
+    from nastech_constants import project_venv_dir
+    from nastech_cli.sqlite_runtime import probe_sqlite_runtime
+
+    venv_dir = project_venv_dir(_m().PROJECT_ROOT)
+    python = (
+        venv_python_path(venv_dir, windows=_m()._is_windows())
+        if venv_dir is not None
+        else Path(sys.executable)
+    )
+    info = probe_sqlite_runtime(python)
+    return info is not None and not info.wal_reset_vulnerable, info
+
+
+def _print_verified_update_completion(message: str) -> bool:
+    """Print a success completion only after probing the next Nastech runtime."""
+    if not message.startswith("✓"):
+        _print_update_completion(message)
+        return False
+    sqlite_runtime_ok, sqlite_info = _post_update_sqlite_runtime_status()
+    if sqlite_info is None:
+        # Grace path: an unprobeable interpreter (no venv in a dev checkout,
+        # probe subprocess unavailable) must not fail an otherwise-successful
+        # update — only a POSITIVE vulnerable probe withholds success
+        # (same contract as _venv_core_imports_healthy's unknown states).
+        logger.debug("Post-update SQLite runtime probe unavailable; not blocking")
+        _print_update_completion(message)
+        return True
+    if sqlite_runtime_ok:
+        _print_update_completion(message)
+        return True
+    print()
+    detail = (
+        f"SQLite {sqlite_info.sqlite_version_string} still has the "
+        "WAL-reset corruption bug"
+    )
+    print(f"⚠ Update partially complete — {detail}.")
+    print(
+        "  Rebuild the Nastech venv with a uv-managed Python, restart Nastech, "
+        "then verify with `nastech doctor`."
+    )
+    return False
+
+
 def _clear_stale_sqlite_sidecars(db_path: Path) -> None:
     """Delete the WAL / shared-memory / rollback-journal files next to *db_path*.
 
@@ -1752,11 +1862,16 @@ def _print_update_summary(
     node_failures: list,
     desktop_build_ok: bool,
     pre_update_version: str | None,
-) -> None:
+) -> bool:
     """Final update banner. A failed Desktop rebuild is non-fatal for the
     Python side, but must not print ``✓ Update complete!`` (#88251)."""
+    sqlite_runtime_ok, sqlite_info = _post_update_sqlite_runtime_status()
+    if sqlite_info is None:
+        # Grace path: an unprobeable interpreter must not fail the update —
+        # only a POSITIVE vulnerable probe demotes success to partial.
+        sqlite_runtime_ok = True
     print()
-    if node_failures or not desktop_build_ok:
+    if node_failures or not desktop_build_ok or not sqlite_runtime_ok:
         parts = []
         if node_failures:
             parts.append(
@@ -1766,14 +1881,27 @@ def _print_update_summary(
             parts.append(
                 "the desktop app was not rebuilt and is still on the previous build"
             )
+        if not sqlite_runtime_ok and sqlite_info is not None:
+            parts.append(
+                f"SQLite {sqlite_info.sqlite_version_string} still has the "
+                "WAL-reset corruption bug"
+            )
         print("⚠ Update partially complete — " + "; ".join(parts) + ".")
         if node_failures:
             print("  Code and Python deps are updated, but the dashboard/TUI may")
             print("  be in a mixed state until the Node deps are rebuilt.")
         if not desktop_build_ok:
             print("  Run `nastech desktop` to retry the desktop rebuild.")
+        if not sqlite_runtime_ok:
+            print(
+                "  The Python runtime remediation did not complete. Run `nastech "
+                "update` again; if SQLite is unchanged, rebuild the Nastech venv "
+                "with a uv-managed Python, restart Nastech, then verify with "
+                "`nastech doctor`."
+            )
     else:
         _print_update_completion(_update_complete_message(pre_update_version))
+    return desktop_build_ok and sqlite_runtime_ok
 
 
 def _write_gateway_update_exit_code(ok: bool) -> None:
@@ -2225,7 +2353,7 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
             "Post-update state.db integrity check (zip path) failed: %s", exc
         )
 
-    _print_update_summary(
+    update_complete = _print_update_summary(
         node_failures=node_failures,
         desktop_build_ok=desktop_build_ok,
         pre_update_version=pre_update_version,
@@ -2245,11 +2373,11 @@ def _update_via_zip(args, *, had_desktop_app_before_update: bool = False) -> boo
         from nastech_cli.update_receipt import finalize_update_receipt
 
         finalize_update_receipt(
-            "success" if (desktop_build_ok and not node_failures) else "partial"
+            "success" if update_complete and not node_failures else "partial"
         )
     except Exception as _receipt_exc:
         logger.debug("Update receipt finalize (zip path) failed: %s", _receipt_exc)
-    return desktop_build_ok
+    return update_complete
 
 def _stash_local_changes_if_needed(git_cmd: list[str], cwd: Path) -> Optional[str]:
     status = subprocess.run(
@@ -2423,6 +2551,127 @@ def _park_stashed_changes(stash_ref: str) -> None:
     print(f"  Restore manually with: git stash apply {stash_ref}")
 
 
+def _git_untracked_paths(git_cmd: list[str], cwd: Path) -> set[str] | None:
+    """Return untracked paths, or ``None`` when Git cannot enumerate them."""
+    try:
+        result = subprocess.run(
+            git_cmd + ["ls-files", "--others", "--exclude-standard", "-z"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="surrogateescape",
+        )
+    except (OSError, subprocess.SubprocessError):
+        result = None
+    if result is None or result.returncode != 0:
+        print(
+            "  ⚠ Could not enumerate untracked files while validating the "
+            "restored stash."
+        )
+        return None
+    return {path for path in result.stdout.split("\0") if path}
+
+
+def _restored_python_paths(
+    git_cmd: list[str], cwd: Path
+) -> tuple[str, ...] | None:
+    """Return restored ``.py`` paths changed from ``HEAD``.
+
+    This deliberately validates Python source only; non-Python entry scripts
+    remain outside the executable import-health check.
+    """
+    try:
+        changed = subprocess.run(
+            git_cmd + ["diff", "--name-only", "-z", "HEAD", "--", "*.py"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="surrogateescape",
+        )
+    except (OSError, subprocess.SubprocessError):
+        changed = None
+    if changed is None or changed.returncode != 0:
+        print("  ⚠ Could not enumerate tracked Python files restored from the stash.")
+        return None
+    paths = set(changed.stdout.split("\0"))
+    untracked = _git_untracked_paths(git_cmd, cwd)
+    if untracked is None:
+        return None
+    paths.update(path for path in untracked if path.endswith(".py"))
+    paths.discard("")
+    return tuple(sorted(paths))
+
+
+def _reject_unsafe_stash_restore(
+    git_cmd: list[str],
+    cwd: Path,
+    stash_ref: str,
+    preexisting_untracked: set[str],
+    failing_target: str,
+    detail: str | None,
+) -> None:
+    """Restore the clean updated tree, preserve the stash, and abort the update."""
+    print()
+    print("✗ Restored local changes made the Nastech agent unexecutable.")
+    print(f"  Health check failed: {failing_target}")
+    if detail:
+        for line in str(detail).splitlines()[:6]:
+            print(f"    {line}")
+
+    current_untracked = _git_untracked_paths(git_cmd, cwd)
+    restored_untracked = (
+        current_untracked - preexisting_untracked
+        if current_untracked is not None
+        else set()
+    )
+    try:
+        reset = subprocess.run(
+            git_cmd + ["reset", "--hard", "HEAD"], cwd=cwd, capture_output=True
+        )
+    except (OSError, subprocess.SubprocessError):
+        reset = None
+
+    clean = None
+    if restored_untracked:
+        try:
+            clean = subprocess.run(
+                git_cmd + ["clean", "-fd", "--", *sorted(restored_untracked)],
+                cwd=cwd,
+                capture_output=True,
+            )
+        except (OSError, subprocess.SubprocessError):
+            clean = None
+    cleanup_ok = (
+        current_untracked is not None
+        and reset is not None
+        and reset.returncode == 0
+        and (not restored_untracked or (clean is not None and clean.returncode == 0))
+    )
+    if cleanup_ok:
+        try:
+            verify = subprocess.run(
+                git_cmd + ["diff", "--quiet", "HEAD", "--"],
+                cwd=cwd,
+                capture_output=True,
+            )
+            cleanup_ok = verify.returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            cleanup_ok = False
+
+    if cleanup_ok:
+        print("  The clean updated tree has been restored; the gateway was not restarted.")
+    else:
+        print("  ⚠ The clean updated tree could not be fully restored automatically.")
+        print("    Inspect `git status` and run `git reset --hard HEAD` before retrying.")
+    print("  Platform connectivity alone does not mean the agent can execute turns.")
+    print(f"  Your local changes remain preserved in stash: {stash_ref}")
+    print(f"  Inspect them with: git stash show --stat {stash_ref}")
+    print(f"  Restore manually after fixing them: git stash apply {stash_ref}")
+    raise SystemExit(1)
+
+
 def _restore_stashed_changes(
     git_cmd: list[str],
     cwd: Path,
@@ -2431,15 +2680,17 @@ def _restore_stashed_changes(
     input_fn=None,
 ) -> bool:
     if prompt_user:
+        remote_prompt = input_fn is not None
+        prompt_suffix = "[y/N]" if remote_prompt else "[Y/n]"
         print()
         print("⚠ Local changes were stashed before updating.")
         print(
             "  Restoring them may reapply local customizations onto the updated codebase."
         )
         print("  Review the result afterward if Nastech behaves unexpectedly.")
-        print("Restore local changes now? [Y/n]")
+        print(f"Restore local changes now? {prompt_suffix}")
         if input_fn is not None:
-            response = input_fn("Restore local changes now? [Y/n]", "y")
+            response = input_fn(f"Restore local changes now? {prompt_suffix}", "n")
         else:
             try:
                 response = input().strip().lower()
@@ -2450,12 +2701,21 @@ def _restore_stashed_changes(
                 # skip-restore path below, which already explains how to
                 # restore manually from git stash.
                 response = "n"
-        if response not in {"", "y", "yes"}:
+        accepted = response in {"y", "yes"} or (not remote_prompt and response == "")
+        if not accepted:
             print("Skipped restoring local changes.")
             print("Your changes are still preserved in git stash.")
             print(f"Restore manually with: git stash apply {stash_ref}")
             return False
 
+    preexisting_untracked = _git_untracked_paths(git_cmd, cwd)
+    if preexisting_untracked is None:
+        print("  The stash was not restored because its cleanup baseline is unknown.")
+        print(f"  Restore manually with: git stash apply {stash_ref}")
+        return False
+    clean_import_failures = _critical_module_import_failures(
+        cwd, report_runtime_errors=True
+    )
     print("→ Restoring local changes...")
     restore = subprocess.run(
         git_cmd + ["stash", "apply", stash_ref],
@@ -2516,6 +2776,51 @@ def _restore_stashed_changes(
         # restore had conflicts.  Let cmd_update continue with pip install,
         # skill sync, and gateway restart.
         return False
+
+    restored_python = _restored_python_paths(git_cmd, cwd)
+    if restored_python is None:
+        _reject_unsafe_stash_restore(
+            git_cmd,
+            cwd,
+            stash_ref,
+            preexisting_untracked,
+            "restored Python source discovery",
+            "could not determine which restored Python files require validation",
+        )
+    syntax_ok, failing_path, syntax_error = _validate_python_files_syntax(
+        cwd, restored_python
+    )
+    if not syntax_ok:
+        _reject_unsafe_stash_restore(
+            git_cmd,
+            cwd,
+            stash_ref,
+            preexisting_untracked,
+            failing_path or "restored Python source",
+            syntax_error,
+        )
+
+    restored_import_failures = _critical_module_import_failures(
+        cwd, report_runtime_errors=True
+    )
+    changed_import_failure = next(
+        (
+            (module, error)
+            for module, error in restored_import_failures.items()
+            if clean_import_failures.get(module) != error
+        ),
+        None,
+    )
+    if changed_import_failure is not None:
+        failing_module, import_error = changed_import_failure
+        _reject_unsafe_stash_restore(
+            git_cmd,
+            cwd,
+            stash_ref,
+            preexisting_untracked,
+            f"agent import {failing_module or 'unknown'}",
+            import_error[1],
+        )
 
     stash_selector = _resolve_stash_selector(git_cmd, cwd, stash_ref)
     if stash_selector is None:
@@ -3745,7 +4050,7 @@ def _repair_node_deps_on_current_checkout(
     gateway_mode: bool = False,
     pre_update_snapshot_id: str | None = None,
     completion_message: str = "✓ Already up to date!",
-) -> None:
+) -> bool:
     """Repair Node deps on the ``commit_count == 0`` path (#77211).
 
     A current checkout does not imply healthy Node deps: a previous npm
@@ -3765,7 +4070,7 @@ def _repair_node_deps_on_current_checkout(
         print_completion(
             "⚠ Checkout is current, but Node.js dependencies could not be repaired."
         )
-        return
+        return False
     # Pair the refresh with the web build like every other
     # _update_node_dependencies call site; it staleness-checks internally,
     # so this is a no-op when nothing changed.
@@ -3775,7 +4080,7 @@ def _repair_node_deps_on_current_checkout(
         gateway_mode=gateway_mode,
         pre_update_snapshot_id=pre_update_snapshot_id,
     )
-    print_completion(completion_message)
+    return bool(print_completion(completion_message))
 
 
 def _update_node_dependencies() -> list[str]:
@@ -4755,7 +5060,12 @@ def _detect_venv_python_processes(
 
     matches: list[tuple[int, str, str]] = []
     try:
-        proc_iter = psutil.process_iter(["pid", "exe", "name", "cmdline", "cwd"])
+        # On Windows, prefetching cmdline and cwd performs two expensive
+        # per-process queries. A busy workstation can have 500+ processes, so
+        # querying those fields for every unrelated process can exceed the
+        # Desktop preflight watchdog. First collect only cheap identity fields;
+        # fetch cmdline/cwd lazily for plausible Python/uv/Nastech candidates.
+        proc_iter = psutil.process_iter(["pid", "exe", "name"])
     except Exception:
         return []
     for proc in proc_iter:
@@ -4771,13 +5081,23 @@ def _detect_venv_python_processes(
             exe_norm = str(Path(exe).resolve()).lower()
         except (OSError, ValueError):
             exe_norm = str(exe).lower()
-        cmdline_raw = " ".join(info.get("cmdline") or [])
-        cmdline_low = cmdline_raw.lower()
-        cwd_low = str(info.get("cwd") or "").lower().rstrip(os.sep) + os.sep
-
         # Primary match: the executable itself lives under this venv
         # (venv\Scripts\python(w).exe — the desktop backend / gateway case).
         is_holder = exe_norm.startswith(venv_prefix)
+        name = str(info.get("name") or Path(exe).name)
+        name_low = name.lower()
+
+        if not is_holder and not (
+            name_low.startswith(("python", "pypy"))
+            or name_low in {"uv.exe", "uvx.exe", "nastech.exe"}
+        ):
+            continue
+
+        try:
+            cmdline_raw = " ".join(proc.cmdline() or [])
+        except Exception:
+            cmdline_raw = ""
+        cmdline_low = cmdline_raw.lower()
         # Fallback: uv/base-interpreter trampolines run a python whose exe is
         # OUTSIDE the venv but which still imports from it and holds its .pyd
         # files. Catch those by what they're running: a cmdline that references
@@ -4786,6 +5106,10 @@ def _detect_venv_python_processes(
         if not is_holder and venv_prefix in cmdline_low:
             is_holder = True
         if not is_holder and "nastech_cli.main" in cmdline_low:
+            try:
+                cwd_low = str(proc.cwd() or "").lower().rstrip(os.sep) + os.sep
+            except Exception:
+                cwd_low = os.sep
             if root_prefix in cmdline_low or cwd_low.startswith(root_prefix):
                 is_holder = True
         if not is_holder:
@@ -5231,6 +5555,55 @@ def _leftover_pausable_gateway_pids(
     return pids
 
 
+def _refuse_gateway_ancestor_tree_kill(
+    pids: list[int], *, gateway_mode: bool
+) -> bool:
+    """Refuse a plain Windows update that would kill its own process tree.
+
+    A chat agent can launch plain ``nastech update`` through its terminal tool.
+    In that topology the updater is a child of the gateway.  The leftover
+    holder recovery below uses ``taskkill /T /F`` on Windows, so force-stopping
+    that gateway also kills the updater before it can mutate the checkout
+    (#98814).
+
+    ``/update`` uses the supported ``--gateway`` hand-off and is deliberately
+    exempt: it detaches the updater and provides file-based progress/result
+    delivery.  For every other invocation, refuse only when a nominated
+    gateway is positively identified as this process's ancestor.  If ancestry
+    cannot be established, preserve the existing holder recovery behavior.
+    """
+    if gateway_mode or not pids:
+        return False
+
+    try:
+        from nastech_cli.gateway import _is_pid_ancestor_of_current_process
+
+        ancestors = [
+            int(pid)
+            for pid in pids
+            if _is_pid_ancestor_of_current_process(int(pid))
+        ]
+    except Exception as exc:
+        logger.debug("Could not inspect gateway ancestry before tree-kill: %s", exc)
+        return False
+
+    if not ancestors:
+        return False
+
+    rendered = ", ".join(str(pid) for pid in ancestors)
+    print(
+        "✗ Refusing to stop the gateway process tree because this updater "
+        f"is running inside it (gateway PID(s): {rendered})."
+    )
+    print(
+        "  On Windows, taskkill /T would terminate the updater before the "
+        "update can run."
+    )
+    print("  From a chat platform, use `/update` instead.")
+    print("  Otherwise, run `nastech update` from a separate terminal.")
+    return True
+
+
 def _ledger_manual_serve_holders(
     matches: list[tuple[int, str, str]],
 ) -> list[dict]:
@@ -5340,7 +5713,7 @@ def _relaunch_stopped_serves(token: dict) -> None:
 
 def _orphaned_desktop_backend_pids(
     matches: list[tuple[int, str, str]],
-) -> list[int] | None:
+) -> list[tuple[int, int]] | None:
     """PIDs from *matches* when every remaining holder is an ORPHANED backend.
 
     The venv-holder guard refuses on the Desktop app's ``serve`` backend by
@@ -5388,7 +5761,7 @@ def _orphaned_desktop_backend_pids(
         )
 
     # Pass 1: find orphaned backend ROOTS among the holders.
-    roots: list[int] = []
+    roots: list[tuple[int, int]] = []
     remaining: list[tuple[int, str]] = []  # (pid, argv_low) still to justify
     for pid, _name, cmdline in matches:
         argv = cmdline
@@ -5406,6 +5779,21 @@ def _orphaned_desktop_backend_pids(
             continue
         try:
             proc = psutil.Process(int(pid))
+            # Fingerprint from the SAME psutil handle used for classification
+            # below, quantized to centiseconds — the exact scheme
+            # gateway.status.get_process_start_time uses on Windows, so the
+            # value round-trips through pid_is_nastech at kill time. (Reading
+            # /proc/<pid>/stat here instead would consult the HOST process
+            # table and use different units.)
+            process_start_time = int(round(proc.create_time() * 100))
+        except psutil.NoSuchProcess:
+            # The candidate itself exited during classification; there is
+            # nothing left to reap and no identity to pass to taskkill.
+            continue
+        except Exception:
+            return None
+
+        try:
             ppid = proc.ppid()
             parent = psutil.Process(ppid) if ppid else None
             if parent is not None and parent.is_running():
@@ -5424,12 +5812,12 @@ def _orphaned_desktop_backend_pids(
             pass  # parent gone → orphan
         except Exception:
             return None
-        roots.append(int(pid))
+        roots.append((int(pid), process_start_time))
 
     # Pass 2: every non-backend holder must be a descendant of an accepted
     # orphan root — then it dies with the root's tree reap. Anything else
     # (operator REPL, stray script) keeps the refusal.
-    root_set = set(roots)
+    root_set = {pid for pid, _start_time in roots}
     for pid, _low in remaining:
         if not root_set:
             return None
@@ -5559,7 +5947,9 @@ def _handoff_reapable_backend_pids(
     return roots or None
 
 
-def _stop_process_trees(pids: list[int]) -> None:
+def _stop_process_trees(
+    pids: list[int] | list[tuple[int, int]],
+) -> None:
     """Force-stop each PID with its full child tree (Windows).
 
     ``taskkill /T /F`` mirrors the Desktop's ``forceKillProcessTree`` and
@@ -5567,12 +5957,38 @@ def _stop_process_trees(pids: list[int]) -> None:
     ``.nastech-runtime`` interpreter child alive and holding the install open
     (#70026). Best effort; never raises.
     """
-    for pid in pids:
+    from gateway.status import get_process_start_time
+    from nastech_cli._subprocess_compat import pid_is_nastech, windows_hide_flags
+
+    for entry in pids:
+        if isinstance(entry, tuple):
+            pid, expected_start_time = entry
+        else:
+            pid = int(entry)
+            expected_start_time = get_process_start_time(pid)
         try:
+            if expected_start_time is None:
+                logger.debug(
+                    "Skipping taskkill of PID %s: process identity unavailable",
+                    pid,
+                )
+                continue
+            if not pid_is_nastech(
+                pid,
+                expected_start_time=expected_start_time,
+            ):
+                logger.debug(
+                    "Skipping taskkill of non-Nastech or changed PID %s",
+                    pid,
+                )
+                continue
             subprocess.run(
-                ["taskkill", "/PID", str(int(pid)), "/T", "/F"],
+                ["taskkill", "/PID", str(pid), "/T", "/F"],
                 check=False,
-                capture_output=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                creationflags=windows_hide_flags(),
             )
         except Exception as exc:
             logger.debug("Could not stop process tree %s: %s", pid, exc)
@@ -5829,7 +6245,7 @@ def _pause_windows_gateways_for_update() -> dict | None:
         return None
 
     try:
-        from gateway.status import terminate_pid
+        from gateway.status import get_process_start_time, terminate_pid
         from nastech_cli.gateway import (
             _capture_gateway_argv,
             _get_restart_drain_timeout,
@@ -6019,8 +6435,13 @@ def _pause_windows_gateways_for_update() -> dict | None:
     force_killed = []
     for pid in sorted(set(survivors).union(unmapped_pids).union(launcher_pids)):
         try:
-            terminate_pid(int(pid), force=True)
-            force_killed.append(int(pid))
+            pid_int = int(pid)
+            terminate_pid(
+                pid_int,
+                force=True,
+                expected_start_time=get_process_start_time(pid_int),
+            )
+            force_killed.append(pid_int)
         except (ProcessLookupError, PermissionError, OSError):
             pass
 
@@ -6999,6 +7420,114 @@ def _resume_windows_gateways_after_update(token: dict | None) -> None:
             f"  ✓ Restarting {unmapped_relaunched} unmapped Windows gateway process(es)"
         )
 
+def _git_is_trampoline(git_cmd: list) -> bool:
+    """Whether *git_cmd* resolves to a Git-for-Windows trampoline launcher.
+
+    Git for Windows ships two ~46KB shims (``bin\\git.exe``, ``cmd\\git.exe``)
+    that re-exec the real ``mingw64\\libexec\\git-core\\git.exe``. When the
+    shim's re-exec target is missing or PATH resolves to the shim in a
+    context where it cannot find git-core, every git call dies with the
+    launcher's own guard message instead of running — a broken PATH entry,
+    not a network or filesystem problem (#87876). Never raises; unknown
+    states report False so a probe failure can't block an update.
+    """
+    try:
+        result = subprocess.run(
+            git_cmd + ["--version"],
+            capture_output=True,
+            text=True, encoding="utf-8", errors="replace",
+            timeout=15,
+        )
+    except Exception:
+        return False
+    output = ((result.stdout or "") + (result.stderr or "")).lower()
+    return "fork bomb" in output
+
+
+def _portable_git_candidates() -> list:
+    """PortableGit candidate paths: shared root first, then profile home.
+
+    The Nastech-managed PortableGit tree lives under the SHARED root
+    (``<root>/git/...``), not the profile-scoped NASTECH_HOME
+    (``<root>/profiles/<name>``), so a profile-scoped ``nastech update`` must
+    look there (monerostar review, #87876). The profile-home candidate is
+    kept as a fallback for custom layouts that place it there.
+    """
+    candidates = []
+    try:
+        for root in (get_default_nastech_root(), Path(get_nastech_home())):
+            candidates.append(
+                root / "git" / "mingw64" / "libexec" / "git-core" / "git.exe"
+            )
+    except Exception:
+        pass
+    return candidates
+
+
+def _locate_real_git() -> Optional[Path]:
+    """Find a real Git-for-Windows binary that is not a broken trampoline.
+
+    The trampoline symptom is PATH-level: ``bin\\git.exe`` / ``cmd\\git.exe``
+    (both ~46KB shims) fail to re-exec git-core, while the real binary at
+    ``mingw64\\libexec\\git-core\\git.exe`` (≈4.4MB) works when invoked
+    directly (#87876). Check the standard Git for Windows locations plus the
+    Nastech-managed PortableGit copy; accept the first candidate that runs and
+    does NOT print the trampoline guard. Returns None when nothing suitable
+    is found — callers then keep the broken command and let the existing
+    fetch-failure ZIP fallback handle it.
+    """
+    candidates = [
+        Path(r"C:\Program Files\Git\mingw64\libexec\git-core\git.exe"),
+        Path(r"C:\Program Files (x86)\Git\mingw64\libexec\git-core\git.exe"),
+    ] + _portable_git_candidates()
+    for candidate in candidates:
+        if not candidate.exists():
+            continue
+        try:
+            result = subprocess.run(
+                [str(candidate), "--version"],
+                capture_output=True,
+                text=True, encoding="utf-8", errors="replace",
+                timeout=15,
+            )
+        except Exception:
+            continue
+        output = ((result.stdout or "") + (result.stderr or "")).lower()
+        if "fork bomb" in output:
+            continue
+        return candidate
+    return None
+
+
+def _ensure_non_trampoline_git(git_cmd: list) -> list:
+    """Swap a broken Git-for-Windows trampoline for a real git binary.
+
+    Runs up front, right after the git command is built. When the resolved
+    ``git`` is a broken trampoline, locate the real binary and rebuild the
+    command with it so fetch/pull/checkout keep working with a real git
+    instead of degrading to the ZIP fallback. When no real binary can be
+    found, leave the command untouched — the existing fetch-failure handler
+    already falls back to the ZIP path on Windows. No-op off Windows (the
+    trampoline is a Git-for-Windows artifact) and when git is healthy.
+    """
+    if sys.platform != "win32":
+        return git_cmd
+    if not _git_is_trampoline(git_cmd):
+        return git_cmd
+    real_git = _locate_real_git()
+    if real_git is None:
+        print(
+            "⚠ Detected a broken git trampoline and could not locate a real "
+            "git binary — the update will fall back to the ZIP path."
+        )
+        return git_cmd
+    print(
+        f"⚠ Detected a broken git trampoline; switching to real git at "
+        f"{real_git}"
+    )
+    return [str(real_git)] + list(git_cmd[1:])
+
+
 def _discard_lockfile_churn(git_cmd, repo_root):
     """Restore tracked ``package-lock.json`` files that npm dirtied locally.
 
@@ -7237,6 +7766,121 @@ def _rebuild_desktop_after_update(
     return True
 
 
+def _path_uid(path) -> Optional[int]:
+    """Owner uid of ``path`` via ``os.stat`` — ``None`` when unreadable.
+
+    Separate seam so tests can simulate root-owned files without chown
+    (which needs root). Never raises.
+    """
+    try:
+        return os.stat(path, follow_symlinks=False).st_uid
+    except OSError:
+        return None
+
+
+def _venv_foreign_owned_paths(venv_root, limit: int = 5) -> list:
+    """Bounded scan for venv entries not owned by the current user (#83529).
+
+    A venv that was ever touched by ``sudo pip`` / ``sudo nastech`` contains
+    root-owned files (classically ``*.dist-info/INSTALLER``). A later normal
+    ``nastech update`` then dies mid-mutation inside ``uv pip install -e .``
+    ("Permission denied (os error 13)") with ``venv/bin/nastech`` already
+    deleted — the CLI is bricked. Same philosophy as the contended-venv gate
+    (#87331): a venv we cannot safely mutate is never mutated at all.
+
+    Checks a deliberately BOUNDED set (no full recursion — must never be
+    slow): the venv root, each direct entry of ``venv/bin``, the top-level
+    entries of the first ``lib/python*/site-packages`` found, and the direct
+    children of each ``*.dist-info`` there. Caps stat calls at ~2000 and
+    returned paths at ``limit``. POSIX-only: returns ``[]`` on Windows
+    (no ``os.geteuid``) and when running as root. Swallows every per-entry
+    ``OSError`` and returns ``[]`` on any structural surprise — this helper
+    must NEVER raise and must never add noticeable latency to update.
+
+    Returns a list of ``(path_str, uid)`` tuples, at most ``limit`` long.
+    """
+    try:
+        if not hasattr(os, "geteuid"):
+            return []  # windows-footgun: ok — POSIX ownership concept only
+        euid = os.geteuid()  # windows-footgun: ok — guarded by hasattr above
+        if euid == 0:
+            return []  # root can rewrite anything; nothing to refuse
+
+        venv_root = Path(venv_root)
+        budget = 2000  # max stat() calls — hard bound on preflight cost
+        foreign: list = []
+
+        def _check(p) -> bool:
+            """stat one path; True while scan should continue."""
+            nonlocal budget
+            if budget <= 0 or len(foreign) >= limit:
+                return False
+            budget -= 1
+            uid = _path_uid(p)
+            if uid is not None and uid != euid:
+                foreign.append((str(p), uid))
+            return budget > 0 and len(foreign) < limit
+
+        def _scan_dir(d, recurse_dist_info: bool = False) -> None:
+            try:
+                entries = list(os.scandir(d))
+            except OSError:
+                return
+            for entry in entries:
+                if not _check(entry.path):
+                    return
+                if recurse_dist_info and entry.name.endswith(".dist-info"):
+                    try:
+                        children = list(os.scandir(entry.path))
+                    except OSError:
+                        continue
+                    for child in children:
+                        if not _check(child.path):
+                            return
+
+        if not _check(venv_root):
+            return foreign[:limit]
+        _scan_dir(venv_root / "bin")
+
+        # First lib/python*/site-packages (POSIX venv layout).
+        site_packages = next(
+            iter(sorted(venv_root.glob("lib/python*/site-packages"))), None
+        )
+        if site_packages is not None:
+            _scan_dir(site_packages, recurse_dist_info=True)
+
+        return foreign[:limit]
+    except Exception:
+        # Preflight is advisory: any structural surprise means "no verdict",
+        # never a crashed or blocked update.
+        return []
+
+
+def _refuse_update_if_venv_foreign_owned(project_root) -> None:
+    """Refuse-before-mutate ownership gate for the dependency install (#83529).
+
+    Runs after the code pull (pulling code is safe) and immediately before
+    the first venv mutation. If the venv contains files owned by another
+    uid, the ``uv pip install -e .`` below would die mid-mutation and brick
+    the install — so refuse up front, with the exact recovery command,
+    while the venv is still fully intact. No subprocess calls here: update
+    tests mock ``subprocess.run`` with sequenced side effects.
+    """
+    foreign = _venv_foreign_owned_paths(Path(project_root) / "venv")
+    if not foreign:
+        return
+    print("\n✗ Update stopped: this install's venv contains files owned by another user.")
+    print("  Updating now would fail midway (Permission denied) and leave Nastech broken.")
+    print("  This usually happens after running nastech or pip with sudo. Offending paths:")
+    for p, uid in foreign:
+        print(f"    - {p} (owner uid {uid})")
+    print("\n  Fix ownership, then re-run the update:")
+    print(f"    sudo chown -R $(id -un): {project_root}")
+    print("    nastech update")
+    print("\n  Nothing in the venv was modified.")
+    sys.exit(1)
+
+
 def _cmd_update_impl(args, gateway_mode: bool):
     """Body of ``cmd_update`` — kept separate so the wrapper can always
     restore stdio even on ``sys.exit``."""
@@ -7398,13 +8042,20 @@ def _cmd_update_impl(args, gateway_mode: bool):
         if _venv_holders:
             _gateway_holders = _m()._leftover_pausable_gateway_pids(_venv_holders)
             if _gateway_holders is not None:
+                if _refuse_gateway_ancestor_tree_kill(
+                    _gateway_holders, gateway_mode=gateway_mode
+                ):
+                    _m()._resume_windows_gateways_after_update(
+                        _windows_gateway_resume
+                    )
+                    sys.exit(2)
                 # Every remaining holder is a gateway the pause machinery
                 # already owns — respawned by its supervisor inside the
                 # pause→guard window, or up through a spawn path discovery
                 # does not map. Stop them and re-check instead of
                 # dead-ending; the post-update resume (and the supervisor
                 # that respawned them) brings gateways back afterwards.
-                from gateway.status import terminate_pid
+                from gateway.status import get_process_start_time, terminate_pid
 
                 print(
                     f"  ⚠ {len(_gateway_holders)} gateway process(es) still "
@@ -7412,7 +8063,12 @@ def _cmd_update_impl(args, gateway_mode: bool):
                 )
                 for _pid in _gateway_holders:
                     try:
-                        terminate_pid(int(_pid), force=True)
+                        pid_int = int(_pid)
+                        terminate_pid(
+                            pid_int,
+                            force=True,
+                            expected_start_time=get_process_start_time(pid_int),
+                        )
                     except Exception as exc:
                         logger.debug(
                             "Could not stop leftover gateway %s: %s", _pid, exc
@@ -7592,6 +8248,11 @@ def _cmd_update_impl(args, gateway_mode: bool):
     git_cmd = ["git"]
     if sys.platform == "win32":
         git_cmd = ["git", "-c", "windows.appendAtomically=false"]
+    # A broken Git-for-Windows trampoline refuses every git call with a
+    # "BUG (fork bomb)" guard instead of running; swap in a real binary up
+    # front so the normal git path survives instead of degrading to ZIP
+    # (#87876).
+    git_cmd = _ensure_non_trampoline_git(git_cmd)
 
     # Discard npm lockfile churn before any stash/branch logic. npm rewrites
     # tracked package-lock.json files non-deterministically at install/build
@@ -7957,6 +8618,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # "Already up to date!" and exits without doing the one job it
             # was spawned for.
             handed_off_sync = os.environ.get(_m()._UPDATE_REEXEC_ENV) == "1"
+            current_checkout_complete = True
             if handed_off_sync:
                 print("→ Finishing the dependency install handed off by nastech.exe...")
             elif not healthy:
@@ -8027,13 +8689,16 @@ def _cmd_update_impl(args, gateway_mode: bool):
                         gateway_mode=gateway_mode,
                         pre_update_snapshot_id=pre_update_snapshot_id,
                     )
-                    _print_update_completion("✓ Update complete!")
+                    current_checkout_complete = _print_verified_update_completion(
+                        "✓ Update complete!"
+                    )
                 else:
+                    current_checkout_complete = False
                     print(f"⚠ Venv still unhealthy after repair: {detail_after}")
                     print("  Close all Nastech windows/gateways and re-run: nastech update")
             else:
-                _repair_node_deps_on_current_checkout(
-                    _print_update_completion,
+                current_checkout_complete = _repair_node_deps_on_current_checkout(
+                    _print_verified_update_completion,
                     assume_yes=assume_yes,
                     gateway_mode=gateway_mode,
                     pre_update_snapshot_id=pre_update_snapshot_id,
@@ -8057,8 +8722,24 @@ def _cmd_update_impl(args, gateway_mode: bool):
             # Git is current, but a prior pull may still owe the fleet a
             # restart (#95294). Catch up even on the "Already up to date"
             # path — that early return is what left the gateway on stale
-            # code for two days.
+            # code for two days. Runs BEFORE the runtime-verification exit
+            # gate below: a vulnerable SQLite runtime demotes the outcome to
+            # partial, but must not strand the fleet on stale code (#91277
+            # fleet contract — the pending-restart check always executes).
             _apply_pending_fleet_restart_catchup()
+            if not current_checkout_complete:
+                if gateway_mode:
+                    _write_gateway_update_exit_code(False)
+                try:
+                    from nastech_cli.update_receipt import finalize_update_receipt
+
+                    finalize_update_receipt("partial")
+                except Exception as _receipt_exc:
+                    logger.debug(
+                        "Update receipt finalize (current checkout) failed: %s",
+                        _receipt_exc,
+                    )
+                sys.exit(1)
             return
 
         if commit_count > 0:
@@ -8329,6 +9010,11 @@ def _cmd_update_impl(args, gateway_mode: bool):
         # Reinstall Python dependencies. Prefer .[all], but if one optional extra
         # breaks on this machine, keep base deps and reinstall the remaining extras
         # individually so update does not silently strip working capabilities.
+        #
+        # Ownership preflight (#83529): refuse before the first venv mutation
+        # if the venv contains foreign-owned files (sudo-pip residue) — the
+        # install below would die mid-mutation and brick the CLI.
+        _refuse_update_if_venv_foreign_owned(_m().PROJECT_ROOT)
         #
         # Self-lock deferral (relocated preflight — #86735): if THIS process
         # holds a native extension the sync must rewrite, defer NOW — after
@@ -8718,7 +9404,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
             pre_update_snapshot_id=pre_update_snapshot_id,
         )
 
-        _print_update_summary(
+        update_complete = _print_update_summary(
             node_failures=node_failures,
             desktop_build_ok=desktop_build_ok,
             pre_update_version=pre_update_version,
@@ -8849,11 +9535,11 @@ def _cmd_update_impl(args, gateway_mode: bool):
         #
         # Writing the marker here — after git pull + pip install succeed but
         # before we attempt the restart — ensures the new gateway sees it
-        # regardless of how we die. Gated on desktop_build_ok (#88251): a
-        # Desktop rebuild failure must not be reported as "0" — the gateway's
-        # /update watcher (gateway/run.py) polls this file.
+        # regardless of how we die. The verified summary includes Desktop and
+        # SQLite-runtime health, so neither failure is reported as "0" to the
+        # gateway watcher (gateway/run.py).
         if gateway_mode:
-            _write_gateway_update_exit_code(desktop_build_ok)
+            _write_gateway_update_exit_code(update_complete)
 
         gateway_fleet_restart_incomplete = False
         gateway_restart_phase_errors: list[str] = []
@@ -9617,14 +10303,21 @@ def _cmd_update_impl(args, gateway_mode: bool):
                     print(
                         f"  ⚠ {len(_stuck)} gateway process(es) ignored SIGTERM — force-killing"
                     )
-                    from gateway.status import terminate_pid as _terminate_pid
+                    from gateway.status import (
+                        get_process_start_time as _get_process_start_time,
+                        terminate_pid as _terminate_pid,
+                    )
                     for pid in _stuck:
                         try:
                             # Routes through taskkill /T /F on Windows,
                             # SIGKILL on POSIX — _signal.SIGKILL doesn't
                             # exist on Windows so the old raw os.kill call
                             # used to crash the entire update path.
-                            _terminate_pid(pid, force=True)
+                            _terminate_pid(
+                                pid,
+                                force=True,
+                                expected_start_time=_get_process_start_time(pid),
+                            )
                         except (ProcessLookupError, PermissionError, OSError):
                             pass
                     # Give the OS a beat to reap the processes so the
@@ -9965,7 +10658,11 @@ def _cmd_update_impl(args, gateway_mode: bool):
             from nastech_cli.update_receipt import finalize_update_receipt
 
             _receipt_path = finalize_update_receipt(
-                "partial" if gateway_fleet_restart_incomplete else "success",
+                (
+                    "partial"
+                    if gateway_fleet_restart_incomplete or not update_complete
+                    else "success"
+                ),
                 fleet=_fleet_snapshot,
             )
             if _receipt_path is not None:

@@ -11,8 +11,8 @@ import { UserEditComposer } from '@/components/assistant-ui/thread/user-edit-com
 import { UserMessage } from '@/components/assistant-ui/thread/user-message'
 import { Intro, type IntroProps } from '@/components/chat/intro'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { useI18n } from '@/i18n'
 import type { NastechGateway } from '@/nastech'
+import { useI18n } from '@/i18n'
 import { notifyError } from '@/store/notifications'
 
 type ThreadLoadingState = 'response' | 'session'
@@ -175,6 +175,7 @@ export const Thread = memo(function Thread({
           components={messageComponents}
           emptyPlaceholder={emptyPlaceholder}
           loadingIndicator={loadingIndicator}
+          sessionId={sessionId}
           sessionKey={sessionKey}
         />
         {loading === 'session' && <CenteredThreadSpinner />}

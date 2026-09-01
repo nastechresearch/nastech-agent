@@ -43,6 +43,10 @@ import uuid
 from pathlib import Path
 
 _IS_WINDOWS = platform.system() == "Windows"
+# systemd transient scopes exist only on Linux. Gate every scope-path branch
+# on this constant (not merely "not Windows") so macOS and other POSIX
+# platforms provably never touch systemd code (#70716 cross-platform audit).
+_IS_LINUX = platform.system() == "Linux"
 from tools.environments.local import _find_shell, _resolve_safe_cwd, _sanitize_subprocess_env
 from nastech_cli._subprocess_compat import windows_hide_flags
 from dataclasses import dataclass, field
@@ -215,7 +219,7 @@ def _systemd_run_user_scope_available() -> bool:
             return False
 
         available = False
-        if not _IS_WINDOWS:
+        if _IS_LINUX:
             try:
                 import shutil
 
@@ -379,6 +383,10 @@ class ProcessSession:
     id: str                                     # Unique session ID ("proc_xxxxxxxxxxxx")
     command: str                                 # Original command string
     task_id: str = ""                           # Task/sandbox isolation key
+    owner_task_id: str = ""                     # RAW spawning task id (e.g. subagent "sa-...");
+                                                # task_id is the CONTAINER key and may be collapsed
+                                                # to "default"/session key by _resolve_container_task_id,
+                                                # so ownership checks must use this field (#child-notify)
     session_key: str = ""                       # Gateway session key (for reset protection)
     pid: Optional[int] = None                   # OS process ID
     process: Optional[subprocess.Popen] = None  # Popen handle (local only)
@@ -623,6 +631,7 @@ class ProcessRegistry:
                     "session_id": session.id,
                     "session_key": session.session_key,
                     "task_id": session.task_id,
+                    "owner_task_id": session.owner_task_id or session.task_id,
                     "command": session.command,
                     "type": "watch_disabled",
                     "suppressed": session._watch_suppressed,
@@ -661,6 +670,7 @@ class ProcessRegistry:
             "session_id": session.id,
             "session_key": session.session_key,
             "task_id": session.task_id,
+            "owner_task_id": session.owner_task_id or session.task_id,
             "command": session.command,
             "type": "watch_match",
             "pattern": matched_pattern,
@@ -687,6 +697,7 @@ class ProcessRegistry:
             "session_id": session.id,
             "session_key": session.session_key,
             "task_id": session.task_id,
+            "owner_task_id": session.owner_task_id or session.task_id,
             "command": session.command,
             "type": "watch_disabled",
             "suppressed": 0,
@@ -1038,6 +1049,7 @@ class ProcessRegistry:
         session_key: str = "",
         env_vars: dict = None,
         use_pty: bool = False,
+        owner_task_id: str = "",
     ) -> ProcessSession:
         """
         Spawn a background process locally.
@@ -1062,6 +1074,7 @@ class ProcessRegistry:
             id=f"proc_{uuid.uuid4().hex[:12]}",
             command=command,
             task_id=task_id,
+            owner_task_id=owner_task_id or task_id,
             session_key=session_key,
             cwd=_resolve_safe_cwd(cwd or os.getcwd()),
             started_at=time.time(),
@@ -1089,7 +1102,7 @@ class ProcessRegistry:
                 # Wrap the PTY command in a systemd scope so interactive
                 # executors get their own cgroup, same as pipe mode.
                 pty_in_supervised_gateway = (
-                    not _IS_WINDOWS and _is_supervised_gateway_process()
+                    _IS_LINUX and _is_supervised_gateway_process()
                 )
                 pty_use_systemd_scope = (
                     pty_in_supervised_gateway and _systemd_run_user_scope_available()
@@ -1167,7 +1180,7 @@ class ProcessRegistry:
         # cgroup (and the messaging control plane with it). This applies to
         # both pipe mode and the PTY path above.
         shell_argv = [user_shell, "-lic", f"set +m; {safe_command}"]
-        in_supervised_gateway = not _IS_WINDOWS and _is_supervised_gateway_process()
+        in_supervised_gateway = _IS_LINUX and _is_supervised_gateway_process()
         use_systemd_scope = (
             in_supervised_gateway and _systemd_run_user_scope_available()
         )
@@ -1281,6 +1294,7 @@ class ProcessRegistry:
         task_id: str = "",
         session_key: str = "",
         timeout: int = 10,
+        owner_task_id: str = "",
     ) -> ProcessSession:
         """
         Spawn a background process through a non-local environment backend.
@@ -1297,6 +1311,7 @@ class ProcessRegistry:
             id=f"proc_{uuid.uuid4().hex[:12]}",
             command=command,
             task_id=task_id,
+            owner_task_id=owner_task_id or task_id,
             session_key=session_key,
             cwd=cwd,
             started_at=time.time(),
@@ -1640,6 +1655,7 @@ class ProcessRegistry:
                 "session_id": session.id,
                 "session_key": session.session_key,
                 "task_id": session.task_id,
+                "owner_task_id": session.owner_task_id or session.task_id,
                 "command": session.command,
                 "exit_code": session.exit_code,
                 "completion_reason": session.completion_reason,
@@ -1948,14 +1964,20 @@ class ProcessRegistry:
             ):
                 continue
 
-            # Subagent-owned process notifications (task_id "sa-...") are
-            # suppressed from the parent conversation by default — the
-            # child's consolidated delegation result is the deliverable;
-            # "npm ci finished" walls mid-chat are noise. Dropped, NOT
-            # requeued (children never drain notify events, so requeueing
-            # would pin them in the queue forever). Type 'async_delegation'
-            # is the delegation result itself and is NEVER suppressed.
-            _evt_task_id = str(evt.get("task_id") or "")
+            # Subagent-owned process notifications are suppressed from the
+            # parent conversation by default — the child's consolidated
+            # delegation result is the deliverable; "npm ci finished" walls
+            # mid-chat are noise. Ownership is judged on owner_task_id (the
+            # RAW spawning task id): the container key in task_id is
+            # deliberately collapsed to "default"/the session key by
+            # _resolve_container_task_id, which previously let child events
+            # bypass this gate. Dropped, NOT requeued (children never drain
+            # notify events, so requeueing would pin them in the queue
+            # forever). Type 'async_delegation' is the delegation result
+            # itself and is NEVER suppressed.
+            _evt_task_id = str(
+                evt.get("owner_task_id") or evt.get("task_id") or ""
+            )
             if not is_async_delegation and _evt_task_id.startswith("sa-"):
                 if surface_child is None:
                     surface_child = self._surface_child_process_notifications()
@@ -2806,6 +2828,7 @@ class ProcessRegistry:
                             "cwd": s.cwd,
                             "started_at": s.started_at,
                             "task_id": s.task_id,
+                            "owner_task_id": s.owner_task_id or s.task_id,
                             "session_key": s.session_key,
                             "watcher_platform": s.watcher_platform,
                             "watcher_chat_id": s.watcher_chat_id,
@@ -2896,6 +2919,7 @@ class ProcessRegistry:
                 id=entry["session_id"],
                 command=entry.get("command", "unknown"),
                 task_id=entry.get("task_id", ""),
+                owner_task_id=entry.get("owner_task_id", "") or entry.get("task_id", ""),
                 session_key=entry.get("session_key", ""),
                 pid=pid,
                 host_start_time=recorded_start,
@@ -3229,7 +3253,7 @@ def _delegation_attribution_line(evt: dict) -> "str | None":
     the task_id against the live + recently-finished subagent registry and
     return a short provenance line, or None for parent-owned processes.
     """
-    task_id = str(evt.get("task_id") or "")
+    task_id = str(evt.get("owner_task_id") or evt.get("task_id") or "")
     if not task_id.startswith("sa-"):
         return None
     try:

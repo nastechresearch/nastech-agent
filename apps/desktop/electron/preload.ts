@@ -249,7 +249,8 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
 
     return () => ipcRenderer.removeListener('nastech:context-menu-spellcheck', listener)
   },
-  saveImageBuffer: (data, ext) => ipcRenderer.invoke('nastech:saveImageBuffer', { data, ext }),
+  saveImageBuffer: (data, ext, name) => ipcRenderer.invoke('nastech:saveImageBuffer', { data, ext, name }),
+  capturePreview: payload => ipcRenderer.invoke('nastech:capturePreview', payload),
   saveClipboardImage: () => ipcRenderer.invoke('nastech:saveClipboardImage'),
   getPathForFile: file => {
     try {
@@ -350,6 +351,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     }
   },
   terminal: {
+    attach: id => ipcRenderer.invoke('nastech:terminal:attach', id),
     cwd: id => ipcRenderer.invoke('nastech:terminal:cwd', id),
     dispose: id => ipcRenderer.invoke('nastech:terminal:dispose', id),
     resize: (id, size) => ipcRenderer.invoke('nastech:terminal:resize', id, size),
@@ -474,6 +476,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   // reload mid-bootstrap.
   getBootstrapState: () => ipcRenderer.invoke('nastech:bootstrap:get'),
   continueBootstrapLocal: () => ipcRenderer.invoke('nastech:bootstrap:continue-local'),
+  recycleBackend: profile => ipcRenderer.invoke('nastech:backend:recycle', profile),
   resetBootstrap: () => ipcRenderer.invoke('nastech:bootstrap:reset'),
   repairBootstrap: () => ipcRenderer.invoke('nastech:bootstrap:repair'),
   cancelBootstrap: () => ipcRenderer.invoke('nastech:bootstrap:cancel'),

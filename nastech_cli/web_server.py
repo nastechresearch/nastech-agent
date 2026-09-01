@@ -303,6 +303,9 @@ def _start_desktop_cron_ticker(stop_event: "threading.Event", interval: int = 60
             profile_homes = list(profiles_to_serve(multiplex=True))
             if len(profile_homes) > 1:
                 start_kwargs["profile_homes"] = profile_homes
+                from nastech_logging import enable_profile_log_routing
+
+                enable_profile_log_routing(profile_homes)
                 _log.info(
                     "Desktop cron scheduler will tick %d profile(s): %s",
                     len(profile_homes),
@@ -468,6 +471,19 @@ async def _lifespan(app: "FastAPI"):
         # the old gateway to launchd (PPID=1). It keeps holding the QQ
         # WebSocket, and a newly forked gateway then races the same credential,
         # splitting messages across parallel session trees (#77276).
+        #
+        # The sweep itself still runs unconditionally — a stale-but-present
+        # registration must not veto the #77276 orphan reap. Protection for
+        # a healthy standalone gateway (launched via `nastech gateway run`,
+        # no service supervisor) lives INSIDE the reaper: it probes the
+        # registration with cleanup_stale=False so the recorded PID always
+        # joins the exclusion set, even when liveness validation would have
+        # unlinked the record mid-sweep. That matters most on Windows, where
+        # every layer of the launcher chain (stub -> venv python -> runtime
+        # python) carries "gateway run" in its command line, so
+        # find_gateway_pids() matches processes the pidfile exclusion cannot
+        # see, and os.kill(SIGTERM) is a hard TerminateProcess — the
+        # gateway's planned-stop watcher (0.5s poll) has no time to drain.
         try:
             from nastech_cli.gateway import _reap_unsupervised_gateway_orphans
 
@@ -817,6 +833,43 @@ def should_require_dashboard_auth(
     return should_require_auth(host) or any(
         candidate not in _LOOPBACK_HOST_VALUES
         for candidate in trusted_public_hosts
+    )
+
+
+def _desktop_loopback_auth_exempt(
+    host: str,
+    ssh_session_token: Optional[str] = None,
+    ssh_owner_nonce: Optional[str] = None,
+) -> bool:
+    """True for a Desktop-owned loopback backend (#96490).
+
+    A non-loopback ``dashboard.public_url`` engages the ticket-only auth gate
+    for EVERY ``nastech serve`` on the machine — including the private loopback
+    backends the Desktop app spawns for itself. Those backends authenticate
+    with the per-spawn session token (injected via
+    ``NASTECH_DASHBOARD_SESSION_TOKEN`` for local spawns, ``--ssh-session-token
+    -file``/``--ssh-owner-nonce`` for Desktop SSH), which the gate's WS path
+    refuses outright — Desktop could not boot with a ``public_url`` configured.
+
+    The public_url describes a DIFFERENT deployment: the actual public
+    dashboard is a separate process on a non-loopback bind, whose own startup
+    computes ``should_require_dashboard_auth`` from its host and stays gated.
+    Exempting this process therefore never opens the public surface.
+
+    Exemption requires ALL of: loopback bind, ``NASTECH_DESKTOP=1`` (set by
+    every Desktop spawn path — local and SSH), and an operator-minted
+    credential (env token, SSH session token, or owner nonce). A plain
+    ``nastech serve`` with ``NASTECH_DESKTOP=1`` exported but no credential is
+    NOT exempt.
+    """
+    if host not in _LOOPBACK_HOST_VALUES:
+        return False
+    if os.environ.get("NASTECH_DESKTOP") != "1":
+        return False
+    return bool(
+        os.environ.get("NASTECH_DASHBOARD_SESSION_TOKEN")
+        or ssh_session_token
+        or ssh_owner_nonce
     )
 
 
@@ -7363,17 +7416,18 @@ _AUX_TASK_SLOTS: Tuple[str, ...] = (
 
 
 def _dashboard_code_skew_guard() -> Optional[str]:
-    """Return a clear \"restart required\" message when the dashboard runs stale code.
+    """Return a clear \"restart required\" message when this process runs stale code.
 
-    The dashboard is a long-lived process; its ``sys.modules`` is frozen at
-    boot.  When ``nastech update`` (or a manual ``git pull``) replaces the
-    checkout underneath it, a first-time lazy import on a new code path can
-    resolve a freshly-pulled consumer module against a stale cached dependency
-    -> ImportError — e.g. ``/api/model/options`` 500 after the update added
-    ``agent.model_metadata.is_grok_46_family`` while the running process kept
-    serving the pre-update module (#86207).  Mirror the gateway's
-    ``_model_switch_skew_guard``: refuse the risky call with an actionable
-    message instead of crashing with a cryptic import error.
+    The dashboard and Desktop-owned ``nastech serve`` are long-lived; their
+    ``sys.modules`` is frozen at boot.  When ``nastech update`` (or a manual
+    ``git pull``) replaces the checkout underneath them, a first-time lazy
+    import on a new code path can resolve a freshly-pulled consumer module
+    against a stale cached dependency -> ImportError — e.g. ``/api/model/options``
+    500 after the update added ``agent.model_metadata.is_grok_46_family`` while
+    the running process kept serving the pre-update module (#86207).  Mirror
+    the gateway's ``_model_switch_skew_guard``: refuse the risky call with an
+    actionable, deployment-aware message instead of crashing with a cryptic
+    import error (#97046).
 
     Returns None when no drift is detectable (fresh process, or a non-git
     install where the boot fingerprint could not be read — never a false
@@ -7386,10 +7440,28 @@ def _dashboard_code_skew_guard() -> Optional[str]:
         return None
     boot_rev, disk_rev = skew
     return (
-        f"This dashboard is running code from {boot_rev} but the checkout on "
+        f"This process is running code from {boot_rev} but the checkout on "
         f"disk is now {disk_rev}. The model picker would risk a stale-module "
-        f"crash — restart the dashboard to load the new code "
-        f"(systemctl --user restart nastech-dashboard, or nastech dashboard --port <port>)"
+        f"crash — {_dashboard_skew_restart_hint()}"
+    )
+
+
+def _dashboard_skew_restart_hint() -> str:
+    """Restart advice that matches how this process is actually owned.
+
+    The same FastAPI app backs the browser dashboard *and* Desktop-owned
+    ``nastech serve --isolated`` (local or SSH). Hardcoding a systemd unit
+    misleads macOS/launchd hosts and Desktop SSH backends, which have no
+    ``nastech-dashboard`` unit (#97046).
+    """
+    if os.environ.get("NASTECH_SERVE_HEADLESS") == "1":
+        return (
+            "restart the Desktop-owned backend to load the new code "
+            "(use Restart backend in Nastech Desktop, or quit and reopen the app)"
+        )
+    return (
+        "restart this Nastech process to load the new code "
+        "(nastech dashboard --port <port>, or the equivalent service restart for this install)"
     )
 
 
@@ -7746,8 +7818,39 @@ def _apply_model_assignment_sync(
         model_cfg = _apply_main_model_assignment(
             cfg.get("model", {}), provider, model, base_url, api_key
         )
-        if isinstance(provider_entry, dict) and provider_entry.get("api_key"):
-            model_cfg["api_key"] = provider_entry["api_key"]
+        _raw_assign_entry = None
+        try:
+            _stored, _raw_assign_entry = find_provider_entry(
+                read_raw_config().get("providers"), provider
+            )
+        except Exception:
+            _raw_assign_entry = None
+        _assign_key_env = (
+            str(_raw_assign_entry.get("key_env") or "").strip()
+            if isinstance(_raw_assign_entry, dict)
+            else ""
+        )
+        if _assign_key_env:
+            # #88990: carry the credential POINTER, never a resolved secret.
+            model_cfg["key_env"] = _assign_key_env
+            model_cfg.pop("api_key", None)
+        elif isinstance(provider_entry, dict) and provider_entry.get("api_key"):
+            # #88990: provider_entry comes from load_config(), which expands
+            # ${VAR} env refs to plaintext. Copying that resolved value into
+            # model.api_key writes the SECRET into config.yaml (and recreates
+            # it on every re-apply, even after the user deletes it by hand).
+            # Prefer the raw ${VAR} template; only fall back to the expanded
+            # value when the raw yaml itself stores the key as a literal (no
+            # new exposure in that case).
+            _raw_key = (
+                str(_raw_assign_entry.get("api_key") or "").strip()
+                if isinstance(_raw_assign_entry, dict)
+                else ""
+            )
+            if _raw_key.startswith("${") and _raw_key.endswith("}"):
+                model_cfg["api_key"] = _raw_key
+            else:
+                model_cfg["api_key"] = provider_entry["api_key"]
         cfg["model"] = model_cfg
 
         # When switching the main provider to Nastech, mirror the CLI's
@@ -7979,15 +8082,22 @@ def _denormalize_config_from_web(config: Dict[str, Any]) -> Dict[str, Any]:
     string; the rest is preserved transparently.
 
     Also handles ``model_context_length`` — writes it back into the model dict
-    as ``context_length``.  A value of 0 or absent means "auto-detect" (omitted
-    from the dict so get_model_context_length() uses its normal resolution).
+    as ``context_length``.  A value of 0 means "auto-detect" (omitted from the
+    dict so get_model_context_length() uses its normal resolution). ``config``
+    may be a partial update (e.g. the Settings autosave diff) that omits
+    ``model_context_length`` entirely when the user didn't touch it — that
+    must leave the on-disk override untouched, not get treated the same as an
+    explicit 0 and cleared.
     """
     config = dict(config)
     # Remove any _model_meta that might have leaked in (shouldn't happen
     # with the stripped GET response, but be defensive)
     config.pop("_model_meta", None)
 
-    # Extract and remove model_context_length before processing model
+    # Extract and remove model_context_length before processing model, but
+    # remember whether it was actually present: a partial update omitting the
+    # key means "unchanged", which is different from an explicit 0.
+    ctx_sent = "model_context_length" in config
     ctx_override = config.pop("model_context_length", 0)
     if not isinstance(ctx_override, int):
         try:
@@ -7996,50 +8106,59 @@ def _denormalize_config_from_web(config: Dict[str, Any]) -> Dict[str, Any]:
             ctx_override = 0
 
     model_val = config.get("model")
-    if isinstance(model_val, str) and model_val:
+    if (isinstance(model_val, str) and model_val) or ctx_sent:
         # Read the current disk config to recover model subkeys
         try:
             disk_config = load_config()
             disk_model = disk_config.get("model")
             if isinstance(disk_model, dict):
-                prev_default = str(disk_model.get("default") or "").strip()
-                prev_provider = str(disk_model.get("provider") or "").strip()
-                # When the model name actually changed, re-detect which
-                # provider serves it. The Config-page Model field is a flat
-                # string with no provider info, so without this a user who
-                # picks an OpenRouter model while their default provider is
-                # ollama-local keeps the stale provider and 404s. Only fires
-                # on a real model change so saving unrelated config fields
-                # never overwrites an explicit provider.
-                if model_val != prev_default and prev_provider:
-                    new_provider, resolved_model = _infer_provider_on_model_change(
-                        model_val, prev_provider
-                    )
-                    if new_provider and new_provider.strip().lower() != prev_provider.lower():
-                        # Route through the canonical assignment chokepoints so
-                        # the model is normalized for the new provider and stale
-                        # base_url/api_mode/api_key are cleared on the switch
-                        # (and preserved on a same-provider re-pick).
-                        norm_provider, norm_model = _normalize_main_model_assignment(
-                            new_provider, resolved_model
+                if isinstance(model_val, str) and model_val:
+                    prev_default = str(disk_model.get("default") or "").strip()
+                    prev_provider = str(disk_model.get("provider") or "").strip()
+                    # When the model name actually changed, re-detect which
+                    # provider serves it. The Config-page Model field is a flat
+                    # string with no provider info, so without this a user who
+                    # picks an OpenRouter model while their default provider is
+                    # ollama-local keeps the stale provider and 404s. Only fires
+                    # on a real model change so saving unrelated config fields
+                    # never overwrites an explicit provider.
+                    if model_val != prev_default and prev_provider:
+                        new_provider, resolved_model = _infer_provider_on_model_change(
+                            model_val, prev_provider
                         )
-                        disk_model = _apply_main_model_assignment(
-                            disk_model, norm_provider, norm_model
-                        )
-                        model_val = norm_model
-                # Preserve all subkeys, update default with the new value
-                disk_model["default"] = model_val
-                # Write context_length into the model dict (0 = remove/auto)
-                if ctx_override > 0:
-                    disk_model["context_length"] = ctx_override
-                else:
-                    disk_model.pop("context_length", None)
+                        if new_provider and new_provider.strip().lower() != prev_provider.lower():
+                            # Route through the canonical assignment chokepoints so
+                            # the model is normalized for the new provider and stale
+                            # base_url/api_mode/api_key are cleared on the switch
+                            # (and preserved on a same-provider re-pick).
+                            norm_provider, norm_model = _normalize_main_model_assignment(
+                                new_provider, resolved_model
+                            )
+                            disk_model = _apply_main_model_assignment(
+                                disk_model, norm_provider, norm_model
+                            )
+                            model_val = norm_model
+                    # Preserve all subkeys, update default with the new value
+                    disk_model["default"] = model_val
+                # Write context_length into the model dict (0 = remove/auto),
+                # but only when the payload actually carried the key.
+                if ctx_sent:
+                    if ctx_override > 0:
+                        disk_model["context_length"] = ctx_override
+                    else:
+                        disk_model.pop("context_length", None)
                 config["model"] = disk_model
-            # Model was previously a bare string — upgrade to dict if
-            # user is setting a context_length override
-            elif ctx_override > 0:
+            # Model was previously a bare string (or absent) — upgrade to a
+            # dict if the user is setting a context_length override.
+            elif ctx_sent and ctx_override > 0:
+                if isinstance(model_val, str) and model_val:
+                    default = model_val
+                elif isinstance(disk_model, str) and disk_model:
+                    default = disk_model
+                else:
+                    default = ""
                 config["model"] = {
-                    "default": model_val,
+                    "default": default,
                     "context_length": ctx_override,
                 }
         except Exception:
@@ -8665,7 +8784,25 @@ def activate_custom_endpoint(endpoint_id: str, profile: Optional[str] = None):
                 model_cfg["key_env"] = entry["key_env"]
                 model_cfg.pop("api_key", None)
             elif entry.get("api_key"):
-                model_cfg["api_key"] = entry["api_key"]
+                # Same #88990 shape as /api/model/set: `cfg` is env-expanded,
+                # so a raw `${VAR}` api_key would land as plaintext. Copy the
+                # raw template when that's what's on disk.
+                _raw_entry = None
+                try:
+                    _stored_raw, _raw_entry = find_provider_entry(
+                        read_raw_config().get("providers"), provider_key
+                    )
+                except Exception:
+                    _raw_entry = None
+                _raw_key = (
+                    str(_raw_entry.get("api_key") or "").strip()
+                    if isinstance(_raw_entry, dict)
+                    else ""
+                )
+                if _raw_key.startswith("${") and _raw_key.endswith("}"):
+                    model_cfg["api_key"] = _raw_key
+                else:
+                    model_cfg["api_key"] = entry["api_key"]
             cfg["model"] = model_cfg
             save_config(cfg)
         return {"ok": True, "provider": provider_key, "model": model}
@@ -12355,15 +12492,21 @@ def _open_session_db_at_path(db_path: Path, *, read_only: bool):
 
     try:
         return _open_probed()
-    except sqlite3.DatabaseError as exc:
+    except (sqlite3.DatabaseError, UnicodeDecodeError) as exc:
         message = str(exc).lower()
         stale_schema = "no such table" in message or "no such column" in message
-        if not stale_schema and not is_malformed_schema_error(exc):
+        if not stale_schema and not (
+            # UnicodeDecodeError = pysqlite could not decode SQLite's own
+            # error message because corrupt file bytes were embedded in it
+            # (#98924). The one-writable-open heal is the only repair path,
+            # so route it through the same dispatch as malformed schema.
+            is_malformed_schema_error(exc) or isinstance(exc, UnicodeDecodeError)
+        ):
             raise
         SessionDB(db_path=db_path, read_only=False).close()
         try:
             return _open_probed()
-        except sqlite3.DatabaseError as still_stale:
+        except (sqlite3.DatabaseError, UnicodeDecodeError) as still_stale:
             message = str(still_stale).lower()
             if "no such table" not in message and "no such column" not in message:
                 raise
@@ -19479,9 +19622,22 @@ def start_server(
     # Stash the auth-gate flag on app.state so middleware / SPA-token injection /
     # WS-auth paths can branch on it consistently. It also decides whether to
     # refuse startup, log the gate-on banner, and enable uvicorn proxy_headers.
-    app.state.auth_required = should_require_dashboard_auth(
-        host, app.state.trusted_public_hosts
-    )
+    if _desktop_loopback_auth_exempt(host, ssh_session_token, ssh_owner_nonce):
+        # A configured dashboard.public_url describes the operator's PUBLIC
+        # deployment, not this private Desktop-owned loopback backend (#96490).
+        # Desktop authenticates with the per-spawn session token; forcing the
+        # ticket-only gate here broke every Desktop boot while the actual
+        # public dashboard — a separate non-loopback process — stayed gated.
+        app.state.auth_required = should_require_auth(host)
+        _log.info(
+            "Desktop-owned loopback backend: dashboard.public_url does not "
+            "engage the ticket gate for this process; the public deployment "
+            "keeps its own gate.",
+        )
+    else:
+        app.state.auth_required = should_require_dashboard_auth(
+            host, app.state.trusted_public_hosts
+        )
 
     # ``--insecure`` no longer disables the auth gate (June 2026 hardening:
     # the nastech-0day MCP-persistence campaign abused unauthenticated public

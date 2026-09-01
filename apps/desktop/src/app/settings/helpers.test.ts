@@ -6,6 +6,7 @@ import { FIELD_DESCRIPTIONS, FIELD_LABELS, SECTIONS } from './constants'
 import { defineFieldCopy, fieldCopyForSchemaKey, schemaKeyToFieldCopyKey } from './field-copy'
 import {
   clearsEnabledToolsets,
+  diffConfig,
   enumOptionsFor,
   getNested,
   isExternalMemoryProvider,
@@ -402,6 +403,46 @@ describe('settings helpers', () => {
       const next: NastechConfigRecord = { model: 'b', toolsets: ['memory'] }
 
       expect(clearsEnabledToolsets(prev, next)).toBe(false)
+    })
+  })
+
+  describe('diffConfig', () => {
+    it('omits a top-level key the draft never touched', () => {
+      // The autosave baseline is a snapshot taken when Settings opened. A key
+      // an agent set via `nastech config set` while the page sat open must not
+      // come back in the patch just because it's still present in the draft.
+      const baseline: NastechConfigRecord = { fallback_providers: ['nara1'], timezone: 'UTC' }
+      const draft: NastechConfigRecord = { fallback_providers: ['nara1'], timezone: 'America/New_York' }
+
+      expect(diffConfig(baseline, draft)).toEqual({ timezone: 'America/New_York' })
+    })
+
+    it('includes a nested key only when it actually changed, leaving siblings out', () => {
+      const baseline: NastechConfigRecord = { display: { personality: 'default', show_reasoning: true } }
+      const draft: NastechConfigRecord = { display: { personality: 'default', show_reasoning: false } }
+
+      expect(diffConfig(baseline, draft)).toEqual({ display: { show_reasoning: false } })
+    })
+
+    it('sends a new key that was absent from the baseline', () => {
+      const baseline: NastechConfigRecord = {}
+      const draft: NastechConfigRecord = { timezone: 'UTC' }
+
+      expect(diffConfig(baseline, draft)).toEqual({ timezone: 'UTC' })
+    })
+
+    it('returns an empty object when the draft matches the baseline exactly', () => {
+      const baseline: NastechConfigRecord = { toolsets: ['memory'], display: { personality: 'default' } }
+      const draft: NastechConfigRecord = { toolsets: ['memory'], display: { personality: 'default' } }
+
+      expect(diffConfig(baseline, draft)).toEqual({})
+    })
+
+    it('treats an array as a whole value, not diffed element by element', () => {
+      const baseline: NastechConfigRecord = { toolsets: ['memory', 'terminal'] }
+      const draft: NastechConfigRecord = { toolsets: ['memory'] }
+
+      expect(diffConfig(baseline, draft)).toEqual({ toolsets: ['memory'] })
     })
   })
 })

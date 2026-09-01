@@ -1,8 +1,9 @@
 import type { AppendMessage, ThreadMessage } from '@assistant-ui/react'
-import { useStore } from '@nanostores/react'
 import { JsonRpcGatewayError } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react'
 
+import { transcribeAudio } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { stripAnsi } from '@/lib/ansi'
 import { type ChatMessage, textPart } from '@/lib/chat-messages'
@@ -12,7 +13,6 @@ import { triggerHaptic } from '@/lib/haptics'
 import { setMutableRef } from '@/lib/mutable-ref'
 import { normalize } from '@/lib/text'
 import { transcribeAudioClientDirect } from '@/lib/voice-client-direct'
-import { transcribeAudio } from '@/nastech'
 import { clearClarifyRequest } from '@/store/clarify'
 import {
   $composerAttachments,
@@ -22,17 +22,14 @@ import {
   updateComposerAttachment
 } from '@/store/composer'
 import { resetSessionBackground } from '@/store/composer-status'
-import { requestGatewayForAgent } from '@/store/gateway'
 import { clearNotifications, notify, notifyError } from '@/store/notifications'
 import { clearPreviewArtifacts } from '@/store/preview-status'
 import { clearAllPrompts } from '@/store/prompts'
 import {
   $busy,
-  $connection,
   $currentCwd,
   $messages,
   $terminalBackend,
-  getSessionOwnerHint,
   setActiveSessionId,
   setAwaitingResponse,
   setBusy,
@@ -486,30 +483,6 @@ export function usePromptActions({
     }
   }, [activeSessionId, composerAttachments, eagerlyUploadAttachment])
 
-  // Session resume can be routed through a registry connection while the
-  // render-time requestGateway still points at the local default socket. Keep
-  // every follow-up session RPC on the same composite owner; otherwise resume
-  // succeeds on NASTECH01 and prompt.submit immediately fails locally with
-  // "session not found".
-  const requestForPromptSession = useCallback<GatewayRequest>(
-    (method, params = {}, timeoutMs) => {
-      const storedSessionId = selectedStoredSessionIdRef.current
-      const owner = storedSessionId ? getSessionOwnerHint(storedSessionId) : undefined
-      const ambientConnection = $connection.get()
-
-      const connectionId =
-        owner?.connectionId ||
-        (ambientConnection?.mode === 'remote' ? ambientConnection.connectionId?.trim() || '' : '')
-
-      if (connectionId) {
-        return requestGatewayForAgent(connectionId, owner?.profile || 'default', method, params, timeoutMs)
-      }
-
-      return timeoutMs === undefined ? requestGateway(method, params) : requestGateway(method, params, timeoutMs)
-    },
-    [requestGateway, selectedStoredSessionIdRef]
-  )
-
   const submitPromptText = useSubmitPrompt({
     activeSessionIdRef,
     busyRef,
@@ -518,7 +491,9 @@ export function usePromptActions({
     getRoutedStoredSessionId,
     getRuntimeIdForStoredSession,
     getRouteToken,
-    requestGateway: requestForPromptSession,
+    // Window dispatcher: exact owner + turn lease through the terminal event.
+    // A private requestGatewayForAgent wrapper released the only client at ACK.
+    requestGateway,
     runtimeIdByStoredSessionIdRef,
     resumeStoredSession,
     selectedStoredSessionIdRef,
@@ -932,12 +907,16 @@ export function usePromptActions({
 
         applySurvivorRowIds(sessionId, survivorRowIds)
       } catch (err) {
+        // Same rollback as restoreToMessage below: applyReloadOptimistic
+        // already hid/truncated the transcript, and leaving that in place
+        // after a rejected submit is what blanked the chat (#95745).
         updateSessionState(sessionId, state => ({
           ...state,
           busy: false,
           awaitingResponse: false,
           turnLive: false,
-          turnStartedAt: null
+          turnStartedAt: null,
+          messages
         }))
         notifyError(err, copy.regenerateFailed)
       }

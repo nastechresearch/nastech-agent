@@ -34,12 +34,12 @@ import { RemoteDisplayBanner } from '@/components/remote-display-banner'
 import { SendDiagnosticsHost } from '@/components/send-diagnostics-dialog'
 import { TipHost } from '@/components/tips'
 import { emitGatewayEvent } from '@/contrib/events'
+import { getLatestSessionMessages } from '@/nastech'
 import { type ChatMessage, chatMessageText, preserveLocalAssistantErrors, toChatMessages } from '@/lib/chat-messages'
 import { isMessagingSource } from '@/lib/session-source'
 import { latestSessionTodos } from '@/lib/todos'
 import { activateWakeIndicator } from '@/lib/wake-indicator'
 import { playWakeSound } from '@/lib/wake-sound'
-import { getLatestSessionMessages } from '@/nastech'
 import { $billingSettingsRequest } from '@/store/billing-block'
 import { $desktopBoot } from '@/store/boot'
 import { requestVoiceConversationStart } from '@/store/composer'
@@ -72,8 +72,10 @@ import {
   $selectedStoredSessionId,
   $sessionResumeRequest,
   $sessions,
+  forgetSessionOwnerHintsForSession,
   requestSessionResume,
   sessionMatchesStoredId,
+  sessionOwnerRouteFromRow,
   sessionPinId,
   setAwaitingResponse,
   setBusy,
@@ -115,9 +117,9 @@ import { SessionSwitcher } from '../session-switcher'
 import { useBackgroundQueueDrain } from '../session/hooks/use-background-queue-drain'
 import { useContextSuggestions } from '../session/hooks/use-context-suggestions'
 import { useCwdActions } from '../session/hooks/use-cwd-actions'
+import { useNastechConfig } from '../session/hooks/use-nastech-config'
 import { useMessageStream } from '../session/hooks/use-message-stream'
 import { useModelControls } from '../session/hooks/use-model-controls'
-import { useNastechConfig } from '../session/hooks/use-nastech-config'
 import { usePreviewRouting } from '../session/hooks/use-preview-routing'
 import { usePromptActions } from '../session/hooks/use-prompt-actions'
 import { useRouteResume } from '../session/hooks/use-route-resume'
@@ -339,6 +341,8 @@ export function ContribWiring({ children }: { children: ReactNode }) {
   const { refreshNastechConfig, sttEnabled, voiceMaxRecordingSeconds } = useNastechConfig({ activeSessionIdRef })
 
   const { applySavedMainModel, refreshCurrentModel, selectModel } = useModelControls({
+    cacheOwnerConnectionId: activeConnectionId || undefined,
+    cacheProfile: activeGatewayProfile,
     queryClient,
     requestGateway
   })
@@ -992,17 +996,18 @@ export function ContribWiring({ children }: { children: ReactNode }) {
     // against whichever cached row is found first — the user clicks a row
     // previewing profile A and the resume dials profile B. Pin the row's own
     // (connection, profile) as the resume owner before navigating; untagged
-    // rows (single-profile installs, legacy pages) keep the id-only path.
+    // rows (single-profile installs and the legacy primary-SSH path) keep the
+    // ambient/id-only path. Clear any stale explicit hint first: older builds
+    // incorrectly persisted those rows as `local`, which made a remote session
+    // click switch to the Mac backend and fail with "session not found".
     onResumeSession: (sessionId, session) => {
-      const rowProfile = session?.profile?.trim()
+      const ownerRoute = sessionOwnerRouteFromRow(session)
 
-      if (rowProfile) {
-        requestSessionResume(sessionId, {
-          connectionId: session?.connection_id?.trim() || 'local',
-          ...(session?.connection_id?.trim() ? {} : { mode: 'local' as const }),
-          profile: rowProfile,
-          targetProfile: rowProfile
-        })
+      if (ownerRoute) {
+        requestSessionResume(sessionId, ownerRoute)
+      } else {
+        forgetSessionOwnerHintsForSession(sessionId)
+        requestSessionResume(sessionId)
       }
 
       openSession(sessionId, navigate)
@@ -1152,11 +1157,18 @@ export function ContribWiring({ children }: { children: ReactNode }) {
           requestGateway={requestGateway}
         />
       )}
-      <ModelPickerOverlay gateway={gateway || undefined} onSelect={selectModel} profile={activeGatewayProfile} />
+      <ModelPickerOverlay
+        gateway={gateway || undefined}
+        onSelect={selectModel}
+        ownerConnectionId={activeConnectionId || undefined}
+        profile={activeGatewayProfile}
+        requestGateway={requestGateway}
+      />
       <SessionPickerOverlay onResume={sessionId => openSession(sessionId, navigate)} />
       <ModelVisibilityOverlay
         gateway={gateway || undefined}
         onOpenProviders={openProviderSettings}
+        ownerConnectionId={activeConnectionId || undefined}
         profile={activeGatewayProfile}
       />
       <UpdatesOverlay />

@@ -415,6 +415,7 @@ def _build_gateway_cmd_script(
     lines.append(f'set "NASTECH_HOME={nastech_home}"')
     lines.append('set "PYTHONIOENCODING=utf-8"')
     lines.append('set "NASTECH_GATEWAY_DETACHED=1"')
+    lines.append('set "NASTECH_SUPERVISED_CHILD=1"')
     python_exe_path, venv_dir, extra_pythonpath = _resolve_detached_python(python_path)
     # VIRTUAL_ENV lets the gateway's own python detection find the venv
     # if someone imports nastech_constants-based logic during startup.
@@ -500,6 +501,7 @@ def _build_gateway_vbs_script(
         f"env.Item({_quote_vbs_string('NASTECH_HOME')}) = {_quote_vbs_string(nastech_home)}",
         f"env.Item({_quote_vbs_string('PYTHONIOENCODING')}) = {_quote_vbs_string('utf-8')}",
         f"env.Item({_quote_vbs_string('NASTECH_GATEWAY_DETACHED')}) = {_quote_vbs_string('1')}",
+        f"env.Item({_quote_vbs_string('NASTECH_SUPERVISED_CHILD')}) = {_quote_vbs_string('1')}",
         f"env.Item({_quote_vbs_string('VIRTUAL_ENV')}) = {_quote_vbs_string(_preserve_nastech_home_path(venv_dir))}",
         # Mirror the cmd wrapper's ``PYTHONPATH=<static>;%PYTHONPATH%``: chain onto
         # whatever PYTHONPATH the task environment already carries, at runtime.
@@ -814,6 +816,7 @@ def _build_gateway_argv() -> tuple[list[str], str, dict[str, str]]:
         "NASTECH_HOME": nastech_home,
         "PYTHONIOENCODING": "utf-8",
         "NASTECH_GATEWAY_DETACHED": "1",
+        "NASTECH_SUPERVISED_CHILD": "1",
         "VIRTUAL_ENV": _preserve_nastech_home_path(venv_dir),
     }
     _prepend_pythonpath(
@@ -1570,7 +1573,7 @@ def _windows_stop_drain_timeout() -> float:
 def _force_terminate_known_gateway_pids(pids: list[int]) -> int:
     """Force-kill known gateway PIDs without a broad process sweep."""
     try:
-        from gateway.status import _pid_exists, terminate_pid
+        from gateway.status import _pid_exists, get_process_start_time, terminate_pid
     except ImportError:
         return 0
 
@@ -1584,7 +1587,11 @@ def _force_terminate_known_gateway_pids(pids: list[int]) -> int:
         try:
             if not _pid_exists(pid):
                 continue
-            terminate_pid(pid, force=True)
+            terminate_pid(
+                pid,
+                force=True,
+                expected_start_time=get_process_start_time(pid),
+            )
             killed += 1
         except ProcessLookupError:
             continue

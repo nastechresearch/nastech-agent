@@ -2712,11 +2712,18 @@ class GatewayStreamConsumer:
             # draft(final=true) — that would seal the live stream with
             # interim text and orphan the true final into a plain-send
             # duplicate (live finding, 2026-08-16 canary).
-            _md = dict(self.metadata) if self.metadata else {}
+            _md = self._metadata_for_send(final=False) or {}
             _md["_interim_send"] = True
+            # Only pass reply_to for platforms that use reply-anchoring for
+            # threading. Discord/Telegram use native thread_id in metadata;
+            # passing reply_to on every commentary creates reply spam.
+            _plat = getattr(getattr(self.adapter, "platform", None), "value", None)
+            _platform_name = str(_plat or getattr(self.adapter, "name", "")).lower()
+            _needs_reply_anchor = _platform_name in ("buzz", "slack", "mattermost", "feishu")
             result = await self.adapter.send(
                 chat_id=self.chat_id,
                 content=text,
+                reply_to=self._initial_reply_to_id if _needs_reply_anchor else None,
                 metadata=_md,
             )
             # Note: do NOT set _already_sent = True here.
@@ -2826,11 +2833,23 @@ class GatewayStreamConsumer:
             return False
         try:
             try:
-                result = fn(text, metadata=self.metadata)
+                # Pass the chat id so multi-platform adapters (relay) resolve
+                # the decision through THIS chat's negotiated platform, not
+                # the primary identity's.  Without it a Slack-primary relay
+                # with unfurl force-on misroutes a fronted Telegram/Discord
+                # chat's final through the fresh-send lane (duplicate
+                # delivery: those descriptors advertise no ``delete`` op),
+                # and the mirror posture leaves fronted Slack chats dark.
+                result = fn(text, metadata=self.metadata, chat_id=self.chat_id)
             except TypeError:
-                # Adapter / test double whose hook doesn't accept the metadata
-                # keyword — fall back to the positional-only form.
-                result = fn(text)
+                try:
+                    # Single-platform hook signature (Telegram, base class):
+                    # (content, metadata=None) — no chat_id keyword.
+                    result = fn(text, metadata=self.metadata)
+                except TypeError:
+                    # Adapter / test double whose hook doesn't accept the
+                    # metadata keyword — fall back to the positional-only form.
+                    result = fn(text)
         except Exception as e:
             logger.debug("prefers_fresh_final_streaming check failed: %s", e)
             return False
