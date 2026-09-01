@@ -1,5 +1,7 @@
 import { atom, map } from 'nanostores'
 
+import { queryClient } from '@/lib/query-client'
+import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
 import {
   getActionStatus,
   installSkillFromHub,
@@ -7,8 +9,6 @@ import {
   uninstallSkillFromHub,
   updateSkillsFromHub
 } from '@/nastech'
-import { queryClient } from '@/lib/query-client'
-import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
 import { upsertDesktopActionTask } from '@/store/activity'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 
