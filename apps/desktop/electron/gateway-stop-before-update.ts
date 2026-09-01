@@ -63,7 +63,11 @@ export function startGatewaysAfterUpdateAbort(nastechCliPath: string, deps: Stop
   return runGatewayLifecycleCommand(nastechCliPath, ['gateway', 'start', '--all'], deps)
 }
 
-function runGatewayLifecycleCommand(nastechCliPath: string, args: string[], deps: StopGatewayBeforeUpdateDeps): boolean {
+function runGatewayLifecycleCommand(
+  nastechCliPath: string,
+  args: string[],
+  deps: StopGatewayBeforeUpdateDeps
+): boolean {
   const isWindows = deps.isWindows ?? process.platform === 'win32'
 
   if (!isWindows) {
