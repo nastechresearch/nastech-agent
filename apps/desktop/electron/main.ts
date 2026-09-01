@@ -299,6 +299,7 @@ import {
   profileNameFromDeleteRequest,
   resolveRouteProfile
 } from './profile-delete-routing'
+import { migrateActiveProfileIfMissing as migrateActiveProfileIfMissingPure } from './profile-migration'
 import { prepareProfileRenameLifecycle, profileRenameFromRequest } from './profile-rename-routing'
 import {
   buildSidebarSessionSliceParams,
@@ -4726,8 +4727,7 @@ function createActiveBackend(backendArgs) {
 function resolveNastechBackend(backendArgs) {
   // 1. Explicit override -- NASTECH_DESKTOP_NASTECH_ROOT points at a developer
   //    checkout. Honour it as-is (no bootstrap; the user is driving).
-  const overrideRoot =
-    process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
+  const overrideRoot = process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
 
   if (overrideRoot && isNastechSourceRoot(overrideRoot)) {
     const backend = createPythonBackend(overrideRoot, `Nastech source at ${overrideRoot}`, backendArgs)
@@ -9417,6 +9417,67 @@ function writeActiveDesktopProfile(name) {
   return value || null
 }
 
+// True when the given pid belongs to a running process whose command line
+// contains "nastech", avoiding false positives from stale gateway.pid files
+// whose PID was recycled by the OS to an unrelated process.
+function isNastechProcess(pid) {
+  try {
+    process.kill(pid, 0) // signal 0 = existence check, no signal sent
+  } catch {
+    return false
+  }
+
+  // On macOS / Linux, check the command line to avoid PID recycling false positives.
+  try {
+    const cmdline = fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8')
+
+    return cmdline.includes('nastech')
+  } catch {
+    // /proc not available (macOS) — fall back to ps. Use -o args= to inspect
+    // the full command line, not just the process name.  -o comm= would return
+    // "python3" for any Python process, creating false positives.
+    try {
+      const { execSync } = require('child_process')
+      const out = execSync(`ps -p ${pid} -o args=`, { encoding: 'utf8', timeout: 2000 })
+
+      return out.includes('nastech')
+    } catch {
+      return false
+    }
+  }
+}
+
+// Seed active-profile.json from the best available signal when the file does
+// not yet exist.  Runs exactly once (no-op once the file exists).  Priority:
+//   1. Legacy ~/.nastech/active_profile (explicit CLI choice via nastech profile use)
+//   2. Running gateway (gateway.pid with verified liveness + nastech identity)
+//   3. state.db heuristics (hybrid recency×size score picks the primary workspace)
+// The stored JSON includes _migrated:true so the renderer can optionally surface
+// a one-time notification that the profile was auto-detected.
+//
+// Decision logic lives in profile-migration.ts (pure + unit-tested). This wrapper
+// just wires Electron/Node fs into a MigrationDeps bag and delegates.
+function migrateActiveProfileIfMissing() {
+  migrateActiveProfileIfMissingPure(DESKTOP_PROFILE_CONFIG_PATH, {
+    legacyActivePath: path.join(NASTECH_HOME, 'active_profile'),
+    profilesRoot: path.join(NASTECH_HOME, 'profiles'),
+    existsSync: p => fs.existsSync(p),
+    readFileSync: (p, enc) => fs.readFileSync(p, enc),
+    statSync: p => fs.statSync(p),
+    readdirSync: (p, opts) => fs.readdirSync(p, opts as { withFileTypes: true }),
+    isNastechProcess,
+    now: () => Date.now(),
+    writeJson: (target, decision) => {
+      // Mirror writeActiveDesktopProfile's atomic-write + parent-dir-create
+      // semantics so the migration produces a file indistinguishable from a
+      // user-driven profile switch.
+      fs.mkdirSync(path.dirname(target), { recursive: true })
+      writeFileAtomic(target, JSON.stringify(decision, null, 2))
+    },
+    isValidProfileName: p => PROFILE_NAME_RE.test(p)
+  })
+}
+
 // Sanitize a connection config into the renderer-facing shape. With no
 // `profile` this describes the global/default connection (the existing
 // behavior); with a `profile` it describes that profile's per-profile remote
@@ -12178,6 +12239,21 @@ async function spawnPoolBackend(profile, entry, opts: { forceLocal?: boolean; po
   // the claim, and would miss anything printed before it.
   const outputTail = createBackendOutputTail()
   outputTail.attach(child)
+
+  // Start watching for the READY announcement BEFORE any await (#60323):
+  // stdout is already flowing into the tail, and Node streams never replay
+  // consumed chunks to late listeners — a sentinel printed while
+  // claimBackendChild runs would otherwise be lost forever, timing out a
+  // healthy backend. The tail-buffer accessor covers any residual gap.
+  const portAnnouncement = waitForDashboardPortAnnouncement(child, {
+    bufferedOutput: () => outputTail.text(),
+    describeOutputTail: () => outputTail.describe(),
+    readyFile
+  })
+
+  // Mark handled so an early rejection (child dies during the claim) can't
+  // surface as an unhandled rejection before the Promise.race below attaches.
+  portAnnouncement.catch(() => {})
   await claimBackendChild(child, `${backend.command} ${backend.args.join(' ')}`, profile, backendNonce, outputTail)
 
   child.stdout.on('data', rememberLog)
@@ -12211,10 +12287,7 @@ async function spawnPoolBackend(profile, entry, opts: { forceLocal?: boolean; po
   })
 
   // Discover the ephemeral port the child bound to
-  const port = await Promise.race([
-    waitForDashboardPortAnnouncement(child, { describeOutputTail: () => outputTail.describe(), readyFile }),
-    startFailed
-  ])
+  const port = await Promise.race([portAnnouncement, startFailed])
 
   if (readyFile) {
     fs.unlink(readyFile, () => {})
@@ -12402,6 +12475,15 @@ async function startNastech() {
     return existingConnectionPromise
   }
 
+  // Seed active-profile.json from legacy signals BEFORE the first
+  // profile-dependent read (`primaryBackendIsRemote()` on the next line, then
+  // `primaryProfileKey()` inside the connection IIFE below). Without this,
+  // remote-mode users whose preference file is missing (first boot after
+  // update) resolve primaryProfileKey() to 'default' inside the IIFE, then
+  // the remote branch returns and never runs the migration. Runs once;
+  // no-op when the preference file already exists.
+  migrateActiveProfileIfMissing()
+
   const connectionAttempt = backendConnectionState.startAttempt()
   const primaryProfile = primaryProfileKey()
 
@@ -12565,6 +12647,24 @@ async function startNastech() {
     // later, after the claim, and would miss anything printed before it.
     const primaryOutputTail = createBackendOutputTail()
     primaryOutputTail.attach(nastechProcess)
+
+    // Start watching for the READY announcement BEFORE any await (#60323):
+    // claimBackendChild can take seconds (its Windows Get-Process probe cold
+    // start alone runs 2-8s) and advanceBootProgress awaits renderer IPC.
+    // stdout is already flowing into the tail, and Node streams never replay
+    // consumed chunks to late listeners, so a sentinel printed during that
+    // window was lost forever — the wait then hit its 90s timeout and a
+    // healthy backend was killed (deterministic on Windows, racy on
+    // macOS/Linux). The tail-buffer accessor covers any residual gap.
+    const portAnnouncement = waitForDashboardPortAnnouncement(nastechProcess, {
+      bufferedOutput: () => primaryOutputTail.text(),
+      describeOutputTail: () => primaryOutputTail.describe(),
+      readyFile
+    })
+
+    // Mark handled so an early rejection (child dies during the claim) can't
+    // surface as an unhandled rejection before the Promise.race below attaches.
+    portAnnouncement.catch(() => {})
     await claimBackendChild(
       nastechProcess,
       `${backend.command} ${backend.args.join(' ')}`,
@@ -12651,13 +12751,7 @@ async function startNastech() {
     await advanceBootProgress('backend.port', 'Waiting for Nastech backend to launch', 86)
 
     // Discover the ephemeral port the child bound to
-    const port = await Promise.race([
-      waitForDashboardPortAnnouncement(nastechProcess, {
-        describeOutputTail: () => primaryOutputTail.describe(),
-        readyFile
-      }),
-      backendStartFailed
-    ])
+    const port = await Promise.race([portAnnouncement, backendStartFailed])
 
     if (readyFile) {
       fs.unlink(readyFile, () => {})

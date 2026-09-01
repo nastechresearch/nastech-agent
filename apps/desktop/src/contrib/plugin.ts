@@ -12,9 +12,9 @@
  * through the plugin host loader (next phase); this is that seam.
  */
 
+import { pluginRest, type PluginRestOptions, pluginSocket } from '@/nastech'
 import { createPluginI18n, type PluginI18n } from '@/i18n'
 import { readKey, writeKey } from '@/lib/storage'
-import { pluginRest, type PluginRestOptions, pluginSocket } from '@/nastech'
 import { dispatchPluginNativeNotification, type PluginNativeNotificationInput } from '@/store/native-notifications'
 
 import { registry } from './registry'

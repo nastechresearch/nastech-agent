@@ -46,6 +46,10 @@ def nastech_home(tmp_path, monkeypatch):
 
     token = set_nastech_home_override(str(home))
     goals._DB_CACHE.clear()
+    # Pre-warm the SessionDB cache from sync context so async GoalManager
+    # writes never race the bounded loop-thread bootstrap window on loaded
+    # CI runners (goal silently unpersisted; main run 33455779041).
+    goals._get_session_db()
     yield home
     try:
         reset_nastech_home_override(token)

@@ -102,7 +102,7 @@ class TestSessionDbInitTimeout:
                  patch("cron.scheduler._resolve_origin", return_value=None), \
                  patch("nastech_cli.env_loader.load_nastech_dotenv"), \
                  patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-                 patch("nastech_state.SessionDB", side_effect=make_session_db), \
+                 patch("nastech_state.get_shared_session_db", side_effect=make_session_db), \
                  patch(
                      "nastech_cli.runtime_provider.resolve_runtime_provider",
                      return_value=_RUNTIME,
@@ -131,7 +131,7 @@ class TestSessionDbInitTimeout:
              patch("cron.scheduler._resolve_origin", return_value=None), \
              patch("nastech_cli.env_loader.load_nastech_dotenv"), \
              patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-             patch("nastech_state.SessionDB"), \
+             patch("nastech_state.get_shared_session_db"), \
              patch(
                  "nastech_cli.runtime_provider.resolve_runtime_provider",
                  return_value=_RUNTIME,
@@ -166,7 +166,7 @@ class TestSessionDbInitTimeout:
              patch("cron.scheduler._resolve_origin", return_value=None), \
              patch("nastech_cli.env_loader.load_nastech_dotenv"), \
              patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-             patch("nastech_state.SessionDB", return_value=fake_db), \
+             patch("nastech_state.get_shared_session_db", return_value=fake_db), \
              patch(
                  "nastech_cli.runtime_provider.resolve_runtime_provider",
                  return_value=_RUNTIME,
@@ -209,7 +209,7 @@ class TestSessionDbInitTimeout:
              patch("cron.scheduler._resolve_origin", return_value=None), \
              patch("nastech_cli.env_loader.load_nastech_dotenv"), \
              patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-             patch("nastech_state.SessionDB"), \
+             patch("nastech_state.get_shared_session_db"), \
              patch(
                  "nastech_cli.runtime_provider.resolve_runtime_provider",
                  return_value=_RUNTIME,
@@ -259,7 +259,7 @@ class TestDispatchGuardReleasedAfterHang:
                  patch("cron.scheduler._resolve_origin", return_value=None), \
                  patch("nastech_cli.env_loader.load_nastech_dotenv"), \
                  patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-                 patch("nastech_state.SessionDB"), \
+                 patch("nastech_state.get_shared_session_db"), \
                  patch(
                      "nastech_cli.runtime_provider.resolve_runtime_provider",
                      return_value=_RUNTIME,
@@ -357,7 +357,7 @@ class TestLateSessionDbClosedAfterTimeout:
                  patch("cron.scheduler._resolve_origin", return_value=None), \
                  patch("nastech_cli.env_loader.load_nastech_dotenv"), \
                  patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-                 patch("nastech_state.SessionDB", side_effect=_hanging_then_capture), \
+                 patch("nastech_state.get_shared_session_db", side_effect=_hanging_then_capture), \
                  patch(
                      "nastech_cli.runtime_provider.resolve_runtime_provider",
                      return_value={
@@ -415,7 +415,7 @@ class TestSessionDbInitAfterEarlyReturns:
              patch("cron.scheduler._resolve_origin", return_value=None), \
              patch("nastech_cli.env_loader.load_nastech_dotenv"), \
              patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-             patch("nastech_state.SessionDB") as mock_db_cls, \
+             patch("nastech_state.get_shared_session_db") as mock_db_cls, \
              patch(
                  "cron.scheduler._run_job_script_with_claim_heartbeat",
                  return_value=(True, '{"wakeAgent": false}'),

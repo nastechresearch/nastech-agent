@@ -56,7 +56,7 @@ def _tick(job, tmp_path, current_provider, deliveries):
          patch("cron.scheduler._resolve_origin", return_value=None), \
          patch("nastech_cli.env_loader.load_nastech_dotenv"), \
          patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-         patch("nastech_state.SessionDB", return_value=fake_db), \
+         patch("nastech_state.get_shared_session_db", return_value=fake_db), \
          patch("tools.mcp_tool.discover_mcp_tools", return_value=[]), \
          patch("nastech_cli.runtime_provider.resolve_runtime_provider",
                return_value={
@@ -141,7 +141,7 @@ class TestDriftAlertOnce:
                  patch("cron.scheduler._resolve_origin", return_value=None), \
                  patch("nastech_cli.env_loader.load_nastech_dotenv"), \
                  patch("nastech_cli.env_loader.reset_secret_source_cache"), \
-                 patch("nastech_state.SessionDB", return_value=fake_db), \
+                 patch("nastech_state.get_shared_session_db", return_value=fake_db), \
                  patch("tools.mcp_tool.discover_mcp_tools", return_value=[]), \
                  patch("nastech_cli.runtime_provider.resolve_runtime_provider",
                        return_value={

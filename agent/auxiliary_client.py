@@ -1334,8 +1334,15 @@ NASTECH_EXTRA_BODY = _nastech_extra_body()
 # Set at resolve time — True if the auxiliary client points to Nastech Portal
 auxiliary_is_nastech: bool = False
 
-# Default auxiliary models per provider
-_OPENROUTER_MODEL = "google/gemini-3.6-flash"
+# Default auxiliary models per provider.
+# _OPENROUTER_MODEL is the BUILT-IN fallback used only when the user never set
+# auxiliary.openrouter_model — it MUST be a :free SKU: this lane engages
+# silently (auxiliary tasks, no user prompt), and a paid built-in default here
+# meant silent real OpenRouter spend the user never opted into (#81952). The
+# SKU matches the one the free_only warning below recommends. User-configured
+# auxiliary.openrouter_model values are honored untouched (paid allowed when
+# the user chose it; _warn_paid_lane_once still fires for that case).
+_OPENROUTER_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
 _NASTECH_MODEL = "google/gemini-3.6-flash"
 _NASTECH_DEFAULT_BASE_URL = "https://inference-api.nastechresearch.github.io/v1"
 _ANTHROPIC_DEFAULT_BASE_URL = "https://api.anthropic.com"
@@ -7018,6 +7025,40 @@ def resolve_provider_client(
                 custom_key = build_command_token_provider(
                     custom_key_cmd, custom_entry.get("name") or provider
                 ) or custom_key
+            if not custom_key:
+                try:
+                    from agent.credential_pool import (
+                        custom_provider_pool_key_candidates,
+                        load_pool,
+                    )
+
+                    pool_name = (
+                        custom_entry.get("provider_key")
+                        or custom_entry.get("name")
+                        or provider
+                    )
+                    for pool_key in custom_provider_pool_key_candidates(
+                        custom_base, pool_name
+                    ):
+                        try:
+                            pool = load_pool(pool_key)
+                        except Exception:
+                            continue
+                        if not pool.has_credentials():
+                            continue
+                        pool_entry = pool.select()
+                        if pool_entry is None:
+                            continue
+                        pool_api_key = (
+                            getattr(pool_entry, "runtime_api_key", None)
+                            or getattr(pool_entry, "access_token", "")
+                            or ""
+                        )
+                        if str(pool_api_key).strip():
+                            custom_key = str(pool_api_key).strip()
+                            break
+                except Exception:
+                    pass
             custom_key = custom_key or "no-key-required"
             if custom_key == "no-key-required":
                 logger.warning(

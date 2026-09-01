@@ -3190,9 +3190,10 @@ def _resolve_use_tui(args) -> bool:
 
 def cmd_chat(args):
     """Run interactive chat CLI."""
-    use_tui = _resolve_use_tui(args)
-
     _apply_safe_mode(args)
+    _apply_user_config_bypass(args)
+    _guard_noninteractive_user_config(args)
+    use_tui = _resolve_use_tui(args)
 
     # --in DIR: run in DIR. Must happen before any session resolution so the
     # workspace-scoped "latest"/-c lookups key off DIR, and it pins the
@@ -3424,14 +3425,6 @@ def cmd_chat(args):
     # that invoke cmd_chat directly (e.g. subcommand dispatch).
     if getattr(args, "yolo", False):
         os.environ["NASTECH_YOLO_MODE"] = "1"
-
-    # --ignore-user-config: make load_cli_config() / load_config() skip the
-    # user's ~/.nastech/config.yaml and return built-in defaults. Set BEFORE
-    # importing cli (which runs `CLI_CONFIG = load_cli_config()` at module
-    # import time). Credentials in .env are still loaded — this flag only
-    # ignores behavioral/config settings.
-    if getattr(args, "ignore_user_config", False):
-        os.environ["NASTECH_IGNORE_USER_CONFIG"] = "1"
 
     # --ignore-rules: skip auto-injection of AGENTS.md/SOUL.md/.cursorrules
     # (rules), memory entries, and any preloaded skills coming from user config.
@@ -5187,10 +5180,13 @@ _LAZY_COMMAND_EXPORTS = {
         "_npm_lockfile_changed",
         "_npm_manifest_paths",
         "_npm_manifests_digest",
+        "_ORPHAN_RESCUE_REF_MAX_AGE_DAYS",
+        "_ORPHAN_RESCUE_REFS_TO_KEEP",
         "_orphaned_desktop_backend_pids",
         "_pending_fleet_restart_needed",
         "_pause_windows_gateways_for_update",
         "_print_curator_first_run_notice",
+        "_prune_orphan_rescue_refs",
         "_print_curator_recent_run_notice",
         "_print_fts_optimize_available_notice",
         "_print_parked_branch_kept_notice",
@@ -12110,6 +12106,23 @@ def cmd_dashboard(args):
     # ready sentinel. Resolved once and threaded through the re-exec, the
     # build gate, and start_server.
     _headless_backend = getattr(args, "headless_backend", False)
+    # `nastech serve` is headless/non-interactive: fail closed on a corrupt
+    # config.yaml instead of silently starting on defaults where provider
+    # auto-detection can adopt unnamed .env credentials (issue #81952).
+    # Same policy + escape hatch as _guard_noninteractive_user_config.
+    if _headless_backend:
+        from nastech_cli.config import (
+            InvalidUserConfigError,
+            require_parseable_user_config,
+        )
+
+        try:
+            require_parseable_user_config(
+                ignore_user_config=bool(getattr(args, "ignore_user_config", False))
+            )
+        except InvalidUserConfigError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            raise SystemExit(2) from exc
     _ssh_owner_nonce = getattr(args, "ssh_owner_nonce", None)
     if _ssh_owner_nonce and not re.fullmatch(r"[0-9a-f]{16}", _ssh_owner_nonce):
         raise SystemExit("--ssh-owner-nonce must be 16 lowercase hex characters")
@@ -12644,6 +12657,8 @@ def _prepare_agent_startup(args) -> None:
     if getattr(args, "yolo", False):
         os.environ["NASTECH_YOLO_MODE"] = "1"
     _apply_safe_mode(args)
+    _apply_user_config_bypass(args)
+    _guard_noninteractive_user_config(args)
 
     _sub_attr, _sub_set = _AGENT_SUBCOMMANDS.get(args.command, (None, None))
     if not (
@@ -12733,6 +12748,43 @@ def _apply_safe_mode(args) -> None:
     os.environ["NASTECH_SAFE_MODE"] = "1"
     os.environ["NASTECH_IGNORE_USER_CONFIG"] = "1"
     os.environ["NASTECH_IGNORE_RULES"] = "1"
+
+
+def _apply_user_config_bypass(args) -> None:
+    """Apply the explicit config bypass before any startup config reads."""
+    if getattr(args, "ignore_user_config", False):
+        os.environ["NASTECH_IGNORE_USER_CONFIG"] = "1"
+
+
+def _guard_noninteractive_user_config(args) -> None:
+    """Fail closed before a non-interactive invocation initializes providers."""
+    if getattr(args, "_noninteractive_config_validated", False):
+        return
+
+    is_noninteractive = (
+        bool(getattr(args, "oneshot", None))
+        or bool(getattr(args, "query", None))
+    )
+    if not is_noninteractive:
+        return
+
+    from nastech_cli.config import (
+        InvalidUserConfigError,
+        require_parseable_user_config,
+    )
+
+    try:
+        require_parseable_user_config(
+            ignore_user_config=bool(
+                getattr(args, "ignore_user_config", False)
+                or getattr(args, "safe_mode", False)
+            )
+        )
+    except InvalidUserConfigError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(2) from exc
+
+    setattr(args, "_noninteractive_config_validated", True)
 
 
 def _set_chat_arg_defaults(args) -> None:

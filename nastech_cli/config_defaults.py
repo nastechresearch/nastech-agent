@@ -555,7 +555,7 @@ DEFAULT_CONFIG = {
         "extract_backend": "",   # per-capability override for web_extract (e.g. "native")
         "extract_char_limit": 15000,  # per-page char budget for web_extract; larger pages truncate + store full text in cache/web
         # Keyless free-tier ring: with NO web backend configured or keyed,
-        # web_search/web_extract rotate round-robin across five vendors'
+        # web_search/web_extract rotate round-robin across four vendors'
         # public free tiers (exa, parallel, firecrawl, keenable),
         # failing over to the next ring vendor on rate limits. Never
         # pre-empts a configured or keyed backend. Set false to disable.
@@ -565,10 +565,11 @@ DEFAULT_CONFIG = {
         # free-tier ring — the next call attempts the chosen backend again
         # (no sticky failover). Off when keyless_fallback is false.
         "keyless_rescue": True,
-        # Per-provider tier selection for ring vendors with both a keyless
+        # Per-provider tier selection for vendors with both a keyless
         # free endpoint and a keyed paid path (exa, parallel,
-        # firecrawl, keenable). Set by the `nastech tools` picker's
-        # "Free (keyless)" / "Paid (API key)" rows.
+        # firecrawl, keenable on the ring; tavily is opt-in keyless via
+        # `nastech tools`, not a ring member). Set by the `nastech tools`
+        # picker's "Free (keyless)" / "Paid (API key)" rows.
         #   free  — always use the anonymous free endpoint (even with a key)
         #   paid  — always use the keyed path (missing key = error; vendor
         #           is also excluded from the keyless ring)
@@ -1733,6 +1734,15 @@ DEFAULT_CONFIG = {
         # override for backward compatibility. 0 disables the reap
         # (park forever).
         "ws_orphan_reap_grace_s": 20.0,
+        # Activity-staleness threshold (seconds) gating the WS-orphan
+        # interrupt of a detached RUNNING turn (#98028/#100325). A
+        # client-absent turn is only interrupted once its agent activity
+        # clock (the same one the agent.turn_liveness watchdog samples —
+        # stamped by API waits, stream tokens, tool heartbeats) has been
+        # idle at least this long; an actively-working detached turn runs
+        # to completion. Default matches agent.turn_liveness.timeout_s.
+        # 0 restores the old interrupt-at-grace-regardless behavior.
+        "ws_orphan_activity_stale_s": 600.0,
         # Startup sweep of session rows orphaned by a dead gateway process
         # (#65194).  The ws-orphan grace timer above is in-process, so a
         # gateway restart (update, crash, systemd) leaves disconnected
@@ -2267,9 +2277,17 @@ DEFAULT_CONFIG = {
 
     # Skills — external skill directories for sharing skills across tools/agents.
     # Each path is expanded (~, ${VAR}) and resolved.  Read-only — skill creation
-    # always goes to ~/.nastech/skills/.
+    # goes to ~/.nastech/skills/ unless create_dir (below) redirects it.
     "skills": {
         "external_dirs": [],   # e.g. ["~/.agents/skills", "/shared/team-skills"]
+        # Where agent-created skills (skill_manage action=create) are written.
+        # Empty = the profile-local skills dir (~/.nastech/skills/). When set,
+        # new skills land here AND every agent-facing instruction that names
+        # the creation path (tool schema text, prompts) renders this directory
+        # instead of the default. Expanded (~, ${VAR}); relative paths resolve
+        # against NASTECH_HOME. The directory is scanned for skills alongside
+        # the local dir. e.g. "/opt/brain/skills"
+        "create_dir": "",
         # Project-local skill discovery: when a session starts inside a git
         # checkout, ``<root>/.nastech/skills/`` and ``<root>/.agents/skills/``
         # are sourced as the highest-precedence skill tier — but ONLY when the
@@ -4495,6 +4513,14 @@ OPTIONAL_ENV_VARS = {
         "password": True,
         "category": "tool",
         "advanced": True,
+    },
+    "TAVILY_API_KEY": {
+        "description": "Tavily API key for AI-native web search and extract (optional — keyless works when Tavily is selected)",
+        "prompt": "Tavily API key",
+        "url": "https://app.tavily.com/home",
+        "tools": ["web_search", "web_extract"],
+        "password": True,
+        "category": "tool",
     },
     "KEENABLE_API_KEY": {
         "description": "Keenable API key for fast independent-index web search and page fetch (optional — keyless free tier works without it)",
