@@ -1427,7 +1427,8 @@ export const ru = defineLocale({
       useBackend: 'Использовать этот бэкенд',
       nastechIncluded: 'Входит в подписку Nastech — войдите в Nastech Portal, чтобы активировать.',
       nastechAuthNeededTitle: 'Войдите в Nastech Portal',
-      nastechAuthNeededMessage: provider => `${provider} сохранён, но не активируется, пока вы не войдёте в Nastech Portal.`,
+      nastechAuthNeededMessage: provider =>
+        `${provider} сохранён, но не активируется, пока вы не войдёте в Nastech Portal.`,
       nastechAuthSignIn: 'Войти',
       nastechAuthDoneTitle: 'Nastech Portal подключён',
       nastechAuthDoneMessage: 'Ваши бэкенды по подписке теперь активны.',
@@ -3258,7 +3259,8 @@ export const ru = defineLocale({
       address: 'Адрес',
       addressPlaceholder: 'Введите адрес',
       blankPageBody: 'Введите адрес выше, чтобы просматривать, или попросите Nastech открыть страницу.',
-      finishedRestarting: message => `Nastech завершил перезапуск сервера предпросмотра${message ? `: ${message}` : ''}`,
+      finishedRestarting: message =>
+        `Nastech завершил перезапуск сервера предпросмотра${message ? `: ${message}` : ''}`,
       failedRestarting: message => `Перезапуск сервера не удался: ${message}`,
       unknownError: 'неизвестная ошибка',
       restartedTitle: 'Сервер предпросмотра перезапущен',
