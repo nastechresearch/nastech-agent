@@ -205,6 +205,40 @@ def _resolve_ws_orphan_reap_grace() -> float:
 
 
 _WS_ORPHAN_REAP_GRACE_S = _resolve_ws_orphan_reap_grace()
+
+
+def _resolve_ws_orphan_activity_stale() -> float:
+    """Resolve the detached-turn activity staleness threshold (seconds).
+
+    A detached RUNNING turn is only interrupted by the WS-orphan reaper once
+    its activity clock has been idle at least this long (#98028/#100325);
+    while the turn keeps producing (API waits, stream tokens, tool
+    heartbeats all stamp the clock) it runs to completion detached.
+    Config-driven via ``dashboard.ws_orphan_activity_stale_s``; the
+    ``NASTECH_TUI_WS_ORPHAN_ACTIVITY_STALE_S`` env var is an internal
+    override. Defaults to 600s, matching the turn-liveness watchdog's idle
+    bound (``agent.turn_liveness.timeout_s``) so "wedged" means the same
+    thing on both paths. ``0`` disables the gate (pre-#98028 behavior:
+    interrupt at grace regardless of activity).
+    """
+    raw = os.environ.get("NASTECH_TUI_WS_ORPHAN_ACTIVITY_STALE_S")
+    if raw is None or not str(raw).strip():
+        try:
+            from nastech_cli.config import load_config
+
+            raw = (load_config().get("dashboard") or {}).get(
+                "ws_orphan_activity_stale_s"
+            )
+        except Exception:
+            raw = None
+    try:
+        stale = float(raw) if raw is not None else 600.0
+    except (ValueError, TypeError):
+        stale = 600.0
+    return max(0.0, stale)
+
+
+_WS_ORPHAN_ACTIVITY_STALE_S = _resolve_ws_orphan_activity_stale()
 _WS_ORPHAN_INTERRUPT_REAP_POLL_S = 1.0
 # Total budget for the interrupt-then-reap poll chain. If an interrupted turn
 # never settles (agent thread hung in a syscall, supervisor lost), each 1s poll
@@ -1393,6 +1427,34 @@ def _cancel_ws_orphan_reap(sid: str) -> None:
             pass
 
 
+def _ws_orphan_turn_activity_is_fresh(session: dict) -> bool:
+    """Whether a detached RUNNING turn's activity clock is still fresh.
+
+    Reuses the agent's existing activity summary (``_touch_activity`` is
+    stamped by API waits, stream tokens, and tool heartbeats — the same
+    clock the turn-liveness watchdog samples; see agent/turn_liveness.py).
+    Fresh means the WS-orphan reaper must NOT interrupt the turn yet
+    (#98028/#100325): deliberate client absence (closed laptop, backgrounded
+    mobile app, desktop update/relaunch) keeps healthy work running detached.
+
+    Conservative fallbacks preserve the wedged-turn safety net: a disabled
+    threshold (<= 0), a missing/opaque agent, an unreadable summary, or a
+    never-stamped clock all report NOT fresh, i.e. eligible for the
+    interrupt-at-grace path exactly as before.
+    """
+    if _WS_ORPHAN_ACTIVITY_STALE_S <= 0:
+        return False
+    agent = session.get("agent")
+    summary_fn = getattr(agent, "get_activity_summary", None)
+    if not callable(summary_fn):
+        return False
+    try:
+        elapsed = summary_fn().get("seconds_since_activity")
+        return elapsed is not None and float(elapsed) < _WS_ORPHAN_ACTIVITY_STALE_S
+    except Exception:
+        return False
+
+
 def _schedule_ws_orphan_reap(sid: str, *, delay_s: float | None = None) -> None:
     """After a grace window, reap session ``sid`` iff it's still orphaned.
 
@@ -1429,30 +1491,47 @@ def _schedule_ws_orphan_reap(sid: str, *, delay_s: float | None = None) -> None:
             if _session_has_active_delegations(sid, current):
                 reschedule_delay = _WS_ORPHAN_REAP_GRACE_S
             elif current.get("running"):
-                # Mid-turn detached sessions must never drop the single
-                # Timer (#85578): after the reconnect grace the turn is
-                # interrupted once, then the reap keeps polling until the
-                # normal turn-finalization path settles.
-                polls = int(current.get("_client_gone_interrupt_polls") or 0) + 1
-                current["_client_gone_interrupt_polls"] = polls
-                if polls > _WS_ORPHAN_INTERRUPT_REAP_MAX_POLLS:
-                    # The interrupted turn never settled inside the budget —
-                    # force-reap rather than parking the session + a timer
-                    # chain forever. Loud by design: this only fires when a
-                    # turn is genuinely stuck past interrupt.
-                    logger.error(
-                        "client_gone sid=%s: turn did not settle after %d "
-                        "interrupt polls (%.0fs) — force-reaping detached "
-                        "session",
-                        sid, polls - 1,
-                        (polls - 1) * _WS_ORPHAN_INTERRUPT_REAP_POLL_S,
+                if not current.get(
+                    "_client_gone_interrupt_requested"
+                ) and _ws_orphan_turn_activity_is_fresh(current):
+                    # Client-absent but actively producing (#98028/#100325):
+                    # the turn keeps running detached (the sentinel transport
+                    # already buffers emits) and the reaper re-checks each
+                    # grace interval. Only a turn whose activity clock has
+                    # gone stale — genuinely wedged, the case the interrupt
+                    # was added for — falls through to the interrupt below.
+                    logger.debug(
+                        "client_gone sid=%s action=defer (turn activity "
+                        "fresh; stale threshold %.0fs)",
+                        sid,
+                        _WS_ORPHAN_ACTIVITY_STALE_S,
                     )
-                    session = _pop_session_by_id(sid)
+                    reschedule_delay = _WS_ORPHAN_REAP_GRACE_S
                 else:
-                    if not current.get("_client_gone_interrupt_requested"):
-                        current["_client_gone_interrupt_requested"] = True
-                        interrupt_session = current
-                    reschedule_delay = _WS_ORPHAN_INTERRUPT_REAP_POLL_S
+                    # Mid-turn detached sessions must never drop the single
+                    # Timer (#85578): after the reconnect grace the turn is
+                    # interrupted once, then the reap keeps polling until the
+                    # normal turn-finalization path settles.
+                    polls = int(current.get("_client_gone_interrupt_polls") or 0) + 1
+                    current["_client_gone_interrupt_polls"] = polls
+                    if polls > _WS_ORPHAN_INTERRUPT_REAP_MAX_POLLS:
+                        # The interrupted turn never settled inside the budget
+                        # — force-reap rather than parking the session + a
+                        # timer chain forever. Loud by design: this only fires
+                        # when a turn is genuinely stuck past interrupt.
+                        logger.error(
+                            "client_gone sid=%s: turn did not settle after %d "
+                            "interrupt polls (%.0fs) — force-reaping detached "
+                            "session",
+                            sid, polls - 1,
+                            (polls - 1) * _WS_ORPHAN_INTERRUPT_REAP_POLL_S,
+                        )
+                        session = _pop_session_by_id(sid)
+                    else:
+                        if not current.get("_client_gone_interrupt_requested"):
+                            current["_client_gone_interrupt_requested"] = True
+                            interrupt_session = current
+                        reschedule_delay = _WS_ORPHAN_INTERRUPT_REAP_POLL_S
             else:
                 session = _pop_session_by_id(sid)
 
@@ -2216,10 +2295,10 @@ _start_idle_reaper()
 def _get_db():
     global _db, _db_error
     if _db is None:
-        from nastech_state import SessionDB
+        from nastech_state import get_shared_session_db
 
         try:
-            _db = SessionDB()
+            _db = get_shared_session_db()
             _db_error = None
         except Exception as exc:
             _db_error = str(exc)
@@ -2245,9 +2324,9 @@ def _db_for_profile(profile: str | None = None):
     if profile_home is None:
         return _get_db(), False
     try:
-        from nastech_state import SessionDB
+        from nastech_state import get_shared_session_db
 
-        return SessionDB(db_path=Path(profile_home) / "state.db"), True
+        return get_shared_session_db(Path(profile_home) / "state.db"), True
     except Exception as exc:
         logger.warning(
             "TUI profile session store unavailable for %s: %s",
@@ -2309,11 +2388,11 @@ def _open_profile_session_db(profile_home):
     the build's ``agent_error`` path) instead of swallowing it back onto the
     launch handle.
     """
-    from nastech_state import SessionDB
+    from nastech_state import get_shared_session_db
 
     db_path = Path(profile_home) / "state.db"
     try:
-        return SessionDB(db_path=db_path)
+        return get_shared_session_db(db_path)
     except Exception as exc:
         raise RuntimeError(
             f"profile session store unavailable: {db_path}: {exc}"
@@ -3938,7 +4017,8 @@ def _ensure_session_db_row(session: dict) -> bool:
         from nastech_state import SessionDB
 
         try:
-            db = SessionDB(db_path=Path(profile_home) / "state.db")
+            from nastech_state import get_shared_session_db
+            db = get_shared_session_db(Path(profile_home) / "state.db")
         except Exception:
             logger.debug("failed to open profile db for session row", exc_info=True)
             return False
@@ -4068,7 +4148,8 @@ def _ensure_session_db_row(session: dict) -> bool:
     finally:
         if close_db:
             try:
-                db.close()
+                from nastech_state import release_or_close
+                release_or_close(db)
             except Exception:
                 pass
     return True
@@ -4152,7 +4233,8 @@ def _session_db(session: dict):
         from nastech_state import SessionDB
 
         try:
-            db, close_db = SessionDB(db_path=Path(profile_home) / "state.db"), True
+            from nastech_state import get_shared_session_db
+            db, close_db = get_shared_session_db(Path(profile_home) / "state.db"), True
         except Exception:
             logger.debug("failed to open profile db for session", exc_info=True)
     else:
@@ -4162,7 +4244,8 @@ def _session_db(session: dict):
     finally:
         if close_db and db is not None:
             with contextlib.suppress(Exception):
-                db.close()
+                from nastech_state import release_or_close
+                release_or_close(db)
 
 
 def _rewind_active_session_history(
