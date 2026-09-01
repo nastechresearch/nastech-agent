@@ -75,6 +75,52 @@ def _session_db_executor(timeouts: list, *, instant_timeout: bool = True):
 
 
 class TestSessionDbInitTimeout:
+    def test_sessiondb_init_preserves_multiplex_profile_context(
+        self, tmp_path, monkeypatch
+    ):
+        """The timeout worker must construct SessionDB under the active profile."""
+        from nastech_constants import (
+            get_nastech_home,
+            reset_nastech_home_override,
+            set_nastech_home_override,
+        )
+
+        default_home = tmp_path / "default"
+        profile_home = tmp_path / "profiles" / "jobsearch"
+        monkeypatch.setenv("NASTECH_HOME", str(default_home))
+        observed_homes = []
+        fake_db = MagicMock()
+
+        def make_session_db(*args, **kwargs):
+            observed_homes.append(get_nastech_home())
+            return fake_db
+
+        job = {"id": "profile-sessiondb", "name": "test", "prompt": "hello"}
+        profile_token = set_nastech_home_override(profile_home)
+        try:
+            with patch("cron.scheduler._nastech_home", None), \
+                 patch("cron.scheduler._resolve_origin", return_value=None), \
+                 patch("nastech_cli.env_loader.load_nastech_dotenv"), \
+                 patch("nastech_cli.env_loader.reset_secret_source_cache"), \
+                 patch("nastech_state.SessionDB", side_effect=make_session_db), \
+                 patch(
+                     "nastech_cli.runtime_provider.resolve_runtime_provider",
+                     return_value=_RUNTIME,
+                 ), \
+                 patch("run_agent.AIAgent") as mock_agent_cls:
+                mock_agent = MagicMock()
+                mock_agent.run_conversation.return_value = {"final_response": "ok"}
+                mock_agent_cls.return_value = mock_agent
+
+                success, _output, final_response, error = run_job(job)
+        finally:
+            reset_nastech_home_override(profile_token)
+
+        assert success is True
+        assert error is None
+        assert final_response == "ok"
+        assert observed_homes == [profile_home]
+
     def test_run_job_does_not_hang_when_sessiondb_init_wedges(self, tmp_path, monkeypatch):
         """run_job proceeds without a session store when SessionDB init times out."""
         monkeypatch.setenv("NASTECH_CRON_SESSION_DB_TIMEOUT", "0.2")

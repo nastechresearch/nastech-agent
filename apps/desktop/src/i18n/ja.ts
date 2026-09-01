@@ -162,7 +162,9 @@ export const ja = defineLocale({
       microphonePermission: 'マイクのアクセス許可が拒否されました。',
       openaiRejectedApiKey: 'OpenAI が API キーを拒否しました。',
       openaiRejectedApiKeyWithStatus: status => `OpenAI が API キーを拒否しました (${status} invalid_api_key)。`,
-      openaiTtsNeedsKey: 'OpenAI TTS には VOICE_TOOLS_OPENAI_KEY または OPENAI_API_KEY が必要です。'
+      openaiTtsNeedsKey: 'OpenAI TTS には VOICE_TOOLS_OPENAI_KEY または OPENAI_API_KEY が必要です。',
+      codeSkewRestartRequired:
+        'アップデート後、このバックエンドは古いコードのままです。再起動して新しいコードを読み込んでください。'
     },
     voice: {
       configureSpeechToText: '音声モードを使用するには音声認識を設定してください。',
@@ -996,6 +998,12 @@ export const ja = defineLocale({
       provider: 'プロバイダー',
       model: 'モデル',
       applying: '適用中...',
+      loadFailed: 'モデルを読み込めませんでした',
+      restartRequired:
+        'アップデート後、このバックエンドは古いコードのままです。再起動して新しいコードを読み込んでください。',
+      restartBackend: 'バックエンドを再起動',
+      restartingBackend: 'バックエンドを再起動中...',
+      restartFailed: 'バックエンドを再起動できませんでした',
       auxiliaryTitle: '補助モデル',
       resetAllToMain: 'すべてメインにリセット',
       auxiliaryDesc:
@@ -1096,8 +1104,7 @@ export const ja = defineLocale({
       activeBackend: '使用中',
       activeBackendHint: 'これが現在アクティブなバックエンドです',
       useBackend: 'このバックエンドを使う',
-      nastechIncluded:
-        'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
+      nastechIncluded: 'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
       nastechAuthNeededTitle: 'Nastech Portal にサインイン',
       nastechAuthNeededMessage: provider =>
         `${provider} は保存されましたが、Nastech Portal にサインインするまで有効になりません。`,
@@ -1150,7 +1157,17 @@ export const ja = defineLocale({
         enabledMessage: '新しいセッションは既定ブラウザプロファイルのスナップショットでブラウジングします。',
         disabledTitle: '実プロファイルブラウジング：オフ',
         disabledMessage: 'プロファイルのスナップショットは削除され、新しいセッションはクリーンなブラウザを使用します。',
-        failedSave: '実プロファイル設定を保存できませんでした'
+        failedSave: '実プロファイル設定を保存できませんでした',
+        prompt: {
+          title: 'サイトにログインしたまま利用',
+          body: 'Nastech が既定ブラウザプロファイルのスナップショットでブラウジングできるようにすると、サイトはログイン済みの状態で開きます。',
+          bulletSnapshot: 'Cookie とログイン情報は管理されたスナップショットにコピーされます。',
+          bulletLiveProfile: '実際のブラウザプロファイルが直接開かれることはありません。',
+          bulletLocal: 'データがこのコンピュータの外に出ることはありません。',
+          dontShowAgain: '今後表示しない',
+          notNow: '今はしない',
+          enable: 'プロファイルを使用'
+        }
       }
     }
   },
@@ -1209,7 +1226,9 @@ export const ja = defineLocale({
     edit: '編集',
     archive: 'アーカイブ',
     skillArchivedTitle: 'スキルをアーカイブしました',
-    skillArchivedMessage: 'nastech curator restore で復元できます。'
+    skillArchivedMessage: 'nastech curator restore で復元できます。',
+    officialCatalog: 'インストール可能',
+    officialPill: '公式'
   },
 
   starmap: {
@@ -2259,8 +2278,7 @@ export const ja = defineLocale({
     done: '完了',
     applyingBody:
       'Nastech アップデーターが独自のウィンドウで引き継ぎ、完了後に自動的に Nastech を再度開きます。更新中はご自分で Nastech を開き直さないでください。',
-    applyingBodyBackend:
-      'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
+    applyingBodyBackend: 'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
     applyingClose: 'このウィンドウは更新中に閉じ、その後 Nastech が自動的に再度開きます。',
     errorTitle: '更新が完了しませんでした',
     errorBody: 'ご安心ください。何も失われていません。今すぐ再試行できます。',

@@ -30,11 +30,11 @@ import { findGroupOfPane } from '@/components/pane-shell/tree/model'
 import { $layoutTree, closeTreePane, moveTreePane, setTreeGroupTabStrip } from '@/components/pane-shell/tree/store'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { transcribeAudio } from '@/nastech'
 import { useI18n } from '@/i18n'
 import type { ChatMessage } from '@/lib/chat-messages'
 import { NEW_SESSION_TITLE, sessionTitle } from '@/lib/chat-runtime'
 import { transcribeAudioClientDirect } from '@/lib/voice-client-direct'
-import { transcribeAudio } from '@/nastech'
 import { createComposerAttachmentScope, draftTitleFor } from '@/store/composer'
 import { $pinnedSessionIds, pinSession, unpinSession } from '@/store/layout'
 import { $activeGatewayProfile } from '@/store/profile'
@@ -165,7 +165,13 @@ function TileChat({
     [ownerRoute, requestGateway]
   )
 
-  const { selectModel } = useModelControls({ queryClient, requestGateway: requestTileGateway })
+  const { selectModel } = useModelControls({
+    cacheOwnerConnectionId: ownerRoute?.connectionId || undefined,
+    cacheProfile: ownerRoute?.targetProfile || ownerRoute?.profile || undefined,
+    queryClient,
+    requestGateway: requestTileGateway
+  })
+
   const activeGatewayProfile = useStore($activeGatewayProfile)
   const cwd = useStore(view.$cwd)
   const gatewayOpen = useStore($gatewayState) === 'open'
@@ -233,11 +239,20 @@ function TileChat({
       gatewayOpen ? (
         <ModelMenuPanel
           onSelectModel={selectModel}
+          ownerConnectionId={ownerRoute?.connectionId || undefined}
           profile={ownerRoute?.targetProfile || ownerRoute?.profile || activeGatewayProfile}
           requestGateway={requestTileGateway}
         />
       ) : null,
-    [activeGatewayProfile, gatewayOpen, ownerRoute?.profile, ownerRoute?.targetProfile, requestTileGateway, selectModel]
+    [
+      activeGatewayProfile,
+      gatewayOpen,
+      ownerRoute?.connectionId,
+      ownerRoute?.profile,
+      ownerRoute?.targetProfile,
+      requestTileGateway,
+      selectModel
+    ]
   )
 
   return (
@@ -246,6 +261,8 @@ function TileChat({
         <ChatView
           gateway={gateway}
           modelMenuContent={modelMenuContent}
+          modelOptionsOwnerConnectionId={ownerRoute?.connectionId || undefined}
+          modelOptionsProfile={ownerRoute?.targetProfile || ownerRoute?.profile || activeGatewayProfile}
           onAddContextRef={addContextRefAttachment}
           onAddUrl={onAddUrl}
           onAttachDroppedItems={composer.attachDroppedItems}
@@ -268,6 +285,7 @@ function TileChat({
           onThreadMessagesChange={actions.handleThreadMessagesChange}
           onToggleSelectedPin={noop}
           onTranscribeAudio={tileTranscribeAudio}
+          requestModelOptionsForOwner={requestTileGateway}
         />
       </ComposerScopeProvider>
     </SessionViewProvider>

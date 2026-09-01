@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `a9c783f21995723c812dcb2f8ae58bc6a4323e2f`
+- upstream sha : `5a8e8a6b87487c0e0785cd9eb561cc6a96c64f5e`
 - source       : `https://github.com/Nastechresearch/nastech-agent.git`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -31,9 +31,9 @@
 
 ## Brand
 
-- total files : 10769
-- renamed     : 1499 (folders and file names)
-- text-rewritten : 10671
+- total files : 11003
+- renamed     : 1524 (folders and file names)
+- text-rewritten : 10905
 - locked-copied  : 56
 - binary-copied  : 8
 - owned assets   : 34 (our logo/banner/mascot override upstream)
@@ -45,549 +45,823 @@
 
 ## Direct upstream tree delta
 
-- complete: +66 ~281 -4 ↪177
+- complete: +240 ~556 -6 ↪0
+- MODIFIED `.dockerignore`
+- MODIFIED `.env.example`
+- MODIFIED `.github/workflows/ci.yaml`
+- MODIFIED `.github/workflows/docker.yml`
+- ADDED `.github/workflows/profile-artifact-check.yml`
+- MODIFIED `.github/workflows/windows-venv-e2e.yml`
 - MODIFIED `.gitignore`
-- ADDED `SOUL.md`
 - MODIFIED `agent/agent_init.py`
 - MODIFIED `agent/agent_runtime_helpers.py`
+- MODIFIED `agent/auxiliary_client.py`
 - MODIFIED `agent/chat_completion_helpers.py`
+- ADDED `agent/codex_headers.py`
 - MODIFIED `agent/context_compressor.py`
 - MODIFIED `agent/conversation_compression.py`
 - MODIFIED `agent/conversation_loop.py`
-- MODIFIED `agent/message_sanitization.py`
+- MODIFIED `agent/curator.py`
+- MODIFIED `agent/deadline.py`
+- MODIFIED `agent/estop.py`
+- MODIFIED `agent/memory_manager.py`
 - MODIFIED `agent/model_metadata.py`
-- MODIFIED `agent/native_compaction.py`
-- MODIFIED `agent/prompt_builder.py`
-- MODIFIED `agent/skill_commands.py`
-- MODIFIED `agent/skill_utils.py`
+- MODIFIED `agent/portal_tags.py`
+- MODIFIED `agent/prompt_cache_scope.py`
+- MODIFIED `agent/redact.py`
 - MODIFIED `agent/system_prompt.py`
+- MODIFIED `agent/transports/chat_completions.py`
+- MODIFIED `agent/transports/codex.py`
 - MODIFIED `agent/turn_context.py`
-- MODIFIED `apps/desktop/electron/mcp-oauth-callback-ipc.test.ts`
+- MODIFIED `agent/turn_finalizer.py`
+- ADDED `agent/turn_liveness.py`
+- MODIFIED `agent/web_search_provider.py`
+- MODIFIED `agent/web_search_registry.py`
+- ADDED `apps/desktop/e2e/electron-binary.ts`
+- ADDED `apps/desktop/e2e/electron-binary.unit.test.ts`
+- MODIFIED `apps/desktop/e2e/fixtures.ts`
+- MODIFIED `apps/desktop/e2e/launch-packaged-app.spec.ts`
+- MODIFIED `apps/desktop/electron/backend-claim.test.ts`
+- MODIFIED `apps/desktop/electron/backend-claim.ts`
+- ADDED `apps/desktop/electron/backend-recycle.test.ts`
+- ADDED `apps/desktop/electron/backend-recycle.ts`
+- MODIFIED `apps/desktop/electron/connection-apply.test.ts`
+- MODIFIED `apps/desktop/electron/connection-apply.ts`
+- MODIFIED `apps/desktop/electron/connection-config.test.ts`
+- MODIFIED `apps/desktop/electron/connection-config.ts`
+- MODIFIED `apps/desktop/electron/connection-registry.test.ts`
+- MODIFIED `apps/desktop/electron/connection-registry.ts`
+- ADDED `apps/desktop/electron/gateway-stop-before-update.test.ts`
+- ADDED `apps/desktop/electron/gateway-stop-before-update.ts`
+- MODIFIED `apps/desktop/electron/main.ts`
+- MODIFIED `apps/desktop/electron/preload.ts`
+- ADDED `apps/desktop/electron/preview-capture.test.ts`
+- ADDED `apps/desktop/electron/preview-capture.ts`
+- ADDED `apps/desktop/electron/registry-primary-profile-scope.test.ts`
+- MODIFIED `apps/desktop/electron/ssh-connection.test.ts`
+- MODIFIED `apps/desktop/electron/ssh-connection.ts`
+- MODIFIED `apps/desktop/electron/terminal-ipc.ts`
+- ADDED `apps/desktop/electron/terminal-output-gate.test.ts`
+- ADDED `apps/desktop/electron/terminal-output-gate.ts`
+- MODIFIED `apps/desktop/electron/venv-blocker-scan.test.ts`
+- MODIFIED `apps/desktop/electron/venv-blocker-scan.ts`
+- ADDED `apps/desktop/electron/venv-holder-select.test.ts`
+- ADDED `apps/desktop/electron/venv-holder-select.ts`
+- MODIFIED `apps/desktop/playwright.config.ts`
+- MODIFIED `apps/desktop/scripts/assert-dist-built.mjs`
+- MODIFIED `apps/desktop/scripts/assert-dist-built.test.mjs`
+- MODIFIED `apps/desktop/scripts/run-electron-builder.mjs`
+- MODIFIED `apps/desktop/src/api/sessions.test.ts`
+- MODIFIED `apps/desktop/src/api/sessions.ts`
+- MODIFIED `apps/desktop/src/api/skills.ts`
+- MODIFIED `apps/desktop/src/app/chat/composer/focus.test.ts`
+- MODIFIED `apps/desktop/src/app/chat/composer/focus.ts`
+- MODIFIED `apps/desktop/src/app/chat/composer/hooks/use-composer-draft.test.tsx`
+- MODIFIED `apps/desktop/src/app/chat/composer/hooks/use-composer-draft.ts`
+- MODIFIED `apps/desktop/src/app/chat/composer/status-stack/index.tsx`
+- ADDED `apps/desktop/src/app/chat/composer/status-stack/polling-guard.test.tsx`
+- MODIFIED `apps/desktop/src/app/chat/hooks/use-composer-actions.test.ts`
+- MODIFIED `apps/desktop/src/app/chat/hooks/use-composer-actions.ts`
+- MODIFIED `apps/desktop/src/app/chat/index.tsx`
+- ADDED `apps/desktop/src/app/chat/right-rail/preview-annotate-card.test.tsx`
+- ADDED `apps/desktop/src/app/chat/right-rail/preview-annotate-card.tsx`
+- ADDED `apps/desktop/src/app/chat/right-rail/preview-annotate-host.test.ts`
+- ADDED `apps/desktop/src/app/chat/right-rail/preview-annotate-host.ts`
+- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-browser-bar.test.tsx`
+- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-browser-bar.tsx`
+- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-pane.test.tsx`
+- MODIFIED `apps/desktop/src/app/chat/right-rail/preview-pane.tsx`
+- ADDED `apps/desktop/src/app/chat/right-rail/real-profile-consent-dialog.test.tsx`
+- ADDED `apps/desktop/src/app/chat/right-rail/real-profile-consent-dialog.tsx`
+- MODIFIED `apps/desktop/src/app/chat/scroll-to-bottom-button.test.tsx`
+- MODIFIED `apps/desktop/src/app/chat/scroll-to-bottom-button.tsx`
+- MODIFIED `apps/desktop/src/app/chat/session-tile-actions.test.ts`
+- MODIFIED `apps/desktop/src/app/chat/session-tile-actions.ts`
+- MODIFIED `apps/desktop/src/app/chat/session-tile.tsx`
+- ADDED `apps/desktop/src/app/chat/sidebar/chrome.test.tsx`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/chrome.tsx`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/filter-menu.tsx`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/index.tsx`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/order.test.ts`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/order.ts`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/projects/index.ts`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/projects/workspace-groups.test.ts`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/projects/workspace-groups.ts`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/sessions-section.tsx`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/virtual-session-list.tsx`
+- ADDED `apps/desktop/src/app/command-center/delete-confirm.test.tsx`
+- MODIFIED `apps/desktop/src/app/command-center/index.tsx`
+- MODIFIED `apps/desktop/src/app/contrib/session-rpc-dispatcher.test.ts`
+- MODIFIED `apps/desktop/src/app/contrib/session-rpc-dispatcher.ts`
+- MODIFIED `apps/desktop/src/app/contrib/surfaces.tsx`
+- MODIFIED `apps/desktop/src/app/contrib/wiring.tsx`
+- MODIFIED `apps/desktop/src/app/layout-constants.ts`
+- MODIFIED `apps/desktop/src/app/master-detail.tsx`
+- MODIFIED `apps/desktop/src/app/model-picker-overlay.tsx`
+- MODIFIED `apps/desktop/src/app/model-visibility-overlay.tsx`
+- MODIFIED `apps/desktop/src/app/right-sidebar/terminal/use-terminal-session.ts`
+- ADDED `apps/desktop/src/app/session/hooks/use-message-stream/btw-complete-event.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/clarify-hydration.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/input-requests.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/lifecycle.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/session-info.test.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/session-info.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/gateway-event/status.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/index.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/interim-sealing.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/session-info-side-effects.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/session-reclaimed.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-message-stream/utils.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-model-controls.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-model-controls.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/index.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/index.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-prompt-actions/slash.ts`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-session-actions.test.tsx`
+- MODIFIED `apps/desktop/src/app/session/hooks/use-session-actions/index.ts`
+- MODIFIED `apps/desktop/src/app/settings/browser-real-profile-panel.tsx`
+- ADDED `apps/desktop/src/app/settings/config-settings.test.tsx`
+- MODIFIED `apps/desktop/src/app/settings/config-settings.tsx`
+- MODIFIED `apps/desktop/src/app/settings/helpers.test.ts`
+- MODIFIED `apps/desktop/src/app/settings/helpers.ts`
+- MODIFIED `apps/desktop/src/app/settings/model-settings.test.tsx`
+- MODIFIED `apps/desktop/src/app/settings/model-settings.tsx`
+- MODIFIED `apps/desktop/src/app/shell/model-catalog-menu.tsx`
+- MODIFIED `apps/desktop/src/app/shell/model-menu-panel.test.tsx`
+- MODIFIED `apps/desktop/src/app/shell/model-menu-panel.tsx`
+- MODIFIED `apps/desktop/src/app/skills/index.test.tsx`
+- MODIFIED `apps/desktop/src/app/skills/index.tsx`
+- MODIFIED `apps/desktop/src/components/assistant-ui/clarify-tool.test.tsx`
+- MODIFIED `apps/desktop/src/components/assistant-ui/clarify-tool.tsx`
+- MODIFIED `apps/desktop/src/components/assistant-ui/thread/index.tsx`
+- MODIFIED `apps/desktop/src/components/assistant-ui/thread/list.test.ts`
+- MODIFIED `apps/desktop/src/components/assistant-ui/thread/list.tsx`
+- MODIFIED `apps/desktop/src/components/model-picker.tsx`
+- MODIFIED `apps/desktop/src/components/model-visibility-dialog.tsx`
 - MODIFIED `apps/desktop/src/global.d.ts`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/group-chat-view.tsx`
-- ADDED `apps/desktop/src/plugins/nastech-bots/group-hold-status.test.tsx`
-- ADDED `apps/desktop/src/plugins/nastech-bots/group-hold-status.tsx`
-- MODIFIED `apps/desktop/src/plugins/nastech-bots/i18n.ts`
+- MODIFIED `apps/desktop/src/nastech-parity.test.ts`
+- MODIFIED `apps/desktop/src/i18n/ar.ts`
+- MODIFIED `apps/desktop/src/i18n/en.ts`
+- MODIFIED `apps/desktop/src/i18n/ja.ts`
+- MODIFIED `apps/desktop/src/i18n/types.ts`
+- MODIFIED `apps/desktop/src/i18n/zh-hant.ts`
+- MODIFIED `apps/desktop/src/i18n/zh.ts`
+- MODIFIED `apps/desktop/src/lib/chat-messages/types.ts`
+- ADDED `apps/desktop/src/lib/code-skew-error.test.ts`
+- ADDED `apps/desktop/src/lib/code-skew-error.ts`
+- MODIFIED `apps/desktop/src/lib/desktop-slash-commands.test.ts`
+- MODIFIED `apps/desktop/src/lib/desktop-slash-commands.ts`
+- MODIFIED `apps/desktop/src/lib/keybinds/composer-focus-keys.test.ts`
+- MODIFIED `apps/desktop/src/lib/keybinds/composer-focus-keys.ts`
+- MODIFIED `apps/desktop/src/lib/model-options.test.ts`
+- MODIFIED `apps/desktop/src/lib/model-options.ts`
+- ADDED `apps/desktop/src/lib/model-picker-owner.test.ts`
+- ADDED `apps/desktop/src/lib/model-picker-owner.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/flush.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/identity.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/in-page.test.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/in-page.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/index.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/pack.test.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/pack.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/stack.test.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/stack.ts`
+- ADDED `apps/desktop/src/lib/preview-annotate/tokens.ts`
+- MODIFIED `apps/desktop/src/lib/session-date-groups.test.ts`
+- MODIFIED `apps/desktop/src/lib/session-date-groups.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/bot-open-focus-identity.test.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/bot-row-keeps-closed-chat.test.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/canonical-chat.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/group-bot-handoff.test.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/roster-actions.test.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/roster-actions.ts`
+- MODIFIED `apps/desktop/src/sdk/index.ts`
+- MODIFIED `apps/desktop/src/store/composer-status.ts`
+- ADDED `apps/desktop/src/store/display-toggles.test.ts`
+- ADDED `apps/desktop/src/store/display-toggles.ts`
+- MODIFIED `apps/desktop/src/store/gateway-profile-request.test.ts`
+- MODIFIED `apps/desktop/src/store/gateway.ts`
+- MODIFIED `apps/desktop/src/store/goals.test.ts`
+- MODIFIED `apps/desktop/src/store/goals.ts`
+- MODIFIED `apps/desktop/src/store/hub-actions.ts`
+- MODIFIED `apps/desktop/src/store/layout.ts`
+- MODIFIED `apps/desktop/src/store/notifications.test.ts`
+- MODIFIED `apps/desktop/src/store/notifications.ts`
+- MODIFIED `apps/desktop/src/store/profile-agent-activation.test.ts`
+- MODIFIED `apps/desktop/src/store/profile.ts`
+- MODIFIED `apps/desktop/src/store/prompts.test.ts`
+- MODIFIED `apps/desktop/src/store/prompts.ts`
+- MODIFIED `apps/desktop/src/store/reactions-enabled.ts`
+- ADDED `apps/desktop/src/store/real-profile-consent.ts`
+- ADDED `apps/desktop/src/store/runtime-gone.test.ts`
+- ADDED `apps/desktop/src/store/runtime-gone.ts`
+- MODIFIED `apps/desktop/src/store/session-states.test.ts`
+- MODIFIED `apps/desktop/src/store/session-states.ts`
+- MODIFIED `apps/desktop/src/store/session.test.ts`
+- MODIFIED `apps/desktop/src/store/session.ts`
+- ADDED `apps/desktop/src/store/thread-scroll.test.ts`
+- MODIFIED `apps/desktop/src/store/thread-scroll.ts`
+- MODIFIED `apps/desktop/src/store/tips.ts`
+- MODIFIED `apps/desktop/src/store/tours.ts`
+- MODIFIED `apps/desktop/src/types/nastech.ts`
+- MODIFIED `apps/desktop/vite.config.ts`
+- MODIFIED `apps/desktop/vitest.config.ts`
+- MODIFIED `apps/desktop/vitest.setup.ts`
 - MODIFIED `cli-config.yaml.example`
 - MODIFIED `cli.py`
-- ADDED `contributors/emails/1290231+steveonjava@users.noreply.github.com`
-- ADDED `contributors/emails/ijnotion@pm.me`
-- ADDED `contributors/emails/itskaism@users.noreply.github.com`
-- ADDED `contributors/emails/yozamono@gmail.com`
-- MODIFIED `evals/compaction/results/SCORECARD-2026-08-15.md`
-- MODIFIED `evals/compaction/runner.py`
-- ADDED `gateway/hosted_room_discussion.py`
-- ADDED `gateway/hosted_room_driver.py`
-- ADDED `gateway/hosted_room_policy_checkpoint.py`
-- ADDED `gateway/hosted_room_replicas.py`
-- ADDED `gateway/hosted_rooms.py`
+- ADDED `contributors/emails/1396641434@qq.com`
+- ADDED `contributors/emails/1908937833@qq.com`
+- ADDED `contributors/emails/852938468@qq.com`
+- ADDED `contributors/emails/Agi-Asi@users.noreply.github.com`
+- MODIFIED `contributors/emails/StanleyStetson@users.noreply.github.com`
+- ADDED `contributors/emails/a.dltorreruiz@gmail.com`
+- ADDED `contributors/emails/adria.arrufat@gmail.com`
+- ADDED `contributors/emails/agent@Agents-Mac-mini.local`
+- ADDED `contributors/emails/alex@gunsberg.fi`
+- ADDED `contributors/emails/anuvrat.rastogi@sap.com`
+- ADDED `contributors/emails/bear@bearhuddleston.dev`
+- ADDED `contributors/emails/boni.alessandro997@gmail.com`
+- ADDED `contributors/emails/brinshadewater@gmail.com`
+- ADDED `contributors/emails/brooklyn@brooklyn.sh`
+- ADDED `contributors/emails/brooklyn@NastechResearch.com`
+- ADDED `contributors/emails/cjenkins@scacpa.org`
+- ADDED `contributors/emails/clyu168@126.com`
+- ADDED `contributors/emails/crabbemaxim@gmail.com`
+- ADDED `contributors/emails/dan@danbennett.me`
+- ADDED `contributors/emails/das7514@gmail.com`
+- ADDED `contributors/emails/dcdexhome@gmail.com`
+- ADDED `contributors/emails/dev@solovision.local`
+- ADDED `contributors/emails/developer.kj@gmail.com`
+- ADDED `contributors/emails/diatche@gmail.com`
+- ADDED `contributors/emails/elmar@conradie.co.za`
+- ADDED `contributors/emails/email = 615759+mkoistinen@users.noreply.github.com`
+- ADDED `contributors/emails/everest.kill1@gmail.com`
+- ADDED `contributors/emails/frendo.wu@gmail.com`
+- ADDED `contributors/emails/gkhn.yldrmlr@gmail.com`
+- ADDED `contributors/emails/grkt@ppmz.com`
+- ADDED `contributors/emails/humdrum00001010@gmail.com`
+- ADDED `contributors/emails/info@bergmann89.de`
+- ADDED `contributors/emails/ishan@supreme-god.dev`
+- ADDED `contributors/emails/itkingtao@126.com`
+- ADDED `contributors/emails/jamesmatheson35@gmail.com`
+- ADDED `contributors/emails/jason.mow@gmail.com`
+- ADDED `contributors/emails/jfm@laposte.net`
+- MODIFIED `contributors/emails/joaomarcosdias444@gmail.com`
+- ADDED `contributors/emails/joseleos@gmail.com`
+- ADDED `contributors/emails/justin.t.adkins@gmail.com`
+- ADDED `contributors/emails/katie@lightpanda.io`
+- ADDED `contributors/emails/kevinfizu@gmail.com`
+- ADDED `contributors/emails/komzpa@gmail.com`
+- ADDED `contributors/emails/konstantin.khlopkov93@gmail.com`
+- ADDED `contributors/emails/lancaster.xuan@gmail.com`
+- ADDED `contributors/emails/latdani@gmail.com`
+- ADDED `contributors/emails/lilShawtty@qq.com`
+- ADDED `contributors/emails/loahnisk@gmail.com`
+- ADDED `contributors/emails/mathias@gorf.de`
+- ADDED `contributors/emails/mattlutz4@gmail.com`
+- ADDED `contributors/emails/me@alvin.tech`
+- ADDED `contributors/emails/michael@empowerlo.com`
+- ADDED `contributors/emails/mmcclean@amazon.com`
+- ADDED `contributors/emails/muhammedeminkamay92@gmail.com`
+- ADDED `contributors/emails/nanakoice@NanakoIces-Mac-mini.local`
+- ADDED `contributors/emails/neocode24@gmail.com`
+- ADDED `contributors/emails/nntruonghan@gmail.com`
+- ADDED `contributors/emails/paula@smfworks.com`
+- ADDED `contributors/emails/pbaker@cteh.com`
+- ADDED `contributors/emails/protas.box@icloud.com`
+- ADDED `contributors/emails/rafael@amora.com.br`
+- ADDED `contributors/emails/ricardo.mendes@maiolabs.ai`
+- ADDED `contributors/emails/riyaazd29@users.noreply.github.com`
+- ADDED `contributors/emails/rmohid@gmail.com`
+- ADDED `contributors/emails/ryancurrah@gmail.com`
+- ADDED `contributors/emails/semabelou@gmail.com`
+- ADDED `contributors/emails/sergey0515@users.noreply.github.com`
+- ADDED `contributors/emails/silviomanuel297@gmail.com`
+- MODIFIED `contributors/emails/ssahaun19@gmail.com`
+- ADDED `contributors/emails/themadsilversurfer@gmail.com`
+- ADDED `contributors/emails/tom@clientspike.com`
+- ADDED `contributors/emails/vaibhavdahiya28@gmail.com`
+- ADDED `contributors/emails/vatevstoil@gmail.com`
+- ADDED `contributors/emails/vjpixel@users.noreply.github.com`
+- ADDED `contributors/emails/vyr.agent@vyrgs.com`
+- ADDED `contributors/emails/vyre@ishanparihar.com`
+- ADDED `contributors/emails/weddle@gmail.com`
+- ADDED `contributors/emails/xuezhao@gmail.com`
+- ADDED `contributors/emails/xy952666680@users.noreply.github.com`
+- ADDED `contributors/emails/yaandere200@gmail.com`
+- ADDED `contributors/emails/yongliabc888@gmail.com`
+- ADDED `contributors/emails/yuvalfis@users.noreply.github.com`
+- MODIFIED `cron/jobs.py`
+- MODIFIED `cron/scheduler.py`
+- MODIFIED `cron/scheduler_provider.py`
+- ADDED `docs/cron-doctor-spec.md`
+- MODIFIED `docs/session-lifecycle.md`
+- ADDED `docs/state-db-recovery.md`
+- MODIFIED `evals/browser_use/single_run.py`
+- MODIFIED `gateway/authz_mixin.py`
+- MODIFIED `gateway/config.py`
+- MODIFIED `gateway/display_config.py`
+- MODIFIED `gateway/hosted_room_discussion.py`
+- MODIFIED `gateway/hosted_room_driver.py`
+- ADDED `gateway/hosted_room_execution_policy.py`
+- ADDED `gateway/hosted_room_links.py`
+- ADDED `gateway/hosted_room_peer.py`
+- MODIFIED `gateway/hosted_rooms.py`
+- MODIFIED `gateway/lifecycle_ledger.py`
+- MODIFIED `gateway/platforms/api_server.py`
+- ADDED `gateway/platforms/api_server_room_dispatch.py`
+- ADDED `gateway/platforms/api_server_room_grants.py`
+- ADDED `gateway/platforms/api_server_run_idempotency.py`
+- ADDED `gateway/platforms/api_server_runs.py`
+- MODIFIED `gateway/platforms/base.py`
+- MODIFIED `gateway/restart.py`
 - MODIFIED `gateway/run.py`
+- MODIFIED `gateway/session.py`
+- MODIFIED `gateway/session_stall.py`
 - MODIFIED `gateway/slash_commands.py`
+- ADDED `gateway/startup_watchdog.py`
+- MODIFIED `gateway/status.py`
+- MODIFIED `gateway/stream_consumer.py`
+- MODIFIED `gateway/turn_context.py`
+- MODIFIED `gateway/turn_lease.py`
+- MODIFIED `nastech_cli/__init__.py`
+- MODIFIED `nastech_cli/_scan_venv_blockers.py`
+- MODIFIED `nastech_cli/_subprocess_compat.py`
+- MODIFIED `nastech_cli/active_sessions.py`
+- MODIFIED `nastech_cli/archive_safe.py`
+- MODIFIED `nastech_cli/backup.py`
+- MODIFIED `nastech_cli/cli_agent_setup_mixin.py`
+- MODIFIED `nastech_cli/cli_commands_mixin.py`
 - MODIFIED `nastech_cli/config.py`
 - MODIFIED `nastech_cli/config_defaults.py`
-- ADDED `nastech_cli/install_identity.py`
+- MODIFIED `nastech_cli/credential_lifecycle.py`
+- MODIFIED `nastech_cli/cron.py`
+- MODIFIED `nastech_cli/curator.py`
+- MODIFIED `nastech_cli/dashboard_auth/cookies.py`
+- MODIFIED `nastech_cli/dashboard_auth/routes.py`
+- MODIFIED `nastech_cli/dashboard_procs.py`
+- MODIFIED `nastech_cli/debug.py`
+- MODIFIED `nastech_cli/doctor.py`
+- MODIFIED `nastech_cli/dump.py`
+- MODIFIED `nastech_cli/gateway.py`
+- MODIFIED `nastech_cli/gateway_windows.py`
+- MODIFIED `nastech_cli/gui_uninstall.py`
+- MODIFIED `nastech_cli/linux_desktop_entry.py`
+- MODIFIED `nastech_cli/main.py`
+- MODIFIED `nastech_cli/managed_uv.py`
 - MODIFIED `nastech_cli/model_switch.py`
+- MODIFIED `nastech_cli/models.py`
+- MODIFIED `nastech_cli/nastech_subscription.py`
+- MODIFIED `nastech_cli/oneshot.py`
+- MODIFIED `nastech_cli/plugin_dev.py`
+- MODIFIED `nastech_cli/profiles.py`
+- MODIFIED `nastech_cli/pt_input_extras.py`
 - MODIFIED `nastech_cli/runtime_provider.py`
+- MODIFIED `nastech_cli/service_manager.py`
+- MODIFIED `nastech_cli/session_listing.py`
+- MODIFIED `nastech_cli/setup.py`
+- MODIFIED `nastech_cli/status.py`
+- MODIFIED `nastech_cli/subcommands/cron.py`
+- MODIFIED `nastech_cli/subcommands/peer.py`
+- MODIFIED `nastech_cli/subcommands/profile.py`
+- MODIFIED `nastech_cli/tools_config.py`
+- ADDED `nastech_cli/toolset_scope.py`
+- MODIFIED `nastech_cli/toolset_validation.py`
+- MODIFIED `nastech_cli/update_cmd.py`
+- MODIFIED `nastech_cli/web_routers/profiles.py`
+- MODIFIED `nastech_cli/web_routers/sessions.py`
+- MODIFIED `nastech_cli/web_routers/skills.py`
 - MODIFIED `nastech_cli/web_server.py`
+- MODIFIED `nastech_cli/worktree_gc.py`
+- MODIFIED `nastech_constants.py`
+- MODIFIED `nastech_logging.py`
+- ADDED `nastech_startup_watchdog.py`
 - MODIFIED `nastech_state.py`
-- RENAMED `skills/autonomous-ai-agents/merge-reconciler/SKILL.md` -> `optional-skills/autonomous-ai-agents/agent-merge-conflict-arbiter/SKILL.md`
-- RENAMED `skills/creative/ascii-art/SKILL.md` -> `optional-skills/creative/ascii-art/SKILL.md`
-- RENAMED `skills/creative/comfyui/SKILL.md` -> `optional-skills/creative/comfyui/SKILL.md`
-- RENAMED `skills/creative/comfyui/references/official-cli.md` -> `optional-skills/creative/comfyui/references/official-cli.md`
-- RENAMED `skills/creative/comfyui/references/rest-api.md` -> `optional-skills/creative/comfyui/references/rest-api.md`
-- RENAMED `skills/creative/comfyui/references/template-integrity.md` -> `optional-skills/creative/comfyui/references/template-integrity.md`
-- RENAMED `skills/creative/comfyui/references/workflow-format.md` -> `optional-skills/creative/comfyui/references/workflow-format.md`
-- RENAMED `skills/creative/comfyui/scripts/_common.py` -> `optional-skills/creative/comfyui/scripts/_common.py`
-- RENAMED `skills/creative/comfyui/scripts/auto_fix_deps.py` -> `optional-skills/creative/comfyui/scripts/auto_fix_deps.py`
-- RENAMED `skills/creative/comfyui/scripts/check_deps.py` -> `optional-skills/creative/comfyui/scripts/check_deps.py`
-- RENAMED `skills/creative/comfyui/scripts/comfyui_setup.sh` -> `optional-skills/creative/comfyui/scripts/comfyui_setup.sh`
-- RENAMED `skills/creative/comfyui/scripts/extract_schema.py` -> `optional-skills/creative/comfyui/scripts/extract_schema.py`
-- RENAMED `skills/creative/comfyui/scripts/fetch_logs.py` -> `optional-skills/creative/comfyui/scripts/fetch_logs.py`
-- RENAMED `skills/creative/comfyui/scripts/hardware_check.py` -> `optional-skills/creative/comfyui/scripts/hardware_check.py`
-- RENAMED `skills/creative/comfyui/scripts/health_check.py` -> `optional-skills/creative/comfyui/scripts/health_check.py`
-- RENAMED `skills/creative/comfyui/scripts/run_batch.py` -> `optional-skills/creative/comfyui/scripts/run_batch.py`
-- RENAMED `skills/creative/comfyui/scripts/run_workflow.py` -> `optional-skills/creative/comfyui/scripts/run_workflow.py`
-- RENAMED `skills/creative/comfyui/scripts/ws_monitor.py` -> `optional-skills/creative/comfyui/scripts/ws_monitor.py`
-- RENAMED `skills/creative/comfyui/tests/README.md` -> `optional-skills/creative/comfyui/tests/README.md`
-- RENAMED `skills/creative/comfyui/tests/conftest.py` -> `optional-skills/creative/comfyui/tests/conftest.py`
-- RENAMED `skills/creative/comfyui/tests/pytest.ini` -> `optional-skills/creative/comfyui/tests/pytest.ini`
-- RENAMED `skills/creative/comfyui/tests/test_check_deps.py` -> `optional-skills/creative/comfyui/tests/test_check_deps.py`
-- RENAMED `skills/creative/comfyui/tests/test_cloud_integration.py` -> `optional-skills/creative/comfyui/tests/test_cloud_integration.py`
-- RENAMED `skills/creative/comfyui/tests/test_common.py` -> `optional-skills/creative/comfyui/tests/test_common.py`
-- RENAMED `skills/creative/comfyui/tests/test_extract_schema.py` -> `optional-skills/creative/comfyui/tests/test_extract_schema.py`
-- RENAMED `skills/creative/comfyui/tests/test_run_workflow.py` -> `optional-skills/creative/comfyui/tests/test_run_workflow.py`
-- RENAMED `skills/creative/comfyui/workflows/README.md` -> `optional-skills/creative/comfyui/workflows/README.md`
-- RENAMED `skills/creative/comfyui/workflows/animatediff_video.json` -> `optional-skills/creative/comfyui/workflows/animatediff_video.json`
-- RENAMED `skills/creative/comfyui/workflows/flux_dev_txt2img.json` -> `optional-skills/creative/comfyui/workflows/flux_dev_txt2img.json`
-- RENAMED `skills/creative/comfyui/workflows/sd15_txt2img.json` -> `optional-skills/creative/comfyui/workflows/sd15_txt2img.json`
-- RENAMED `skills/creative/comfyui/workflows/sdxl_img2img.json` -> `optional-skills/creative/comfyui/workflows/sdxl_img2img.json`
-- RENAMED `skills/creative/comfyui/workflows/sdxl_inpaint.json` -> `optional-skills/creative/comfyui/workflows/sdxl_inpaint.json`
-- RENAMED `skills/creative/comfyui/workflows/sdxl_txt2img.json` -> `optional-skills/creative/comfyui/workflows/sdxl_txt2img.json`
-- RENAMED `skills/creative/comfyui/workflows/upscale_4x.json` -> `optional-skills/creative/comfyui/workflows/upscale_4x.json`
-- RENAMED `skills/creative/comfyui/workflows/wan_video_t2v.json` -> `optional-skills/creative/comfyui/workflows/wan_video_t2v.json`
-- RENAMED `skills/creative/excalidraw/SKILL.md` -> `optional-skills/creative/excalidraw/SKILL.md`
-- RENAMED `skills/creative/excalidraw/references/colors.md` -> `optional-skills/creative/excalidraw/references/colors.md`
-- RENAMED `skills/creative/excalidraw/references/dark-mode.md` -> `optional-skills/creative/excalidraw/references/dark-mode.md`
-- RENAMED `skills/creative/excalidraw/references/examples.md` -> `optional-skills/creative/excalidraw/references/examples.md`
-- RENAMED `skills/creative/excalidraw/scripts/upload.py` -> `optional-skills/creative/excalidraw/scripts/upload.py`
-- RENAMED `skills/creative/pretext/SKILL.md` -> `optional-skills/creative/pretext/SKILL.md`
-- RENAMED `skills/creative/pretext/references/patterns.md` -> `optional-skills/creative/pretext/references/patterns.md`
-- RENAMED `skills/creative/pretext/templates/donut-orbit.html` -> `optional-skills/creative/pretext/templates/donut-orbit.html`
-- RENAMED `skills/creative/pretext/templates/hello-orb-flow.html` -> `optional-skills/creative/pretext/templates/hello-orb-flow.html`
-- RENAMED `skills/creative/sketch/SKILL.md` -> `optional-skills/creative/sketch/SKILL.md`
-- RENAMED `skills/creative/touchdesigner-mcp/SKILL.md` -> `optional-skills/creative/touchdesigner-mcp/SKILL.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/3d-scene.md` -> `optional-skills/creative/touchdesigner-mcp/references/3d-scene.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/animation.md` -> `optional-skills/creative/touchdesigner-mcp/references/animation.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/audio-reactive.md` -> `optional-skills/creative/touchdesigner-mcp/references/audio-reactive.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/dat-scripting.md` -> `optional-skills/creative/touchdesigner-mcp/references/dat-scripting.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/external-data.md` -> `optional-skills/creative/touchdesigner-mcp/references/external-data.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/geometry-comp.md` -> `optional-skills/creative/touchdesigner-mcp/references/geometry-comp.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/glsl.md` -> `optional-skills/creative/touchdesigner-mcp/references/glsl.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/layout-compositor.md` -> `optional-skills/creative/touchdesigner-mcp/references/layout-compositor.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/mcp-tools.md` -> `optional-skills/creative/touchdesigner-mcp/references/mcp-tools.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/midi-osc.md` -> `optional-skills/creative/touchdesigner-mcp/references/midi-osc.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/network-patterns.md` -> `optional-skills/creative/touchdesigner-mcp/references/network-patterns.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/operator-tips.md` -> `optional-skills/creative/touchdesigner-mcp/references/operator-tips.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/operators.md` -> `optional-skills/creative/touchdesigner-mcp/references/operators.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/panel-ui.md` -> `optional-skills/creative/touchdesigner-mcp/references/panel-ui.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/particles.md` -> `optional-skills/creative/touchdesigner-mcp/references/particles.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/pitfalls.md` -> `optional-skills/creative/touchdesigner-mcp/references/pitfalls.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/postfx.md` -> `optional-skills/creative/touchdesigner-mcp/references/postfx.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/projection-mapping.md` -> `optional-skills/creative/touchdesigner-mcp/references/projection-mapping.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/python-api.md` -> `optional-skills/creative/touchdesigner-mcp/references/python-api.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/replicator.md` -> `optional-skills/creative/touchdesigner-mcp/references/replicator.md`
-- RENAMED `skills/creative/touchdesigner-mcp/references/troubleshooting.md` -> `optional-skills/creative/touchdesigner-mcp/references/troubleshooting.md`
-- RENAMED `skills/creative/touchdesigner-mcp/scripts/setup.sh` -> `optional-skills/creative/touchdesigner-mcp/scripts/setup.sh`
-- RENAMED `skills/mlops/evaluation/DESCRIPTION.md` -> `optional-skills/mlops/evaluation/DESCRIPTION.md`
-- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/SKILL.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/SKILL.md`
-- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/references/api-evaluation.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/references/api-evaluation.md`
-- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/references/benchmark-guide.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/references/benchmark-guide.md`
-- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/references/custom-tasks.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/references/custom-tasks.md`
-- RENAMED `skills/mlops/evaluation/evaluating-llms-harness/references/distributed-eval.md` -> `optional-skills/mlops/evaluation/evaluating-llms-harness/references/distributed-eval.md`
-- RENAMED `skills/mlops/evaluation/weights-and-biases/SKILL.md` -> `optional-skills/mlops/evaluation/weights-and-biases/SKILL.md`
-- RENAMED `skills/mlops/evaluation/weights-and-biases/references/artifacts.md` -> `optional-skills/mlops/evaluation/weights-and-biases/references/artifacts.md`
-- RENAMED `skills/mlops/evaluation/weights-and-biases/references/integrations.md` -> `optional-skills/mlops/evaluation/weights-and-biases/references/integrations.md`
-- RENAMED `skills/mlops/evaluation/weights-and-biases/references/sweeps.md` -> `optional-skills/mlops/evaluation/weights-and-biases/references/sweeps.md`
-- RENAMED `skills/mlops/inference/DESCRIPTION.md` -> `optional-skills/mlops/inference/DESCRIPTION.md`
-- RENAMED `skills/mlops/inference/llama-cpp/SKILL.md` -> `optional-skills/mlops/inference/llama-cpp/SKILL.md`
-- RENAMED `skills/mlops/inference/llama-cpp/references/advanced-usage.md` -> `optional-skills/mlops/inference/llama-cpp/references/advanced-usage.md`
-- RENAMED `skills/mlops/inference/llama-cpp/references/hub-discovery.md` -> `optional-skills/mlops/inference/llama-cpp/references/hub-discovery.md`
-- RENAMED `skills/mlops/inference/llama-cpp/references/optimization.md` -> `optional-skills/mlops/inference/llama-cpp/references/optimization.md`
-- RENAMED `skills/mlops/inference/llama-cpp/references/quantization.md` -> `optional-skills/mlops/inference/llama-cpp/references/quantization.md`
-- RENAMED `skills/mlops/inference/llama-cpp/references/server.md` -> `optional-skills/mlops/inference/llama-cpp/references/server.md`
-- RENAMED `skills/mlops/inference/llama-cpp/references/troubleshooting.md` -> `optional-skills/mlops/inference/llama-cpp/references/troubleshooting.md`
-- RENAMED `skills/mlops/inference/serving-llms-vllm/SKILL.md` -> `optional-skills/mlops/inference/serving-llms-vllm/SKILL.md`
-- RENAMED `skills/mlops/inference/serving-llms-vllm/references/optimization.md` -> `optional-skills/mlops/inference/serving-llms-vllm/references/optimization.md`
-- RENAMED `skills/mlops/inference/serving-llms-vllm/references/quantization.md` -> `optional-skills/mlops/inference/serving-llms-vllm/references/quantization.md`
-- RENAMED `skills/mlops/inference/serving-llms-vllm/references/server-deployment.md` -> `optional-skills/mlops/inference/serving-llms-vllm/references/server-deployment.md`
-- RENAMED `skills/mlops/inference/serving-llms-vllm/references/troubleshooting.md` -> `optional-skills/mlops/inference/serving-llms-vllm/references/troubleshooting.md`
-- RENAMED `skills/mlops/models/DESCRIPTION.md` -> `optional-skills/mlops/models/DESCRIPTION.md`
-- RENAMED `skills/mlops/huggingface-hub/SKILL.md` -> `optional-skills/mlops/models/huggingface-hub/SKILL.md`
-- RENAMED `skills/research/blogwatcher/SKILL.md` -> `optional-skills/research/blogwatcher/SKILL.md`
-- RENAMED `skills/research/research-paper-writing/SKILL.md` -> `optional-skills/research/research-paper-writing/SKILL.md`
-- RENAMED `skills/research/research-paper-writing/references/autoreason-methodology.md` -> `optional-skills/research/research-paper-writing/references/autoreason-methodology.md`
-- RENAMED `skills/research/research-paper-writing/references/checklists.md` -> `optional-skills/research/research-paper-writing/references/checklists.md`
-- RENAMED `skills/research/research-paper-writing/references/citation-workflow.md` -> `optional-skills/research/research-paper-writing/references/citation-workflow.md`
-- RENAMED `skills/research/research-paper-writing/references/experiment-patterns.md` -> `optional-skills/research/research-paper-writing/references/experiment-patterns.md`
-- RENAMED `skills/research/research-paper-writing/references/human-evaluation.md` -> `optional-skills/research/research-paper-writing/references/human-evaluation.md`
-- RENAMED `skills/research/research-paper-writing/references/paper-types.md` -> `optional-skills/research/research-paper-writing/references/paper-types.md`
-- RENAMED `skills/research/research-paper-writing/references/phase5-paper-drafting.md` -> `optional-skills/research/research-paper-writing/references/phase5-paper-drafting.md`
-- RENAMED `skills/research/research-paper-writing/references/reviewer-guidelines.md` -> `optional-skills/research/research-paper-writing/references/reviewer-guidelines.md`
-- RENAMED `skills/research/research-paper-writing/references/sources.md` -> `optional-skills/research/research-paper-writing/references/sources.md`
-- RENAMED `skills/research/research-paper-writing/references/writing-guide.md` -> `optional-skills/research/research-paper-writing/references/writing-guide.md`
-- RENAMED `skills/research/research-paper-writing/templates/README.md` -> `optional-skills/research/research-paper-writing/templates/README.md`
-- RENAMED `skills/research/research-paper-writing/templates/aaai2026/README.md` -> `optional-skills/research/research-paper-writing/templates/aaai2026/README.md`
-- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026-unified-supp.tex` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026-unified-supp.tex`
-- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026-unified-template.tex` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026-unified-template.tex`
-- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026.bib` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026.bib`
-- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026.bst` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026.bst`
-- RENAMED `skills/research/research-paper-writing/templates/aaai2026/aaai2026.sty` -> `optional-skills/research/research-paper-writing/templates/aaai2026/aaai2026.sty`
-- RENAMED `skills/research/research-paper-writing/templates/acl/README.md` -> `optional-skills/research/research-paper-writing/templates/acl/README.md`
-- RENAMED `skills/research/research-paper-writing/templates/acl/acl.sty` -> `optional-skills/research/research-paper-writing/templates/acl/acl.sty`
-- RENAMED `skills/research/research-paper-writing/templates/acl/acl_latex.tex` -> `optional-skills/research/research-paper-writing/templates/acl/acl_latex.tex`
-- RENAMED `skills/research/research-paper-writing/templates/acl/acl_lualatex.tex` -> `optional-skills/research/research-paper-writing/templates/acl/acl_lualatex.tex`
-- RENAMED `skills/research/research-paper-writing/templates/acl/acl_natbib.bst` -> `optional-skills/research/research-paper-writing/templates/acl/acl_natbib.bst`
-- RENAMED `skills/research/research-paper-writing/templates/acl/anthology.bib.txt` -> `optional-skills/research/research-paper-writing/templates/acl/anthology.bib.txt`
-- RENAMED `skills/research/research-paper-writing/templates/acl/custom.bib` -> `optional-skills/research/research-paper-writing/templates/acl/custom.bib`
-- RENAMED `skills/research/research-paper-writing/templates/acl/formatting.md` -> `optional-skills/research/research-paper-writing/templates/acl/formatting.md`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/README.md` -> `optional-skills/research/research-paper-writing/templates/colm2025/README.md`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.bib` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.bib`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.bst` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.bst`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.pdf` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.pdf`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.sty` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.sty`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/colm2025_conference.tex` -> `optional-skills/research/research-paper-writing/templates/colm2025/colm2025_conference.tex`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/fancyhdr.sty` -> `optional-skills/research/research-paper-writing/templates/colm2025/fancyhdr.sty`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/math_commands.tex` -> `optional-skills/research/research-paper-writing/templates/colm2025/math_commands.tex`
-- RENAMED `skills/research/research-paper-writing/templates/colm2025/natbib.sty` -> `optional-skills/research/research-paper-writing/templates/colm2025/natbib.sty`
-- RENAMED `skills/research/research-paper-writing/templates/iclr2026/fancyhdr.sty` -> `optional-skills/research/research-paper-writing/templates/iclr2026/fancyhdr.sty`
-- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.bib` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.bib`
-- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.bst` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.bst`
-- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.pdf` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.pdf`
-- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.sty` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.sty`
-- RENAMED `skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.tex` -> `optional-skills/research/research-paper-writing/templates/iclr2026/iclr2026_conference.tex`
-- RENAMED `skills/research/research-paper-writing/templates/iclr2026/math_commands.tex` -> `optional-skills/research/research-paper-writing/templates/iclr2026/math_commands.tex`
-- RENAMED `skills/research/research-paper-writing/templates/iclr2026/natbib.sty` -> `optional-skills/research/research-paper-writing/templates/iclr2026/natbib.sty`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/algorithm.sty` -> `optional-skills/research/research-paper-writing/templates/icml2026/algorithm.sty`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/algorithmic.sty` -> `optional-skills/research/research-paper-writing/templates/icml2026/algorithmic.sty`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/example_paper.bib` -> `optional-skills/research/research-paper-writing/templates/icml2026/example_paper.bib`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/example_paper.pdf` -> `optional-skills/research/research-paper-writing/templates/icml2026/example_paper.pdf`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/example_paper.tex` -> `optional-skills/research/research-paper-writing/templates/icml2026/example_paper.tex`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/fancyhdr.sty` -> `optional-skills/research/research-paper-writing/templates/icml2026/fancyhdr.sty`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/icml2026.bst` -> `optional-skills/research/research-paper-writing/templates/icml2026/icml2026.bst`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/icml2026.sty` -> `optional-skills/research/research-paper-writing/templates/icml2026/icml2026.sty`
-- RENAMED `skills/research/research-paper-writing/templates/icml2026/icml_numpapers.pdf` -> `optional-skills/research/research-paper-writing/templates/icml2026/icml_numpapers.pdf`
-- RENAMED `skills/research/research-paper-writing/templates/neurips2025/Makefile` -> `optional-skills/research/research-paper-writing/templates/neurips2025/Makefile`
-- RENAMED `skills/research/research-paper-writing/templates/neurips2025/extra_pkgs.tex` -> `optional-skills/research/research-paper-writing/templates/neurips2025/extra_pkgs.tex`
-- RENAMED `skills/research/research-paper-writing/templates/neurips2025/main.tex` -> `optional-skills/research/research-paper-writing/templates/neurips2025/main.tex`
-- RENAMED `skills/research/research-paper-writing/templates/neurips2025/neurips.sty` -> `optional-skills/research/research-paper-writing/templates/neurips2025/neurips.sty`
-- RENAMED `skills/smart-home/DESCRIPTION.md` -> `optional-skills/smart-home/DESCRIPTION.md`
-- RENAMED `skills/smart-home/openhue/SKILL.md` -> `optional-skills/smart-home/openhue/SKILL.md`
-- MODIFIED `optional-skills/software-development/code-wiki/SKILL.md`
-- MODIFIED `plugins/platforms/photon/README.md`
-- MODIFIED `plugins/platforms/photon/adapter.py`
-- MODIFIED `plugins/platforms/photon/plugin.yaml`
-- MODIFIED `plugins/platforms/photon/sidecar/index.mjs`
-- MODIFIED `plugins/platforms/photon/sidecar/package-lock.json`
-- MODIFIED `plugins/platforms/photon/sidecar/package.json`
-- MODIFIED `plugins/platforms/photon/sidecar/patch-spectrum-mixed-attachments.mjs`
+- MODIFIED `nastech_state_common.py`
+- MODIFIED `nastech_state_schema.py`
+- MODIFIED `nastech_state_search.py`
+- MODIFIED `nastech_time.py`
+- MODIFIED `locales/af.yaml`
+- MODIFIED `locales/ar.yaml`
+- MODIFIED `locales/de.yaml`
+- MODIFIED `locales/en.yaml`
+- MODIFIED `locales/es.yaml`
+- MODIFIED `locales/fr.yaml`
+- MODIFIED `locales/ga.yaml`
+- MODIFIED `locales/hu.yaml`
+- MODIFIED `locales/it.yaml`
+- MODIFIED `locales/ja.yaml`
+- MODIFIED `locales/ko.yaml`
+- MODIFIED `locales/pt.yaml`
+- MODIFIED `locales/ru.yaml`
+- MODIFIED `locales/tr.yaml`
+- MODIFIED `locales/uk.yaml`
+- MODIFIED `locales/zh-hant.yaml`
+- MODIFIED `locales/zh.yaml`
+- MODIFIED `plugins/image_gen/openai-codex/__init__.py`
+- MODIFIED `plugins/memory/openviking/README.md`
+- MODIFIED `plugins/memory/openviking/__init__.py`
+- MODIFIED `plugins/model-providers/nastech/__init__.py`
+- MODIFIED `plugins/model-providers/openrouter/__init__.py`
+- MODIFIED `plugins/platforms/buzz/adapter.py`
+- MODIFIED `plugins/platforms/buzz/plugin.yaml`
+- MODIFIED `plugins/platforms/discord/adapter.py`
+- MODIFIED `plugins/platforms/feishu/adapter.py`
+- MODIFIED `plugins/platforms/telegram/adapter.py`
+- MODIFIED `plugins/platforms/telegram/telegram_network.py`
+- MODIFIED `plugins/platforms/whatsapp/adapter.py`
+- MODIFIED `plugins/web/brave_free/provider.py`
+- MODIFIED `plugins/web/firecrawl/provider.py`
+- MODIFIED `plugins/web/keenable/provider.py`
+- MODIFIED `plugins/web/keyless_mcp.py`
+- MODIFIED `plugins/web/searxng/__init__.py`
+- DELETED `plugins/web/tavily/__init__.py`
+- DELETED `plugins/web/tavily/plugin.yaml`
+- DELETED `plugins/web/tavily/provider.py`
+- MODIFIED `plugins/web/xai/provider.py`
+- MODIFIED `pyproject.toml`
 - MODIFIED `run_agent.py`
-- DELETED `skills/github/DESCRIPTION.md`
-- DELETED `skills/mlops/DESCRIPTION.md`
-- MODIFIED `skills/productivity/document-to-action-items/SKILL.md`
-- DELETED `skills/productivity/ocr-and-documents/DESCRIPTION.md`
-- MODIFIED `skills/productivity/pdf/SKILL.md`
-- RENAMED `skills/productivity/nano-pdf/SKILL.md` -> `skills/productivity/pdf/references/nano-pdf-editing.md`
-- RENAMED `skills/productivity/ocr-and-documents/SKILL.md` -> `skills/productivity/pdf/references/ocr-extraction.md`
-- RENAMED `skills/productivity/ocr-and-documents/scripts/extract_marker.py` -> `skills/productivity/pdf/scripts/extract_marker.py`
-- RENAMED `skills/productivity/ocr-and-documents/scripts/extract_pymupdf.py` -> `skills/productivity/pdf/scripts/extract_pymupdf.py`
-- MODIFIED `skills/productivity/pdf/scripts/pdf_page_image.py`
-- MODIFIED `skills/productivity/pdf/scripts/pdf_read.py`
-- DELETED `skills/productivity/session-librarian/SKILL.md`
-- MODIFIED `skills/productivity/teams-meeting-pipeline/SKILL.md`
-- MODIFIED `skills/research/arxiv/SKILL.md`
-- MODIFIED `skills/research/grounded-citations/SKILL.md`
-- MODIFIED `skills/research/grounded-citations/references/citation-formats.md`
-- RENAMED `skills/github/codebase-inspection/SKILL.md` -> `skills/software-development/codebase-inspection/SKILL.md`
-- ADDED `skills/software-development/github/SKILL.md`
-- RENAMED `skills/github/github-auth/SKILL.md` -> `skills/software-development/github/references/auth.md`
-- RENAMED `skills/github/github-pr-workflow/references/ci-troubleshooting.md` -> `skills/software-development/github/references/ci-troubleshooting.md`
-- RENAMED `skills/github/github-code-review/SKILL.md` -> `skills/software-development/github/references/code-review.md`
-- RENAMED `skills/github/github-pr-workflow/references/conventional-commits.md` -> `skills/software-development/github/references/conventional-commits.md`
-- RENAMED `skills/github/github-repo-management/references/github-api-cheatsheet.md` -> `skills/software-development/github/references/github-api-cheatsheet.md`
-- RENAMED `skills/github/github-issue-to-pr/SKILL.md` -> `skills/software-development/github/references/issue-to-pr.md`
-- RENAMED `skills/github/github-issues/SKILL.md` -> `skills/software-development/github/references/issues.md`
-- RENAMED `skills/github/github-pr-workflow/SKILL.md` -> `skills/software-development/github/references/pr-workflow.md`
-- RENAMED `skills/github/github-repo-management/SKILL.md` -> `skills/software-development/github/references/repo-management.md`
-- RENAMED `skills/github/github-code-review/references/review-output-template.md` -> `skills/software-development/github/references/review-output-template.md`
-- RENAMED `skills/github/github-auth/scripts/gh-env.sh` -> `skills/software-development/github/scripts/gh-env.sh`
-- RENAMED `skills/github/github-auth/scripts/git-credential-token.py` -> `skills/software-development/github/scripts/git-credential-token.py`
-- RENAMED `skills/github/github-issues/templates/bug-report.md` -> `skills/software-development/github/templates/bug-report.md`
-- RENAMED `skills/github/github-issues/templates/feature-request.md` -> `skills/software-development/github/templates/feature-request.md`
-- RENAMED `skills/github/github-pr-workflow/templates/pr-body-bugfix.md` -> `skills/software-development/github/templates/pr-body-bugfix.md`
-- RENAMED `skills/github/github-pr-workflow/templates/pr-body-feature.md` -> `skills/software-development/github/templates/pr-body-feature.md`
-- MODIFIED `skills/software-development/requesting-code-review/SKILL.md`
-- ADDED `skills/web/DESCRIPTION.md`
-- RENAMED `skills/research/blocked-page-recovery/SKILL.md` -> `skills/web/blocked-page-recovery/SKILL.md`
-- RENAMED `skills/research/blocked-page-recovery/scripts/recover_page.py` -> `skills/web/blocked-page-recovery/scripts/recover_page.py`
+- ADDED `scripts/ci/check_profile_archive_boundary.py`
+- MODIFIED `scripts/ci/classify_changes.py`
+- MODIFIED `scripts/contributor_audit.py`
+- MODIFIED `scripts/desktop-update/posix.sh`
+- ADDED `scripts/desktop-update/retry-policy.ps1`
+- MODIFIED `scripts/desktop-update/windows.ps1`
+- MODIFIED `scripts/nastech-gateway`
+- MODIFIED `scripts/install.sh`
+- MODIFIED `scripts/lib/node-bootstrap.sh`
+- ADDED `scripts/probe_active_session_exclusivity.py`
+- MODIFIED `scripts/release.py`
+- MODIFIED `skills/autonomous-ai-agents/nastech-agent/references/providers-and-models.md`
+- MODIFIED `tests/agent/test_async_token_accounting.py`
+- ADDED `tests/agent/test_aux_affordable_402_retry.py`
+- MODIFIED `tests/agent/test_aux_progress_streaming.py`
+- MODIFIED `tests/agent/test_auxiliary_client.py`
+- ADDED `tests/agent/test_auxiliary_openrouter_max_tokens.py`
+- MODIFIED `tests/agent/test_codex_app_server_persist.py`
+- ADDED `tests/agent/test_codex_aux_no_progress_timeout.py`
+- ADDED `tests/agent/test_codex_aux_timeout_fd_ownership.py`
 - MODIFIED `tests/agent/test_compress_context_progress_timeout.py`
-- ADDED `tests/agent/test_compression_attempt_lifecycle.py`
-- MODIFIED `tests/agent/test_compression_attempt_ownership.py`
 - MODIFIED `tests/agent/test_compression_concurrent_fork.py`
-- MODIFIED `tests/agent/test_compression_review_76354.py`
-- ADDED `tests/agent/test_compression_stall_interrupt_96775.py`
+- MODIFIED `tests/agent/test_compression_rotation_state.py`
+- ADDED `tests/agent/test_compression_split_failure_cooldown.py`
+- MODIFIED `tests/agent/test_compression_worker_isolation_76354.py`
+- ADDED `tests/agent/test_compressor_truncated_summary_guard.py`
 - MODIFIED `tests/agent/test_context_compressor.py`
-- ADDED `tests/agent/test_estimator_parity_84371.py`
-- ADDED `tests/agent/test_lean_single_aux_call.py`
-- MODIFIED `tests/agent/test_native_preflight_estimate.py`
-- MODIFIED `tests/agent/test_plugin_prompt_sections.py`
-- MODIFIED `tests/agent/test_skill_commands.py`
-- ADDED `tests/agent/test_skill_session_platform_gate.py`
+- ADDED `tests/agent/test_context_compressor_reasoning_fallback.py`
+- MODIFIED `tests/agent/test_curator.py`
+- MODIFIED `tests/agent/test_deadline.py`
+- ADDED `tests/agent/test_declared_conversation_scope.py`
+- MODIFIED `tests/agent/test_hygiene_timeout_cooldown_isolation.py`
+- MODIFIED `tests/agent/test_model_metadata.py`
+- MODIFIED `tests/agent/test_pre_compress_checkpoint_contract.py`
+- ADDED `tests/agent/test_preflight_compression_timeout_fail_closed.py`
+- MODIFIED `tests/agent/test_redact.py`
+- ADDED `tests/agent/test_studio_bridge_affinity.py`
 - MODIFIED `tests/agent/test_system_prompt.py`
-- MODIFIED `tests/gateway/test_agent_cache.py`
-- ADDED `tests/gateway/test_codex_hygiene_compaction.py`
-- ADDED `tests/gateway/test_hosted_room_discussion.py`
-- ADDED `tests/gateway/test_hosted_room_driver.py`
-- ADDED `tests/gateway/test_hosted_room_gateway_lifecycle.py`
-- ADDED `tests/gateway/test_hosted_room_local_boundary.py`
-- ADDED `tests/gateway/test_hosted_room_replicas.py`
-- ADDED `tests/gateway/test_hosted_rooms.py`
-- ADDED `tests/gateway/test_hosted_rooms_read_path.py`
-- MODIFIED `tests/gateway/test_model_switch_persistence.py`
+- MODIFIED `tests/agent/test_turn_context.py`
+- ADDED `tests/agent/test_turn_liveness.py`
+- ADDED `tests/agent/transports/test_chat_completions_xai_tool_search_alias.py`
+- MODIFIED `tests/agent/transports/test_codex_transport.py`
+- MODIFIED `tests/ci/test_classify_changes.py`
+- MODIFIED `tests/cli/test_modify_other_keys_aliases.py`
+- ADDED `tests/cli/test_single_query_clarify.py`
+- ADDED `tests/cli/test_worktree_pushed_tier.py`
+- MODIFIED `tests/conftest.py`
+- MODIFIED `tests/cron/test_87033_cronjob_gateway_liveness.py`
+- MODIFIED `tests/cron/test_claim_job_for_fire.py`
+- MODIFIED `tests/cron/test_cron_failure_summarizer_inactivity.py`
+- ADDED `tests/cron/test_cron_home_target_profile_scope.py`
+- MODIFIED `tests/cron/test_cron_inactivity_timeout.py`
+- MODIFIED `tests/cron/test_cron_incidents.py`
+- ADDED `tests/cron/test_cron_multiplex_profile_route_preflight.py`
+- ADDED `tests/cron/test_cron_next_run_profile_timezone.py`
+- ADDED `tests/cron/test_cron_tick_stale_yield.py`
+- MODIFIED `tests/cron/test_cron_workdir.py`
+- MODIFIED `tests/cron/test_execution_ledger.py`
+- MODIFIED `tests/cron/test_oneshot_dispatch_failure_run_claim.py`
+- MODIFIED `tests/cron/test_parallel_pool.py`
+- MODIFIED `tests/cron/test_run_one_job.py`
+- MODIFIED `tests/cron/test_scheduler.py`
+- MODIFIED `tests/cron/test_scheduler_cron_session_isolation.py`
+- MODIFIED `tests/cron/test_scheduler_provider.py`
+- MODIFIED `tests/cron/test_script_claim_heartbeat.py`
+- MODIFIED `tests/cron/test_sessiondb_init_hang.py`
+- ADDED `tests/cron/test_stale_module_leaf_imports.py`
+- DELETED `tests/cron/test_terminal_cwd_lock.py`
+- ADDED `tests/fixtures/room_link_protocol_v2.json`
+- MODIFIED `tests/gateway/relay/test_relay_slack_unfurl.py`
+- MODIFIED `tests/gateway/restart_test_helpers.py`
+- MODIFIED `tests/gateway/test_api_server.py`
+- ADDED `tests/gateway/test_api_server_declared_conversation.py`
+- ADDED `tests/gateway/test_api_server_room_dispatch.py`
+- ADDED `tests/gateway/test_api_server_room_grants.py`
+- ADDED `tests/gateway/test_api_server_run_idempotency.py`
+- MODIFIED `tests/gateway/test_api_server_runs.py`
+- ADDED `tests/gateway/test_api_server_runs_extraction.py`
+- MODIFIED `tests/gateway/test_approval_prompt_redaction.py`
+- MODIFIED `tests/gateway/test_buzz_adapter.py`
+- ADDED `tests/gateway/test_buzz_authz.py`
+- ADDED `tests/gateway/test_buzz_forum_kinds.py`
+- ADDED `tests/gateway/test_buzz_mention_resolution.py`
+- ADDED `tests/gateway/test_buzz_progress_thread_routing.py`
+- ADDED `tests/gateway/test_buzz_thread_topology.py`
+- MODIFIED `tests/gateway/test_buzz_websocket.py`
+- MODIFIED `tests/gateway/test_compression_in_flight_check.py`
+- MODIFIED `tests/gateway/test_config.py`
+- MODIFIED `tests/gateway/test_config_env_bridge_authority.py`
+- ADDED `tests/gateway/test_discord_username_allowlist_env_reload.py`
+- MODIFIED `tests/gateway/test_document_context_note.py`
+- MODIFIED `tests/gateway/test_feishu_approval_buttons.py`
+- MODIFIED `tests/gateway/test_gateway_shutdown.py`
+- MODIFIED `tests/gateway/test_hosted_room_discussion.py`
+- MODIFIED `tests/gateway/test_hosted_room_driver.py`
+- ADDED `tests/gateway/test_hosted_room_execution_policy.py`
+- ADDED `tests/gateway/test_hosted_room_links.py`
+- DELETED `tests/gateway/test_hosted_room_local_boundary.py`
+- ADDED `tests/gateway/test_hosted_room_peer.py`
+- MODIFIED `tests/gateway/test_hosted_rooms.py`
+- MODIFIED `tests/gateway/test_hygiene_failure_cooldown_ladder.py`
+- ADDED `tests/gateway/test_lifecycle_state_db_check.py`
+- MODIFIED `tests/gateway/test_mixed_attachment_routing.py`
+- MODIFIED `tests/gateway/test_multiplex_lifecycle.py`
+- MODIFIED `tests/gateway/test_multiplex_profile_authz.py`
+- MODIFIED `tests/gateway/test_multiplex_session_db_profile_scope.py`
+- ADDED `tests/gateway/test_orphan_exit_grace.py`
+- MODIFIED `tests/gateway/test_platform_base.py`
+- ADDED `tests/gateway/test_reaped_session_recovery.py`
+- MODIFIED `tests/gateway/test_restart_drain.py`
+- ADDED `tests/gateway/test_restart_drain_recovery_dedup.py`
+- MODIFIED `tests/gateway/test_restart_resume_pending.py`
+- MODIFIED `tests/gateway/test_resume_command.py`
+- MODIFIED `tests/gateway/test_routing_save_fast_path.py`
+- MODIFIED `tests/gateway/test_run_progress_topics.py`
+- MODIFIED `tests/gateway/test_runner_startup_failures.py`
+- MODIFIED `tests/gateway/test_running_agent_session_toggles.py`
+- MODIFIED `tests/gateway/test_session.py`
+- ADDED `tests/gateway/test_session_db_handle_sharing.py`
+- ADDED `tests/gateway/test_session_db_replaced_fallback.py`
+- ADDED `tests/gateway/test_session_degraded_db_continuity.py`
 - MODIFIED `tests/gateway/test_session_hygiene.py`
-- MODIFIED `tests/gateway/test_session_model_override_persistence.py`
-- ADDED `tests/gateway/test_subagent_failure_notice.py`
-- ADDED `tests/nastech_cli/test_install_identity.py`
-- MODIFIED `tests/nastech_cli/test_runtime_provider_resolution.py`
-- MODIFIED `tests/nastech_cli/test_web_server_boot_handshake.py`
-- MODIFIED `tests/plugins/platforms/photon/test_inbound.py`
-- MODIFIED `tests/run_agent/test_413_compression.py`
-- MODIFIED `tests/run_agent/test_fallback_reasoning_override.py`
-- ADDED `tests/run_agent/test_in_place_persist_marker_98450.py`
-- MODIFIED `tests/run_agent/test_native_compaction.py`
-- ADDED `tests/run_agent/test_native_compaction_nontext_retention.py`
-- ADDED `tests/run_agent/test_native_compaction_switch_capabilities.py`
-- MODIFIED `tests/run_agent/test_run_agent_codex_responses.py`
-- MODIFIED `tests/run_agent/test_switch_model_context.py`
-- MODIFIED `tests/run_agent/test_switch_model_rollback.py`
-- RENAMED `tests/skills/test_merge_reconciler_skill.py` -> `tests/skills/test_agent_merge_conflict_arbiter_skill.py`
-- MODIFIED `tests/skills/test_comfyui_skill.py`
-- MODIFIED `tests/skills/test_github_credential_token.py`
-- RENAMED `tests/skills/test_github_issue_to_pr_skill.py` -> `tests/skills/test_github_skill.py`
-- ADDED `tests/test_compaction_prompt_rebuild.py`
-- MODIFIED `tests/test_compaction_tool_refresh.py`
-- MODIFIED `tests/tools/test_approval.py`
-- MODIFIED `tests/tools/test_async_delegation.py`
+- MODIFIED `tests/gateway/test_session_stall_watchdog.py`
+- MODIFIED `tests/gateway/test_session_title_rename_lane.py`
+- ADDED `tests/gateway/test_startup_watchdog.py`
+- MODIFIED `tests/gateway/test_status.py`
+- MODIFIED `tests/gateway/test_steer_command.py`
+- MODIFIED `tests/gateway/test_telegram_closewait_limits_31599.py`
+- ADDED `tests/gateway/test_telegram_closewait_windows_live.py`
+- MODIFIED `tests/gateway/test_telegram_network.py`
+- MODIFIED `tests/gateway/test_telegram_network_reconnect.py`
+- MODIFIED `tests/gateway/test_tts_media_routing.py`
+- MODIFIED `tests/gateway/test_turn_lease.py`
+- MODIFIED `tests/gateway/test_whatsapp_connect.py`
+- MODIFIED `tests/nastech_cli/test_active_sessions.py`
+- MODIFIED `tests/nastech_cli/test_apply_profile_override.py`
+- ADDED `tests/nastech_cli/test_archive_safe.py`
+- ADDED `tests/nastech_cli/test_cli_partial_update_hint_96900.py`
+- MODIFIED `tests/nastech_cli/test_cmd_update.py`
+- MODIFIED `tests/nastech_cli/test_config.py`
+- ADDED `tests/nastech_cli/test_config_dotted_key_names.py`
+- MODIFIED `tests/nastech_cli/test_credential_lifecycle.py`
+- MODIFIED `tests/nastech_cli/test_cron.py`
+- MODIFIED `tests/nastech_cli/test_cron_parser_builder.py`
+- ADDED `tests/nastech_cli/test_cron_status_profile_isolation.py`
+- MODIFIED `tests/nastech_cli/test_dashboard_admin_endpoints.py`
+- MODIFIED `tests/nastech_cli/test_dashboard_auth_cookies.py`
+- MODIFIED `tests/nastech_cli/test_dashboard_auth_native_flow.py`
+- MODIFIED `tests/nastech_cli/test_dashboard_auth_prefix.py`
+- MODIFIED `tests/nastech_cli/test_doctor.py`
+- MODIFIED `tests/nastech_cli/test_dump_env_visibility.py`
+- MODIFIED `tests/nastech_cli/test_env_export_line_lifecycle.py`
+- MODIFIED `tests/nastech_cli/test_gateway.py`
+- ADDED `tests/nastech_cli/test_git_trampoline_windows_live.py`
+- MODIFIED `tests/nastech_cli/test_gui_command.py`
+- MODIFIED `tests/nastech_cli/test_linux_desktop_entry.py`
+- ADDED `tests/nastech_cli/test_linux_sandbox_fixup.py`
+- MODIFIED `tests/nastech_cli/test_managed_uv.py`
+- ADDED `tests/nastech_cli/test_model_alias_credentials_83612.py`
+- ADDED `tests/nastech_cli/test_model_assignment_env_key_mirror.py`
+- ADDED `tests/nastech_cli/test_model_set_secret_copy.py`
+- MODIFIED `tests/nastech_cli/test_nastech_subscription.py`
+- ADDED `tests/nastech_cli/test_openrouter_preset_validation.py`
+- MODIFIED `tests/nastech_cli/test_peer_cmd.py`
+- MODIFIED `tests/nastech_cli/test_plugin_dev.py`
+- MODIFIED `tests/nastech_cli/test_plugins_cmd_category_discovery.py`
+- ADDED `tests/nastech_cli/test_profile_export_default_path.py`
+- MODIFIED `tests/nastech_cli/test_scan_venv_blockers.py`
+- MODIFIED `tests/nastech_cli/test_session_handoff.py`
+- MODIFIED `tests/nastech_cli/test_session_listing.py`
+- MODIFIED `tests/nastech_cli/test_set_config_value.py`
+- ADDED `tests/nastech_cli/test_stale_pid_guard.py`
+- MODIFIED `tests/nastech_cli/test_status.py`
+- ADDED `tests/nastech_cli/test_taskkill_identity_windows_live.py`
+- MODIFIED `tests/nastech_cli/test_tools_config.py`
+- MODIFIED `tests/nastech_cli/test_toolset_validation.py`
+- MODIFIED `tests/nastech_cli/test_update_autostash.py`
+- MODIFIED `tests/nastech_cli/test_update_concurrent_quarantine.py`
+- MODIFIED `tests/nastech_cli/test_update_desktop_stale_warning.py`
+- MODIFIED `tests/nastech_cli/test_update_import_guard.py`
+- MODIFIED `tests/nastech_cli/test_update_orphan_backend_reap.py`
+- ADDED `tests/nastech_cli/test_update_sqlite_remediation.py`
+- MODIFIED `tests/nastech_cli/test_update_stale_dashboard.py`
+- MODIFIED `tests/nastech_cli/test_update_venv_health.py`
+- ADDED `tests/nastech_cli/test_update_venv_ownership_preflight.py`
+- MODIFIED `tests/nastech_cli/test_update_wedged_gateway.py`
+- MODIFIED `tests/nastech_cli/test_venv_holder_windows_live.py`
+- MODIFIED `tests/nastech_cli/test_web_server.py`
+- ADDED `tests/nastech_state/test_86366_tail_rewind_semantics.py`
+- ADDED `tests/nastech_state/test_86366_watermark_interplay.py`
+- ADDED `tests/nastech_state/test_88197_automatic_ended_stamp.py`
+- ADDED `tests/nastech_state/test_state_db_file_identity.py`
+- MODIFIED `tests/openviking_plugin/test_openviking.py`
+- ADDED `tests/plugins/memory/test_openviking_optional_peer.py`
+- MODIFIED `tests/plugins/memory/test_openviking_provider.py`
+- ADDED `tests/plugins/platforms/buzz/test_buzz_unscoped_requirement_gate.py`
+- MODIFIED `tests/plugins/web/test_web_search_provider_plugins.py`
+- ADDED `tests/run_agent/test_compression_timeout_terminal.py`
+- ADDED `tests/run_agent/test_gemini_native_reservation.py`
+- MODIFIED `tests/run_agent/test_init_fallback_on_exhausted_pool.py`
+- MODIFIED `tests/run_agent/test_message_sequence_repair.py`
+- ADDED `tests/run_agent/test_preflight_timeout_typed_result.py`
+- ADDED `tests/run_agent/test_sanitiser_escalation.py`
+- MODIFIED `tests/run_agent/test_turn_completion_explainer.py`
+- ADDED `tests/run_agent/test_turn_liveness_watchdog.py`
+- ADDED `tests/scripts/test_check_profile_archive_boundary.py`
+- ADDED `tests/state/test_append_message_after_close_94736.py`
+- ADDED `tests/state/test_compression_lease_refresh_before_publish.py`
+- MODIFIED `tests/state/test_fts_runtime_rebuild.py`
+- ADDED `tests/state/test_writer_conn_thread_safety.py`
+- ADDED `tests/test_98924_readonly_fts_decode_error.py`
+- ADDED `tests/test_active_session_exclusivity.py`
+- MODIFIED `tests/test_code_skew.py`
+- ADDED `tests/test_desktop_update_windows_retry_policy.py`
+- MODIFIED `tests/test_estop.py`
+- MODIFIED `tests/test_fts_update_of_narrowing.py`
+- MODIFIED `tests/test_nastech_logging.py`
+- ADDED `tests/test_nastech_state_conn_lock_audit.py`
+- ADDED `tests/test_install_clone_throttle_fallback.py`
+- ADDED `tests/test_install_sh_node_deps_workspaces.py`
+- ADDED `tests/test_install_sh_node_prerelease.py`
+- ADDED `tests/test_install_sh_node_probe_87460.py`
+- MODIFIED `tests/test_ollama_num_ctx.py`
+- MODIFIED `tests/test_packaging_metadata.py`
+- ADDED `tests/test_session_db_profile_stamp.py`
+- MODIFIED `tests/test_session_db_read_conn_pool.py`
+- MODIFIED `tests/test_session_db_read_path_split.py`
+- ADDED `tests/test_session_detail_malformed_db.py`
+- MODIFIED `tests/test_state_db_malformed_repair.py`
+- MODIFIED `tests/test_timezone.py`
+- MODIFIED `tests/test_tui_gateway_server.py`
+- MODIFIED `tests/test_zeroed_state_db.py`
+- MODIFIED `tests/tools/conftest.py`
 - MODIFIED `tests/tools/test_bot_mode_dm.py`
-- MODIFIED `tests/tools/test_cron_approval_mode.py`
-- MODIFIED `tests/tools/test_delegate.py`
-- ADDED `tests/tools/test_delegate_capability_inheritance.py`
+- MODIFIED `tests/tools/test_browser_homebrew_paths.py`
+- MODIFIED `tests/tools/test_browser_lightpanda.py`
+- ADDED `tests/tools/test_browser_lightpanda_serve.py`
+- MODIFIED `tests/tools/test_browser_orphan_reaper.py`
+- MODIFIED `tests/tools/test_browser_use_cli.py`
+- MODIFIED `tests/tools/test_delegate_control_actions.py`
+- MODIFIED `tests/tools/test_delegate_output_schema.py`
+- ADDED `tests/tools/test_display_toggles.py`
+- MODIFIED `tests/tools/test_docker_environment.py`
+- MODIFIED `tests/tools/test_env_passthrough.py`
+- MODIFIED `tests/tools/test_nastech_subprocess_env.py`
+- MODIFIED `tests/tools/test_interrupt.py`
+- MODIFIED `tests/tools/test_llm_content_none_guard.py`
+- MODIFIED `tests/tools/test_local_env_blocklist.py`
 - MODIFIED `tests/tools/test_process_registry.py`
-- MODIFIED `tests/tools/test_skill_manager_tool.py`
-- MODIFIED `tests/tools/test_skills_tool.py`
+- ADDED `tests/tools/test_process_registry_windows_live.py`
+- MODIFIED `tests/tools/test_send_message_target_parse.py`
+- MODIFIED `tests/tools/test_skill_ledger.py`
+- MODIFIED `tests/tools/test_strict_provider_selection.py`
+- ADDED `tests/tools/test_terminal_bounded_execute.py`
+- MODIFIED `tests/tools/test_terminal_task_cwd.py`
+- MODIFIED `tests/tools/test_tip_tool.py`
+- MODIFIED `tests/tools/test_tour_tool.py`
+- MODIFIED `tests/tools/test_web_keyless_fallback.py`
+- MODIFIED `tests/tools/test_web_keyless_rescue.py`
+- MODIFIED `tests/tools/test_web_providers.py`
+- MODIFIED `tests/tools/test_web_providers_brave_free.py`
+- MODIFIED `tests/tools/test_web_providers_ddgs.py`
+- MODIFIED `tests/tools/test_web_providers_searxng.py`
+- MODIFIED `tests/tools/test_web_providers_xai.py`
+- MODIFIED `tests/tools/test_web_result_cache.py`
+- MODIFIED `tests/tools/test_web_tools_config.py`
+- DELETED `tests/tools/test_web_tools_tavily.py`
+- MODIFIED `tests/tools/test_windows_native_support.py`
 - MODIFIED `tests/tui_gateway/test_auto_continue.py`
-- MODIFIED `tests/tui_gateway/test_compression_config_hot_reload.py`
-- ADDED `tests/tui_gateway/test_groups_methods.py`
-- ADDED `tests/tui_gateway/test_groups_replication_methods.py`
-- ADDED `tests/tui_gateway/test_hosted_room_driver_runtime.py`
-- ADDED `tests/tui_gateway/test_hosted_room_prompt_fence.py`
-- ADDED `tests/tui_gateway/test_hosted_room_server_rpc.py`
-- ADDED `tests/tui_gateway/test_hosted_room_service.py`
+- MODIFIED `tests/tui_gateway/test_compaction_status.py`
+- MODIFIED `tests/tui_gateway/test_compute_host_phase1.py`
+- ADDED `tests/tui_gateway/test_config_profile_scope.py`
+- ADDED `tests/tui_gateway/test_config_set_display_toggles.py`
+- MODIFIED `tests/tui_gateway/test_cross_process_orphan_ownership.py`
+- MODIFIED `tests/tui_gateway/test_groups_methods.py`
+- MODIFIED `tests/tui_gateway/test_hosted_room_driver_runtime.py`
+- ADDED `tests/tui_gateway/test_hosted_room_peer_http.py`
+- ADDED `tests/tui_gateway/test_hosted_room_peer_transport.py`
+- MODIFIED `tests/tui_gateway/test_hosted_room_prompt_fence.py`
+- MODIFIED `tests/tui_gateway/test_hosted_room_service.py`
+- ADDED `tests/tui_gateway/test_hosted_room_two_gateway_scoped.py`
+- ADDED `tests/tui_gateway/test_model_options_profile_scope.py`
+- MODIFIED `tests/tui_gateway/test_profiles_list_canonical_session.py`
+- MODIFIED `tests/tui_gateway/test_projects_rpc.py`
+- MODIFIED `tests/tui_gateway/test_session_db_ownership_teardown.py`
+- MODIFIED `tests/tui_gateway/test_session_resume_db_ownership.py`
 - MODIFIED `tools/approval.py`
 - MODIFIED `tools/bot_mode_dm.py`
+- ADDED `tools/browser_lightpanda.py`
+- MODIFIED `tools/browser_tool.py`
+- MODIFIED `tools/browser_use_cli.py`
 - MODIFIED `tools/delegate_tool.py`
+- MODIFIED `tools/desktop_ui.py`
+- MODIFIED `tools/environments/base.py`
+- MODIFIED `tools/environments/docker.py`
+- MODIFIED `tools/environments/local.py`
+- ADDED `tools/environments/path_utils.py`
+- MODIFIED `tools/environments/singularity.py`
+- MODIFIED `tools/interrupt.py`
 - MODIFIED `tools/process_registry.py`
+- MODIFIED `tools/react_to_message_tool.py`
+- MODIFIED `tools/send_message_tool.py`
+- MODIFIED `tools/skill_ledger.py`
 - MODIFIED `tools/skill_manager_tool.py`
-- MODIFIED `tools/skills_tool.py`
-- ADDED `tui_gateway/hosted_room_driver.py`
-- ADDED `tui_gateway/hosted_room_server_rpc.py`
-- ADDED `tui_gateway/hosted_room_service.py`
+- MODIFIED `tools/skill_usage.py`
+- MODIFIED `tools/skills_hub.py`
+- MODIFIED `tools/terminal_tool.py`
+- MODIFIED `tools/tip_tool.py`
+- MODIFIED `tools/tour_tool.py`
+- MODIFIED `tools/url_safety.py`
+- MODIFIED `tools/web_tools.py`
+- MODIFIED `toolsets.py`
+- MODIFIED `trajectory_compressor.py`
+- MODIFIED `tui_gateway/compute_host.py`
+- MODIFIED `tui_gateway/host_supervisor.py`
+- MODIFIED `tui_gateway/hosted_room_driver.py`
+- ADDED `tui_gateway/hosted_room_peer_http.py`
+- ADDED `tui_gateway/hosted_room_peer_transport.py`
+- MODIFIED `tui_gateway/hosted_room_service.py`
 - MODIFIED `tui_gateway/methods_bot_relay.py`
-- ADDED `tui_gateway/methods_groups.py`
+- MODIFIED `tui_gateway/methods_complete.py`
+- MODIFIED `tui_gateway/methods_config.py`
+- MODIFIED `tui_gateway/methods_groups.py`
+- MODIFIED `tui_gateway/methods_profiles.py`
 - MODIFIED `tui_gateway/methods_prompt.py`
 - MODIFIED `tui_gateway/methods_session.py`
 - MODIFIED `tui_gateway/server.py`
-- MODIFIED `ui-tui/src/__tests__/appChromeStatusRule.test.tsx`
-- MODIFIED `website/docs/developer-guide/context-compression-and-caching.md`
-- MODIFIED `website/docs/guides/delegation-patterns.md`
+- MODIFIED `ui-tui/src/__tests__/appChromeBlockedTimers.test.tsx`
+- MODIFIED `ui-tui/src/__tests__/createGatewayEventHandler.test.ts`
+- MODIFIED `ui-tui/src/__tests__/useInputHandlers.test.ts`
+- MODIFIED `ui-tui/src/app/createGatewayEventHandler.ts`
+- MODIFIED `ui-tui/src/app/interfaces.ts`
+- MODIFIED `ui-tui/src/app/turnController.ts`
+- MODIFIED `ui-tui/src/app/uiStore.ts`
+- MODIFIED `ui-tui/src/app/useInputHandlers.ts`
+- MODIFIED `ui-tui/src/app/useMainApp.ts`
+- MODIFIED `ui-tui/src/components/appChrome.tsx`
+- MODIFIED `ui-tui/src/components/appLayout.tsx`
+- MODIFIED `utils.py`
+- MODIFIED `uv.lock`
+- ADDED `web/src/lib/env-state.test.ts`
+- ADDED `web/src/lib/env-state.ts`
+- MODIFIED `web/src/pages/EnvPage.tsx`
+- MODIFIED `website/docs/developer-guide/memory-provider-plugin.md`
+- MODIFIED `website/docs/developer-guide/web-search-provider-plugin.md`
+- MODIFIED `website/docs/integrations/index.md`
+- MODIFIED `website/docs/reference/cli-commands.md`
 - MODIFIED `website/docs/reference/environment-variables.md`
-- MODIFIED `website/docs/reference/optional-skills-catalog.md`
-- MODIFIED `website/docs/reference/skills-catalog.md`
+- MODIFIED `website/docs/reference/slash-commands.md`
+- MODIFIED `website/docs/reference/tools-reference.md`
+- MODIFIED `website/docs/user-guide/bot-mode.md`
+- MODIFIED `website/docs/user-guide/cli.md`
 - MODIFIED `website/docs/user-guide/configuration.md`
 - MODIFIED `website/docs/user-guide/configuring-models.md`
-- MODIFIED `website/docs/user-guide/features/delegation.md`
-- MODIFIED `website/docs/user-guide/features/kanban.md`
-- MODIFIED `website/docs/user-guide/messaging/photon.md`
+- MODIFIED `website/docs/user-guide/desktop.md`
+- MODIFIED `website/docs/user-guide/features/api-server.md`
+- MODIFIED `website/docs/user-guide/features/browser.md`
+- MODIFIED `website/docs/user-guide/features/cron.md`
+- MODIFIED `website/docs/user-guide/features/memory-providers.md`
+- MODIFIED `website/docs/user-guide/features/web-dashboard.md`
+- MODIFIED `website/docs/user-guide/features/web-search.md`
+- MODIFIED `website/docs/user-guide/messaging/buzz.md`
+- MODIFIED `website/docs/user-guide/messaging/index.md`
+- MODIFIED `website/docs/user-guide/profile-distributions.md`
 - MODIFIED `website/docs/user-guide/security.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/apple/apple-apple-notes.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/apple/apple-apple-reminders.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/apple/apple-findmy.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/apple/apple-imessage.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-claude-code.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-codex.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-computer-use.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent.md`
-- ADDED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-merge-reconciler.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-opencode.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-architecture-diagram.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-ascii-video.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-baoyu-infographic.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-claude-design.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-design-md.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-humanizer.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-manim-video.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-p5js.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-popular-web-designs.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/creative/creative-songwriting-and-ai-music.md`
-- ADDED `website/docs/user-guide/skills/bundled/devops/devops-sdlc-review.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/email/email-email-inbox-triage.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/email/email-himalaya.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/media/media-gif-search.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/media/media-songsee.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/media/media-youtube-content.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/note-taking/note-taking-obsidian.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-airtable.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-box.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-document-to-action-items.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-docx.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-google-workspace.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-maps.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-meeting-action-items.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-notion.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-pdf.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-powerpoint.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-product-price-monitor.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-teams-meeting-pipeline.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-weekly-review-planning.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/productivity/productivity-xlsx.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/research/research-arxiv.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/research/research-competitor-news-monitor.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/research/research-grounded-citations.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/research/research-llm-wiki.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/social-media/social-media-xurl.md`
-- ADDED `website/docs/user-guide/skills/bundled/software-development/software-development-codebase-inspection.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-dogfood.md`
-- ADDED `website/docs/user-guide/skills/bundled/software-development/software-development-github.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-nastech-agent-skill-authoring.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-inspecting-nastech-desktop-dom.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-node-inspect-debugger.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-python-debugpy.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-requesting-code-review.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-simplify-code.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-spike.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-systematic-debugging.md`
-- MODIFIED `website/docs/user-guide/skills/bundled/software-development/software-development-test-driven-development.md`
-- ADDED `website/docs/user-guide/skills/bundled/web/web-blocked-page-recovery.md`
-- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-antigravity-cli.md`
-- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-blackbox.md`
-- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-grok.md`
-- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-honcho.md`
-- MODIFIED `website/docs/user-guide/skills/optional/autonomous-ai-agents/autonomous-ai-agents-openhands.md`
-- MODIFIED `website/docs/user-guide/skills/optional/blockchain/blockchain-evm.md`
-- MODIFIED `website/docs/user-guide/skills/optional/blockchain/blockchain-hyperliquid.md`
-- MODIFIED `website/docs/user-guide/skills/optional/blockchain/blockchain-solana.md`
-- MODIFIED `website/docs/user-guide/skills/optional/communication/communication-one-three-one-rule.md`
-- ADDED `website/docs/user-guide/skills/optional/creative/creative-ascii-art.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-audiocraft-audio-generation.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-baoyu-article-illustrator.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-baoyu-comic.md`
-- ADDED `website/docs/user-guide/skills/optional/creative/creative-comfyui.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-concept-diagrams.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-creative-ideation.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-draw-your-font.md`
-- ADDED `website/docs/user-guide/skills/optional/creative/creative-excalidraw.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-heartmula.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-hyperframes.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-impeccable.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-kanban-video-orchestrator.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-meme-generation.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-pixel-art.md`
-- ADDED `website/docs/user-guide/skills/optional/creative/creative-pretext.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-simple-english.md`
-- ADDED `website/docs/user-guide/skills/optional/creative/creative-sketch.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-social-media-content-calendar.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-tldraw-offline.md`
-- ADDED `website/docs/user-guide/skills/optional/creative/creative-touchdesigner-mcp.md`
-- MODIFIED `website/docs/user-guide/skills/optional/creative/creative-unreal-mcp.md`
-- MODIFIED `website/docs/user-guide/skills/optional/data-science/data-science-jupyter-notebook.md`
-- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-actual-setup.md`
-- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-docker-management.md`
-- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-nastech-s6-container-supervision.md`
-- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-inference-sh-cli.md`
-- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-pinggy-tunnel.md`
-- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-setup-wizard-generator.md`
-- MODIFIED `website/docs/user-guide/skills/optional/devops/devops-watchers.md`
-- MODIFIED `website/docs/user-guide/skills/optional/dogfood/dogfood-adversarial-ux-test.md`
-- MODIFIED `website/docs/user-guide/skills/optional/email/email-agentmail.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-3-statement-model.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-comps-analysis.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-dcf-model.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-excel-author.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-lbo-model.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-merger-model.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-polymarket.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-pptx-author.md`
-- MODIFIED `website/docs/user-guide/skills/optional/finance/finance-stocks.md`
-- MODIFIED `website/docs/user-guide/skills/optional/gaming/gaming-minecraft-modpack-server.md`
-- MODIFIED `website/docs/user-guide/skills/optional/gaming/gaming-pokemon-player.md`
-- MODIFIED `website/docs/user-guide/skills/optional/health/health-fitness-nutrition.md`
-- MODIFIED `website/docs/user-guide/skills/optional/health/health-neuroskill-bci.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mcp/mcp-fastmcp.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mcp/mcp-mcp-oauth-remote-gateway.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mcp/mcp-mcporter.md`
-- MODIFIED `website/docs/user-guide/skills/optional/migration/migration-openclaw-migration.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-accelerate.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-chroma.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-clip.md`
-- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-evaluation-evaluating-llms-harness.md`
-- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-evaluation-weights-and-biases.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-faiss.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-flash-attention.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-guidance.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-huggingface-tokenizers.md`
-- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-inference-llama-cpp.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-inference-outlines.md`
-- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-inference-serving-llms-vllm.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-instructor.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-lambda-labs.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-llava.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-modal.md`
-- ADDED `website/docs/user-guide/skills/optional/mlops/mlops-models-huggingface-hub.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-models-segment-anything-model.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-nemo-curator.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-obliteratus.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-peft.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-pinecone.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-pytorch-fsdp.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-pytorch-lightning.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-qdrant.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-research-dspy.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-saelens.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-simpo.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-slime.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-stable-diffusion.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-tensorrt-llm.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-torchtitan.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-training-axolotl.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-training-trl-fine-tuning.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-training-unsloth.md`
-- MODIFIED `website/docs/user-guide/skills/optional/mlops/mlops-whisper.md`
-- MODIFIED `website/docs/user-guide/skills/optional/payments/payments-mpp-agent.md`
-- MODIFIED `website/docs/user-guide/skills/optional/payments/payments-stripe-link-cli.md`
-- MODIFIED `website/docs/user-guide/skills/optional/payments/payments-stripe-projects.md`
-- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-canvas.md`
-- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-decision-questionnaire.md`
-- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-here-now.md`
-- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-memento-flashcards.md`
-- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-shop.md`
-- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-shopify.md`
-- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-siyuan.md`
-- MODIFIED `website/docs/user-guide/skills/optional/productivity/productivity-telephony.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-bioinformatics.md`
-- ADDED `website/docs/user-guide/skills/optional/research/research-blogwatcher.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-darwinian-evolver.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-domain-intel.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-drug-discovery.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-duckduckgo-search.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-gitnexus-explorer.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-osint-investigation.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-parallel-cli.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-pinecone-research.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-qmd.md`
-- ADDED `website/docs/user-guide/skills/optional/research/research-research-paper-writing.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-scrapling.md`
-- MODIFIED `website/docs/user-guide/skills/optional/research/research-searxng-search.md`
-- MODIFIED `website/docs/user-guide/skills/optional/security/security-1password.md`
-- MODIFIED `website/docs/user-guide/skills/optional/security/security-godmode.md`
-- MODIFIED `website/docs/user-guide/skills/optional/security/security-oss-forensics.md`
-- MODIFIED `website/docs/user-guide/skills/optional/security/security-sherlock.md`
-- MODIFIED `website/docs/user-guide/skills/optional/security/security-unbroker.md`
-- MODIFIED `website/docs/user-guide/skills/optional/security/security-web-pentest.md`
-- ADDED `website/docs/user-guide/skills/optional/smart-home/smart-home-openhue.md`
-- ADDED `website/docs/user-guide/skills/optional/software-development/software-development-ast-grep.md`
-- MODIFIED `website/docs/user-guide/skills/optional/software-development/software-development-code-wiki.md`
-- MODIFIED `website/docs/user-guide/skills/optional/software-development/software-development-grill-me.md`
-- MODIFIED `website/docs/user-guide/skills/optional/software-development/software-development-rest-graphql-debug.md`
-- MODIFIED `website/docs/user-guide/skills/optional/software-development/software-development-subagent-driven-development.md`
-- MODIFIED `website/docs/user-guide/skills/optional/web-development/web-development-cloudflare-temporary-deploy.md`
-- ADDED `website/docs/user-guide/skills/optional/web-development/web-development-har-derived-api-client.md`
-- MODIFIED `website/docs/user-guide/skills/optional/web-development/web-development-page-agent.md`
-- MODIFIED `website/docs/user-guide/skills/optional/web-development/web-development-publish-site.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/kanban.md`
-- MODIFIED `website/sidebars.ts`
+- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/reference/environment-variables.md`
+- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/features/cron.md`
 
 ## Scan
 
-10823 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10701]
+11057 files scanned [audio=5, binary=7, doc=5, font=13, image=92, text=10935]
 
 
 ## Diff
 
-1410 renamed, 0 rewritten, 9010 identical, 61 locked, 0 missing, 34 owned, 254 reconciled
+1435 renamed, 0 rewritten, 9219 identical, 61 locked, 0 missing, 34 owned, 254 reconciled
 
 
 ## Fork check (vs nastech-agent)
 
-- 10299 identical, 280 updated (+0/-0 lines), 243 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 0 collision-safe relocated, 54 preserved fork-local files, 0 violations
+- 10143 identical, 672 updated (+0/-0 lines), 241 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 1 locked/binary, 1 collision-safe relocated, 54 preserved fork-local files, 0 violations
 
 - features: fork 51 -> branded 51
 

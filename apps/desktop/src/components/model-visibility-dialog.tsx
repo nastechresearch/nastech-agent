@@ -9,12 +9,12 @@ import { DisclosureCaret } from '@/components/ui/disclosure-caret'
 import { GlyphSpinner } from '@/components/ui/glyph-spinner'
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { Switch } from '@/components/ui/switch'
+import type { NastechGateway } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { Search } from '@/lib/icons'
 import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { displayModelName, modelDisplayParts } from '@/lib/model-status-label'
 import { normalize } from '@/lib/text'
-import type { NastechGateway } from '@/nastech'
 import {
   $visibleModels,
   collapseModelFamilies,
@@ -32,6 +32,7 @@ interface ModelVisibilityDialogProps {
   onOpenChange: (open: boolean) => void
   onOpenProviders: () => void
   open: boolean
+  ownerConnectionId?: string
   profile?: string
   sessionId?: string | null
 }
@@ -41,6 +42,7 @@ export function ModelVisibilityDialog({
   onOpenChange,
   onOpenProviders,
   open,
+  ownerConnectionId,
   profile = 'default',
   sessionId
 }: ModelVisibilityDialogProps) {
@@ -51,8 +53,8 @@ export function ModelVisibilityDialog({
   const collapsedProviders = useStore($collapsedProviders)
 
   const modelOptions = useQuery({
-    queryKey: modelOptionsQueryKey(profile, sessionId),
-    queryFn: (): Promise<ModelOptionsResponse> => requestModelOptions({ gateway: gw, sessionId }),
+    queryKey: modelOptionsQueryKey(profile, sessionId, ownerConnectionId),
+    queryFn: (): Promise<ModelOptionsResponse> => requestModelOptions({ gateway: gw, profile, sessionId }),
     enabled: open
   })
 

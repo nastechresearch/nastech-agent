@@ -922,6 +922,25 @@ max_concurrent_sessions: null
 # explicitly want one shared "room brain" per group/channel.
 group_sessions_per_user: true
 
+# Optional direct endpoint for autonomous Bot Mode rooms spanning gateways.
+# Leave unset for the safe default: Desktop coordinates cross-gateway rooms and
+# same-gateway rooms can still continue on their own. Set this only to the
+# public HTTPS base URL that another trusted Nastech gateway can reach. The API
+# server key authorizes the initial invitation; scoped grants are signed by a
+# separate installation-private secret and survive API-key rotation. Disbanding
+# a Group Chat revokes its known peer routes; API-key rotation alone does not.
+# Network access should still be limited to the peer gateways (for example with
+# your VPN or firewall).
+# Plain HTTP is accepted only for loopback testing; every reachable peer URL
+# must use HTTPS.
+#
+# gateway:
+#   room_link_url: "https://nastech.example.net"
+#
+# The equivalent environment override is NASTECH_ROOM_LINK_URL. After changing
+# it, restart the gateway and reopen New Group Chat > Advanced; Nastech will
+# re-check the selected gateways automatically.
+
 # Startup sweep of session rows orphaned by a dead gateway process.
 # The normal disconnect cleanup runs on an in-process grace timer, so a
 # gateway restart (update, crash, systemd) leaves those rows permanently
@@ -1022,8 +1041,8 @@ agent:
   # Maximum time an alias routing key waits for an active turn holding the same
   # resolved session lease. On expiry Nastech rejects this inbound message and
   # asks the user to resend rather than running it without serialization.
-  # Non-positive values fall back to the 1800-second default.
-  # gateway_turn_lease_timeout: 1800
+  # Non-positive values fall back to the 5-second default.
+  # gateway_turn_lease_timeout: 5
 
   # Staged warning: send a warning before escalating to full timeout.
   # Fires once per run when inactivity reaches this threshold (seconds).
@@ -1035,6 +1054,16 @@ agent:
   # gateway logs a WARNING and notifies the user to try /new. Does not kill
   # the turn (see gateway_timeout). 0 = disable. Default 300.
   # session_stall_timeout: 300
+
+  # Transcript-sanitiser repeated-heal escalation (#96870). The pre-send
+  # sanitiser silently repairs empty non-final turns on the wire copy; after
+  # this many heal passes within a 10-minute session window Nastech logs one
+  # ERROR (with session id + heal pattern) and sends a ONE-TIME out-of-band
+  # notice to the user suggesting /debug share or `nastech doctor`. The notice
+  # goes through the status channel only — conversation context and prompt
+  # caching are untouched. Set 0 to disable escalation (per-window WARNINGs
+  # still fire). Default 3.
+  # sanitizer_heal_escalation_threshold: 3
 
   # Related in-agent compression timeouts (they live under the top-level
   # compression: block, shown here for discoverability next to the stall
@@ -1140,6 +1169,15 @@ agent:
   #     system_prompt: "You are a meticulous code reviewer."
   #     tone: "direct"
   #     style: "terse"
+
+# =============================================================================
+# Gateway Lifecycle
+# =============================================================================
+gateway:
+  # Post-interrupt grace for running agents during an unexpected SIGTERM.
+  # Adapter, bridge, and database teardown starts after this many seconds even
+  # if an agent has not unwound. Keep it below the service-manager stop budget.
+  # signal_interrupt_grace_timeout: 1
 
 # =============================================================================
 # Toolsets
@@ -1754,6 +1792,13 @@ display:
 # Aliases are checked BEFORE the models.dev catalog, so they can route
 # to endpoints not in the catalog (e.g. Ollama Cloud, local servers).
 #
+# An alias pointing at its own endpoint can carry that endpoint's
+# credential with `api_key` (a literal, or a "${VAR}" reference) or
+# `key_env` (an env var name). `api_key` wins if both are set. When
+# neither is set the key is resolved from the alias HOST — never from
+# whatever provider was active before the switch, which would send that
+# provider's secret to an unrelated third party.
+#
 # model_aliases:
 #   opus:
 #     model: claude-opus-4-6
@@ -1766,6 +1811,11 @@ display:
 #     model: glm-4.7
 #     provider: custom
 #     base_url: "https://ollama.com/v1"
+#   theta:
+#     model: theta-1
+#     provider: custom
+#     base_url: "https://theta.example.com/v1"
+#     key_env: THETA_API_KEY               # or: api_key: "${THETA_API_KEY}"
 
 # =============================================================================
 # Privacy

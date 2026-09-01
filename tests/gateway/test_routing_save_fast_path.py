@@ -29,6 +29,12 @@ def _source(user_id: str = "user-1") -> SessionSource:
 
 def _make_store(tmp_path, monkeypatch, **config_kwargs) -> SessionStore:
     monkeypatch.setattr(nastech_state, "DEFAULT_DB_PATH", tmp_path / "state.db")
+    # The routing index is pinned to NASTECH_HOME's store (#66887 recovery
+    # fix); point it at the test tmp so the ambient and routing stores are
+    # the same file, matching the store this harness inspects.
+    import nastech_constants
+
+    monkeypatch.setattr(nastech_constants, "get_nastech_home", lambda: str(tmp_path))
     return SessionStore(
         sessions_dir=tmp_path / "sessions",
         config=GatewayConfig(**config_kwargs),

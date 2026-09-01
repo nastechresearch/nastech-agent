@@ -6,6 +6,13 @@ import { NO_PROJECT_ID } from '@/app/chat/sidebar/projects/workspace-groups'
 import { graftRefreshedTailOntoBackfill } from '@/app/chat/transcript-backfill'
 import { revealTreePane } from '@/components/pane-shell/tree/store'
 import { setWorkspaceScope } from '@/components/pane-shell/workspace-scope'
+import {
+  deleteSession,
+  fetchStoredTranscriptAcrossBackends,
+  getAllSessionMessages,
+  getLatestSessionMessages,
+  setSessionArchived
+} from '@/nastech'
 import { useI18n } from '@/i18n'
 import {
   type ChatMessage,
@@ -18,13 +25,6 @@ import {
 import { isMissingRpcMethod } from '@/lib/gateway-rpc'
 import { recoverInFlightTurnJournal } from '@/lib/inflight-turn-journal'
 import { setSessionYolo } from '@/lib/yolo-session'
-import {
-  deleteSession,
-  fetchStoredTranscriptAcrossBackends,
-  getAllSessionMessages,
-  getLatestSessionMessages,
-  setSessionArchived
-} from '@/nastech'
 import { $clarifyRequests } from '@/store/clarify'
 import { migrateSessionDraft } from '@/store/composer'
 import { clearQueuedPrompts, migrateQueuedPrompts } from '@/store/composer-queue'
@@ -71,6 +71,7 @@ import {
   $newChatWorkspaceTarget,
   $sessions,
   $yoloActive,
+  getCurrentModelSource,
   getSessionOwnerHint,
   type NewChatWorkspaceTarget,
   resolveComposerSessionKey,
@@ -242,8 +243,9 @@ function reconcileAuthoritativeMessages(
 // mode one backend serves every profile, so an omitted profile silently lands the
 // chat on the launch (default) profile — the "rubberbands back to default" bug.
 // A no-op for single-profile/local-pooled users (a backend resolves its own launch
-// profile to None). The sticky UI model/effort/fast ride as per-session overrides,
-// never the profile default (that lives in Settings → Model).
+// profile to None). Effort/fast still ride as per-session overrides. Model and
+// provider only ride when the composer source is 'manual' — a default-sourced
+// value is a mirror of Settings → Model and must not pin the new chat.
 async function desktopSessionCreateParams(
   cwd: string,
   capturedRoute = resolveNewChatOwnerRoute()
@@ -252,11 +254,17 @@ async function desktopSessionCreateParams(
   // profile handshake below can yield long enough for background config/model
   // refreshes to finish; reading atoms afterward would silently create the
   // session with a different selection than the one the user submitted.
+  // Settings → Model while a session is live leaves $currentModel painted with
+  // the live agent (applySavedMainModel) and only flips the source to 'default'.
+  // Shipping that stale value as an override pins every new chat to the old
+  // model. Omit model/provider unless the source is 'manual'.
+  const isManualSelection = getCurrentModelSource() === 'manual'
+
   const selection = {
     effort: $currentReasoningEffort.get().trim(),
     fast: $currentFastMode.get(),
-    model: $currentModel.get().trim(),
-    provider: $currentProvider.get().trim()
+    model: isManualSelection ? $currentModel.get().trim() : '',
+    provider: isManualSelection ? $currentProvider.get().trim() : ''
   }
 
   const profile = capturedRoute?.profile || $newChatProfile.get() || normalizeProfileKey($activeGatewayProfile.get())

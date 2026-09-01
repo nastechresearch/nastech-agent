@@ -161,7 +161,8 @@ export const en: Translations = {
       microphonePermission: 'Microphone permission was denied.',
       openaiRejectedApiKey: 'OpenAI rejected the API key.',
       openaiRejectedApiKeyWithStatus: status => `OpenAI rejected the API key (${status} invalid_api_key).`,
-      openaiTtsNeedsKey: 'OpenAI TTS needs VOICE_TOOLS_OPENAI_KEY or OPENAI_API_KEY.'
+      openaiTtsNeedsKey: 'OpenAI TTS needs VOICE_TOOLS_OPENAI_KEY or OPENAI_API_KEY.',
+      codeSkewRestartRequired: 'This backend is running old code after an update. Restart it to load the new code.'
     },
     voice: {
       configureSpeechToText: 'Configure speech-to-text to use voice mode.',
@@ -1090,6 +1091,11 @@ export const en: Translations = {
       reasoning: 'Reasoning',
       reasoningOff: 'Off',
       defaultsFailed: 'Failed to save model defaults',
+      loadFailed: 'Could not load models',
+      restartRequired: 'This backend is running old code after an update. Restart it to load the new code.',
+      restartBackend: 'Restart backend',
+      restartingBackend: 'Restarting backend...',
+      restartFailed: 'Could not restart the backend',
       auxiliaryTitle: 'Auxiliary models',
       resetAllToMain: 'Reset all to main',
       auxiliaryDesc: 'Helper tasks run on the main model by default. Assign a dedicated model to any task to override.',
@@ -1199,8 +1205,7 @@ export const en: Translations = {
       useBackend: 'Use this backend',
       nastechIncluded: 'Included with a Nastech subscription — sign in to Nastech Portal to activate.',
       nastechAuthNeededTitle: 'Sign in to Nastech Portal',
-      nastechAuthNeededMessage: provider =>
-        `${provider} is saved but won't activate until you sign in to Nastech Portal.`,
+      nastechAuthNeededMessage: provider => `${provider} is saved but won't activate until you sign in to Nastech Portal.`,
       nastechAuthSignIn: 'Sign in',
       nastechAuthDoneTitle: 'Nastech Portal connected',
       nastechAuthDoneMessage: 'Your subscription backends are now active.',
@@ -1258,7 +1263,17 @@ export const en: Translations = {
         enabledMessage: 'New sessions will browse with a snapshot of your default browser profile.',
         disabledTitle: 'Real-profile browsing off',
         disabledMessage: 'The profile snapshot will be deleted; new sessions use a clean browser.',
-        failedSave: 'Could not save the real-profile setting'
+        failedSave: 'Could not save the real-profile setting',
+        prompt: {
+          title: 'Stay signed in to your sites',
+          body: 'Let Nastech browse with a snapshot of your default browser profile, so sites open already signed in.',
+          bulletSnapshot: 'Cookies and logins are copied into a managed snapshot.',
+          bulletLiveProfile: 'Your live browser profile is never opened directly.',
+          bulletLocal: 'Nothing leaves this computer.',
+          dontShowAgain: "Don't show again",
+          notNow: 'Not now',
+          enable: 'Use my profile'
+        }
       }
     }
   },
@@ -1319,6 +1334,8 @@ export const en: Translations = {
     archive: 'Archive',
     skillArchivedTitle: 'Skill archived',
     skillArchivedMessage: 'Restorable via nastech curator restore.',
+    officialCatalog: 'Available to install',
+    officialPill: 'Official',
     hub: {
       searchPlaceholder: 'Search the skill hub',
       search: 'Search',
@@ -2760,8 +2777,7 @@ export const en: Translations = {
       xai: { short: 'Grok models', description: 'Direct access to xAI Grok models.' },
       local: {
         short: 'self-hosted',
-        description:
-          'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
+        description: 'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
       }
     },
     backToSignIn: 'Back to sign in',
@@ -3107,7 +3123,17 @@ export const en: Translations = {
       loadFailedConsole: (code, message) => `Load failed${code ? ` (${code})` : ''}: ${message}`,
       unreachableDescription: 'The preview page could not be reached.',
       openTarget: url => `Open ${url}`,
-      fallbackTitle: 'Preview'
+      fallbackTitle: 'Preview',
+      annotate: 'Annotate',
+      annotateOn: 'Stop annotating',
+      annotateNeedPage: 'Open a page in the in-app browser first.',
+      annotateFailed: 'Could not start annotation mode',
+      commenting: 'Commenting',
+      addComments: count => (count === 1 ? 'Add 1 comment' : `Add ${count} comments`),
+      commentPlaceholder: 'Add a comment...',
+      commentTitle: n => `Comment ${n}`,
+      saveComment: 'Save',
+      cancelComment: 'Cancel comment'
     }
   },
 

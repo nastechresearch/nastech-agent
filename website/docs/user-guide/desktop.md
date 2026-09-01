@@ -44,6 +44,7 @@ The center of the app. You get:
 - **The same conversation history** as every other Nastech surface — sessions started here resume in the CLI/TUI and vice versa.
 - **Drag-and-drop files** anywhere in the chat area to attach them to your next message.
 - **A right-hand preview rail** — render web pages, files, and tool outputs side by side while you keep chatting.
+- **Comment mode in the in-app browser** — click **Annotate** in the preview browser bar, then click any element (or drag a box) on the live page and type a note; each saved comment stays as a numbered pin on the page. Saving a pin never sends a turn — when you're done, **Add N comments** attaches a cropped screenshot per pin and a short prompt naming each comment to the composer, and you still hit send yourself. Pin numbers hold steady if you delete one, and switching chats clears the stack.
 - **Composer history and queue editing** — press the up/down arrow keys in an empty composer to recall and reuse previous prompts, and edit messages you've queued up before they're sent. Pressing Stop (or Esc) while turns are queued pauses the queue and expands it above the composer; resume it from there, or send, edit, and delete individual entries.
 - **A conversation timeline rail** — long chats get a slim rail of markers along the edge of the transcript, one per prompt. Hover it to pop open the list of prompts, click one to jump straight to that point in the conversation. (It appears once the chat has a handful of turns.)
 - **Find in page** — press **Cmd/Ctrl+F** to open a find bar that searches the rendered chat transcript. Enter / Shift+Enter (or Cmd/Ctrl+G / Cmd/Ctrl+Shift+G while the bar is open) step through matches; Esc closes it.
@@ -182,7 +183,7 @@ When you have two or more [profiles](./profiles.md), the config-backed settings 
 
 The app also surfaces the broader Nastech management surface so you don't have to drop to a terminal:
 
-- **Skills** — browse, install, and manage [skills](./features/skills.md).
+- **Skills** — browse, install, and manage [skills](./features/skills.md). The Skills tab lists your installed skills with enable/disable toggles, and below them the full built-in optional-skills catalog that ships with Nastech — each entry has a one-click **Install** button that flips the row into the installed list once it finishes.
 - **Memory graph (Star Map)** — type `/journey` (aliases `/learning`, `/memory-graph`) in chat to open an interactive constellation of learned skills and memories over time, with a playback scrubber. Nodes can be edited or deleted right from the panel (skills are archived, memories removed). See [Learning Journey](./features/memory.md#learning-journey-journey).
 - **Cron** — view and manage [scheduled jobs](../reference/cli-commands.md#nastech-cron).
 - **Profiles** — switch between [Nastech profiles](./profiles.md) (isolated config/skills/sessions).

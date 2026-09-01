@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import { forceRedraw, useInput } from '@nastech/ink'
+import { useStore } from '@nanostores/react'
 import { useEffect, useRef } from 'react'
 
 import { DASHBOARD_TUI_MODE } from '../config/env.js'
@@ -166,6 +166,10 @@ export function dismissSensitivePrompt(
 }
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+
+export function shouldDetachEditedHistoryInput(historyIdx: null | number, history: readonly string[], value: string) {
+  return historyIdx !== null && value !== history[historyIdx]
+}
 
 export function useInputHandlers(ctx: InputHandlerContext): InputHandlerResult {
   const { actions, composer, gateway, terminal, voice, wheelStep } = ctx
