@@ -23,13 +23,13 @@ import {
 } from '@/components/ui/sidebar'
 import { Tip, TipKeybindLabel } from '@/components/ui/tooltip'
 import { useContributions } from '@/contrib/react/use-contributions'
+import { searchSessions, type SessionInfo, type SessionSearchResult } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { comboTokens } from '@/lib/keybinds/combo'
 import { resolveProfileColor } from '@/lib/profile-color'
 import { sessionMatchesSearch } from '@/lib/session-search'
 import { normalizeSessionSource, sessionSourceLabel } from '@/lib/session-source'
 import { cn } from '@/lib/utils'
-import { searchSessions, type SessionInfo, type SessionSearchResult } from '@/nastech'
 import { $activeConnectionId } from '@/store/connections'
 import { $cronJobs } from '@/store/cron'
 import { $bindings } from '@/store/keybinds'
@@ -89,7 +89,6 @@ import {
   $projectScope,
   $projectTree,
   $projectTreeLoading,
-  $removedSessionIds,
   $reposScanning,
   ALL_PROJECTS,
   enterProject,
@@ -127,6 +126,7 @@ import {
 } from '@/store/session'
 import { $sessionDotStateById, sessionStatusBucket } from '@/store/session-dot-state'
 import { $unconfirmedPinWrites } from '@/store/session-pin-sync'
+import { $removedSessionIds } from '@/store/session-removal'
 import { $focusedStoredSessionId, $workingSessionIds, type SplitDir } from '@/store/session-states'
 import { ackAllSessionsRead } from '@/store/session-unread'
 import { markSessionUnread } from '@/store/session-unread-remote'

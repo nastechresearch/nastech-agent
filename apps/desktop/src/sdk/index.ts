@@ -36,6 +36,7 @@ import {
   $workspaceMode,
   $workspaceOwnerKey,
   setWorkspaceScope as publishWorkspaceScope,
+  setWorkspaceOwnerLabel,
   type WorkspaceNewSessionTarget
 } from '@/components/pane-shell/workspace-scope'
 import { onGatewayEvent } from '@/contrib/events'
@@ -1160,6 +1161,11 @@ export const host = {
     return close
   },
 
+  /** Name a workspace owner on its tabs (a bot's display name). A canonical
+   *  chat's STORED title is an identity the backend resolves by name; this is
+   *  the caption shown for it. Feature-detect on older desktops. */
+  setWorkspaceOwnerLabel,
+
   /** Switch the visible main-pane workspace without unregistering retained panes. */
   setWorkspaceScope: (
     mode: WorkspaceMode,
@@ -1217,8 +1223,9 @@ export const host = {
    *  caller falls through to its authoritative open path. */
   focusOpenWorkspaceSession: (
     workspaceOwnerKey: string,
-    isStaleTile?: (tile: { storedSessionId: string; workspaceTabTitle?: string }) => boolean
-  ): null | string => focusWorkspaceOwnerSessionTile(workspaceOwnerKey, isStaleTile),
+    isStaleTile?: (tile: { storedSessionId: string; workspaceTabTitle?: string }) => boolean,
+    onlyStoredIds?: readonly string[]
+  ): null | string => focusWorkspaceOwnerSessionTile(workspaceOwnerKey, isStaleTile, onlyStoredIds),
 
   /** Reactive on-screen visibility of a contributed pane: true while it is in
    *  the layout tree, not dismissed/hidden, its zone un-minimized, AND holding
@@ -1510,6 +1517,11 @@ export {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
+  // Submenus: Bot Mode files a bot into a user section from its row menu, and
+  // a flat list of every folder would swamp the items already there.
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger
 } from '@/components/ui/context-menu'
 export { CopyButton } from '@/components/ui/copy-button'
@@ -1627,11 +1639,11 @@ export { triggerHaptic as haptic } from '@/lib/haptics'
 export * as icons from '@/lib/icons'
 export { type KeybindContribution, KEYBINDS_AREA } from '@/lib/keybinds/actions'
 export { formatModifierToken } from '@/lib/keybinds/combo'
+export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 /** A `Map` with a ceiling, for the module-level caches a plugin keeps across
  *  a renderer that stays open for days. Only for values that can be
  *  regenerated — eviction costs a recompute or a refetch, never correctness. */
 export { LruCache } from '@/lib/lru-cache'
-export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 /** The app's deterministic identity color for a name (profiles, assignees,
  *  authors), its translucent tag fill, and the curated picker swatches — so
  *  plugin-rendered identities read the same hue as everywhere else. The

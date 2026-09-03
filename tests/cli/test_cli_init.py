@@ -465,6 +465,25 @@ class TestNestedDictModelDefaultPairing:
         assert "unrestricted" in output
         assert "Slash commands: all available" in output
 
+    def test_provider_prefixed_startup_model_overrides_stale_provider(self):
+        cli = _make_cli(
+            config_overrides={
+                "model": {
+                    "default": "anthropic/claude-opus-4.6",
+                    "provider": "anthropic",
+                },
+                "providers": {
+                    "nastech": {
+                        "base_url": "https://inference-api.nastechresearch.github.io/v1",
+                    },
+                },
+            },
+            model="nastech/deepseek-v4-pro",
+        )
+
+        assert cli.model == "deepseek-v4-pro"
+        assert cli.requested_provider == "nastech"
+
 
 class TestRootLevelProviderOverride:
     """Root-level provider/base_url in config.yaml must NOT override model.provider."""

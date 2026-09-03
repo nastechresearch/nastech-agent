@@ -82,18 +82,19 @@ class NastechPortalAdapter(UpstreamAdapter):
         failed_credential: UpstreamCredential,
         status_code: int,
     ) -> Optional[UpstreamCredential]:
-        _ = failed_credential
         if status_code != 401:
             return None
         logger.info("proxy: Nastech upstream rejected bearer; force-refreshing invoke JWT")
         return self._get_credential(
             force_refresh=True,
+            stale_access_token=failed_credential.bearer,
         )
 
     def _get_credential(
         self,
         *,
         force_refresh: bool = False,
+        stale_access_token: Optional[str] = None,
     ) -> UpstreamCredential:
         with self._lock:
             state = self._read_state()
@@ -105,6 +106,7 @@ class NastechPortalAdapter(UpstreamAdapter):
             try:
                 refreshed = resolve_nastech_runtime_credentials(
                     force_refresh=force_refresh,
+                    stale_access_token=stale_access_token or None,
                 )
             except AuthError as exc:
                 if _is_terminal_nastech_refresh_error(exc):

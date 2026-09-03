@@ -1,4 +1,4 @@
-import { getGlobalModelOptions, type ModelOptionsResponse, type NastechGateway } from '@/nastech'
+import { getGlobalModelOptions, type NastechGateway, type ModelOptionsResponse } from '@/nastech'
 import type { ModelOptionProvider } from '@/types/nastech'
 
 /**
