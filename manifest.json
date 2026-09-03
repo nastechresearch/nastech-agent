@@ -1,15 +1,16 @@
 {
   "number": 1,
   "dir": "Nastech-Update#1",
-  "upstream_sha": "3ea71a47b3f87d707944ebc7aa543a21cd24a936",
+  "upstream_sha": "05f548f35dd3242bf2ff74743e9112acde251f77",
   "nastech_url": "https://github.com/Nastechresearch/nastech-agent.git",
   "source_provenance": {
     "remote_url": "https://github.com/Nastechresearch/nastech-agent.git",
-    "fetched_at": "2026-09-03T08:14:57+00:00",
+    "fetched_at": "2026-09-03T08:58:22+00:00",
     "acquisition": "fresh-direct-clone",
     "baseline_sha": "7cd91114b462b7af76e558cc4e97f82201d2e884"
   },
   "commit_subjects": [
+    "fix(desktop): declare rememberLog state before the top-level pool-limits read",
     "fix(desktop): refresh Bot Chat transcript when a roster click fronts an already-open tab",
     "fix(desktop): toast action is a real button, not a hairline text link",
     "fix(prompt): Muse Spark gets tool-use enforcement + execution guidance on defaults (#96550)",
@@ -718,7 +719,7 @@
     ".github": 8,
     ".gitignore": 1,
     "agent": 165,
-    "apps": 470,
+    "apps": 471,
     "cli-config.yaml.example": 15,
     "cli.py": 12,
     "contributors": 45,

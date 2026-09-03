@@ -6,8 +6,8 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 703 commits affecting 1534 files.
-- **Source revision:** `3ea71a47b3f8`.
+- **Changes incorporated:** 704 commits affecting 1534 files.
+- **Source revision:** `05f548f35dd3`.
 - **Previous source revision:** `7cd91114b462`.
 
 ## Technical coverage
@@ -15,7 +15,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 - **.github/:** 8 changed files.
 - **.gitignore/:** 1 changed files.
 - **agent/:** 165 changed files.
-- **apps/:** 470 changed files.
+- **apps/:** 471 changed files.
 - **cli-config.yaml.example/:** 15 changed files.
 - **cli.py/:** 12 changed files.
 - **contributors/:** 45 changed files.
@@ -69,6 +69,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ### Reliability and fixes
 
+- fix(desktop): declare rememberLog state before the top-level pool-limits read
 - fix(desktop): refresh Bot Chat transcript when a roster click fronts an already-open tab
 - fix(desktop): toast action is a real button, not a hairline text link
 - fix(prompt): Muse Spark gets tool-use enforcement + execution guidance on defaults (#96550)
@@ -80,8 +81,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 - fix(vision): honor supports_vision_tool_messages=False in tool-result media gates
 - fix(inventory): reword pending-entitlement warning to avoid Windows footgun false positive
 - fix(inventory): explain the locked Nastech list while entitlement is pending
-- fix(gateway): keep first model picker open responsive on cold pricing cache
-- 416 additional reliability and fixes updates are included in this verified snapshot.
+- 417 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Performance
 

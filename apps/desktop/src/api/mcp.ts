@@ -137,13 +137,11 @@ export function installMcpCatalogEntry(
   env: Record<string, string> = {},
   profile?: ProfileScope
 ): Promise<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }> {
-  return window.nastechDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>(
-    {
-      ...capabilityScoped(profile),
-      path: '/api/mcp/catalog/install',
-      method: 'POST',
-      body: { name, env, enable: true },
-      timeoutMs: 60_000
-    }
-  )
+  return window.nastechDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>({
+    ...capabilityScoped(profile),
+    path: '/api/mcp/catalog/install',
+    method: 'POST',
+    body: { name, env, enable: true },
+    timeoutMs: 60_000
+  })
 }
