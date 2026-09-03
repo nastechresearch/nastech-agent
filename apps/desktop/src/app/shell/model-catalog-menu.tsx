@@ -18,8 +18,6 @@ import {
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { usePointerQuiet } from '@/components/ui/keyboard-first'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { NastechGateway } from '@/nastech'
-import { getLocalModelsStatus } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { displayModelName, modelDisplayParts } from '@/lib/model-status-label'
@@ -27,6 +25,8 @@ import { DEFAULT_REASONING_EFFORT, reasoningEffortLabel } from '@/lib/reasoning-
 import { normalize } from '@/lib/text'
 import { useStoreSelector } from '@/lib/use-session-slice'
 import { cn } from '@/lib/utils'
+import type { NastechGateway } from '@/nastech'
+import { getLocalModelsStatus } from '@/nastech'
 import { $localModelsEnabled } from '@/store/local-models-flag'
 import { $localRuntimeJobs, runningModelDownloads, watchLocalRuntimeJobs } from '@/store/local-runtime-jobs'
 import {
