@@ -27,7 +27,8 @@ const tone: Record<NotificationKind, { icon: IconComponent; iconClass: string; v
   success: { icon: CheckCircle2, iconClass: 'text-primary', variant: 'success' }
 }
 
-const STACK_SURFACE = 'pointer-events-auto border border-(--stroke-nastech) bg-popover/95 shadow-nastech backdrop-blur-md'
+const STACK_SURFACE =
+  'pointer-events-auto border border-(--stroke-nastech) bg-popover/95 shadow-nastech backdrop-blur-md'
 
 function partitionNotifications(notifications: AppNotification[]) {
   const defaultStack: AppNotification[] = []
