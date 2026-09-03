@@ -10,16 +10,22 @@ import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 const translucencySupport = ipcRenderer.sendSync('nastech:translucency:support')
 const hudWindowing = ipcRenderer.sendSync('nastech:hud:windowing')
 const hudNativeDrag = hudWindowing?.nativeDrag === true
+const launchFlags = ipcRenderer.sendSync('nastech:launch-flags')
 
 contextBridge.exposeInMainWorld('nastechDesktop', {
   glassSupported: translucencySupport?.glass === true,
   translucencySupported: translucencySupport?.translucency === true,
+  // Launch-flag fact: the app was started with --local, so the renderer may
+  // show the local-models surfaces. Static for the window's lifetime.
+  localModelsEnabled: launchFlags?.localModels === true,
   getConnection: profile => ipcRenderer.invoke('nastech:connection', profile),
   // Registry-scoped backend resolution: { connectionId, profile } → descriptor.
   getConnectionFor: payload => ipcRenderer.invoke('nastech:connection:for', payload),
   getProfileRoutes: profiles => ipcRenderer.invoke('nastech:plugin-profile-routes', profiles),
   revalidateConnection: () => ipcRenderer.invoke('nastech:connection:revalidate'),
   touchBackend: profile => ipcRenderer.invoke('nastech:backend:touch', profile),
+  getPoolLimits: () => ipcRenderer.invoke('nastech:pool-limits:get'),
+  setPoolLimits: limits => ipcRenderer.invoke('nastech:pool-limits:set', limits),
   getGatewayWsUrl: profile => ipcRenderer.invoke('nastech:gateway:ws-url', profile),
   // Registry-scoped fresh WS URL: { connectionId, profile } → result shape of
   // getGatewayWsUrl, minted against that connection's backend.
@@ -487,6 +493,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     return () => ipcRenderer.removeListener('nastech:bootstrap:event', listener)
   },
   getVersion: () => ipcRenderer.invoke('nastech:version'),
+  relaunchApp: () => ipcRenderer.invoke('nastech:app:relaunch'),
   getRemoteDisplayReason: () => ipcRenderer.invoke('nastech:get-remote-display-reason'),
   uninstall: {
     summary: () => ipcRenderer.invoke('nastech:uninstall:summary'),

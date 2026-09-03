@@ -539,6 +539,15 @@ def _model_flow_nastech(config, current_model="", args=None):
     # of CLI release cadence.
     unavailable_models: list[str] = []
     unavailable_message = ""
+
+    # Neither the curated list nor the Portal's recommendations know what the
+    # org may reach. Narrow before the tier split, so an id the policy rescues
+    # still has to pass the free/paid predicate instead of going around it.
+    from nastech_cli.models import nastech_policy_allowed_ids, restrict_to_nastech_policy
+
+    _policy_allowed = nastech_policy_allowed_ids()
+    _policy_narrowed = False
+
     if free_tier:
         try:
             from nastech_cli.nastech_account import (
@@ -559,6 +568,11 @@ def _model_flow_nastech(config, current_model="", args=None):
         model_ids, pricing = union_with_portal_free_recommendations(
             model_ids, pricing, _nastech_portal_url,
         )
+        _before_policy = model_ids
+        model_ids = restrict_to_nastech_policy(
+            model_ids, _policy_allowed, rescue_empty=True,
+        )
+        _policy_narrowed = model_ids != _before_policy
         model_ids, unavailable_models = partition_nastech_models_by_tier(
             model_ids, pricing, free_tier=True
         )
@@ -566,6 +580,11 @@ def _model_flow_nastech(config, current_model="", args=None):
         model_ids, pricing = union_with_portal_paid_recommendations(
             model_ids, pricing, _nastech_portal_url,
         )
+        _before_policy = model_ids
+        model_ids = restrict_to_nastech_policy(
+            model_ids, _policy_allowed, rescue_empty=True,
+        )
+        _policy_narrowed = model_ids != _before_policy
 
     if not model_ids and not unavailable_models:
         print("No models available for Nastech Portal after filtering.")
@@ -580,6 +599,11 @@ def _model_flow_nastech(config, current_model="", args=None):
             print(unavailable_message or f"Upgrade at {_url} to access paid models.")
         return
 
+    from nastech_cli.nastech_account import nastech_policy_notice
+
+    _policy_notice = nastech_policy_notice(removed=_policy_narrowed)
+    if _policy_notice:
+        print(_policy_notice)
     print(
         f'Showing {len(model_ids)} curated models — use "Enter custom model name" for others.'
     )

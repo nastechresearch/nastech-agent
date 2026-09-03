@@ -5,12 +5,14 @@ import { useLocation, useNavigate } from 'react-router'
 import { codiconIcon } from '@/components/ui/codicon'
 import { KbdCombo } from '@/components/ui/kbd'
 import { Tip } from '@/components/ui/tooltip'
+import { getNastechConfigDefaults, getNastechConfigRecord, saveNastechConfig } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import {
   Archive,
   BarChart3,
   Bell,
+  Cpu,
   Download,
   Globe,
   Info,
@@ -27,10 +29,10 @@ import {
 import { isEditableTarget } from '@/lib/keybinds/combo'
 import { typeToFocusChar } from '@/lib/keybinds/composer-focus-keys'
 import { cn } from '@/lib/utils'
-import { getNastechConfigDefaults, getNastechConfigRecord, saveNastechConfig } from '@/nastech'
 import { $commandPaletteOpen, openCommandPalettePage } from '@/store/command-palette'
 import { confirm } from '@/store/confirm'
 import { bindingsFor } from '@/store/keybinds'
+import { $localModelsEnabled } from '@/store/local-models-flag'
 import { notifyError } from '@/store/notifications'
 
 import { useRouteEnumParam } from '../hooks/use-route-enum-param'
@@ -217,7 +219,22 @@ export function SettingsView({ onClose, onConfigSaved, onMainModelChanged }: Set
             id: 'pview:custom-endpoints',
             label: t.settings.nav.providerCustomEndpoints,
             onSelect: () => openProviderView('custom-endpoints')
-          }
+          },
+          // Local models ships behind the --local launch flag: no flag, no
+          // nav entry (the pane itself also refuses to render, so a stale
+          // ?pview=local deep link falls back to accounts-shaped emptiness
+          // rather than a hidden feature).
+          ...($localModelsEnabled.get()
+            ? [
+                {
+                  active: activeView === 'providers' && providerView === 'local',
+                  icon: Cpu,
+                  id: 'pview:local',
+                  label: t.settings.nav.providerLocalModels,
+                  onSelect: () => openProviderView('local')
+                }
+              ]
+            : [])
         ],
         gapBefore: true,
         icon: Zap,
