@@ -5,23 +5,6 @@ import { useNavigate } from 'react-router'
 import { NEW_CHAT_ROUTE } from '@/app/routes'
 import { Button } from '@/components/ui/button'
 import { Tip } from '@/components/ui/tooltip'
-import { useI18n } from '@/i18n'
-import {
-  Check,
-  CheckCircle2,
-  Cpu,
-  Download,
-  Eject,
-  FolderOpen,
-  Loader2,
-  Monitor,
-  Package,
-  Search,
-  StopFilled,
-  Trash2,
-  Zap
-} from '@/lib/icons'
-import { cn } from '@/lib/utils'
 import {
   activateLocalModel,
   deleteLocalModel,
@@ -40,6 +23,23 @@ import {
   setLocalServer,
   sideloadLocalModel
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import {
+  Check,
+  CheckCircle2,
+  Cpu,
+  Download,
+  Eject,
+  FolderOpen,
+  Loader2,
+  Monitor,
+  Package,
+  Search,
+  StopFilled,
+  Trash2,
+  Zap
+} from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import {
   $localRuntimeJobs,
   runningDownloadFor,

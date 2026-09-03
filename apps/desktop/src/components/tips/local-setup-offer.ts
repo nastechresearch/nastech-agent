@@ -21,9 +21,9 @@
  * because eligibility is a fact about the backend's machine.
  */
 
+import { getLocalCatalog, getLocalModelsStatus } from '@/nastech'
 import type { Translations } from '@/i18n/types'
 import { LOCAL_SETUP_TIP_ID, localSetupDue, localSetupEligible } from '@/lib/tips/local-cta'
-import { getLocalCatalog, getLocalModelsStatus } from '@/nastech'
 import { $localModelsEnabled } from '@/store/local-models-flag'
 import { $connection } from '@/store/session'
 import { $retiredTips, $tipShownAt, dismissTip, showTip } from '@/store/tips'

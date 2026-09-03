@@ -1464,6 +1464,15 @@ function persistPoolLimits(limits) {
   }
 }
 
+// rememberLog() state. Declared here, before the top-level
+// readPersistedPoolLimits() call below, because that call logs during module
+// evaluation; declaring these later crashed launch with `undefined.push` in
+// the packaged build (esbuild lowers the TDZ to undefined instead of throwing).
+const nastechLog = []
+let desktopLogBuffer = ''
+let desktopLogFlushTimer = null
+let desktopLogFlushPromise = Promise.resolve()
+
 let poolLimits = readPersistedPoolLimits()
 // Hard cap on local backends that are starting OR running (the LRU eviction
 // above is soft — it spares keepalive-fresh entries). Follows the live
@@ -1574,12 +1583,8 @@ let connectionRegistryCache = null
 let connectionRegistryCacheMtime = null
 let remoteHeaderRulesInstalled = false
 const remoteWsHeaderStore = createRemoteWsHeaderStore()
-const nastechLog = []
 const previewWatchers = new Map()
 let previewShortcutActive = false
-let desktopLogBuffer = ''
-let desktopLogFlushTimer = null
-let desktopLogFlushPromise = Promise.resolve()
 let nativeThemeListenerInstalled = false
 
 let bootProgressState = {
@@ -4885,8 +4890,7 @@ function createActiveBackend(backendArgs) {
 function resolveNastechBackend(backendArgs) {
   // 1. Explicit override -- NASTECH_DESKTOP_NASTECH_ROOT points at a developer
   //    checkout. Honour it as-is (no bootstrap; the user is driving).
-  const overrideRoot =
-    process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
+  const overrideRoot = process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
 
   if (overrideRoot && isNastechSourceRoot(overrideRoot)) {
     const backend = createPythonBackend(overrideRoot, `Nastech source at ${overrideRoot}`, backendArgs)
