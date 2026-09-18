@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Nastech",
-  "version": "0.21.1",
+  "version": "0.21.4",
   "identifier": "com.nastechresearch.nastech.setup",
   "build": {
     "beforeDevCommand": "npm run dev",

@@ -2,7 +2,7 @@
   "name": "nastech",
   "productName": "Nastech",
   "private": true,
-  "version": "0.17.6",
+  "version": "0.21.4",
   "description": "Native desktop shell for Nastech Agent.",
   "author": "Nastech Research",
   "repository": {
