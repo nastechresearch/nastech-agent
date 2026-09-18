@@ -1,6 +1,7 @@
 import { PassThrough } from 'stream'
 
 import { renderSync } from '@nastech/ink'
+import { stripAnsi } from '@nastech/shared/ansi'
 import React from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -24,7 +25,6 @@ vi.mock('@nastech/ink', async importOriginal => {
 import type { SubscriptionOverlayState } from '../app/interfaces.js'
 import { SubscriptionOverlay } from '../components/subscriptionOverlay.js'
 import type { SubscriptionStateResponse } from '../gatewayTypes.js'
-import { stripAnsi } from '../lib/text.js'
 import { DEFAULT_THEME } from '../theme.js'
 
 const t = DEFAULT_THEME

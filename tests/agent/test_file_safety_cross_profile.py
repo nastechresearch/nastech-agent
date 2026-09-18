@@ -1,15 +1,4 @@
-"""Tests for the cross-Nastech-profile write guard in agent/file_safety.
-
-The guard fires when a tool tries to write into another Nastech profile's
-skills/plugins/cron/memories directory. It's a soft guard — defense in
-depth, NOT a security boundary — but it prevents the agent from silently
-corrupting a profile that belongs to a different session.
-
-Reference: May 2026 incident — a nastech-security profile session
-accidentally edited skills under both ~/.nastech/profiles/nastech-security/skills/
-AND ~/.nastech/skills/ (the default profile's skills), realizing only
-afterwards that the second path belonged to a different profile.
-"""
+"""Tests for the active-profile resolver in agent/file_safety."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -60,7 +49,6 @@ def fake_nastech(tmp_path, monkeypatch):
     import nastech_constants
     monkeypatch.setattr(nastech_constants, "get_default_nastech_root", lambda: root)
 
-    # The reloads below ensure get_cross_profile_warning/classify see the patched root.
     import agent.file_safety as fs
     monkeypatch.setattr(fs, "_nastech_root_path", lambda: root)
 
@@ -100,69 +88,3 @@ class TestResolveActiveProfileName:
         monkeypatch.setattr(fs, "_nastech_home_path", _boom)
         # Should not raise — falls back to "default"
         assert fs._resolve_active_profile_name() == "default"
-
-
-# ---------------------------------------------------------------------------
-# classify_cross_profile_target
-# ---------------------------------------------------------------------------
-
-
-class TestClassifyCrossProfileTarget:
-
-    def test_security_writing_default_skill(self, fake_nastech, monkeypatch):
-        """The exact incident from May 2026."""
-        _set_active_home(monkeypatch, fake_nastech["security_home"])
-        from agent.file_safety import classify_cross_profile_target
-        result = classify_cross_profile_target(
-            str(fake_nastech["default_home"] / "skills" / "foo" / "SKILL.md")
-        )
-        assert result is not None
-        assert result["active_profile"] == "nastech-security"
-        assert result["target_profile"] == "default"
-        assert result["area"] == "skills"
-
-    def test_default_writing_security_skill(self, fake_nastech, monkeypatch):
-        """Inverse direction — default-profile session reaching into a named profile."""
-        _set_active_home(monkeypatch, fake_nastech["default_home"])
-        from agent.file_safety import classify_cross_profile_target
-        result = classify_cross_profile_target(
-            str(fake_nastech["security_home"] / "skills" / "foo" / "SKILL.md")
-        )
-        assert result is not None
-        assert result["active_profile"] == "default"
-        assert result["target_profile"] == "nastech-security"
-
-
-    @pytest.mark.parametrize("area", ["skills", "plugins", "cron", "memories"])
-    def test_all_profile_scoped_areas_classified(self, fake_nastech, monkeypatch, area):
-        _set_active_home(monkeypatch, fake_nastech["security_home"])
-        from agent.file_safety import classify_cross_profile_target
-        target = fake_nastech["default_home"] / area / "foo.txt"
-        result = classify_cross_profile_target(str(target))
-        assert result is not None
-        assert result["area"] == area
-
-
-
-
-# ---------------------------------------------------------------------------
-# get_cross_profile_warning
-# ---------------------------------------------------------------------------
-
-
-class TestGetCrossProfileWarning:
-    """The guard is RETIRED (maintainer decision): profiles are not
-    isolated, so the warning helper is a permanent None stub — kept only
-    so external callers fail soft. The classifier itself survives for
-    the system-prompt hint and diagnostics."""
-
-    def test_in_profile_returns_none(self, fake_nastech, monkeypatch):
-        from agent.file_safety import get_cross_profile_warning
-        assert get_cross_profile_warning(
-            str(fake_nastech["root"] / "skills" / "a" / "SKILL.md")) is None
-
-    def test_cross_profile_returns_none_guard_retired(self, fake_nastech, monkeypatch):
-        from agent.file_safety import get_cross_profile_warning
-        target = fake_nastech["root"] / "profiles" / "security" / "skills" / "x" / "SKILL.md"
-        assert get_cross_profile_warning(str(target)) is None
-

@@ -28,7 +28,7 @@ def _stage(home, name):
 def _write_presets(home, *model_ids):
     pdir = home / "runtimes" / "llamacpp"
     pdir.mkdir(parents=True, exist_ok=True)
-    body = "\n".join(f"[{m}]\nctx-size = 65536\n" for m in model_ids)
+    body = "\n".join(f"[{m}]\nmodel = {home / 'models' / (m + '.gguf')}\nctx-size = 65536\n" for m in model_ids)
     (pdir / "presets.ini").write_text(body, encoding="utf-8")
 
 
@@ -47,6 +47,16 @@ def test_presets_current_when_every_staged_model_is_covered(nastech_home):
     _stage(nastech_home, "model-a")
     _write_presets(nastech_home, "model-a")
     assert _presets_stale() is False
+
+
+def test_legacy_presets_without_model_paths_are_regenerated(nastech_home):
+    from nastech_cli.local_runtime.bootstrap import _presets_stale
+
+    _stage(nastech_home, "model-a")
+    _write_presets(nastech_home, "model-a")
+    ini = nastech_home / "runtimes/llamacpp/presets.ini"
+    ini.write_text("[model-a]\nctx-size = 65536\n")
+    assert _presets_stale()
 
 
 def test_no_models_is_never_stale(nastech_home):

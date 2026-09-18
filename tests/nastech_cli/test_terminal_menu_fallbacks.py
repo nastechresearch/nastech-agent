@@ -113,7 +113,7 @@ def test_prompt_model_selection_fallback_uses_line_editor_for_custom_model(
 
 
 def test_remove_custom_provider_falls_back_on_menu_runtime_error(tmp_path, monkeypatch):
-    from nastech_cli.main import _remove_custom_provider
+    from nastech_cli.main_provider_setup import _remove_custom_provider
 
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
     monkeypatch.setattr("nastech_cli.curses_ui.curses_radiolist", _raise_menu)

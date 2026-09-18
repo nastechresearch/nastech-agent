@@ -129,7 +129,7 @@ def test_select_provider_and_model_warns_if_named_custom_provider_disappears(
 
 
 def test_modal_setup_persists_direct_mode_when_user_chooses_their_own_account(tmp_path, monkeypatch):
-    monkeypatch.setattr("nastech_cli.setup.managed_nastech_tools_enabled", lambda: True)
+    monkeypatch.setattr("tools.tool_backend_helpers.managed_nastech_tools_enabled", lambda: True)
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
     monkeypatch.delenv("MODAL_TOKEN_ID", raising=False)
     monkeypatch.delenv("MODAL_TOKEN_SECRET", raising=False)
@@ -146,9 +146,8 @@ def test_modal_setup_persists_direct_mode_when_user_chooses_their_own_account(tm
 
     monkeypatch.setattr("nastech_cli.setup.prompt_choice", fake_prompt_choice)
     monkeypatch.setattr("nastech_cli.setup.prompt", lambda *args, **kwargs: next(prompt_values))
-    monkeypatch.setattr("nastech_cli.setup._prompt_container_resources", lambda config: None)
     monkeypatch.setattr(
-        "nastech_cli.setup.get_nastech_subscription_features",
+        "nastech_cli.nastech_subscription.get_nastech_subscription_features",
         lambda config: type("Features", (), {"nastech_auth_present": True})(),
     )
     monkeypatch.setitem(

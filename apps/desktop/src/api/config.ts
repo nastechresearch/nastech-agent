@@ -4,9 +4,9 @@ import type {
   CustomEndpointUpdate,
   CustomEndpointValidationResponse,
   EnvVarInfo,
-  LogsResponse,
   NastechConfig,
   NastechConfigRecord,
+  LogsResponse,
   OAuthPollResponse,
   OAuthProvidersResponse,
   OAuthStartResponse,
@@ -14,7 +14,13 @@ import type {
   StatusResponse
 } from '@/types/nastech'
 
-import { capabilityScoped, nastechApi, type ProfileScope, profileScoped, STARTUP_REQUEST_TIMEOUT_MS } from './client'
+import {
+  capabilityScoped,
+  nastechApi,
+  type ProfileScope,
+  profileScoped,
+  STARTUP_REQUEST_TIMEOUT_MS
+} from './client'
 
 export function getStatus(): Promise<StatusResponse> {
   return nastechApi<StatusResponse>({
@@ -68,10 +74,13 @@ export function getNastechConfig(profile?: string): Promise<NastechConfig> {
   })
 }
 
-export function getNastechConfigRecord(profile?: ProfileScope): Promise<NastechConfigRecord> {
+export function getNastechConfigRecord(
+  profile?: ProfileScope,
+  { includeDefaults = true }: { includeDefaults?: boolean } = {}
+): Promise<NastechConfigRecord> {
   return window.nastechDesktop.api<NastechConfigRecord>({
     ...capabilityScoped(profile),
-    path: '/api/config'
+    path: includeDefaults ? '/api/config' : '/api/config?include_defaults=false'
   })
 }
 
@@ -90,10 +99,14 @@ export function getNastechConfigSchema(profile?: null | string): Promise<ConfigS
   })
 }
 
-export function saveNastechConfig(config: NastechConfigRecord, profile?: null | string): Promise<{ ok: boolean }> {
+export function saveNastechConfig(
+  config: NastechConfigRecord,
+  profile?: null | string,
+  { preserveLanguage = false }: { preserveLanguage?: boolean } = {}
+): Promise<{ ok: boolean }> {
   return nastechApi<{ ok: boolean }>({
     ...profileScoped(profile),
-    path: '/api/config',
+    path: preserveLanguage ? '/api/config?preserve_language=true' : '/api/config',
     method: 'PUT',
     body: { config }
   })
@@ -198,16 +211,19 @@ export function deleteCustomEndpoint(id: string): Promise<CustomEndpointsRespons
   })
 }
 
-export function listOAuthProviders(): Promise<OAuthProvidersResponse> {
+export function listOAuthProviders(profile?: null | string): Promise<OAuthProvidersResponse> {
   return nastechApi<OAuthProvidersResponse>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: '/api/providers/oauth'
   })
 }
 
-export function disconnectOAuthProvider(providerId: string): Promise<{ ok: boolean; provider: string }> {
+export function disconnectOAuthProvider(
+  providerId: string,
+  profile?: null | string
+): Promise<{ ok: boolean; provider: string }> {
   return nastechApi<{ ok: boolean; provider: string }>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: `/api/providers/oauth/${encodeURIComponent(providerId)}`,
     method: 'DELETE'
   })
@@ -222,9 +238,14 @@ export function startOAuthLogin(providerId: string, profile?: ProfileScope): Pro
   })
 }
 
-export function submitOAuthCode(providerId: string, sessionId: string, code: string): Promise<OAuthSubmitResponse> {
+export function submitOAuthCode(
+  providerId: string,
+  sessionId: string,
+  code: string,
+  profile?: null | string
+): Promise<OAuthSubmitResponse> {
   return nastechApi<OAuthSubmitResponse>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: `/api/providers/oauth/${encodeURIComponent(providerId)}/submit`,
     method: 'POST',
     body: { session_id: sessionId, code }
@@ -242,9 +263,9 @@ export function pollOAuthSession(
   })
 }
 
-export function cancelOAuthSession(sessionId: string): Promise<{ ok: boolean }> {
+export function cancelOAuthSession(sessionId: string, profile?: null | string): Promise<{ ok: boolean }> {
   return nastechApi<{ ok: boolean }>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: `/api/providers/oauth/sessions/${encodeURIComponent(sessionId)}`,
     method: 'DELETE'
   })

@@ -1,3 +1,4 @@
+import type { GatewayEvent } from '@nastech/shared'
 import { useCallback } from 'react'
 
 import { gatewayEventCompletedFileDiff } from '@/lib/gateway-events'
@@ -15,9 +16,8 @@ import {
 } from '@/store/preview'
 import { $activeSessionId, $currentCwd } from '@/store/session'
 import { $focusedRuntimeId, $sessionTiles } from '@/store/session-states'
-import type { RpcEvent } from '@/types/nastech'
 
-type EventHandler = (event: RpcEvent) => void
+type EventHandler = (event: GatewayEvent) => void
 
 interface PreviewRoutingOptions {
   baseHandleGatewayEvent: EventHandler

@@ -13,7 +13,7 @@ from plugins.memory.query_rewrite import (
     rewrite_memory_query,
 )
 from nastech_cli.config import DEFAULT_CONFIG
-from nastech_cli.main import _AUX_TASKS
+from nastech_cli.main_provider_setup import _AUX_TASKS
 
 
 def _response(text: str):

@@ -1,6 +1,6 @@
 """Tests for the state.db integrity guard used by the update flow (#68474).
 
-Exercises ``verify_sqlite_integrity`` and ``copy_db_and_verify`` against REAL
+Exercises ``verify_sqlite_integrity`` against REAL
 SQLite files (valid, zeroed, truncated) — the exact corruption signature from
 issue #68474 (file kept at original size, 100% null bytes, header gone).
 """
@@ -9,7 +9,7 @@ import sqlite3
 
 import pytest
 
-from nastech_cli.backup import copy_db_and_verify, verify_sqlite_integrity
+from nastech_cli.backup import verify_sqlite_integrity
 
 
 @pytest.fixture()
@@ -112,7 +112,7 @@ class TestPreUpdateBackupIntegrityGuard:
     def test_healthy_db_stays_quiet(self, nastech_home, capsys):
         from argparse import Namespace
 
-        from nastech_cli.main import _run_pre_update_backup
+        from nastech_cli.update_cmd import _run_pre_update_backup
 
         snap_id = _run_pre_update_backup(Namespace(no_backup=False, backup=False))
         out = capsys.readouterr().out
@@ -126,7 +126,7 @@ class TestPreUpdateBackupIntegrityGuard:
         from argparse import Namespace
 
         import nastech_cli.backup as backup_mod
-        from nastech_cli.main import _run_pre_update_backup
+        from nastech_cli.update_cmd import _run_pre_update_backup
 
         real_create = backup_mod.create_quick_snapshot
 

@@ -19,7 +19,7 @@ from agent.context_compressor import (
 )
 from nastech_state import SessionDB
 from gateway.config import GatewayConfig, HomeChannel, Platform, PlatformConfig
-from gateway.platforms.base import MessageEvent
+from gateway.platforms.event import MessageEvent
 from gateway.session import SessionEntry, SessionSource, build_session_key
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 import nastech_cli.auth as auth
+import nastech_cli.auth_nastech as auth_nastech
 from nastech_cli.auth import (
     NASTECH_BILLING_MANAGE_SCOPE,
     nastech_token_has_billing_scope,
@@ -17,8 +18,28 @@ from nastech_cli.auth import (
 # ---------------------------------------------------------------------------
 
 
+class TestNastechTokenHasBillingScope:
+    def test_true_when_scope_string_contains_billing_manage(self, monkeypatch):
+        monkeypatch.setattr(
+            auth, "get_provider_auth_state",
+            lambda pid: {"scope": f"openid {NASTECH_BILLING_MANAGE_SCOPE} inference"},
+        )
+        assert nastech_token_has_billing_scope() is True
 
+    def test_false_when_scope_missing_or_not_a_string(self, monkeypatch):
+        monkeypatch.setattr(auth, "get_provider_auth_state", lambda pid: {"scope": "openid inference"})
+        assert nastech_token_has_billing_scope() is False
+        monkeypatch.setattr(auth, "get_provider_auth_state", lambda pid: {"scope": None})
+        assert nastech_token_has_billing_scope() is False
+        monkeypatch.setattr(auth, "get_provider_auth_state", lambda pid: None)
+        assert nastech_token_has_billing_scope() is False
 
+    def test_false_when_auth_state_lookup_raises(self, monkeypatch):
+        def _boom(pid):
+            raise RuntimeError("auth store unreadable")
+
+        monkeypatch.setattr(auth, "get_provider_auth_state", _boom)
+        assert nastech_token_has_billing_scope() is False
 
 
 # ---------------------------------------------------------------------------
@@ -34,7 +55,9 @@ def _stub_persist(monkeypatch):
     monkeypatch.setattr(auth, "_save_provider_state", lambda *a, **kw: None)
     monkeypatch.setattr(auth, "_save_auth_store", lambda *a, **kw: "auth.json")
     monkeypatch.setattr(auth, "_write_shared_nastech_state", lambda *a, **kw: None)
+    monkeypatch.setattr(auth_nastech, "_write_shared_nastech_state", lambda *a, **kw: None)
     monkeypatch.setattr(auth, "_sync_nastech_pool_from_auth_store", lambda: None)
+    monkeypatch.setattr(auth_nastech, "_sync_nastech_pool_from_auth_store", lambda: None)
 
 
 class _NullCtx:
@@ -64,6 +87,7 @@ def test_step_up_requests_billing_scope_and_reuses_prior_urls(monkeypatch, _stub
         return {"scope": "inference:invoke tool:invoke billing:manage", "access_token": "t"}
 
     monkeypatch.setattr(auth, "_nastech_device_code_login", _fake_login)
+    monkeypatch.setattr(auth_nastech, "_nastech_device_code_login", _fake_login)
 
     granted = step_up_nastech_billing_scope()
     assert granted is True

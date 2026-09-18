@@ -11,9 +11,9 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { saveNastechConfigRecord } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { Check, Globe } from '@/lib/icons'
-import { saveNastechConfigRecord } from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 import {
   $realProfilePromptClaim,
@@ -78,7 +78,9 @@ export function RealProfileConsentDialog({ tabId }: RealProfileConsentDialogProp
     setConfig(next)
 
     try {
-      await saveNastechConfigRecord(next)
+      // Sparse patch: PUT /api/config deep-merges, and echoing the cached
+      // snapshot would overwrite keys other surfaces changed since it loaded.
+      await saveNastechConfigRecord({ browser: { use_real_profile: true } })
       notify({ kind: 'info', title: copy.enabledTitle, message: copy.enabledMessage })
     } catch (err) {
       setConfig(config)

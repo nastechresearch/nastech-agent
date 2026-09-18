@@ -1,5 +1,8 @@
 import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 
+import type { DesktopProfileRoute } from './desktop-profile'
+import { customWindowControlsEnabled } from './window-controls'
+
 // Which translucency the OS can back. Asked synchronously because the renderer
 // needs it before its first paint, and answered by main because deciding it
 // needs `os.release()` — a sandboxed preload may only require electron, events,
@@ -18,12 +21,19 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   // Launch-flag fact: the app was started with --local, so the renderer may
   // show the local-models surfaces. Static for the window's lifetime.
   localModelsEnabled: launchFlags?.localModels === true,
-  getConnection: profile => ipcRenderer.invoke('nastech:connection', profile),
+  // Launch-flag fact: the Nastech free tier is on for this launch
+  // (NASTECH_GUEST_ONBOARDING=1 or --guest-onboarding). Read-only; the same
+  // decision is stamped onto every backend the app spawns.
+  guestOnboardingEnabled: launchFlags?.guestOnboarding === true,
+  // Launch-flag fact: skip the first-run film (NASTECH_SKIP_INTRO=1 or
+  // --skip-intro). Rehearsal aid for the guided chat behind it.
+  skipIntro: launchFlags?.skipIntro === true,
+  getConnection: (profile, opts) => ipcRenderer.invoke('nastech:connection', profile, opts),
   // Registry-scoped backend resolution: { connectionId, profile } → descriptor.
   getConnectionFor: payload => ipcRenderer.invoke('nastech:connection:for', payload),
   getProfileRoutes: profiles => ipcRenderer.invoke('nastech:plugin-profile-routes', profiles),
   revalidateConnection: () => ipcRenderer.invoke('nastech:connection:revalidate'),
-  touchBackend: profile => ipcRenderer.invoke('nastech:backend:touch', profile),
+  touchBackend: (profile, options) => ipcRenderer.invoke('nastech:backend:touch', profile, options),
   getPoolLimits: () => ipcRenderer.invoke('nastech:pool-limits:get'),
   setPoolLimits: limits => ipcRenderer.invoke('nastech:pool-limits:set', limits),
   getGatewayWsUrl: profile => ipcRenderer.invoke('nastech:gateway:ws-url', profile),
@@ -34,7 +44,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   getAgentRoster: () => ipcRenderer.invoke('nastech:agents:roster'),
   openSessionWindow: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openSession', sessionId, opts),
   openSessionInTerminal: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openInTerminal', sessionId, opts),
-  openWindow: () => ipcRenderer.invoke('nastech:window:openInstance'),
+  openWindow: (options?: DesktopProfileRoute) => ipcRenderer.invoke('nastech:window:openInstance', options),
   openBrowserWindow: tabId => ipcRenderer.invoke('nastech:window:openBrowser', tabId),
   onBrowserPopoutClosed: callback => {
     const listener = (_event, tabId) => callback(tabId)
@@ -43,6 +53,12 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     return () => ipcRenderer.removeListener('nastech:browser-popout:closed', listener)
   },
   claimAmbientCue: key => ipcRenderer.invoke('nastech:ambient:claim', key),
+  windowControls: {
+    custom: customWindowControlsEnabled(),
+    minimize: () => ipcRenderer.send('nastech:window-control', 'minimize'),
+    toggleMaximize: () => ipcRenderer.send('nastech:window-control', 'toggle-maximize'),
+    close: () => ipcRenderer.send('nastech:window-control', 'close')
+  },
   wakeIndicator: {
     getState: () => ipcRenderer.invoke('nastech:wake-indicator:get'),
     setState: state => ipcRenderer.send('nastech:wake-indicator:set', state),
@@ -51,6 +67,30 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
       ipcRenderer.on('nastech:wake-indicator:state', listener)
 
       return () => ipcRenderer.removeListener('nastech:wake-indicator:state', listener)
+    }
+  },
+  chatOnboarding: {
+    grow: request => ipcRenderer.send('nastech:chat-onboarding:grow', request),
+    soloBoot: () => ipcRenderer.send('nastech:chat-onboarding:solo-boot')
+  },
+  introReveal: {
+    open: (payload?: { hideMain?: boolean }) => ipcRenderer.invoke('nastech:intro-reveal:open', payload),
+    close: (payload?: { showMain?: boolean }) => ipcRenderer.invoke('nastech:intro-reveal:close', payload),
+    skip: () => ipcRenderer.send('nastech:intro-reveal:skip'),
+    ready: () => ipcRenderer.send('nastech:intro-reveal:ready'),
+    onSkip: callback => {
+      const listener = () => callback()
+
+      ipcRenderer.on('nastech:intro-reveal:skip', listener)
+
+      return () => ipcRenderer.removeListener('nastech:intro-reveal:skip', listener)
+    },
+    onClosed: callback => {
+      const listener = () => callback()
+
+      ipcRenderer.on('nastech:intro-reveal:closed', listener)
+
+      return () => ipcRenderer.removeListener('nastech:intro-reveal:closed', listener)
     }
   },
   petOverlay: {
@@ -141,6 +181,34 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
       return () => ipcRenderer.removeListener('nastech:hud:game-overlay', listener)
     }
   },
+  // macOS native screenshot gesture; captures require a main-issued request.
+  screenshot: process.platform === 'darwin' ? {
+    getSettings: () => ipcRenderer.invoke('nastech:screenshot:settings:get'),
+    setEnabled: enabled => ipcRenderer.invoke('nastech:screenshot:settings:set', enabled),
+    openPermissionSettings: kind => ipcRenderer.invoke('nastech:screenshot:permission', kind),
+    capture: requestId => ipcRenderer.invoke('nastech:screenshot:capture', requestId),
+    onStatus: callback => {
+      const listener = (_event, status) => callback(status)
+      ipcRenderer.on('nastech:screenshot:status', listener)
+
+      return () => ipcRenderer.removeListener('nastech:screenshot:status', listener)
+    },
+    onRequest: callback => {
+      const channel = 'nastech:screenshot:request'
+      const listener = (_event, requestId) => callback(requestId)
+      if (ipcRenderer.listenerCount(channel) === 0) {
+        ipcRenderer.send('nastech:screenshot:subscribe', true)
+      }
+      ipcRenderer.on(channel, listener)
+
+      return () => {
+        ipcRenderer.removeListener(channel, listener)
+        if (ipcRenderer.listenerCount(channel) === 0) {
+          ipcRenderer.send('nastech:screenshot:subscribe', false)
+        }
+      }
+    }
+  } : undefined,
   // Quick Entry: the global-hotkey mini composer window. Main owns the OS
   // shortcut + the persisted preference; the quick window only captures text
   // and hands it back, and the primary renderer submits it through the normal
@@ -223,6 +291,14 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     agentSignIn: dashboardUrl => ipcRenderer.invoke('nastech:cloud:agent-sign-in', dashboardUrl)
   },
   profile: {
+    getDefault: () => ipcRenderer.invoke('nastech:profile:default:get'),
+    setDefault: (route: DesktopProfileRoute) => ipcRenderer.invoke('nastech:profile:default:set', route),
+    onDefaultChanged: (callback: (route: DesktopProfileRoute | null) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, route: DesktopProfileRoute | null) => callback(route)
+      ipcRenderer.on('nastech:profile:default:changed', listener)
+
+      return () => ipcRenderer.removeListener('nastech:profile:default:changed', listener)
+    },
     get: () => ipcRenderer.invoke('nastech:profile:get'),
     remember: name => ipcRenderer.invoke('nastech:profile:remember', name),
     set: name => ipcRenderer.invoke('nastech:profile:set', name)
@@ -257,6 +333,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   },
   saveImageBuffer: (data, ext, name) => ipcRenderer.invoke('nastech:saveImageBuffer', { data, ext, name }),
   capturePreview: payload => ipcRenderer.invoke('nastech:capturePreview', payload),
+  savePastedText: text => ipcRenderer.invoke('nastech:savePastedText', { text }),
   saveClipboardImage: () => ipcRenderer.invoke('nastech:saveClipboardImage'),
   getPathForFile: file => {
     try {
@@ -322,8 +399,8 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   revealPath: targetPath => ipcRenderer.invoke('nastech:fs:reveal', targetPath),
   openDir: dirPath => ipcRenderer.invoke('nastech:fs:openDir', dirPath),
   desktopPluginsRoot: () => ipcRenderer.invoke('nastech:fs:desktopPluginsRoot'),
+  reconcileDesktopPlugins: () => ipcRenderer.invoke('nastech:fs:reconcileDesktopPlugins'),
   logsRoot: () => ipcRenderer.invoke('nastech:fs:logsRoot'),
-  agentPluginsRoot: () => ipcRenderer.invoke('nastech:fs:agentPluginsRoot'),
   renamePath: (targetPath, newName) => ipcRenderer.invoke('nastech:fs:rename', targetPath, newName),
   writeTextFile: (filePath, content) => ipcRenderer.invoke('nastech:fs:writeText', filePath, content),
   trashPath: targetPath => ipcRenderer.invoke('nastech:fs:trash', targetPath),
@@ -352,7 +429,6 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
       shipInfo: repoPath => ipcRenderer.invoke('nastech:git:review:shipInfo', repoPath),
       prList: (repoPath, branches, numbers) =>
         ipcRenderer.invoke('nastech:git:review:prList', repoPath, branches, numbers),
-      fetchPrComment: (repoPath, url) => ipcRenderer.invoke('nastech:git:review:fetchPrComment', repoPath, url),
       createPr: repoPath => ipcRenderer.invoke('nastech:git:review:createPr', repoPath)
     }
   },
@@ -447,6 +523,15 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
 
     return () => ipcRenderer.removeListener('nastech:backend-exit', listener)
   },
+  // Cooperative pool retirement (main → renderer): the pooled backend under
+  // `poolKey` is being stopped for a foreground open. Park that scope; do not
+  // redial into the slot it vacated.
+  onPoolBackendRetiring: callback => {
+    const listener = (_event, payload) => callback(payload)
+    ipcRenderer.on('nastech:pool:retiring', listener)
+
+    return () => ipcRenderer.removeListener('nastech:pool:retiring', listener)
+  },
   // Soft gateway-mode apply finished tearing down the primary backend. Renderer
   // should wipe session lists + re-dial without a window reload.
   onConnectionApplied: callback => {
@@ -494,13 +579,14 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   },
   getVersion: () => ipcRenderer.invoke('nastech:version'),
   relaunchApp: () => ipcRenderer.invoke('nastech:app:relaunch'),
+  getMachineProfile: () => ipcRenderer.invoke('nastech:machine:profile'),
   getRemoteDisplayReason: () => ipcRenderer.invoke('nastech:get-remote-display-reason'),
   uninstall: {
     summary: () => ipcRenderer.invoke('nastech:uninstall:summary'),
     run: mode => ipcRenderer.invoke('nastech:uninstall:run', { mode })
   },
   updates: {
-    check: () => ipcRenderer.invoke('nastech:updates:check'),
+    check: opts => ipcRenderer.invoke('nastech:updates:check', opts),
     apply: opts => ipcRenderer.invoke('nastech:updates:apply', opts),
     getBranch: () => ipcRenderer.invoke('nastech:updates:branch:get'),
     setBranch: name => ipcRenderer.invoke('nastech:updates:branch:set', name),

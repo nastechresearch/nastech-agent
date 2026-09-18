@@ -144,7 +144,7 @@ Within each source, Nastech also recognizes sub-category directories that route 
 | `plugins/context_engine/<name>/` | Context-compression engines (`ctx.register_context_engine()`) | **Own loader** in `plugins/context_engine/__init__.py` (one active at a time) |
 | `plugins/model-providers/<name>/` | LLM provider profiles (`register_provider(ProviderProfile(...))`) | **Own loader** in `providers/__init__.py` (lazily scanned on first `get_provider_profile()` call) |
 
-User plugins at `~/.nastech/plugins/model-providers/<name>/` and `~/.nastech/plugins/memory/<name>/` override bundled plugins of the same name — last-writer-wins in `register_provider()` / `register_memory_provider()`. Drop a directory in, and it replaces the built-in without any repo edits.
+User plugins at `~/.nastech/plugins/model-providers/<name>/` override bundled model providers of the same name (last-writer-wins in `register_provider()`), so you can replace a built-in provider profile without any repo edits. Memory providers resolve the other way round: for `~/.nastech/plugins/memory/<name>/` the **bundled** provider wins on a name collision (bundled, then user, then project, then entry points; first seen wins), so a user memory provider needs its own unique name.
 
 ## Plugins are opt-in (with a few exceptions)
 
@@ -190,6 +190,31 @@ plugin; choose a new exact commit explicitly with
 `nastech plugins install <source> --force --ref <new-commit>`. The
 profile-local install metadata contains no config values, environment values,
 secrets, or capability grants.
+
+The same agent-plugin pin is available in Nastech Desktop: **Capabilities →
+Plugins → Install from Git** has a *Pin to commit* field that takes the full
+40-character SHA, and **Installed** shows a `pinned @ <sha8>` badge on pinned
+agent plugins. This does not guarantee a pinned standalone desktop-plugin
+install. `nastech plugins list` prints
+the pin in its Source column (`git pinned@<sha8>`). Pins work for private
+repositories too, through the same stored credentials described below.
+
+### Installing from a private repository
+
+`nastech plugins install` clones non-interactively (it never prompts for a
+username or password), so a private repo needs a credential Nastech can find on
+its own. For an `https://` source it tries, in order:
+
+1. `GITHUB_TOKEN` or `GH_TOKEN` from your `.env` (GitHub hosts only).
+2. The `gh` CLI's login (`gh auth login`), GitHub hosts only.
+3. Your git credential helper (`git credential fill`) for that host — works for
+   GitLab, Bitbucket and self-hosted servers if a credential is already stored.
+
+The credential is sent as a one-shot HTTP header for that install or update;
+it is never written into the plugin's `.git/config` or the install metadata.
+SSH sources (`git@host:owner/repo.git`) authenticate through your ssh-agent as
+before. The same resolution applies to `nastech plugins update`, catalog MCP
+installs from git, and profile distributions fetched from a git URL.
 
 ### What the allow-list does NOT gate
 
@@ -268,13 +293,13 @@ When you upgrade to a version of Nastech that has opt-in plugins (config schema 
 
 ## Available hooks
 
-Plugins can register the 26 lifecycle events currently accepted by `nastech_cli.plugins.VALID_HOOKS`. The **[Event Hooks catalog](/user-guide/features/hooks#shipped-plugin-hook-catalog)** is canonical for exact timing, return handling, payload fields, and privacy notes.
+Plugins can register the 27 lifecycle events currently accepted by `nastech_cli.plugins.VALID_HOOKS`. The **[Event Hooks catalog](/user-guide/features/hooks#shipped-plugin-hook-catalog)** is canonical for exact timing, return handling, payload fields, and privacy notes.
 
 | Descriptive category | Shipped hooks |
 |---|---|
 | **Directive/control** | `pre_tool_call`, `pre_llm_call`, `pre_verify`, `pre_gateway_dispatch` |
 | **Transform** | `transform_tool_result`, `transform_terminal_output`, `transform_llm_output`, `pre_transcription` |
-| **Observer** | `post_tool_call`, `post_llm_call`, `pre_api_request`, `post_api_request`, `api_request_error`, `on_stream_start`, `on_stream_delta`, `on_stream_end`, `on_interim_message`, `on_session_start`, `on_session_end`, `on_session_finalize`, `on_session_reset`, `on_skill_lifecycle`, `subagent_start`, `subagent_stop`, `pre_approval_request`, `post_approval_response`, `pre_command`, `kanban_task_claimed`, `kanban_task_completed`, `kanban_task_blocked` |
+| **Observer** | `post_tool_call`, `post_llm_call`, `pre_api_request`, `post_api_request`, `api_request_error`, `on_stream_start`, `on_stream_delta`, `on_stream_end`, `on_interim_message`, `on_session_start`, `on_session_end`, `on_session_finalize`, `on_session_reset`, `agent_loop_stopped`, `on_skill_lifecycle`, `subagent_start`, `subagent_stop`, `pre_approval_request`, `post_approval_response`, `pre_command`, `kanban_task_claimed`, `kanban_task_completed`, `kanban_task_blocked` |
 
 These categories describe current behavior rather than defining future naming rules. Plugin middleware remains a separate registry/surface.
 ## Plugin types
@@ -340,8 +365,8 @@ Declarative plugins are symlinked with a `nix-managed-` prefix — they coexist 
 ```bash
 nastech plugins                               # unified interactive UI
 nastech plugins list                          # table: enabled / disabled / not enabled
-nastech plugins search <term>                 # search the community plugin index
-nastech plugins install <name>                # install by index name (resolved to repo @ pinned ref)
+nastech plugins search <term>                 # search the Nastech plugin catalog
+nastech plugins install <name>                # install a catalog entry (repo @ reviewed pinned SHA)
 nastech plugins install user/repo             # install from Git, then prompt Enable? [y/N]
 nastech plugins install user/repo --enable    # install AND enable (no prompt)
 nastech plugins install user/repo --no-enable # install but leave disabled (no prompt)
@@ -351,6 +376,27 @@ nastech plugins enable my-plugin              # add to allow-list
 nastech plugins disable my-plugin             # remove from allow-list + add to disabled
 nastech plugins capabilities [my-plugin]      # declared vs granted capabilities
 ```
+
+### Installed and Browse in Desktop
+
+Open **Capabilities → Plugins**. **Installed** reads the app's desktop-plugin
+registry and the selected profile's actual agent-plugin state, combining both
+halves in one row where appropriate. It is not a list of catalog entries
+assumed to be installed. **Browse** is a native catalog view, not an embedded
+website; it uses the same **Installed / Browse** tabs as Skills, with search
+at the top and the tab switch and actions on one row. Browse defaults to cards,
+with list and card icons at the right of the filters. The layout choice is shared
+with Skills and remembered. Click a card to read its details; Install opens the
+existing review-then-install dialog.
+
+Desktop and the public [Plugin Catalog](/plugins) consume the same CDN
+snapshot, [`/docs/api/plugins.json`](https://nastechresearch.github.io/nastech-agent/docs/api/plugins.json).
+The public alias serves the same data as Desktop's fetch URL,
+`https://nastechresearch.github.io/nastech-agent/docs/api/plugins.json`. The docs
+build generates it from `plugin-catalog/*.yaml` and cached star counts. The
+same publish also supplies the removed-entry list used by the installer.
+Browsing does not query GitHub live or fetch source repos;
+the installer retrieves code only as part of the separate install flow.
 
 ### One-click install links (Desktop)
 
@@ -373,10 +419,27 @@ deep links never auto-install, and agent-plugin installs go through the same
 `nastech plugins install`.
 
 Hybrid repos (agent + desktop halves in one repo) use one link and one
-dialog. The same modal is reachable without a link via **Settings → Plugins →
-Install from Git**. Legacy `nastech://plugin-agent/…` and
+dialog. The same modal is reachable without a link via **Capabilities →
+Plugins → Install from Git**. Legacy `nastech://plugin-agent/…` and
 `nastech://plugin-desktop/…` URLs route into the same dialog. In dev builds
 (`npm run dev`) the scheme is `nastech-dev://`.
+
+The public [Plugin Catalog](/plugins) includes **Install in Nastech** on every
+card. Catalog links carry `catalog_name`, a URL-encoded `repo` (including
+`#subdir` when present), and `sha`:
+
+```text
+nastech://plugin/install?repo=owner%2Frepo&catalog_name=example-plugin&sha=0123456789abcdef0123456789abcdef01234567
+```
+
+The SHA parameter is display metadata only. For the agent-plugin install,
+the backend resolves `catalog_name` to its reviewed pin when you confirm;
+the link cannot override that pin. Do not treat the displayed SHA as a pin
+guarantee for a standalone desktop plugin. These catalog parameters require
+an updated Desktop build; older builds may only understand the repository
+link. If the app is missing or too old, update Desktop or use the copyable
+`nastech plugins install <catalog-name>` command in the expanded card to retain
+catalog resolution.
 
 Websites need no SDK — a normal anchor works:
 
@@ -494,73 +557,40 @@ capability (`gateway.raw_events`) with a "no stability guarantee" label and a
 separate design, and has not shipped.
 :::
 
-### Discovering community plugins
+### Discovering plugins — the Nastech plugin catalog
 
-`nastech plugins search <term>` searches the **community plugin index** — a
-static, machine-readable JSON catalog of community plugins. Matching is fuzzy
-across name, description, and tags:
-
-```bash
-nastech plugins search telegram               # fuzzy search
-nastech plugins search                        # browse the whole index
-nastech plugins search --capability platform  # filter by declared capability
-nastech plugins search media --json           # machine-readable output
-nastech plugins search --refresh              # bypass the 24h local cache
-```
-
-Once you've found a plugin, install it by bare name — the name is resolved
-through the index to its `owner/repo` plus the index-pinned commit:
+`nastech plugins search <term>` searches the **Nastech plugin catalog** — the
+curated, SHA-pinned catalog maintained in the nastech-agent repository
+(`plugin-catalog/`). Matching covers entry names, descriptions, and declared
+tools:
 
 ```bash
-nastech plugins install nastech-media-studio
+nastech plugins search telegram    # search the catalog
+nastech plugins browse             # browse every entry
+nastech plugins info <name>        # full details for one entry
 ```
 
-If a name matches more than one entry, the candidates are listed and nothing
-is installed. Explicit `owner/repo` or Git-URL identifiers never touch the
-index and keep working exactly as before. An explicit `--ref <sha>` always
-overrides the index pin.
+Once you've found a plugin, install it by bare name — the name resolves to
+the entry's repository at its **pinned commit SHA**, and catalog provenance is
+recorded so `nastech plugins update` can re-pin when the catalog moves:
 
-**How the index is fetched.** The index lives at a canonical URL
-(`https://raw.githubusercontent.com/NastechResearch/nastech-plugin-index/main/index.json`,
-overridable via `nastech config set plugins.index_url <url>`). Fetches are
-cached under `~/.nastech/cache/plugin_index.json` for 24 hours; when the
-remote is unreachable the stale cache is used, and when there is no cache at
-all a bundled seed copy ships with Nastech — so search works fully offline.
-
-**Index entry format.** Each entry is a JSON object:
-
-```json
-{
-  "name": "nastech-media-studio",
-  "description": "Generative media workspace plugin.",
-  "author": "NastechResearch",
-  "tags": ["media", "image-gen"],
-  "repo": "NastechResearch/nastech-media-studio",
-  "ref": "<40-char commit SHA>",
-  "subdir": null,
-  "homepage": "https://github.com/NastechResearch/nastech-media-studio",
-  "capabilities": ["tools", "dashboard"],
-  "api_version": 1,
-  "added_at": "2026-08-12"
-}
+```bash
+nastech plugins install <catalog-name>
 ```
 
-`repo` is the `owner/name` GitHub identifier, `ref` pins an immutable commit
-SHA, and optional `subdir` supports monorepos. The bundled seed file
-(`nastech_cli/data/plugin_index.json` in the repo) is the format reference.
+Explicit `owner/repo` or Git-URL identifiers never touch the catalog and are
+flagged as custom (unreviewed) sources. An explicit
+`--ref <40-char commit SHA>` pins a custom install.
 
-**Submitting a plugin.** The index is maintained as a plain JSON file —
-submit a pull request to the
-[nastech-plugin-index](https://github.com/NastechResearch/nastech-plugin-index)
-repository adding your entry (name, description, author, tags, `owner/repo`,
-and a pinned commit SHA). Review covers the entry's *metadata* only.
+See [Plugin Catalog](./plugin-catalog.md) for the full trust model, admission
+CI, and submission workflow.
 
-:::warning Indexed ≠ audited
-Inclusion in the community index means the entry's metadata was reviewed —
-**it is not a code audit**. Installing still goes through the normal
-consent/review flow (plugins install disabled by default, enabling is an
-explicit step, and tool-override rights require a separate grant). Review a
-plugin's source before enabling it.
+:::warning Cataloged ≠ audited
+A catalog entry means the entry's metadata and declared capabilities were
+reviewed at admission — **it is not a code audit**. Installing still goes
+through the normal consent flow (plugins install disabled by default,
+enabling is an explicit step, and tool-override rights require a separate
+grant). Review a plugin's source before enabling it.
 :::
 
 ### Plugin packs
@@ -575,8 +605,8 @@ description: STT + streaming TTS + approval relay
 author: hyper
 version: 1.0.0
 plugins:
-  - name: nastech-media-studio            # bare community-index name…
-    ref: e8d59971d2b7901405b39dac7b03bdd616272d0d
+  - name: nastech-telegram-business       # bare plugin-catalog name…
+    ref: e905f3bc5eeaa5a9dab9bc5155601b3ebec75757
   - repo: owner/approval-relay           # …or explicit owner/repo (or git URL)
     ref: 8f3c2d1a9b4e5f6071829304a5b6c7d8e9f00112
     subdir: plugins/relay                # optional monorepo path
@@ -595,7 +625,7 @@ nastech plugins pack export --enabled-only       # only plugins.enabled
 
 **Supply-chain posture.** Every entry's `ref` must be an exact 40-character
 commit SHA — tags and branch names are rejected with an error naming the
-entry, the same rule as the community index. Pack installs ride the exact
+entry, the same rule as the plugin catalog. Pack installs ride the exact
 same pinned install path as `nastech plugins install --ref <sha>` and record
 the same provenance in `plugins/.install-metadata.json`, so two installs of
 the same pack resolve identically. Packs build on the
@@ -651,7 +681,23 @@ Three verdicts, matching Cowork's pass/warn/fail:
 | **dangerous** | Blocked. `--force` does **not** override |
 
 On `nastech plugins update`, a dangerous verdict on the updated tree
-disables the plugin until you review the findings and re-enable it.
+disables the plugin until you review the findings and re-enable it. A
+dangerous block names the critical findings that caused it (e.g.
+`1 critical of 42 findings (destructive_root_rm)`), so a single blocking
+line is not hidden behind the total.
+
+Top-level test trees (`tests/`, `test/`, `testing/`, `spec/`, `specs/`,
+`fixtures/` at the plugin root) are still scanned — a plugin's `__init__.py`
+can import from them, so they are runtime code — but a critical finding
+there is capped at **caution**: their fixtures deliberately hold hostile
+strings to prove the plugin rejects them, so it asks for confirmation and
+`--force` overrides it instead of blocking the install outright. The same
+finding in any other file (`setup.sh`, `src/spec/…`) is still **dangerous**.
+Likewise, a generic sample token (`hardcoded_secret`) inside a runtime `.py`
+file's `if __name__ == "__main__":` self-test block is capped at **caution**
+— the loader imports plugins and never runs that block — while every other
+finding inside it (destructive commands, provider-shaped keys such as `sk-…`)
+and the same token anywhere above the guard keep full severity.
 
 Scanning is on by default; disable it in `config.yaml`:
 

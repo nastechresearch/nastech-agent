@@ -2,9 +2,9 @@ import { useStore } from '@nanostores/react'
 import { useEffect, useMemo, useState } from 'react'
 
 import type { NastechGitWorktree } from '@/global'
+import type { SessionInfo } from '@/nastech'
 import { desktopGit } from '@/lib/desktop-git'
 import { mapPool } from '@/lib/pool'
-import type { SessionInfo } from '@/nastech'
 import { $sidebarWorkspaceNodeOpen, toggleWorkspaceNodeCollapsed } from '@/store/layout'
 import { $worktreeRefreshToken } from '@/store/projects'
 
@@ -44,6 +44,16 @@ const projectActivityTime = (project: SidebarProjectTree): number =>
 // The project's most-recent sessions, for the overview preview under each row.
 export const latestProjectSessions = (project: SidebarProjectTree, limit: number): SessionInfo[] =>
   [...projectSessions(project)].sort((a, b) => sessionRecency(b) - sessionRecency(a)).slice(0, limit)
+
+// The overview payload carries only the most-recent preview rows per project.
+// Once the user asks for the rest, the project's full lanes are fetched on
+// demand; fold them under the (live-overlaid) preview so a just-created
+// session keeps its place and nothing renders twice.
+export const expandedProjectSessions = (preview: SessionInfo[], hydrated: SidebarProjectTree): SessionInfo[] => {
+  const seen = new Set(preview.map(session => session.id))
+
+  return [...preview, ...latestProjectSessions(hydrated, Infinity).filter(session => !seen.has(session.id))]
+}
 
 // Home is a fixture, not a project: it always leads the overview, above the
 // active project and outside any hand-picked order.

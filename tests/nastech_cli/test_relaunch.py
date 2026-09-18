@@ -215,16 +215,55 @@ class TestResolveNastechBinWindowsPyGuard:
         # Must NOT be the .py — must be the nastech.exe PATH entry.
         assert bin_path == r"C:\venv\Scripts\nastech.exe"
 
-    @pytest.mark.linux_only
-    def test_posix_still_accepts_py_argv0(self, monkeypatch, tmp_path):
-        """POSIX behaviour unchanged: argv[0] pointing at an executable
-        script (including .py with a shebang + chmod +x) is fine to return
-        because POSIX exec can route through the shebang line."""
+    def test_posix_python_launcher_falls_through_to_path(self, monkeypatch, tmp_path):
+        """A Python source launcher must not be re-executed through its shebang.
+
+        The git installer invokes ``nastech`` with the venv interpreter while the
+        source launcher's shebang uses ``/usr/bin/env python3``.  Re-executing
+        that source file directly can therefore escape the venv and lose core
+        dependencies such as PyYAML.
+        """
+        if sys.platform == "win32":
+            pytest.skip("POSIX semantics")
+        script = tmp_path / "nastech"
+        script.write_text("#!/usr/bin/env python3\n")
+        script.chmod(0o755)
+        wrapper = tmp_path / "bin" / "nastech"
+        wrapper.parent.mkdir()
+        wrapper.write_text("#!/usr/bin/env bash\n")
+        wrapper.chmod(0o755)
+        monkeypatch.setattr(relaunch_mod.sys, "argv", [str(script), "chat"])
+        monkeypatch.setattr(
+            relaunch_mod.shutil, "which",
+            lambda name: str(wrapper) if name == "nastech" else None,
+        )
+        assert relaunch_mod.resolve_nastech_bin() == str(wrapper)
+
+    def test_posix_python_launcher_on_path_falls_back_to_current_python(
+        self, monkeypatch, tmp_path
+    ):
+        """PATH must not re-select the Python launcher rejected from argv[0]."""
+        if sys.platform == "win32":
+            pytest.skip("POSIX semantics")
         script = tmp_path / "nastech"
         script.write_text("#!/usr/bin/env python3\n")
         script.chmod(0o755)
         monkeypatch.setattr(relaunch_mod.sys, "argv", [str(script), "chat"])
-        assert relaunch_mod.resolve_nastech_bin() == str(script)
+        monkeypatch.setattr(
+            relaunch_mod.shutil,
+            "which",
+            lambda name: str(script) if name == "nastech" else None,
+        )
+
+        assert relaunch_mod.resolve_nastech_bin() is None
+
+        # A console script pinned to the running interpreter keeps the venv: still exec-able.
+        pinned = tmp_path / "pinned" / "nastech"
+        pinned.parent.mkdir()
+        pinned.write_text(f"#!{sys.executable}\n")
+        pinned.chmod(0o755)
+        monkeypatch.setattr(relaunch_mod.sys, "argv", [str(pinned), "chat"])
+        assert relaunch_mod.resolve_nastech_bin() == str(pinned)
 
     @pytest.mark.windows_only
     def test_windows_py_argv0_with_no_nastech_on_path_returns_none(self, monkeypatch, tmp_path):

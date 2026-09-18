@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { getTerminalBackends, selectTerminalBackend } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { AlertTriangle, Check, Loader2, RefreshCw } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { getTerminalBackends, selectTerminalBackend } from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 import type { TerminalBackendInfo, TerminalBackendsResponse } from '@/types/nastech'
 

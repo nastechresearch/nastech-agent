@@ -9,6 +9,7 @@ These are pure-stdlib tmp_path tests (no container build).
 from __future__ import annotations
 
 import importlib.util
+import os
 import json
 from pathlib import Path
 
@@ -113,3 +114,18 @@ def test_terminal_entry_missing_marker_is_not_terminal(tmp_path):
     entry) → not terminal, no re-seed."""
     auth = _write_auth(tmp_path, {"nastech": {"client_id": "nastech-cli-vps"}})
     assert mod.reseed_if_terminal(auth, _FRESH_SEED) == "not_terminal"
+
+
+def test_stale_temp_from_a_killed_prior_run_does_not_block_reseed(tmp_path):
+    """Boot-hook PIDs repeat inside a container: a temp left by a SIGKILL'd run must never make
+    the next re-seed fail (main() swallows the exception, so the recovery path would be dead)."""
+    home = tmp_path / "home"
+    home.mkdir()
+    auth = _write_auth(home, {"nastech": _terminal_nastech_state()})
+    stale = Path(f"{auth}.rebootstrap.{os.getpid()}.tmp")
+    stale.write_text("{torn", encoding="utf-8")
+
+    assert mod.reseed_if_terminal(auth, _FRESH_SEED) == "reseeded"
+    store = json.loads(Path(auth).read_text())
+    assert store["providers"]["nastech"]["refresh_token"] == "FRESH-rt"
+    assert sorted(p.name for p in home.iterdir()) == sorted(["auth.json", stale.name]), "no new temp survives"

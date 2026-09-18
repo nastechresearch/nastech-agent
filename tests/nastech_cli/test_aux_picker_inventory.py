@@ -23,6 +23,7 @@ from unittest.mock import patch
 
 import pytest
 import yaml
+from nastech_cli import main_provider_setup
 
 
 CONFIG = {
@@ -123,7 +124,6 @@ def test_aux_pickers_route_through_the_shared_substrate(configured_home):
     of user config the author didn't think about. Both pickers must reach
     the provider list only through ``build_aux_picker_rows``.
     """
-    import nastech_cli.main as main
     import nastech_cli.tools_config as tools_config
 
     direct_calls = []
@@ -143,9 +143,9 @@ def test_aux_pickers_route_through_the_shared_substrate(configured_home):
     with (
         patch("nastech_cli.model_switch.list_authenticated_providers", _direct),
         patch("nastech_cli.inventory.build_aux_picker_rows", _substrate),
-        patch("nastech_cli.main._prompt_provider_choice", return_value=None),
+        patch("nastech_cli.main_provider_setup._prompt_provider_choice", return_value=None),
     ):
-        main._aux_select_for_task("compression")
+        main_provider_setup._aux_select_for_task("compression")
         tools_config._configure_vision_provider_model({}, {})
 
     assert len(substrate_calls) == 2, (

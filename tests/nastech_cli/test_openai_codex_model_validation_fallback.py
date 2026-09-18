@@ -18,7 +18,7 @@ it.
 from unittest.mock import patch
 
 from nastech_cli.model_switch import switch_model
-from nastech_cli.models import validate_requested_model
+from nastech_cli.models_validate import validate_requested_model
 
 
 def test_openai_codex_unknown_but_plausible_model_is_accepted_with_warning():

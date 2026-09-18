@@ -293,8 +293,11 @@ ${preamble()}
 type Trip = { error: string; kind: 'failed' } | { kind: 'answered'; result: PreviewActResult } | { kind: 'silent' }
 
 async function runJson(run: PreviewScriptRunner, code: string): Promise<Trip> {
+  // Pages such as Trendyol replace Promise with ZoneAwarePromise. Electron
+  // awaits native promises only, otherwise IPC clones the thenable's state.
+  // An async function adopts it into a native promise without changing the page.
   const raw = await Promise.race([
-    run(code).catch((error: unknown) => new Error(String(error))),
+    run(`(async () => (${code}))()`).catch((error: unknown) => new Error(String(error))),
     new Promise<undefined>(resolve => setTimeout(resolve, ACT_TIMEOUT_MS))
   ])
 
@@ -418,9 +421,7 @@ async function driveAction(
 /** Flag a click the overlay intercepted, which would otherwise look like a page
  *  that simply ignored it. */
 function hitNote(hit?: { tag: string; trusted: boolean } | null): string | undefined {
-  return hit && hit.tag === 'NASTECH-WATCH'
-    ? 'The action overlay intercepted the click instead of the page.'
-    : undefined
+  return hit && hit.tag === 'NASTECH-WATCH' ? 'The action overlay intercepted the click instead of the page.' : undefined
 }
 
 /** How far a screenful is, whether there is anywhere to go, and a spot to wheel

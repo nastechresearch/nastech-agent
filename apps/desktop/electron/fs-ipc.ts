@@ -8,6 +8,12 @@ import path from 'node:path'
 import { ipcMain, shell } from 'electron'
 
 import { installDesktopPluginFromGit, probePluginRepo } from './desktop-plugin-install'
+import {
+  DESKTOP_PLUGINS_DIR,
+  ensureDir,
+  migrateProfileScopedDesktopPlugins,
+  reconcileUnifiedDesktopHalves
+} from './desktop-plugins-root'
 import { readDirForIpc } from './fs-read-dir'
 import { gitRootForIpc } from './git-root'
 
@@ -78,38 +84,45 @@ export function registerFsIpc({
   // it yields `undefined/desktop-plugins` (or a non-existent remote path) and the
   // on-disk plugin door silently breaks (#66899). Electron owns this resolution
   // so it stays valid in every connection mode. Created on demand, like openDir.
+  // Profile-scoped roots (agent plugins, logs) live under profiles/<name>/ for a
+  // named Desktop profile — they belong to THAT agent. 'default'/unset pins the
+  // global root.
   async function localPluginsRoot(dirName: string): Promise<string> {
-    // Profile-aware: a named Desktop profile gets its own plugin root under
-    // profiles/<name>/, matching the profile-scoped nastech_home the backend
-    // reported before this resolver existed. 'default'/unset pins the global root.
     const profile = readActiveDesktopProfile()
     const base = profile && profile !== 'default' ? path.join(nastechHome, 'profiles', profile) : nastechHome
-    const dir = path.join(base, dirName)
 
-    try {
-      await fs.promises.mkdir(dir, { recursive: true })
-    } catch {
-      // Best-effort create; return the path regardless so the reveal action can
-      // still surface a real openPath error and the scanner can retry later.
-    }
-
-    return dir
+    return ensureDir(path.join(base, dirName))
   }
 
-  ipcMain.handle('nastech:fs:desktopPluginsRoot', async () => localPluginsRoot('desktop-plugins'))
+  // The standalone desktop-plugin root is APP-level, never profile-scoped: a
+  // desktop plugin extends this app, not an agent, so it must stay installed
+  // and loaded whichever profile / gateway / machine the window is pointed at.
+  // Earlier builds scoped it per profile; anything left in those folders is
+  // moved up once so it does not silently vanish on a profile switch.
+  async function desktopPluginsRoot(): Promise<string> {
+    const root = await ensureDir(path.join(nastechHome, DESKTOP_PLUGINS_DIR))
+    await migrateProfileScopedDesktopPlugins(nastechHome, root)
+    await reconcileUnifiedDesktopHalves(nastechHome, root)
+
+    return root
+  }
+
+  ipcMain.handle('nastech:fs:desktopPluginsRoot', async () => desktopPluginsRoot())
+
+  // Re-run the unified-half reconcile on demand (after an agent-plugin install /
+  // update / uninstall through the gateway) so the app-level copy tracks the
+  // package without waiting for the next root resolution.
+  ipcMain.handle('nastech:fs:reconcileDesktopPlugins', async () => {
+    const root = await ensureDir(path.join(nastechHome, DESKTOP_PLUGINS_DIR))
+
+    return reconcileUnifiedDesktopHalves(nastechHome, root)
+  })
 
   // The LOCAL logs root (`<NASTECH_HOME>/logs`, profile-aware) — the error
   // card's "Open Logs" action reveals agent.log/gateway.log without the user
   // knowing where NASTECH_HOME lives. Same Electron-local resolution as the
   // plugin roots: valid in every connection mode, created on demand.
   ipcMain.handle('nastech:fs:logsRoot', async () => localPluginsRoot('logs'))
-
-  // The LOCAL agent-plugin root (`<NASTECH_HOME>/plugins`), same Electron-local
-  // resolution as above. This is the desktop half of a UNIFIED plugin package:
-  // an agent plugin may ship `desktop/plugin.js` alongside its Python code (the
-  // same shape as `dashboard/manifest.json`), and the renderer's disk door scans
-  // this root for it — one installable folder serving both SDKs.
-  ipcMain.handle('nastech:fs:agentPluginsRoot', async () => localPluginsRoot('plugins'))
 
   ipcMain.handle('nastech:plugin:probe', async (_event, payload) => {
     const identifier = String(payload?.identifier || payload?.repo || '').trim()
@@ -128,9 +141,12 @@ export function registerFsIpc({
       return { ok: false, error: 'identifier is required' }
     }
 
-    const desktopPluginsRoot = await localPluginsRoot('desktop-plugins')
-
-    return installDesktopPluginFromGit(resolveGitBinary(), identifier, desktopPluginsRoot, Boolean(payload?.force))
+    return installDesktopPluginFromGit(
+      resolveGitBinary(),
+      identifier,
+      await desktopPluginsRoot(),
+      Boolean(payload?.force)
+    )
   })
 
   // Rename a file/folder in place. The renderer passes the existing path + a new

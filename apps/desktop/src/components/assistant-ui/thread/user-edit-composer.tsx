@@ -36,8 +36,10 @@ import {
 } from '@/app/chat/composer/inline-refs'
 import { chipTypedPathOnSpace, pathifyRefs } from '@/app/chat/composer/path-refs'
 import {
+  beginComposerComposition,
   composerPlainText,
   insertComposerContentsAtCaret,
+  markEditorEmptiness,
   placeCaretEnd,
   refChipElement,
   renderComposerContents,
@@ -50,8 +52,8 @@ import { isRedoShortcut, isUndoShortcut } from '@/app/chat/composer/undo-history
 import { chipTypedUrlOnSpace, linkifyUrls } from '@/app/chat/composer/url-refs'
 import {
   extractDroppedFiles,
-  isImagePath,
   NASTECH_PATHS_MIME,
+  isImagePath,
   partitionDroppedFiles
 } from '@/app/chat/hooks/use-composer-actions'
 import { uploadComposerAttachment } from '@/app/session/hooks/use-prompt-actions'
@@ -64,6 +66,7 @@ import {
   USER_BUBBLE_BASE_CLASS
 } from '@/components/assistant-ui/thread/user-message'
 import { Codicon } from '@/components/ui/codicon'
+import type { NastechGateway } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { attachmentDisplayText, attachmentId, pathLabel } from '@/lib/chat-runtime'
 import { sanitizeComposerInput } from '@/lib/composer-input-sanitize'
@@ -71,7 +74,6 @@ import { DATA_IMAGE_URL_RE } from '@/lib/embedded-images'
 import { triggerHaptic } from '@/lib/haptics'
 import { Loader2Icon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import type { NastechGateway } from '@/nastech'
 import type { ComposerAttachment } from '@/store/composer'
 import { notifyError } from '@/store/notifications'
 import { $terminalBackend } from '@/store/session'
@@ -257,6 +259,9 @@ export const UserEditComposer: FC<UserEditComposerProps> = ({ cwd, gateway, sess
 
   const syncDraftFromEditor = useCallback(
     (editor: HTMLDivElement) => {
+      // Native edits bypass renderComposerContents, so refresh the placeholder
+      // marker here as well, just like the main composer.
+      markEditorEmptiness(editor)
       const nextDraft = sanitizeComposerInput(composerPlainText(editor))
 
       if (nextDraft !== draftRef.current) {
@@ -854,8 +859,9 @@ export const UserEditComposer: FC<UserEditComposerProps> = ({ cwd, gateway, sess
                 composingRef.current = false
                 flushEditorToDraft(event.currentTarget)
               }}
-              onCompositionStart={() => {
+              onCompositionStart={event => {
                 composingRef.current = true
+                beginComposerComposition(event.currentTarget)
               }}
               onDragOver={handleDragOver}
               onDrop={handleDrop}

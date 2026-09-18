@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from nastech_cli.auth import PROVIDER_REGISTRY
-from nastech_cli.model_setup_flows import _existing_api_key_for_model_flow
+from nastech_cli.model_setup_flows_common import _existing_api_key_for_model_flow
 
 
 class _PoolEntry:
@@ -46,7 +46,7 @@ def test_generic_api_key_flow_passes_pool_key_to_existing_key_prompt(monkeypatch
     with (
         patch("nastech_cli.config.get_env_value", return_value=""),
         patch("agent.credential_pool.load_pool", return_value=_AvailablePool()),
-        patch("nastech_cli.main._prompt_api_key", side_effect=capture_prompt),
+        patch("nastech_cli.main_provider_setup._prompt_api_key", side_effect=capture_prompt),
     ):
         _model_flow_api_key_provider({}, "deepseek")
 
@@ -57,7 +57,7 @@ def test_generic_api_key_flow_passes_pool_key_to_existing_key_prompt(monkeypatch
 
 def test_bedrock_flow_sees_pool_key_when_no_env(monkeypatch, capsys):
     """Bedrock API-key mode must also see pool-backed credentials."""
-    from nastech_cli.model_setup_flows import _model_flow_bedrock_api_key
+    from nastech_cli.model_setup_flows_bedrock import _model_flow_bedrock_api_key
 
     monkeypatch.delenv("AWS_BEARER_TOKEN_BEDROCK", raising=False)
 

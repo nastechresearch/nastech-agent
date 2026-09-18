@@ -53,7 +53,7 @@ def test_migrated_sites_render_through_the_shared_helper():
     an implementation detail — only the rendering is pinned)."""
     from nastech_cli.backup import _format_size as backup
     from nastech_cli.checkpoints import _fmt_bytes as checkpoints
-    from nastech_cli.doctor import _human_bytes as doctor
+    from nastech_cli.sizefmt import format_bytes as doctor
 
     for n in (0, 512, 2048, 1234567, 1024**3, 1024**4):
         expected = format_bytes(n)

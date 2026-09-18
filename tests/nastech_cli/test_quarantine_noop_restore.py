@@ -23,7 +23,7 @@ from unittest.mock import patch
 import pytest
 
 from nastech_cli import _install_repair as ir
-from nastech_cli import main as cli_main
+from nastech_cli import main_install_repair
 
 
 def _make_scripts_dir(tmp_path: Path) -> Path:
@@ -39,7 +39,7 @@ def _shim_names(scripts: Path) -> set[str]:
 
 
 # ---------------------------------------------------------------------------
-# nastech_cli.main._run_quarantined_install
+# main_install_repair._run_quarantined_install
 # ---------------------------------------------------------------------------
 
 
@@ -47,10 +47,9 @@ def test_main_noop_success_restores_shims(tmp_path):
     """A successful install that writes no entry points must restore shims."""
     scripts = _make_scripts_dir(tmp_path)
 
-    with patch.object(cli_main, "_is_windows", lambda: True), patch.object(
-        cli_main, "_run_install_with_heartbeat", lambda cmd, env=None: None
+    with patch.object(main_install_repair, "_is_windows", lambda: True), patch.object(main_install_repair, "_run_install_with_heartbeat", lambda cmd, env=None: None
     ):
-        cli_main._run_quarantined_install(["fake"], scripts_dir=scripts)
+        main_install_repair._run_quarantined_install(["fake"], scripts_dir=scripts)
 
     names = _shim_names(scripts)
     assert "nastech.exe" in names, "nastech.exe must be restored after a no-op install"
@@ -67,10 +66,9 @@ def test_main_rewriting_success_keeps_fresh_shims(tmp_path):
         for name in ("nastech", "nastech-agent", "nastech-acp", "nastech-gateway"):
             (scripts / f"{name}.exe").write_bytes(b"MZ-new-" + name.encode())
 
-    with patch.object(cli_main, "_is_windows", lambda: True), patch.object(
-        cli_main, "_run_install_with_heartbeat", fake_install
+    with patch.object(main_install_repair, "_is_windows", lambda: True), patch.object(main_install_repair, "_run_install_with_heartbeat", fake_install
     ):
-        cli_main._run_quarantined_install(["fake"], scripts_dir=scripts)
+        main_install_repair._run_quarantined_install(["fake"], scripts_dir=scripts)
 
     assert (scripts / "nastech.exe").read_bytes() == b"MZ-new-nastech"
 
@@ -81,11 +79,10 @@ def test_main_failure_restores_shims_and_reraises(tmp_path):
     def boom(cmd, env=None):
         raise RuntimeError("install died")
 
-    with patch.object(cli_main, "_is_windows", lambda: True), patch.object(
-        cli_main, "_run_install_with_heartbeat", boom
+    with patch.object(main_install_repair, "_is_windows", lambda: True), patch.object(main_install_repair, "_run_install_with_heartbeat", boom
     ):
         with pytest.raises(RuntimeError, match="install died"):
-            cli_main._run_quarantined_install(["fake"], scripts_dir=scripts)
+            main_install_repair._run_quarantined_install(["fake"], scripts_dir=scripts)
 
     assert (scripts / "nastech.exe").read_bytes() == b"MZ-old-nastech"
 

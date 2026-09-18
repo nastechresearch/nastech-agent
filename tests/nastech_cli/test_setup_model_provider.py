@@ -137,7 +137,7 @@ def test_setup_summary_local_browser_unavailable_without_chromium(
 
     Unlike the mocked-feature tests above, this drives the real
     ``get_nastech_subscription_features`` so the surface stays aligned with the
-    runtime gate in ``tools.browser_tool.check_browser_requirements``.
+    runtime gate in ``tools.browser_tool_install.check_browser_requirements``.
     """
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
     _clear_provider_env(monkeypatch)
@@ -156,8 +156,8 @@ def test_setup_summary_local_browser_unavailable_without_chromium(
         "nastech_cli.nastech_subscription.get_nastech_portal_account_info",
         lambda *a, **k: None,
     )
-    monkeypatch.setattr("tools.browser_tool._chromium_installed", lambda: False)
-    monkeypatch.setattr("tools.browser_tool._using_lightpanda_engine", lambda: False)
+    monkeypatch.setattr("tools.browser_tool_install._chromium_installed", lambda: False)
+    monkeypatch.setattr("tools.browser_tool_lightpanda_fallback._using_lightpanda_engine", lambda: False)
     monkeypatch.setattr(
         "agent.auxiliary_client.get_available_vision_backends", lambda: []
     )

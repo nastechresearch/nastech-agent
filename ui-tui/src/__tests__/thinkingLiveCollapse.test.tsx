@@ -1,11 +1,11 @@
 import { PassThrough } from 'stream'
 
 import { renderSync } from '@nastech/ink'
+import { stripAnsi } from '@nastech/shared/ansi'
 import React from 'react'
 import { describe, expect, it } from 'vitest'
 
 import { ToolTrail } from '../components/thinking.js'
-import { stripAnsi } from '../lib/text.js'
 import { DEFAULT_THEME } from '../theme.js'
 
 const flushEffects = async () => {

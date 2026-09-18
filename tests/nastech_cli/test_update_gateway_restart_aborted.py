@@ -15,11 +15,7 @@ from __future__ import annotations
 import sys
 import types
 
-from nastech_cli.main import (
-    _restart_phase_failure_is_incomplete,
-    _surviving_gateway_pids_after_failed_restart,
-    _warn_gateway_restart_phase_aborted,
-)
+from nastech_cli.update_cmd import _restart_phase_failure_is_incomplete, _surviving_gateway_pids_after_failed_restart, _warn_gateway_restart_phase_aborted
 
 
 class TestSurvivingGatewayProbe:

@@ -1,6 +1,7 @@
+import { contrastRatio } from '@nastech/shared/color'
 import { describe, expect, it } from 'vitest'
 
-import { contrastRatio, hexToOklch, withHue } from './color'
+import { hexToOklch, withHue } from './color'
 import { githubTheme, nastechTheme } from './presets'
 import { retintTheme, themeHue } from './retint'
 import type { DesktopThemeColors } from './types'

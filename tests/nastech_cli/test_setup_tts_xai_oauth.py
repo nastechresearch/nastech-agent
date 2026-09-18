@@ -63,7 +63,7 @@ def test_run_xai_oauth_login_from_setup_does_not_hijack_active_provider(
     monkeypatch.setattr("nastech_cli.auth._is_remote_session", lambda: True)
 
     from nastech_cli.auth import is_source_suppressed, suppress_credential_source
-    from nastech_cli.setup import _run_xai_oauth_login_from_setup
+    from nastech_cli.setup_tts import _run_xai_oauth_login_from_setup
 
     suppress_credential_source("xai-oauth", "device_code")
     assert is_source_suppressed("xai-oauth", "device_code") is True

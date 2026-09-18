@@ -5,7 +5,66 @@ vi.mock('@/nastech', () => ({
   saveNastechConfig: vi.fn(async () => undefined)
 }))
 
+import { saveNastechConfig } from '@/nastech'
+
 import { $voiceStopPhrase, applyVoiceStopPhraseFromConfig } from './voice-prefs'
+
+it('keeps the desktop toggle local across config refreshes', async () => {
+  for (const fails of [false, true]) {
+    for (const enabled of [false, true]) {
+      localStorage.clear()
+      vi.resetModules()
+      const prefs = await import('./voice-prefs')
+      const write = vi.spyOn(localStorage, 'setItem')
+
+      if (fails) {
+        write.mockImplementation(() => {
+          throw new DOMException('Full', 'QuotaExceededError')
+        })
+      }
+
+      vi.mocked(saveNastechConfig).mockClear()
+
+      try {
+        await prefs.setAutoSpeakReplies(enabled)
+        prefs.applyAutoSpeakFromConfig({ voice: { auto_tts: !enabled } })
+        expect(prefs.$autoSpeakReplies.get()).toBe(enabled)
+        expect(saveNastechConfig).not.toHaveBeenCalled()
+        expect(localStorage.getItem('nastech.desktop.autoSpeakReplies')).toBe(fails ? null : String(enabled))
+      } finally {
+        write.mockRestore()
+      }
+    }
+  }
+})
+
+it('migrates the legacy preference once, not on every refresh', async () => {
+  for (const fails of [false, true]) {
+    for (const enabled of [false, true]) {
+      localStorage.clear()
+      vi.resetModules()
+      const prefs = await import('./voice-prefs')
+      const write = vi.spyOn(localStorage, 'setItem')
+
+      if (fails) {
+        write.mockImplementation(() => {
+          throw new DOMException('Denied', 'SecurityError')
+        })
+      }
+
+      try {
+        prefs.applyAutoSpeakFromConfig(null)
+        expect(localStorage.getItem('nastech.desktop.autoSpeakReplies')).toBeNull()
+        prefs.applyAutoSpeakFromConfig({ voice: { auto_tts: enabled } })
+        prefs.applyAutoSpeakFromConfig({ voice: { auto_tts: !enabled } })
+        expect(prefs.$autoSpeakReplies.get()).toBe(enabled)
+        expect(localStorage.getItem('nastech.desktop.autoSpeakReplies')).toBe(fails ? null : String(enabled))
+      } finally {
+        write.mockRestore()
+      }
+    }
+  }
+})
 
 describe('applyVoiceStopPhraseFromConfig', () => {
   it('defaults to "stop" when the key is absent (backend default applies)', () => {

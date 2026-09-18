@@ -6,7 +6,7 @@
  * backend, no core edits.
  *
  * Ships OFF by default (`defaultEnabled: false`): it inventories in
- * Settings ▸ Plugins and registers nothing until the user flips the switch.
+ * Capabilities ▸ Plugins and registers nothing until the user flips the switch.
  */
 
 import './kanban.css'
@@ -14,10 +14,10 @@ import './kanban.css'
 import {
   cn,
   Codicon,
+  type NastechPlugin,
   host,
   type KeybindContribution,
   KEYBINDS_AREA,
-  type NastechPlugin,
   PALETTE_AREA,
   type PaletteContribution,
   type RouteContribution,

@@ -9,6 +9,7 @@ working model configured (consumer-onboarding audit finding #7, Aug 2026).
 from unittest.mock import patch
 
 from nastech_cli.auth import AuthError
+from nastech_cli import nastech_subscription
 
 
 def _summary_output(capsys, provider_ready: bool):
@@ -25,7 +26,7 @@ def _summary_output(capsys, provider_ready: bool):
 
     # Keep the summary fast/hermetic: stub the heavier feature probes.
     with patch("nastech_cli.auth.resolve_provider", resolver), \
-         patch.object(setup_mod, "get_nastech_subscription_features") as feats:
+         patch.object(nastech_subscription, "get_nastech_subscription_features") as feats:
         feats.side_effect = Exception("stubbed")
         try:
             setup_mod._print_setup_summary({}, "/tmp/nowhere")

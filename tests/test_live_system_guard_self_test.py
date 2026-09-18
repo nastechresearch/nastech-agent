@@ -20,6 +20,7 @@ from __future__ import annotations
 import os
 import signal
 import subprocess
+import sys
 import types
 
 import pytest
@@ -290,6 +291,32 @@ def test_subprocess_killall_nastech_blocked():
 
 
 
+
+
+# ──────────────────── real gateway runtime spawn ─────────────────
+
+
+def test_subprocess_popen_real_gateway_restart_blocked():
+    """``python -m nastech_cli.main gateway restart`` is a detached child that
+    inherits the pytest-tmp NASTECH_HOME, resolves the developer's real
+    ``nastech-gateway`` unit, and outlives the test (39 six-day orphans squatted
+    the webhook port, 2026-09-03). Blocked at the spawn primitive."""
+    with pytest.raises(RuntimeError, match="live-system guard"):
+        subprocess.Popen(
+            [sys.executable, "-m", "nastech_cli.main", "gateway", "restart"],
+            start_new_session=True,
+        )
+
+
+def test_subprocess_run_gateway_status_passes_through():
+    """Only lifecycle verbs are blocked: ``gateway status`` (and every other
+    read-only subcommand) must still spawn — via the canonical matcher, not an
+    argv substring."""
+    result = subprocess.run(
+        [sys.executable, "-c", "import sys; print(sys.argv[1:])", "-m", "nastech_cli.main", "gateway", "status"],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0
 
 
 # ──────────────────── bypass marker ─────────────────────────────

@@ -1,6 +1,5 @@
+import type { ModelOptionProvider } from '@nastech/shared'
 import { describe, expect, it } from 'vitest'
-
-import type { ModelOptionProvider } from '@/types/nastech'
 
 import {
   collapseModelFamilies,

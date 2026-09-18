@@ -1,9 +1,9 @@
-import { useStore } from '@nanostores/react'
 import { isGatewayReauthRequired, resolveGatewayWsUrl } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useCallback, useEffect, useRef } from 'react'
 
-import { RECONNECT_ATTEMPT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
 import type { NastechGateway } from '@/nastech'
+import { RECONNECT_ATTEMPT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
 import { $gateway, ensureActiveGatewayOpen, isActivePrimary } from '@/store/gateway'
 import { $activeGatewayProfile } from '@/store/profile'
 import { $gatewayState, setConnection } from '@/store/session'

@@ -19,7 +19,9 @@
     /* Path aliases */
     "paths": {
       "@/*": ["./src/*"],
-      "@nastech/shared": ["../apps/shared/src/index.ts"]
+      "@nastech/shared": ["../apps/shared/src/index.ts"],
+      "@nastech/shared/ansi": ["../apps/shared/src/ansi.ts"],
+      "@nastech/shared/i18n": ["../apps/shared/src/i18n.ts"]
     },
 
     /* Linting */

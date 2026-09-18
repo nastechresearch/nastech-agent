@@ -33,7 +33,7 @@
  * as bootstrap-platform.ts and hardening.ts).
  */
 
-import { execFileSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 
 /** Default probe budget. 5s false-negativeed healthy Windows cold starts (#61764). */
 const DEFAULT_PROBE_TIMEOUT_MS = 15_000
@@ -85,10 +85,10 @@ function isTimeoutError(err: unknown): boolean {
 }
 
 /**
- * Run execFileSync; on timeout only, retry once before failing.
+ * Run without blocking the event loop; on timeout only, retry once before failing.
  * Non-timeout failures (ENOENT, non-zero exit) fail immediately.
  */
-function execProbeSync(
+async function execProbe(
   command: string,
   args: string[],
   options: {
@@ -99,16 +99,36 @@ function execProbeSync(
     shell?: boolean
     windowsHide?: boolean
   }
-): void {
+): Promise<void> {
+  const run = () =>
+    new Promise<void>((resolve, reject) => {
+      const child = spawn(command, args, options)
+      child.once('error', reject)
+      child.once('close', (code, signal) => {
+        // A timed-out probe may handle SIGTERM and exit zero; it is still a timeout.
+        if (code === 0 && !child.killed) {
+          resolve()
+        } else {
+          reject(
+            Object.assign(new Error(`Runtime probe failed: ${command} (${signal || code})`), {
+              code,
+              signal,
+              killed: child.killed
+            })
+          )
+        }
+      })
+    })
+
   try {
-    execFileSync(command, args, options)
+    await run()
   } catch (err) {
     if (!isTimeoutError(err)) {
       throw err
     }
 
     // One cold-cache / AV miss should not force nastech-setup --update (#61764).
-    execFileSync(command, args, options)
+    await run()
   }
 }
 
@@ -141,13 +161,13 @@ function nastechRuntimeImportProbe() {
  * @param {object} [opts.env] - Additional environment for the probe.
  * @returns {boolean}
  */
-function canImportNastechCli(pythonPath: string, opts: { env?: Record<string, string> } = {}) {
+async function canImportNastechCli(pythonPath: string, opts: { env?: Record<string, string> } = {}) {
   if (!pythonPath) {
     return false
   }
 
   try {
-    execProbeSync(pythonPath, ['-c', nastechRuntimeImportProbe()], {
+    await execProbe(pythonPath, ['-c', nastechRuntimeImportProbe()], {
       env: { ...process.env, ...(opts.env || {}) },
       stdio: 'ignore',
       timeout: PROBE_TIMEOUT_MS,
@@ -175,7 +195,7 @@ function canImportNastechCli(pythonPath: string, opts: { env?: Record<string, st
  * @param {string} nastechCommand - Resolved absolute path to a nastech
  *   executable (or an interpreter+script wrapper).
  * @param {boolean} [opts.shell] - Whether to run through a shell. For
- *   .cmd/.bat shims on Windows execFileSync needs shell:true to find
+ *   .cmd/.bat shims on Windows spawn needs shell:true to find
  *   the cmd interpreter; mirrors the same flag isCommandScript() drives
  *   in resolveNastechBackend.
  * @returns {boolean}
@@ -190,13 +210,13 @@ function shouldTrustNastechOverride(nastechOverride?: string) {
   return typeof nastechOverride === 'string' && nastechOverride.trim().length > 0
 }
 
-function verifyNastechCli(nastechCommand: string, opts?: { shell?: boolean }) {
+async function verifyNastechCli(nastechCommand: string, opts?: { shell?: boolean }) {
   if (!nastechCommand) {
     return false
   }
 
   try {
-    execProbeSync(nastechCommand, ['--version'], {
+    await execProbe(nastechCommand, ['--version'], {
       stdio: 'ignore',
       timeout: PROBE_TIMEOUT_MS,
       shell: Boolean(opts?.shell),
@@ -212,8 +232,9 @@ function verifyNastechCli(nastechCommand: string, opts?: { shell?: boolean }) {
 export {
   canImportNastechCli,
   DEFAULT_PROBE_TIMEOUT_MS,
-  execProbeSync,
+  execProbe,
   nastechRuntimeImportProbe,
+  isTimeoutError,
   PROBE_TIMEOUT_MS,
   resolveProbeTimeoutMs,
   shouldTrustNastechOverride,

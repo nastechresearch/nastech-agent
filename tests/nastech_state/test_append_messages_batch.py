@@ -11,10 +11,8 @@ import sqlite3
 
 import pytest
 
-from nastech_state import (
-    CompressionSessionClosedError,
-    SessionDB,
-)
+from nastech_state import SessionDB
+from nastech_state_errors import CompressionSessionClosedError
 
 
 @pytest.fixture()

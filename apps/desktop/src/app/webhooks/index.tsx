@@ -20,9 +20,6 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { useI18n } from '@/i18n'
-import { AlertTriangle, Globe, Plus, RefreshCw } from '@/lib/icons'
-import { cn } from '@/lib/utils'
 import {
   createWebhook,
   deleteWebhook,
@@ -32,6 +29,9 @@ import {
   type WebhookRoute,
   type WebhooksResponse
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import { AlertTriangle, Globe, Plus, RefreshCw } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import { notify, notifyError } from '@/store/notifications'
 import { $profileScope } from '@/store/profile'
 import { runGatewayRestart } from '@/store/system-actions'
@@ -147,19 +147,21 @@ export function WebhooksView({ onClose }: WebhooksViewProps) {
   const restartGatewayNow = useCallback(async () => {
     setRestarting(true)
 
-    try {
-      await runGatewayRestart()
+    // runGatewayRestart never rejects (it toasts its own failure); the boolean
+    // is the only signal that the receiver actually came back.
+    const ok = await runGatewayRestart()
+
+    if (ok) {
       setRestartNeeded(false)
       setRestartError(null)
       // Give the receiver a moment to bind before re-reading state.
       window.setTimeout(() => void reload(true), 4000)
-    } catch (err) {
+    } else {
       setRestartNeeded(true)
-      setRestartError(String(err))
-      notifyError(err, w.restartFailed(''))
-    } finally {
-      setRestarting(false)
+      setRestartError(w.restartFailed(''))
     }
+
+    setRestarting(false)
   }, [reload, w])
 
   const handleEnable = useCallback(async () => {

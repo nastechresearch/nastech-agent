@@ -18,7 +18,10 @@
     "paths": {
       "@/*": ["./src/*"],
       "@nastech/plugin-sdk": ["./src/sdk/index.ts"],
+      "@nastech/shared/ansi": ["../shared/src/ansi.ts"],
       "@nastech/shared/billing": ["../shared/src/billing-types.ts"],
+      "@nastech/shared/color": ["../shared/src/color.ts"],
+      "@nastech/shared/i18n": ["../shared/src/i18n.ts"],
       "@nastech/shared/translucency": ["../shared/src/translucency.ts"],
       "@nastech/shared": ["../shared/src/index.ts"]
     }

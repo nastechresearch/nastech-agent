@@ -14,7 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable
 
-from nastech_cli.commands import SlashCommandCompleter
+from nastech_cli.commands_completion import SlashCommandCompleter
 
 
 def _run(tmp_path: Path, word: str) -> list[tuple[str, str]]:

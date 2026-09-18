@@ -18,6 +18,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from nastech_cli import kanban_db as kb
+from nastech_cli import kanban_db_connect as kbc
 from nastech_cli.plugins import get_plugin_manager
 
 
@@ -67,7 +68,7 @@ def captured_updates():
 
 
 def _make_task(title="t"):
-    conn = kb.connect()
+    conn = kbc.connect()
     try:
         return kb.create_task(conn, title=title, assignee="alice")
     finally:
