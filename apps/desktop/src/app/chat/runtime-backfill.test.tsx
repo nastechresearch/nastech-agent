@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { stubThreadEnvironment } from '@/components/assistant-ui/test-utils'
 import { type TranscriptWindowValue, useTranscriptWindow } from '@/components/assistant-ui/thread/transcript-window'
-import type * as NastechApi from '@/nastech'
 import type { ChatMessage } from '@/lib/chat-messages'
+import type * as NastechApi from '@/nastech'
 import type * as SessionStates from '@/store/session-states'
 import { $transcriptTailBySessionId, recordTranscriptTail } from '@/store/transcript-tail'
 

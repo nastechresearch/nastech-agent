@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { getStatus } from '@/nastech'
 import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
+import { getStatus } from '@/nastech'
 import { refreshFreeTierStatus, setFreeTierRoute } from '@/store/free-tier'
 import { $setupReadyTick } from '@/store/live-sync'
 import type { StatusResponse } from '@/types/nastech'

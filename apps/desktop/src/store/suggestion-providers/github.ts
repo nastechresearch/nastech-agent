@@ -1,6 +1,6 @@
 import { requestComposerFocus, requestComposerInsert } from '@/app/chat/composer/focus'
-import { getGhAuthStatus } from '@/nastech'
 import { translateNow } from '@/i18n'
+import { getGhAuthStatus } from '@/nastech'
 import { type ComposerSuggestion, registerDraftProvider } from '@/store/composer-suggestions'
 
 /**

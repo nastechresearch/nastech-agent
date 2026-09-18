@@ -97,6 +97,8 @@ describe('TUI bundle (issue #31227)', () => {
   it('has the @nastech/ink entry-exports module compiled to sync init', () => {
     // Sanity check that the alias swap to packages/nastech-ink/src/entry-exports.ts
     // is still active and producing the expected synchronous init shape.
-    expect(bundleSrc).toMatch(/var init_entry_exports = __esm\(\{\s*"packages\/nastech-ink\/src\/entry-exports\.ts"\(\)/)
+    expect(bundleSrc).toMatch(
+      /var init_entry_exports = __esm\(\{\s*"packages\/nastech-ink\/src\/entry-exports\.ts"\(\)/
+    )
   })
 })

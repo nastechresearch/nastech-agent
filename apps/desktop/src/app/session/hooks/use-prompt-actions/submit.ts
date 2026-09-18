@@ -1,6 +1,5 @@
 import { type MutableRefObject, useCallback } from 'react'
 
-import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
 import type { Translations } from '@/i18n'
 import { type ChatMessage, textPart } from '@/lib/chat-messages'
 import { optimisticAttachmentRef } from '@/lib/chat-runtime'
@@ -12,6 +11,7 @@ import {
   stopVoicePlayback,
   takeVoicePlaybackInterrupted
 } from '@/lib/voice-playback'
+import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
 import {
   $composerAttachments,
   type ComposerAttachment,

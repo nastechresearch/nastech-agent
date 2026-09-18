@@ -607,7 +607,8 @@ export const ru = defineLocale({
       sessionDensityComfortable: 'Комфортно',
       sessionDensityDetailed: 'Подробно',
       tabStripTitle: 'Панель вкладок',
-      tabStripDesc: 'Показывать вкладки над зоной. Автоматически скрываются для одной панели, если не открыта другая зона чата или плитки.',
+      tabStripDesc:
+        'Показывать вкладки над зоной. Автоматически скрываются для одной панели, если не открыта другая зона чата или плитки.',
       tabStripAuto: 'Авто',
       tabStripAlways: 'Всегда',
       tabStripNever: 'Никогда',
@@ -1061,7 +1062,8 @@ export const ru = defineLocale({
       errorTitle: 'Ошибка сочетания для снимка окна',
       loadFailed: 'Не удалось прочитать состояние сочетания. Повторите попытку, чтобы проверить текущую настройку.',
       saveFailed: 'Не удалось подтвердить изменение сочетания. Повторите попытку, чтобы проверить текущую настройку.',
-      permissionFailed: 'Не удалось открыть Системные настройки. Откройте раздел «Конфиденциальность и безопасность» вручную и повторите попытку.',
+      permissionFailed:
+        'Не удалось открыть Системные настройки. Откройте раздел «Конфиденциальность и безопасность» вручную и повторите попытку.',
       captureFailed: 'Не удалось снять переднее окно. Ничего не прикреплено и не отправлено.',
       contextChanged: 'Текущий черновик изменился во время съёмки. Снимок не прикреплён и не отправлен.'
     },
@@ -1535,7 +1537,8 @@ export const ru = defineLocale({
       useBackend: 'Использовать этот бэкенд',
       nastechIncluded: 'Входит в подписку Nastech — войдите в Nastech Portal, чтобы активировать.',
       nastechAuthNeededTitle: 'Войдите в Nastech Portal',
-      nastechAuthNeededMessage: provider => `${provider} сохранён, но не активируется, пока вы не войдёте в Nastech Portal.`,
+      nastechAuthNeededMessage: provider =>
+        `${provider} сохранён, но не активируется, пока вы не войдёте в Nastech Portal.`,
       nastechAuthSignIn: 'Войти',
       nastechAuthDoneTitle: 'Nastech Portal подключён',
       nastechAuthDoneMessage: 'Ваши бэкенды по подписке теперь активны.',
@@ -3541,7 +3544,8 @@ export const ru = defineLocale({
       address: 'Адрес',
       addressPlaceholder: 'Введите адрес',
       blankPageBody: 'Введите адрес выше, чтобы просматривать, или попросите Nastech открыть страницу.',
-      finishedRestarting: message => `Nastech завершил перезапуск сервера предпросмотра${message ? `: ${message}` : ''}`,
+      finishedRestarting: message =>
+        `Nastech завершил перезапуск сервера предпросмотра${message ? `: ${message}` : ''}`,
       failedRestarting: message => `Перезапуск сервера не удался: ${message}`,
       unknownError: 'неизвестная ошибка',
       restartedTitle: 'Сервер предпросмотра перезапущен',

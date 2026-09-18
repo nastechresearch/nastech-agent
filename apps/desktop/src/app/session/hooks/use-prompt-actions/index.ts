@@ -1,11 +1,10 @@
 import type { AppendMessage, ThreadMessage } from '@assistant-ui/react'
+import { useStore } from '@nanostores/react'
 import { JsonRpcGatewayError } from '@nastech/shared'
 import { SLASH_COMMAND_RE } from '@nastech/shared'
 import { stripAnsi } from '@nastech/shared/ansi'
-import { useStore } from '@nanostores/react'
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react'
 
-import { transcribeAudio } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { type ChatMessage, textPart } from '@/lib/chat-messages'
 import { pathLabel } from '@/lib/chat-runtime'
@@ -14,6 +13,7 @@ import { triggerHaptic } from '@/lib/haptics'
 import { setMutableRef } from '@/lib/mutable-ref'
 import { normalize } from '@/lib/text'
 import { transcribeAudioClientDirect } from '@/lib/voice-client-direct'
+import { transcribeAudio } from '@/nastech'
 import { clearClarifyRequest } from '@/store/clarify'
 import {
   $composerAttachments,

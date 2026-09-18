@@ -182,33 +182,39 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     }
   },
   // macOS native screenshot gesture; captures require a main-issued request.
-  screenshot: process.platform === 'darwin' ? {
-    getSettings: () => ipcRenderer.invoke('nastech:screenshot:settings:get'),
-    setEnabled: enabled => ipcRenderer.invoke('nastech:screenshot:settings:set', enabled),
-    openPermissionSettings: kind => ipcRenderer.invoke('nastech:screenshot:permission', kind),
-    capture: requestId => ipcRenderer.invoke('nastech:screenshot:capture', requestId),
-    onStatus: callback => {
-      const listener = (_event, status) => callback(status)
-      ipcRenderer.on('nastech:screenshot:status', listener)
+  screenshot:
+    process.platform === 'darwin'
+      ? {
+          getSettings: () => ipcRenderer.invoke('nastech:screenshot:settings:get'),
+          setEnabled: enabled => ipcRenderer.invoke('nastech:screenshot:settings:set', enabled),
+          openPermissionSettings: kind => ipcRenderer.invoke('nastech:screenshot:permission', kind),
+          capture: requestId => ipcRenderer.invoke('nastech:screenshot:capture', requestId),
+          onStatus: callback => {
+            const listener = (_event, status) => callback(status)
+            ipcRenderer.on('nastech:screenshot:status', listener)
 
-      return () => ipcRenderer.removeListener('nastech:screenshot:status', listener)
-    },
-    onRequest: callback => {
-      const channel = 'nastech:screenshot:request'
-      const listener = (_event, requestId) => callback(requestId)
-      if (ipcRenderer.listenerCount(channel) === 0) {
-        ipcRenderer.send('nastech:screenshot:subscribe', true)
-      }
-      ipcRenderer.on(channel, listener)
+            return () => ipcRenderer.removeListener('nastech:screenshot:status', listener)
+          },
+          onRequest: callback => {
+            const channel = 'nastech:screenshot:request'
+            const listener = (_event, requestId) => callback(requestId)
 
-      return () => {
-        ipcRenderer.removeListener(channel, listener)
-        if (ipcRenderer.listenerCount(channel) === 0) {
-          ipcRenderer.send('nastech:screenshot:subscribe', false)
+            if (ipcRenderer.listenerCount(channel) === 0) {
+              ipcRenderer.send('nastech:screenshot:subscribe', true)
+            }
+
+            ipcRenderer.on(channel, listener)
+
+            return () => {
+              ipcRenderer.removeListener(channel, listener)
+
+              if (ipcRenderer.listenerCount(channel) === 0) {
+                ipcRenderer.send('nastech:screenshot:subscribe', false)
+              }
+            }
+          }
         }
-      }
-    }
-  } : undefined,
+      : undefined,
   // Quick Entry: the global-hotkey mini composer window. Main owns the OS
   // shortcut + the persisted preference; the quick window only captures text
   // and hands it back, and the primary renderer submits it through the normal

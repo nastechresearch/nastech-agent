@@ -10,9 +10,9 @@ import {
 import { atom } from 'nanostores'
 
 import type { NastechConnection } from '@/global'
-import { NastechGateway, setApiRequestConnection } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { isTimeoutError, RECONNECT_ATTEMPT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
+import { NastechGateway, setApiRequestConnection } from '@/nastech'
 import { notifyError, RECOVERY_ACTIONS } from '@/store/notifications'
 import { markNativeNotifyBaseline } from '@/store/notify-baseline'
 import { setConnection, setGatewayState } from '@/store/session'
@@ -608,6 +608,7 @@ async function openSecondary(entry: Secondary, spawnPriority: SpawnPriority = 'b
   const desktop = window.nastechDesktop
 
   const reauthError = g.reauthFailures.get(entry.scope)?.error
+
   if (reauthError) {
     throw reauthError
   }
@@ -753,6 +754,7 @@ async function openSecondary(entry: Secondary, spawnPriority: SpawnPriority = 'b
       entry.wantOpen = false
       clearTimer(entry)
     }
+
     throw error
   } finally {
     if (entry.connectPromise === pending) {
@@ -785,9 +787,11 @@ function isStalledDialError(error: unknown): boolean {
 
 function rearmSecondary(entry: Secondary, priority: SpawnPriority = 'foreground'): void {
   const reauthError = g.reauthFailures.get(entry.scope)?.error
+
   if (reauthError && priority !== 'foreground') {
     throw reauthError
   }
+
   g.reauthFailures.delete(entry.scope)
 
   if (entry.retiredByPool && priority !== 'foreground') {
@@ -827,6 +831,7 @@ async function reconnectSecondary(entry: Secondary): Promise<void> {
   } catch (error) {
     if (isGatewayReauthRequired(error)) {
       notifyError(error, translateNow('boot.errors.gatewaySignInRequired'), { action: RECOVERY_ACTIONS.openGateways() })
+
       return
     }
 
@@ -930,8 +935,7 @@ function createSecondary(profile: string, connectionId: null | string = null): S
     g.config?.onEvent(scopedEvent)
     releaseTerminalTurnLease(entry.scope, event)
   })
-  entry.offRequest =
-    gateway.onRequest?.(request => dispatchServerRequest(request, profile, connectionId)) ?? (() => {})
+  entry.offRequest = gateway.onRequest?.(request => dispatchServerRequest(request, profile, connectionId)) ?? (() => {})
   entry.offState = gateway.onState(state => {
     reportGatewayState(scope, state)
 
@@ -1286,6 +1290,7 @@ export function retainGatewayForRelay(connectionId: null | string, profile: stri
   }
 
   entry.relayRetainCount += 1
+
   if (!g.reauthFailures.has(entry.scope)) {
     rearmSecondary(entry)
   }
@@ -1799,7 +1804,9 @@ export async function ensureGatewayForProfile(profile: string): Promise<void> {
 // reconnects are owned by use-gateway-boot, so we only drive secondaries here.
 // A scope parked on a rejected session stays parked for automatic request
 // retries; only a user gesture (`explicit`: the Reconnect action) may redial it.
-export async function ensureActiveGatewayOpen({ explicit = false }: { explicit?: boolean } = {}): Promise<NastechGateway | null> {
+export async function ensureActiveGatewayOpen({
+  explicit = false
+}: { explicit?: boolean } = {}): Promise<NastechGateway | null> {
   if (g.activeKey === g.primaryProfile) {
     return g.primaryGateway
   }
@@ -2078,6 +2085,7 @@ export function closeLegacySecondaryGateways(): void {
       g.reauthFailures.delete(scope)
     }
   }
+
   closeSecondariesWhere(isLegacySecondary)
 }
 
