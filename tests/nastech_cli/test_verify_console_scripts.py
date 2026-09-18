@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from nastech_cli import main_install_repair
 
 
 @pytest.fixture
@@ -44,10 +45,10 @@ class TestVerifyConsoleScriptsInstalled:
         for name in ("nastech", "nastech-agent", "nastech-acp"):
             (fake_scripts_dir / f"{name}.exe").write_bytes(b"fake")
 
-        with patch("nastech_cli.main._is_windows", return_value=True), \
-             patch("nastech_cli.main._venv_scripts_dir", return_value=fake_scripts_dir), \
-             patch("nastech_cli.main._run_quarantined_install") as mock_install:
-            from nastech_cli.main import _verify_console_scripts_installed
+        with patch("nastech_cli.main_install_repair._is_windows", return_value=True), \
+             patch("nastech_cli.main_install_repair._venv_scripts_dir", return_value=fake_scripts_dir), \
+             patch("nastech_cli.main_install_repair._run_quarantined_install") as mock_install:
+            from nastech_cli.main_install_repair import _verify_console_scripts_installed
 
             _verify_console_scripts_installed(["uv", "pip"], env={})
 
@@ -61,8 +62,8 @@ class TestVerifyConsoleScriptsInstalled:
     ):
         import nastech_cli.main as main_mod
 
-        with patch("nastech_cli.main._is_windows", return_value=True):
-            names = {path.name for path in main_mod._nastech_exe_shims(fake_scripts_dir)}
+        with patch("nastech_cli.main_install_repair._is_windows", return_value=True):
+            names = {path.name for path in main_install_repair._nastech_exe_shims(fake_scripts_dir)}
 
         assert {"nastech.exe", "nastech-agent.exe", "nastech-acp.exe"} <= names
         assert "nastech-gateway.exe" in names

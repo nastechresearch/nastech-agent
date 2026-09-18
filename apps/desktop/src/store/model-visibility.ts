@@ -1,7 +1,7 @@
+import type { ModelOptionProvider } from '@nastech/shared'
 import { atom } from 'nanostores'
 
 import { persistString, storedString } from '@/lib/storage'
-import type { ModelOptionProvider } from '@/types/nastech'
 
 const STORAGE_KEY = 'nastech.desktop.visible-models'
 

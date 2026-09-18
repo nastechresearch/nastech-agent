@@ -1,69 +1,31 @@
 """Global emergency stop (ESTOP) — a resumable pause for NEW work only.
 
-``nastech pause`` writes a sentinel file at ``$NASTECH_HOME/ESTOP``;
-``nastech resume`` removes it. While the sentinel exists:
-
-* the cron scheduler skips dispatching due jobs (``cron/scheduler.py:tick``),
-* the embedded kanban dispatcher skips spawning workers
-  (``gateway/kanban_watchers.py``),
-* new gateway turns get a brief "Nastech is paused" reply instead of an
-  agent run (``gateway/run.py:_handle_message``).
-
-In-flight work is NEVER killed — this is pause-new-work, not panic/exit.
-The check is one or two ``os.stat`` calls (process home + fleet root when
-they differ) so callers may run it every tick; no caching beyond the OS is
-performed, so engaging/disengaging takes effect on the very next check.
-
-The sentinel body is optional JSON ``{"reason": ..., "engaged_at": ...}``.
-A corrupt or empty file still counts as engaged (fail safe): the pause must
-hold even if the file was created by ``touch ~/.nastech/ESTOP``.
-
-Ported from: gastownhall/gastown estop.go (MIT). Related prior art:
-#26778 (/panic — kill/exit semantics; deliberately different, ours is
-resumable) and #44617 (interrupting in-flight cron; deliberately out of
-scope here).
+``nastech pause`` writes a sentinel at ``$NASTECH_HOME/ESTOP``; ``nastech resume``
+removes it. While it exists the cron scheduler, kanban dispatcher and new gateway
+turns skip work; in-flight work is never killed. The check is one or two uncached
+``os.stat`` calls (process home + fleet root when they differ). The body is optional
+JSON ``{"reason", "engaged_at"}``; a corrupt/empty file still counts as engaged
+(fail safe, e.g. ``touch ~/.nastech/ESTOP``). Ported from gastownhall/gastown estop.go (MIT).
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import os
 import threading
+from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+# Same profile-aware / fleet-root resolvers the file-safety guards use (fail-open to ~/.nastech).
+from agent.file_safety import _nastech_home_path as _nastech_home, _nastech_root_path as _canonical_root
+
 SENTINEL_NAME = "ESTOP"
 
-# Per-component "logged already for this engagement" flags so a paused
-# dispatch loop logs once per engagement instead of once per tick.
+# Per-component "logged already for this engagement" flags: log once per engagement, not per tick.
 _log_lock = threading.Lock()
 _logged_components: set[str] = set()
-
-
-def _nastech_home() -> Path:
-    """Resolve the active NASTECH_HOME (profile-aware) at call time."""
-    try:
-        from nastech_constants import get_nastech_home
-        return get_nastech_home()
-    except Exception:
-        return Path(os.path.expanduser("~/.nastech"))
-
-
-def _canonical_root() -> Path:
-    """Fleet-wide Nastech root, even when this process is a profile gateway.
-
-    Profile gateways launch with NASTECH_HOME=~/.nastech/profiles/<name>.
-    ``nastech pause`` from an operator seat writes ~/.nastech/ESTOP. If we
-    only inspect the profile home, the emergency stop does not bind
-    (jarvis-os/t_7b65ff88: fleet-analyst kept dispatching through pause).
-    """
-    try:
-        from nastech_constants import get_default_nastech_root
-        return Path(get_default_nastech_root())
-    except Exception:
-        return Path(os.path.expanduser("~/.nastech"))
 
 
 def sentinel_path() -> Path:
@@ -72,31 +34,23 @@ def sentinel_path() -> Path:
 
 
 def _candidate_sentinel_paths() -> list:
-    """Profile home first, then the fleet root if it is a different directory."""
+    """Profile home first, then the fleet root if it is a different directory: a profile
+    gateway (NASTECH_HOME=~/.nastech/profiles/<n>) must still honor an operator's ~/.nastech/ESTOP."""
     primary = sentinel_path()
-    paths = [primary]
     try:
         root = _canonical_root() / SENTINEL_NAME
     except Exception:
-        return paths
+        return [primary]
     try:
-        if root.resolve() != primary.resolve():
-            paths.append(root)
+        distinct = root.resolve() != primary.resolve()
     except Exception:
-        # Non-Path test doubles (fail-safe stat fixture) fail .resolve();
-        # the generic comparison below still dedupes plain equal paths.
-        if root != primary:
-            paths.append(root)
-    return paths
+        # Non-Path test doubles fail .resolve(); plain equality still dedupes.
+        distinct = root != primary
+    return [primary, root] if distinct else [primary]
 
 
 def is_engaged() -> bool:
-    """Cheap check: is the global emergency stop engaged?
-
-    Engaged if ANY candidate sentinel exists: the process NASTECH_HOME
-    (profile-local) or the fleet canonical root (~/.nastech). Fail SAFE on
-    stat errors so an unreadable sentinel still holds the pause.
-    """
+    """True if ANY candidate sentinel exists; fail SAFE (True) on stat errors."""
     saw_stat_error = False
     for path in _candidate_sentinel_paths():
         try:
@@ -110,73 +64,50 @@ def is_engaged() -> bool:
 def engage(reason: Optional[str] = None) -> Path:
     """Create the ESTOP sentinel. Idempotent; re-engaging updates the file."""
     path = sentinel_path()
-    payload = {
-        "engaged_at": datetime.now(timezone.utc).isoformat(),
-        "reason": reason or None,
-    }
+    payload = {"engaged_at": datetime.now(timezone.utc).isoformat(), "reason": reason or None}
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     except OSError:
-        # Best effort: an empty/partial sentinel still pauses (fail safe).
-        try:
+        with suppress(OSError):  # Best effort: an empty/partial sentinel still pauses (fail safe).
             path.touch(exist_ok=True)
-        except OSError:
-            pass
     return path
 
 
 def disengage() -> bool:
-    """Remove ESTOP sentinels this process can see.
-
-    Lifts both the process-local sentinel and the fleet-root sentinel so
-    ``nastech resume`` from a profile gateway still clears an operator pause
-    written at ~/.nastech/ESTOP.
-    """
+    """Remove every visible sentinel (process-local and fleet-root)."""
     lifted = False
     for path in _candidate_sentinel_paths():
         try:
             path.unlink()
             lifted = True
-        except FileNotFoundError:
-            continue
         except (OSError, AttributeError):
             continue
     return lifted
 
 
 def get_state() -> Optional[dict]:
-    """Return ``{"reason": ..., "engaged_at": ...}`` or None when not engaged.
-
-    A sentinel with an unreadable/corrupt body still reports engaged, with
-    both fields None — the pause is authoritative, the metadata is not.
-    """
+    """Return ``{"reason", "engaged_at"}`` or None when not engaged; an unreadable/corrupt
+    body still reports engaged with both fields None."""
     if not is_engaged():
         return None
-    reason = None
-    engaged_at = None
+    state = {"reason": None, "engaged_at": None}
     found = False
     for path in _candidate_sentinel_paths():
         try:
-            exists = path.exists()
+            if not path.exists():
+                continue
         except OSError:
-            return {"reason": None, "engaged_at": None}
+            return state
         except AttributeError:
             continue
-        if not exists:
-            continue
         found = True
-        try:
+        with suppress(OSError, ValueError, AttributeError):
             raw = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(raw, dict):
-                reason = raw.get("reason") or None
-                engaged_at = raw.get("engaged_at") or None
+                state = {"reason": raw.get("reason") or None, "engaged_at": raw.get("engaged_at") or None}
                 break
-        except (OSError, ValueError, AttributeError):
-            continue
-    if not found:
-        return None
-    return {"reason": reason, "engaged_at": engaged_at}
+    return state if found else None
 
 
 def paused_reply() -> Optional[str]:
@@ -184,48 +115,32 @@ def paused_reply() -> Optional[str]:
     state = get_state()
     if state is None:
         return None
-    reason = state.get("reason")
-    if reason:
-        return (
-            f"⏸️ Nastech is paused ({reason}). New work is on hold; "
-            "run `nastech resume` to pick things back up."
-        )
-    return (
-        "⏸️ Nastech is paused. New work is on hold; "
-        "run `nastech resume` to pick things back up."
-    )
+    tag = f" ({state['reason']})" if state.get("reason") else ""
+    return f"⏸️ Nastech is paused{tag}. New work is on hold; run `nastech resume` to pick things back up."
 
 
 def check_paused(component: str, logger: logging.Logger) -> bool:
-    """Return True when engaged, logging once per engagement per component.
-
-    Dispatch loops call this every tick; the log fires on the disengaged→
-    engaged transition for that component and re-arms after a resume, so a
-    long pause doesn't spam one line per tick.
-    """
+    """Return True when engaged, logging once per engagement per component (re-armed after a resume)."""
     if not is_engaged():
         with _log_lock:
             _logged_components.discard(component)
         return False
     with _log_lock:
         first = component not in _logged_components
-        if first:
-            _logged_components.add(component)
+        _logged_components.add(component)
     if first:
-        state = get_state() or {}
-        reason = state.get("reason")
+        reason = (get_state() or {}).get("reason")
         suffix = f" (reason: {reason})" if reason else ""
         logger.info(
-            "%s dispatch paused by global emergency stop%s — remove with "
-            "`nastech resume` (%s)",
-            component,
-            suffix,
-            sentinel_path(),
+            "%s dispatch paused by global emergency stop%s — remove with `nastech resume` (%s)",
+            component, suffix, sentinel_path(),
         )
     return True
 
 
-def _reset_log_state_for_tests() -> None:
-    """Clear the log-once bookkeeping (test isolation helper)."""
-    with _log_lock:
-        _logged_components.clear()
+# ---- BEGIN PLUGIN-COMPAT (revert-scheduled; see COMPAT_MANIFEST.md) ----
+# Names external plugins imported from this module before the Sep 2026 decomposition.
+# Internal code MUST NOT use these (scripts/check_compat_pointers.py fails CI if it does).
+# The whole block is removed by reverting the commit that added it.
+import os  # noqa: F401,E402
+# ---- END PLUGIN-COMPAT ----

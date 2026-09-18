@@ -26,7 +26,8 @@ const RESERVED_DEEP_LINK_KINDS = new Set([
   'plugin',
   'plugin-agent',
   'plugin-desktop',
-  'settings'
+  'settings',
+  'skill'
 ])
 
 function appendSearch(path: string, params: URLSearchParams | Record<string, string> | undefined): string {
@@ -155,11 +156,7 @@ export function resolveNastechOpenPath(target: NastechOpenTarget | null | undefi
  * Build a navigate path from a parsed deep-link payload
  * (`nastech://<kind>/<name>?…` → kind/name/params).
  */
-export function pathFromNastechDeepLink(
-  kind: string,
-  name: string,
-  params: Record<string, string> = {}
-): string | null {
+export function pathFromNastechDeepLink(kind: string, name: string, params: Record<string, string> = {}): string | null {
   if (!kind || !name) {
     return null
   }

@@ -86,8 +86,6 @@ def build_catalog() -> dict:
                 "metadata": {
                     "display_name": "Nastech Portal",
                     "note": (
-                        "Free-tier gating is determined live via Portal pricing "
-                        "(partition_nastech_models_by_tier), not this manifest. "
                         'The entry labeled "default": true is the model Nastech '
                         "silently lands on when the user never picked one."
                     ),

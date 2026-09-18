@@ -4,7 +4,7 @@ A negative before/after delta means the DB grew — printing
 "reclaimed -163.0 MB" for that reads as data loss (issue #70146).
 """
 
-from nastech_cli.main import _size_delta_label
+from nastech_cli.sessions_cmd import _size_delta_label
 
 
 def test_shrink_reports_reclaimed():

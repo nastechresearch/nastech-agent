@@ -6,7 +6,7 @@ description: "Build wrapper CLIs that extend the Nastech TUI with custom widgets
 
 # Extending the CLI
 
-Nastech exposes protected extension hooks on `NastechCLI` so wrapper CLIs can add widgets, keybindings, and layout customizations without overriding the 1000+ line `run()` method. This keeps your extension decoupled from internal changes.
+Nastech exposes protected extension hooks on `NastechCLI` so wrapper CLIs can add widgets, keybindings, and layout customizations without overriding the `run()` method or the TUI construction in `nastech_cli/cli_tui_mixin.py` (where these hooks are defined; `NastechCLI` in `cli.py` mixes it in). This keeps your extension decoupled from internal changes.
 
 ## Extension points
 

@@ -14,7 +14,7 @@ import os
 import yaml
 
 import nastech_cli.runtime_provider as rp
-from nastech_cli.model_setup_flows import _model_flow_bedrock_api_key
+from nastech_cli.model_setup_flows_bedrock import _model_flow_bedrock_api_key
 
 
 REGION = "us-east-1"

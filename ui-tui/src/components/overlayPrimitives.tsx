@@ -1,9 +1,10 @@
 import type { Key } from '@nastech/ink'
 import { Text, useInput } from '@nastech/ink'
+import { mix } from '@nastech/shared/color'
 import { type ReactNode, useState } from 'react'
 
 import type { UsageModelData } from '../gatewayTypes.js'
-import { liftForContrast, mix } from '../lib/color.js'
+import { liftForContrast } from '../lib/color.js'
 import type { Theme } from '../theme.js'
 
 /**

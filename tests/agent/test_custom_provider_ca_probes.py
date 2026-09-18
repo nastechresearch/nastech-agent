@@ -239,6 +239,14 @@ class TestMetadataProbeThreadsProviderCA:
 class TestCatalogProbeThreadsSSLContext:
     """End-to-end: the urllib catalog probe carries the provider SSL context."""
 
+    @pytest.fixture(autouse=True)
+    def _clear_probe_neg_cache(self):
+        import nastech_cli.models as models
+
+        models._probe_neg_cache.clear()
+        yield
+        models._probe_neg_cache.clear()
+
     def test_probe_api_models_passes_ssl_context(self, clean_env, real_ca):
         import nastech_cli.models as models
 

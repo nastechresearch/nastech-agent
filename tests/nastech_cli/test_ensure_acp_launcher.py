@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from nastech_cli.main import _ensure_acp_launcher
+from nastech_cli.update_cmd import _ensure_acp_launcher
 
 
 @pytest.fixture

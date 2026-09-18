@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import type { IconComponent } from '@/lib/icons'
 import type { NastechGateway } from '@/nastech'
+import type { IconComponent } from '@/lib/icons'
 import type { EnvVarInfo } from '@/types/nastech'
 
 export type SettingsView =
@@ -12,9 +12,9 @@ export type SettingsView =
   | 'keybinds'
   | 'keys'
   | 'notifications'
-  | 'plugins'
   | 'providers'
   | 'sessions'
+  | 'vault'
   | `config:${string}`
 export type EnvPatch = Partial<Pick<EnvVarInfo, 'is_set' | 'redacted_value'>>
 

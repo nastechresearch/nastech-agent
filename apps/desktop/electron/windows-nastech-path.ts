@@ -171,7 +171,7 @@ export interface ResolveVenvNastechCommandDeps {
   isCommandScript: (command: string) => boolean
   fileExists: (filePath: string) => boolean
   directoryExists: (filePath: string) => boolean
-  canImportNastechCli: (python: string, opts?: { env?: Record<string, string> }) => boolean
+  canImportNastechCli: (python: string, opts?: { env?: Record<string, string> }) => Promise<boolean>
   getVenvPython: (venvRoot: string) => string
   getVenvSitePackagesEntries: (venvRoot: string) => string[]
   buildDesktopBackendEnv: (opts: {
@@ -205,11 +205,11 @@ export interface ResolveVenvNastechCommandDeps {
  * python doesn't exist, or the import probe fails. Otherwise returns the
  * resolved backend descriptor.
  */
-export function resolveVenvNastechCommand(
+export async function resolveVenvNastechCommand(
   command: string,
   backendArgs: string[],
   deps: ResolveVenvNastechCommandDeps
-): {
+): Promise<{
   label: string
   command: string
   args: string[]
@@ -218,7 +218,7 @@ export function resolveVenvNastechCommand(
   kind: 'python'
   root: string
   shell: false
-} | null {
+} | null> {
   const {
     isWindows,
     isCommandScript,
@@ -261,13 +261,13 @@ export function resolveVenvNastechCommand(
   const root = dirname(venvRoot)
 
   if (
-    !canImportNastechCli(python, {
+    !(await canImportNastechCli(python, {
       env: {
         PYTHONPATH: [...(directoryExists(root) ? [root] : []), process.env.PYTHONPATH]
           .filter((entry): entry is string => Boolean(entry))
           .join(path.delimiter)
       }
-    })
+    }))
   ) {
     rememberLog?.(
       `Ignoring venv Nastech at ${python}: runtime import probe failed (broken/partial venv); falling through to bootstrap.`

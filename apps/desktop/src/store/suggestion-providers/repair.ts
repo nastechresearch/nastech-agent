@@ -1,7 +1,7 @@
+import { listMcpServers } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
 import { prettyName } from '@/lib/text'
-import { authMcpServer, cancelMcpOAuthFlow, getMcpOAuthFlow, listMcpServers } from '@/nastech'
 import { type ComposerSuggestion, offerSuggestions } from '@/store/composer-suggestions'
 import { $gateway } from '@/store/gateway'
 import { notifyError } from '@/store/notifications'
@@ -40,11 +40,7 @@ async function reconnect(server: string, sessionId: string | null, cancelled: ()
   try {
     await completeMcpDesktopOAuth({
       serverName: server,
-      start: authMcpServer,
-      status: getMcpOAuthFlow,
-      cancelled,
-      cancel: cancelMcpOAuthFlow,
-      openExternal: url => window.nastechDesktop.openExternal(url)
+      cancelled
     })
 
     // Fresh tokens reach the live session before the pill claims success.

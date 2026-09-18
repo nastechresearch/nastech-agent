@@ -1,14 +1,21 @@
+import type { ModelOptionsResult } from '@nastech/shared'
+
 import type {
   AnalyticsResponse,
   AuxiliaryModelsResponse,
   MoaConfigResponse,
   ModelAssignmentRequest,
   ModelAssignmentResponse,
-  ModelInfoResponse,
-  ModelOptionsResponse
+  ModelInfoResponse
 } from '@/types/nastech'
 
-import { capabilityScoped, nastechApi, type ProfileScope, profileScoped, STARTUP_REQUEST_TIMEOUT_MS } from './client'
+import {
+  capabilityScoped,
+  nastechApi,
+  type ProfileScope,
+  profileScoped,
+  STARTUP_REQUEST_TIMEOUT_MS
+} from './client'
 
 export function getGlobalModelInfo(profile?: null | string): Promise<ModelInfoResponse> {
   return nastechApi<ModelInfoResponse>({
@@ -32,7 +39,7 @@ export function getGlobalModelOptions(
     explicitOnly?: boolean
   },
   profile?: null | string
-): Promise<ModelOptionsResponse> {
+): Promise<ModelOptionsResult> {
   const params = new URLSearchParams()
 
   if (opts?.refresh) {
@@ -47,7 +54,7 @@ export function getGlobalModelOptions(
     params.set('explicit_only', '1')
   }
 
-  return nastechApi<ModelOptionsResponse>({
+  return nastechApi<ModelOptionsResult>({
     ...profileScoped(profile),
     path: params.size > 0 ? `/api/model/options?${params.toString()}` : '/api/model/options',
     timeoutMs: STARTUP_REQUEST_TIMEOUT_MS

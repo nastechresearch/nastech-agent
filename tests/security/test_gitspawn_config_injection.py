@@ -160,13 +160,6 @@ def test_working_diff_is_safe(malicious_repo):
     assert _fired(marker) == []
 
 
-def test_goals_fingerprint_is_safe(malicious_repo):
-    from nastech_cli.goals import workspace_fingerprint
-    repo, marker = malicious_repo
-    workspace_fingerprint(str(repo))
-    assert _fired(marker) == []
-
-
 def test_web_git_diff_is_safe(malicious_repo):
     from nastech_cli import web_git
     repo, marker = malicious_repo

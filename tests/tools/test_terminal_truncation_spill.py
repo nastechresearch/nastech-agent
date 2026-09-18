@@ -12,10 +12,11 @@ from tools.terminal_tool import terminal_tool
 @pytest.fixture
 def small_cap(tmp_path, monkeypatch):
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path / ".nastech"))
+    from nastech_constants import nastech_home_key
     import tools.tool_output_limits as lim
-    monkeypatch.setattr(lim, "_cached_limits", {
+    monkeypatch.setattr(lim, "_cached_limits", {nastech_home_key(): {
         "max_bytes": 2000, "max_lines": 2000, "max_line_length": 2000,
-    })
+    }})
     return tmp_path
 
 

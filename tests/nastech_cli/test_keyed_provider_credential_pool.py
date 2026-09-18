@@ -152,7 +152,7 @@ def test_prune_keeps_active_legacy_pool_for_keyed_provider(tmp_path, monkeypatch
         encoding="utf-8",
     )
 
-    from nastech_cli.model_setup_flows import (
+    from nastech_cli.model_setup_flows_common import (
         _prune_replaced_custom_model_config_credentials,
     )
 

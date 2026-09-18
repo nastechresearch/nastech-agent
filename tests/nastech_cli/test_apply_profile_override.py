@@ -34,6 +34,7 @@ def _run_apply_profile_override(
 
     if active_profile and active_profile != "default":
         (nastech_root / "profiles" / active_profile).mkdir(parents=True, exist_ok=True)
+        (nastech_root / "profiles" / active_profile / "config.yaml").write_text("{}\n")  # identity marker
 
     monkeypatch.setattr(Path, "home", lambda: tmp_path)
     if nastech_home is not None:
@@ -105,6 +106,7 @@ class TestApplyProfileOverrideNastechHomeGuard:
         user_home = tmp_path / "home" / "nastech"
         profile_dir = user_home / ".nastech" / "profiles" / "elias"
         profile_dir.mkdir(parents=True, exist_ok=True)
+        (profile_dir / "config.yaml").write_text("{}\n")  # identity marker: a bare dir does not resolve
         (root_home / ".nastech").mkdir(parents=True, exist_ok=True)
 
         monkeypatch.setattr(Path, "home", lambda: root_home)
@@ -117,11 +119,14 @@ class TestApplyProfileOverrideNastechHomeGuard:
 
         monkeypatch.setattr(pwd, "getpwnam", lambda name: SimpleNamespace(pw_dir=str(user_home)))
 
-        from nastech_cli.main import _apply_profile_override
+        from nastech_cli.main import _apply_profile_override, _resolve_sudo_user_profile_env
         _apply_profile_override()
 
         assert os.environ.get("NASTECH_HOME") == str(profile_dir)
         assert sys.argv == ["nastech", "gateway", "install", "--system"]
+        # Same identity gate as ``-p`` without sudo: a marker-less shell is not a profile.
+        (user_home / ".nastech" / "profiles" / "ghost" / "cron").mkdir(parents=True)
+        assert _resolve_sudo_user_profile_env("ghost") is None
 
 
 
@@ -162,8 +167,9 @@ class TestSupervisedChildIgnoresStickyProfile:
         nastech_root = tmp_path / ".nastech"
         nastech_root.mkdir(parents=True, exist_ok=True)
         (nastech_root / "active_profile").write_text("briefer")
-        (nastech_root / "profiles" / "briefer").mkdir(parents=True, exist_ok=True)
-        (nastech_root / "profiles" / "coder").mkdir(parents=True, exist_ok=True)
+        for name in ("briefer", "coder"):
+            (nastech_root / "profiles" / name).mkdir(parents=True, exist_ok=True)
+            (nastech_root / "profiles" / name / "config.yaml").write_text("{}\n")  # identity marker
 
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         monkeypatch.delenv("NASTECH_HOME", raising=False)
@@ -262,6 +268,21 @@ class TestGeneralizedSupervisorMarkers:
             active_profile="telegram_nick",
             argv=["nastech", "gateway", "run"],
             extra_env={"NASTECH_GATEWAY_EXTERNAL_SUPERVISOR": "1"},
+        )
+        assert result == str(nastech_root)
+
+    def test_desktop_ssh_serve_child_skips_active_profile(self, tmp_path, monkeypatch):
+        """A Desktop-owned `serve --ssh-session-token-file` child names its profile explicitly
+        (or none for the root home); the remote host's sticky active_profile must not re-home
+        it, or Settings read one profile's config.yaml while the user edits another."""
+        nastech_root = self._root_home(tmp_path)
+        result = _run_apply_profile_override(
+            tmp_path,
+            monkeypatch,
+            nastech_home=str(nastech_root),
+            active_profile="telegram_nick",
+            argv=["nastech", "serve", "--isolated", "--host", "127.0.0.1", "--port", "0",
+                  "--ssh-session-token-file", "/tmp/x/y.token"],
         )
         assert result == str(nastech_root)
 

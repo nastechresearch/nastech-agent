@@ -5,6 +5,8 @@ import { desktopFsCacheKey, desktopGitRoot, readDesktopDir, readDesktopFileDataU
 import { ALWAYS_EXCLUDED } from '@/lib/excluded-paths'
 import { cleanPath, comparisonPath } from '@/lib/path-compare'
 
+import { showsIgnoredFiles } from './prefs'
+
 export type ProjectTreeEntry = NastechReadDirEntry
 
 interface GitignoreRule {
@@ -117,6 +119,13 @@ function ignoredBy(rules: GitignoreRule[], entry: NastechReadDirEntry) {
 }
 
 async function filterIgnored(entries: NastechReadDirEntry[], rootPath: string, dirPath: string) {
+  // Opting a project into its ignored files skips the gitignore pass entirely —
+  // no git-root probe, no .gitignore reads. ALWAYS_EXCLUDED still applies: `.git`
+  // internals and dependency/build dirs are never worth browsing, in any repo.
+  if (showsIgnoredFiles(rootPath)) {
+    return entries
+  }
+
   const root = await gitRootFor(rootPath)
 
   if (!root) {

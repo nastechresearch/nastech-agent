@@ -8,8 +8,9 @@ import type {
 
 import { capabilityScoped, nastechApi, type ProfileScope, STARTUP_REQUEST_TIMEOUT_MS } from './client'
 
-export function getProfiles(): Promise<ProfilesResponse> {
+export function getProfiles(scope?: ProfileScope): Promise<ProfilesResponse> {
   return nastechApi<ProfilesResponse>({
+    ...(scope === undefined ? {} : capabilityScoped(scope)),
     path: '/api/profiles',
     timeoutMs: STARTUP_REQUEST_TIMEOUT_MS
   })

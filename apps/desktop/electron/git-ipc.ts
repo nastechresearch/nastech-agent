@@ -13,7 +13,6 @@ import {
   reviewCommitContext,
   reviewCreatePr,
   reviewDiff,
-  reviewFetchPrComment,
   reviewList,
   reviewPrList,
   reviewPush,
@@ -100,9 +99,6 @@ export function registerGitIpc({ resolveGitBinary, resolveGhBinary }: GitIpcDeps
   ipcMain.handle('nastech:git:review:shipInfo', async (_event, repoPath) => reviewShipInfo(repoPath, resolveGhBinary()))
   ipcMain.handle('nastech:git:review:prList', async (_event, repoPath, branches, numbers) =>
     reviewPrList(repoPath, resolveGhBinary(), branches, numbers)
-  )
-  ipcMain.handle('nastech:git:review:fetchPrComment', async (_event, repoPath, url) =>
-    reviewFetchPrComment(repoPath, resolveGhBinary(), url)
   )
   ipcMain.handle('nastech:git:review:createPr', async (_event, repoPath) =>
     reviewCreatePr(repoPath, resolveGitBinary(), resolveGhBinary())

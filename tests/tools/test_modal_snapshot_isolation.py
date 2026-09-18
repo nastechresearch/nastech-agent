@@ -60,7 +60,7 @@ def _install_modal_test_modules(
     _reset_modules(("tools", "nastech_cli", "modal"))
 
     nastech_cli = types.ModuleType("nastech_cli")
-    nastech_cli.__path__ = []  # type: ignore[attr-defined]
+    nastech_cli.__path__ = [str(REPO_ROOT / "nastech_cli")]  # type: ignore[attr-defined]
     sys.modules["nastech_cli"] = nastech_cli
     nastech_home = tmp_path / "nastech-home"
     os.environ["NASTECH_HOME"] = str(nastech_home)

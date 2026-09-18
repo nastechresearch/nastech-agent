@@ -49,7 +49,7 @@ def _run_openai_switch(
             },
         ),
         patch(
-            "nastech_cli.models.validate_requested_model",
+            "nastech_cli.models_validate.validate_requested_model",
             return_value=_MOCK_VALIDATION,
         ),
         patch("nastech_cli.model_switch.get_model_info", return_value=None),

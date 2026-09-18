@@ -57,7 +57,8 @@ beforeEach(() => {
     requested: false,
     firstRunSkipped: false,
     manual: false,
-    localEndpoint: false
+    localEndpoint: false,
+    freeTierReady: false
   })
   failBoot()
 })
@@ -65,12 +66,32 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('BootFailureOverlay', () => {
+  it('keeps keyboard focus inside the recovery surface', () => {
+    render(
+      <>
+        <button type="button">Background action</button>
+        <BootFailureOverlay />
+      </>
+    )
+
+    const recoverySurface = screen.getByRole('dialog', { name: /Nastech couldn't start/i })
+    const retry = screen.getByRole('button', { name: /retry/i })
+    const backgroundAction = screen.getByText(/background action/i)
+
+    retry.focus()
+    backgroundAction.focus()
+
+    expect(recoverySurface.getAttribute('aria-modal')).toBe('true')
+    expect(recoverySurface.contains(globalThis.document.activeElement)).toBe(true)
+  })
+
   it('swaps to the in-place gateway settings view (no route nav) and back', async () => {
     render(<BootFailureOverlay />)
 
     fireEvent.click(screen.getByRole('button', { name: /gateway settings/i }))
     // Recovery actions give way to the embedded panel (behind a Back control).
     expect(await screen.findByRole('button', { name: /back/i })).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: /gateway settings/i }).getAttribute('aria-modal')).toBe('true')
     expect(screen.queryByRole('button', { name: /retry/i })).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: /back/i }))
@@ -150,9 +171,7 @@ describe('BootFailureOverlay', () => {
     const gatewayUrl = 'https://agent-1.agents.nastechresearch.github.io'
     const logout = vi.fn().mockResolvedValue({ ok: true, connected: false })
     const nativeLogin = vi.fn().mockResolvedValue({ ok: true, connected: false })
-    const cloudStatus = vi
-      .fn()
-      .mockResolvedValue({ portalBaseUrl: 'https://portal.nastechresearch.github.io', signedIn: false })
+    const cloudStatus = vi.fn().mockResolvedValue({ portalBaseUrl: 'https://portal.nastechresearch.github.io', signedIn: false })
 
     const cloudLogin = vi.fn().mockResolvedValue({
       ok: true,

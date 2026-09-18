@@ -35,6 +35,13 @@ def home(tmp_path, monkeypatch):
     nastech_home = tmp_path / ".nastech"
     nastech_home.mkdir()
     monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
+    # The profile write now validates through ``switch_model`` (catalog + credentials); these
+    # tests pin the guard handshake, so echo the pick back as an accepted route.
+    from nastech_cli.model_switch import ModelSwitchResult
+    monkeypatch.setattr(
+        "nastech_cli.model_switch.switch_model",
+        lambda *, raw_input, explicit_provider, **_kw: ModelSwitchResult(
+            success=True, new_model=raw_input, target_provider=explicit_provider))
     return nastech_home
 
 

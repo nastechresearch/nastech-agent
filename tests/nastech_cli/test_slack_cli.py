@@ -10,6 +10,7 @@ import pytest
 
 from nastech_cli.slack_cli import _build_full_manifest, slack_manifest_command
 from nastech_cli.subcommands.slack import build_slack_parser
+from nastech_cli import main_platform_setup
 
 
 def _parse_slack_args(argv):

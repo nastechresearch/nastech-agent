@@ -4,7 +4,8 @@ import os
 import pytest
 from nastech_constants import set_nastech_home_override, reset_nastech_home_override
 
-from nastech_cli.main import _read_ssh_session_token_file, cmd_dashboard
+from nastech_cli.main import cmd_dashboard
+from nastech_cli.main_dashboard import _read_ssh_session_token_file
 from nastech_cli.subcommands.dashboard import build_dashboard_parser
 
 

@@ -5,6 +5,7 @@ import json
 import time
 
 import nastech_cli.auth as auth
+import nastech_cli.auth_nastech as auth_nastech
 from nastech_cli.auth import (
     NASTECH_SESSION_TERMINAL,
     NASTECH_SESSION_UNKNOWN,
@@ -41,6 +42,11 @@ def _block_live_auth(monkeypatch):
     monkeypatch.setattr(auth, "get_nastech_auth_status", _fail_if_live_auth_is_used)
     monkeypatch.setattr(
         auth,
+        "resolve_nastech_runtime_credentials",
+        _fail_if_live_auth_is_used,
+    )
+    monkeypatch.setattr(
+        auth_nastech,
         "resolve_nastech_runtime_credentials",
         _fail_if_live_auth_is_used,
     )

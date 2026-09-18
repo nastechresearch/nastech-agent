@@ -22,9 +22,7 @@ describe('isTermuxTuiMode', () => {
   })
 
   it('allows explicit opt-out override', () => {
-    expect(isTermuxTuiMode({ TERMUX_VERSION: '0.118.0', NASTECH_TUI_TERMUX_MODE: '0' } as NodeJS.ProcessEnv)).toBe(
-      false
-    )
+    expect(isTermuxTuiMode({ TERMUX_VERSION: '0.118.0', NASTECH_TUI_TERMUX_MODE: '0' } as NodeJS.ProcessEnv)).toBe(false)
   })
 
   it('stays false outside Termux even if override is set', () => {

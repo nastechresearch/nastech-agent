@@ -1,12 +1,12 @@
 import { PassThrough } from 'stream'
 
 import { Box, renderSync } from '@nastech/ink'
+import { stripAnsi } from '@nastech/shared/ansi'
 import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { usePet } from '../app/usePet.js'
 import { PetPane } from '../components/appLayout.js'
-import { stripAnsi } from '../lib/text.js'
 
 vi.mock('../app/usePet.js', () => ({
   usePet: vi.fn()

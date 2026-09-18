@@ -22,14 +22,14 @@ prefix and reassigned to openrouter, even though it isn't in
 
 from unittest.mock import patch
 
-from nastech_cli.web_server import _normalize_main_model_assignment
+from nastech_cli.web_server_config import _normalize_main_model_assignment
 
 
 def _no_custom_providers_configured():
     """Patch load_config so resolve_user_provider/resolve_custom_provider
     both come up empty, forcing execution into the fallback path under
     test -- independent of whatever config.yaml happens to be on disk."""
-    return patch("nastech_cli.web_server.load_config", return_value={})
+    return patch("nastech_cli.config.load_config", return_value={})
 
 
 class TestUnresolvedNamedCustomProviderIsNotTreatedAsStrayVendorPrefix:

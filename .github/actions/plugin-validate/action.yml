@@ -1,0 +1,56 @@
+name: Nastech Plugin Validate
+description: >-
+  Validate a Nastech Agent plugin (plugin.yaml manifest schema AND
+  declared-vs-actually-registered capabilities) using
+  `nastech plugins validate`. Drop this into your plugin repo's CI:
+
+    - uses: actions/checkout@<sha>
+    - uses: NastechResearch/nastech-agent/.github/actions/plugin-validate@main
+      with:
+        path: .
+
+  The caller's job owns checkout; this action installs Python + nastech-agent
+  (git install — a supported CI-context install route) and runs the
+  validator against your plugin directory.
+
+inputs:
+  path:
+    description: Path to the plugin directory (containing plugin.yaml).
+    default: "."
+  nastech-ref:
+    description: nastech-agent git ref (branch/tag/sha) to install and validate with.
+    default: "main"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.11"
+
+    - name: Install nastech-agent
+      shell: bash
+      env:
+        _NASTECH_REF: ${{ inputs.nastech-ref }}
+      run: |
+        set -euo pipefail
+        # CI-context install from git; the ref lets plugin authors validate
+        # against a pinned nastech release instead of main.
+        pip install "git+https://github.com/NastechResearch/nastech-agent@${_NASTECH_REF}"
+
+    - name: Validate plugin
+      shell: bash
+      env:
+        _PLUGIN_PATH: ${{ inputs.path }}
+      run: |
+        set -uo pipefail
+        # `nastech plugins validate` checks the plugin.yaml manifest schema
+        # and loads the plugin in a scratch subprocess to verify that the
+        # capabilities it DECLARES match what it actually registers.
+        if nastech plugins validate "$_PLUGIN_PATH"; then
+          echo "✅ PASS: plugin at '$_PLUGIN_PATH' validated cleanly"
+        else
+          echo "❌ FAIL: plugin at '$_PLUGIN_PATH' failed validation (see output above)"
+          exit 1
+        fi

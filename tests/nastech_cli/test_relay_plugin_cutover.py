@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 from nastech_cli.config import migrate_config
-from nastech_cli.doctor import collect_relay_plugin_cutover_findings
+from nastech_cli.doctor_config import collect_relay_plugin_cutover_findings
 from nastech_cli.relay_plugin_cutover import RELAY_PLUGINS_CONFIG_ENV
 
 

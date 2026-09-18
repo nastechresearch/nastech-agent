@@ -1,5 +1,5 @@
 from nastech_cli.config import DEFAULT_CONFIG
-from nastech_cli.web_server import CONFIG_SCHEMA
+from nastech_cli.web_server_config import CONFIG_SCHEMA
 
 
 def test_desktop_repo_discovery_defaults_preserve_existing_behavior():

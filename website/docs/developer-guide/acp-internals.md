@@ -175,7 +175,7 @@ ACP temporarily installs an approval callback on the terminal tool during prompt
 
 ## Related files
 
-- `tests/acp/` — ACP test suite
+- `tests/acp_adapter/` — ACP test suite
 - `toolsets.py` — `nastech-acp` toolset definition
 - `nastech_cli/main.py` — `nastech acp` CLI subcommand
 - `pyproject.toml` — `[acp]` optional dependency + `nastech-acp` script

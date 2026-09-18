@@ -21,7 +21,8 @@ from unittest.mock import patch
 
 import pytest
 
-from nastech_cli.main import _cmd_update_check, cmd_update
+from nastech_cli.main import cmd_update
+from nastech_cli.update_cmd import _cmd_update_check
 
 
 # ---------- cmd_update (apply path) ----------

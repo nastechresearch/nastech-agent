@@ -135,6 +135,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          to: '/plugins',
+          label: 'Plugins',
+          position: 'left',
+        },
+        {
           href: 'https://nastechresearch.github.io/nastech-agent/',
           label: 'Download',
           position: 'left',

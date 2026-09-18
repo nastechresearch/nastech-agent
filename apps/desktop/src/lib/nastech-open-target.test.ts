@@ -59,5 +59,6 @@ describe('pathFromNastechDeepLink', () => {
   it('ignores reserved kinds', () => {
     expect(pathFromNastechDeepLink('blueprint', 'morning-brief')).toBeNull()
     expect(pathFromNastechDeepLink('plugin', 'install')).toBeNull()
+    expect(pathFromNastechDeepLink('skill', 'install')).toBeNull()
   })
 })
