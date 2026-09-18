@@ -20,6 +20,9 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { useI18n } from '@/i18n'
+import { AlertTriangle, Globe, Plus, RefreshCw } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import {
   createWebhook,
   deleteWebhook,
@@ -29,9 +32,6 @@ import {
   type WebhookRoute,
   type WebhooksResponse
 } from '@/nastech'
-import { useI18n } from '@/i18n'
-import { AlertTriangle, Globe, Plus, RefreshCw } from '@/lib/icons'
-import { cn } from '@/lib/utils'
 import { notify, notifyError } from '@/store/notifications'
 import { $profileScope } from '@/store/profile'
 import { runGatewayRestart } from '@/store/system-actions'

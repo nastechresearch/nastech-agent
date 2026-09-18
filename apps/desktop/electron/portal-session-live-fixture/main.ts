@@ -154,7 +154,9 @@ async function run() {
     assert.equal(await portal.renewPortalAccessSilently(), false)
     console.log('PORTAL_SESSION_LIVE_OK')
   } finally {
-    for (const window of BrowserWindow.getAllWindows()) {window.destroy()}
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.destroy()
+    }
     server.closeAllConnections()
     await new Promise<void>(resolve => server.close(() => resolve()))
   }

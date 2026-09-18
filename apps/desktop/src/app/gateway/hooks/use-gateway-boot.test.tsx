@@ -383,11 +383,13 @@ describe('default-route profile adoption', () => {
     async connectionId => {
       const base = fakeDesktop()
       const route = { connectionId, profile: 'coder' }
+
       const desktop = {
         ...base,
         getConnectionFor: vi.fn(async () => ({ ...coderConn, registryScoped: true })),
         profile: { ...base.profile, getDefault: vi.fn(async () => route) }
       }
+
       ;(window as { nastechDesktop?: unknown }).nastechDesktop = desktop
       render(<Harness />)
       await flushAsync()
@@ -398,6 +400,7 @@ describe('default-route profile adoption', () => {
         expect(desktop.getConnection).toHaveBeenCalledWith('coder')
         expect(desktop.getConnectionFor).not.toHaveBeenCalled()
       }
+
       expect($connection.get()?.profile).toBe('coder')
       expect($desktopBoot.get().running).toBe(false)
     }
@@ -616,7 +619,9 @@ describe('primary failure foreground isolation', () => {
       desktop.getGatewayWsUrl.mockImplementation(async conn => conn?.wsUrl ?? primaryConn.wsUrl)
       // A rejected session waits for explicit recovery, even after credentials change.
       let recovery!: Promise<void>
-      act(() => { recovery = reconnectGateway() })
+      act(() => {
+        recovery = reconnectGateway()
+      })
       await flushAsync()
       await recovery
       expect($gatewayState.get()).toBe('open')
@@ -652,7 +657,9 @@ describe('useGatewayBoot remote reconnect loop (real hook, fake socket)', () => 
     await advanceBackoff()
     expect(desktop.getGatewayWsUrl).toHaveBeenCalledTimes(calls)
     desktop.getGatewayWsUrl.mockResolvedValue(primaryConn.wsUrl)
-    act(() => { connectionApplied?.() })
+    act(() => {
+      connectionApplied?.()
+    })
     await flushAsync()
     expect($gatewayState.get()).toBe('open')
     expect($desktopBoot.get().error).toBeNull()

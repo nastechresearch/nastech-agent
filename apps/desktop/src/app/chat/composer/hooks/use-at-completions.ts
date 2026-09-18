@@ -3,9 +3,9 @@ import { useCallback } from 'react'
 
 import { refChipLabel } from '@/components/assistant-ui/directive-text'
 import { useContributions } from '@/contrib/react/use-contributions'
-import type { NastechGateway } from '@/nastech'
 import { cachedPathCompletion, hasCachedPathCompletion } from '@/lib/slash-completion-cache'
 import { normalize } from '@/lib/text'
+import type { NastechGateway } from '@/nastech'
 
 import type { ComposerAtCompletionSource } from '../contrib'
 import { COMPOSER_AREAS } from '../contrib'
