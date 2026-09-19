@@ -140,7 +140,7 @@ profile-scoped code runs without the override where one is expected.
 
 ## Inbound routing
 
-`gateway.profile_routes` maps `(platform, guild_id, chat_id, thread_id)` to a
+`gateway.profile_routes` maps `(platform, user_id, guild_id, chat_id, thread_id)` to a
 profile; matching is conjunctive, most-specific-first, with parent-chain chat
 matching for threads. Routing only runs when multiplexing is active, and a
 matched route whose target is outside the served set is rejected (the event is
@@ -168,13 +168,29 @@ Pairing stores are constructed per served profile.
 ## Per-bot session lanes
 
 Session keys are namespaced by profile (`agent:main` for default,
-`agent:<name>` for named profiles). Adapters carry `_owner_profile`
-(installed at adapter configuration time, before any inbound event) because
-adapter ingress runs before `SessionSource.profile` is stamped;
-`_session_key_profile` resolves source stamp → owner profile → store
-resolver. Text/media batching, active-session tracking, and the busy-session
-guard are all keyed per lane, so two bots sharing a chat do not share a
-session lane.
+`agent:<name>` for named profiles). Every inbound event carries ONE frozen
+`RoutingIdentity` (`gateway/session_identity.py`), resolved by
+`resolve_identity()` at the runner's ingress handlers and pinned on the source
+as a wire-invisible attribute: `transport_profile` (the bot that received it —
+credential, allowlist, `authorization_home`), `runtime_profile` (the routed
+profile that executes — `runtime_home`, key `namespace`, `store_path`) and a
+weak `transport` ref to the receiving adapter. `"default"` is spelled out;
+`None` never means default. Under multiplexing a route to an unserved profile
+raises `IdentityUnresolved` and the event is dropped.
+
+Adapters also carry `_owner_profile` (installed at adapter configuration time,
+before any inbound event). Every ingress path canonicalizes the identity FIRST
+— `BasePlatformAdapter._canonicalize` runs at `handle_message`, text/photo/album
+batching, the busy path and every adapter-derived session key; the runner's
+per-profile and default handlers, the auth-check callback and the shared
+`_handle_message` gate do the same — so no lane is keyed before the receiving
+bot is known. Text/media batching, active-session tracking, the busy-session
+guard, `/stop` `/new` `/reset` and clarify replies are all keyed per lane, so
+two bots sharing a chat do not share a session lane and a control command on one
+bot cannot reach the other's run. A route to an unserved profile is dropped with
+one WARNING at the first seam it reaches, never keyed into `agent:main`. Copy a
+source with `session_identity.replace_source`, not `dataclasses.replace`, or the
+copy loses its transport and identity.
 
 ## Control plane
 

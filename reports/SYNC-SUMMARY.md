@@ -6,76 +6,70 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 63 commits affecting 2249 files.
-- **Source revision:** `03fee43ca344`.
-- **Previous source revision:** `a51143fbbe6d`.
+- **Changes incorporated:** 50 commits affecting 2253 files.
+- **Source revision:** `8df0a0379378`.
+- **Previous source revision:** `03fee43ca344`.
 
 ## Technical coverage
 
-- **acp_adapter/:** 1 changed files.
-- **agent/:** 17 changed files.
-- **apps/:** 29 changed files.
-- **cli.py/:** 1 changed files.
-- **contributors/:** 7 changed files.
-- **cron/:** 2 changed files.
-- **gateway/:** 2 changed files.
-- **nastech_cli/:** 13 changed files.
-- **plugin-catalog/:** 24 changed files.
-- **plugins/:** 8 changed files.
-- **scripts/:** 1 changed files.
-- **tests/:** 30 changed files.
-- **tools/:** 3 changed files.
-- **tui_gateway/:** 1 changed files.
-- **website/:** 14 changed files.
+- **agent/:** 15 changed files.
+- **apps/:** 82 changed files.
+- **cli.py/:** 2 changed files.
+- **contributors/:** 5 changed files.
+- **gateway/:** 30 changed files.
+- **nastech_cli/:** 8 changed files.
+- **nastech_state.py/:** 1 changed files.
+- **nastech_state_profile_repair.py/:** 1 changed files.
+- **plugins/:** 5 changed files.
+- **scripts/:** 2 changed files.
+- **tests/:** 38 changed files.
+- **tui_gateway/:** 6 changed files.
+- **website/:** 20 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(auth): opt out of borrowing Codex CLI / Claude Code logins (auth.adopt_external_logins)
-- feat(plugins): pin nastech-talk catalog entry to v0.19.2
-- feat(plugin-catalog): add Nastech Talk
-- feat(plugin-catalog): add Prism provider
-- feat(catalog): add Search1API plugin
-- feat(catalog): add pinned artifact-relay plugin
-- feat(plugin-catalog): add nastech-security-audit
-- feat(catalog): add OpenAlex research tools
+- feat(sessions): `nastech sessions repair-profiles` settles crossed-profile durable state
+- feat(gateway): route inbound messages to profiles by sender user_id
+- feat(gateway): RoutingIdentity — one frozen identity per inbound event
 
 ### Reliability and fixes
 
-- fix(agent): refuse stale singleton adoption over rotated manual:device_code entries (#106705)
-- fix(auth): isolate Codex singleton sync by principal
-- fix(agent): terminal copy for the new role_alternation failure reason
-- fix: MoA aggregator merges adjacent same-role messages only for destinations that reject them
-- fix(desktop): restore the unsent composer draft when a session is gone
-- fix(desktop): /reasoning hide|show gates Thinking blocks immediately
-- fix(desktop): count the head entries the group-chat mirror drops
-- fix(desktop): mark truncated group-chat sync payloads
-- fix(desktop): mark the truncated head of a bot group-chat turn delta
-- fix: /stop halts background subagents and returns their partial results as interrupted completions
-- fix(kanban): dispatcher blocks a card on the first terminal provider error
-- fix(kanban): worker exits EX_CONFIG on a terminal provider error
-- 18 additional reliability and fixes updates are included in this verified snapshot.
+- fix(gateway): voice input re-routes per speaker through the identity seam
+- fix(gateway): canonicalize identity first at every adapter ingress path
+- fix(tui_gateway): probe foreign rows by keyset and re-hydrate after a remote compaction
+- fix(tui_gateway): next prompt sees turns another surface appended to the session (#42962)
+- fix(desktop): create a project from a folder in one step
+- fix(agent): judge "wrong script" against the user's own message; one continuation kind per stop
+- fix(agent): re-prompt once when a turn that did tool work ends on a collapsed fragment
+- fix(shared): a failed gateway dial says which failure it hit
+- fix(tui_gateway): the turn-completion trim waits for the other sessions too
+- fix(tui_gateway): the periodic memory trim waits until no session is busy or attached
+- fix(desktop): profile-only secondaries count their live turn too
+- fix(desktop): wake probe counts the foreground turn as in-flight work; sibling pins and prune follow-through
+- 14 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs: relative link to the borrowed-logins section (route-style links fail the docs check)
+- docs(agent): the finish explainer's terminal set is a sibling heuristic, not the same one
+- docs(model_switch): say what the fallback actually relies on
 
 ### Improvements
 
-- chore: map contributor email for @Caelier (#100423 salvage)
-- test: two invariant tests for Codex singleton adoption, replacing the salvaged suites
-- test(desktop): pin the omitted-head marker on the real group turn path
-- plugin-catalog: nastech-talk disclosure line for the Codex realtime lane + contributor map
-- plugin-catalog: bump nastech-talk pin to v0.21.0, add voice category
-- catalog: pin nastech-talk to v0.19.1 (read-only Codex lane)
-- chore: map contributor email for @TheStreamCode
-- catalog: bump nastech-muse-code to e335011 (review fixes)
-- catalog: bump nastech-muse-code to 22298cb (poll-tolerant device login)
-- catalog: bump nastech-muse-code to v0.2.0 (own device login, no omp)
-- catalog: add nastech-muse-code (Muse Spark via Muse Code subscription)
-- chore: map contributor email for @Shotflame
-- 12 additional improvements updates are included in this verified snapshot.
+- test(gateway): identity-canonical ingress invariants (#88715 rows A/B) + docs
+- refactor(gateway): fold the runner's duplicated identity stamps into one seam
+- Revert "feat(catalog): restore website install links to Desktop"
+- Revert "docs(catalog): restore native browsing and install guidance"
+- Revert "feat(ui): support icon-only segmented controls"
+- Revert "feat(desktop): restore native skill and plugin catalogs"
+- Revert "feat(desktop): browse catalogs as cards with a saved list option"
+- refactor(desktop): folder-derived project name lives in the input only
+- test(desktop): cover folder-derived project creation
+- chore: map Anton Vykhovanets to @vykhovanets for #68621 salvage
+- test(agent): degenerate-final recovery — a collapsed fragment after tool work is re-prompted, not accepted
+- chore(contributors): map dankkush (PR #111472 salvage)
+- 7 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
