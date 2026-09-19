@@ -9,7 +9,7 @@ the real output directory — "cron output" alone sent operators hunting.
 from __future__ import annotations
 
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from nastech_constants import display_nastech_home
 
@@ -59,7 +59,7 @@ _PROVIDER_FAILURE_ACTION: dict[str, str] = {
         "`nastech cron edit {job_id} --provider <name>`."
     ),
     "auth": (
-        "Sign in again with /login (or `nastech auth add <provider>` in a terminal), or pin a "
+        "Sign in again with /login (or `{relogin}` in a terminal), or pin a "
         "working provider with `nastech cron edit {job_id} --provider <name>`, then "
         "`nastech cron run {job_id}` to retry."
     ),
@@ -77,9 +77,10 @@ _DEFAULT_FAILURE_ACTION = "Run it again with `nastech cron run {job_id}`, or edi
 
 
 def provider_failure_notice(
-    job_name: str, job_id: str, reason: str, *, backup_provider_phrase: str,
+    job_name: str, job_id: str, reason: str, *, backup_provider_phrase: str, provider: Any = None,
 ) -> Optional[str]:
-    """The notice for a provider-shaped ``reason``, or None when the reason is not one."""
+    """The notice for a provider-shaped ``reason``, or None when the reason is not one.
+    ``provider`` is the job's pinned slug (if any) so the auth action names its exact sign-in."""
     cause = _provider_failure_cause(reason)
     if cause is None:
         return None
@@ -89,7 +90,10 @@ def provider_failure_notice(
             f"`nastech cron run {job_id}` tries now."
         )
     else:
-        action = _PROVIDER_FAILURE_ACTION.get(reason, _DEFAULT_FAILURE_ACTION).format(job_id=job_id)
+        from agent.turn_failure_copy import relogin_command_hint
+
+        action = _PROVIDER_FAILURE_ACTION.get(reason, _DEFAULT_FAILURE_ACTION).format(
+            job_id=job_id, relogin=relogin_command_hint(provider))
     return (
         f"⚠️ Cron '{job_name}' failed: {cause}. {action} "
         f"Run log: `nastech cron runs {job_id}`."

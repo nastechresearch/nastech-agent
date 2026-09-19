@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import { createCronTriggerController, type CronTriggerController } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import type * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -29,10 +29,6 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { type Translations, useI18n } from '@/i18n'
-import { AlertTriangle } from '@/lib/icons'
-import { requestModelOptions } from '@/lib/model-options'
-import { asText } from '@/lib/text'
 import {
   type AutomationBlueprint,
   createCronJob,
@@ -48,6 +44,10 @@ import {
   type SessionInfo,
   updateCronJob
 } from '@/nastech'
+import { type Translations, useI18n } from '@/i18n'
+import { AlertTriangle } from '@/lib/icons'
+import { requestModelOptions } from '@/lib/model-options'
+import { asText } from '@/lib/text'
 import { $cronFocusJobId, $cronJobs, invalidateCronJobsRequests, setCronFocusJobId } from '@/store/cron'
 import { $changeEventsAvailable, $cronChangeTick } from '@/store/live-sync'
 import { notify, notifyError } from '@/store/notifications'
@@ -83,7 +83,7 @@ import {
   toggleCronDeliveryTarget,
   validateCronEditor
 } from './cron-job-model'
-import { jobState, jobTitle, STATE_DOT } from './job-state'
+import { jobState, jobTitle, nextRunOverdueMs, STATE_DOT } from './job-state'
 
 const DEFAULT_DELIVER = 'local'
 
@@ -818,7 +818,10 @@ function CronJobDetail({ busy, c, job, onEdit, onOpenSession, onPauseResume, onT
           rows={[
             { label: c.frequencyLabel, value: jobScheduleDisplay(job) },
             { label: c.last.replace(/:$/, ''), value: formatTime(job.last_run_at) },
-            { label: c.next.replace(/:$/, ''), value: formatTime(job.next_run_at) },
+            {
+              label: (nextRunOverdueMs(job) === null ? c.next : c.overdueSince).replace(/:$/, ''),
+              value: formatTime(job.next_run_at)
+            },
             { label: c.deliverLabel, value: c.deliveryLabels[deliver] ?? deliver },
             ...(modelOverride ? [{ label: c.modelLabel, value: modelOverride }] : [])
           ]}

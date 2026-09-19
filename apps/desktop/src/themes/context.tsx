@@ -9,8 +9,8 @@
  * The two are persisted independently. Shift+X toggles light/dark.
  */
 
-import { useStore } from '@nanostores/react'
 import { ensureContrast, mix, parseColor } from '@nastech/shared/color'
+import { useStore } from '@nanostores/react'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
 import { $registryVersion } from '@/contrib/registry'

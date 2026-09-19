@@ -1,0 +1,14 @@
+name: nastech-toolsmith
+repo: https://github.com/Adolanium/nastech-toolsmith
+sha: b66068edbd9642d76b4bbb023b47b7e560a7922a
+description: Local developer tools, transformation recipes, and reviewed chat handoff inside Nastech Desktop.
+maintainer: Adolanium
+tier: community
+category: desktop
+requires_nastech: ">=0.21.3"
+docs_url: https://github.com/Adolanium/nastech-toolsmith#readme
+capabilities:
+  provides_tools: []
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: []

@@ -13,7 +13,7 @@ Coming from **Claude Code** or **OpenAI Codex CLI** instead? Use [`nastech impor
 :::
 
 :::tip
-If your OpenClaw setup was multi-provider, `nastech setup --portal` collapses it to one OAuth — 300+ models plus the Tool Gateway in a single login. See [Nastech Portal](/integrations/nastech-portal).
+If your OpenClaw setup was multi-provider, `nastech setup --portal` collapses it to one OAuth — 300+ models plus the Tool Gateway in a single login. See [Nastech Portal](../integrations/nastech-portal.md).
 :::
 
 ## Quick start
@@ -171,7 +171,7 @@ These are saved to `~/.nastech/migration/openclaw/<timestamp>/archive/` for manu
 | `HEARTBEAT.md` | `archive/workspace/HEARTBEAT.md` | Use cron jobs for periodic tasks |
 | `BOOTSTRAP.md` | `archive/workspace/BOOTSTRAP.md` | Use context files or skills |
 | Cron jobs | `archive/cron-config.json` | Recreate with `nastech cron create` |
-| Plugins | `archive/plugins-config.json` | See [plugins guide](/user-guide/features/hooks) |
+| Plugins | `archive/plugins-config.json` | See [plugins guide](../user-guide/features/hooks.md) |
 | Hooks/webhooks | `archive/hooks-config.json` | Use `nastech webhook` or gateway hooks |
 | Memory backend | `archive/memory-backend-config.json` | Configure via `nastech honcho` |
 | Skills registry | `archive/skills-registry-config.json` | Use `nastech skills config` |

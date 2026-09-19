@@ -23,13 +23,15 @@ const BACKEND = process.env.NASTECH_DASHBOARD_URL ?? "http://127.0.0.1:9119";
  * token, every protected `/api/*` call 401s.
  *
  * This plugin fetches the running dashboard's `index.html` on each dev page
- * load, scrapes the `window.__NASTECH_SESSION_TOKEN__` assignment, and
- * re-injects it into the dev HTML. No-op in production builds.
+ * load and forwards its runtime bootstrap values into the dev HTML. No-op in
+ * production builds.
  */
 function nastechDevToken(): Plugin {
   const TOKEN_RE = /window\.__NASTECH_SESSION_TOKEN__\s*=\s*"([^"]+)"/;
   const EMBEDDED_RE =
     /window\.__NASTECH_DASHBOARD_EMBEDDED_CHAT__\s*=\s*(true|false)/;
+  const INITIAL_PROFILE_RE =
+    /window\.__NASTECH_INITIAL_PROFILE__\s*=\s*("(?:\\.|[^"\\])*")/;
 
   return {
     name: "nastech:dev-session-token",
@@ -48,13 +50,16 @@ function nastechDevToken(): Plugin {
         }
         const embeddedMatch = html.match(EMBEDDED_RE);
         const embeddedJs = embeddedMatch ? embeddedMatch[1] : "true";
+        const initialProfileMatch = html.match(INITIAL_PROFILE_RE);
+        const initialProfileJs = initialProfileMatch?.[1] ?? '""';
         return [
           {
             tag: "script",
             injectTo: "head",
             children:
               `window.__NASTECH_SESSION_TOKEN__="${match[1]}";` +
-              `window.__NASTECH_DASHBOARD_EMBEDDED_CHAT__=${embeddedJs};`,
+              `window.__NASTECH_DASHBOARD_EMBEDDED_CHAT__=${embeddedJs};` +
+              `window.__NASTECH_INITIAL_PROFILE__=${initialProfileJs};`,
           },
         ];
       } catch (err) {

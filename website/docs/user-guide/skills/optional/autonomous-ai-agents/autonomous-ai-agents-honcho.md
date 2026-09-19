@@ -21,7 +21,7 @@ Configure and troubleshoot Honcho memory for Nastech.
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `Honcho`, `Memory`, `Profiles`, `Observation`, `Dialectic`, `User-Modeling`, `Session-Summary` |
-| Related skills | [`nastech-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent) |
+| Related skills | [`nastech-agent`](../../bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent.md) |
 
 ## Reference: full SKILL.md
 

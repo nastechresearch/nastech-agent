@@ -595,9 +595,9 @@ nastech chat
 ```
 
 另请参阅：
-- [MCP（模型上下文协议）](/user-guide/features/mcp)
-- [在 Nastech 中使用 MCP](/guides/use-mcp-with-nastech)
-- [MCP 配置参考](/reference/mcp-config-reference)
+- [MCP（模型上下文协议）](../user-guide/features/mcp.md)
+- [在 Nastech 中使用 MCP](../guides/use-mcp-with-nastech.md)
+- [MCP 配置参考](./mcp-config-reference.md)
 
 #### MCP 超时错误
 

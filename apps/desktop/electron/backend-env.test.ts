@@ -147,6 +147,22 @@ test('buildDesktopBackendEnv forces PYTHONUTF8 unless the user set it explicitly
   assert.equal(optedOut.PYTHONUTF8, '0')
 })
 
+test('normalizeNastechHomeRoot expands a literal leading ~ against the home directory, not cwd', () => {
+  assert.equal(
+    normalizeNastechHomeRoot('~/.nastech', { pathModule: path.posix, homedir: '/Users/test' }),
+    '/Users/test/.nastech'
+  )
+  assert.equal(
+    normalizeNastechHomeRoot('~/.nastech/profiles/oracle', { pathModule: path.posix, homedir: '/Users/test' }),
+    '/Users/test/.nastech'
+  )
+  assert.equal(
+    normalizeNastechHomeRoot('~\\.nastech', { pathModule: path.win32, homedir: 'C:\\Users\\test' }),
+    'C:\\Users\\test\\.nastech'
+  )
+  assert.equal(normalizeNastechHomeRoot('~', { pathModule: path.posix, homedir: '/Users/test' }), '/Users/test')
+})
+
 test('normalizeNastechHomeRoot maps profile homes back to the global Nastech root', () => {
   assert.equal(
     normalizeNastechHomeRoot('/Users/test/.nastech/profiles/oracle', { pathModule: path.posix }),

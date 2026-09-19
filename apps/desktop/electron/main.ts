@@ -171,7 +171,7 @@ import {
   DESKTOP_PROFILE_NAME_RE,
   type DesktopProfileRoute,
   resolveDesktopConnectionRequest,
-  resolveDesktopWindowRoute
+  resolveDesktopWindowLaunch
 } from './desktop-profile'
 import { resolveDesktopRemoteRoute, v1SshTerminalPoolKey } from './desktop-remote-route'
 import {
@@ -389,6 +389,7 @@ import {
   type SecretStoragePolicy,
   writeSecretStoragePolicy
 } from './secret-storage-policy'
+import { describeGitSpawnFailure, GIT_UNUSABLE, selectRunnableBinary } from './select-runnable-binary'
 import {
   buildInstanceWindowUrl,
   buildSessionWindowUrl,
@@ -1215,8 +1216,7 @@ function getTitleBarOverlayOptions() {
     darwinMajor: DARWIN_MAJOR,
     titlebarHeight: TITLEBAR_HEIGHT,
     color: TITLEBAR_OVERLAY_COLOR,
-    foreground:
-      rendererTitleBarTheme && isHexColor(rendererTitleBarTheme.foreground) ? rendererTitleBarTheme.foreground : null,
+    foreground: rendererTitleBarTheme && isHexColor(rendererTitleBarTheme.foreground) ? rendererTitleBarTheme.foreground : null,
     dark: nativeTheme.shouldUseDarkColors
   })
 }
@@ -2949,13 +2949,59 @@ function makeDashboardReadyFile() {
 // standard Git-for-Windows locations, then PATH. Cached after first probe.
 let _gitBinaryCache = null
 
+// A binary can exist on disk and still be unlaunchable — on macOS an
+// Intel-only build ahead on PATH (e.g. a pre-Rosetta-removal Homebrew)
+// fails at spawn time with errno -86 (EBADARCH), which callers then report
+// as an update-server/network problem. Probing `git --version` before
+// committing to a candidate skips such entries; the existence-only
+// fallback keeps behaviour unchanged where the probe itself cannot run.
+function binaryRuns(candidate) {
+  try {
+    execFileSync(candidate, ['--version'], {
+      stdio: 'ignore',
+      timeout: 5000,
+      windowsHide: true
+    })
+
+    return true
+  } catch {
+    return false
+  }
+}
+
+function findPathCandidates(command) {
+  const pathEntries = String(process.env.PATH || '')
+    .split(path.delimiter)
+    .filter(Boolean)
+
+  const candidates = []
+
+  for (const entry of pathEntries) {
+    const candidate = path.join(entry, command)
+
+    if (fileExists(candidate)) {
+      candidates.push(candidate)
+    }
+  }
+
+  return candidates
+}
+
 function resolveGitBinary() {
   if (_gitBinaryCache) {
     return _gitBinaryCache
   }
 
   if (!IS_WINDOWS) {
-    _gitBinaryCache = findOnPath('git') || 'git'
+    // Every PATH hit, probed — the first entry that merely exists can be
+    // unlaunchable while a working system git sits later on the same PATH.
+    const selected = selectRunnableBinary({
+      candidates: findPathCandidates('git'),
+      fileExists,
+      binaryRuns
+    })
+
+    _gitBinaryCache = selected || 'git'
 
     return _gitBinaryCache
   }
@@ -3002,9 +3048,22 @@ function resolveGhBinary() {
   } else {
     const home = app.getPath('home')
     candidates.push('/opt/homebrew/bin/gh', '/usr/local/bin/gh', '/usr/bin/gh', path.join(home, '.local', 'bin', 'gh'))
+    // PATH hits go through the same probe: a bare findOnPath fallback would
+    // re-select an unlaunchable first hit when none of the fixed locations exist.
+    candidates.push(...findPathCandidates('gh'))
   }
 
-  _ghBinaryCache = candidates.find(fileExists) || findOnPath('gh') || 'gh'
+  // Same selection rule as git: an existing-but-unlaunchable candidate (e.g.
+  // an Intel-only build from a stale Homebrew) must not shadow a working one
+  // further down the list, and PATH is only consulted when none of the
+  // explicit candidates is usable.
+  const selected = selectRunnableBinary({
+    candidates,
+    fileExists,
+    binaryRuns
+  })
+
+  _ghBinaryCache = selected || findOnPath('gh') || 'gh'
 
   return _ghBinaryCache
 }
@@ -3114,8 +3173,10 @@ function resolveUpdateRoot() {
 
 function runGit(args, options: any = {}): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
+    const gitBinary = resolveGitBinary()
+
     const child = spawn(
-      resolveGitBinary(),
+      gitBinary,
       IS_WINDOWS ? ['-c', 'windows.appendAtomically=false', ...args] : args,
       hiddenWindowsChildOptions({
         cwd: options.cwd,
@@ -3136,7 +3197,13 @@ function runGit(args, options: any = {}): Promise<{ code: number; stdout: string
       stderr += text
       options.onLine?.('stderr', text)
     })
-    child.once('error', reject)
+    // A spawn-level failure means git itself never ran (missing, not
+    // executable, wrong CPU architecture) — a local problem, not a network one.
+    child.once('error', error => {
+      const local = describeGitSpawnFailure(error, gitBinary)
+
+      reject(local ? Object.assign(new Error(local), { kind: GIT_UNUSABLE, cause: error }) : error)
+    })
     // 'close', not 'exit': exit can fire before the stdio pipes drain, and a
     // resolved-early `remote get-url` came back as "" often enough to route
     // passive checks down the wrong remote path.
@@ -3495,7 +3562,9 @@ function repairMacUpdaterHelper(updater) {
 function venvNastechShimPath(updateRoot) {
   const venvDir = resolveVenvDir(updateRoot)
 
-  return IS_WINDOWS ? path.join(venvDir, 'Scripts', 'nastech.exe') : path.join(venvDir, 'bin', 'nastech')
+  return IS_WINDOWS
+    ? path.join(venvDir, 'Scripts', 'nastech.exe')
+    : path.join(venvDir, 'bin', 'nastech')
 }
 
 // Best-effort lock probe mirroring the Rust updater's is_locked(): a running
@@ -5078,8 +5147,7 @@ async function createActiveBackend(backendArgs) {
 async function resolveNastechBackend(backendArgs) {
   // 1. Explicit override -- NASTECH_DESKTOP_NASTECH_ROOT points at a developer
   //    checkout. Honour it as-is (no bootstrap; the user is driving).
-  const overrideRoot =
-    process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
+  const overrideRoot = process.env.NASTECH_DESKTOP_NASTECH_ROOT && path.resolve(process.env.NASTECH_DESKTOP_NASTECH_ROOT)
 
   if (overrideRoot && isNastechSourceRoot(overrideRoot)) {
     const backend = await createPythonBackend(overrideRoot, `Nastech source at ${overrideRoot}`, backendArgs)
@@ -5341,7 +5409,8 @@ async function runEnsureRuntime(backend: any, assertStillOwned: () => void): Pro
           void 0
         }
       },
-      writeMarker: writeBootstrapMarker
+      writeMarker: writeBootstrapMarker,
+      gitBinary: resolveGitBinary()
     })
 
     bootstrapAbortController = null
@@ -5384,9 +5453,7 @@ async function runEnsureRuntime(backend: any, assertStillOwned: () => void): Pro
   // (install.ps1 owns those concerns now and the bootstrap-complete marker
   // attests they ran successfully).
   if (!isNastechSourceRoot(ACTIVE_NASTECH_ROOT)) {
-    throw new Error(
-      missingInstallPartMessage(`Nastech source files are missing or incomplete at ${ACTIVE_NASTECH_ROOT}`)
-    )
+    throw new Error(missingInstallPartMessage(`Nastech source files are missing or incomplete at ${ACTIVE_NASTECH_ROOT}`))
   }
 
   // On Windows, preflight Git Bash. Nastech' terminal tool calls bash.exe
@@ -8422,15 +8489,14 @@ function resolvePortalBaseUrl() {
   return String(raw).trim().replace(/\/+$/, '')
 }
 
-const { hasLivePortalSession, hasPortalAccessToken, renewPortalAccessSilently, openPortalLoginWindow } =
-  createPortalSession({
-    isReady: () => app.isReady(),
-    getOauthSession,
-    resolvePortalBaseUrl,
-    warmOauthCookieStore,
-    createWindow: options => new BrowserWindow(options),
-    rememberLog
-  })
+const { hasLivePortalSession, hasPortalAccessToken, renewPortalAccessSilently, openPortalLoginWindow } = createPortalSession({
+  isReady: () => app.isReady(),
+  getOauthSession,
+  resolvePortalBaseUrl,
+  warmOauthCookieStore,
+  createWindow: options => new BrowserWindow(options),
+  rememberLog
+})
 
 // Discover the hosted (Nastech Cloud) agents the signed-in user can see. Calls
 // the NAS trimmed-summary endpoint over the partition-bound net, so the portal
@@ -8463,13 +8529,10 @@ async function discoverCloudAgents(org?: string) {
   const fetchAgents = () =>
     discoverWithTeamFallback(
       selectedOrg =>
-        fetchJsonViaOauthSession(
-          `${portalBaseUrl}/api/agents${selectedOrg ? `?org=${encodeURIComponent(selectedOrg)}` : ''}`,
-          {
-            method: 'GET',
-            timeoutMs: 15_000
-          }
-        ),
+        fetchJsonViaOauthSession(`${portalBaseUrl}/api/agents${selectedOrg ? `?org=${encodeURIComponent(selectedOrg)}` : ''}`, {
+          method: 'GET',
+          timeoutMs: 15_000
+        }),
       org
     )
 
@@ -9876,11 +9939,9 @@ async function buildRemoteConnection(
 }
 
 const sshConnections = new Map<string, any>()
-
 const sshIsolatedKeepalives = createSshIsolatedKeepaliveRegistry({
   log: chunk => sshRememberLog(chunk)
 })
-
 const desktopInstallationId = loadOrCreateInstallationId(DESKTOP_INSTALLATION_PATH)
 
 // Managed SSH update lifecycle (#93042): while an update owns a registered
@@ -12163,8 +12224,9 @@ function startPoolIdleReaper() {
       if (now - (entry.lastActiveAt || 0) > poolIdleMs()) {
         // Remote descriptors hold no child/slot. Local children require the
         // same admission authority as foreground and LRU reclamation.
-        const retiring = entry.process ? poolRetirer.retireIdle(profile, poolIdleMs()) : stopPoolBackend(profile)
-
+        const retiring = entry.process
+          ? poolRetirer.retireIdle(profile, poolIdleMs())
+          : stopPoolBackend(profile)
         void retiring.catch(error => rememberLog(`Pool idle retirement failed: ${String(error)}`))
       }
     }
@@ -12452,7 +12514,6 @@ async function runPoolBackendStart(profile, entry, opts: { forceLocal?: boolean;
   const startFailed = new Promise((_resolve, reject) => {
     rejectStart = reject
   })
-
   // Exit/error can now arrive while the ownership claim is still pending.
   startFailed.catch(() => {})
 
@@ -12488,7 +12549,6 @@ async function runPoolBackendStart(profile, entry, opts: { forceLocal?: boolean;
     describeOutputTail: () => outputTail.describe(),
     readyFile
   })
-
   portAnnouncement.catch(() => {})
   await claimBackendChild(child, `${backend.command} ${backend.args.join(' ')}`, profile, backendNonce, outputTail)
   assertPoolEntryStillOwned(poolKey, entry, { releaseSlot: false })
@@ -12571,12 +12631,10 @@ const poolStopper = createPoolStopper({
 
 function stopPoolBackend(profile: string): Promise<void> {
   const entry = backendPool.get(profile)
-
   const stopping = releaseLocalBackendSlotAfterExit(
     () => releaseLocalBackendSlot(entry),
     () => poolStopper.stop(profile)
   )
-
   // Fire-and-forget callers still need diagnostics; awaiters receive the
   // rejection, while physical ownership and the exit finalizer remain live.
   void stopping.catch(error => {
@@ -12607,7 +12665,6 @@ const poolRetirer = createPoolRetirer({
   onRetiring: broadcastPoolBackendRetiring,
   log: rememberLog
 })
-
 localBackendLifecycle.signal.addEventListener('abort', poolRetirer.dispose, { once: true })
 
 async function teardownPoolBackendAndWait(profile) {
@@ -12740,7 +12797,6 @@ function scheduleUnexpectedPrimaryRecovery({ code = null, signal = null, error =
     if (primaryExitRecovery.isCrashLooping()) {
       const message =
         'Nastech backend keeps crashing right after it restarts; not restarting it again. Relaunch Nastech Desktop.'
-
       rememberLog(`[supervisor] ${message}`)
       sendBackendExit({ code, signal, error: message })
 
@@ -13567,10 +13623,11 @@ const instanceWindows = new Set<any>()
 // when there's no live source window (e.g. all windows closed on macOS). The
 // pure cascade math lives in session-windows.ts (instanceWindowBounds).
 function nextInstanceBounds(source: BrowserWindow | null = BrowserWindow.getFocusedWindow() || mainWindow) {
-  const fallback = computeWindowOptions(readWindowState(), screen.getAllDisplays())
+  const displays = screen.getAllDisplays()
+  const fallback = computeWindowOptions(readWindowState(), displays)
   const base = source && !source.isDestroyed() ? source.getBounds() : null
 
-  return instanceWindowBounds(base, fallback)
+  return instanceWindowBounds(base, fallback, displays)
 }
 
 // Open a new full-chrome instance window. Mirrors createWindow()'s window
@@ -13582,12 +13639,11 @@ function createInstanceWindow(
   options?: DesktopProfileRoute,
   source: BrowserWindow | null = BrowserWindow.getFocusedWindow() || mainWindow
 ) {
-  const route = resolveDesktopWindowRoute(
+  const route = resolveDesktopWindowLaunch(
     options,
     source && !source.isDestroyed() ? windowConnectionRoutes.get(source.webContents.id) : null,
     { connectionId: null, profile: primaryProfileKey() }
   )
-
   validateDesktopProfileRoute(route)
   const icon = getAppIconPath()
 
@@ -14883,10 +14939,7 @@ ipcMain.handle('nastech:connection:for', async (_event, payload) => {
   const id = String(connectionId || '').trim() || registry.primary
   const spawnPriority = spawnPriorityFrom(priority)
 
-  return connectDesktopProfileRoute(
-    { connectionId: id, profile: String(profile ?? '').trim() || 'default' },
-    spawnPriority
-  )
+  return connectDesktopProfileRoute({ connectionId: id, profile: String(profile ?? '').trim() || 'default' }, spawnPriority)
 })
 
 const windowConnectionRoutes = new WindowConnectionRouteRegistry()
@@ -16600,7 +16653,6 @@ async function dispatchRegistryApiRequest(
   // OUT of the claim: an interactive open coalescing onto an in-flight
   // passive read would otherwise inherit its "no warm backend" rejection.
   const spawnPriority = spawnPriorityFrom(request?.priority)
-
   const connection: any = request?.passive
     ? await ensureRegistryBackend(registryConnectionId, routeProfile, '', { passive: true })
     : await backendDialClaims.run(backendScopeKey(registryConnectionId, routeProfile), () =>
@@ -17517,7 +17569,7 @@ ipcMain.handle('nastech:updates:check', async (_event, opts) =>
   checkUpdates({ force: Boolean(opts?.force) }).catch(error => ({
     supported: true,
     branch: readDesktopUpdateConfig().branch,
-    error: 'check-failed',
+    error: error?.kind === GIT_UNUSABLE ? GIT_UNUSABLE : 'check-failed',
     message: error?.message || String(error),
     fetchedAt: Date.now()
   }))

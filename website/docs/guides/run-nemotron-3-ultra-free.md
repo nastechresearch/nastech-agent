@@ -113,11 +113,11 @@ Already set up with another model?
 
 - **Don't see the model in the list?** Make sure you finished the Nastech Portal connection and that you're on the **Free** plan. In the CLI, `nastech portal info` confirms you're logged in and routing through Nastech.
 - **Picked the wrong variant?** Re-select `nvidia/nemotron-3-ultra:free` — the `:free` suffix is required to stay on the no-cost tier.
-- **Browser didn't open / you're on a remote host (CLI)?** See [OAuth over SSH / Remote Hosts](/guides/oauth-over-ssh) for port-forwarding workarounds.
+- **Browser didn't open / you're on a remote host (CLI)?** See [OAuth over SSH / Remote Hosts](./oauth-over-ssh.md) for port-forwarding workarounds.
 
 ## See also
 
-- **[Desktop App](/user-guide/desktop)** — The native one-click app (macOS, Windows, Linux)
-- **[Run Nastech Agent with Nastech Portal](/guides/run-nastech-with-nastech-portal)** — Full Portal walkthrough: models, Tool Gateway, and verification
-- **[Nastech Portal integration](/integrations/nastech-portal)** — What's in the subscription
-- **[Quickstart](/getting-started/quickstart)** — Install-to-chat in under 5 minutes
+- **[Desktop App](../user-guide/desktop.md)** — The native one-click app (macOS, Windows, Linux)
+- **[Run Nastech Agent with Nastech Portal](./run-nastech-with-nastech-portal.md)** — Full Portal walkthrough: models, Tool Gateway, and verification
+- **[Nastech Portal integration](../integrations/nastech-portal.md)** — What's in the subscription
+- **[Quickstart](../getting-started/quickstart.md)** — Install-to-chat in under 5 minutes

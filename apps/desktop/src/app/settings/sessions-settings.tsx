@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 
+import { restoreListedSession } from '@/app/session/hooks/use-session-actions/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tip } from '@/components/ui/tooltip'
-import { useI18n } from '@/i18n'
-import { sessionTitle } from '@/lib/chat-runtime'
-import { pathLeaf } from '@/lib/display-path'
-import { triggerHaptic } from '@/lib/haptics'
-import { Archive, ArchiveOff, FolderOpen, Loader2, Trash2 } from '@/lib/icons'
 import {
   deleteSession,
   getNastechConfigRecord,
@@ -15,9 +11,14 @@ import {
   saveNastechConfig,
   setSessionArchived
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import { sessionTitle } from '@/lib/chat-runtime'
+import { pathLeaf } from '@/lib/display-path'
+import { triggerHaptic } from '@/lib/haptics'
+import { Archive, ArchiveOff, FolderOpen, Loader2, Trash2 } from '@/lib/icons'
 import { confirm } from '@/store/confirm'
 import { notify, notifyError } from '@/store/notifications'
-import { applyConfiguredDefaultProjectDir, ensureDefaultWorkspaceCwd, setSessions } from '@/store/session'
+import { applyConfiguredDefaultProjectDir, ensureDefaultWorkspaceCwd } from '@/store/session'
 import { untombstoneSessions } from '@/store/session-removal'
 import { forgetSessionUnread } from '@/store/session-unread'
 import type { NastechConfigRecord, SessionInfo } from '@/types/nastech'
@@ -63,7 +64,7 @@ export function SessionsSettings() {
         // Surface it again in the sidebar without waiting for a full refresh, and
         // lift any optimistic eviction so the grouped tree shows it again too.
         untombstoneSessions([session.id, session._lineage_root_id])
-        setSessions(prev => [{ ...session, archived: false }, ...prev.filter(s => s.id !== session.id)])
+        restoreListedSession({ ...session, archived: false })
         triggerHaptic('selection')
         notify({ durationMs: 2_000, kind: 'success', message: s.restored })
       } catch (err) {

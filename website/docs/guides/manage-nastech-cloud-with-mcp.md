@@ -6,9 +6,9 @@ description: "Connect Nastech Agent to the Nastech Portal MCP server so your loc
 
 # Manage Nastech Cloud with MCP
 
-[Nastech Cloud](https://portal.nastechresearch.github.io/cloud) runs hosted Nastech Agent instances for you. Normally you manage them from the `/agents` page in the [Nastech Portal](/integrations/nastech-portal). This guide connects your **local** Nastech Agent to the Portal's MCP server so you can manage those cloud instances by just asking — "list my cloud agents", "restart the stopped one", "what's it costing me" — without leaving your terminal.
+[Nastech Cloud](https://portal.nastechresearch.github.io/cloud) runs hosted Nastech Agent instances for you. Normally you manage them from the `/agents` page in the [Nastech Portal](../integrations/nastech-portal.md). This guide connects your **local** Nastech Agent to the Portal's MCP server so you can manage those cloud instances by just asking — "list my cloud agents", "restart the stopped one", "what's it costing me" — without leaving your terminal.
 
-It's a standard [MCP](/user-guide/features/mcp) server hosted by Nastech Research, gated by the same OAuth login you already use for the Portal. Once connected, Nastech gets two tools it can call on your behalf.
+It's a standard [MCP](../user-guide/features/mcp.md) server hosted by Nastech Research, gated by the same OAuth login you already use for the Portal. Once connected, Nastech gets two tools it can call on your behalf.
 
 ## What you can do with it
 
@@ -28,7 +28,7 @@ Every call runs against **your** org with your Portal identity, and membership i
 
 ## Prerequisites
 
-- A [Nastech Portal](/integrations/nastech-portal) account with [Nastech Cloud](https://portal.nastechresearch.github.io/cloud) access (at least one instance, or the ability to create one).
+- A [Nastech Portal](../integrations/nastech-portal.md) account with [Nastech Cloud](https://portal.nastechresearch.github.io/cloud) access (at least one instance, or the ability to create one).
 - MCP support installed. If you used the standard install script it's already there; otherwise:
 
   ```bash
@@ -127,7 +127,7 @@ mcp_servers:
       include: [agents]
 ```
 
-Run `/reload-mcp` after changing the config. See [Use MCP with Nastech](/guides/use-mcp-with-nastech) for the full filtering model (`include`/`exclude`, `prompts`, `resources`).
+Run `/reload-mcp` after changing the config. See [Use MCP with Nastech](./use-mcp-with-nastech.md) for the full filtering model (`include`/`exclude`, `prompts`, `resources`).
 
 ## Troubleshooting
 
@@ -165,12 +165,12 @@ OAuth tokens refresh automatically, but if the Portal invalidates your session (
 
 ### Headless / SSH / remote host
 
-The OAuth browser callback runs on the machine where Nastech is running. On a remote host, forward the loopback port over SSH — the same pattern as any other OAuth login. See [OAuth over SSH / Remote Hosts](/guides/oauth-over-ssh).
+The OAuth browser callback runs on the machine where Nastech is running. On a remote host, forward the loopback port over SSH — the same pattern as any other OAuth login. See [OAuth over SSH / Remote Hosts](./oauth-over-ssh.md).
 
 ## See also
 
-- **[Nastech Portal](/integrations/nastech-portal)** — the subscription, models, and Tool Gateway behind the same login
-- **[Use MCP with Nastech](/guides/use-mcp-with-nastech)** — connecting and filtering MCP servers in general
-- **[MCP feature overview](/user-guide/features/mcp)** — what MCP is and how Nastech uses it
-- **[MCP configuration reference](/reference/mcp-config-reference)** — every `mcp_servers` field, including `auth: oauth`
-- **[OAuth over SSH](/guides/oauth-over-ssh)** — logging in from remote or browser-only environments
+- **[Nastech Portal](../integrations/nastech-portal.md)** — the subscription, models, and Tool Gateway behind the same login
+- **[Use MCP with Nastech](./use-mcp-with-nastech.md)** — connecting and filtering MCP servers in general
+- **[MCP feature overview](../user-guide/features/mcp.md)** — what MCP is and how Nastech uses it
+- **[MCP configuration reference](../reference/mcp-config-reference.md)** — every `mcp_servers` field, including `auth: oauth`
+- **[OAuth over SSH](./oauth-over-ssh.md)** — logging in from remote or browser-only environments

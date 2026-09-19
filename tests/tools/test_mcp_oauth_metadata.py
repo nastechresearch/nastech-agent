@@ -24,7 +24,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from mcp.shared.auth import OAuthMetadata
+pytest.importorskip("mcp.shared.auth", reason="MCP SDK not installed")
+
+from mcp.shared.auth import OAuthMetadata  # noqa: E402
 
 from tools.mcp_oauth import NastechTokenStorage
 from tools.mcp_oauth_manager import _NASTECH_PROVIDER_CLS

@@ -17,7 +17,7 @@ Quick answers and fixes for the most common questions and issues.
 Nastech Agent works with any OpenAI-compatible API. Supported providers include:
 
 - **[OpenRouter](https://openrouter.ai/)** — access hundreds of models through one API key (recommended for flexibility)
-- **[Nastech Portal](/integrations/nastech-portal)** — Nastech Research's subscription gateway — 300+ models plus web/image/TTS/browser through one OAuth login (recommended for newcomers)
+- **[Nastech Portal](../integrations/nastech-portal.md)** — Nastech Research's subscription gateway — 300+ models plus web/image/TTS/browser through one OAuth login (recommended for newcomers)
 - **OpenAI** — GPT-5.4, GPT-5-codex, GPT-4.1, GPT-4o, etc.
 - **Anthropic** — Claude models (direct API, OAuth via `nastech auth add anthropic`, OpenRouter, or any compatible proxy)
 - **Google** — Gemini models (direct API via `gemini` provider, OpenRouter, or compatible proxy)
@@ -228,7 +228,7 @@ To isolate the source:
 3. Retry in a fresh session with another configured model or provider. A refusal that changes with the model is model/provider behavior, not a Nastech execution control.
 4. If an explicit tool error appears, use its exact text when reporting the problem.
 
-See [Security](/user-guide/security) for Nastech' documented execution controls and [Providers](/integrations/providers) for provider configuration.
+See [Security](../user-guide/security.md) for Nastech' documented execution controls and [Providers](../integrations/providers.md) for provider configuration.
 
 #### `/model` only shows one provider / can't switch providers
 
@@ -532,7 +532,7 @@ nastech prompt-size
 /usage
 ```
 
-If the baseline looks high before you've typed anything, that's the fixed prompt budget — the system prompt plus tool schemas sent on every call. Run [`nastech prompt-size`](/reference/cli-commands#nastech-prompt-size) to measure it, then trim: disable toolsets you don't use (`nastech tools`) and uninstall or disable skills you don't need (`nastech skills`).
+If the baseline looks high before you've typed anything, that's the fixed prompt budget — the system prompt plus tool schemas sent on every call. Run [`nastech prompt-size`](./cli-commands.md#nastech-prompt-size) to measure it, then trim: disable toolsets you don't use (`nastech tools`) and uninstall or disable skills you don't need (`nastech skills`).
 
 :::tip
 Use `/compress` regularly during long sessions. It summarizes the conversation history and reduces token usage significantly while preserving context.
@@ -603,9 +603,9 @@ nastech chat
 ```
 
 See also:
-- [MCP (Model Context Protocol)](/user-guide/features/mcp)
-- [Use MCP with Nastech](/guides/use-mcp-with-nastech)
-- [MCP Config Reference](/reference/mcp-config-reference)
+- [MCP (Model Context Protocol)](../user-guide/features/mcp.md)
+- [Use MCP with Nastech](../guides/use-mcp-with-nastech.md)
+- [MCP Config Reference](./mcp-config-reference.md)
 
 #### MCP timeout errors
 
@@ -636,7 +636,7 @@ No. Each messaging platform (Telegram, Discord, etc.) requires exclusive access 
 
 No. Each profile has its own memory store, session database, and skills directory. They are completely isolated. If you want to start a new profile with existing memories and sessions, use `nastech profile create newname --clone-all` to copy everything from the current profile, or add `--clone-from <profile>` to copy from a specific source profile.
 
-This isolation is also the reason to never run two agents against the *same* profile or Nastech home: both write memory automatically and each loads the other's writes at session start, so their stored state degrades with every session. One agent per profile; for genuinely shared memory across agents, use an [external memory provider](/user-guide/features/memory-providers).
+This isolation is also the reason to never run two agents against the *same* profile or Nastech home: both write memory automatically and each loads the other's writes at session start, so their stored state degrades with every session. One agent per profile; for genuinely shared memory across agents, use an [external memory provider](../user-guide/features/memory-providers.md).
 
 ### What happens when I run `nastech update`?
 

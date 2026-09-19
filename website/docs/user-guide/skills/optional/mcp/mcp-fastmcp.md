@@ -21,7 +21,7 @@ Build, test, and deploy Python MCP servers.
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `MCP`, `FastMCP`, `Python`, `Tools`, `Resources`, `Prompts`, `Deployment` |
-| Related skills | [`nastech-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent), [`mcporter`](/docs/user-guide/skills/optional/mcp/mcp-mcporter) |
+| Related skills | [`nastech-agent`](../../bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent.md), [`mcporter`](./mcp-mcporter.md) |
 
 ## Reference: full SKILL.md
 

@@ -98,7 +98,7 @@ That logs you in, sets Nastech as your provider, and turns on the Tool Gateway i
 :::info Setup modes
 On a fresh install, `nastech setup` offers three modes:
 
-- **Quick Setup (Nastech Portal)** — OAuth login, no API keys to manage; sets up a model plus the Tool Gateway tools, billed to your [Nastech Portal subscription](/integrations/nastech-portal). The recommended fast path.
+- **Quick Setup (Nastech Portal)** — OAuth login, no API keys to manage; sets up a model plus the Tool Gateway tools, billed to your [Nastech Portal subscription](../integrations/nastech-portal.md). The recommended fast path.
 - **Full Setup** — walk through every provider, tool, and option yourself (bring your own keys).
 - **Blank Slate** — everything starts **off** except the bare minimum needed to run an agent: **provider & model, the File Operations toolset, and the Terminal toolset**. No web, browser, code execution, vision, memory, delegation, cron, skills, plugins, or MCP servers — and compression, checkpoints, smart routing, and memory capture are all disabled. After the minimal baseline is applied, you choose one of two paths: **start with everything disabled** (finish now with the minimal agent), or **walk through all configurations** (opt in to tools, skills, plugins, MCP, and messaging). Pick this when you want a minimal, fully-controlled agent and intend to enable only exactly what you need.
 
@@ -262,7 +262,7 @@ Only after the base chat works. Pick what you need:
 nastech gateway setup    # Interactive platform configuration
 ```
 
-Connect [Telegram](/user-guide/messaging/telegram), [Discord](/user-guide/messaging/discord), [Slack](/user-guide/messaging/slack), [WhatsApp](/user-guide/messaging/whatsapp), [Signal](/user-guide/messaging/signal), [Email](/user-guide/messaging/email), or [Home Assistant](/user-guide/messaging/homeassistant), or [Microsoft Teams](/user-guide/messaging/teams).
+Connect [Telegram](../user-guide/messaging/telegram.md), [Discord](../user-guide/messaging/discord.md), [Slack](../user-guide/messaging/slack.md), [WhatsApp](../user-guide/messaging/whatsapp.md), [Signal](../user-guide/messaging/signal.md), [Email](../user-guide/messaging/email.md), or [Home Assistant](../user-guide/messaging/homeassistant.md), or [Microsoft Teams](../user-guide/messaging/teams.md).
 
 ### Automation and tools
 
@@ -396,4 +396,4 @@ That sequence gets you from "broken vibes" back to a known state fast.
 - **[AI Providers](../integrations/providers.md)** — Full provider list and setup details
 - **[Skills System](../user-guide/features/skills.md)** — Reusable workflows and knowledge
 - **[Tips & Best Practices](../guides/tips.md)** — Power user tips
-- **[Moving to another machine](/reference/faq#exporting-nastech-to-another-machine)** — `nastech backup` migrates your whole setup (or [a single profile](/reference/faq#moving-a-single-profile-to-another-machine)); no need to rebuild from scratch
+- **[Moving to another machine](../reference/faq.md#exporting-nastech-to-another-machine)** — `nastech backup` migrates your whole setup (or [a single profile](../reference/faq.md#moving-a-single-profile-to-another-machine)); no need to rebuild from scratch

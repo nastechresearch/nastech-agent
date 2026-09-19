@@ -99,9 +99,14 @@ Examples:
     nastech config edit            Edit config in $EDITOR
     nastech config set model gpt-4 Set a config value
     nastech gateway                Run messaging gateway
+    nastech gateway install        Install gateway background service
+    nastech gateway start          Start the installed gateway service
+    nastech gateway stop           Stop the gateway service
+    nastech gateway status         Show gateway status
+    nastech -p <profile> <cmd>     Run any command against a named profile's
+                                  home (also --profile) — e.g. nastech -p coder gateway stop
     nastech -s nastech-agent-dev,github-auth
     nastech -w                     Start in isolated git worktree
-    nastech gateway install        Install gateway background service
     nastech sessions list          List past sessions
     nastech sessions browse        Interactive session picker
     nastech sessions rename ID T   Rename/title a session

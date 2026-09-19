@@ -64,7 +64,7 @@ Both built-in OpenCode providers send an opaque, per-conversation `x-opencode-se
 
 The two built-in OpenCode providers each pin their own relay on `opencode.ai` (`opencode-zen` → `/zen/v1`, `opencode-go` → `/zen/go/v1`). A `model.base_url` left behind by the other relay is healed to the selected provider's relay, and the model you pick (`-m`, `/model`, a fallback entry or a channel override) decides which relay is used — so switching from a Zen model to a Go-only one never sends the request to Zen. A custom provider you define under `providers:` whose name extends a family slug (for example `opencode-go-bridge`) still gets the family's per-model API-mode routing and `/v1` handling, but its `base_url` is taken as declared: name it after the relay it actually points at.
 
-For the official API-key path, see the dedicated [Google Gemini guide](/guides/google-gemini).
+For the official API-key path, see the dedicated [Google Gemini guide](../guides/google-gemini.md).
 
 :::tip Model key alias
 In the `model:` config section, you can use either `default:` or `model:` as the key name for your model ID. Both `model: { default: my-model }` and `model: { model: my-model }` work identically.
@@ -73,7 +73,7 @@ In the `model:` config section, you can use either `default:` or `model:` as the
 
 ### Nastech Portal
 
-[Nastech Portal](https://portal.nastechresearch.github.io) is Nastech Research's unified subscription gateway and **the recommended way to run Nastech Agent**. One OAuth login covers 300+ frontier agentic models (Claude, GPT, Gemini, DeepSeek, Qwen, Kimi, GLM, MiniMax, Grok, ...) plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, browser automation) — billed against your Nastech subscription instead of separate per-provider accounts.
+[Nastech Portal](https://portal.nastechresearch.github.io) is Nastech Research's unified subscription gateway and **the recommended way to run Nastech Agent**. One OAuth login covers 300+ frontier agentic models (Claude, GPT, Gemini, DeepSeek, Qwen, Kimi, GLM, MiniMax, Grok, ...) plus the [Tool Gateway](../user-guide/features/tool-gateway.md) (web search, image generation, TTS, browser automation) — billed against your Nastech subscription instead of separate per-provider accounts.
 
 ```bash
 nastech setup --portal     # fresh install — OAuth + provider + gateway in one command
@@ -83,7 +83,7 @@ nastech portal info        # inspect login + routing at any time
 
 Don't have a subscription yet? Get one at [portal.nastechresearch.github.io/manage-subscription](https://portal.nastechresearch.github.io/manage-subscription).
 
-**For full details:** see the dedicated [Nastech Portal integration page](/integrations/nastech-portal) (what's in the subscription, model catalog, troubleshooting) and the step-by-step [Run Nastech Agent with Nastech Portal guide](/guides/run-nastech-with-nastech-portal).
+**For full details:** see the dedicated [Nastech Portal integration page](./nastech-portal.md) (what's in the subscription, model catalog, troubleshooting) and the step-by-step [Run Nastech Agent with Nastech Portal guide](../guides/run-nastech-with-nastech-portal.md).
 
 **Client identification.** Every Portal request from Nastech Agent carries a `client=nastech-client-v<version>` tag (e.g. `client=nastech-client-v0.13.0`) auto-aligned to your installed release. This is sent on all Portal pathways — main chat loop, auxiliary calls, compression summarizer, web extraction — and lets Portal-side telemetry distinguish Nastech traffic from other clients. No config required; the tag updates automatically when you `nastech update`.
 
@@ -95,7 +95,7 @@ The OpenAI Codex provider authenticates via device code (open a URL, enter a cod
 
 If a token refresh fails with a terminal error (HTTP 4xx, `invalid_grant`, revoked grant, etc.), Nastech marks the refresh token as dead and stops replaying it so you don't see a flood of identical auth failures. The next request surfaces a typed re-auth message instead. Run `nastech auth add openai-codex` (or `nastech model` → **ChatGPT or Codex Subscription**) to start a fresh device-code login; the quarantine clears on the next successful exchange.
 
-Device login can fail with `[SSL: UNEXPECTED_EOF_WHILE_READING]` or a TLS handshake timeout on Python/OpenSSL 3.5+ when a middlebox rejects post-quantum groups such as X25519MLKEM768 (curl may still work). Nastech does not change default TLS policy. Point `OPENSSL_CONF` at a config that restricts `Groups` to classic curves before running `nastech model`, or diagnose with TLS 1.2:
+Device login can fail with `[SSL: UNEXPECTED_EOF_WHILE_READING]` or a TLS handshake timeout on Python/OpenSSL 3.5+ when a middlebox rejects post-quantum groups such as X25519MLKEM768 (curl may still work). A one-off dropped connection is not fatal: while waiting for your browser approval Nastech keeps polling through up to six consecutive transport errors (and retries the device-code request and token exchange twice) before giving up, so only a persistently broken network surfaces this error. Nastech does not change default TLS policy. Point `OPENSSL_CONF` at a config that restricts `Groups` to classic curves before running `nastech model`, or diagnose with TLS 1.2:
 
 ```ini
 openssl_conf = openssl_init
@@ -112,11 +112,11 @@ Groups = x25519:secp256r1:secp384r1:x448
 :::
 
 :::warning
-Even when using Nastech Portal, Codex, or a custom endpoint, some tools (vision, web summarization, MoA) use a separate "auxiliary" model. By default (`auxiliary.*.provider: "auto"`), Nastech routes these tasks to your **main chat model** — the same model you picked in `nastech model`. You can override each task individually to route it to a cheaper/faster model (e.g. Gemini Flash on OpenRouter) — see [Auxiliary Models](/user-guide/configuration#auxiliary-models).
+Even when using Nastech Portal, Codex, or a custom endpoint, some tools (vision, web summarization, MoA) use a separate "auxiliary" model. By default (`auxiliary.*.provider: "auto"`), Nastech routes these tasks to your **main chat model** — the same model you picked in `nastech model`. You can override each task individually to route it to a cheaper/faster model (e.g. Gemini Flash on OpenRouter) — see [Auxiliary Models](../user-guide/configuration.md#auxiliary-models).
 :::
 
 :::tip Nastech Tool Gateway
-Paid Nastech Portal subscribers also get access to the **[Tool Gateway](/user-guide/features/tool-gateway)** — web search, image generation, TTS, and browser automation routed through your subscription. No extra API keys needed. On a fresh install, `nastech setup --portal` logs you in, sets Nastech as your provider, and turns the gateway on in one command. Existing users can enable it from `nastech model` or per-tool from `nastech tools`. Inspect routing at any time with `nastech portal info`.
+Paid Nastech Portal subscribers also get access to the **[Tool Gateway](../user-guide/features/tool-gateway.md)** — web search, image generation, TTS, and browser automation routed through your subscription. No extra API keys needed. On a fresh install, `nastech setup --portal` logs you in, sets Nastech as your provider, and turns the gateway on in one command. Existing users can enable it from `nastech model` or per-tool from `nastech tools`. Inspect routing at any time with `nastech portal info`.
 :::
 
 ### Two Commands for Model Management
@@ -151,7 +151,7 @@ Several providers let you sign in to Nastech with a **consumer subscription** (C
 
 **xAI (SuperGrok / X Premium+).** Browser OAuth works with either an active SuperGrok subscription or an X Premium+ subscription on the linked X account, and the same bearer token is reused by direct-to-xAI tools (TTS, image gen, video gen, transcription, X Search). If inference returns `HTTP 403` after a successful login, that's a tier/entitlement restriction on xAI's side, not a stale token — the workaround is switching to an `XAI_API_KEY`. See [xAI (Grok)](#xai-grok--responses-api--prompt-caching) below and the [xAI Grok OAuth guide](../guides/xai-grok-oauth.md).
 
-**Google Gemini.** There is currently no way to sign in to Nastech with a consumer Gemini subscription — the `gemini` provider takes an API key, and [Google Vertex AI](#google-vertex-ai) bills to your GCP project. A billing-enabled Google Cloud project is recommended for agent use; free-tier quotas are too small for long-running agent sessions. See the [Google Gemini guide](/guides/google-gemini).
+**Google Gemini.** There is currently no way to sign in to Nastech with a consumer Gemini subscription — the `gemini` provider takes an API key, and [Google Vertex AI](#google-vertex-ai) bills to your GCP project. A billing-enabled Google Cloud project is recommended for agent use; free-tier quotas are too small for long-running agent sessions. See the [Google Gemini guide](../guides/google-gemini.md).
 
 :::tip One subscription instead of five
 If you'd rather not track per-provider plan semantics at all, [Nastech Portal](#nastech-portal) covers 300+ models under a single subscription with one OAuth login.
@@ -461,7 +461,7 @@ Authentication uses the standard boto3 chain: explicit `AWS_ACCESS_KEY_ID`/`AWS_
 
 Bedrock uses the **Converse API** under the hood — requests are translated to Bedrock's model-agnostic shape, so the same config works for Claude, Nova, DeepSeek, and Llama models. Set `BEDROCK_BASE_URL` only if you're calling a non-default regional endpoint.
 
-See the [AWS Bedrock guide](/guides/aws-bedrock) for a walkthrough of IAM setup, region selection, and cross-region inference.
+See the [AWS Bedrock guide](../guides/aws-bedrock.md) for a walkthrough of IAM setup, region selection, and cross-region inference.
 
 ### Google Vertex AI
 
@@ -486,7 +486,7 @@ vertex:
   region: "global"               # required for the Gemini 3.x previews
 ```
 
-`VERTEX_PROJECT_ID` / `VERTEX_REGION` env vars override the `config.yaml` values. Nastech lazy-installs `google-auth` on first use; run `nastech setup` if the managed install needs repair. See the [Google Vertex AI guide](/guides/google-vertex) for the full walkthrough, and the [Google Gemini guide](/guides/google-gemini) for the static-API-key AI Studio path instead.
+`VERTEX_PROJECT_ID` / `VERTEX_REGION` env vars override the `config.yaml` values. Nastech lazy-installs `google-auth` on first use; run `nastech setup` if the managed install needs repair. See the [Google Vertex AI guide](../guides/google-vertex.md) for the full walkthrough, and the [Google Gemini guide](../guides/google-gemini.md) for the static-API-key AI Studio path instead.
 
 ### Qwen Portal (OAuth)
 
@@ -557,7 +557,7 @@ model:
 Supported models: `MiniMax-M2.7` (main) and `MiniMax-M2.7-highspeed` (wired as the default auxiliary model). The OAuth path ignores `MINIMAX_API_KEY` / `MINIMAX_BASE_URL`.
 
 :::tip MiniMax OAuth vs API key
-`minimax-oauth` uses MiniMax's consumer-facing portal with OAuth login — no billing setup required. The `minimax` and `minimax-cn` providers use `MINIMAX_API_KEY` / `MINIMAX_CN_API_KEY` — for programmatic access. See the [MiniMax OAuth guide](/guides/minimax-oauth) for a full walkthrough.
+`minimax-oauth` uses MiniMax's consumer-facing portal with OAuth login — no billing setup required. The `minimax` and `minimax-cn` providers use `MINIMAX_API_KEY` / `MINIMAX_CN_API_KEY` — for programmatic access. See the [MiniMax OAuth guide](../guides/minimax-oauth.md) for a full walkthrough.
 :::
 
 ### NVIDIA NIM
@@ -1161,7 +1161,7 @@ model:
 
 **Possible causes:**
 1. **Low output limit on the server** — configure the server's generation default (for example SGLang's `--default-max-tokens`). Nastech does not expose an output-token cap setting. Response length is distinct from the conversation's context window (`context_length`).
-2. **Context exhaustion** — The model filled its context window. Increase `model.context_length` or enable [context compression](/user-guide/configuration#context-compression) in Nastech.
+2. **Context exhaustion** — The model filled its context window. Increase `model.context_length` or enable [context compression](../user-guide/configuration.md#context-compression) in Nastech.
 
 ---
 
@@ -1385,6 +1385,8 @@ Not to be confused with `secrets.command`, which runs a helper **once at startup
 Older configs used a top-level `custom_providers:` list instead. It still works — Nastech reads both — and `nastech update` auto-migrates it to the `providers:` dict (config v12). Field names differ slightly in the dict format: legacy `model` is `default_model`, and legacy `api_mode` is `transport`.
 :::
 
+**Reasoning effort on custom endpoints.** The configured `reasoning_effort` (`/reasoning max`, `agent.reasoning_effort`) reaches a custom endpoint unchanged on both the `chat_completions` and the `codex_responses` transport — up to `max`; only the Nastech-internal `ultra` is clamped to `max`. Two exceptions follow the host rather than the entry: a custom entry pointed at `api.openai.com` keeps OpenAI's per-model ladder (`max` is a gpt-5.6-only level there), and an entry pointed at a provider whose profile publishes a per-model vocabulary (Ramp Router) is clamped to that catalog. An endpoint that rejects the level answers with an HTTP 400 instead of Nastech silently downgrading it.
+
 Some OpenAI-compatible endpoints need provider-specific request body fields. Add an `extra_body` map to the matching custom provider and Nastech will merge it into each chat-completions request for that endpoint:
 
 ```yaml
@@ -1533,6 +1535,8 @@ model:
 PERPLEXITY_API_KEY=your-perplexity-key
 ```
 
+Perplexity's Agent API (`api: https://api.perplexity.ai/v1` with `api_mode: codex_responses`) reserves the function names `web_search`, `search_files`, `fetch_url`, `people_search` and `finance_search` for its own built-in tools. Nastech renames its client tools of the same name to `nastech_<name>` on the wire and maps them back before dispatch, for the main agent loop and auxiliary calls (title generation, compression, MoA aggregation) alike — the same treatment OpenCode's `/v1/responses` endpoints get.
+
 #### Multiple providers in one config
 
 The three recipes compose — use all of them together and switch per turn with `/model custom:<name>:<model>`:
@@ -1635,7 +1639,7 @@ provider_routing:
   #   "anthropic/claude-fable-5.1": {only: ["anthropic"]}
 ```
 
-**Shortcuts:** Append `:nitro` to any model name for throughput sorting (e.g., `anthropic/claude-sonnet-4:nitro`), or `:floor` for price sorting. Per-model details: [Provider Routing](/user-guide/features/provider-routing#per-model-overrides-models).
+**Shortcuts:** Append `:nitro` to any model name for throughput sorting (e.g., `anthropic/claude-sonnet-4:nitro`), or `:floor` for price sorting. Per-model details: [Provider Routing](../user-guide/features/provider-routing.md#per-model-overrides-models).
 
 ## OpenRouter Pareto Code Router
 
@@ -1656,7 +1660,7 @@ Notes:
 - Set to empty string (or remove the line) to let OpenRouter pick the strongest available coder — its documented behavior when the plugins block is omitted.
 - Selection is deterministic per score on a given day, but the actual model chosen can shift as the Pareto frontier moves (new models, benchmark updates).
 - See OpenRouter's [Pareto Router docs](https://openrouter.ai/docs/guides/routing/routers/pareto-router) for the full router behavior.
-- To use the Pareto Code router for a specific **auxiliary task** (compression, vision, etc.) instead of the main agent, set `extra_body.plugins` under that task — see [Auxiliary Models → OpenRouter routing & Pareto Code for auxiliary tasks](/user-guide/configuration#openrouter-routing--pareto-code-for-auxiliary-tasks).
+- To use the Pareto Code router for a specific **auxiliary task** (compression, vision, etc.) instead of the main agent, set `extra_body.plugins` under that task — see [Auxiliary Models → OpenRouter routing & Pareto Code for auxiliary tasks](../user-guide/configuration.md#openrouter-routing--pareto-code-for-auxiliary-tasks).
 
 ## Fallback Providers
 
@@ -1685,12 +1689,12 @@ When activated, the fallback swaps the model and provider mid-session without lo
 Supported providers: `openrouter`, `nastech`, `novita`, `openai-codex`, `copilot`, `copilot-acp`, `anthropic`, `gemini`, `qwen-oauth`, `huggingface`, `zai`, `kimi-coding`, `kimi-coding-cn`, `minimax`, `minimax-cn`, `minimax-oauth`, `deepseek`, `nvidia`, `xai`, `xai-oauth`, `ollama-cloud`, `bedrock`, `ai-gateway`, `azure-foundry`, `opencode-zen`, `opencode-go`, `commandcode`, `commandcode-anthropic`, `kilocode`, `xiaomi`, `arcee`, `gmi`, `actual`, `stepfun`, `lmstudio`, `alibaba`, `alibaba-coding-plan`, `tencent-tokenhub`, `tencent-tokenplan`, `nebius-token-factory`, `router`, `custom`.
 
 :::tip
-Fallback is configured exclusively through `config.yaml` — or interactively via `nastech fallback`. For full details on when it triggers, how the chain advances, and how it interacts with auxiliary tasks and delegation, see [Fallback Providers](/user-guide/features/fallback-providers).
+Fallback is configured exclusively through `config.yaml` — or interactively via `nastech fallback`. For full details on when it triggers, how the chain advances, and how it interacts with auxiliary tasks and delegation, see [Fallback Providers](../user-guide/features/fallback-providers.md).
 :::
 
 ---
 
 ## See Also
 
-- [Configuration](/user-guide/configuration) — General configuration (directory structure, config precedence, terminal backends, memory, compression, and more)
-- [Environment Variables](/reference/environment-variables) — Complete reference of all environment variables
+- [Configuration](../user-guide/configuration.md) — General configuration (directory structure, config precedence, terminal backends, memory, compression, and more)
+- [Environment Variables](../reference/environment-variables.md) — Complete reference of all environment variables

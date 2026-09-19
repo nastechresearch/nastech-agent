@@ -46,8 +46,8 @@ import {
 import { onGatewayEvent } from '@/contrib/events'
 import { registry } from '@/contrib/registry'
 import type { WorkspaceMode } from '@/contrib/types'
-import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
 import { deleteProfile, getLogs, getStatus, nastechApi, type NastechGateway } from '@/nastech'
+import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
 import {
   $gateway,
   activeGatewayConnectionId,
@@ -1570,6 +1570,11 @@ export { SidebarRowLead } from '@/app/chat/sidebar/chrome'
 export { ConnectionGlyph } from '@/app/chat/sidebar/connection-glyph'
 export { SIDEBAR_ROW_LEAD, SIDEBAR_TRUNCATED_LEADING } from '@/app/chat/sidebar/row-geometry'
 export { PALETTE_AREA, type PaletteContribution } from '@/app/command-palette/contrib'
+/** THE overdue test for a cron job's `next_run_at`: non-null once the stored slot
+ *  sits past the scheduler grace and the job is expected to fire. Every surface
+ *  that prints a next run switches its label on this (`t.cron.next` →
+ *  `t.cron.overdueSince`) so a dead scheduler never reads as "Next: 7 hr ago". */
+export { nextRunOverdueMs } from '@/app/cron/job-state'
 /** THE master-detail toolkit core uses for list+inspector surfaces (Scheduled
  *  jobs, Kanban, …): a dense left `PanelList` of `PanelListRow`s beside a
  *  scrolling `PanelDetail` of `PanelSectionLabel` / `PanelMeta` / `PanelBlock`.
@@ -1596,7 +1601,13 @@ export {
   PanelRowMenu,
   PanelSectionLabel
 } from '@/app/overlays/panel'
-export { type RouteContribution, ROUTES_AREA, SIDEBAR_NAV_AREA, type SidebarNavContribution } from '@/app/routes'
+export {
+  type RouteContribution,
+  ROUTES_AREA,
+  SIDEBAR_NAV_AREA,
+  type SidebarNavContribution,
+  WORKSPACE_PAGE_HEADER_AREA
+} from '@/app/routes'
 
 /** THE full per-toolset config panel core Settings renders — provider picker,
  *  env vars / API keys, model catalog picker, and post-setup runners. Route-
@@ -1779,6 +1790,7 @@ export {
 export { triggerHaptic as haptic } from '@/lib/haptics'
 /** The app's lucide icon set (RefreshCw, LayoutDashboard, Activity, …). */
 export * as icons from '@/lib/icons'
+export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 /** IME-aware Enter: true only for a real submit Enter, never a CJK composition
  *  commit (`isComposing` or the legacy keyCode 229). Use it on every plugin
  *  text field whose bare Enter performs an action. */
@@ -1789,7 +1801,6 @@ export { formatModifierToken } from '@/lib/keybinds/combo'
  *  a renderer that stays open for days. Only for values that can be
  *  regenerated — eviction costs a recompute or a refetch, never correctness. */
 export { LruCache } from '@/lib/lru-cache'
-export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 /** The app's deterministic identity color for a name (profiles, assignees,
  *  authors), its translucent tag fill, and the curated picker swatches — so
  *  plugin-rendered identities read the same hue as everywhere else. The
@@ -1807,6 +1818,10 @@ export { reasoningEffortLabel } from '@/lib/reasoning-effort'
 
 export const PANES_AREA = 'panes'
 export const STATUSBAR_AREAS = { left: 'statusBar.left', right: 'statusBar.right' } as const
+/** Titlebar slots are PERMANENT mount points: a component registered here
+ *  stays mounted across chat ↔ page navigation, so `useEffect` setup/cleanup
+ *  runs once per registration, not once per route. Page-owned controls that
+ *  should exist only while a page is up go to `WORKSPACE_PAGE_HEADER_AREA`. */
 export const TITLEBAR_AREAS = { center: 'titleBar.center', left: 'titleBar.left', right: 'titleBar.right' } as const
 
 /** The app's own gateway-readiness evaluation (setup.status +
@@ -1876,8 +1891,6 @@ export { retintTheme, themeHue } from '@/themes/retint'
 export type { DesktopTheme, DesktopThemeColors } from '@/themes/types'
 export { THEMES_AREA } from '@/themes/user-themes'
 export type { StatusResponse } from '@/types/nastech'
-/** Subscribe a component to a `host.state` atom. */
-export { useStore as useValue } from '@nanostores/react'
 /** Public SDK name for the shared gateway wire event; kept stable for plugins. */
 export type { GatewayEvent as RpcEvent } from '@nastech/shared'
 /** THE compact-number formatter — every user-facing count/token figure goes
@@ -1894,6 +1907,8 @@ export {
 /** WCAG contrast, from the sRGB primitives shared with the TUI (`null` for
  *  an unparseable colour, never a fake 0). */
 export { contrastRatio } from '@nastech/shared/color'
+/** Subscribe a component to a `host.state` atom. */
+export { useStore as useValue } from '@nanostores/react'
 /** The app's data-fetching layer. Plugins share the ONE QueryClient mounted at
  *  the app root, so their queries cache, dedupe, poll (`refetchInterval`), and
  *  invalidate exactly like core screens — no hand-rolled atoms or polls. */

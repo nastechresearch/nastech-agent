@@ -8,11 +8,11 @@ import { Switch } from '@/components/ui/switch'
 import { Tip } from '@/components/ui/tooltip'
 import { $pluginRecords, type PluginRecord, setPluginEnabled } from '@/contrib/plugins-store'
 import { discoverRuntimePlugins } from '@/contrib/runtime-loader'
+import type { ProfileScope } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { FolderOpen, Loader2, Monitor, Package, RefreshCw } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import type { ProfileScope } from '@/nastech'
 import {
   $agentPluginBusy,
   $agentPlugins,
@@ -25,6 +25,7 @@ import {
 } from '@/store/agent-plugins'
 import { notify, notifyError } from '@/store/notifications'
 import { openPluginInstallRequest } from '@/store/plugin-install-request'
+import { $connection } from '@/store/session'
 
 import { Pill } from '../settings/primitives'
 import { useDeepLinkHighlight } from '../settings/use-deep-link-highlight'
@@ -193,6 +194,9 @@ function PackageRow({
   const desktopOn = desktop ? desktop.status !== 'disabled' : false
   const agentOn = agent?.status === 'enabled'
   const agentToggleable = Boolean(agent?.key)
+  // Electron's desktop-half reconcile only walks THIS machine's homes, so a
+  // package installed on a remote backend can never materialize here (#114079).
+  const remoteBackend = useStore($connection)?.mode === 'remote'
 
   return (
     <div
@@ -250,8 +254,10 @@ function PackageRow({
             }}
           />
         ) : pkg.desktopMissing ? (
-          <Tip label={p.desktopHalfPendingTip}>
-            <span className="text-[0.65rem] text-(--ui-text-tertiary)">{p.desktopHalfPending}</span>
+          <Tip label={remoteBackend ? p.desktopHalfRemoteTip : p.desktopHalfPendingTip}>
+            <span className="text-[0.65rem] text-(--ui-text-tertiary)">
+              {remoteBackend ? p.desktopHalfRemote : p.desktopHalfPending}
+            </span>
           </Tip>
         ) : (
           <Dash />
@@ -316,33 +322,17 @@ export function PluginActions({ profile }: { profile: ProfileScope }) {
   const { requestGateway } = useGatewayRequest()
   const scope = profileParam(profile)
 
-  return (
-    <>
-      <Button
-        className="underline"
-        onClick={() => openPluginInstallRequest({ profile: scope, repo: '' })}
-        size="xs"
-        variant="text"
-      >
-        {d.installModal.installFromGit}
-      </Button>
-      <Tip label={d.openFolder}>
-        <Button aria-label={d.openFolder} onClick={() => void revealPluginsDir()} size="icon-xs" variant="ghost">
-          <FolderOpen />
-        </Button>
-      </Tip>
-      <Tip label={d.rescan}>
-        <Button
-          aria-label={d.rescan}
-          onClick={() => void rescanAll(requestGateway, scope)}
-          size="icon-xs"
-          variant="ghost"
-        >
-          <RefreshCw />
-        </Button>
-      </Tip>
-    </>
-  )
+  return <>
+    <Button className="underline" onClick={() => openPluginInstallRequest({ profile: scope, repo: '' })} size="xs" variant="text">
+      {d.installModal.installFromGit}
+    </Button>
+    <Tip label={d.openFolder}>
+      <Button aria-label={d.openFolder} onClick={() => void revealPluginsDir()} size="icon-xs" variant="ghost"><FolderOpen /></Button>
+    </Tip>
+    <Tip label={d.rescan}>
+      <Button aria-label={d.rescan} onClick={() => void rescanAll(requestGateway, scope)} size="icon-xs" variant="ghost"><RefreshCw /></Button>
+    </Tip>
+  </>
 }
 
 /** THE plugins surface: one row per package. Each row shows its Desktop half
@@ -386,38 +376,26 @@ export const PluginsTab = memo(function PluginsTab({
   useDeepLinkHighlight({ param: 'plugin', ready: () => true, elementId: pluginElementId })
 
   const agentBusy = (row: AgentPluginRow) => busyKey === (row.key ?? row.name) || busyKey === row.name
-
-  const installedEntries = useMemo(
-    () =>
-      parseCatalog(
-        'plugins',
-        packages.map(pkg => ({
-          name: pkg.name,
-          identifier: pkg.agent?.catalog_name ?? pkg.desktop?.packageOrigin?.catalogName ?? pkg.key,
-          description: pkg.description,
-          category: pkg.kind === 'desktop' ? 'desktop' : 'general',
-          tier: pkg.agent?.catalog_tier ?? pkg.agent?.source ?? pkg.desktop?.kind ?? '',
-          repo: pkg.desktop?.packageOrigin?.repo ?? '',
-          sha: pkg.agent?.installed_sha ?? pkg.desktop?.packageOrigin?.sha ?? '',
-          version: pkg.agent?.version ?? ''
-        }))
-      ).map((entry, index) => ({ ...entry, id: `installed:${packages[index].key}` })),
-    [packages]
-  )
-
+  const installedEntries = useMemo(() => parseCatalog('plugins', packages.map(pkg => ({
+    name: pkg.name,
+    identifier: pkg.agent?.catalog_name ?? pkg.desktop?.packageOrigin?.catalogName ?? pkg.key,
+    description: pkg.description,
+    category: pkg.kind === 'desktop' ? 'desktop' : 'general',
+    tier: pkg.agent?.catalog_tier ?? pkg.agent?.source ?? pkg.desktop?.kind ?? '',
+    repo: pkg.desktop?.packageOrigin?.repo ?? '',
+    sha: pkg.agent?.installed_sha ?? pkg.desktop?.packageOrigin?.sha ?? '',
+    version: pkg.agent?.version ?? ''
+  }))).map((entry, index) => ({ ...entry, id: `installed:${packages[index].key}` })), [packages])
   const packageById = useMemo(() => new Map(packages.map(pkg => [`installed:${pkg.key}`, pkg])), [packages])
-
-  const isInstalled = (entry: CatalogEntry) =>
-    packageById.has(entry.id) ||
-    agentRows.some(row => (row.catalog_name === entry.name || row.name === entry.name) && !row.update_available)
-
-  const install = (entry: CatalogEntry) =>
-    openPluginInstallRequest({
-      catalogName: entry.name,
-      profile: scope,
-      repo: entry.subdir ? `${entry.repo}#${entry.subdir}` : entry.repo,
-      sha: entry.sha
-    })
+  const isInstalled = (entry: CatalogEntry) => packageById.has(entry.id) || agentRows.some(row =>
+    (row.catalog_name === entry.name || row.name === entry.name) && !row.update_available
+  )
+  const install = (entry: CatalogEntry) => openPluginInstallRequest({
+    catalogName: entry.name,
+    profile: scope,
+    repo: entry.subdir ? `${entry.repo}#${entry.subdir}` : entry.repo,
+    sha: entry.sha
+  })
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -435,28 +413,26 @@ export const PluginsTab = memo(function PluginsTab({
             return null
           }
 
-          return (
-            <PackageRow
-              busy={pkg.agent ? agentBusy(pkg.agent) : false}
-              key={pkg.key}
-              onAgentToggle={(row, enable) => {
-                if (row.key) {
-                  void toggleAgentPlugin(requestGateway, row.key, enable, p.toggleFailed(row.name), scope)
+          return <PackageRow
+            busy={pkg.agent ? agentBusy(pkg.agent) : false}
+            key={pkg.key}
+            onAgentToggle={(row, enable) => {
+              if (row.key) {
+                void toggleAgentPlugin(requestGateway, row.key, enable, p.toggleFailed(row.name), scope)
+              }
+            }}
+            onAgentUpdate={row => {
+              void updateAgentPlugin(requestGateway, row.name, p.updateFailed(row.name), scope).then(applied => {
+                if (applied) {
+                  notify({ kind: 'success', message: p.updated(row.name) })
+                  void rescanAll(requestGateway, scope)
                 }
-              }}
-              onAgentUpdate={row => {
-                void updateAgentPlugin(requestGateway, row.name, p.updateFailed(row.name), scope).then(applied => {
-                  if (applied) {
-                    notify({ kind: 'success', message: p.updated(row.name) })
-                    void rescanAll(requestGateway, scope)
-                  }
-                })
-              }}
-              pkg={pkg}
-              scope={scope}
-              scopeLabel={label}
-            />
-          )
+              })
+            }}
+            pkg={pkg}
+            scope={scope}
+            scopeLabel={label}
+          />
         }}
         view={view}
       />

@@ -6,12 +6,12 @@ description: "Start-to-finish walkthrough: subscribe, set up, switch models, ena
 
 # Run Nastech Agent with Nastech Portal
 
-This guide walks you through running Nastech Agent on a [Nastech Portal](https://portal.nastechresearch.github.io) subscription end to end — from signing up to verifying that every tool routes correctly. If you just want the overview of what the Portal is and what's in the subscription, see the [Nastech Portal integration page](/integrations/nastech-portal). This page is the task script.
+This guide walks you through running Nastech Agent on a [Nastech Portal](https://portal.nastechresearch.github.io) subscription end to end — from signing up to verifying that every tool routes correctly. If you just want the overview of what the Portal is and what's in the subscription, see the [Nastech Portal integration page](../integrations/nastech-portal.md). This page is the task script.
 
 ## Prerequisites
 
-- Nastech Agent installed ([Quickstart](/getting-started/quickstart))
-- A web browser on the machine you're setting up (or SSH port forwarding — see [OAuth over SSH](/guides/oauth-over-ssh))
+- Nastech Agent installed ([Quickstart](../getting-started/quickstart.md))
+- A web browser on the machine you're setting up (or SSH port forwarding — see [OAuth over SSH](./oauth-over-ssh.md))
 - About 5 minutes
 
 You do **not** need: an OpenAI key, an Anthropic key, a Firecrawl account, a FAL account, a Browser Use account, or any other per-vendor credential. That's the whole point.
@@ -52,7 +52,7 @@ nastech auth add nastech --type oauth
 # Then re-run `nastech setup --portal` to wire the provider + gateway
 ```
 
-See [OAuth over SSH / Remote Hosts](/guides/oauth-over-ssh) for the full walkthrough including ProxyJump chains, mosh/tmux, and ControlMaster gotchas.
+See [OAuth over SSH / Remote Hosts](./oauth-over-ssh.md) for the full walkthrough including ProxyJump chains, mosh/tmux, and ControlMaster gotchas.
 
 ## 3. Verify it worked
 
@@ -120,7 +120,7 @@ nastech config set model.default anthropic/claude-sonnet-4.6
 
 ### Don't pick Nastech-4 for agent work
 
-Nastech-4-70B and Nastech-4-405B are available on the Portal at deep discounts, but they're **chat/reasoning models**, not tool-call-tuned. They will struggle with multi-step agent loops. Use them for conversation/research work through the [subscription proxy](/user-guide/features/subscription-proxy) from non-agent tools. For Nastech Agent itself, stick to the frontier agentic models above.
+Nastech-4-70B and Nastech-4-405B are available on the Portal at deep discounts, but they're **chat/reasoning models**, not tool-call-tuned. They will struggle with multi-step agent loops. Use them for conversation/research work through the [subscription proxy](../user-guide/features/subscription-proxy.md) from non-agent tools. For Nastech Agent itself, stick to the frontier agentic models above.
 
 The Portal's own [info page](https://portal.nastechresearch.github.io/info) carries this warning too — it's the official Nastech guidance, not just a Nastech-side opinion.
 
@@ -148,7 +148,7 @@ You'll see per-tool routing — `via Nastech Portal` for the ones routed through
 
 ## 7. (Optional) Enable voice mode
 
-Because the Tool Gateway includes OpenAI TTS, [voice mode](/user-guide/features/voice-mode) works without a separate OpenAI key:
+Because the Tool Gateway includes OpenAI TTS, [voice mode](../user-guide/features/voice-mode.md) works without a separate OpenAI key:
 
 ```bash
 nastech setup tts
@@ -160,7 +160,7 @@ Then in any messaging-platform session (Telegram, Discord, Signal, etc.), send a
 
 ## 8. (Optional) Cron + always-on workflows
 
-The Portal subscription works for [cron jobs](/user-guide/features/cron) and [batch processing](/user-guide/features/batch-processing) the same way it works for interactive chat — the OAuth refresh token is reused automatically. No additional setup; just schedule cron jobs and they'll bill against your subscription.
+The Portal subscription works for [cron jobs](../user-guide/features/cron.md) and [batch processing](../user-guide/features/batch-processing.md) the same way it works for interactive chat — the OAuth refresh token is reused automatically. No additional setup; just schedule cron jobs and they'll bill against your subscription.
 
 ```bash
 nastech cron create "0 9 * * *" \
@@ -172,7 +172,7 @@ The cron job runs unattended, calls the model + web search + summarization all t
 
 ## Profiles and multi-user setups
 
-If you use [Nastech profiles](/user-guide/profiles) (e.g. a separate config per project), the Portal refresh token is automatically shared across all profiles via a shared token store. Sign in once on any profile, and the rest pick it up automatically.
+If you use [Nastech profiles](../user-guide/profiles.md) (e.g. a separate config per project), each profile is an independent credential island: a profile that has never signed in to the Portal fails closed instead of adopting another profile's session. Sign in once per profile with `nastech -p <name> portal` — when a shared Portal session already exists on the machine it offers to import it without a browser round-trip, and from then on the shared token store keeps that profile's token current. See [Profile setup](../integrations/nastech-portal.md#profile-setup).
 
 For team setups where multiple humans share a machine, each human has their own Portal account → each home directory holds its own `~/.nastech/auth.json` → no token sharing across users. This is the right boundary.
 
@@ -186,7 +186,7 @@ The OAuth flow didn't complete. Re-run it:
 nastech portal
 ```
 
-If your browser doesn't open or the callback fails, you're likely on a remote/headless host — see [OAuth over SSH](/guides/oauth-over-ssh) for the port-forwarding workarounds.
+If your browser doesn't open or the callback fails, you're likely on a remote/headless host — see [OAuth over SSH](./oauth-over-ssh.md) for the port-forwarding workarounds.
 
 ### "Model: currently openrouter" (or some other provider) instead of "using Nastech as inference provider"
 
@@ -268,9 +268,9 @@ That's the deal. If you're using more than two of those backends anyway, the sub
 
 ## See also
 
-- **[Nastech Portal integration page](/integrations/nastech-portal)** — Overview of what's in the subscription
-- **[Tool Gateway](/user-guide/features/tool-gateway)** — Full details on every gateway-routed tool
-- **[Subscription proxy](/user-guide/features/subscription-proxy)** — Use your Portal subscription from non-Nastech tools
-- **[Voice mode](/user-guide/features/voice-mode)** — Set up voice conversations on the Portal subscription
-- **[OAuth over SSH](/guides/oauth-over-ssh)** — Remote / headless login patterns
-- **[Profiles](/user-guide/profiles)** — Share one Portal login across multiple Nastech configurations
+- **[Nastech Portal integration page](../integrations/nastech-portal.md)** — Overview of what's in the subscription
+- **[Tool Gateway](../user-guide/features/tool-gateway.md)** — Full details on every gateway-routed tool
+- **[Subscription proxy](../user-guide/features/subscription-proxy.md)** — Use your Portal subscription from non-Nastech tools
+- **[Voice mode](../user-guide/features/voice-mode.md)** — Set up voice conversations on the Portal subscription
+- **[OAuth over SSH](./oauth-over-ssh.md)** — Remote / headless login patterns
+- **[Profiles](../user-guide/profiles.md)** — Share one Portal login across multiple Nastech configurations

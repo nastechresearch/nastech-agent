@@ -372,14 +372,7 @@ interface GroupChatSettingsDialogProps {
 /** Edit an existing group chat's name and picture. Renames re-key the room
  *  and every local member's membership (renameGroupChat); the picture rides
  *  the room record. Both apply on Save so a cancelled dialog changes nothing. */
-function GroupChatSettingsDialog({
-  group,
-  members,
-  open,
-  onClose,
-  onManageMembers,
-  onRenamed
-}: GroupChatSettingsDialogProps) {
+function GroupChatSettingsDialog({ group, members, open, onClose, onManageMembers, onRenamed }: GroupChatSettingsDialogProps) {
   const { t } = useI18n()
   const b = useBots()
   const rooms: Record<string, GroupChatRoom> = useValue($groupChats)
@@ -776,8 +769,9 @@ export function GroupChatWorkspace({ group, members, onBack, visible = true }: G
     }
   }
 
-  const summaryActivity =
-    !room.running && unresolvedFailures.size ? [...unresolvedFailures.values()].at(-1)! : latestActivity
+  const summaryActivity = !room.running && unresolvedFailures.size
+    ? [...unresolvedFailures.values()].at(-1)!
+    : latestActivity
 
   // #94570 shell rewired onto the real primitive (#91868/#94569): the button
   // must stop the ROUND, not just spray per-member interrupts — without the
@@ -804,9 +798,7 @@ export function GroupChatWorkspace({ group, members, onBack, visible = true }: G
           <Codicon className="shrink-0 text-[0.65rem]" name={activityOpen ? 'chevron-down' : 'chevron-right'} />
           <span className="shrink-0 font-medium">{b.group.activity}</span>
           {summaryActivity ? (
-            <span
-              className={cn('min-w-0 flex-1 truncate', groupActivityTone(summaryActivity.kind))}
-            >{`${groupActivityLabel(summaryActivity, group)} · ${relativeTime(summaryActivity.at)}`}</span>
+            <span className={cn('min-w-0 flex-1 truncate', groupActivityTone(summaryActivity.kind))}>{`${groupActivityLabel(summaryActivity, group)} · ${relativeTime(summaryActivity.at)}`}</span>
           ) : null}
         </RowButton>
         {room.running ? (
@@ -970,16 +962,18 @@ export function GroupChatWorkspace({ group, members, onBack, visible = true }: G
   }
 
   const attachButton = (thread: null | string) => (
-    <Button
-      className="shrink-0 text-(--ui-text-tertiary) hover:text-foreground"
-      onClick={() => void pickGroupAttachments().then(picked => addImages(thread, picked))}
-      size="sm"
-      title={b.group.attachHint}
-      type="button"
-      variant="ghost"
-    >
-      <Codicon name="attach" />
-    </Button>
+    <Tip label={b.group.attachHint}>
+      <Button
+        aria-label={b.group.attachHint}
+        className="shrink-0 text-(--ui-text-tertiary) hover:text-foreground"
+        onClick={() => void pickGroupAttachments().then(picked => addImages(thread, picked))}
+        size="sm"
+        type="button"
+        variant="ghost"
+      >
+        <Codicon name="attach" />
+      </Button>
+    </Tip>
   )
 
   // #91359: recognized @mentions render as inline references; recomputed
@@ -1002,8 +996,7 @@ export function GroupChatWorkspace({ group, members, onBack, visible = true }: G
       return
     }
 
-    const seed = (current: string) =>
-      current.includes(`@${tag}`) ? current : `@${tag} ${current}`.replace(/\s+$/, ' ')
+    const seed = (current: string) => (current.includes(`@${tag}`) ? current : `@${tag} ${current}`.replace(/\s+$/, ' '))
     const thread = groupThreadOf(entry)
 
     if (replyThread === thread) {
@@ -1085,15 +1078,16 @@ export function GroupChatWorkspace({ group, members, onBack, visible = true }: G
             {isUser ? (
               <span className="text-[0.7rem] font-semibold text-foreground">{label}</span>
             ) : (
-              <Button
-                className="text-left text-[0.7rem] font-semibold text-(--ui-accent)"
-                onClick={() => setRevealedSpeaker(revealed ? null : entryKey)}
-                size="inline"
-                title={revealed ? 'Hide full handle' : 'Show full handle'}
-                variant="text"
-              >
-                {label}
-              </Button>
+              <Tip label={revealed ? 'Hide full handle' : 'Show full handle'}>
+                <Button
+                  className="text-left text-[0.7rem] font-semibold text-(--ui-accent)"
+                  onClick={() => setRevealedSpeaker(revealed ? null : entryKey)}
+                  size="inline"
+                  variant="text"
+                >
+                  {label}
+                </Button>
+              </Tip>
             )}
             <span className="text-[0.625rem] text-(--ui-text-quaternary)">{relativeTime(entry.at)}</span>
             {entry.text.trim() || !isUser ? (
@@ -1111,9 +1105,7 @@ export function GroupChatWorkspace({ group, members, onBack, visible = true }: G
                     </Button>
                   </Tip>
                 )}
-                {entry.text.trim() ? (
-                  <CopyButton appearance="icon" buttonSize="icon" stopPropagation text={entry.text} />
-                ) : null}
+                {entry.text.trim() ? <CopyButton appearance="icon" buttonSize="icon" stopPropagation text={entry.text} /> : null}
               </div>
             ) : null}
           </div>
@@ -1121,6 +1113,7 @@ export function GroupChatWorkspace({ group, members, onBack, visible = true }: G
             className="min-w-0 text-xs text-(--ui-text-secondary) [&_p]:mb-1 [&_p:last-child]:mb-0 [&_ul]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:mb-1 [&_ol]:list-decimal [&_ol]:pl-4 [&_pre]:overflow-x-auto" // The app shell sets user-select: none globally; message bodies opt
             // back in so drag-select and ⌘C work in group chat logs.
             data-selectable-text="true"
+            data-slot="group-chat-message-content"
           >
             {MessageTextContent ? (
               <MessageTextContent decorateText={mentionText} media={!member?.remoteSource} text={entry.text} />
@@ -1326,12 +1319,7 @@ export function GroupChatWorkspace({ group, members, onBack, visible = true }: G
         onManageMembers={() => setMemberPickerOpen(true)}
         open={settingsOpen}
       />
-      <GroupMemberPicker
-        group={group}
-        members={members}
-        onClose={() => setMemberPickerOpen(false)}
-        open={memberPickerOpen}
-      />
+      <GroupMemberPicker group={group} members={members} onClose={() => setMemberPickerOpen(false)} open={memberPickerOpen} />
       <ConfirmDialog
         busyLabel={b.group.disbanding}
         confirmLabel={b.group.disbandAction}
@@ -1380,6 +1368,7 @@ function GroupChatMainView({ group }: GroupChatMainViewProps) {
   useValue($groupChats)
   const roster = useValue($lastRoster)
   const members = groupChatMemberBots(group, roster, allMeta)
+
 
   // Older SDKs have no paneVisibility: fall back to an always-visible atom so
   // the hook order stays stable and behavior matches the previous build.

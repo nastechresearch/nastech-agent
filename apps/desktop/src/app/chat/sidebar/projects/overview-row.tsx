@@ -5,9 +5,9 @@ import { useRef, useState } from 'react'
 import { type NewSessionSplitHandler, startNewSessionDrag } from '@/app/chat/new-session-drag'
 import { Codicon } from '@/components/ui/codicon'
 import { Tip } from '@/components/ui/tooltip'
+import type { SessionInfo } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
-import type { SessionInfo } from '@/nastech'
 import { $sidebarShowAllSessions } from '@/store/layout'
 import { fetchProjectSessions, projectProfile } from '@/store/projects'
 
@@ -222,11 +222,11 @@ export function ProjectOverviewRow({
       data-glass-opaque={dragging ? '' : undefined}
       label={project.isAuto ? <Tip label={s.projects.autoDiscovered}>{labelLink}</Tip> : labelLink}
       lead={lead}
-      // The label is grab surface too, not just the lead's grabber — same
-      // listeners, minus the controls that keep their own gestures. A project
-      // row has no rival drag (its title navigates on CLICK), so the sortable
-      // owns the press outright.
-      {...dragHandleProps}
+      // The label is grab surface too, not just the lead's grabber — the
+      // pointer activator only (the full handle stays on the grabber, see
+      // useSortableBindings), minus the controls that keep their own gestures.
+      // A project row has no rival drag (its title navigates on CLICK), so the
+      // sortable owns the press outright.
       onPointerDown={event => {
         if ((event.target as HTMLElement).closest('[data-reorder-handle], [data-row-actions]')) {
           return

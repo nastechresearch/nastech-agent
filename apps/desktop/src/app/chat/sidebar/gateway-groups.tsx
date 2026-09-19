@@ -18,10 +18,10 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { ProfileGlyph } from '@/components/ui/profile-glyph'
+import type { SessionInfo } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { useStoreSelector } from '@/lib/use-session-slice'
 import { cn } from '@/lib/utils'
-import type { SessionInfo } from '@/nastech'
 import { $connectionsRegistry } from '@/store/connection-registry-state'
 import { newSessionInAgent, newSessionInProfile } from '@/store/profile'
 import { $sessionProfilesUsage } from '@/store/session'
@@ -192,8 +192,8 @@ function GatewayProfileGroup({
         // glyph only reveals its grabber on hover, so a press anywhere on the
         // row must start the reorder too. The ⋯/caret cluster and the handle
         // keep their own gestures; a sub-threshold press on the label is still
-        // the click that folds the group.
-        {...sortable.dragHandleProps}
+        // the click that folds the group. Pointer activator only (forwarded
+        // below); the full handle stays on the grabber (see useSortableBindings).
         actions={
           <div className="flex items-center">
             {group.profile && (

@@ -101,7 +101,7 @@ def snapshot_shutdown_context(received_signal: Any = None) -> Dict[str, Any]:
     # --replace instance is killing us". Filenames mirror gateway.status; literals keep the signal-
     # handler path import-light.
     with contextlib.suppress(Exception):  # noqa: BLE001 — never raise from a signal handler
-        nastech_home_str = os.environ.get("NASTECH_HOME")
+        nastech_home_str = os.path.expanduser(os.environ.get("NASTECH_HOME", ""))
         if nastech_home_str:
             raw = _read_marker(Path(nastech_home_str) / ".gateway-takeover.json")
             if raw is not None:

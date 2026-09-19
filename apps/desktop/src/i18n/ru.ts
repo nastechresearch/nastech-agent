@@ -272,9 +272,11 @@ export const ru = defineLocale({
     },
     native: {
       approvalTitle: 'Требуется одобрение',
+      approvalTitleNamed: session => `Требуется одобрение — ${session}`,
       approveAction: 'Одобрить',
       rejectAction: 'Отклонить',
       inputTitle: 'Требуется ввод',
+      inputTitleNamed: session => `Требуется ввод — ${session}`,
       inputBody: 'Nastech ожидает ваш ответ.',
       turnDoneTitle: 'Nastech завершил',
       turnDoneBody: '',
@@ -607,8 +609,7 @@ export const ru = defineLocale({
       sessionDensityComfortable: 'Комфортно',
       sessionDensityDetailed: 'Подробно',
       tabStripTitle: 'Панель вкладок',
-      tabStripDesc:
-        'Показывать вкладки над зоной. Автоматически скрываются для одной панели, если не открыта другая зона чата или плитки.',
+      tabStripDesc: 'Показывать вкладки над зоной. Автоматически скрываются для одной панели, если не открыта другая зона чата или плитки.',
       tabStripAuto: 'Авто',
       tabStripAlways: 'Всегда',
       tabStripNever: 'Никогда',
@@ -1062,8 +1063,7 @@ export const ru = defineLocale({
       errorTitle: 'Ошибка сочетания для снимка окна',
       loadFailed: 'Не удалось прочитать состояние сочетания. Повторите попытку, чтобы проверить текущую настройку.',
       saveFailed: 'Не удалось подтвердить изменение сочетания. Повторите попытку, чтобы проверить текущую настройку.',
-      permissionFailed:
-        'Не удалось открыть Системные настройки. Откройте раздел «Конфиденциальность и безопасность» вручную и повторите попытку.',
+      permissionFailed: 'Не удалось открыть Системные настройки. Откройте раздел «Конфиденциальность и безопасность» вручную и повторите попытку.',
       captureFailed: 'Не удалось снять переднее окно. Ничего не прикреплено и не отправлено.',
       contextChanged: 'Текущий черновик изменился во время съёмки. Снимок не прикреплён и не отправлен.'
     },
@@ -1537,8 +1537,7 @@ export const ru = defineLocale({
       useBackend: 'Использовать этот бэкенд',
       nastechIncluded: 'Входит в подписку Nastech — войдите в Nastech Portal, чтобы активировать.',
       nastechAuthNeededTitle: 'Войдите в Nastech Portal',
-      nastechAuthNeededMessage: provider =>
-        `${provider} сохранён, но не активируется, пока вы не войдёте в Nastech Portal.`,
+      nastechAuthNeededMessage: provider => `${provider} сохранён, но не активируется, пока вы не войдёте в Nastech Portal.`,
       nastechAuthSignIn: 'Войти',
       nastechAuthDoneTitle: 'Nastech Portal подключён',
       nastechAuthDoneMessage: 'Ваши бэкенды по подписке теперь активны.',
@@ -1587,7 +1586,14 @@ export const ru = defineLocale({
         selectedMessage: backend =>
           `Команды терминала теперь выполняются через ${backend}. Применится к новым сеансам.`,
         failedSelect: backend => `Не удалось выбрать ${backend}`,
-        needsSetupHint: 'Этот бэкенд можно выбрать сейчас — команды будут падать, пока настройка не завершена.'
+        needsSetupHint:
+          'Этот бэкенд уже выбран без завершённой настройки — команды будут завершаться ошибкой, пока настройка не будет завершена.',
+        needsSetupConfirmTitle: backend => `Всё равно выбрать ${backend}?`,
+        needsSetupConfirmDescription: detail =>
+          `${detail} Сеансы, запущенные после этого изменения, останутся без терминала и файловых инструментов, пока настройка не завершена.`,
+        needsSetupConfirmDescriptionGeneric:
+          'Этот бэкенд ещё не настроен. Сеансы, запущенные после этого изменения, останутся без терминала и файловых инструментов, пока настройка не завершена.',
+        needsSetupConfirmAction: 'Выбрать всё равно'
       }
     }
   },
@@ -3050,6 +3056,7 @@ export const ru = defineLocale({
     notAvailableTitle: 'Обновление недоступно',
     unsupportedMessage: 'Эта версия Nastech не может обновлять себя из приложения.',
     connectionRetry: 'Проверьте соединение и попробуйте снова.',
+    gitUnusable: 'Nastech не удалось запустить Git на этом компьютере, поэтому проверить обновления не получилось.',
     latestBody: 'У вас последняя версия.',
     latestBodyBackend: 'Бэкенд работает на последней версии.',
     allSetTitle: 'Всё готово',
@@ -3544,8 +3551,7 @@ export const ru = defineLocale({
       address: 'Адрес',
       addressPlaceholder: 'Введите адрес',
       blankPageBody: 'Введите адрес выше, чтобы просматривать, или попросите Nastech открыть страницу.',
-      finishedRestarting: message =>
-        `Nastech завершил перезапуск сервера предпросмотра${message ? `: ${message}` : ''}`,
+      finishedRestarting: message => `Nastech завершил перезапуск сервера предпросмотра${message ? `: ${message}` : ''}`,
       failedRestarting: message => `Перезапуск сервера не удался: ${message}`,
       unknownError: 'неизвестная ошибка',
       restartedTitle: 'Сервер предпросмотра перезапущен',

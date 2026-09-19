@@ -21,7 +21,7 @@ Import an OpenClaw setup (memories, skills) into Nastech.
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `Migration`, `OpenClaw`, `Nastech`, `Memory`, `Persona`, `Import` |
-| Related skills | [`nastech-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent) |
+| Related skills | [`nastech-agent`](../../bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent.md) |
 
 ## Reference: full SKILL.md
 

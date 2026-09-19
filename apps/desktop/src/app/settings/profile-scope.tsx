@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 
 import { useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
-import { $profiles, normalizeProfileKey, profileLabel, refreshProfiles } from '@/store/profile'
+import { $activeGatewayProfile, $profiles, normalizeProfileKey, profileLabel, refreshProfiles } from '@/store/profile'
 import {
   $settingsScopeEditsNonDefault,
   $settingsScopeOverride,
@@ -16,7 +16,9 @@ import type { ProfileInfo } from '@/types/nastech'
 // (ui_meta['nastech-bots'].title), else the app-wide profileLabel
 // (display_name → slug). Scoped to this selector on purpose — the profile
 // rail and Profiles page keep naming profiles by display_name.
-export function settingsScopeLabel(profile: Pick<ProfileInfo, 'bot_title' | 'display_name' | 'name'>): string {
+export function settingsScopeLabel(
+  profile: Pick<ProfileInfo, 'bot_title' | 'display_name' | 'name'>
+): string {
   return (profile.bot_title ?? '').trim() || profileLabel(profile)
 }
 
@@ -103,5 +105,34 @@ export function SettingsProfileScope({ className }: { className?: string }) {
         </p>
       ) : null}
     </div>
+  )
+}
+
+/** Read-only note for Providers pages whose requests carry no scope and so
+ *  always edit the app's ACTIVE profile (Custom Endpoints, Local Models) — the
+ *  reporter's "which profile am I editing?" gap. Same string as the selector's
+ *  note above; hidden with fewer than two profiles like the selector itself. */
+export function ActiveProfileNote({ className }: { className?: string }) {
+  const { t } = useI18n()
+  const active = useStore($activeGatewayProfile)
+  const profiles = useStore($profiles)
+
+  if (profiles.length < 2) {
+    return null
+  }
+
+  const key = normalizeProfileKey(active)
+  const profile = profiles.find(candidate => normalizeProfileKey(candidate.name) === key)
+
+  return (
+    <p
+      className={cn(
+        'text-[length:var(--conversation-caption-font-size)] leading-(--conversation-caption-line-height) text-(--ui-text-tertiary)',
+        className
+      )}
+      role="status"
+    >
+      {t.settings.profileScope.editsProfile(profile ? settingsScopeLabel(profile) : key)}
+    </p>
   )
 }

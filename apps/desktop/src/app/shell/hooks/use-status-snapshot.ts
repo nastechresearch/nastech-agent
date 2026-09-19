@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
 import { getStatus } from '@/nastech'
+import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
 import { refreshFreeTierStatus, setFreeTierRoute } from '@/store/free-tier'
 import { $setupReadyTick } from '@/store/live-sync'
 import type { StatusResponse } from '@/types/nastech'
@@ -106,7 +106,11 @@ export function useStatusSnapshot(
         }
 
         if (statusResult.status === 'fulfilled') {
-          setStatusSnapshot(statusResult.value)
+          const next = statusResult.value
+          // Preserve reference identity on a no-op: the 60s tick re-reads a
+          // usually-unchanged snapshot, and a fresh object for the same content
+          // re-renders every consumer for nothing.
+          setStatusSnapshot(previous => (JSON.stringify(previous) === JSON.stringify(next) ? previous : next))
         }
       } finally {
         scheduleRefresh()

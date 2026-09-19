@@ -21,7 +21,7 @@ Neutral third-party resolution of agent merge conflicts.
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `Multi-Agent`, `Git`, `Merge-Conflict`, `Kanban`, `Arbitration` |
-| Related skills | [`nastech-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent) |
+| Related skills | [`nastech-agent`](./autonomous-ai-agents-nastech-agent.md) |
 
 ## Reference: full SKILL.md
 

@@ -4,9 +4,9 @@ import type {
   CustomEndpointUpdate,
   CustomEndpointValidationResponse,
   EnvVarInfo,
-  LogsResponse,
   NastechConfig,
   NastechConfigRecord,
+  LogsResponse,
   OAuthPollResponse,
   OAuthProvidersResponse,
   OAuthStartResponse,
@@ -14,7 +14,13 @@ import type {
   StatusResponse
 } from '@/types/nastech'
 
-import { capabilityScoped, nastechApi, type ProfileScope, profileScoped, STARTUP_REQUEST_TIMEOUT_MS } from './client'
+import {
+  capabilityScoped,
+  nastechApi,
+  type ProfileScope,
+  profileScoped,
+  STARTUP_REQUEST_TIMEOUT_MS
+} from './client'
 
 export function getStatus(): Promise<StatusResponse> {
   return nastechApi<StatusResponse>({

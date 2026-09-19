@@ -5,6 +5,23 @@ import { useNavigate } from 'react-router'
 import { NEW_CHAT_ROUTE } from '@/app/routes'
 import { Button } from '@/components/ui/button'
 import { Tip } from '@/components/ui/tooltip'
+import {
+  activateLocalModel,
+  deleteLocalModel,
+  downloadBrowsedModel,
+  downloadLocalModel,
+  ejectLocalModel,
+  getLocalCatalog,
+  getLocalHardware,
+  getLocalModelsStatus,
+  type HFFileGroup,
+  type HFSearchHit,
+  listHFRepoFiles,
+  quickstartLocalModels,
+  searchHFModels,
+  setLocalServer,
+  sideloadLocalModel
+} from '@/nastech'
 import { useI18n } from '@/i18n'
 import {
   Check,
@@ -23,23 +40,6 @@ import {
 } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import {
-  activateLocalModel,
-  deleteLocalModel,
-  downloadBrowsedModel,
-  downloadLocalModel,
-  ejectLocalModel,
-  getLocalCatalog,
-  getLocalHardware,
-  getLocalModelsStatus,
-  type HFFileGroup,
-  type HFSearchHit,
-  listHFRepoFiles,
-  quickstartLocalModels,
-  searchHFModels,
-  setLocalServer,
-  sideloadLocalModel
-} from '@/nastech'
-import {
   $localRuntimeInstallStarting,
   $localRuntimeJobs,
   runningDownloadFor,
@@ -51,6 +51,7 @@ import { notify, notifyError } from '@/store/notifications'
 import type { LocalCatalogModel, LocalHardware, LocalModelsStatus } from '@/types/nastech'
 
 import { ListRow, Pill, SettingsContent, SettingsSection, SettingsSkeleton } from './primitives'
+import { ActiveProfileNote } from './profile-scope'
 
 function ProgressBar({ percent }: { percent: number | undefined }) {
   return (
@@ -405,6 +406,7 @@ export function LocalModelsSettings() {
 
   return (
     <SettingsContent>
+      <ActiveProfileNote className="mb-5" />
       {/* ── Runtime ── */}
       <SettingsSection
         aside={

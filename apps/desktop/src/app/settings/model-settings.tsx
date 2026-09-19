@@ -7,19 +7,14 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
-import { useI18n } from '@/i18n'
-import { isCodeSkewRestartRequired } from '@/lib/code-skew-error'
-import { AlertTriangle, Cpu, Loader2 } from '@/lib/icons'
-import { isSubmitEnter } from '@/lib/ime'
-import { cn } from '@/lib/utils'
 import {
   getAuxiliaryModels,
   getGlobalModelInfo,
   getGlobalModelOptions,
   getMoaModels,
   getRecommendedDefaultModel,
-  saveMoaModels,
   saveNastechConfig,
+  saveMoaModels,
   setEnvVar,
   setModelAssignment
 } from '@/nastech'
@@ -30,11 +25,16 @@ import type {
   MoaModelSlot,
   StaleAuxAssignment
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import { isCodeSkewRestartRequired } from '@/lib/code-skew-error'
+import { AlertTriangle, Cpu, Loader2 } from '@/lib/icons'
+import { isSubmitEnter } from '@/lib/ime'
+import { cn } from '@/lib/utils'
 import { setMainModelAssignment } from '@/store/cron-model-impact'
 import { notifyError, readableError } from '@/store/notifications'
 import { startManualLocalEndpoint, startManualOnboarding, startManualProviderOAuth } from '@/store/onboarding'
 
-import { invalidateNastechConfig, nastechConfigCacheWriter, useNastechConfigRecord } from '../hooks/use-config-record'
+import { nastechConfigCacheWriter, invalidateNastechConfig, useNastechConfigRecord } from '../hooks/use-config-record'
 import { useOnProfileSwitch } from '../hooks/use-on-profile-switch'
 
 import { CONTROL_TEXT } from './constants'
