@@ -665,6 +665,17 @@ terminal:
 
 Paths are relative to `~/.nastech/`. Files are mounted to `/root/.nastech/` inside the container. This list is read by `tools/credential_files.py` (`terminal.credential_files`) — it lives under the `terminal:` block but is loaded by the credential-files module, not the core terminal backend, so it isn't part of the bundled `DEFAULT_CONFIG` snapshot.
 
+### Borrowed CLI logins (Codex CLI, Claude Code) {#borrowed-cli-logins}
+
+When Nastech has no usable login of its own for `openai-codex` or `anthropic`, it can borrow the Codex CLI's `~/.codex/auth.json` and Claude Code's `~/.claude/.credentials.json` (or Keychain entry) and refresh them on your behalf. Both use single-use, rotating refresh tokens: once two programs hold one token family, whichever refreshes first invalidates the other's copy, which shows up as "I logged in once in the terminal and Nastech keeps failing" (or the reverse). If you run those CLIs alongside Nastech, give Nastech its own login and turn adoption off:
+
+```yaml
+auth:
+  adopt_external_logins: false   # default: true
+```
+
+With the switch off Nastech never reads or refreshes those files: the `claude_code` credential-pool row disappears, `nastech auth list` prints one line saying so, and the log carries one INFO line per process. Only automatic adoption is affected — `nastech auth add openai-codex` still asks before importing an existing Codex CLI login. Add your own logins with `nastech auth add anthropic` / `nastech auth add openai-codex`.
+
 ### What Each Sandbox Filters
 
 | Sandbox | Default Filter | Passthrough Override |

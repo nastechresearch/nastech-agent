@@ -12,11 +12,6 @@ import { ErrorBanner } from '@/components/ui/error-state'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Tip } from '@/components/ui/tooltip'
-import { type Translations, useI18n } from '@/i18n'
-import { openExternalLink } from '@/lib/external-link'
-import { AlertTriangle, ExternalLink, RefreshCw, Save, Trash2 } from '@/lib/icons'
-import { normalize } from '@/lib/text'
-import { cn } from '@/lib/utils'
 import {
   approvePairing,
   getMessagingPlatforms,
@@ -28,6 +23,11 @@ import {
   type TelegramOnboardingApplyResponse,
   updateMessagingPlatform
 } from '@/nastech'
+import { type Translations, useI18n } from '@/i18n'
+import { openExternalLink } from '@/lib/external-link'
+import { AlertTriangle, ExternalLink, RefreshCw, Save, Trash2 } from '@/lib/icons'
+import { normalize } from '@/lib/text'
+import { cn } from '@/lib/utils'
 import { $changeEventsAvailable, $pairingChangeTick, $platformsChangeTick } from '@/store/live-sync'
 import { notify, notifyError } from '@/store/notifications'
 import { $settingsRequestProfile } from '@/store/settings-scope'
@@ -424,10 +424,7 @@ export function MessagingView({ setStatusbarItemGroup: _setStatusbarItemGroup, .
           title: m.restartFailedManual,
           message: m.restartFailedManualDetail,
           action: { label: m.restartAgain, onClick: () => void runGatewayRestart() },
-          secondaryAction: {
-            label: m.openLogs,
-            onClick: () => void window.nastechDesktop?.revealLogs?.().catch(() => undefined)
-          }
+          secondaryAction: { label: m.openLogs, onClick: () => void window.nastechDesktop?.revealLogs?.().catch(() => undefined) }
         })
       }
 

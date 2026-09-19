@@ -2,10 +2,10 @@ import { useStore } from '@nanostores/react'
 import { type MutableRefObject, useCallback, useEffect, useRef } from 'react'
 
 import { graftRefreshedTailOntoBackfill } from '@/app/chat/transcript-backfill'
+import { getLatestSessionMessages, type ProfileScope } from '@/nastech'
 import { preserveLocalAssistantErrors, sealOpenToolParts, toChatMessages } from '@/lib/chat-messages'
 import { createClientSessionState } from '@/lib/chat-runtime'
 import { sessionMessagesSignature } from '@/lib/session-signatures'
-import { getLatestSessionMessages, type ProfileScope } from '@/nastech'
 import { $sidebarShowArchived } from '@/store/layout'
 import { $changeEventsAvailable, $cronChangeTick, $sessionsChangeTick } from '@/store/live-sync'
 import { $onBattery, batteryPollInterval } from '@/store/power'
@@ -61,9 +61,9 @@ export function resolveActiveTranscriptSession(
   storedSessionId: string,
   runtimeSessionId: string
 ): ActiveTranscriptSession | undefined {
-  const verifiedOwner = $sessionTiles
-    .get()
-    .find(tile => tile.storedSessionId === storedSessionId && tile.runtimeId === runtimeSessionId)?.ownerRoute
+  const verifiedOwner = $sessionTiles.get().find(
+    tile => tile.storedSessionId === storedSessionId && tile.runtimeId === runtimeSessionId
+  )?.ownerRoute
 
   if (verifiedOwner) {
     return { ownerRoute: verifiedOwner, profile: verifiedOwner.profile }

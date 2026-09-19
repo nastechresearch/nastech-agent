@@ -3,6 +3,7 @@ import { parseCommandDispatch, parseSlashCommand } from '@nastech/shared'
 import { type MutableRefObject, useCallback, useRef } from 'react'
 
 import { prepareDefaultNewSession } from '@/app/session/new-session-route'
+import { getProfiles } from '@/nastech'
 import type { Translations } from '@/i18n'
 import { type ChatMessage, toChatMessages } from '@/lib/chat-messages'
 import { sessionTitle } from '@/lib/chat-runtime'
@@ -16,8 +17,8 @@ import {
   resolveDesktopCommand
 } from '@/lib/desktop-slash-commands'
 import { isMissingRpcMethod } from '@/lib/gateway-rpc'
+import { applyReasoningSlashResult, reasoningSlashParams } from '@/lib/reasoning-slash'
 import { setSessionYolo } from '@/lib/yolo-session'
-import { getProfiles } from '@/nastech'
 import { openCommandPalettePage } from '@/store/command-palette'
 import { setComposerDraft } from '@/store/composer'
 import { applyGoalStatusText } from '@/store/goals'
@@ -769,6 +770,46 @@ export function useSlashCommand(deps: SlashCommandDeps) {
             renderSlashOutput(`error: ${err instanceof Error ? err.message : String(err)}`)
           } finally {
             compressInFlightRef.current.delete(sessionId)
+          }
+        },
+        // /reasoning runs the gateway's `config.set key=reasoning` — the Ink
+        // TUI's path. Through slash.exec the display words only reached
+        // config.yaml and the Thinking gate ($showReasoning) waited for the
+        // next config refresh; the effort level was set on a throwaway CLI.
+        reasoning: async ctx => {
+          const resolved = await withSlashOutput(ctx)
+
+          if (!resolved) {
+            return
+          }
+
+          const { render: renderSlashOutput, sessionId } = resolved
+          const params = reasoningSlashParams(ctx.arg, sessionId)
+
+          try {
+            if (!params) {
+              const current = await requestGateway<{ display?: string; value?: string }>('config.get', {
+                key: 'reasoning',
+                session_id: sessionId
+              })
+
+              renderSlashOutput(`reasoning: ${current.value || 'medium'} · display ${current.display || 'hide'}`)
+
+              return
+            }
+
+            const result = await requestGateway<{ value?: string }>('config.set', params)
+
+            applyReasoningSlashResult(result.value)
+            renderSlashOutput(`reasoning: ${result.value || params.value}`)
+          } catch (err) {
+            if (isMissingRpcMethod(err)) {
+              await runExec(ctx)
+
+              return
+            }
+
+            renderSlashOutput(`error: ${err instanceof Error ? err.message : String(err)}`)
           }
         },
         // /yolo maps to the status-bar YOLO control — a per-session approval

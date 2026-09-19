@@ -1,6 +1,6 @@
 import { type AppendMessage, AssistantRuntimeProvider, type ThreadMessage } from '@assistant-ui/react'
-import { useStore } from '@nanostores/react'
 import type { ModelOptionsResult } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import type { ReadableAtom } from 'nanostores'
 import type * as React from 'react'
@@ -17,6 +17,7 @@ import { usePaneGroup, usePaneVisible } from '@/components/pane-shell/pane-visib
 import { $hoveredTreeGroup, $sessionTileDragging, $sessionTileEdgeHover } from '@/components/pane-shell/tree/store'
 import { PromptOverlays } from '@/components/prompt-overlays'
 import { TitleMenuTrigger } from '@/components/ui/title-menu-trigger'
+import { type NastechGateway } from '@/nastech'
 import { useI18n } from '@/i18n'
 import type { ChatMessage } from '@/lib/chat-messages'
 import { NEW_SESSION_TITLE, quickModelOptions, sessionTitle } from '@/lib/chat-runtime'
@@ -24,7 +25,6 @@ import { useIncrementalExternalStoreRuntime } from '@/lib/incremental-external-s
 import { currentModelCapabilities, modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { useStoreSelector } from '@/lib/use-session-slice'
 import { cn } from '@/lib/utils'
-import { type NastechGateway } from '@/nastech'
 import { migrateSessionDraft } from '@/store/composer'
 import { migrateQueuedPrompts, parkQueuedPrompts } from '@/store/composer-queue'
 import { $introSplash } from '@/store/intro-splash'
@@ -257,10 +257,9 @@ export function ChatRuntimeBoundary({
   const ownerConnection = ownerRoute?.connectionId
   const ownerProfile = ownerRoute?.targetProfile || ownerRoute?.profile
 
-  const tailProfile = useMemo(
-    () => (ownerProfile ? { connectionId: ownerConnection, profile: ownerProfile } : undefined),
-    [ownerConnection, ownerProfile]
-  )
+  const tailProfile = useMemo(() => ownerProfile
+    ? { connectionId: ownerConnection, profile: ownerProfile }
+    : undefined, [ownerConnection, ownerProfile])
 
   const history = useHistoryWindow({
     scopeKey: JSON.stringify([runtimeId, storedId, tailProfile, connectionId, activeProfile, suppressMessages]),
@@ -323,9 +322,7 @@ export function ChatRuntimeBoundary({
     async (beforePrepend?: () => void) => {
       // A historical page is not the live tail: its older neighbours come from
       // the prompt range the rail already draws, never from store backfill.
-      if (history.page) {
-        return history.revealOlder(beforePrepend)
-      }
+      if (history.page) {return history.revealOlder(beforePrepend)}
 
       // Network latency is not scroll intent. Capture at arrival, immediately
       // before the store prepend, and only grow a window that has a page to show.
@@ -383,18 +380,9 @@ export function ChatRuntimeBoundary({
   const newerAvailable = history.page?.newerAvailable ?? false
   const { revealRow, returnToLatest } = history
 
-  const transcriptWindow = useMemo(
-    () => ({
-      olderAvailable,
-      expandWindow,
-      revealRow,
-      returnToLatest,
-      currentMessages,
-      isHistorical,
-      newerAvailable
-    }),
-    [expandWindow, olderAvailable, revealRow, returnToLatest, currentMessages, isHistorical, newerAvailable]
-  )
+  const transcriptWindow = useMemo(() => ({
+    olderAvailable, expandWindow, revealRow, returnToLatest, currentMessages, isHistorical, newerAvailable
+  }), [expandWindow, olderAvailable, revealRow, returnToLatest, currentMessages, isHistorical, newerAvailable])
 
   const runtime = useIncrementalExternalStoreRuntime<ThreadMessage>({
     messageRepository: runtimeMessageRepository,

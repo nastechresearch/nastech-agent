@@ -1,11 +1,11 @@
 import { resolveSessionRpcOwner } from '@/app/contrib/wiring-routing'
 import { textWithoutReferenceLines } from '@/components/assistant-ui/reference-kinds'
+import { getSession } from '@/nastech'
 import { assistantTextPart, type ChatMessage, chatMessageText, textPart, toChatMessages } from '@/lib/chat-messages'
 import { normalizePersonalityValue } from '@/lib/chat-runtime'
 import { embeddedImageUrls, textWithoutEmbeddedImages } from '@/lib/embedded-images'
 import { parseErrorSurface } from '@/lib/error-surface'
 import { isMessagingSource, normalizeSessionSource } from '@/lib/session-source'
-import { getSession } from '@/nastech'
 import { reconcileApprovalModeForProfile } from '@/store/approval-mode'
 import { requestDesktopOnboardingForCredentialWarning } from '@/store/onboarding'
 import { $activeGatewayProfile, $profiles, normalizeProfileKey } from '@/store/profile'
@@ -370,7 +370,8 @@ export function reconcileResumeMessages(nextMessages: ChatMessage[], previousMes
     // empty/tool-only hydrated row can share a role ordinal while being
     // different turns, and plain `'' === ''` would pair them (#114543),
     // grafting the cached reasoning/tool parts onto the unrelated row.
-    const sameText = nextText.length > 0 && (nextText === previousVisibleText || nextText === previousText.trim())
+    const sameText =
+      nextText.length > 0 && (nextText === previousVisibleText || nextText === previousText.trim())
 
     // Mid-turn, the authoritative text has advanced past the cached copy by one
     // or more deltas. That is still the same turn, and the cached row holds the
@@ -387,7 +388,9 @@ export function reconcileResumeMessages(nextMessages: ChatMessage[], previousMes
     // inherit its reasoning/tool parts (#76444 review / salvage).
     const sameTurn =
       sameText ||
-      (nextText.length > 0 && previousTrimmed.length > 0 && isStrictAnswerTextExtension(nextText, previousTrimmed)) ||
+      (nextText.length > 0 &&
+        previousTrimmed.length > 0 &&
+        isStrictAnswerTextExtension(nextText, previousTrimmed)) ||
       (message.role === 'assistant' &&
         previous.role === 'assistant' &&
         hasStructuralParts(previous) &&
@@ -847,7 +850,6 @@ export function appendLiveSessionProjection(messages: ChatMessage[], projection:
     // timeline projection history uses instead of as a user bubble (#112144).
     // `toChatMessages` yields nothing for `hidden`, so the prompt is omitted.
     const displayKind = projection.inflight?.display_kind
-
     const typed = displayKind
       ? toChatMessages([
           {

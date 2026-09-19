@@ -4119,6 +4119,15 @@ _TRANSIENT_PROVIDER_REASONS = frozenset({
     "rate_limit", "upstream_rate_limit", "billing", "overloaded", "server_error", "timeout",
 })
 
+# ``failure_reason`` values a retry can never heal: the credential was rejected, the model does
+# not exist for this account, or the TLS chain is broken. A Kanban worker exits
+# ``KANBAN_TERMINAL_PROVIDER_EXIT_CODE`` so the dispatcher parks the card after ONE spawn with
+# the provider's words as the reason, instead of re-spawning into the same wall until
+# ``kanban.failure_limit`` is spent. ``billing`` stays transient: credit comes back.
+_TERMINAL_PROVIDER_REASONS = frozenset({
+    "auth", "auth_permanent", "model_not_found", "ssl_cert_verification",
+})
+
 
 def _single_query_exit_code(result) -> int:
     """Map a one-shot turn result onto a process exit code, for both `-q` and `-Q`.
@@ -4129,6 +4138,8 @@ def _single_query_exit_code(result) -> int:
     failed purely on a provider rate-limit / billing wall exits ``KANBAN_RATE_LIMIT_EXIT_CODE``
     (EX_TEMPFAIL): the dispatcher books that run ``rate_limited`` and requeues the task
     WITHOUT counting a failure, so a quota window or a provider outage cannot trip the breaker.
+    One that failed on a terminal provider error (credential revoked, model gone) exits
+    ``KANBAN_TERMINAL_PROVIDER_EXIT_CODE`` (EX_CONFIG): the dispatcher blocks the card at once.
     """
     if not isinstance(result, dict):
         return 1
@@ -4136,9 +4147,14 @@ def _single_query_exit_code(result) -> int:
         return 130
     if not (result.get("failed") or result.get("partial") or result.get("completed") is False):
         return 0
-    if os.environ.get("NASTECH_KANBAN_TASK") and result.get("failure_reason") in _TRANSIENT_PROVIDER_REASONS:
-        from nastech_cli.kanban_db import KANBAN_RATE_LIMIT_EXIT_CODE
-        return KANBAN_RATE_LIMIT_EXIT_CODE
+    if os.environ.get("NASTECH_KANBAN_TASK"):
+        reason = result.get("failure_reason")
+        if reason in _TRANSIENT_PROVIDER_REASONS:
+            from nastech_cli.kanban_db import KANBAN_RATE_LIMIT_EXIT_CODE
+            return KANBAN_RATE_LIMIT_EXIT_CODE
+        if reason in _TERMINAL_PROVIDER_REASONS:
+            from nastech_cli.kanban_db import KANBAN_TERMINAL_PROVIDER_EXIT_CODE
+            return KANBAN_TERMINAL_PROVIDER_EXIT_CODE
     return 1
 
 

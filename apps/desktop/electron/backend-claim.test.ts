@@ -145,16 +145,10 @@ test('exit line carries the buffered tail next to the exit code, preferring the 
     formatBackendExitLine('Ignoring stale Nastech backend exit', 1, null, tail),
     'Ignoring stale Nastech backend exit (1)\nRecent backend output:\nTraceback (most recent call last):'
   )
-  assert.equal(
-    formatBackendExitLine('Nastech backend exited', null, 'SIGTERM', tail),
-    'Nastech backend exited (SIGTERM)\nRecent backend output:\nTraceback (most recent call last):'
-  )
+  assert.equal(formatBackendExitLine('Nastech backend exited', null, 'SIGTERM', tail), 'Nastech backend exited (SIGTERM)\nRecent backend output:\nTraceback (most recent call last):')
 })
 
 test('exit line stays byte-identical to the legacy shape when the tail is empty or missing', () => {
-  assert.equal(
-    formatBackendExitLine('Nastech backend exited', 0, null, createBackendOutputTail(64)),
-    'Nastech backend exited (0)'
-  )
+  assert.equal(formatBackendExitLine('Nastech backend exited', 0, null, createBackendOutputTail(64)), 'Nastech backend exited (0)')
   assert.equal(formatBackendExitLine('Nastech backend exited', 1, null, null), 'Nastech backend exited (1)')
 })

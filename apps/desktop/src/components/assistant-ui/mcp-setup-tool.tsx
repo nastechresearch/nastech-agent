@@ -10,6 +10,7 @@ import { ToolFallback } from '@/components/assistant-ui/tool/fallback'
 import { WIDGET_SHELL_CLASS } from '@/components/chat/widget-shell'
 import { Button } from '@/components/ui/button'
 import { ConnectorCard, ConnectorRow, type ConnectorRowMark, ConnectorSummary } from '@/components/ui/connector-card'
+import { getActionStatus, getMcpCatalog, installMcpCatalogEntry, type McpCatalogEntry, setMcpServerEnabled } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { connectorText, type McpTarget, mcpTargets } from '@/lib/connector-tools'
 import { triggerHaptic } from '@/lib/haptics'
@@ -18,13 +19,6 @@ import { isSubmitEnter } from '@/lib/ime'
 import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
 import { prettyName } from '@/lib/text'
 import { cn } from '@/lib/utils'
-import {
-  getActionStatus,
-  getMcpCatalog,
-  installMcpCatalogEntry,
-  type McpCatalogEntry,
-  setMcpServerEnabled
-} from '@/nastech'
 import {
   type ConnectionRequest,
   type ConnectionTarget,
@@ -90,13 +84,7 @@ function readSetupResult(result: unknown): SettledTarget[] {
     const name = connectorText(target.name)
 
     return name
-      ? [
-          {
-            name,
-            state: connectorText(target.state) ?? '',
-            tools: Array.isArray(target.tools) ? target.tools.length : 0
-          }
-        ]
+      ? [{ name, state: connectorText(target.state) ?? '', tools: Array.isArray(target.tools) ? target.tools.length : 0 }]
       : []
   })
 }
@@ -361,9 +349,7 @@ function McpSetupRow({ action, copy, request, single, target }: McpSetupRowProps
       envOpen={envOpen && !!entry && entry.required_env.length > 0}
       envRequired={copy.envRequired}
       mark={mark}
-      markLabel={
-        mark === 'connected' ? t.connectors.connected : waiting ? t.connectors.waiting : t.connectors.notConnected
-      }
+      markLabel={mark === 'connected' ? t.connectors.connected : waiting ? t.connectors.waiting : t.connectors.notConnected}
       onEnvChange={(key, value) => setEnvDraft(prev => ({ ...prev, [key]: value }))}
     />
   )

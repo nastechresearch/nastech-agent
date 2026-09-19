@@ -1701,6 +1701,7 @@ _FALLBACK_REASON_LABELS = {
     FailoverReason.provider_policy_blocked: "provider policy blocked the request",
     FailoverReason.content_policy_blocked: "content policy blocked the request",
     FailoverReason.format_error: "request format rejected",
+    FailoverReason.role_alternation: "adjacent same-role messages rejected",
     FailoverReason.invalid_encrypted_content: "encrypted reasoning state rejected",
     FailoverReason.multimodal_tool_content_unsupported: "multimodal tool content unsupported",
     FailoverReason.thinking_signature: "thinking signature rejected",

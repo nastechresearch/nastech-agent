@@ -695,9 +695,7 @@ const ThreadMessageListInner: FC<ThreadMessageListProps> = ({
   useEffect(
     () =>
       onScrollToBottomRequest(() => {
-        if (isHistorical) {
-          returnToLatest?.()
-        }
+        if (isHistorical) {returnToLatest?.()}
 
         if (jumpRestoreRef.current) {
           jumpRestoreRef.current()

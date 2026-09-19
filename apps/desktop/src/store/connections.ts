@@ -195,7 +195,6 @@ function waitForInitialConnection(): Promise<void> {
  */
 export async function initializeConnectionsRegistry(): Promise<DesktopConnectionsRegistry | null> {
   const freshSessionRequest = $freshSessionRequest.get()
-
   const [registry, defaultLoaded] = await Promise.all([
     refreshConnectionsRegistry(),
     refreshDefaultProfile().then(

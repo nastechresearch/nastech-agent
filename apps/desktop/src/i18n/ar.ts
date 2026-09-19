@@ -2160,6 +2160,8 @@ export const ar = defineLocale({
     attachments: count => `${count} مرفق`,
     editingInComposer: 'جار التحرير في صندوق الكتابة',
     editingQueuedInComposer: 'جار تحرير رسالة في الطابور',
+    restoredDraftNotice: 'تمت استعادة رسالتك غير المُرسلة',
+    restoredDraftUndo: 'تراجع',
     queueEdit: 'تحرير الرسالة المجدولة',
     queueSendNext: 'إرسالها تاليا',
     queueSteer: 'توجيه — تصحيح الدور الجاري فورا',
@@ -2546,8 +2548,7 @@ export const ar = defineLocale({
     copyAuthCode: 'انسخ رمز التفويض وألصقه أدناه.',
     pasteAuthCode: 'ألصق رمز التفويض',
     reopenAuthPage: 'إعادة فتح صفحة التفويض',
-    autoBrowser: provider =>
-      `فتحنا ${provider} في المتصفح. صرّح لـ Nastech هناك وسيتم الاتصال تلقائياً دون نسخ أو لصق.`,
+    autoBrowser: provider => `فتحنا ${provider} في المتصفح. صرّح لـ Nastech هناك وسيتم الاتصال تلقائياً دون نسخ أو لصق.`,
     reopenSignInPage: 'إعادة فتح صفحة تسجيل الدخول',
     waitingAuthorize: 'بانتظار التفويض...',
     externalPending: provider =>
@@ -3151,8 +3152,7 @@ export const ar = defineLocale({
     sudoSendFailed: 'فشل إرسال كلمة مرور sudo',
     secretSendFailed: 'فشل إرسال السر',
     sudoTitle: 'مطلوب sudo',
-    sudoDesc:
-      'راجع الأمر قبل إدخال كلمة مرور sudo. تُرسل كلمة المرور إلى الوكيل الذي ينفّذه وتُحفظ مؤقتًا لهذه الجلسة.',
+    sudoDesc: 'راجع الأمر قبل إدخال كلمة مرور sudo. تُرسل كلمة المرور إلى الوكيل الذي ينفّذه وتُحفظ مؤقتًا لهذه الجلسة.',
     sudoCommandUnavailable: 'لم يقدّم هذا الوكيل الأمر. ألغِ الطلب إذا لم تتمكن من التحقق منه في المحادثة.',
     sudoPlaceholder: 'كلمة المرور',
     secretTitle: 'مطلوب سر',

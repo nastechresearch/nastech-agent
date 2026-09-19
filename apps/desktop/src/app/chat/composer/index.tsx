@@ -71,6 +71,7 @@ import { shouldConvertPasteToAttachment } from './large-paste'
 import { ActionBadges } from './micro-actions'
 import { chipTypedPathOnSpace, pathifyRefs } from './path-refs'
 import { QueuePanel } from './queue-panel'
+import { RestoredDraftNotice } from './restored-draft-notice'
 import {
   beginComposerComposition,
   composerPlainText,
@@ -1145,7 +1146,6 @@ export function ChatBar({
           // guard forever (#44135). Clear unconditionally: by the time blur
           // runs there is nothing left composing in this editor.
           composingRef.current = false
-
           if (blurCloseTimer.current !== null) {
             window.clearTimeout(blurCloseTimer.current)
           }
@@ -1440,6 +1440,11 @@ export function ChatBar({
                     additions beside the "+" menu and before the controls.
                     All four render nothing until something contributes. */}
                   <ContribSlot area={COMPOSER_AREAS.top} />
+                  <RestoredDraftNotice
+                    freshDraft={activeQueueSessionKey === null}
+                    onUndone={clearDraft}
+                    readLiveText={syncDraftFromEditor}
+                  />
                   <VoiceActivity state={voiceActivityState} />
                   <VoicePlaybackActivity />
                   {queueEdit && editingQueuedPrompt && (

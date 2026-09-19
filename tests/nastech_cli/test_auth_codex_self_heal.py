@@ -96,3 +96,34 @@ def test_self_heals_missing_singleton_access_token_from_codex_cli(tmp_path, monk
     assert tokens["refresh_token"] == "fresh-refresh"
 
 
+
+
+def test_opt_out_never_adopts_codex_cli_login(tmp_path, monkeypatch):
+    """``auth.adopt_external_logins: false`` (#113023): the Codex CLI pair is a single-use refresh-token
+    family the user did not hand to Nastech. Both automatic recovery paths must leave it (and Nastech' own
+    auth.json) untouched and surface the real error instead."""
+    nastech_home = tmp_path / "nastech"
+    codex_home = tmp_path / "codex"
+    nastech_home.mkdir()
+    codex_home.mkdir()
+    (nastech_home / "config.yaml").write_text("auth:\n  adopt_external_logins: false\n")
+    nastech_auth = {"version": 1, "providers": {"openai-codex": {
+        "tokens": {"refresh_token": "stale-refresh"}, "auth_mode": "chatgpt"}}}
+    (nastech_home / "auth.json").write_text(json.dumps(nastech_auth))
+    (codex_home / "auth.json").write_text(json.dumps({
+        "tokens": {"access_token": "fresh-access", "refresh_token": "fresh-refresh"}}))
+    monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+
+    with pytest.raises(AuthError) as info:
+        resolve_codex_runtime_credentials()
+    assert info.value.code == "codex_auth_missing_access_token"
+
+    def _rejected(*_a, **_k):
+        raise AuthError("bad", provider="openai-codex", code="invalid_grant", relogin_required=True)
+
+    monkeypatch.setattr(auth_codex, "refresh_codex_oauth_pure", _rejected)
+    with pytest.raises(AuthError) as info:
+        _refresh_codex_auth_tokens(dict(STALE), 5.0)
+    assert info.value.relogin_required  # surfaced, not papered over with the CLI pair
+    assert json.loads((nastech_home / "auth.json").read_text()) == nastech_auth

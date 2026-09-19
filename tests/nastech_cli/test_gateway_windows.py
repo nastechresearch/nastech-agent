@@ -481,6 +481,76 @@ def test_reconcile_scheduled_task_reregisters_only_on_drift(monkeypatch, tmp_pat
     assert not any(c[0] in ("/Delete", "/Create") for c in calls)
 
 
+def _arrange_uninstalled_start(monkeypatch):
+    """start() with no Scheduled Task / Startup entry; returns (install_calls, spawn_count)."""
+    installs, spawns = [], []
+    monkeypatch.delenv("NASTECH_GATEWAY_INSTALL_START_ON_LOGIN", raising=False)
+    monkeypatch.delenv("NASTECH_NONINTERACTIVE", raising=False)
+    monkeypatch.setattr(gateway_windows, "_assert_windows", lambda: None)
+    monkeypatch.setattr(gateway_windows, "_print_start_attestation_warning", lambda: None)
+    monkeypatch.setattr(gateway_windows, "_gateway_pids", lambda: [])
+    monkeypatch.setattr(gateway_windows, "is_task_registered", lambda: False)
+    monkeypatch.setattr(gateway_windows, "is_startup_entry_installed", lambda: False)
+    monkeypatch.setattr(gateway_windows, "install", lambda **kwargs: installs.append(kwargs))
+    monkeypatch.setattr(gateway_windows, "_spawn_detached", lambda: spawns.append(1) or 4242)
+    monkeypatch.setattr(gateway_windows, "_report_gateway_start", lambda via: None)
+    monkeypatch.setattr(gateway_windows, "_stdin_console_mode_ok", lambda: True)
+    return installs, spawns
+
+
+def test_stdin_interactive_only_when_isatty_and_a_console_answers_get_console_mode():
+    """Windows CRT isatty() is True for the NUL device (`nastech gateway start < NUL`, stdin=DEVNULL), so
+    isatty alone must not open the prompt; off Windows (no console-mode fact) isatty decides (#113977)."""
+    assert gateway_windows._stdin_is_interactive(isatty=True, console_mode_ok=False) is False   # NUL
+    assert gateway_windows._stdin_is_interactive(isatty=True, console_mode_ok=True) is True     # console
+    assert gateway_windows._stdin_is_interactive(isatty=False, console_mode_ok=True) is False   # pipe
+    assert gateway_windows._stdin_is_interactive(isatty=True, console_mode_ok=None) is True     # POSIX tty
+
+
+def test_start_with_nul_stdin_starts_the_gateway_but_never_installs_login_persistence(monkeypatch, capsys):
+    """isatty says TTY, GetConsoleMode says no console: `< NUL` gets the same treatment as a pipe."""
+    installs, spawns = _arrange_uninstalled_start(monkeypatch)
+    monkeypatch.setattr(setup, "is_interactive_stdin", lambda: True)
+    monkeypatch.setattr(gateway_windows, "_stdin_console_mode_ok", lambda: False)
+    monkeypatch.setattr(setup, "prompt_yes_no", lambda *a, **k: pytest.fail("no prompt on a NUL stdin"))
+
+    gateway_windows.start()
+
+    assert installs == [] and spawns == [1]
+    assert "nastech gateway install" in capsys.readouterr().out
+
+
+def test_start_without_tty_starts_the_gateway_but_never_installs_login_persistence(monkeypatch, capsys):
+    """`nastech gateway start < /dev/null` must not answer the persistence question with a default Yes
+    (#113977); it starts the gateway once and points at the explicit install command."""
+    installs, spawns = _arrange_uninstalled_start(monkeypatch)
+    monkeypatch.setattr(setup, "is_interactive_stdin", lambda: False)
+    monkeypatch.setattr(setup, "prompt_yes_no", lambda *a, **k: pytest.fail("no prompt without a TTY"))
+
+    gateway_windows.start()
+
+    assert installs == [] and spawns == [1]
+    out = capsys.readouterr().out
+    assert "nastech gateway install" in out and "did not complete" not in out
+
+
+def test_start_on_tty_hands_both_answers_to_install_and_honours_the_env_opt_out(monkeypatch):
+    """Yes → one install() carrying start_now+start_on_login (install spawns; start() must not spawn
+    again). NASTECH_GATEWAY_INSTALL_START_ON_LOGIN=0 → no question, no install, a plain start."""
+    installs, spawns = _arrange_uninstalled_start(monkeypatch)
+    monkeypatch.setattr(setup, "is_interactive_stdin", lambda: True)
+    monkeypatch.setattr(setup, "prompt_yes_no", lambda *a, **k: True)
+
+    gateway_windows.start()
+    assert installs == [{"force": False, "start_now": True, "start_on_login": True}] and spawns == []
+
+    installs.clear()
+    monkeypatch.setenv("NASTECH_GATEWAY_INSTALL_START_ON_LOGIN", "0")
+    monkeypatch.setattr(setup, "prompt_yes_no", lambda *a, **k: pytest.fail("env override must skip the prompt"))
+    gateway_windows.start()
+    assert installs == [] and spawns == [1]
+
+
 
 
 

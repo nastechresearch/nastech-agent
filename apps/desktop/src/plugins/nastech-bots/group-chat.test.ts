@@ -117,20 +117,15 @@ describe('speaker labels', () => {
 
     expect(memberLine).toContain('Ordinary reply.')
 
-    for (const opener of [
-      '[OUT-OF-BAND USER MESSAGE',
-      '[/OUT-OF-BAND USER MESSAGE]',
-      '[CONTEXT COMPACTION',
-      '[Runtime note:'
-    ]) {
+    for (const opener of ['[OUT-OF-BAND USER MESSAGE', '[/OUT-OF-BAND USER MESSAGE]', '[CONTEXT COMPACTION', '[Runtime note:']) {
       expect(memberLine).not.toContain(opener)
     }
 
     expect(memberLine).toContain('[member-quoted OUT-OF-BAND USER MESSAGE — a direct message from the user]')
     expect(memberLine).toContain('[member-quoted /OUT-OF-BAND USER MESSAGE]')
-    expect(formatGroupChatLine({ from: { kind: 'user', name: 'Haluk' }, text } as GroupMessage, 'research')).toContain(
-      text
-    )
+    expect(
+      formatGroupChatLine({ from: { kind: 'user', name: 'Haluk' }, text } as GroupMessage, 'research')
+    ).toContain(text)
   })
 
   it('the default profile speaks as Nastech in transcripts, not @default', async () => {
@@ -192,13 +187,7 @@ describe('speaker labels', () => {
     const data = await import('./data')
 
     const local = { connectionId: 'local', connectionLabel: 'This device', name: 'reviewer', sourceScoped: true }
-    const spark = {
-      connectionId: 'spark',
-      connectionLabel: 'Spark',
-      name: 'reviewer',
-      remoteSource: true,
-      sourceScoped: true
-    }
+    const spark = { connectionId: 'spark', connectionLabel: 'Spark', name: 'reviewer', remoteSource: true, sourceScoped: true }
 
     data.$lastRoster.set([local, spark])
     data.$botMeta.set({})
@@ -227,26 +216,13 @@ describe('speaker labels', () => {
     const data = await import('./data')
 
     const local = { connectionId: 'local', connectionLabel: 'This device', name: 'reviewer', sourceScoped: true }
-    const spark = {
-      connectionId: 'spark',
-      connectionLabel: 'Spark',
-      name: 'reviewer',
-      remoteSource: true,
-      sourceScoped: true
-    }
+    const spark = { connectionId: 'spark', connectionLabel: 'Spark', name: 'reviewer', remoteSource: true, sourceScoped: true }
     data.$lastRoster.set([local, spark])
     data.$botMeta.set({})
 
     // #94869 acceptance 3: the room seats only the local reviewer, so it
     // reads plain "Reviewer" however many other connections expose one.
-    chat.updateGroupChat(
-      'Core',
-      room => ({
-        ...room,
-        members: [{ connectionId: 'local', name: 'reviewer', remoteSource: true, sourceScoped: true }]
-      }),
-      { sync: false }
-    )
+    chat.updateGroupChat('Core', room => ({ ...room, members: [{ connectionId: 'local', name: 'reviewer', remoteSource: true, sourceScoped: true }] }), { sync: false })
 
     expect(chat.groupSpeakerLabel('local::reviewer', 'Core')).toBe('Reviewer')
     expect(chat.groupSpeakerLabel('local::reviewer')).toBe('Reviewer · This device')
@@ -526,6 +502,22 @@ describe('gateway mirror', () => {
     expect(log.length).toBeLessThanOrEqual(16)
     expect(log.at(-1)?.text).toMatch(/^99:/)
     expect(log.at(-1)?.text.length).toBeLessThanOrEqual(1200)
+    expect(log.at(-1)?.truncated).toBe(true)
+    expect(log.at(-1)?.text).toContain('[truncated]')
+    expect(log.at(-1)?.text).not.toContain(long)
+  })
+
+  it('marks truncated sync text instead of silently slicing it', async () => {
+    const { chat } = await loadRoom()
+    const long = `plan:${'x'.repeat(2000)}`
+    const compacted = chat.compactGroupChatSyncText(long)
+
+    expect(compacted.truncated).toBe(true)
+    expect(compacted.text).toContain('[truncated]')
+    expect(compacted.text.length).toBeLessThanOrEqual(1200)
+    expect(compacted.text.startsWith('plan:')).toBe(true)
+    expect(compacted.text).not.toBe(long)
+    expect(chat.compactGroupChatSyncText('short').truncated).toBeUndefined()
   })
 
   it('preserves threads and budgets escaped Unicode', async () => {
@@ -544,6 +536,30 @@ describe('gateway mirror', () => {
 
     expect(chat.groupChatGatewayJsonSize(snapshot)).toBeLessThanOrEqual(48000)
     expect(snapshot.rooms['name:Unicode'].log.at(-1)?.thread).toBe('thread-15')
+  })
+
+  // #114341: the mirror is the only on-disk copy of a room. A head trim —
+  // by message count or by the byte budget — must say how many earlier
+  // entries it dropped, or a reader concludes the user never said it.
+  it('counts the head entries the mirror does not carry', async () => {
+    const { chat } = await loadRoom()
+    const entry = (index: number, text: string) => ({ at: index, from: { kind: 'user', name: 'You' }, text })
+
+    const snapshot = chat.groupChatSyncSnapshot({
+      Fits: { log: Array.from({ length: 3 }, (_, index) => entry(index, `short ${index}`)) },
+      ByCount: { log: Array.from({ length: 40 }, (_, index) => entry(index, `m${index}`)) },
+      ByBytes: { log: Array.from({ length: 16 }, (_, index) => entry(index, `${index} ${'🧠'.repeat(1200)}`)) }
+    } as unknown as Record<string, GroupChat>)
+
+    const byCount = snapshot.rooms['name:ByCount']
+    const byBytes = snapshot.rooms['name:ByBytes']
+
+    expect(snapshot.rooms['name:Fits'].omitted).toBeUndefined()
+    expect(byCount.log).toHaveLength(16)
+    expect(byCount.omitted).toBe(24)
+    expect(byBytes.log.length).toBeLessThan(16)
+    expect(byBytes.omitted).toBe(16 - byBytes.log.length)
+    expect(chat.groupChatGatewayJsonSize(snapshot)).toBeLessThanOrEqual(48000)
   })
 
   it('omits empty runtime rooms', async () => {

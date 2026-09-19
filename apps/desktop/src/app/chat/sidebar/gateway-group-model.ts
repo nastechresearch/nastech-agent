@@ -1,8 +1,8 @@
 import { useStore } from '@nanostores/react'
 import { useMemo } from 'react'
 
-import { resolveProfileColor } from '@/lib/profile-color'
 import type { SessionInfo } from '@/nastech'
+import { resolveProfileColor } from '@/lib/profile-color'
 import { $connectionsRegistry } from '@/store/connection-registry-state'
 import { $profileColors, normalizeProfileKey } from '@/store/profile'
 

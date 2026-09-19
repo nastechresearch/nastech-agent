@@ -46,8 +46,8 @@ import {
 import { onGatewayEvent } from '@/contrib/events'
 import { registry } from '@/contrib/registry'
 import type { WorkspaceMode } from '@/contrib/types'
-import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
 import { deleteProfile, getLogs, getStatus, nastechApi, type NastechGateway } from '@/nastech'
+import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
 import {
   $gateway,
   activeGatewayConnectionId,
@@ -1790,6 +1790,7 @@ export {
 export { triggerHaptic as haptic } from '@/lib/haptics'
 /** The app's lucide icon set (RefreshCw, LayoutDashboard, Activity, …). */
 export * as icons from '@/lib/icons'
+export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 /** IME-aware Enter: true only for a real submit Enter, never a CJK composition
  *  commit (`isComposing` or the legacy keyCode 229). Use it on every plugin
  *  text field whose bare Enter performs an action. */
@@ -1800,7 +1801,6 @@ export { formatModifierToken } from '@/lib/keybinds/combo'
  *  a renderer that stays open for days. Only for values that can be
  *  regenerated — eviction costs a recompute or a refetch, never correctness. */
 export { LruCache } from '@/lib/lru-cache'
-export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 /** The app's deterministic identity color for a name (profiles, assignees,
  *  authors), its translucent tag fill, and the curated picker swatches — so
  *  plugin-rendered identities read the same hue as everywhere else. The
@@ -1891,8 +1891,6 @@ export { retintTheme, themeHue } from '@/themes/retint'
 export type { DesktopTheme, DesktopThemeColors } from '@/themes/types'
 export { THEMES_AREA } from '@/themes/user-themes'
 export type { StatusResponse } from '@/types/nastech'
-/** Subscribe a component to a `host.state` atom. */
-export { useStore as useValue } from '@nanostores/react'
 /** Public SDK name for the shared gateway wire event; kept stable for plugins. */
 export type { GatewayEvent as RpcEvent } from '@nastech/shared'
 /** THE compact-number formatter — every user-facing count/token figure goes
@@ -1909,6 +1907,8 @@ export {
 /** WCAG contrast, from the sRGB primitives shared with the TUI (`null` for
  *  an unparseable colour, never a fake 0). */
 export { contrastRatio } from '@nastech/shared/color'
+/** Subscribe a component to a `host.state` atom. */
+export { useStore as useValue } from '@nanostores/react'
 /** The app's data-fetching layer. Plugins share the ONE QueryClient mounted at
  *  the app root, so their queries cache, dedupe, poll (`refetchInterval`), and
  *  invalidate exactly like core screens — no hand-rolled atoms or polls. */
