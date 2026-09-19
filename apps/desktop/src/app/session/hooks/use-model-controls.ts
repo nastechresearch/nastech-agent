@@ -3,11 +3,11 @@ import { type QueryClient } from '@tanstack/react-query'
 import { useCallback, useRef } from 'react'
 
 import type { ModelSelection } from '@/app/shell/model-menu-panel'
+import { getGlobalModelInfo } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { isBusySessionModelSwitch } from '@/lib/gateway-rpc'
 import { surfaceModelSwitchConfirm } from '@/lib/guarded-model-switch'
 import { modelOptionsQueryKey } from '@/lib/model-options'
-import { getGlobalModelInfo } from '@/nastech'
 import { notifyError } from '@/store/notifications'
 import { $activeGatewayProfile } from '@/store/profile'
 import {
@@ -335,7 +335,14 @@ export function useModelControls({
         return false
       }
     },
-    [cacheOwnerConnectionId, cacheProfile, copy.modelSwitchFailed, queryClient, requestGateway, updateModelOptionsCache]
+    [
+      cacheOwnerConnectionId,
+      cacheProfile,
+      copy.modelSwitchFailed,
+      queryClient,
+      requestGateway,
+      updateModelOptionsCache
+    ]
   )
 
   return { applySavedMainModel, refreshCurrentModel, selectModel }

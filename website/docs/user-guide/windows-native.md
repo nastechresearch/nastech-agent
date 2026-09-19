@@ -186,13 +186,15 @@ Flags used when spawning: `DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_
 
 ```powershell
 nastech gateway status      # Merged view: schtasks + Startup folder + running PID
-nastech gateway start       # Starts the scheduled task now
+nastech gateway start       # Starts the gateway in the background (asks about login auto-start only on a TTY when nothing is installed)
 nastech gateway stop        # Writes the planned-stop marker, waits for the gateway to drain (≤ agent.restart_drain_timeout, capped at 30 s), then force-kills only if it is still alive
 nastech gateway restart     # Same drain-first stop, then a fresh start
 nastech gateway uninstall   # Removes schtasks entry, Startup shortcut, pid file
 ```
 
 `nastech gateway status` is idempotent — call it a thousand times in a row and it will never accidentally kill the gateway. (Pre-PR #21561 it silently did, via `os.kill(pid, 0)` colliding with `CTRL_C_EVENT` at the C level — see "process management internals" below if you care about the story.)
+
+Login auto-start is only ever installed on an explicit answer: `nastech gateway install`, a `Y` on a real terminal, or `NASTECH_GATEWAY_INSTALL_START_ON_LOGIN=1`. A scripted or piped `nastech gateway start` (no TTY, or `NASTECH_NONINTERACTIVE=1`) starts the gateway without touching the Scheduled Task or the Startup folder; set `NASTECH_GATEWAY_INSTALL_START_ON_LOGIN=0` to skip the question on a terminal too.
 
 ### Why not a Windows Service?
 

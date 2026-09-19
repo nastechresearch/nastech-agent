@@ -91,7 +91,7 @@ Don't have a subscription yet? Get one at [portal.nastechresearch.github.io/mana
 
 
 :::info Codex Note
-The OpenAI Codex provider authenticates via device code (open a URL, enter a code). Nastech stores the resulting credentials in its own auth store under `~/.nastech/auth.json` and can import existing Codex CLI credentials from `~/.codex/auth.json` when present. No Codex CLI installation is required.
+The OpenAI Codex provider authenticates via device code (open a URL, enter a code). Nastech stores the resulting credentials in its own auth store under `~/.nastech/auth.json` and can import existing Codex CLI credentials from `~/.codex/auth.json` when present. No Codex CLI installation is required. Automatic adoption of the Codex CLI login (when Nastech' own refresh fails) is controlled by `auth.adopt_external_logins` — see [Borrowed CLI logins](../user-guide/security.md#borrowed-cli-logins).
 
 If a token refresh fails with a terminal error (HTTP 4xx, `invalid_grant`, revoked grant, etc.), Nastech marks the refresh token as dead and stops replaying it so you don't see a flood of identical auth failures. The next request surfaces a typed re-auth message instead. Run `nastech auth add openai-codex` (or `nastech model` → **ChatGPT or Codex Subscription**) to start a fresh device-code login; the quarantine clears on the next successful exchange.
 
@@ -163,7 +163,10 @@ Use Claude models directly through the Anthropic API — no OpenRouter proxy nee
 
 When no explicit environment credential is selected, Nastech-owned OAuth grants
 in the credential pool take precedence over a borrowed Claude Code login. The
-borrowed login remains the fallback when no owned OAuth grant is available.
+borrowed login remains the fallback when no owned OAuth grant is available —
+unless `auth.adopt_external_logins: false` is set, in which case Nastech never
+reads or refreshes Claude Code's credentials (see
+[Borrowed CLI logins](../user-guide/security.md#borrowed-cli-logins)).
 Auxiliary authentication recovery refreshes the credential used by the failed
 request, not an unrelated ambient login; rotating a borrowed login can otherwise
 invalidate its owner's refresh token.

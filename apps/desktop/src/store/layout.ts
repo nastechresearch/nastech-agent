@@ -213,11 +213,7 @@ export const $dismissedWorktreeIds = persistentAtom(
 )
 // Only successful git removals may reappear on discovery. Explicit hides,
 // including legacy dismissals without provenance, remain hidden.
-export const $removedWorktreeIds = persistentAtom(
-  'nastech.desktop.removedWorktrees',
-  [] as string[],
-  Codecs.stringArray
-)
+export const $removedWorktreeIds = persistentAtom('nastech.desktop.removedWorktrees', [] as string[], Codecs.stringArray)
 export const $sidebarPinsOpen = atom(true)
 export const $sidebarRecentsOpen = atom(true)
 // Cron-job sessions live in their own section below recents, collapsed by

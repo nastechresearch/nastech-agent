@@ -683,6 +683,22 @@ def _spawn_detached(script_path: Path | None = None, home: Path | None = None) -
     return proc.pid
 
 
+def _stdin_is_interactive(*, isatty: bool, console_mode_ok: bool | None) -> bool:
+    """A human can answer a prompt only on a real console. The Windows CRT reports isatty()==True for
+    every character device — the NUL device included (`nastech gateway start < NUL`, stdin=DEVNULL) — so
+    isatty must be confirmed by GetConsoleMode accepting the handle (#113977). ``console_mode_ok`` is
+    None where that fact does not exist (not Windows) and isatty alone decides."""
+    return isatty and console_mode_ok is not False
+
+
+def _stdin_console_mode_ok() -> bool | None:
+    if sys.platform != "win32":
+        return None
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.GetStdHandle(-10)  # STD_INPUT_HANDLE
+    return bool(kernel32.GetConsoleMode(handle, ctypes.byref(ctypes.c_ulong())))
+
+
 def _install_choice_from_env(name: str) -> bool | None:
     raw = os.environ.get(name)
     if raw is None:
@@ -785,7 +801,7 @@ def install(
             _start_or_report_running()
         else:
             print("ℹ Gateway not started and no auto-start service installed.")
-            print("  Run later with: nastech gateway start")
+            print("  Run in the foreground later with: nastech gateway run")
         return
 
     task_name = get_task_name()
@@ -1493,17 +1509,26 @@ def start() -> None:
         return
 
     if not is_task_registered() and not is_startup_entry_installed():
-        from nastech_cli.setup import prompt_yes_no
+        # Login persistence is a lasting system change: a bare ``start`` installs it only on an explicit
+        # answer — the NASTECH_GATEWAY_INSTALL_START_ON_LOGIN override or a real TTY prompt — never on a
+        # non-TTY default (#113977). Declining still starts the gateway; the command is ``start``.
+        start_on_login = _install_choice_from_env("NASTECH_GATEWAY_INSTALL_START_ON_LOGIN")
+        if start_on_login is None:
+            from nastech_cli.setup import is_interactive_stdin, is_noninteractive, prompt_yes_no
 
-        print("✗ Gateway service is not installed")
-        if not prompt_yes_no("  Install it now so the gateway starts on login?", True):
-            print("  Run: nastech gateway install")
+            print("✗ Gateway service is not installed")
+            if is_noninteractive() or not _stdin_is_interactive(
+                isatty=is_interactive_stdin(), console_mode_ok=_stdin_console_mode_ok()
+            ):
+                start_on_login = False
+            else:
+                start_on_login = prompt_yes_no("  Install it now so the gateway starts on login?", True)
+        if start_on_login:
+            # install() starts the gateway itself (start_now) and reports the outcome — including a UAC
+            # hand-off to an elevated child — so there is nothing left to spawn or to warn about here.
+            install(force=False, start_now=True, start_on_login=True)
             return
-        install(force=False)
-        if not is_task_registered() and not is_startup_entry_installed():
-            print("⚠ Gateway install did not complete in this process.")
-            print("  If a UAC prompt opened, approve it, then run: nastech gateway start")
-            return
+        print("ℹ Login auto-start not installed; add it later with: nastech gateway install")
     elif is_task_registered():
         reconcile_scheduled_task(get_task_name())   # like systemd's regenerate-on-stale before a start
 

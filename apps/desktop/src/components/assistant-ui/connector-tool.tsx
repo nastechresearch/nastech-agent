@@ -1,6 +1,6 @@
 import type { ToolCallMessagePartProps } from '@assistant-ui/react'
-import { useStore } from '@nanostores/react'
 import type { ConnectionTargetState } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { useSessionView } from '@/app/chat/session-view'
@@ -189,9 +189,7 @@ export function ConnectorOffer({ owner, request }: ConnectorOfferProps) {
       )
 
       const rows = recordOf(reply).targets
-      const minted = Array.isArray(rows)
-        ? rows.map(recordOf).find(row => connectorText(row.name) === target.name)
-        : undefined
+      const minted = Array.isArray(rows) ? rows.map(recordOf).find(row => connectorText(row.name) === target.name) : undefined
       const url = connectorAuthorizationUrl(minted?.connect_url)
 
       if (url) {

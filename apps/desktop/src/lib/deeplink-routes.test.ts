@@ -26,16 +26,13 @@ describe('resolveDeepLinkAction', () => {
       sha: '0123456789abcdef0123456789abcdef01234567',
       enable: '1'
     }
-
     const url = new URL(`nastech://plugin/install?${new URLSearchParams(params)}`)
 
-    expect(
-      resolveDeepLinkAction({
-        kind: url.hostname,
-        name: url.pathname.slice(1),
-        params: Object.fromEntries(url.searchParams)
-      })
-    ).toEqual({
+    expect(resolveDeepLinkAction({
+      kind: url.hostname,
+      name: url.pathname.slice(1),
+      params: Object.fromEntries(url.searchParams)
+    })).toEqual({
       type: 'plugin-install',
       repo: params.repo,
       catalogName: params.catalog_name,
@@ -60,13 +57,11 @@ describe('resolveDeepLinkAction', () => {
     const identifier = 'skills-sh/owner/repo/a skill?mode=one&two#readme'
     const url = new URL(`nastech://skill/install?${new URLSearchParams({ identifier })}`)
 
-    expect(
-      resolveDeepLinkAction({
-        kind: url.hostname,
-        name: url.pathname.slice(1),
-        params: Object.fromEntries(url.searchParams)
-      })
-    ).toEqual({ type: 'skill-install', identifier })
+    expect(resolveDeepLinkAction({
+      kind: url.hostname,
+      name: url.pathname.slice(1),
+      params: Object.fromEntries(url.searchParams)
+    })).toEqual({ type: 'skill-install', identifier })
 
     const invalidParams: Record<string, string>[] = [
       {},
@@ -78,7 +73,6 @@ describe('resolveDeepLinkAction', () => {
     for (const params of invalidParams) {
       expect(resolveDeepLinkAction({ kind: 'skill', name: 'install', params })).toEqual({ type: 'ignore' })
     }
-
     expect(resolveDeepLinkAction({ kind: 'skill', name: 'remove', params: { identifier } })).toEqual({ type: 'ignore' })
     expect(resolveDeepLinkAction({ kind: 'plugin', name: 'install', params: {} })).toEqual({ type: 'ignore' })
   })

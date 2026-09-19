@@ -1,8 +1,5 @@
 import { atom, map } from 'nanostores'
 
-import { translateNow } from '@/i18n'
-import { queryClient } from '@/lib/query-client'
-import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
 import {
   getActionStatus,
   installSkillFromHub,
@@ -11,6 +8,9 @@ import {
   uninstallSkillFromHub,
   updateSkillsFromHub
 } from '@/nastech'
+import { translateNow } from '@/i18n'
+import { queryClient } from '@/lib/query-client'
+import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
 import { upsertDesktopActionTask } from '@/store/activity'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
@@ -240,12 +240,7 @@ export class HubInstallBlockedError extends Error {
 
 /** Toast for a failed hub action: a blocked install explains the scan gate and
  *  offers "View scan"; anything else keeps the generic summary + raw tail. */
-export function notifyHubActionFailed(
-  err: unknown,
-  fallbackTitle: string,
-  skillName?: string,
-  profile?: ProfileScope
-): void {
+export function notifyHubActionFailed(err: unknown, fallbackTitle: string, skillName?: string, profile?: ProfileScope): void {
   if (!(err instanceof HubInstallBlockedError)) {
     notifyError(err, fallbackTitle)
 

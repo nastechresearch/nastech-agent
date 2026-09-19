@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import { compactNumber } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
@@ -17,6 +17,20 @@ import { Switch } from '@/components/ui/switch'
 import { TextTab } from '@/components/ui/text-tab'
 import { Textarea } from '@/components/ui/textarea'
 import { Tip } from '@/components/ui/tooltip'
+import {
+  getActionStatus,
+  getLogs,
+  getMcpCatalog,
+  getUsageAnalytics,
+  type NastechGateway,
+  installMcpCatalogEntry,
+  type McpCatalogEntry,
+  type McpTestResult,
+  type ProfileScope,
+  profileScopeKey,
+  saveMcpServers,
+  testMcpServer
+} from '@/nastech'
 import { type Translations, useI18n } from '@/i18n'
 import { startCompletionPoll } from '@/lib/completion-poll'
 import { brandFor } from '@/lib/mcp-brands'
@@ -27,20 +41,6 @@ import { NEEDS_AUTH_RE, PROBE_TTL_MS, probeCache, probeKey, serverFingerprint } 
 import { getServers, isServerShape, type McpServers, normalizeEntry } from '@/lib/mcp-servers'
 import { countEnabledTools, isToolEnabled, toggleToolInServer } from '@/lib/mcp-tool-filter'
 import { cn } from '@/lib/utils'
-import {
-  getActionStatus,
-  getLogs,
-  getMcpCatalog,
-  getUsageAnalytics,
-  installMcpCatalogEntry,
-  type McpCatalogEntry,
-  type McpTestResult,
-  type NastechGateway,
-  type ProfileScope,
-  profileScopeKey,
-  saveMcpServers,
-  testMcpServer
-} from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $activeSessionId } from '@/store/session'
