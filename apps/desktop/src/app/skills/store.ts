@@ -4,6 +4,3 @@ import { Codecs, persistentAtom } from '@/lib/persisted'
 // remembers most/least-used across navigations and restarts.
 export const $skillsSortDesc = persistentAtom('nastech.desktop.capabilities.skillsSortDesc', true, Codecs.bool)
 export const $toolsetsSortDesc = persistentAtom('nastech.desktop.capabilities.toolsetsSortDesc', true, Codecs.bool)
-
-// One browsing layout across Skills and Plugins; Installed keeps its own list.
-export const $catalogCardView = persistentAtom('nastech.desktop.capabilities.catalogCardView', true, Codecs.bool)

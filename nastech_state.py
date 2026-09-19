@@ -48,6 +48,7 @@ from nastech_state_sessions import SessionSessionsMixin
 from nastech_state_fts import SessionFtsSetupMixin, load_fts5_cjk_extension
 from nastech_state_portability import SessionPortabilityMixin
 from nastech_state_telegram import SessionTelegramTopicsMixin
+from nastech_state_profile_repair import SessionProfileRepairMixin
 from nastech_state_schema import SessionSchemaMixin
 import nastech_state_holders as _state_holders
 import nastech_state_lockguard as _lockguard
@@ -442,7 +443,7 @@ class SessionDB(
     SessionSessionsMixin, SessionFtsSetupMixin, SessionSearchMixin, SessionSchemaMixin,
     SessionPortabilityMixin, SessionTelegramTopicsMixin, SessionCompressionMixin,
     SessionGatewayMixin, SessionMaintenanceMixin, SessionUsageMixin, SessionTitlesMixin,
-    SessionMessagesMixin, SessionRewindMixin,
+    SessionMessagesMixin, SessionRewindMixin, SessionProfileRepairMixin,
 ):
     """SQLite-backed session storage with FTS5 search; many reader threads, one writer (WAL)."""
 
