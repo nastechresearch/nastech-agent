@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { getNastechConfigRecord, type ProfileScope, profileScopeKey } from '@/nastech'
 import { queryClient, writeCache } from '@/lib/query-client'
+import { getNastechConfigRecord, type ProfileScope, profileScopeKey } from '@/nastech'
 import type { NastechConfigRecord } from '@/types/nastech'
 
 // One shared cache for the whole profile config record (`GET /api/config`).

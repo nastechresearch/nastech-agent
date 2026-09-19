@@ -5,23 +5,6 @@ import { useNavigate } from 'react-router'
 import { NEW_CHAT_ROUTE } from '@/app/routes'
 import { Button } from '@/components/ui/button'
 import { Tip } from '@/components/ui/tooltip'
-import {
-  activateLocalModel,
-  deleteLocalModel,
-  downloadBrowsedModel,
-  downloadLocalModel,
-  ejectLocalModel,
-  getLocalCatalog,
-  getLocalHardware,
-  getLocalModelsStatus,
-  type HFFileGroup,
-  type HFSearchHit,
-  listHFRepoFiles,
-  quickstartLocalModels,
-  searchHFModels,
-  setLocalServer,
-  sideloadLocalModel
-} from '@/nastech'
 import { useI18n } from '@/i18n'
 import {
   Check,
@@ -39,6 +22,23 @@ import {
   Zap
 } from '@/lib/icons'
 import { cn } from '@/lib/utils'
+import {
+  activateLocalModel,
+  deleteLocalModel,
+  downloadBrowsedModel,
+  downloadLocalModel,
+  ejectLocalModel,
+  getLocalCatalog,
+  getLocalHardware,
+  getLocalModelsStatus,
+  type HFFileGroup,
+  type HFSearchHit,
+  listHFRepoFiles,
+  quickstartLocalModels,
+  searchHFModels,
+  setLocalServer,
+  sideloadLocalModel
+} from '@/nastech'
 import {
   $localRuntimeInstallStarting,
   $localRuntimeJobs,

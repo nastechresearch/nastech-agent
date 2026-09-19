@@ -1,6 +1,6 @@
-import { getLocalModelsJobs, getLocalModelsStatus } from '@/nastech'
 import type { Translations } from '@/i18n/types'
 import { localSetupDue } from '@/lib/tips/local-cta'
+import { getLocalModelsJobs, getLocalModelsStatus } from '@/nastech'
 import { $activeGatewayRoute } from '@/store/gateway'
 import { $localModelsEnabled } from '@/store/local-models-flag'
 import {

@@ -11,11 +11,11 @@ import { useEffect, useRef } from 'react'
 
 import { shouldApplyPostBootProgressError } from '@/components/boot-failure-reauth'
 import type { DesktopBootProgress, NastechConnection, NastechWindowState } from '@/global'
-import { NastechGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd } from '@/lib/desktop-fs'
 import { decideLivenessForceClose, LIVENESS_REPROBE_DELAY_MS } from '@/lib/gateway-liveness-policy'
 import { BACKEND_BOOT_WAIT_TIMEOUT_MS, RECONNECT_ATTEMPT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
+import { NastechGateway } from '@/nastech'
 import {
   $desktopBoot,
   applyDesktopBootProgress,
@@ -142,7 +142,9 @@ const BOOT_RETRY_BASE_DELAY_MS = 2_000
 // own connect timeout.
 
 /** Registry identity whose runtimes died with the primary connection. */
-export function primaryRuntimeConnectionId(connection: Pick<NastechConnection, 'connectionId' | 'mode'>): null | string {
+export function primaryRuntimeConnectionId(
+  connection: Pick<NastechConnection, 'connectionId' | 'mode'>
+): null | string {
   const connectionId = connection.connectionId?.trim()
 
   if (connectionId) {
@@ -510,7 +512,14 @@ export function useGatewayBoot({
     }
 
     function scheduleReconnect(manual?: { profile: string; activationEpoch: number }) {
-      if (cancelled || primaryReauthError || reconnecting || reconnectTimer !== null || gatewayOpen() || $gatewaySwitching.get()) {
+      if (
+        cancelled ||
+        primaryReauthError ||
+        reconnecting ||
+        reconnectTimer !== null ||
+        gatewayOpen() ||
+        $gatewaySwitching.get()
+      ) {
         return
       }
 
@@ -612,6 +621,7 @@ export function useGatewayBoot({
     async function getWindowBackend(startup = false): Promise<NastechConnection> {
       const profile = windowProfileOverride()
       const peer = isPeerInstanceWindow()
+
       const route = profile
         ? { profile, connectionId: peer ? new URLSearchParams(window.location.search).get('connectionId') : null }
         : startup && !peer
