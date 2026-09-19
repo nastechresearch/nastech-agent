@@ -16,11 +16,11 @@ import { Switch } from '@/components/ui/switch'
 import { Tip } from '@/components/ui/tooltip'
 import { $pluginRecords, type PluginRecord, setPluginEnabled } from '@/contrib/plugins-store'
 import { discoverRuntimePlugins } from '@/contrib/runtime-loader'
-import type { ProfileScope } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { FolderOpen, Loader2, Monitor, Package, RefreshCw } from '@/lib/icons'
 import { cn } from '@/lib/utils'
+import type { ProfileScope } from '@/nastech'
 import {
   $agentPluginBusy,
   $agentPlugins,

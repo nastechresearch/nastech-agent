@@ -1,8 +1,8 @@
 import { atom } from 'nanostores'
 
 import { getApiRequestConnection } from '@/api/client'
-import { getLocalModelsJobs, installLocalRuntime } from '@/nastech'
 import { translateNow } from '@/i18n'
+import { getLocalModelsJobs, installLocalRuntime } from '@/nastech'
 import { $activeGatewayRoute } from '@/store/gateway'
 import { $localModelsEnabled } from '@/store/local-models-flag'
 import { notify, notifyError } from '@/store/notifications'

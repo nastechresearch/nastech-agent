@@ -143,7 +143,8 @@ export const en: Translations = {
       startingNastechDesktop: 'Starting Nastech Desktop…'
     },
     errors: {
-      backgroundExited: 'The service that runs your chats closed unexpectedly. Restart it to keep going — your chats and settings are safe.',
+      backgroundExited:
+        'The service that runs your chats closed unexpectedly. Restart it to keep going — your chats and settings are safe.',
       backgroundExitedDuringStartup: 'Nastech stopped right after it started.',
       backendStopped: 'Nastech stopped working in the background',
       restartNastech: 'Restart Nastech',
@@ -245,11 +246,13 @@ export const en: Translations = {
       storageFailure: "Nastech couldn't save to its data folder. Open Maintenance to check and repair it.",
       gatewayAuthFailed:
         'This Nastech no longer accepts your saved sign-in. Open Gateways and sign in again (or paste a new access token), then retry.',
-      methodNotAllowed: "Nastech' background service is out of step with the app, probably after an update. Restart it to fix this.",
+      methodNotAllowed:
+        "Nastech' background service is out of step with the app, probably after an update. Restart it to fix this.",
       microphonePermission: 'Microphone permission was denied.',
       openaiRejectedApiKey: "OpenAI didn't accept your API key. Update it in Settings → Keys, then try again.",
       openaiTtsNeedsKey: 'Voice needs an OpenAI key. Add one in Settings → Keys.',
-      codeSkewRestartRequired: 'Nastech was updated but is still running the old version. Restart it to finish the update.',
+      codeSkewRestartRequired:
+        'Nastech was updated but is still running the old version. Restart it to finish the update.',
       restartNastechFailed: "Couldn't restart Nastech"
     },
     actions: {
@@ -577,7 +580,8 @@ export const en: Translations = {
         desktopSuccess: name => `Desktop plugin ${name} installed`,
         agentFailed: 'Agent plugin install failed',
         desktopFailed: 'Desktop plugin install failed',
-        missingEnv: (name, vars) => `${name} is installed but needs a key before it can work: ${vars}. Add it now, or the plugin's tools will fail.`
+        missingEnv: (name, vars) =>
+          `${name} is installed but needs a key before it can work: ${vars}. Add it now, or the plugin's tools will fail.`
       }
     },
     vault: {
@@ -741,7 +745,8 @@ export const en: Translations = {
       sessionDensityComfortable: 'Comfortable',
       sessionDensityDetailed: 'Detailed',
       tabStripTitle: 'Tab Strip',
-      tabStripDesc: 'Show tabs above a zone. Auto hides them for a single pane unless another chat or tile zone is open.',
+      tabStripDesc:
+        'Show tabs above a zone. Auto hides them for a single pane unless another chat or tile zone is open.',
       tabStripAuto: 'Auto',
       tabStripAlways: 'Always',
       tabStripNever: 'Never',
@@ -1099,7 +1104,8 @@ export const en: Translations = {
     gateway: {
       loading: 'Loading gateway settings...',
       unavailableTitle: 'Gateway settings unavailable',
-      unavailableDesc: 'Connection settings can only be changed from the Nastech Desktop app on the computer running it.',
+      unavailableDesc:
+        'Connection settings can only be changed from the Nastech Desktop app on the computer running it.',
       title: 'Gateway Connection',
       envOverride: 'env override',
       intro:
@@ -1152,7 +1158,8 @@ export const en: Translations = {
       remoteUrlTitle: 'Remote URL',
       remoteUrlDesc: 'Base URL for the remote dashboard backend. Path prefixes are supported, for example /nastech.',
       probing: 'Checking how this gateway authenticates…',
-      probeError: "Nastech can't reach that address. Check the URL and that the other computer is running Nastech — sign-in options appear once it answers.",
+      probeError:
+        "Nastech can't reach that address. Check the URL and that the other computer is running Nastech — sign-in options appear once it answers.",
       signedIn: 'Signed in',
       signIn: 'Sign in',
       signOut: 'Sign out',
@@ -1599,7 +1606,8 @@ export const en: Translations = {
       useBackend: 'Use this backend',
       nastechIncluded: 'Included with a Nastech subscription — sign in with your Nastech account to activate.',
       nastechAuthNeededTitle: 'Sign in with your Nastech account',
-      nastechAuthNeededMessage: provider => `${provider} is saved but will only work once you sign in with your Nastech account.`,
+      nastechAuthNeededMessage: provider =>
+        `${provider} is saved but will only work once you sign in with your Nastech account.`,
       nastechAuthSignIn: 'Sign in',
       nastechAuthDoneTitle: 'Nastech account connected',
       nastechAuthDoneMessage: 'Your subscription backends are now active.',
@@ -1618,7 +1626,8 @@ export const en: Translations = {
       postSetupCompleteTitle: 'Setup complete',
       postSetupCompleteMessage: step => `${step} installed.`,
       postSetupErrorTitle: 'Setup finished with errors',
-      postSetupErrorMessage: step => `Setting up ${step} did not finish. Open the logs to see why, then run setup again.`,
+      postSetupErrorMessage: step =>
+        `Setting up ${step} did not finish. Open the logs to see why, then run setup again.`,
       postSetupOpenLogs: 'Open logs',
       postSetupRunAgain: 'Run again',
       postSetupFailed: step => `Failed to run ${step} setup`,
@@ -3372,7 +3381,8 @@ export const en: Translations = {
     remoteUrlDesc: 'Use the base URL of the Nastech gateway, including https:// when remote.',
     remoteUrlPlaceholder: 'https://gateway.example.com/nastech',
     probing: 'Detecting gateway authentication...',
-    probeError: "Nastech can't reach that address. Check the URL and that the other computer is running Nastech — sign-in options appear once it answers.",
+    probeError:
+      "Nastech can't reach that address. Check the URL and that the other computer is running Nastech — sign-in options appear once it answers.",
     probeErrorDetails: 'Details',
     identityProvider: 'your identity provider',
     authTitle: 'Authentication',
@@ -3447,7 +3457,8 @@ export const en: Translations = {
       xai: { short: 'Grok models', description: 'Direct access to xAI Grok models.' },
       local: {
         short: 'self-hosted',
-        description: 'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
+        description:
+          'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
       }
     },
     backToSignIn: 'Back to sign in',
@@ -3540,7 +3551,7 @@ export const en: Translations = {
     timedOutHeading: 'That sign-in link has expired',
     timedOutBody: "Start again whenever you're ready. You're still on the free Nastech service.",
     retiredBody:
-      'Your session ended before the sign-in finished. Nastech will start a new one; then sign in again whenever you\'re ready.',
+      "Your session ended before the sign-in finished. Nastech will start a new one; then sign in again whenever you're ready.",
     errorBody: "Sign-in didn't finish. Try again whenever you're ready.",
     busyHeading: 'Almost there',
     busyBody: wait =>
@@ -3562,7 +3573,8 @@ export const en: Translations = {
       powRequired:
         "The Nastech server asked for a proof of work, but that isn't implemented in your Agent yet. Sign in or create a free Nastech account to continue.",
       locked: "This session can't continue without signing in. Sign in or create a free Nastech account to keep going.",
-      generic: "Nastech couldn't set up free access without signing in. Signing in is free, or connect another provider.",
+      generic:
+        "Nastech couldn't set up free access without signing in. Signing in is free, or connect another provider.",
       signInBelow: 'Signing in is free. Pick Nastech below.',
       tryAgain: 'Try again',
       retrying: 'Trying again…'
@@ -4012,17 +4024,21 @@ export const en: Translations = {
         auth: 'The AI service rejected your sign-in. Check the credentials for this provider, then send your message again.',
         billing: 'Your account has no credits left for this provider. Top up or switch provider, then send again.',
         disk: 'Your disk is full, so Nastech could not save this conversation. Free some space, then retry.',
-        endpoint: "Nastech can't reach your custom model server. Check that it is running, then send your message again.",
-        gateway: 'Nastech hit an internal problem starting this reply. Send your message again; if it keeps happening, send diagnostics.',
+        endpoint:
+          "Nastech can't reach your custom model server. Check that it is running, then send your message again.",
+        gateway:
+          'Nastech hit an internal problem starting this reply. Send your message again; if it keeps happening, send diagnostics.',
         generic: 'Something went wrong while Nastech was replying. Retry, or copy the details if it keeps happening.',
         provider: 'The AI service could not complete this request. Retry in a moment or switch provider.',
-        runtime: 'Nastech hit an internal problem starting this reply. Send your message again; if it keeps happening, send diagnostics.',
+        runtime:
+          'Nastech hit an internal problem starting this reply. Send your message again; if it keeps happening, send diagnostics.',
         streaming: 'The connection dropped before the reply finished. Retry to send it again.'
       },
       errorCodes: {
         auth: {
           title: provider => `${provider} rejected your sign-in`,
-          body: provider => `The credentials saved for ${provider} were not accepted. Fix them in Settings or switch provider, then send your message again.`
+          body: provider =>
+            `The credentials saved for ${provider} were not accepted. Fix them in Settings or switch provider, then send your message again.`
         },
         auth_permanent: {
           title: provider => `${provider} rejected your sign-in`,
@@ -4072,7 +4088,8 @@ export const en: Translations = {
         },
         model_not_found: {
           title: 'This model is not available',
-          body: provider => `${provider} does not offer this model on your account. Choose another model, then send your message again.`
+          body: provider =>
+            `${provider} does not offer this model on your account. Choose another model, then send your message again.`
         },
         provider_policy_blocked: {
           title: 'This model is blocked by your account settings',
@@ -4358,8 +4375,10 @@ export const en: Translations = {
     sudoSendFailed: 'Could not send sudo password',
     secretSendFailed: 'Could not send secret',
     sudoTitle: 'Administrator password',
-    sudoDesc: 'Review the command before entering your sudo password. Your password is sent to the agent running it and cached for this session.',
-    sudoCommandUnavailable: 'This agent did not provide the command. Cancel if you cannot verify it in the conversation.',
+    sudoDesc:
+      'Review the command before entering your sudo password. Your password is sent to the agent running it and cached for this session.',
+    sudoCommandUnavailable:
+      'This agent did not provide the command. Cancel if you cannot verify it in the conversation.',
     sudoPlaceholder: 'sudo password',
     secretTitle: 'Secret required',
     secretDesc: 'Nastech needs a credential to continue.',
@@ -4477,7 +4496,8 @@ export const en: Translations = {
       success: platform => `Handed off to ${platform}. Resume here anytime.`,
       systemNote: platform => `↻ Handed off to ${platform} — resume here anytime.`,
       failed: error => `Handoff failed: ${error}`,
-      timedOut: "Nastech couldn't reach your messaging connection. Start it from Settings → Messaging, then try the handoff again.",
+      timedOut:
+        "Nastech couldn't reach your messaging connection. Start it from Settings → Messaging, then try the handoff again.",
       startMessaging: 'Start messaging'
     }
   },

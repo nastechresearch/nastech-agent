@@ -61,16 +61,14 @@ test('chooseUpdaterArgs: marker-only install uses --repair when the venv is gone
 })
 
 test('chooseUpdaterArgs: partial updater runtimes use --repair', () => {
-  assert.deepEqual(chooseUpdaterArgs({ hasBootstrapMarker: true, hasVenvNastech: false, hasVenvPython: true }, 'main'), [
-    '--repair',
-    '--branch',
-    'main'
-  ])
-  assert.deepEqual(chooseUpdaterArgs({ hasBootstrapMarker: true, hasVenvNastech: true, hasVenvPython: false }, 'main'), [
-    '--repair',
-    '--branch',
-    'main'
-  ])
+  assert.deepEqual(
+    chooseUpdaterArgs({ hasBootstrapMarker: true, hasVenvNastech: false, hasVenvPython: true }, 'main'),
+    ['--repair', '--branch', 'main']
+  )
+  assert.deepEqual(
+    chooseUpdaterArgs({ hasBootstrapMarker: true, hasVenvNastech: true, hasVenvPython: false }, 'main'),
+    ['--repair', '--branch', 'main']
+  )
 })
 
 test('chooseUpdaterArgs: passes the branch through unchanged in both modes', () => {

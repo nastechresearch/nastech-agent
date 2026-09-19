@@ -1,8 +1,8 @@
 import { capabilityScoped } from '@/api/client'
-import { addMcpServer, getMcpCatalog, listMcpServers, removeMcpServer } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
 import { prettyName } from '@/lib/text'
+import { addMcpServer, getMcpCatalog, listMcpServers, removeMcpServer } from '@/nastech'
 import { type ComposerSuggestion, registerDraftProvider } from '@/store/composer-suggestions'
 import { $gateway } from '@/store/gateway'
 import { notifyError } from '@/store/notifications'
@@ -83,9 +83,14 @@ export function buildMcpSuggestionIndex(
   entries: readonly Pick<McpCatalogEntry, 'name' | 'url' | 'suggest' | 'auth_type' | 'transport'>[]
 ): SuggestibleServer[] {
   return entries
-    .filter(entry =>
-      entry.transport === 'http' && entry.auth_type === 'oauth' && !entry.suggest?.requires_app
-      && entry.suggest && entry.url && (entry.suggest.keywords.length > 0 || entry.suggest.hosts.length > 0)
+    .filter(
+      entry =>
+        entry.transport === 'http' &&
+        entry.auth_type === 'oauth' &&
+        !entry.suggest?.requires_app &&
+        entry.suggest &&
+        entry.url &&
+        (entry.suggest.keywords.length > 0 || entry.suggest.hosts.length > 0)
     )
     .map(entry => ({
       hosts: entry.suggest!.hosts,
