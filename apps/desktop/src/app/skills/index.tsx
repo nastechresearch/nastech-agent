@@ -1,5 +1,5 @@
-import { compactNumber } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { compactNumber } from '@nastech/shared'
 import { useQuery } from '@tanstack/react-query'
 import type * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -13,6 +13,14 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CountSkeleton } from '@/components/ui/skeleton'
 import type { DesktopRosterAgent } from '@/global'
+import { useI18n } from '@/i18n'
+import { isDesktopToolsetVisible } from '@/lib/desktop-toolsets'
+import { Loader2 } from '@/lib/icons'
+import { queryClient } from '@/lib/query-client'
+import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
+import { normalize } from '@/lib/text'
+import { useStoreSelector } from '@/lib/use-session-slice'
+import { cn } from '@/lib/utils'
 import {
   editLearningNode,
   getLearningNode,
@@ -28,14 +36,6 @@ import {
   setSkillEnabled,
   setToolsetEnabled
 } from '@/nastech'
-import { useI18n } from '@/i18n'
-import { isDesktopToolsetVisible } from '@/lib/desktop-toolsets'
-import { Loader2 } from '@/lib/icons'
-import { queryClient } from '@/lib/query-client'
-import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
-import { normalize } from '@/lib/text'
-import { useStoreSelector } from '@/lib/use-session-slice'
-import { cn } from '@/lib/utils'
 import { $gateway, activeGatewayConnectionId } from '@/store/gateway'
 import { $hubActions, installHubSkill, notifyHubActionFailed, OFFICIAL_SKILLS_KEY } from '@/store/hub-actions'
 import { notify, notifyError } from '@/store/notifications'

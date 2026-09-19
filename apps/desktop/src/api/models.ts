@@ -9,13 +9,7 @@ import type {
   ModelInfoResponse
 } from '@/types/nastech'
 
-import {
-  capabilityScoped,
-  nastechApi,
-  type ProfileScope,
-  profileScoped,
-  STARTUP_REQUEST_TIMEOUT_MS
-} from './client'
+import { capabilityScoped, nastechApi, type ProfileScope, profileScoped, STARTUP_REQUEST_TIMEOUT_MS } from './client'
 
 export function getGlobalModelInfo(profile?: null | string): Promise<ModelInfoResponse> {
   return nastechApi<ModelInfoResponse>({
