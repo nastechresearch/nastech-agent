@@ -21,7 +21,7 @@ Serve an interactive codebase knowledge graph web UI.
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `gitnexus`, `code-intelligence`, `knowledge-graph`, `visualization` |
-| Related skills | [`nastech-agent`](/docs/user-guide/skills/bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent), [`codebase-inspection`](/docs/user-guide/skills/bundled/software-development/software-development-codebase-inspection) |
+| Related skills | [`nastech-agent`](../../bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent.md), [`codebase-inspection`](../../bundled/software-development/software-development-codebase-inspection.md) |
 
 ## Reference: full SKILL.md
 

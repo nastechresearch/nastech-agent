@@ -150,11 +150,7 @@ beforeEach(() => {
   api.mockResolvedValue({ profiles: [] })
   setApiRequestConnection(null)
   setApiRequestProfile(null)
-  vi.stubGlobal('window', {
-    nastechDesktop: { api, connections: { list, setLastUsed } },
-    localStorage,
-    location: window.location
-  })
+  vi.stubGlobal('window', { nastechDesktop: { api, connections: { list, setLastUsed } }, localStorage, location: window.location })
 })
 
 afterEach(() => vi.unstubAllGlobals())

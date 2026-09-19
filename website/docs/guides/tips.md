@@ -9,7 +9,7 @@ description: "Practical advice to get the most out of Nastech Agent — prompt t
 A quick-wins collection of practical tips that make you immediately more effective with Nastech Agent. Each section targets a different aspect — scan the headers and jump to what's relevant.
 
 :::tip Confused which model to pick?
-Run `nastech setup --portal` — you get 300+ models including Claude, GPT-5, and Gemini under one subscription. See [Nastech Portal](/integrations/nastech-portal).
+Run `nastech setup --portal` — you get 300+ models including Claude, GPT-5, and Gemini under one subscription. See [Nastech Portal](../integrations/nastech-portal.md).
 :::
 
 ---
@@ -84,7 +84,7 @@ Create an `AGENTS.md` in your project root with architecture decisions, coding c
 
 Want Nastech to have a stable default voice? Edit `~/.nastech/SOUL.md` (or `$NASTECH_HOME/SOUL.md` if you use a custom Nastech home). Nastech now seeds a starter SOUL automatically and uses that global file as the instance-wide personality source.
 
-For a full walkthrough, see [Use SOUL.md with Nastech](/guides/use-soul-with-nastech).
+For a full walkthrough, see [Use SOUL.md with Nastech](./use-soul-with-nastech.md).
 
 ```markdown
 # Soul
@@ -152,7 +152,7 @@ Instead of running terminal commands one at a time, ask the agent to write a scr
 Use `/model` to switch models mid-session. Use a frontier model (Claude Sonnet/Opus, GPT-4o) for complex reasoning and architecture decisions. Switch to a faster model for simple tasks like formatting, renaming, or boilerplate generation. Keep in mind each switch resets the prompt cache (see above), so on long sessions it's often cheaper to start a fresh session on the other model than to bounce back and forth.
 
 :::tip
-Run `/usage` periodically to see your token consumption. Run `/insights` for a broader view of usage patterns over the last 30 days. To see what your *fixed* per-message cost is before any conversation — system prompt, skills index, memory, tool schemas — run [`nastech prompt-size`](/reference/cli-commands#nastech-prompt-size) (works offline).
+Run `/usage` periodically to see your token consumption. Run `/insights` for a broader view of usage patterns over the last 30 days. To see what your *fixed* per-message cost is before any conversation — system prompt, skills index, memory, tool schemas — run [`nastech prompt-size`](../reference/cli-commands.md#nastech-prompt-size) (works offline).
 :::
 
 ## Messaging Tips

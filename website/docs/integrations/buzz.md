@@ -22,7 +22,7 @@ Nastech integrates with Buzz three ways. Pick by where Nastech runs and what you
 
 Buzz Desktop ships Nastech as a preset runtime. With Nastech installed the normal way, open **Settings → Runtimes** and Nastech appears automatically — discovery resolves the `nastech-acp` launcher on your login-shell PATH, which the installer writes to `~/.local/bin` (and `nastech update` self-heals on older installs).
 
-Full setup, troubleshooting, and the security posture (Buzz auto-approves tool permissions — keep agents owner-only): **[ACP Host Integration → Buzz Desktop](/user-guide/features/acp#buzz-desktop)**
+Full setup, troubleshooting, and the security posture (Buzz auto-approves tool permissions — keep agents owner-only): **[ACP Host Integration → Buzz Desktop](../user-guide/features/acp.md#buzz-desktop)**
 
 ## ② Relay bridge (buzz-acp + ACP)
 
@@ -32,7 +32,7 @@ For a hosted Nastech identity that joins Buzz *channels* while Buzz's own harnes
 Buzz relay <-- WebSocket --> buzz-acp <-- ACP over stdio --> Nastech Agent
 ```
 
-The spawned Nastech uses the same config, credentials, memory, and skills as `nastech` on that host. Key minting, channel discovery, owner-only telemetry (`BUZZ_ACP_RELAY_OBSERVER`), and headless-permission guidance: **[ACP Host Integration → Buzz channels (relay bridge)](/user-guide/features/acp#buzz-channels-relay-bridge)**
+The spawned Nastech uses the same config, credentials, memory, and skills as `nastech` on that host. Key minting, channel discovery, owner-only telemetry (`BUZZ_ACP_RELAY_OBSERVER`), and headless-permission guidance: **[ACP Host Integration → Buzz channels (relay bridge)](../user-guide/features/acp.md#buzz-channels-relay-bridge)**
 
 ## ③ Native gateway platform (recommended for full Nastech)
 
@@ -42,7 +42,7 @@ The bundled `buzz` platform plugin makes Buzz a normal Nastech messaging platfor
 nastech gateway setup   # pick Buzz
 ```
 
-Full configuration reference (env vars, config.yaml, transport modes, access control): **[Messaging → Buzz](/user-guide/messaging/buzz)**
+Full configuration reference (env vars, config.yaml, transport modes, access control): **[Messaging → Buzz](../user-guide/messaging/buzz.md)**
 
 ## Which one should I use?
 

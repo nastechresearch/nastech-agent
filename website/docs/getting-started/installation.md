@@ -77,7 +77,7 @@ nastech setup          # Or run the full setup wizard to configure everything at
 ```
 
 :::tip Fastest path: Nastech Portal
-One subscription covers 300+ models plus the [Tool Gateway](/user-guide/features/tool-gateway) (web search, image generation, TTS, cloud browser). Skip the per-tool key juggling:
+One subscription covers 300+ models plus the [Tool Gateway](../user-guide/features/tool-gateway.md) (web search, image generation, TTS, cloud browser). Skip the per-tool key juggling:
 
 ```bash
 nastech setup --portal
@@ -87,7 +87,7 @@ That logs you in, sets Nastech as your provider, and turns on the Tool Gateway i
 :::
 
 :::tip Already running Nastech on another machine?
-You don't need to rebuild your setup from scratch. Restore a full backup with `nastech import` (see [Exporting Nastech to another machine](/reference/faq#exporting-nastech-to-another-machine)), or bring over a single agent with `nastech profile import` (see [Moving a single profile to another machine](/reference/faq#moving-a-single-profile-to-another-machine)). Note that a profile export excludes credentials by design, so an export alone is not a full backup — [`nastech backup` vs `nastech profile export`](/reference/faq#nastech-backup-vs-nastech-profile-export) explains which to use.
+You don't need to rebuild your setup from scratch. Restore a full backup with `nastech import` (see [Exporting Nastech to another machine](../reference/faq.md#exporting-nastech-to-another-machine)), or bring over a single agent with `nastech profile import` (see [Moving a single profile to another machine](../reference/faq.md#moving-a-single-profile-to-another-machine)). Note that a profile export excludes credentials by design, so an export alone is not a full backup — [`nastech backup` vs `nastech profile export`](../reference/faq.md#nastech-backup-vs-nastech-profile-export) explains which to use.
 :::
 
 ---
@@ -159,7 +159,7 @@ Running Nastech as a dedicated unprivileged user (e.g. a `nastech` systemd servi
    sudo loginctl enable-linger <service-user>
    ```
 
-   See [Messaging Gateway](/user-guide/messaging/) for the service setup itself.
+   See [Messaging Gateway](../user-guide/messaging/index.md) for the service setup itself.
 
 The same pattern works on Arch (the installer uses pacman with the same sudo-detection logic), Fedora/RHEL, and openSUSE — those distros don't support `--with-deps` at all, so an administrator always installs the system libraries separately. The relevant `dnf`/`zypper` commands are printed by the installer.
 

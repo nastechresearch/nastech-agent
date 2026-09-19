@@ -695,7 +695,12 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
       void rpc('wake.start', { surface: 'tui' }).catch(() => undefined)
     }
 
-    rpc<CommandsCatalogResponse>('commands.catalog', {})
+    // Bound to the live session when one exists (reconnect): project-local
+    // skills follow the session's repo. Before the first session the gateway
+    // uses the same workspace it seeds a new session with.
+    const catalogSid = getUiState().sid
+
+    rpc<CommandsCatalogResponse>('commands.catalog', catalogSid ? { session_id: catalogSid } : {})
       .then(r => {
         if (!r?.pairs) {
           return
@@ -1515,12 +1520,7 @@ export function createGatewayEventHandler(ctx: GatewayEventHandlerContext): (ev:
           const msgs: Msg[] = failed
             ? [
                 ...finalMessages.filter(
-                  (m, i) =>
-                    !(
-                      i === finalMessages.length - 1 &&
-                      m.role === 'assistant' &&
-                      isBareErrorText(m.text, payload.error)
-                    )
+                  (m, i) => !(i === finalMessages.length - 1 && m.role === 'assistant' && isBareErrorText(m.text, payload.error))
                 ),
                 { role: 'assistant', text: describeTurnFailure(payload) }
               ]

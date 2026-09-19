@@ -3,8 +3,9 @@ import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { $terminalFontFamily, setTerminalFontFamilyFromConfig } from '@/app/right-sidebar/terminal/terminal-font'
-import { persistString } from '@/lib/storage'
 import { getNastechConfig } from '@/nastech'
+import { persistString } from '@/lib/storage'
+import { $showReasoning, setShowReasoningFromConfig } from '@/store/reasoning-disclosure'
 import {
   $currentCwd,
   $currentFastMode,
@@ -35,6 +36,7 @@ const mockConfig = (config: Record<string, unknown>) =>
 describe('useNastechConfig refreshNastechConfig', () => {
   beforeEach(() => {
     // Reset atoms and localStorage between tests
+    setShowReasoningFromConfig(undefined)
     setCurrentCwd('')
     setCurrentFastMode(false)
     setCurrentModelSource('')
@@ -42,6 +44,25 @@ describe('useNastechConfig refreshNastechConfig', () => {
     setDefaultReasoningEffort('')
     setTerminalFontFamilyFromConfig('')
     persistString(WORKSPACE_CWD_KEY, null)
+  })
+
+  // #49664: the Reasoning Blocks toggle wrote config but the renderer never
+  // read it. A refresh mirrors the key (quoted "false" included) and a
+  // missing key falls back to the DEFAULT_CONFIG default (on).
+  it('mirrors display.show_reasoning and resets a missing key to the default', async () => {
+    mockConfig({ display: { show_reasoning: 'false' } })
+    const { result } = renderHook(() => useNastechConfig({ activeSessionIdRef: { current: null } }))
+
+    await act(async () => {
+      await result.current.refreshNastechConfig()
+    })
+    expect($showReasoning.get()).toBe(false)
+
+    mockConfig({})
+    await act(async () => {
+      await result.current.refreshNastechConfig()
+    })
+    expect($showReasoning.get()).toBe(true)
   })
 
   // Regression: the composer keeps a manual model pick sticky, which skips the
@@ -133,6 +154,7 @@ describe('useNastechConfig refreshNastechConfig', () => {
 
     ownsSwitch = false
     staleConfig.resolve({
+      display: { show_reasoning: false },
       agent: { reasoning_effort: 'high', service_tier: 'priority' },
       terminal: { font_family: 'MesloLGS NF' }
     } as Awaited<ReturnType<typeof getNastechConfig>>)
@@ -145,6 +167,7 @@ describe('useNastechConfig refreshNastechConfig', () => {
     expect($currentReasoningEffort.get()).toBe('')
     expect($currentFastMode.get()).toBe(false)
     expect($terminalFontFamily.get()).toBe('')
+    expect($showReasoning.get()).toBe(true)
   })
 
   it('does not let an older profile config overwrite a newer profile', async () => {

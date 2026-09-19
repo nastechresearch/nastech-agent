@@ -205,10 +205,7 @@ describe('ToolsetConfigPanel', () => {
     const voiceInput = screen.getByDisplayValue('alloy')
     fireEvent.change(voiceInput, { target: { value: 'marin' } })
     await waitFor(() => expect(saveNastechConfigRecord).toHaveBeenCalled(), { timeout: 3000 })
-    const saved = saveNastechConfigRecord.mock.calls.at(-1)?.[0] as Record<
-      string,
-      Record<string, Record<string, string>>
-    >
+    const saved = saveNastechConfigRecord.mock.calls.at(-1)?.[0] as Record<string, Record<string, Record<string, string>>>
     expect(saved.tts.openai.voice).toBe('marin')
     // Unscoped panel (no Capabilities override) → profile rides as undefined,
     // preserving the active-profile default. A scoped panel forwards its scope.
@@ -241,12 +238,10 @@ describe('ToolsetConfigPanel', () => {
 
     fireEvent.change(await screen.findByDisplayValue('alloy'), { target: { value: 'marin' } })
     await waitFor(() => expect(saveNastechConfigRecord).toHaveBeenCalled(), { timeout: 3000 })
-
     const [saved, forwarded] = saveNastechConfigRecord.mock.calls.at(-1) as [
       Record<string, Record<string, Record<string, string>>>,
       unknown
     ]
-
     expect(saved.tts.openai.voice).toBe('marin')
     expect(forwarded).toEqual(scope)
   })

@@ -89,10 +89,7 @@ describe('fetchRuntimeReadinessSignals', () => {
 
     await fetchRuntimeReadinessSignals(requestGateway, 'nastech')
 
-    expect(calls).toEqual([
-      { method: 'setup.status' },
-      { method: 'setup.runtime_check', params: { provider: 'nastech' } }
-    ])
+    expect(calls).toEqual([{ method: 'setup.status' }, { method: 'setup.runtime_check', params: { provider: 'nastech' } }])
   })
 })
 

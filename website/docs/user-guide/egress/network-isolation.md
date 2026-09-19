@@ -196,6 +196,6 @@ docker compose exec gateway \
 ## Related
 
 - [SECURITY.md](https://github.com/NastechResearch/nastech-agent/blob/main/SECURITY.md) — Nastech trust model and vulnerability reporting
-- [Docker](/user-guide/docker) — running Nastech in a container
+- [Docker](../docker.md) — running Nastech in a container
 - [Egress proxy](iron-proxy.md) — credential-injection firewall for the sandbox
 - [docker-compose.yml](https://github.com/NastechResearch/nastech-agent/blob/main/docker-compose.yml) — default compose configuration

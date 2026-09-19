@@ -332,7 +332,7 @@ def test_unaccounted_serve_report_names_serve_remedy_not_gateway_restart(capsys)
     assert report_unaccounted_runtimes(outcomes) is True
     out = capsys.readouterr().out
     assert "serve [default] pid 900" in out
-    assert "nastech-serve.service" in out
+    assert "relaunch `nastech serve`" in out
     assert "nastech gateway restart" not in out
 
 

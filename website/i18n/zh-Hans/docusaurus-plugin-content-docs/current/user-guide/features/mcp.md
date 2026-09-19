@@ -585,7 +585,7 @@ MCP 服务器直接从 Nastech 的会话存储（`~/.nastech/sessions/sessions.j
 
 ## 相关文档
 
-- [在 Nastech 中使用 MCP](/guides/use-mcp-with-nastech)
-- [CLI 命令](/reference/cli-commands)
-- [斜杠命令](/reference/slash-commands)
-- [常见问题](/reference/faq)
+- [在 Nastech 中使用 MCP](../../guides/use-mcp-with-nastech.md)
+- [CLI 命令](../../reference/cli-commands.md)
+- [斜杠命令](../../reference/slash-commands.md)
+- [常见问题](../../reference/faq.md)

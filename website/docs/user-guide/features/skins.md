@@ -259,7 +259,7 @@ npm start
 6. Click **Save** to write the skin YAML to `~/.nastech/skins/`.
 7. Click **Activate** to set it as the current skin (updates `display.skin` in `config.yaml`).
 
-Nastech Mod respects the `NASTECH_HOME` environment variable, so it works with [profiles](/user-guide/profiles) too.
+Nastech Mod respects the `NASTECH_HOME` environment variable, so it works with [profiles](../profiles.md) too.
 
 ## Operational notes
 
