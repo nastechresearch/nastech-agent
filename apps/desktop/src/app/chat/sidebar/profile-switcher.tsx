@@ -18,8 +18,8 @@ import {
   useSortable
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { LOCAL_CONNECTION_ID } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { LOCAL_CONNECTION_ID } from '@nastech/shared'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 
@@ -45,7 +45,6 @@ import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { ProfileGlyph } from '@/components/ui/profile-glyph'
 import { Tip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { DesktopRegistryConnection } from '@/global'
-import { getProfileSoul, updateProfileSoul } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { sortConnectionsForDisplay } from '@/lib/connection-display'
 import { triggerHaptic } from '@/lib/haptics'
@@ -58,6 +57,7 @@ import {
   reorderStepHaptic
 } from '@/lib/reorder'
 import { cn } from '@/lib/utils'
+import { getProfileSoul, updateProfileSoul } from '@/nastech'
 import {
   $activeConnectionId,
   $connectionsRegistry,
@@ -942,7 +942,9 @@ function ProfilePill({
     <ProfileLaunchContextMenu connectionId={connectionId ?? null} label={profile} profile={profile}>
       {button}
     </ProfileLaunchContextMenu>
-  ) : button
+  ) : (
+    button
+  )
 }
 
 // The gateway marker that heads every group on the fleet rail: its kind glyph

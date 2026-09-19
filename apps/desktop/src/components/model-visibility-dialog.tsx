@@ -1,5 +1,5 @@
-import type { ModelOptionProvider, ModelOptionsResult } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import type { ModelOptionProvider, ModelOptionsResult } from '@nastech/shared'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
@@ -10,12 +10,12 @@ import { DisclosureCaret } from '@/components/ui/disclosure-caret'
 import { GlyphSpinner } from '@/components/ui/glyph-spinner'
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { Switch } from '@/components/ui/switch'
-import type { NastechGateway } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { Search } from '@/lib/icons'
 import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { displayModelName, modelDisplayParts } from '@/lib/model-status-label'
 import { foldIncludes, normalize } from '@/lib/text'
+import type { NastechGateway } from '@/nastech'
 import {
   $visibleModels,
   collapseModelFamilies,

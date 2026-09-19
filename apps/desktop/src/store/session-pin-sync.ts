@@ -23,8 +23,8 @@
 
 import { atom } from 'nanostores'
 
-import { setSessionPinnedRemote } from '@/nastech'
 import { onConnectionScopeChange } from '@/lib/connection-scoped'
+import { setSessionPinnedRemote } from '@/nastech'
 import { $pinnedSessionIds, pinSession, unpinSession } from '@/store/layout'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $cronSessions, $messagingSessions, $sessions, sessionMatchesStoredId, sessionPinId } from '@/store/session'

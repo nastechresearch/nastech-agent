@@ -1,12 +1,12 @@
-import { DEFAULT_REASONING_EFFORT, type ModelOptionsResult } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { DEFAULT_REASONING_EFFORT, type ModelOptionsResult } from '@nastech/shared'
 import { useQuery } from '@tanstack/react-query'
 
 import { useSessionView } from '@/app/chat/session-view'
-import type { NastechGateway } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { currentPickerSelection } from '@/lib/model-status-label'
+import type { NastechGateway } from '@/nastech'
 import { $modelPresets, applyModelPreset, modelPresetKey, setModelPreset } from '@/store/model-presets'
 import { notifyError } from '@/store/notifications'
 import {

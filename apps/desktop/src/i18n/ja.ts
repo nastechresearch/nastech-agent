@@ -7,12 +7,14 @@ export const ja = defineLocale({
     listView: 'リスト表示',
     cardView: 'カード表示',
     installTitle: (name: string) => `「${name}」をインストールしますか？`,
-    installDescription: 'このスキルは新しいセッションで利用できます。信頼できる提供元からのみインストールしてください。',
+    installDescription:
+      'このスキルは新しいセッションで利用できます。信頼できる提供元からのみインストールしてください。',
     installTo: 'インストール先',
     thisComputer: 'このコンピューター',
     installing: 'インストール中…',
     installComplete: (name: string) => `「${name}」をインストールしました`,
-    destinationChanged: 'インストール先が変更されました。このダイアログを閉じ、インストールリンクを開き直してください。',
+    destinationChanged:
+      'インストール先が変更されました。このダイアログを閉じ、インストールリンクを開き直してください。',
     browse: '閲覧',
     installed: 'インストール済み',
     searchSkills: 'スキルを検索',
@@ -538,7 +540,8 @@ export const ja = defineLocale({
       sessionDensityComfortable: '標準',
       sessionDensityDetailed: '詳細',
       tabStripTitle: 'タブバー',
-      tabStripDesc: 'ゾーンの上にタブを表示します。自動では、他にチャットやタイルのゾーンがない限り、ペインが1つのときに隠します。',
+      tabStripDesc:
+        'ゾーンの上にタブを表示します。自動では、他にチャットやタイルのゾーンがない限り、ペインが1つのときに隠します。',
       tabStripAuto: '自動',
       tabStripAlways: '常に表示',
       tabStripNever: '表示しない',
@@ -1422,7 +1425,8 @@ export const ja = defineLocale({
       activeBackend: '使用中',
       activeBackendHint: 'これが現在アクティブなバックエンドです',
       useBackend: 'このバックエンドを使う',
-      nastechIncluded: 'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
+      nastechIncluded:
+        'Nastech サブスクリプションに含まれています。有効にするには Nastech Portal にサインインしてください。',
       nastechAuthNeededTitle: 'Nastech Portal にサインイン',
       nastechAuthNeededMessage: provider =>
         `${provider} は保存されましたが、Nastech Portal にサインインするまで有効になりません。`,
@@ -1465,8 +1469,7 @@ export const ja = defineLocale({
         selectedTitle: 'バックエンドを選択しました',
         selectedMessage: backend => `ターミナルコマンドは ${backend} で実行されます。新しいセッションに適用されます。`,
         failedSelect: backend => `${backend} の選択に失敗しました`,
-        needsSetupHint:
-          'このバックエンドは選択されていますが、セットアップが完了するまでコマンドは失敗します。',
+        needsSetupHint: 'このバックエンドは選択されていますが、セットアップが完了するまでコマンドは失敗します。',
         needsSetupConfirmTitle: backend => `それでも ${backend} を選択しますか？`,
         needsSetupConfirmDescription: detail =>
           `${detail} この変更後に開始されるセッションは、セットアップが完了するまでターミナルとファイルツールを使用できません。`,
@@ -2770,7 +2773,8 @@ export const ja = defineLocale({
     done: '完了',
     applyingBody:
       'Nastech アップデーターが独自のウィンドウで引き継ぎ、完了後に自動的に Nastech を再度開きます。更新中はご自分で Nastech を開き直さないでください。',
-    applyingBodyBackend: 'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
+    applyingBodyBackend:
+      'リモートバックエンドが更新を適用して再起動します。復帰すると Nastech が自動的に再接続します。',
     applyingClose: 'このウィンドウは更新中に閉じ、その後 Nastech が自動的に再度開きます。',
     errorTitle: '更新が完了しませんでした',
     errorBody: 'ご安心ください。何も失われていません。今すぐ再試行できます。',
@@ -3565,7 +3569,8 @@ export const ja = defineLocale({
     sudoTitle: '管理者パスワード',
     sudoDesc:
       'sudo パスワードを入力する前にコマンドを確認してください。パスワードは実行するエージェントに送信され、このセッション中キャッシュされます。',
-    sudoCommandUnavailable: 'エージェントからコマンドが提供されていません。会話で確認できない場合はキャンセルしてください。',
+    sudoCommandUnavailable:
+      'エージェントからコマンドが提供されていません。会話で確認できない場合はキャンセルしてください。',
     sudoPlaceholder: 'sudo パスワード',
     secretTitle: 'シークレットが必要です',
     secretDesc: 'Nastech は続行するための認証情報が必要です。',
