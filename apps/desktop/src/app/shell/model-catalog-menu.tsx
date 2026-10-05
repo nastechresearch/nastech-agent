@@ -1,6 +1,6 @@
+import { useStore } from '@nanostores/react'
 import type { ModelOptionProvider, ModelOptionsResult, ModelPricing } from '@nastech/shared'
 import { DEFAULT_REASONING_EFFORT } from '@nastech/shared'
-import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import {
   createContext,
@@ -31,7 +31,6 @@ import {
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tip, TipHintLabel } from '@/components/ui/tooltip'
-import type { NastechGateway } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { isSubmitEnter } from '@/lib/ime'
@@ -40,6 +39,7 @@ import { displayModelName, modelDisplayParts } from '@/lib/model-status-label'
 import { reasoningEffortLabel } from '@/lib/reasoning-effort'
 import { foldIncludes, normalize } from '@/lib/text'
 import { cn } from '@/lib/utils'
+import type { NastechGateway } from '@/nastech'
 import { $customModels, addCustomModel, customModelCandidate, withCustomModels } from '@/store/custom-models'
 import { $favoriteModels, favoriteModelKey, toggleFavoriteModel } from '@/store/favorite-models'
 import { $localModelsEnabled } from '@/store/local-models-flag'
