@@ -28,7 +28,8 @@ from typing import Iterable
 # name/prefix instead of grepping declare lines (see below / issue #71296).
 _SNAPSHOT_EXCLUDED_ENV_REGEX = (
     "^declare -x (NASTECH_SESSION_|NASTECH_UI_SESSION_ID|NASTECH_CRON_AUTO_DELIVER_|"
-    "NASTECH_CRON_SESSION|NASTECH_BROWSER_CONTROL_|NASTECH_DELEGATED_CHILD_CONTEXT)")
+    "NASTECH_CRON_SESSION|NASTECH_BROWSER_CONTROL_|NASTECH_DELEGATED_CHILD_CONTEXT|"
+    "NASTECH_RPC_|NASTECH_KERNEL_DIR)")
 _SHELL_ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 # mktemp template suffix + the shell variable holding the allocated temp path.
@@ -76,6 +77,10 @@ def _export_dump_excluding_session_vars(tmp_path: str, excluded_names: Iterable[
         # env; a snapshot taken inside that window would re-assert them on every
         # later ``source`` and fence the PARENT session's kanban CLI (#90782).
         "NASTECH_DELEGATED_CHILD_CONTEXT NASTECH_CRON_SESSION "
+        # Remote code-execution channel vars (RPC token, kernel/rpc dirs): a
+        # leaked token in the snapshot would re-export into every later command
+        # on the backend and outlive the private dir it protects.
+        "${!NASTECH_RPC_*} NASTECH_KERNEL_DIR "
         f"NASTECH_UI_SESSION_ID{extra_unset} 2>/dev/null; "
         "export -p; ) || true; } "
         f"> {tmp_path}")

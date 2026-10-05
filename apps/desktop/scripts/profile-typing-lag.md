@@ -101,10 +101,10 @@ you can do a comparison diff in Chrome DevTools Memory tab.
 
 ```bash
 node apps/desktop/scripts/profile-typing.mjs \
-  --chars=400 --cps=30 --out=/tmp/nastech-typing
-# → /tmp/nastech-typing.cpuprofile  (open in Chrome DevTools Performance)
-# → /tmp/nastech-typing.before.heapsnapshot
-# → /tmp/nastech-typing.after.heapsnapshot
+  --chars=400 --cps=30 --out=$HOME/.nastech/cache/scratch/nastech-typing
+# → ~/.nastech/cache/scratch/nastech-typing.cpuprofile  (open in Chrome DevTools Performance)
+# → ~/.nastech/cache/scratch/nastech-typing.before.heapsnapshot
+# → ~/.nastech/cache/scratch/nastech-typing.after.heapsnapshot
 ```
 
 Loading the cpuprofile: Chrome DevTools → Performance tab → drag the file

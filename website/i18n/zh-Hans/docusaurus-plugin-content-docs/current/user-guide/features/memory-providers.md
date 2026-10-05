@@ -42,12 +42,16 @@ memory:
 
 ### Honcho
 
+:::info 插件目录
+Honcho 由 [Plastic Labs](https://github.com/plastic-labs/honcho/tree/main/nastech-plugin-honcho) 维护，从[插件目录](./plugins.md)安装，不再随 Nastech 内置。它就是之前内置的同一个提供者：工具、配置文件和 `nastech honcho` 命令都没有变化。
+:::
+
 AI 原生的跨会话用户建模，具备辩证推理、会话范围上下文注入、语义搜索和持久化结论。基础上下文现在包含会话摘要以及用户表示和 peer card，使 Agent 能感知已讨论的内容。
 
 | | |
 |---|---|
 | **适合场景** | 具有跨会话上下文的多 Agent 系统、用户-Agent 对齐 |
-| **依赖** | `pip install honcho-ai` + [API key](https://app.honcho.dev) 或自托管实例 |
+| **依赖** | `nastech plugins install honcho`（同时安装 `honcho-ai` SDK）；[API key](https://app.honcho.dev) 或自托管实例 |
 | **数据存储** | Honcho Cloud 或自托管 |
 | **费用** | Honcho 定价（云端）/ 免费（自托管） |
 
@@ -68,7 +72,7 @@ nastech memory setup        # 选择 "honcho" — 运行 Honcho 专属的安装�
 
 旧版 `nastech honcho setup` 命令仍然有效（现在会重定向到 `nastech memory setup`），但只有在 Honcho 被选为激活记忆提供者后才会注册。
 
-**配置：** `$NASTECH_HOME/honcho.json`（profile 本地）或 `~/.honcho/config.json`（全局）。解析顺序：`$NASTECH_HOME/honcho.json` > `~/.nastech/honcho.json` > `~/.honcho/config.json`。参见[配置参考](https://github.com/nastech-ai/nastech-agent/blob/main/plugins/memory/honcho/README.md)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
+**配置：** `$NASTECH_HOME/honcho.json`（profile 本地）或 `~/.honcho/config.json`（全局）。解析顺序：`$NASTECH_HOME/honcho.json` > `~/.nastech/honcho.json` > `~/.honcho/config.json`。参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/nastech-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
 
 <details>
 <summary>完整配置参考</summary>
@@ -197,7 +201,7 @@ nastech honcho sync
 
 通过 [Honcho 控制台](https://app.honcho.dev) 设置的服务端开关优先于本地默认值——在会话初始化时同步回来。
 
-参见 [Honcho 页面](./honcho.md#observation-directional-vs-unified) 获取完整的 observation 参考。
+参见 [Honcho 页面](./honcho.md#观察模式定向-vs-统一) 获取完整的 observation 参考。
 
 <details>
 <summary>完整 honcho.json 示例（多 profile）</summary>
@@ -255,7 +259,11 @@ nastech honcho sync
 
 </details>
 
-参见[配置参考](https://github.com/nastech-ai/nastech-agent/blob/main/plugins/memory/honcho/README.md)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
+参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/nastech-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
+
+#### 从内置 Honcho 升级
+
+早期 Nastech 版本内置了 Honcho。如果某个 profile 仍配置 `memory.provider: honcho`，Nastech 会在下次启动或运行 `nastech update` 时自动安装插件目录中的插件——你的 `~/.honcho/config.json`（或 `$NASTECH_HOME/honcho.json`）、host 块、peer 和会话映射都按原样读取，记忆不会丢失。如需手动安装，或启动时机器无法联网，请运行 `nastech plugins install honcho`。
 
 
 ---
@@ -267,7 +275,7 @@ nastech honcho sync
 | | |
 |---|---|
 | **适合场景** | 具有结构化浏览功能的自托管知识管理 |
-| **依赖** | `pip install openviking` + 运行中的服务器 |
+| **依赖** | 独立部署的 OpenViking 服务器；通过 `nastech memory setup` 准备 Nastech 端依赖 |
 | **数据存储** | 自托管（本地或云端） |
 | **费用** | 免费（开源，AGPL-3.0） |
 
@@ -275,8 +283,9 @@ nastech honcho sync
 
 **安装：**
 ```bash
-# 先启动 OpenViking 服务器
-pip install openviking
+# 使用独立部署的 OpenViking 服务器，不要安装到 Nastech 的依赖环境
+openviking-server init
+openviking-server doctor
 openviking-server
 
 # 然后配置 Nastech
@@ -285,6 +294,8 @@ nastech memory setup    # 选择 "openviking"
 nastech config set memory.provider openviking
 echo "OPENVIKING_ENDPOINT=http://localhost:1933" >> ~/.nastech/.env
 ```
+
+当端点为本地地址且没有进程在监听时，Nastech 会在后台启动 `openviking-server`。该服务器会获得你的模型提供商密钥（供其嵌入和 VLM 模型使用）、你的 `HOME` 与 `OPENVIKING_CONFIG_FILE`，但绝不会获得机器人、网关或中继令牌，也不会获得 Nastech 的 `PYTHONPATH`。服务器需要的其他设置请写入 `ov.conf`。
 
 **主要特性：**
 - 分层上下文加载：L0（约 100 tokens）→ L1（约 2k）→ L2（完整）
@@ -300,7 +311,7 @@ echo "OPENVIKING_ENDPOINT=http://localhost:1933" >> ~/.nastech/.env
 | | |
 |---|---|
 | **适合场景** | 免维护的记忆管理——Mem0 自动处理提取 |
-| **依赖** | `pip install mem0ai` + API key |
+| **依赖** | `nastech memory setup` 通过 PM 准备 Mem0 SDK；API key 或自托管/OSS 服务配置 |
 | **数据存储** | Mem0 Cloud |
 | **费用** | Mem0 定价 |
 
@@ -352,7 +363,7 @@ echo "HINDSIGHT_API_KEY=your-key" >> ~/.nastech/.env
 
 | 键 | 默认值 | 描述 |
 |-----|---------|-------------|
-| `mode` | `cloud` | `cloud` 或 `local` |
+| `mode` | `cloud` | `cloud`、`local_embedded` 或 `local_external` |
 | `bank_id` | `nastech` | 记忆库标识符 |
 | `recall_budget` | `mid` | 召回彻底程度：`low` / `mid` / `high` |
 | `memory_mode` | `hybrid` | `hybrid`（上下文 + 工具）、`context`（仅自动注入）、`tools`（仅工具） |
@@ -467,7 +478,7 @@ nastech config set memory.provider byterover
 | | |
 |---|---|
 | **适合场景** | 带用户 profile 和会话级图谱构建的语义召回 |
-| **依赖** | `pip install supermemory` + [云端 API key](http://app.supermemory.ai/integrations?connect=nastech)，或[自托管服务器](https://supermemory.ai/docs/self-hosting/overview) |
+| **依赖** | `nastech memory setup` 通过 PM 准备 Supermemory SDK；[云端 API key](http://app.supermemory.ai/integrations?connect=nastech)，或[自托管服务器](https://supermemory.ai/docs/self-hosting/overview) |
 | **数据存储** | Supermemory 云端或自托管 |
 | **费用** | 云端按 Supermemory 定价 / 自托管免费 |
 

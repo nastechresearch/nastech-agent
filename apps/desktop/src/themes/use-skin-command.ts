@@ -2,12 +2,15 @@ import { useCallback } from 'react'
 
 import { useTheme } from './context'
 
-// Retired skin names land on the canonical Nastech skin so old muscle memory works.
+// Old names land on a shipped theme so muscle memory works. `gold`/`nastech`
+// only ever meant the classic gold look, so they reach Classic Nastech; `default`
+// stays Nastech because it is also the stock config value, which Desktop reads as
+// "the Desktop default" everywhere else (boot, backend sync, setTheme).
 const ALIASES: Record<string, string> = {
   ares: 'ember',
   default: 'nastech',
-  gold: 'nastech',
-  nastech: 'nastech',
+  gold: 'classic',
+  nastech: 'classic',
   'nastech-light': 'nastech'
 }
 

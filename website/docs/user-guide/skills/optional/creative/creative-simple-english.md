@@ -15,7 +15,7 @@ Rewrite text to ASD-STE100 Simplified Technical English.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/creative/simple-english` |
-| Path | `optional-skills/creative\simple-english` |
+| Path | `optional-skills/creative/simple-english` |
 | Version | `1.2.0` |
 | Author | AminBlg (https://github.com/AminBlg/SimpleEnglish), ported by Nastech Agent |
 | License | MIT |

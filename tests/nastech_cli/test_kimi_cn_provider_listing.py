@@ -16,7 +16,6 @@ from unittest.mock import patch
 
 from nastech_cli.model_switch import (
     list_authenticated_providers,
-    parse_model_flags,
     switch_model,
 )
 from nastech_cli.providers import resolve_provider_full

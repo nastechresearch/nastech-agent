@@ -11,7 +11,7 @@ runtime resolver then makes of it.
 
 import os
 
-import yaml
+import nastech_yaml as yaml
 
 import nastech_cli.runtime_provider as rp
 from nastech_cli.model_setup_flows_bedrock import _model_flow_bedrock_api_key

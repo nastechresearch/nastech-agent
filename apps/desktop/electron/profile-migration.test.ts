@@ -528,10 +528,7 @@ test('migrateActiveProfileIfMissing prefers a single running gateway over heuris
 // ---------------------------------------------------------------------------
 
 test('profileStateDbPath puts default at nastechHome, named under profilesRoot', () => {
-  assert.equal(
-    profileStateDbPath('default', '/home/u/.nastech', '/home/u/.nastech/profiles'),
-    '/home/u/.nastech/state.db'
-  )
+  assert.equal(profileStateDbPath('default', '/home/u/.nastech', '/home/u/.nastech/profiles'), '/home/u/.nastech/state.db')
   assert.equal(
     profileStateDbPath('conduit', '/home/u/.nastech', '/home/u/.nastech/profiles'),
     '/home/u/.nastech/profiles/conduit/state.db'

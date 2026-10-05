@@ -4,9 +4,9 @@ import type {
   CustomEndpointUpdate,
   CustomEndpointValidationResponse,
   EnvVarInfo,
-  LogsResponse,
   NastechConfig,
   NastechConfigRecord,
+  LogsResponse,
   OAuthPollResponse,
   OAuthProvidersResponse,
   OAuthStartResponse,
@@ -15,6 +15,74 @@ import type {
 } from '@/types/nastech'
 
 import { capabilityScoped, nastechApi, type ProfileScope, profileScoped, STARTUP_REQUEST_TIMEOUT_MS } from './client'
+
+type ConfigReadOrigin = { connectionId?: string; priority?: 'foreground'; profile?: string }
+
+const configReadOrigins = new WeakMap<object, ConfigReadOrigin>()
+// Every origin object ever bound, so resolveConfigWriteScope can tell a
+// captured read origin handed back as `writeScope` apart from a fresh
+// `{ connectionId, profile }` pin from the scope selector.
+const knownConfigReadOrigins = new WeakSet<object>()
+
+/** Snapshot the `(connectionId, profile)` that served a config GET. */
+export function bindConfigReadOrigin(record: object, origin: ConfigReadOrigin): void {
+  configReadOrigins.set(record, origin)
+  knownConfigReadOrigins.add(origin)
+}
+
+export function peekConfigReadOrigin(record: object | undefined | null): ConfigReadOrigin | undefined {
+  return record ? configReadOrigins.get(record) : undefined
+}
+
+/** Carry `source`'s read origin onto a record derived from it, so the next write still routes to the gateway that served the GET. */
+export function retainConfigReadOrigin<T extends object>(next: T, source: object | null | undefined): T {
+  const origin = peekConfigReadOrigin(source)
+
+  if (origin) {
+    bindConfigReadOrigin(next, origin)
+  }
+
+  return next
+}
+
+/**
+ * Route a config write to the identity that served the matching read.
+ * An explicit `{ connectionId, profile }` pin wins. A GET-derived record
+ * keeps its captured origin even after the registry primary changes.
+ * Unbound writes (no captured origin, no object pin) keep the live ambient
+ * capability scope — e.g. reset-to-defaults on the current connection.
+ */
+export function resolveConfigWriteScope(
+  record: object | undefined,
+  requestScope?: ProfileScope
+): { connectionId?: string; priority?: 'foreground'; profile?: string } {
+  if (requestScope && typeof requestScope === 'object') {
+    // A captured read origin (the hook's `writeScope`) is already a
+    // capabilityScoped() result. Spread it exactly like the WeakMap branch
+    // below instead of re-running capabilityScoped, which would stamp
+    // `priority: 'foreground'` onto an AMBIENT origin that never carried it —
+    // the two branches must yield the same tag for the same read.
+    return knownConfigReadOrigins.has(requestScope)
+      ? { ...(requestScope as ConfigReadOrigin) }
+      : capabilityScoped(requestScope)
+  }
+
+  const captured = peekConfigReadOrigin(record)
+
+  if (captured) {
+    const profile = typeof requestScope === 'string' ? requestScope.trim() : ''
+
+    // Spread, don't rebuild: the captured origin is a capabilityScoped()
+    // result and may carry `priority: 'foreground'`; an explicit profile
+    // string gets the same foreground priority profileScoped(string) grants.
+    return {
+      ...captured,
+      ...(profile ? { profile, priority: 'foreground' as const } : {})
+    }
+  }
+
+  return capabilityScoped(requestScope)
+}
 
 export function getStatus(): Promise<StatusResponse> {
   return nastechApi<StatusResponse>({
@@ -68,19 +136,34 @@ export function getNastechConfig(profile?: string): Promise<NastechConfig> {
   })
 }
 
+/** GET a config record on the capability scope and bind the serving
+ *  `(connectionId, profile)` to it so the matching write routes back there. */
+async function fetchBoundConfigRecord(
+  profile: ProfileScope,
+  request: { path: string; timeoutMs?: number }
+): Promise<NastechConfigRecord> {
+  const origin = capabilityScoped(profile ?? undefined)
+
+  const record = await window.nastechDesktop.api<NastechConfigRecord>({ ...origin, ...request })
+
+  if (record && typeof record === 'object') {
+    bindConfigReadOrigin(record, origin)
+  }
+
+  return record
+}
+
 export function getNastechConfigRecord(
   profile?: ProfileScope,
   { includeDefaults = true }: { includeDefaults?: boolean } = {}
 ): Promise<NastechConfigRecord> {
-  return window.nastechDesktop.api<NastechConfigRecord>({
-    ...capabilityScoped(profile),
+  return fetchBoundConfigRecord(profile, {
     path: includeDefaults ? '/api/config' : '/api/config?include_defaults=false'
   })
 }
 
 export function getNastechConfigDefaults(): Promise<NastechConfigRecord> {
-  return nastechApi<NastechConfigRecord>({
-    ...profileScoped(),
+  return fetchBoundConfigRecord(undefined, {
     path: '/api/config/defaults',
     timeoutMs: STARTUP_REQUEST_TIMEOUT_MS
   })
@@ -95,11 +178,11 @@ export function getNastechConfigSchema(profile?: null | string): Promise<ConfigS
 
 export function saveNastechConfig(
   config: NastechConfigRecord,
-  profile?: null | string,
+  profile?: ProfileScope,
   { preserveLanguage = false }: { preserveLanguage?: boolean } = {}
 ): Promise<{ ok: boolean }> {
-  return nastechApi<{ ok: boolean }>({
-    ...profileScoped(profile),
+  return window.nastechDesktop.api<{ ok: boolean }>({
+    ...resolveConfigWriteScope(config, profile),
     path: preserveLanguage ? '/api/config?preserve_language=true' : '/api/config',
     method: 'PUT',
     body: { config }
@@ -111,7 +194,7 @@ export function saveNastechConfig(
  *  on another registered gateway), mirroring getNastechConfigRecord. */
 export function saveNastechConfigRecord(config: NastechConfigRecord, profile?: ProfileScope): Promise<{ ok: boolean }> {
   return window.nastechDesktop.api<{ ok: boolean }>({
-    ...capabilityScoped(profile),
+    ...resolveConfigWriteScope(config, profile),
     path: '/api/config',
     method: 'PUT',
     body: { config }
@@ -125,12 +208,19 @@ export function getEnvVars(profile?: null | string): Promise<Record<string, EnvV
   })
 }
 
-export function setEnvVar(key: string, value: string, profile?: ProfileScope): Promise<{ ok: boolean }> {
+// `providerSetup`: the caller is connecting a model provider, so shared metrics count the save as a
+// provider setup even when a tool panel uses the same key (Gemini, xAI...).
+export function setEnvVar(
+  key: string,
+  value: string,
+  profile?: ProfileScope,
+  { providerSetup = false }: { providerSetup?: boolean } = {}
+): Promise<{ ok: boolean }> {
   return window.nastechDesktop.api<{ ok: boolean }>({
     ...capabilityScoped(profile),
     path: '/api/env',
     method: 'PUT',
-    body: { key, value }
+    body: providerSetup ? { key, provider_setup: true, value } : { key, value }
   })
 }
 
@@ -155,59 +245,76 @@ export function revealEnvVar(key: string, profile?: ProfileScope): Promise<{ key
 export function validateProviderCredential(
   key: string,
   value: string,
-  apiKey?: string
-): Promise<{ ok: boolean; reachable: boolean; message: string; models?: string[] }> {
-  return nastechApi<{ ok: boolean; reachable: boolean; message: string; models?: string[] }>({
-    ...profileScoped(),
+  apiKey?: string,
+  profile?: ProfileScope
+): Promise<{ ok: boolean; reachable: boolean; message: string; models?: string[]; resolved_base_url?: string }> {
+  return window.nastechDesktop.api<{
+    ok: boolean
+    reachable: boolean
+    message: string
+    models?: string[]
+    resolved_base_url?: string
+  }>({
+    ...capabilityScoped(profile),
     path: '/api/providers/validate',
     method: 'POST',
     body: { key, value, api_key: apiKey ?? '' }
   })
 }
 
-export function getCustomEndpoints(): Promise<CustomEndpointsResponse> {
+export function getCustomEndpoints(profile?: null | string): Promise<CustomEndpointsResponse> {
   return nastechApi<CustomEndpointsResponse>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: '/api/providers/custom-endpoints'
   })
 }
 
-export function saveCustomEndpoint(endpoint: CustomEndpointUpdate): Promise<CustomEndpointsResponse> {
+export function saveCustomEndpoint(
+  endpoint: CustomEndpointUpdate,
+  profile?: null | string
+): Promise<CustomEndpointsResponse> {
   return nastechApi<CustomEndpointsResponse>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: '/api/providers/custom-endpoints',
     method: 'POST',
     body: endpoint
   })
 }
 
-export function validateCustomEndpoint(endpoint: CustomEndpointUpdate): Promise<CustomEndpointValidationResponse> {
+export function validateCustomEndpoint(
+  endpoint: CustomEndpointUpdate,
+  profile?: null | string
+): Promise<CustomEndpointValidationResponse> {
   return nastechApi<CustomEndpointValidationResponse>({
+    ...profileScoped(profile),
     path: '/api/providers/custom-endpoints/validate',
     method: 'POST',
     body: endpoint
   })
 }
 
-export function activateCustomEndpoint(id: string): Promise<{ ok: boolean; provider: string; model: string }> {
+export function activateCustomEndpoint(
+  id: string,
+  profile?: null | string
+): Promise<{ ok: boolean; provider: string; model: string }> {
   return nastechApi<{ ok: boolean; provider: string; model: string }>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: `/api/providers/custom-endpoints/${encodeURIComponent(id)}/activate`,
     method: 'POST'
   })
 }
 
-export function deleteCustomEndpoint(id: string): Promise<CustomEndpointsResponse> {
+export function deleteCustomEndpoint(id: string, profile?: null | string): Promise<CustomEndpointsResponse> {
   return nastechApi<CustomEndpointsResponse>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: `/api/providers/custom-endpoints/${encodeURIComponent(id)}`,
     method: 'DELETE'
   })
 }
 
-export function listOAuthProviders(profile?: null | string): Promise<OAuthProvidersResponse> {
-  return nastechApi<OAuthProvidersResponse>({
-    ...profileScoped(profile),
+export function listOAuthProviders(profile?: ProfileScope): Promise<OAuthProvidersResponse> {
+  return window.nastechDesktop.api<OAuthProvidersResponse>({
+    ...capabilityScoped(profile),
     path: '/api/providers/oauth'
   })
 }
@@ -236,10 +343,10 @@ export function submitOAuthCode(
   providerId: string,
   sessionId: string,
   code: string,
-  profile?: null | string
+  profile?: ProfileScope
 ): Promise<OAuthSubmitResponse> {
-  return nastechApi<OAuthSubmitResponse>({
-    ...profileScoped(profile),
+  return window.nastechDesktop.api<OAuthSubmitResponse>({
+    ...capabilityScoped(profile),
     path: `/api/providers/oauth/${encodeURIComponent(providerId)}/submit`,
     method: 'POST',
     body: { session_id: sessionId, code }
@@ -257,9 +364,9 @@ export function pollOAuthSession(
   })
 }
 
-export function cancelOAuthSession(sessionId: string, profile?: null | string): Promise<{ ok: boolean }> {
-  return nastechApi<{ ok: boolean }>({
-    ...profileScoped(profile),
+export function cancelOAuthSession(sessionId: string, profile?: ProfileScope): Promise<{ ok: boolean }> {
+  return window.nastechDesktop.api<{ ok: boolean }>({
+    ...capabilityScoped(profile),
     path: `/api/providers/oauth/sessions/${encodeURIComponent(sessionId)}`,
     method: 'DELETE'
   })

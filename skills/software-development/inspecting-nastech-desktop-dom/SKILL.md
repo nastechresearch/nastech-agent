@@ -122,10 +122,10 @@ When there is no port, or you must not disturb the user's window:
 
 ```bash
 cd apps/desktop
-NASTECH_HOME=/tmp/cdp-probe-home \
+NASTECH_HOME=$HOME/.nastech/cache/scratch/cdp-probe-home \
 NASTECH_DESKTOP_DEV_SERVER=http://127.0.0.1:5174 \
 NASTECH_DESKTOP_CDP_PORT=9333 \
-  npx electron . --user-data-dir=/tmp/cdp-probe-userdata
+  npx electron . --user-data-dir=$HOME/.nastech/cache/scratch/cdp-probe-userdata
 ```
 
 The separate `--user-data-dir` dodges Electron's single-instance lock, so it

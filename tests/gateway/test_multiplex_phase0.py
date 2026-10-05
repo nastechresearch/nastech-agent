@@ -11,7 +11,7 @@ Covers the three Phase 0 deliverables:
 import pytest
 from datetime import datetime
 from unittest.mock import patch
-import yaml
+import nastech_yaml as yaml
 
 from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 from gateway.config import GatewayConfig, Platform

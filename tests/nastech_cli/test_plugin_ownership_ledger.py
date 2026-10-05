@@ -8,7 +8,7 @@ from threading import Event
 from time import monotonic, sleep
 from types import MethodType
 
-import yaml
+import nastech_yaml as yaml
 
 
 def _write_plugin(nastech_home: Path) -> None:

@@ -9,7 +9,7 @@ To run:
     cd ~/.nastech/cache/darwinian-evolver/darwinian_evolver
     OPENROUTER_API_KEY=... uv run --with openai python /path/to/this_file.py \
         --num_iterations 3 --num_parents_per_iteration 2 \
-        --output_dir /tmp/my_problem
+        --output_dir ~/.nastech/cache/scratch/my_problem
 
 The pattern mirrors `scripts/parrot_openrouter.py` (the working reference).
 """

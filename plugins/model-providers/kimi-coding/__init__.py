@@ -5,14 +5,18 @@ from typing import Any
 from urllib.parse import urlparse
 
 from agent.reasoning_effort import KIMI_K3_EFFORTS, KIMI_K3_OVERRIDES, thinking_toggle_extras
-from nastech_cli import __version__ as _NASTECH_VERSION
+from nastech_cli.version_info import get_version_info
 from providers import register_provider
 from providers.base import OMIT_TEMPERATURE, ProviderProfile
 
 _HEADERS = {
     "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
     "X-Title": "Nastech Agent",
-    "User-Agent": f"NastechAgent/{_NASTECH_VERSION}",
+    "User-Agent": f"NastechAgent/{get_version_info().base_version}",
+    # Exclude brotli: httpx's brotlicffi backend has a streaming decode bug on
+    # Moonshot's content-encoding: br SSE responses (#28043, #48428, #59556).
+    # gzip sidesteps it while still compressing the transfer.
+    "Accept-Encoding": "gzip",
 }
 
 

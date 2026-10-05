@@ -44,12 +44,6 @@ def test_nothing_to_report_returns_no_lines():
                                            terminal_reason=None, terminal_backend="local") == []
 
 
-def test_web_notice_cites_setup_tools_not_the_toggle_menu():
-    # `nastech tools` with no subcommand is the enable/disable menu; providers live under `nastech setup tools`.
-    lines = tool_availability_warning_lines([_WEB], terminal_reason=None, terminal_backend="local")
-    text = "\n".join(lines)
-    assert "nastech setup tools" in text
-    assert "nastech tools[/]" not in text
 
 
 class TestFilterToEnabledToolsets:

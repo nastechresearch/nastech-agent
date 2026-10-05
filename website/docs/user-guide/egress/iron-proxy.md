@@ -8,7 +8,7 @@ This release wires the egress proxy into the Docker backend only. Modal, Daytona
 
 ## What it is
 
-- A managed `iron-proxy` subprocess on the host, lazy-installed into `~/.nastech/bin/iron-proxy`
+- An `iron-proxy` subprocess on the host, with its pinned binary in the PM tool store
 - A local CA at `~/.nastech/proxy/ca.crt` that the sandbox trusts so iron-proxy can MITM TLS and rewrite headers
 - A `proxy.yaml` config at `~/.nastech/proxy/proxy.yaml` listing the upstream hosts you allow and the secrets-transform mapping
 - A `mappings.json` recording which proxy token corresponds to which real env var
@@ -216,7 +216,7 @@ The CLI subcommand tree:
 
 ```
 nastech egress install                  # download the pinned iron-proxy binary
-nastech egress install --force          # re-download even if a managed copy exists
+nastech egress install --force          # check and repair the managed copy
 
 nastech egress setup                    # interactive wizard
 nastech egress setup --tunnel-port N    # override the tunnel listener port
@@ -277,7 +277,14 @@ Containers already running hold the old tokens and will need to be restarted to 
 
 ## State directory layout
 
-Everything iron-proxy maintains lives in `~/.nastech/proxy/`:
+PM owns the managed binary. Nastech honors an `iron-proxy` executable on
+`PATH` before checking PM selection. If neither exists, `auto_install` requests the pinned package, subject
+to PM's lazy-install policy. Explicit installation checks and repairs managed
+entries without forcing a new download of valid files. See
+[PM security tools](../../reference/package-management.md#optional-security-tools) for hash and signature checks.
+
+Daemon configuration, credentials, and logs remain profile-scoped under
+`$NASTECH_HOME/proxy/` (`~/.nastech/proxy/` by default):
 
 | Path | Mode | Purpose |
 |---|---|---|

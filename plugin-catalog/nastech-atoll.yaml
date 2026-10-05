@@ -1,0 +1,16 @@
+name: nastech-atoll
+title: Nastech Notch Plugin
+repo: https://github.com/himanusia/nastech-notch-plugin
+sha: 298a67e9fc1f9e5a4ec821bdce9d516e7e72e968
+description: "Native Nastech Agent plugin that runs the local Atoll notch monitor for Nastech session and turn status on macOS. Disclosure — macOS only. Starts a detached Node daemon on every Nastech session that reads state.db read-only and sends session titles, model/profile/token stats and a ≤96-char redacted preview of your latest request to the third-party Atoll notch app over localhost. nastech notch setup clones and builds the author's Atoll fork (github.com/himanusia/Atoll at a pinned commit, not reviewed here) with Xcode and installs an unnotarized app to ~/Applications. Node deps install via Nastech's npm ci prompt. Run nastech notch stop before removing."
+maintainer: himanusia
+tier: community
+category: desktop
+version: "0.3.0"
+image: https://raw.githubusercontent.com/himanusia/nastech-notch-plugin/298a67e9fc1f9e5a4ec821bdce9d516e7e72e968/assets/nastech-atoll-thumbnail.jpg
+platforms: [macos]
+capabilities:
+  provides_tools: []
+  provides_hooks: [on_session_start]
+  provides_middleware: []
+  requires_env: []

@@ -10,6 +10,7 @@ from nastech_cli.profiles import create_profile, rename_profile
 from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 import tools.checkpoint_manager as cm
 from tools.checkpoint_manager import CheckpointManager
+from tools import checkpoint_maintenance as maintenance
 
 
 @pytest.fixture()
@@ -68,7 +69,7 @@ def test_rename_preserves_profile_local_checkpoint_history(profile_env, tmp_path
         assert str(new_workdir.resolve()) in project_paths
         assert str(workdir.resolve()) not in project_paths
 
-        plan = manager.safe_restore_plan(str(new_workdir), checkpoint_hash)
+        plan = manager._safe_restore_plan(str(new_workdir), checkpoint_hash)
         assert plan["success"] is True
         assert plan["restore"] == ["note.txt"]
         assert plan["skipped"] == []
@@ -101,7 +102,7 @@ def test_retry_after_partial_rekey_keeps_checkpoints_taken_under_new_name(profil
 
     with patch("nastech_cli.profiles.check_alias_collision", return_value="skip"), \
          patch("nastech_cli.profiles._live_default_multiplexer", return_value=False), \
-         patch.object(cm, "_delete_ref", return_value=False):  # old ref survives: partial rekey
+         patch.object(maintenance, "_delete_ref", return_value=False):  # old ref survives: partial rekey
         new_dir = rename_profile("oldname", "newname")
 
     new_workdir = new_dir / "project"

@@ -15,7 +15,7 @@ Drug discovery: ChEMBL search, drug-likeness, interactions.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/research/drug-discovery` |
-| Path | `optional-skills/research\drug-discovery` |
+| Path | `optional-skills/research/drug-discovery` |
 | Version | `1.0.0` |
 | Author | bennytimz |
 | License | MIT |

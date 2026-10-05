@@ -5,7 +5,7 @@ author: NastechResearch
 requires_env:
   - NASTECH_LANGFUSE_PUBLIC_KEY
   - NASTECH_LANGFUSE_SECRET_KEY
-hooks:
+provides_hooks:
   - pre_api_request
   - post_api_request
   - api_request_error

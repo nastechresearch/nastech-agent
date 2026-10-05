@@ -21,7 +21,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 
 import nastech_cli.model_selection_guards as guards
 import tui_gateway.server as srv

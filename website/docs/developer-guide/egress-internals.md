@@ -13,7 +13,10 @@ The threat model and high-level design are summarised on the user page; this pag
 ## Module layout
 
 ```text
-agent/proxy_sources/iron_proxy.py     Core: binary install, CA gen, config build,
+pm/security_packages.py              Pinned binary acquisition and publication
+                                       through PM. Release provenance staging.
+
+agent/proxy_sources/iron_proxy.py     Core: binary lookup, GPG checks, CA gen, config build,
                                        subprocess lifecycle, mappings I/O, PID/nonce
                                        defense.  Pure-function surface where possible.
 
@@ -67,15 +70,14 @@ tests/agent/test_iron_proxy_e2e.py          Live E2E (gated on NASTECH_RUN_E2E=1
 ```text
 nastech egress install
   -> agent.proxy_sources.iron_proxy.install_iron_proxy(force=...)
-       Downloads pinned tarball + checksums.txt from GitHub Releases.
-       SHA-256 verification before extraction.
-       tarfile.extract(..., filter="data") on Python 3.12+ (PEP 706);
-         falls back to plain extract on older Python with member-name
-         sanitisation via _pick_tar_member.
-       Stage into ~/.nastech/bin/.iron-proxy_XXXX, chmod 755, os.replace
-         to ~/.nastech/bin/iron-proxy (atomic).
-       _VERSION_CACHE.pop(target) so a forced reinstall re-probes
-         --version on next call.
+       pm.ensure("iron-proxy", explicit=True) installs or repairs the entry.
+       PM checks archive and provenance hashes against pm/lock.json.
+       Package staging checks that release checksums cover the pinned archive,
+         then calls the GPG checker. Missing GPG permits hash-only installation.
+         An explicit signature rejection aborts installation.
+       PM publishes the entry and records its identity and digest in facts.
+       pm.installed_package("iron-proxy").binary returns the selected path.
+       _VERSION_CACHE.pop(target) makes the next status call probe --version.
 
 nastech egress setup [--from-bitwarden | --no-bitwarden] [--rotate-tokens]
   -> proxy_cli.cmd_setup
@@ -304,8 +306,8 @@ scripts/run_tests.sh tests/agent/test_iron_proxy.py tests/nastech_cli/test_iron_
 NASTECH_RUN_E2E=1 scripts/run_tests.sh tests/agent/test_iron_proxy_e2e.py
 
 # Live PTY smoke against `nastech egress`
-NASTECH_HOME=/tmp/nastech-egress-test python3 -m nastech_cli.main egress --help
-NASTECH_HOME=/tmp/nastech-egress-test python3 -m nastech_cli.main egress setup --help
+NASTECH_HOME=$HOME/.nastech/cache/scratch/nastech-egress-test python3 -m nastech_cli.main egress --help
+NASTECH_HOME=$HOME/.nastech/cache/scratch/nastech-egress-test python3 -m nastech_cli.main egress setup --help
 ```
 
 The CLI uses argparse, so `--help` is a good first probe for "did my new flag register correctly".

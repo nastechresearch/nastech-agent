@@ -15,7 +15,7 @@ import os
 import time
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 
 
 @pytest.fixture()

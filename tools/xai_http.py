@@ -52,10 +52,10 @@ def has_xai_credentials() -> bool:
 def nastech_xai_user_agent() -> str:
     """Return a stable Nastech-specific User-Agent for xAI HTTP calls."""
     try:
-        from nastech_cli import __version__
+        from nastech_cli.version_info import get_version_info
+        return f"Nastech-Agent/{get_version_info().base_version}"
     except Exception:
-        __version__ = "unknown"
-    return f"Nastech-Agent/{__version__}"
+        return "Nastech-Agent/unknown"
 
 
 def nastech_xai_default_headers() -> Dict[str, str]:

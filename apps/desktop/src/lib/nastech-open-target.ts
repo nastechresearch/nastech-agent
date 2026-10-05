@@ -155,11 +155,7 @@ export function resolveNastechOpenPath(target: NastechOpenTarget | null | undefi
  * Build a navigate path from a parsed deep-link payload
  * (`nastech://<kind>/<name>?…` → kind/name/params).
  */
-export function pathFromNastechDeepLink(
-  kind: string,
-  name: string,
-  params: Record<string, string> = {}
-): string | null {
+export function pathFromNastechDeepLink(kind: string, name: string, params: Record<string, string> = {}): string | null {
   if (!kind || !name) {
     return null
   }

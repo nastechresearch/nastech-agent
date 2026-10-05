@@ -190,7 +190,7 @@ class TestStaleConfigDefaultDoesNotWedgeResolver:
     """
 
     def test_kimi_switch_keeps_v1_despite_claude_config_default(self, tmp_path, monkeypatch):
-        import yaml
+        import nastech_yaml as yaml
         import importlib
 
         monkeypatch.setenv("NASTECH_HOME", str(tmp_path))

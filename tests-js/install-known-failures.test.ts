@@ -11,8 +11,7 @@ const classifier = path.resolve(import.meta.dirname, '../tests/install/e2e-asset
 
 const lockedLog = [
   'error: failed to remove file `C:/install/venv/Lib/site-packages/../../Scripts/nastech.exe`: Access is denied. (os error 5)',
-  'File "C:/install/venv/Scripts/nastech.exe/__main__.py", line 10, in <module>',
-  "subprocess.CalledProcessError: Command '['uv', 'pip', 'install', '-e', '.', '--quiet']' returned non-zero exit status 2.",
+  "⚠ Git update failed: Command '['uv', 'pip', 'install', '-e', '.', '--quiet']' returned non-zero exit status 2.",
 ].join('\n')
 
 const base = {

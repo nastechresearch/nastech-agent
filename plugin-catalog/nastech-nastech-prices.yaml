@@ -1,6 +1,7 @@
 name: nastech-nastech-prices
 repo: https://github.com/Adolanium/nastech-nastech-prices
-sha: 94f99436786e6fbbfcce161635d11c67bf094c8e
+sha: 15b28a46edea42d1501b16659c6595b69ba17054
+version: "0.1.2"
 description: Browse Nastech Portal model prices and account balances in Nastech Desktop.
 maintainer: Adolanium
 tier: community

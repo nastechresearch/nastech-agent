@@ -8,13 +8,13 @@ from __future__ import annotations
 
 
 def test_nastech_portal_tags_contains_product_and_client():
-    """Every Nastech Portal request gets BOTH the product tag and the version tag."""
-    from agent.portal_tags import nastech_client_tag, nastech_portal_tags
+    """Every Nastech Portal request gets BOTH the product tag and the base-version tag."""
+    from agent.portal_tags import nastech_portal_tags
+    from nastech_cli.version_info import get_version_info
 
     tags = nastech_portal_tags()
     assert "product=nastech-agent" in tags
-    assert nastech_client_tag() in tags
-    assert len(tags) == 2
+    assert f"client=nastech-client-v{get_version_info().base_version}" in tags
 
 
 
@@ -45,7 +45,7 @@ def test_ambient_context_set_none_clears():
         token = set_conversation_context(empty)
         try:
             assert get_conversation_context() is None
-            assert len(nastech_portal_tags()) == 2
+            assert not any(t.startswith("conversation=") for t in nastech_portal_tags())
         finally:
             reset_conversation_context(token)
 

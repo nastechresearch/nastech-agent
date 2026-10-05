@@ -3,7 +3,7 @@
 from pathlib import Path
 import shutil
 
-import yaml
+import nastech_yaml as yaml
 
 from nastech_cli.plugins import PluginManager
 

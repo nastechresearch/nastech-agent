@@ -44,7 +44,7 @@ def load_picker_context() -> ConfigContext:
     cfg = load_config()
     model_cfg = cfg.get("model", {})
     if isinstance(model_cfg, dict):
-        # PyYAML parses unquoted scalars as int (`provider: 2070`); keep strings so picker/options
+        # YAML parses unquoted scalars as int (`provider: 2070`); keep strings so picker/options
         # paths never call `.strip()` on an int.
         current_model = str(model_cfg.get("default", model_cfg.get("name", "")) or "")
         current_provider = coerce_provider_id(model_cfg.get("provider", ""))
@@ -142,11 +142,25 @@ def build_models_payload(
         rows = _reorder_canonical(rows)
     if pricing:
         _apply_pricing(rows, force_fresh_nastech_tier=force_fresh_nastech_tier, cached_only=pricing_cache_only)
+    # Both metadata decorators consult ``model_overrides``.  Snapshot the
+    # read-only config once for this payload rather than letting each model
+    # lookup reopen config.yaml through models_dev._cfg_get().
+    metadata_config = None
+    if capabilities or featured:
+        try:
+            from nastech_cli.config import load_config_readonly
+
+            metadata_config = load_config_readonly()
+        except Exception:
+            metadata_config = None
     if capabilities:
-        _apply_capabilities(rows)
+        _apply_capabilities(rows, metadata_config=metadata_config)
     if featured:
-        _apply_featured(rows)
+        _apply_featured(rows, metadata_config=metadata_config)
     _apply_custom_aliases(rows)
+    from nastech_cli.models_validate import drop_unofferable_model_ids
+
+    drop_unofferable_model_ids(rows)
 
     return {"providers": rows, "model": ctx.current_model, "provider": ctx.current_provider}
 
@@ -161,9 +175,32 @@ def _strip_aggregator_overlaps(rows: list[dict]) -> None:
     except Exception:
         return
 
+    builtin_aggregators = {
+        _slug(row) for row in rows
+        if not row.get("is_user_defined") and is_routing_aggregator(_slug(row))
+    }
+
+    def _duplicates_builtin_aggregator(row: dict) -> bool:
+        # A user row that IS the same upstream as a built-in aggregator (registered OpenRouter via
+        # Settings → Providers, or a ``custom:openrouter`` slug) is that aggregator's twin, not a
+        # rival: its catalog is a superset of the built-in row's, so counting it empties the
+        # built-in row (openrouter → total=0 beside a live custom:openrouter row).
+        row_slug = _slug(row)
+        slug_suffix = (
+            row_slug.split(":", 1)[1] if row_slug.startswith("custom:") else ""
+        )
+        if slug_suffix and slug_suffix in builtin_aggregators:
+            return True
+        from agent.model_metadata import _infer_provider_from_url
+
+        inferred = _infer_provider_from_url(str(row.get("api_url") or ""))
+        return inferred is not None and inferred in builtin_aggregators
+
     user_models: set[str] = set()
     for row in rows:
         if row.get("is_user_defined"):
+            if builtin_aggregators and _duplicates_builtin_aggregator(row):
+                continue  # the twin IS that aggregator; it must not retro-strip it
             user_models.update(m.lower() for m in (row.get("models") or []))
     if not user_models:
         return
@@ -277,12 +314,12 @@ def _reasoning_catalog_reader(slug: str):
     return read
 
 
-def _apply_capabilities(rows: list[dict]) -> None:
+def _apply_capabilities(rows: list[dict], *, metadata_config: dict | None = None) -> None:
     """Attach ``{model: {fast, reasoning, ...}}`` per row. ``reasoning`` defaults True when the catalog is
     silent (the dial is a no-op on models that ignore it; hiding it from a capable model is worse). A
     serving aggregator's detail overrides models.dev (adds ``can_disable_reasoning``). ``supported_efforts``
     is deliberately NOT forwarded — it under-reports levels that work."""
-    from nastech_cli.models import model_supports_fast_mode
+    from nastech_cli.models import model_supports_ultrafast, resolve_fast_mode_overrides
 
     try:
         from agent.models_dev import get_model_capabilities
@@ -293,18 +330,21 @@ def _apply_capabilities(rows: list[dict]) -> None:
         slug = row.get("slug") or ""
         caps: dict[str, dict[str, Any]] = {}
         read_reasoning_catalog = _reasoning_catalog_reader(slug.lower())
-
         for model in row.get("models") or []:
             reasoning = True
             if get_model_capabilities is not None and slug:
                 try:
-                    meta = get_model_capabilities(slug, model)
+                    meta = get_model_capabilities(slug, model, config=metadata_config)
                     if meta is not None and meta.supports_reasoning is not None:
                         reasoning = meta.supports_reasoning
                 except Exception:
                     reasoning = True
 
-            entry: dict[str, Any] = {"fast": bool(model_supports_fast_mode(model)), "reasoning": reasoning}
+            fast = resolve_fast_mode_overrides(
+                model, provider=slug, base_url=row.get("api_url")) is not None
+            entry: dict[str, Any] = {"fast": fast, "reasoning": reasoning}
+            if fast and model_supports_ultrafast(model):
+                entry["ultrafast"] = True
 
             if reasoning and read_reasoning_catalog is not None:
                 try:
@@ -328,18 +368,33 @@ def _apply_capabilities(rows: list[dict]) -> None:
 _FEATURED_PER_LAB = 5
 
 
-def _apply_featured(rows: list[dict]) -> None:
-    """Attach a ``featured_models`` shortlist to each aggregator row: newest ``_FEATURED_PER_LAB`` per
-    vendor by models.dev ``release_date`` (ranked within the row, never vs. today, so it is stable);
-    ties keep curated order. Non-aggregators get an empty list and keep top-N behaviour."""
+def _apply_featured(rows: list[dict], *, metadata_config: dict | None = None) -> None:
+    """Attach a ``featured_models`` shortlist to each routing-aggregator row: newest
+    ``_FEATURED_PER_LAB`` per vendor by models.dev ``release_date`` (ranked within the row, never vs.
+    today, so it is stable); ties keep curated order. Non-aggregators — including every user-defined
+    row, whose ``models:`` list is an explicit allow-list — get an empty list and keep top-N
+    behaviour (#120217)."""
     try:
         from agent.models_dev import get_model_info
     except Exception:
         get_model_info = None  # type: ignore[assignment]
 
+    # "Is this row an aggregator?" is answered canonically by is_routing_aggregator() — the same
+    # predicate _strip_aggregator_overlaps() uses. Deriving it from model-id spelling (does any id
+    # contain "/" and span >= 2 prefixes?) misread every Org/Model-shaped user provider as a
+    # multi-lab aggregator and hid the models its owner configured by hand (#120217).
+    try:
+        from nastech_cli.providers import is_routing_aggregator
+    except Exception:
+        is_routing_aggregator = None  # type: ignore[assignment]
+
     for row in rows:
         slug = str(row.get("slug") or "").strip().lower()
         models = row.get("models") or []
+
+        if row.get("is_user_defined") or not (is_routing_aggregator and is_routing_aggregator(slug)):
+            row["featured_models"] = []
+            continue
 
         by_lab: dict[str, list[tuple[int, str, str]]] = {}  # only multi-lab aggregators get a shortlist
         for pos, model in enumerate(models):
@@ -349,7 +404,8 @@ def _apply_featured(rows: list[dict]) -> None:
                 break
             date = ""
             if get_model_info is not None:
-                info = get_model_info(slug, model) or get_model_info("openrouter", model)
+                info = (get_model_info(slug, model, config=metadata_config)
+                        or get_model_info("openrouter", model, config=metadata_config))
                 date = getattr(info, "release_date", "") if info else ""
             by_lab.setdefault(lab, []).append((pos, date, model))
 
@@ -599,6 +655,8 @@ def _apply_pricing(rows: list[dict], *, force_fresh_nastech_tier: bool = False, 
             continue
         try:
             pricing_kwargs = {"cached_only": True} if cached_only else {}
+            if slug.startswith("custom:"):
+                pricing_kwargs["base_url"] = str(row.get("api_url") or "")
             raw_pricing = get_pricing_for_provider(slug, **pricing_kwargs) or {}
         except Exception:
             raw_pricing = {}
@@ -666,14 +724,17 @@ def _apply_pricing(rows: list[dict], *, force_fresh_nastech_tier: bool = False, 
 
 def _local_runtime_row(ctx: "ConfigContext") -> dict | None:
     """The ``llamacpp`` row from staged GGUFs (``None`` when none) — downloaded models must be selectable
-    before the server runs (selection starts it via the runtime_provider seam)."""
+    before the server runs (selection starts it via the runtime_provider seam). The row's id comes from
+    the provider registry's own definition, never a local literal: a row the resolver can't resolve is
+    the bug this row's offline-first contract depends on not having."""
     try:
         from nastech_cli.local_runtime.bootstrap import staged_model_ids
+        from nastech_cli.providers import LLAMACPP_ALIASES, LLAMACPP_PROVIDER_ID
 
         staged = staged_model_ids()
         if not staged:
             return None
-        current = (ctx.current_provider or "").strip().lower() in ("llamacpp", "llama.cpp", "llama-cpp")
+        current = (ctx.current_provider or "").strip().lower() in LLAMACPP_ALIASES
         if not current:
             # A LIVE session on the managed server reports provider "custom" with the managed base_url;
             # match on the endpoint so the session being chatted in still shows a selection.
@@ -686,7 +747,7 @@ def _local_runtime_row(ctx: "ConfigContext") -> dict | None:
             except Exception:
                 current = False
         # Bare "Local" user-facing (engine name is an implementation detail); authenticated = reachability.
-        return _row("llamacpp", "Local", current, models=staged, total_models=len(staged),
+        return _row(LLAMACPP_PROVIDER_ID, "Local", current, models=staged, total_models=len(staged),
                     source="local-runtime", authenticated=True, auth_type="local", warning=None)
     except Exception:
         return None
@@ -700,10 +761,18 @@ def _prewarm_pricing_async(
     from nastech_constants import nastech_home_key
     from nastech_cli.models_pricing import pricing_cache_scope
 
-    slugs = {str(row.get("slug") or "").lower() for row in rows if row.get("slug")}
+    slugs = {
+        (
+            str(row.get("slug") or "").lower(),
+            str(row.get("api_url") or "") if str(row.get("slug") or "").lower().startswith("custom:") else "",
+        )
+        for row in rows if row.get("slug")
+    }
     endpoint_scope = tuple(sorted(
-        (slug, pricing_cache_scope(slug, current_provider=current_provider, current_base_url=current_base_url))
-        for slug in slugs))
+        (slug, pricing_cache_scope(
+            slug, base_url=base_url, current_provider=current_provider, current_base_url=current_base_url,
+        ))
+        for slug, base_url in slugs))
     prewarm_key = (nastech_home_key(), endpoint_scope)
 
     with _pricing_prewarm_lock:
@@ -729,7 +798,15 @@ def _prewarm_pricing_async(
 
 
 def _moa_provider_row(current_provider: str = "") -> dict | None:
-    """The virtual ``moa`` row shared by the CLI inventory and gateway picker; ``None`` without presets."""
+    """The virtual ``moa`` row shared by the CLI inventory and gateway picker; ``None`` without presets.
+
+    Strictly opt-in (#63353): the row only appears when the user's raw config.yaml explicitly
+    enables at least one MoA preset. The synthesized ``default`` preset from
+    ``normalize_moa_config({})`` — which every user gets via DEFAULT_CONFIG defaults — must not
+    be treated as a user choice."""
+    if not _raw_config_has_enabled_moa_preset():
+        return None
+
     try:
         from nastech_cli.config import load_config
         from nastech_cli.moa_config import normalize_moa_config

@@ -1,0 +1,22 @@
+name: nastech-speech
+repo: https://github.com/allmodels-io/nastech-speech
+sha: 6efecc359aa4c091b41ad530575943657ee259de
+description: Give your agent the voice it deserves. Guided TTS and STT setup for
+  Nastech, with voice search and previews, model switching, testing, and native
+  spoken replies across supported providers. Access 80+ speech models through a
+  single API key with the AllModels router.
+maintainer: moeadham
+tier: community
+category: voice
+requires_nastech: ">=0.20.0"
+docs_url: https://github.com/allmodels-io/nastech-speech#readme
+version: "0.3.3"
+image: https://raw.githubusercontent.com/allmodels-io/nastech-speech/6efecc359aa4c091b41ad530575943657ee259de/.github/social-preview.png
+platforms: []
+capabilities:
+  provides_tools:
+    - allmodels_speech_setup
+    - allmodels_speech_manage
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: []

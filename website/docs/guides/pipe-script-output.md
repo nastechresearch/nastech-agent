@@ -36,7 +36,7 @@ nastech send --to telegram "deploy finished"
 echo "RAM 92%" | nastech send --to telegram:-1001234567890
 
 # Send a file
-nastech send --to discord:#ops --file /tmp/report.md
+nastech send --to discord:#ops --file ~/.nastech/cache/scratch/report.md
 
 # Attach a subject/header line
 nastech send --to slack:#eng --subject "[CI] build.log" --file build.log

@@ -1,56 +1,70 @@
 name: Nastech Plugin Validate
 description: >-
-  Validate a Nastech Agent plugin (plugin.yaml manifest schema AND
-  declared-vs-actually-registered capabilities) using
-  `nastech plugins validate`. Drop this into your plugin repo's CI:
-
-    - uses: actions/checkout@<sha>
-    - uses: NastechResearch/nastech-agent/.github/actions/plugin-validate@main
-      with:
-        path: .
-
-  The caller's job owns checkout; this action installs Python + nastech-agent
-  (git install — a supported CI-context install route) and runs the
-  validator against your plugin directory.
+  Validate a plugin's manifest and registered capabilities with Nastech at the
+  requested ref. The caller owns its plugin checkout; Nastech and its locked
+  runtime are prepared separately under RUNNER_TEMP.
 
 inputs:
   path:
     description: Path to the plugin directory (containing plugin.yaml).
     default: "."
   nastech-ref:
-    description: nastech-agent git ref (branch/tag/sha) to install and validate with.
+    description: nastech-agent git ref (branch/tag/sha) to validate with.
     default: "main"
 
 runs:
   using: composite
   steps:
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-      with:
-        python-version: "3.11"
-
-    - name: Install nastech-agent
+    - name: Prepare an isolated Nastech checkout
+      id: source
       shell: bash
       env:
         _NASTECH_REF: ${{ inputs.nastech-ref }}
       run: |
         set -euo pipefail
-        # CI-context install from git; the ref lets plugin authors validate
-        # against a pinned nastech release instead of main.
-        pip install "git+https://github.com/NastechResearch/nastech-agent@${_NASTECH_REF}"
+        source=$(mktemp -d "$RUNNER_TEMP/nastech-plugin-validator.XXXXXX")
+        git init "$source"
+        git -C "$source" remote add origin https://github.com/NastechResearch/nastech-agent.git
+        git -C "$source" fetch --depth=1 -- origin "$_NASTECH_REF"
+        git -C "$source" checkout --detach FETCH_HEAD
+        printf 'source=%s\n' "$source" >> "$GITHUB_OUTPUT"
+        if [ "$RUNNER_OS" = Windows ]; then bootstrap=python; else bootstrap=python3; fi
+        "$bootstrap" -S "$source/scripts/ci/setup_toolchain.py" prepare \
+          --toolchain python --home "$source/.build/pm"
+
+    - name: Prepare the locked Python toolchain
+      shell: bash
+      env:
+        _SOURCE: ${{ steps.source.outputs.source }}
+      run: |
+        set -euo pipefail
+        if [ "$RUNNER_OS" = Windows ]; then bootstrap=python; else bootstrap=python3; fi
+        "$bootstrap" -S "$_SOURCE/scripts/ci/setup_toolchain.py" install \
+          --toolchain python --home "$_SOURCE/.build/pm"
+
+    - name: Build the isolated validator runtime
+      id: runtime
+      shell: bash
+      working-directory: ${{ steps.source.outputs.source }}
+      env:
+        _SOURCE: ${{ steps.source.outputs.source }}
+      run: |
+        set -euo pipefail
+        "$NASTECH_PYTHON" - <<'PY'
+        import os
+        from pathlib import Path
+        from pm import build_environment
+        source = Path(os.environ["_SOURCE"])
+        python = build_environment(source=source, out=source / ".build/validator", explicit=True)
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+            output.write(f"python={python}\n")
+        PY
 
     - name: Validate plugin
       shell: bash
       env:
         _PLUGIN_PATH: ${{ inputs.path }}
+        _VALIDATOR_PYTHON: ${{ steps.runtime.outputs.python }}
       run: |
-        set -uo pipefail
-        # `nastech plugins validate` checks the plugin.yaml manifest schema
-        # and loads the plugin in a scratch subprocess to verify that the
-        # capabilities it DECLARES match what it actually registers.
-        if nastech plugins validate "$_PLUGIN_PATH"; then
-          echo "✅ PASS: plugin at '$_PLUGIN_PATH' validated cleanly"
-        else
-          echo "❌ FAIL: plugin at '$_PLUGIN_PATH' failed validation (see output above)"
-          exit 1
-        fi
+        set -euo pipefail
+        "$_VALIDATOR_PYTHON" -I -m nastech_cli.main plugins validate "$_PLUGIN_PATH"

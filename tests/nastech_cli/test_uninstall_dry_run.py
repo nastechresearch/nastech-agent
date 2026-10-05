@@ -8,8 +8,11 @@ def test_dry_run_prints_plan_without_mutating(monkeypatch, tmp_path, capsys):
     project_root = tmp_path / "nastech-agent"
     nastech_home = tmp_path / ".nastech"
     project_root.mkdir()
+    # A .git dir marks the tree as a removable git checkout — without it the
+    # install-kind gate refuses before the dry-run plan prints.
+    (project_root / ".git").mkdir()
     nastech_home.mkdir()
-    (nastech_home / "config.yaml").write_text("model: {}\n")
+    (nastech_home / "config.yaml").write_text("model: {}\n", encoding="utf-8")
 
     called = False
 
@@ -32,6 +35,25 @@ def test_dry_run_prints_plan_without_mutating(monkeypatch, tmp_path, capsys):
     assert str(nastech_home) in output
     assert project_root.exists()
     assert nastech_home.exists()
+
+
+def test_dry_run_lists_named_profiles_without_desktop_userdata(monkeypatch, tmp_path, capsys):
+    """Full-uninstall dry-run lists named profiles even on a machine with no desktop
+    userData dir — the profiles section must not depend on the desktop install."""
+    profile = SimpleNamespace(name="work", path=tmp_path / "profiles" / "work")
+    monkeypatch.setattr(uninstall, "_is_default_nastech_home", lambda home: True)
+    monkeypatch.setattr(uninstall, "_discover_named_profiles", lambda: [profile])
+    monkeypatch.setattr(
+        "nastech_cli.gui_uninstall.desktop_userdata_dir", lambda: tmp_path / "absent-userdata"
+    )
+
+    uninstall._print_uninstall_dry_run(
+        project_root=tmp_path, nastech_home=tmp_path / ".nastech", full_uninstall=True
+    )
+
+    out = capsys.readouterr().out
+    assert "Named profiles" in out
+    assert "work" in out
 
 
 def test_build_uninstall_parser_accepts_dry_run():

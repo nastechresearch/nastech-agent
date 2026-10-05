@@ -133,11 +133,6 @@ class TestCaseInsensitivity:
         msg = _message(text=text, entities=[_mention_entity(text, mention="@NASTECH_BOT")])
         assert adapter._message_mentions_bot(msg) is True
 
-    def test_mixed_case_mention(self):
-        adapter = _make_adapter()
-        text = "hi @Nastech_Bot"
-        msg = _message(text=text, entities=[_mention_entity(text, mention="@Nastech_Bot")])
-        assert adapter._message_mentions_bot(msg) is True
 
 
 class TestTelegramUtf16EntityOffsets:

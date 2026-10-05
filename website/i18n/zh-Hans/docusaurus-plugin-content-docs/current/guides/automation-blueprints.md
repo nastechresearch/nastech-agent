@@ -142,9 +142,9 @@ Report any gaps where code changed but docs didn't. If everything is in sync, re
 nastech cron create "0 6 * * *" \
   "Run a dependency security audit on the nastech-agent project.
 
-1. cd ~/.nastech/nastech-agent && source .venv/bin/activate
-2. Run: pip audit --format json 2>/dev/null || pip audit 2>&1
-3. Run: npm audit --json 2>/dev/null (in website/ directory if it exists)
+1. Locate the nastech-agent checkout and its pyproject.toml and uv.lock. Do not activate or mutate Nastech's dependency environment.
+2. Scan uv.lock with an independently installed scanner that supports that lock format (check its --help). Preserve the complete findings and errors. If no scanner is available, report the blocker; do not install one into Nastech.
+3. Run: npm audit --json in website/ if it exists. Preserve stderr and distinguish findings from a failed scan.
 4. Check for any CVEs with CVSS score >= 7.0
 
 If vulnerabilities found:

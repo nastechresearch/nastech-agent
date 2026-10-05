@@ -46,7 +46,7 @@ nastech fallback [add|remove|list]  Fallback provider chain
 nastech config [show|edit|get|set|unset|path|env-path|check|migrate]
 nastech login / logout       OAuth sign-in / clear stored auth
 nastech doctor [--fix]       Check dependencies and config
-nastech status [--all]       Component status
+nastech status [--full]      Component summary (--full: every section)
 ```
 
 ### Tools & Skills

@@ -13,7 +13,7 @@ the persisted value here is safe.
 
 from __future__ import annotations
 
-import yaml
+import nastech_yaml as yaml
 
 from nastech_cli.auth import _update_config_for_provider
 from nastech_cli.config import clear_model_endpoint_credentials, get_config_path

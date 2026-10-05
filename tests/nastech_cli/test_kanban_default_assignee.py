@@ -7,27 +7,20 @@ the task is skipped (existing behavior preserved).
 from __future__ import annotations
 
 import json
-import os
-import sys
-import tempfile
+from pathlib import Path
 
 import pytest
 
 
 @pytest.fixture()
-def isolated_kanban_home(monkeypatch):
-    """Spin up a fresh NASTECH_HOME with a clean kanban DB."""
-    test_home = tempfile.mkdtemp(prefix="kanban_default_assignee_test_")
-    monkeypatch.setenv("NASTECH_HOME", test_home)
-    # Force-reimport so the fresh NASTECH_HOME is picked up.
-    for mod in list(sys.modules.keys()):
-        if mod.startswith("nastech_cli") or mod.startswith("nastech_state") or mod == "nastech_constants":
-            del sys.modules[mod]
+def isolated_kanban_home(tmp_path, monkeypatch):
+    """Fresh NASTECH_HOME with a clean kanban DB."""
+    test_home = tmp_path / ".nastech"
+    test_home.mkdir()
+    monkeypatch.setenv("NASTECH_HOME", str(test_home))
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
     from nastech_cli import kanban_db
     yield kanban_db, test_home
-    # Cleanup is best-effort; tempfile dir survives but pytest isolation
-    # gives each test its own monkeypatched NASTECH_HOME so no cross-test
-    # contamination.
 
 
 def _fake_spawn(*args, **kwargs):

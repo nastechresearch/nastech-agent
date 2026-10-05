@@ -34,9 +34,10 @@ def test_base_urls_follow_the_scoped_key_not_default_environ(monkeypatch, second
     from nastech_cli import auth_nastech
 
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
-    monkeypatch.setattr(aux, "_get_named_custom_provider", lambda name: None, raising=False)
+    from nastech_cli.runtime_provider_custom import expand_direct_api_alias
+    monkeypatch.setattr("nastech_cli.runtime_provider._get_named_custom_provider", lambda name: None)
 
-    _, base = aux._expand_direct_api_alias("openai", None)
+    _, base = expand_direct_api_alias("openai", None)
     assert "default.example" not in (base or "")
     assert aux._scoped_key_env("OPENAI_BASE_URL") == ""
     assert auth_nastech._nastech_inference_env_override() is None

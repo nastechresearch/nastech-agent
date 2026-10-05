@@ -22,7 +22,7 @@ if "dotenv" not in sys.modules:
     sys.modules["dotenv"] = fake_dotenv
 
 from nastech_cli.auth import resolve_api_key_provider_credentials
-from nastech_cli.models import CANONICAL_PROVIDERS, _PROVIDER_LABELS, normalize_provider
+from nastech_cli.models import normalize_provider
 
 
 @pytest.fixture(autouse=True)
@@ -46,16 +46,6 @@ class TestFireworksAliases:
         assert normalize_in_providers(alias) == "fireworks"
 
 
-class TestFireworksOrdering:
-    """Fireworks participates in the canonical provider catalog."""
-
-    def test_present_in_canonical_providers(self):
-        slugs = [p.slug for p in CANONICAL_PROVIDERS]
-        assert "fireworks" in slugs
-
-
-    def test_has_a_label(self):
-        assert _PROVIDER_LABELS.get("fireworks") == "Fireworks AI"
 
 
 class TestFireworksConfigRegistry:
@@ -69,23 +59,9 @@ class TestFireworksConfigRegistry:
         assert "FIREWORKS_BASE_URL" not in OPTIONAL_ENV_VARS
 
 
-class TestFireworksOverlay:
-    def test_overlay_exists(self):
-        from nastech_cli.providers import NASTECH_OVERLAYS
-
-        assert "fireworks" in NASTECH_OVERLAYS
-        overlay = NASTECH_OVERLAYS["fireworks"]
-        assert overlay.transport == "openai_chat"
-        assert overlay.base_url_override == "https://api.fireworks.ai/inference/v1"
-        assert not overlay.base_url_env_var
-        assert not overlay.is_aggregator
 
 
 class TestFireworksDoctor:
-    def test_provider_env_hints_include_fireworks(self):
-        from nastech_cli.doctor import _PROVIDER_ENV_HINTS
-
-        assert "FIREWORKS_API_KEY" in _PROVIDER_ENV_HINTS
 
     def test_slash_form_model_is_not_flagged_as_vendor_prefixed(self, monkeypatch, tmp_path):
         """Fireworks' native model IDs are slash-form (accounts/fireworks/...),

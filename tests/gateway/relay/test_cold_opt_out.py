@@ -7,7 +7,7 @@ import sys
 import textwrap
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 
 
 @pytest.mark.parametrize("case", ["native", "url-only", "disabled", "managed", "managed-only", "scoped"])

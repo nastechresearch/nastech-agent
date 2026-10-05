@@ -108,6 +108,44 @@ class TestFleetRestartTimeoutIsolation:
 
         assert seen == ["nastech-serve", "nastech-serve-work", "nastech-gateway"]
 
+    def test_nastech_dashboard_units_are_included(self):
+        # #125297 — the same blind spot for the systemd-supervised dashboard: the
+        # unit pass skipped nastech-dashboard*, so a successful update left the
+        # dashboard on pre-update code with outcome "deferred" and nothing
+        # restarted it. Reconciliation already credits nastech-dashboard{,-<profile>}
+        # unit restarts; the pass must produce one.
+        seen: list[str] = []
+
+        _for_each_systemd_gateway_unit(
+            "\n".join(
+                [
+                    "ssh.service loaded active running",
+                    "nastech-dashboard.service loaded active running",
+                    "nastech-dashboard-work.service loaded active running",
+                    "nastech-serve.service loaded active running",
+                    "",
+                ]
+            ),
+            process_unit=seen.append,
+            on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
+        )
+
+        assert seen == ["nastech-dashboard", "nastech-dashboard-work", "nastech-serve"]
+
+    def test_nastech_dashboard_near_prefix_is_rejected(self):
+        # Same strict shape on the dashboard side: a bare
+        # ``startswith("nastech-dashboard")`` gate would also accept the
+        # unrelated ``nastech-dashboardd.service``.
+        seen: list[str] = []
+
+        _for_each_systemd_gateway_unit(
+            _list_units_stdout(["nastech-dashboardd", "nastech-dashboard-work"]),
+            process_unit=seen.append,
+            on_unit_timeout=lambda *_: pytest.fail("unexpected timeout"),
+        )
+
+        assert seen == ["nastech-dashboard-work"]
+
     def test_nastech_server_near_prefix_is_rejected(self):
         # Review on #83595: a bare ``startswith("nastech-serve")`` gate also
         # accepts the unrelated ``nastech-server.service``. Only the exact

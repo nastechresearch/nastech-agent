@@ -37,7 +37,7 @@ Nastech prints the exact port it bound to on the `Waiting for callback on ...` l
 | MCP servers (`auth: oauth`) | auto-picked per server | Yes, when Nastech is remote (or paste redirect URL) |
 | `xai-oauth` (Grok SuperGrok) | n/a | No — device code flow |
 | `anthropic` (Claude Pro/Max) | n/a | No — paste-the-code flow |
-| `openai-codex` (ChatGPT Plus/Pro) | n/a | No — device code flow |
+| `openai-codex` (ChatGPT Plus/Pro) | n/a (default device code); `1455` with `--browser` / `auth.codex_login_flow: browser` | Only for the opt-in browser PKCE flow, when Nastech is remote |
 | `minimax`, `nastech-portal` | n/a | No — device code flow |
 | `openrouter` (`nastech auth add openrouter --type oauth`) | OS-assigned, local only | No — over SSH Nastech switches to OpenRouter's headless flow and asks you to paste the code shown in the browser |
 

@@ -5,8 +5,6 @@ writes a .container-mode metadata file. The host CLI detects this and
 execs into the container instead of running locally.
 """
 import os
-import subprocess
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -52,12 +50,6 @@ def test_get_container_exec_info_returns_metadata(container_env):
     assert info["nastech_bin"] == "/data/current-package/bin/nastech"
 
 
-
-
-
-
-
-
 # =============================================================================
 # _exec_in_container
 # =============================================================================
@@ -67,16 +59,6 @@ def test_get_container_exec_info_returns_metadata(container_env):
 def docker_container_info():
     return {
         "backend": "docker",
-        "container_name": "nastech-agent",
-        "exec_user": "nastech",
-        "nastech_bin": "/data/current-package/bin/nastech",
-    }
-
-
-@pytest.fixture
-def podman_container_info():
-    return {
-        "backend": "podman",
         "container_name": "nastech-agent",
         "exec_user": "nastech",
         "nastech_bin": "/data/current-package/bin/nastech",

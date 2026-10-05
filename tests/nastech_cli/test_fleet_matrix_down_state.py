@@ -19,7 +19,7 @@ def _setup(monkeypatch, tmp_path, record: dict):
     home = tmp_path / ".nastech"
     home.mkdir(exist_ok=True)
     monkeypatch.setattr(
-        "nastech_cli.build_info.get_code_identity",
+        "nastech_cli.version_info.get_code_identity",
         lambda refresh=False: {"sha": "HEADSHA", "version": "1.0"},
     )
     monkeypatch.setattr("nastech_cli.profiles._get_default_nastech_home", lambda: home)

@@ -15,7 +15,7 @@ Modify or debug s6 services in the Nastech Docker image.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/devops/nastech-s6-container-supervision` |
-| Path | `optional-skills/devops\nastech-s6-container-supervision` |
+| Path | `optional-skills/devops/nastech-s6-container-supervision` |
 | Version | `1.0.0` |
 | Author | Nastech Agent |
 | License | MIT |

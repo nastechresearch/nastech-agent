@@ -116,7 +116,7 @@ def _scrub_child_env(source_env, is_passthrough=None, is_windows=None):
 def _build_child_env(*, rpc_endpoint: str, rpc_token: str, tmpdir: str,
                      child_python: str) -> Dict[str, str]:
     """Build the scrubbed child environment both execution paths share."""
-    from nastech_constants import apply_subprocess_home_env, get_nastech_home_override
+    from nastech_constants import apply_scratch_tmp_env, apply_subprocess_home_env, get_nastech_home_override
     child_env = _scrub_child_env(os.environ)
     child_env["NASTECH_RPC_SOCKET"] = rpc_endpoint
     child_env["NASTECH_RPC_TOKEN"] = rpc_token
@@ -144,18 +144,35 @@ def _build_child_env(*, rpc_endpoint: str, rpc_token: str, tmpdir: str,
     _home_override = get_nastech_home_override()
     if _home_override:
         child_env["NASTECH_HOME"] = _home_override
+        apply_scratch_tmp_env(child_env)  # TMPDIR follows the routed home, like HOME does
     # PYTHONPATH: the staging dir (nastech_tools.py) must always be importable even when project
     # mode changes CWD. Nastech's root is added ONLY when the child runs in Nastech's Python env —
     # exposing Nastech's site-packages to an external interpreter can mix incompatible compiled
     # extensions (3.12 NumPy under a 3.9 venv). Inherited Nastech-owned entries are stripped first.
     # Before re-injecting PYTHONPATH, strip Nastech-owned entries that leaked through _scrub_child_env
-    # (PYTHONPATH is in _SAFE_ENV_PREFIXES so it passes the scrub). They are redundant for same-Nastech-
-    # environment children and may be incompatible with external interpreters (project mode can select a
-    # different venv), so they must not shadow or poison the child's sys.path (#74817).
-    from tools.environments.local_pythonpath import _strip_nastech_owned_pythonpath
+    # (PYTHONPATH is in _SAFE_ENV_PREFIXES so it passes the scrub). External project interpreters
+    # must not inherit Nastech dependencies (#74817). PM's own interpreter, however, can be a
+    # bare bundled Python whose dependencies live in the selected generation, not sys.prefix.
+    from tools.environments.local_pythonpath import (
+        _strip_nastech_owned_pythonpath, _validated_runtime_venv, _same_path,
+    )
+    _runtime_path = None
+    if child_python == sys.executable:
+        runtime_venv = _validated_runtime_venv(child_env)
+        if runtime_venv is not None:
+            from pathlib import Path
+            from pm.environments import site_packages
+            candidate = site_packages(runtime_venv)
+            # Restore only a dependency path the launcher actually supplied, not a newly
+            # selected generation that this still-running interpreter has never loaded.
+            if any(_same_path(Path(entry), candidate)
+                   for entry in child_env.get("PYTHONPATH", "").split(os.pathsep) if entry):
+                _runtime_path = str(candidate)
     _strip_nastech_owned_pythonpath(child_env)
     _existing_pp = child_env.get("PYTHONPATH", "")
     _pp_parts = [tmpdir]
+    if _runtime_path is not None:
+        _pp_parts.append(_runtime_path)
     if _uses_nastech_python_environment(child_python):
         _pp_parts.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     elif child_python not in _external_env_logged:

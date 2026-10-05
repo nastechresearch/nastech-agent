@@ -3,7 +3,7 @@ import threading
 from types import SimpleNamespace
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 from agent.status_output import StatusOutputMixin
 from nastech_cli.cli_stream_mixin import CLIStreamMixin
 from tui_gateway import server

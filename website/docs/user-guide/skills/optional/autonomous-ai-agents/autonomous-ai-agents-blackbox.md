@@ -15,7 +15,7 @@ Delegate coding tasks to the Blackbox AI multi-model CLI.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/autonomous-ai-agents/blackbox` |
-| Path | `optional-skills/autonomous-ai-agents\blackbox` |
+| Path | `optional-skills/autonomous-ai-agents/blackbox` |
 | Version | `1.0.1` |
 | Author | Nastech Agent (Nastech Research) |
 | License | MIT |
@@ -108,8 +108,8 @@ terminal(command="REVIEW=$(mktemp -d) && git clone https://github.com/user/repo.
 Spawn multiple Blackbox instances for independent tasks:
 
 ```
-terminal(command="blackbox --prompt 'Fix the login bug'", workdir="/tmp/issue-1", background=true, pty=true)
-terminal(command="blackbox --prompt 'Add unit tests for auth'", workdir="/tmp/issue-2", background=true, pty=true)
+terminal(command="blackbox --prompt 'Fix the login bug'", workdir="~/.nastech/cache/scratch/issue-1", background=true, pty=true)
+terminal(command="blackbox --prompt 'Add unit tests for auth'", workdir="~/.nastech/cache/scratch/issue-2", background=true, pty=true)
 
 # Monitor all
 process(action="list")

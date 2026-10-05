@@ -10,6 +10,7 @@ from nastech_cli.nastech_account import (
 from nastech_cli.nastech_subscription import get_nastech_subscription_features
 from tools.tool_backend_helpers import managed_nastech_tools_enabled
 from nastech_cli import config
+from nastech_time import safe_strftime
 
 
 def _format_iso_timestamp(value) -> str:
@@ -23,7 +24,7 @@ def _format_iso_timestamp(value) -> str:
         return value
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+    return safe_strftime(parsed.astimezone(), "%Y-%m-%d %H:%M:%S %Z")
 
 
 def _qwen_expiry(expires_at_ms) -> str:

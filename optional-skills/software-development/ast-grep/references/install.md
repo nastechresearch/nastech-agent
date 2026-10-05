@@ -96,9 +96,9 @@ If every package manager fails:
 # 2. Download and extract:
 VERSION=0.45.0
 TRIPLE=aarch64-apple-darwin
-curl -fsSL "https://github.com/ast-grep/ast-grep/releases/download/${VERSION}/app-${TRIPLE}.zip" -o /tmp/ast-grep.zip
-unzip /tmp/ast-grep.zip -d /tmp/ast-grep
-sudo mv /tmp/ast-grep/ast-grep /usr/local/bin/sg
+curl -fsSL "https://github.com/ast-grep/ast-grep/releases/download/${VERSION}/app-${TRIPLE}.zip" -o ~/.nastech/cache/scratch/ast-grep.zip
+unzip ~/.nastech/cache/scratch/ast-grep.zip -d ~/.nastech/cache/scratch/ast-grep
+sudo mv ~/.nastech/cache/scratch/ast-grep/ast-grep /usr/local/bin/sg
 sudo chmod +x /usr/local/bin/sg
 
 # 3. Verify:

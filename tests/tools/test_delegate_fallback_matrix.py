@@ -75,7 +75,7 @@ def test_declared_chain_flows_through_real_profile_config_loader(
 ):
     """The public key must survive DEFAULT_CONFIG/profile loading without
     patching ``_load_config`` and reach the child constructor."""
-    import yaml
+    import nastech_yaml as yaml
 
     from nastech_constants import (
         reset_nastech_home_override,
@@ -112,7 +112,7 @@ def test_declared_chain_flows_through_real_profile_config_loader(
 
 def test_explicit_empty_chain_survives_real_profile_config_loader(tmp_path, monkeypatch):
     """An explicit [] remains an authoritative disable after config loading."""
-    import yaml
+    import nastech_yaml as yaml
 
     from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 
@@ -143,7 +143,7 @@ def test_explicit_empty_chain_survives_real_profile_config_loader(tmp_path, monk
 
 def test_pinned_review_does_not_borrow_general_worker_chain(tmp_path, monkeypatch):
     """The public /review route owns its fallback policy as well as its model."""
-    import yaml
+    import nastech_yaml as yaml
 
     from agent.review_engine import start_review
     from nastech_constants import reset_nastech_home_override, set_nastech_home_override

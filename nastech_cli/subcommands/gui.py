@@ -23,7 +23,9 @@ def build_gui_parser(subparsers, *, cmd_gui: Callable) -> None:
         help="Enable deterministic desktop boot delays for validating startup UI")
     gui_parser.add_argument(
         "--ignore-existing", action="store_true",
-        help="Force Desktop to ignore any nastech CLI already on PATH during backend resolution")
+        help="Skip the installed Nastech runtime (~/.nastech/nastech-agent) so no local "
+             "backend starts and Desktop offers connect or install instead. --nastech-root "
+             "and the bundled runtime still win; a runtime installed during this launch is used.")
     gui_parser.add_argument(
         "--nastech-root",
         help="Override the Nastech source root used by Desktop (sets NASTECH_DESKTOP_NASTECH_ROOT)")
@@ -51,5 +53,10 @@ def build_gui_parser(subparsers, *, cmd_gui: Callable) -> None:
     gui_parser.add_argument(
         "--identity", default="Nastech Local Signing",
         help="Certificate name to create/use for --setup-tcc-identity (default: Nastech Local Signing)",
+    )
+    gui_parser.add_argument(
+        "--close-preview",
+        action="store_true",
+        help="Close the preview pane and exit its fullscreen (out-of-band escape hatch when the pane captured all input)",
     )
     gui_parser.set_defaults(func=cmd_gui)

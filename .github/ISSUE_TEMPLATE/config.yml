@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/NastechResearch/nastech-agent/security/advisories/new
+    about: Report vulnerabilities privately — never in a public issue. Read SECURITY.md for scope first.
   - name: 💬 Nastech Research Discord
     url: https://discord.gg/NastechResearch
     about: For quick questions, showcasing projects, sharing skills, and community chat.

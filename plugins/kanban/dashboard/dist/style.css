@@ -1353,14 +1353,18 @@
 /* ---------------------------------------------------------------------- */
 
 /* Severity token variables so every diagnostic-coloured surface uses the */
-/* same palette. */
+/* same palette. Chained through the host's theme tokens (the dashboard    */
+/* theme engine writes --color-* on <html>) so the rungs follow the active  */
+/* theme like every other colour here; the literals are only the fallback  */
+/* for hosts that define no tokens. Declared on the consuming elements, not */
+/* .nastech-kanban: diagnostic nodes can render outside that container.     */
 .nastech-kanban-diag,
 .nastech-kanban-attention,
 .nastech-kanban-warning-badge,
 .nastech-kanban-attention-row {
-  --nastech-diag-warning: #ff9e3b;
-  --nastech-diag-error:   #ff6b3d;
-  --nastech-diag-critical: #ff4d4d;
+  --nastech-diag-warning:  var(--color-warning, #ff9e3b);
+  --nastech-diag-error:    var(--color-destructive, #ff6b3d);
+  --nastech-diag-critical: var(--color-destructive, #ff4d4d);
 }
 
 /* Warning-badge severity variants (overrides the base colour). */

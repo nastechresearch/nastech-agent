@@ -63,6 +63,9 @@ custom_providers:
     )
 
     monkeypatch.setattr(gateway_run, "_nastech_home", nastech_home)
+    # resolve_persist_behavior() reads the profile config through get_nastech_home(); without this
+    # the sandbox home looks like a fresh install and the --provider switch persists globally.
+    monkeypatch.setattr("nastech_cli.config.get_nastech_home", lambda: nastech_home)
     monkeypatch.setattr("agent.models_dev.fetch_models_dev", lambda: {})
     monkeypatch.setattr(
         "nastech_cli.model_switch.switch_model",

@@ -1,4 +1,4 @@
-import yaml
+import nastech_yaml as yaml
 from tools import approval
 
 

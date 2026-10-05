@@ -15,13 +15,13 @@ Build, test, and deploy Python MCP servers.
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/mcp/fastmcp` |
-| Path | `optional-skills/mcp\fastmcp` |
+| Path | `optional-skills/mcp/fastmcp` |
 | Version | `1.0.0` |
 | Author | Nastech Agent |
 | License | MIT |
 | Platforms | linux, macos, windows |
 | Tags | `MCP`, `FastMCP`, `Python`, `Tools`, `Resources`, `Prompts`, `Deployment` |
-| Related skills | [`nastech-agent`](../../bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent.md), [`mcporter`](./mcp-mcporter.md) |
+| Related skills | [`nastech-agent`](../../bundled/autonomous-ai-agents/autonomous-ai-agents-nastech-agent.md), [`mcporter`](../../optional/mcp/mcp-mcporter.md) |
 
 ## Reference: full SKILL.md
 

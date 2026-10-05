@@ -23,8 +23,8 @@
 
 import { atom } from 'nanostores'
 
-import { onConnectionScopeChange } from '@/lib/connection-scoped'
 import { setSessionPinnedRemote } from '@/nastech'
+import { onConnectionScopeChange } from '@/lib/connection-scoped'
 import { $pinnedSessionIds, pinSession, unpinSession } from '@/store/layout'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $cronSessions, $messagingSessions, $sessions, sessionMatchesStoredId, sessionPinId } from '@/store/session'
@@ -313,4 +313,16 @@ export function resetSessionPinMirror(): void {
   pending.clear()
   unconfirmed.clear()
   publishUnconfirmed()
+}
+
+/**
+ * Forget one id's sync bookkeeping. The dead-session prune calls this before
+ * unpinning a pin whose session is gone, so the reconcile listener (fired
+ * synchronously by `unpinSession`) doesn't re-PATCH the dead id — which would
+ * produce exactly the 404 the prune exists to remove.
+ */
+export function forgetPinSyncState(id: string): void {
+  mirrored.delete(id)
+  pending.delete(id)
+  unconfirmed.delete(id)
 }

@@ -36,6 +36,11 @@ Gmail, Calendar, Drive, Contacts, Sheets, and Docs — through Nastech-managed O
 The setup is fully non-interactive — you drive it step by step so it works
 on CLI, Telegram, Discord, or any platform.
 
+Run the setup script with Python from the Nastech environment, not an unrelated
+system Python. `--install-deps` syncs Nastech' declared Google extra through PM;
+after syncing, restart Nastech and rerun the OAuth command. If Nastech is not
+importable, use `nastech setup` first rather than installing packages with pip.
+
 Define a shorthand first:
 
 ```bash
