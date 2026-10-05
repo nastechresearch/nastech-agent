@@ -13,7 +13,7 @@ import urllib.request
 from nastech_cli.update_channel import STABLE_TAG_RE, is_canary_tag
 
 logger = logging.getLogger(__name__)
-_PUBLIC_BASE = "https://nastech-assets.nastechresearch.github.io"
+_PUBLIC_BASE = "https://nastech-agent.nastechresearch.workers.dev"
 OFFICIAL_REPOSITORY = "NastechResearch/nastech-agent"
 _GITHUB_ORIGIN = re.compile(
     r"^(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/)"
