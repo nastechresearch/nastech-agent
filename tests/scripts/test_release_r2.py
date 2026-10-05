@@ -217,7 +217,7 @@ def test_public_base_url_precedence(monkeypatch):
     # Explicit value, then $CLOUDFLARE_R2_PUBLIC_URL, then the documented
     # production origin — so a local command always names a real page.
     monkeypatch.delenv("CLOUDFLARE_R2_PUBLIC_URL", raising=False)
-    assert public_base_url() == "https://nastech-assets.nastechresearch.github.io"
+    assert public_base_url() == "https://nastech-agent.nastechresearch.workers.dev"
     monkeypatch.setenv("CLOUDFLARE_R2_PUBLIC_URL", "https://cdn.example.com")
     assert public_base_url() == "https://cdn.example.com"
     assert public_base_url("https://explicit.example.com/") == "https://explicit.example.com"
@@ -229,7 +229,7 @@ def test_channel_public_base_defaults_to_production(monkeypatch):
     # secret, so a local command should not have to hand-set it.
     monkeypatch.delenv("CLOUDFLARE_R2_PUBLIC_URL", raising=False)
     monkeypatch.delenv("R2_DISPOSABLE_RUN", raising=False)
-    assert channel_public_base() == "https://nastech-assets.nastechresearch.github.io"
+    assert channel_public_base() == "https://nastech-agent.nastechresearch.workers.dev"
     monkeypatch.setenv("CLOUDFLARE_R2_PUBLIC_URL", "https://cdn.example.com")
     assert channel_public_base() == "https://cdn.example.com"
     assert channel_public_base("https://explicit.example.com/") == "https://explicit.example.com"

@@ -14,7 +14,7 @@ does not run.
 
 The Termux package runs Nastech on **aarch64 (arm64-v8a)** Android devices.
 Two APT channels are published under
-`https://nastech-assets.nastechresearch.github.io/releases/termux/<channel>`:
+`https://nastech-agent.nastechresearch.workers.dev/releases/termux/<channel>`:
 
 | Channel | APT suite | Contents |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ Do not use the desktop/server `install.sh` or a glibc Linux archive on this targ
    ```bash
    mkdir -p "$PREFIX/etc/apt/keyrings"
    curl -fsSL \
-     https://nastech-assets.nastechresearch.github.io/releases/termux/stable/key.asc \
+     https://nastech-agent.nastechresearch.workers.dev/releases/termux/stable/key.asc \
      -o "$PREFIX/etc/apt/keyrings/nastech-agent.asc"
    ```
 
@@ -73,7 +73,7 @@ Do not use the desktop/server `install.sh` or a glibc Linux archive on this targ
 
    ```bash
    printf '%s\n' \
-     "deb [signed-by=$PREFIX/etc/apt/keyrings/nastech-agent.asc] https://nastech-assets.nastechresearch.github.io/releases/termux/stable nastech-stable main" \
+     "deb [signed-by=$PREFIX/etc/apt/keyrings/nastech-agent.asc] https://nastech-agent.nastechresearch.workers.dev/releases/termux/stable nastech-stable main" \
      > "$PREFIX/etc/apt/sources.list.d/nastech-agent.list"
    ```
 

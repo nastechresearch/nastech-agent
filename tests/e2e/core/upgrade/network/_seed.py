@@ -231,7 +231,7 @@ def assert_isolated(inst: Installed) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Release-channel records (the R2 objects under https://nastech-assets.nastechresearch.github.io/).
+# Release-channel records (the R2 objects under https://nastech-agent.nastechresearch.workers.dev/).
 # ---------------------------------------------------------------------------
 
 def canonical(value: object) -> bytes:

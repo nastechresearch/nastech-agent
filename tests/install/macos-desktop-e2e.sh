@@ -49,7 +49,7 @@ PHASE="all"
 UPDATE_METHOD=""
 INSTALL_REF=""
 UPDATE_REF=""
-DMG_URL="https://nastech-assets.nastechresearch.github.io/Nastech-Setup.dmg"
+DMG_URL="https://nastech-agent.nastechresearch.workers.dev/Nastech-Setup.dmg"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --phase)
