@@ -32,7 +32,6 @@ import faulthandler
 import json
 import logging
 import os
-import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -99,15 +98,10 @@ _handle: Optional["StartupWatchdogHandle"] = None
 
 
 def _process_nastech_home() -> Path:
-    """NASTECH_HOME for diagnostic files — stdlib-only replica of the nastech_constants default."""
-    val = os.environ.get("NASTECH_HOME", "").strip()
-    if val:
-        return Path(val)
-    if sys.platform == "win32":
-        local_appdata = os.environ.get("LOCALAPPDATA", "").strip()
-        base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
-        return base / "nastech"
-    return Path.home() / ".nastech"
+    """Use the stdlib-only process resolver before application startup."""
+    from nastech_constants import get_process_nastech_home
+
+    return get_process_nastech_home()
 
 
 def get_startup_watchdog_dump_path(home: Optional[Path] = None) -> Path:

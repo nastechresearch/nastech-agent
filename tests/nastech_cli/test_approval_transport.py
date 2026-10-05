@@ -8,7 +8,7 @@ import threading
 import time
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 
 from nastech_cli.plugins import PluginContext, PluginManager, PluginManifest
 from tools import approval_context, approval_prompt

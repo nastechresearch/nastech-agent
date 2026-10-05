@@ -9,7 +9,9 @@ def test_container_sets_hosted_write_policy_env(built_image: str) -> None:
     script = (
         'test "$NASTECH_HOME" = "/opt/data" && '
         'test "$NASTECH_WRITE_SAFE_ROOT" = "/opt/data" && '
-        'test "$NASTECH_DISABLE_LAZY_INSTALLS" = "1" && '
+        # Opt-in extras install into PM generations under $NASTECH_HOME, never
+        # the sealed /opt/nastech tree, so the image must not refuse them.
+        'test -z "${NASTECH_DISABLE_LAZY_INSTALLS:-}" && '
         'test "$PYTHONDONTWRITEBYTECODE" = "1"'
     )
     result = subprocess.run(

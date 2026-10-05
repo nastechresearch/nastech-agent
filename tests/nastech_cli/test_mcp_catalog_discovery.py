@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 from fastapi.testclient import TestClient
 
 

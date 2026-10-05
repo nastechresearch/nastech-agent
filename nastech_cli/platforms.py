@@ -21,7 +21,6 @@ PLATFORMS: OrderedDict[str, PlatformInfo] = OrderedDict([
     ("signal",         PlatformInfo(label="📡 Signal",          default_toolset="nastech-signal")),
     ("bluebubbles",    PlatformInfo(label="💙 BlueBubbles",     default_toolset="nastech-bluebubbles")),
     ("email",          PlatformInfo(label="📧 Email",           default_toolset="nastech-email")),
-    ("homeassistant",  PlatformInfo(label="🏠 Home Assistant",  default_toolset="nastech-homeassistant")),
     ("mattermost",     PlatformInfo(label="💬 Mattermost",      default_toolset="nastech-mattermost")),
     ("matrix",         PlatformInfo(label="💬 Matrix",          default_toolset="nastech-matrix")),
     ("dingtalk",       PlatformInfo(label="💬 DingTalk",        default_toolset="nastech-dingtalk")),

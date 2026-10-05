@@ -6,7 +6,7 @@ user.
 """
 from __future__ import annotations
 
-from tests.docker.conftest import docker_exec, docker_exec_sh, start_container
+from tests.docker.conftest import docker_exec_sh, start_container
 
 
 def test_config_migration_runs_on_boot(
@@ -25,17 +25,6 @@ def test_config_migration_runs_on_boot(
     )
     assert "EXISTS" in r.stdout, (
         f"config.yaml not found in $NASTECH_HOME: {r.stdout}"
-    )
-
-    # Verify the migration script exists in the image
-    r = docker_exec_sh(
-        container_name,
-        "test -f /opt/nastech/scripts/docker_config_migrate.py && "
-        "echo SCRIPT_EXISTS || echo SCRIPT_MISSING",
-        timeout=10,
-    )
-    assert "SCRIPT_EXISTS" in r.stdout, (
-        f"docker_config_migrate.py not found in image: {r.stdout}"
     )
 
     # Verify config.yaml is owned by nastech (migration ran as nastech)

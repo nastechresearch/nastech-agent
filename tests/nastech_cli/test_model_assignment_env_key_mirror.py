@@ -13,7 +13,7 @@ import importlib
 import os
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 import nastech_cli.web_server_config as _web_server_config
 
 

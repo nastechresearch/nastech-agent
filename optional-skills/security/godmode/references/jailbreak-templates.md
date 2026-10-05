@@ -114,7 +114,7 @@ nastech
 ### Via the GODMODE CLASSIC racer script
 
 ```python
-exec(open(os.path.join(os.environ.get("NASTECH_HOME", os.path.expanduser("~/.nastech")), "skills/red-teaming/godmode/scripts/godmode_race.py")).read())
+exec(open(os.path.join(os.environ.get("NASTECH_HOME", os.path.expanduser("~/.nastech")), "skills/security/godmode/scripts/godmode_race.py")).read())
 result = race_godmode_classic("Your query here")
 print(f"Winner: {result['codename']} — Score: {result['score']}")
 print(result['content'])

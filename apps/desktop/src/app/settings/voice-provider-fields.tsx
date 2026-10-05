@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { useI18n } from '@/i18n'
 import {
   getElevenLabsVoices,
   getNastechConfigSchema,
@@ -9,6 +8,7 @@ import {
   profileScopeKey,
   saveNastechConfigRecord
 } from '@/nastech'
+import { useI18n } from '@/i18n'
 import { notifyError } from '@/store/notifications'
 import type { NastechConfigRecord } from '@/types/nastech'
 
@@ -53,7 +53,7 @@ export function VoiceProviderFields({
 }) {
   const { t } = useI18n()
   const keys = useMemo(() => voiceProviderKeys(section, providerKey), [section, providerKey])
-  const { data: loadedConfig } = useNastechConfigRecord(profile)
+  const { data: loadedConfig, writeScope } = useNastechConfigRecord(profile)
   // Parents pass `profile` as a fresh object literal each render; keying the
   // writer and the autosave effect on its identity would re-arm the 550ms
   // timer on every unrelated re-render. Key on the scope string instead
@@ -97,7 +97,7 @@ export function VoiceProviderFields({
     }
 
     const timeout = window.setTimeout(() => {
-      void saveNastechConfigRecord(diffConfig(baseline ?? {}, config), profile)
+      void saveNastechConfigRecord(diffConfig(baseline ?? {}, config), writeScope ?? profile)
         .then(() => {
           setBaseline(config)
           writeConfigCache(config)
@@ -106,8 +106,8 @@ export function VoiceProviderFields({
     }, 550)
 
     return () => window.clearTimeout(timeout)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- copy is stable; `profile` is keyed by scopeKey; avoid re-scheduling autosave on locale change
-  }, [config, scopeKey, saveVersion, writeConfigCache])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- copy is stable; `profile`/`baseline` are keyed by scopeKey; avoid re-scheduling autosave on locale change
+  }, [config, scopeKey, saveVersion, writeConfigCache, writeScope])
 
   // ElevenLabs cloned/library voices from the live account, when available —
   // mirrors the Settings → Voice dynamic voice list.

@@ -2,7 +2,7 @@
 // Real desktop + real backend. Isolated identity; no copied credentials.
 // Adds a fixed Vite port and CDP (9344) so the run can be driven and read
 // from outside. When you only want to click through it yourself:
-//   D=$(mktemp -d) && env -u NASTECH_SHARED_AUTH_DIR NASTECH_GUEST_ONBOARDING=1 NASTECH_SKIP_INTRO=1 \
+//   D=$(mktemp -d) && env -u NASTECH_SHARED_AUTH_DIR NASTECH_GUEST_ONBOARDING=1 \
 //     NASTECH_HOME="$D/home" NASTECH_DESKTOP_USER_DATA_DIR="$D/userdata" nastech desktop
 import { spawn } from 'node:child_process'
 import fs from 'node:fs'
@@ -31,7 +31,7 @@ Object.assign(env, {
   NASTECH_DESKTOP_USER_DATA_DIR: path.join(sandbox, 'electron'), NASTECH_DESKTOP_CWD: path.join(sandbox, 'work'),
   NASTECH_DESKTOP_NASTECH_ROOT: root, NASTECH_DESKTOP_PYTHON: python,
   NASTECH_DESKTOP_IGNORE_EXISTING: '1', NASTECH_DESKTOP_APP_NAME: 'Nastech Connector Rehearsal',
-  NASTECH_GUEST_ONBOARDING: '1', NASTECH_SKIP_INTRO: '1', NASTECH_DESKTOP_DEV_SERVER: url, NASTECH_DESKTOP_CDP_PORT: '9344'
+  NASTECH_GUEST_ONBOARDING: '1', NASTECH_DESKTOP_DEV_SERVER: url, NASTECH_DESKTOP_CDP_PORT: '9344'
 })
 const entry = path.join(desktop, 'dist/connector-rehearsal.mjs')
 fs.writeFileSync(entry, `import { app } from 'electron'\napp.setAsDefaultProtocolClient = () => false\napp.setAppPath(${JSON.stringify(desktop)})\nawait import('./electron-main.mjs')\n`)

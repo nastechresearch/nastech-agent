@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 
 from nastech_cli.model_switch import ModelSwitchResult
 

@@ -21,7 +21,9 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _run_gateway_import(nastech_home: Path, initial_env: dict[str, str]) -> dict[str, str]:
+def _run_gateway_import(
+    nastech_home: Path, initial_env: dict[str, str], routed_home: Path | None = None
+) -> dict[str, str]:
     """Import gateway.run in a clean subprocess and return the post-import env.
 
     The bridge runs at module-import time, so simply importing is enough
@@ -33,6 +35,9 @@ def _run_gateway_import(nastech_home: Path, initial_env: dict[str, str]) -> dict
         f"""
         import os, sys
         sys.path.insert(0, {str(PROJECT_ROOT)!r})
+        if {str(routed_home or "")!r}:
+            from nastech_constants import set_nastech_home_override
+            set_nastech_home_override({str(routed_home or "")!r})
 
         try:
             from gateway import run  # noqa: F401  — module import triggers bridge
@@ -50,6 +55,7 @@ def _run_gateway_import(nastech_home: Path, initial_env: dict[str, str]) -> dict
             "NASTECH_GATEWAY_BUSY_TEXT_MODE",
             "NASTECH_GATEWAY_PLATFORM_CONNECT_TIMEOUT",
             "NASTECH_TIMEZONE",
+            "TERMINAL_CWD",
         ):
             v = os.environ.get(k)
             if v is not None:
@@ -100,7 +106,7 @@ def _run_gateway_import(nastech_home: Path, initial_env: dict[str, str]) -> dict
 
 def _write_config(home: Path, agent_cfg: dict | None = None, display_cfg: dict | None = None,
                   timezone: str | None = None, gateway_cfg: dict | None = None) -> None:
-    import yaml
+    import nastech_yaml as yaml
     cfg: dict = {}
     if agent_cfg:
         cfg["agent"] = agent_cfg
@@ -172,7 +178,11 @@ def test_default_turn_lease_timeout_overrides_stale_env_when_key_is_omitted(
 
     env = _run_gateway_import(nastech_home, initial_env={})
 
-    assert env.get("NASTECH_TURN_LEASE_TIMEOUT") == "5"
+    from nastech_cli.config import DEFAULT_CONFIG
+
+    assert float(env.get("NASTECH_TURN_LEASE_TIMEOUT")) == float(
+        DEFAULT_CONFIG["agent"]["gateway_turn_lease_timeout"]
+    )
 
 
 def test_default_turn_lease_timeout_matches_the_runtime_fallback() -> None:
@@ -214,3 +224,22 @@ def test_env_platform_connect_timeout_wins_over_config(nastech_home: Path) -> No
     )
 
     assert env.get("NASTECH_GATEWAY_PLATFORM_CONNECT_TIMEOUT") == "120"
+
+
+def test_first_import_under_a_routed_override_bridges_the_process_home(tmp_path: Path) -> None:
+    """A multiplexed backend first imports gateway.run lazily inside a routed profile's session;
+    the import-time bridge must still write the LAUNCH home's config into the process env."""
+    from utils import atomic_yaml_write
+
+    homes = {}
+    for name, turns in (("launch", 111), ("routed", 222)):
+        home = tmp_path / name
+        (home / "work").mkdir(parents=True)
+        cfg = {"agent": {"max_turns": turns}, "terminal": {"cwd": str(home / "work")}}
+        atomic_yaml_write(home / "config.yaml", cfg)
+        homes[name] = home
+
+    env = _run_gateway_import(homes["launch"], {}, routed_home=homes["routed"])
+
+    assert env.get("NASTECH_MAX_ITERATIONS") == "111"
+    assert env.get("TERMINAL_CWD") == str(homes["launch"] / "work")

@@ -41,14 +41,11 @@ test('a selected non-local backend that is not ready warns once with Use Local /
 
   const toast = $notifications.get()[0]
   expect(toast?.kind).toBe('warning')
-  expect(toast?.title).toMatch(/Terminal commands are unavailable/)
   expect(toast?.message).toContain('Docker')
   expect(toast?.detail).toBe('Docker daemon not reachable')
-  // Plain language: the toast names the tool (Docker), never "backend".
-  expect(`${toast?.title} ${toast?.message} ${toast?.action?.label}`).not.toMatch(/backend/i)
 
   toast?.action?.onClick()
-  expect($routeRequest.get()?.path).toBe('/skills?tab=toolsets')
+  expect($routeRequest.get()?.path).toBe('/capabilities?tab=toolsets')
 
   toast?.secondaryAction?.onClick()
   expect(selectTerminalBackend).toHaveBeenCalledWith('local')

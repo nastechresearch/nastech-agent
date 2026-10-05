@@ -131,19 +131,22 @@ For isolated local testing, use one `NASTECH_HOME` for plugin enablement and the
 agent run:
 
 ```bash
-export NASTECH_HOME=/tmp/nastech-middleware-test
+export NASTECH_HOME=$HOME/.nastech/cache/scratch/nastech-middleware-test
 mkdir -p "$NASTECH_HOME"
 nastech plugins enable <plugin-name>
 nastech chat --query 'Reply exactly ok'
 ```
 
-For source checkouts, prefer the source command so the runtime sees plugins and
-middleware from the working tree:
+For source checkouts, use the [PM developer workflow](../reference/package-management.md#developer-workflow)
+and a separate development home so the runtime sees plugins and middleware from
+the working tree:
 
 ```bash
-uv sync
-uv run nastech plugins enable <plugin-name>
-uv run nastech chat --query 'Reply exactly ok'
+export NASTECH_HOME="$HOME/nastech-middleware-test"
+export NASTECH_RUNTIME_DIR="$NASTECH_HOME/tools"
+source ./activate
+python nastech plugins enable <plugin-name>
+python nastech chat --query 'Reply exactly ok'
 ```
 
 ## Generic Plugin Examples
@@ -180,6 +183,9 @@ The effective request is passed to `pre_api_request`, provider execution, and
 This plugin constrains `terminal` calls to a known working directory:
 
 ```python
+from pathlib import Path
+
+
 def register(ctx):
     ctx.register_middleware("tool_request", normalize_terminal_workdir)
 
@@ -188,7 +194,7 @@ def normalize_terminal_workdir(**kwargs):
     if kwargs.get("tool_name") != "terminal":
         return None
     args = dict(kwargs["args"])
-    args.setdefault("workdir", "/tmp/nastech-middleware-demo")
+    args.setdefault("workdir", str(Path.home() / ".nastech" / "cache" / "scratch" / "nastech-middleware-demo"))
     return {
         "args": args,
         "source": "middleware-demo",
@@ -242,8 +248,9 @@ Execution middleware may call `next_call(modified_args)` to pass a changed
 payload to later middleware and the base tool dispatcher.
 
 Plugin-specific examples should live with the plugin that owns the behavior.
-NeMo Relay execution middleware is installed through an explicitly selected
-Relay `plugins.toml`; see
+NeMo Relay execution middleware is installed through Relay's discovered user
+and system configuration, or through an explicit `plugins.toml` selected with
+`NASTECH_NEMO_RELAY_PLUGINS_TOML`; see
 [Relay shared metrics](relay-shared-metrics.md).
 
 ## Safety Notes

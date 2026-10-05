@@ -12,15 +12,18 @@ Nastech isn't just a CLI tool. You can import `AIAgent` directly and use it prog
 
 ## Installation
 
-Clone Nastech and create its supported editable development environment:
+Clone Nastech and prepare its source environment through PM. The Bash recipe is:
 
 ```bash
 git clone https://github.com/NastechResearch/nastech-agent.git
 cd nastech-agent
-uv sync
+source ./activate
 ```
 
-Run your application with `uv run python your_app.py` from that checkout. Nastech does not publish a supported wheel or source distribution for `requirements.txt` installs.
+Run your application with `python your_app.py` from that activated checkout.
+For PowerShell preparation or an independent interpreter, see the
+[PM developer workflow](../reference/package-management.md#developer-workflow).
+Nastech does not publish a supported wheel or source distribution for `requirements.txt` installs.
 
 :::tip
 The same environment variables used by the CLI are required when using Nastech as a library. At minimum, set `OPENROUTER_API_KEY` (or `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` if using direct provider access).

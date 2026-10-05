@@ -6,6 +6,10 @@ description: "Your first conversation with Nastech Agent — from install to cha
 
 # Nastech Agent Quickstart
 
+Python dependency commands on this page use a
+[PM-prepared source checkout](../reference/package-management.md#developer-workflow).
+After a dependency change, reactivate the checkout and restart Nastech.
+
 This guide gets you from zero to a working Nastech setup that survives real use. Install, choose a provider, verify a working chat, and know exactly what to do when something breaks.
 
 ## Prefer to watch?
@@ -53,7 +57,9 @@ To easily install the command-line and desktop applications, [download the Naste
 ### Without Nastech Desktop:
 For a command-line only install without Nastech Desktop, run:
 
-#### Linux / macOS / WSL2 / Android (Termux)
+For aarch64 Android devices, use the separate [Termux APT guide](./termux.md).
+
+#### Linux / macOS / WSL2
 ```bash
 curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 ```
@@ -64,10 +70,6 @@ Run in powershell:
 ```powershell
 iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1) 
 ```
-
-:::tip Android / Termux
-If you're installing on a phone, see the dedicated [Termux guide](./termux.md) for the tested manual path, supported extras, and current Android-specific limitations.
-:::
 
 After it finishes, reload your shell:
 
@@ -262,7 +264,7 @@ Only after the base chat works. Pick what you need:
 nastech gateway setup    # Interactive platform configuration
 ```
 
-Connect [Telegram](../user-guide/messaging/telegram.md), [Discord](../user-guide/messaging/discord.md), [Slack](../user-guide/messaging/slack.md), [WhatsApp](../user-guide/messaging/whatsapp.md), [Signal](../user-guide/messaging/signal.md), [Email](../user-guide/messaging/email.md), or [Home Assistant](../user-guide/messaging/homeassistant.md), or [Microsoft Teams](../user-guide/messaging/teams.md).
+Connect [Telegram](../user-guide/messaging/telegram.md), [Discord](../user-guide/messaging/discord.md), [Slack](../user-guide/messaging/slack.md), [WhatsApp](../user-guide/messaging/whatsapp.md), [Signal](../user-guide/messaging/signal.md), [Email](../user-guide/messaging/email.md), [Home Assistant](../user-guide/messaging/homeassistant.md) (plugin), or [Microsoft Teams](../user-guide/messaging/teams.md).
 
 ### Automation and tools
 
@@ -283,15 +285,10 @@ For Docker sandboxes, you can also enable the **egress credential-injection prox
 
 ### Voice mode
 
-```bash
-# From the Nastech install directory (the curl installer placed it at
-# ~/.nastech/nastech-agent on Linux/macOS or %LOCALAPPDATA%\nastech\nastech-agent on Windows):
-cd ~/.nastech/nastech-agent
-uv pip install --python ./venv/bin/python -e ".[voice]"
-# Includes faster-whisper for free local speech-to-text
-```
-
-Then in the CLI: `/voice on`. Press `Ctrl+B` to record. See [Voice Mode](../user-guide/features/voice-mode.md).
+Run `nastech tools` and configure the Voice providers. Then enable `/voice on`
+in the CLI and press `Ctrl+B` to record. PM handles missing supported
+requirements; a dependency change can require a restart. Local Faster-Whisper
+is not available on every architecture. See [Voice Mode](../user-guide/features/voice-mode.md).
 
 ### Skills
 
@@ -340,7 +337,7 @@ ACP support ships with the standard `[all]` extras, so the curl installer alread
 nastech acp
 ```
 
-(If you installed without `[all]`, run `cd ~/.nastech/nastech-agent && uv pip install -e ".[acp]"` first.)
+(If you installed without `[all]`, run `cd ~/.nastech/nastech-agent && python -c "import pm; pm.sync_venv(['acp'], explicit=True)"` first.)
 
 See [ACP Editor Integration](../user-guide/features/acp.md).
 

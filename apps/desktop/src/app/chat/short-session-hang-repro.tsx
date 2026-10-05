@@ -83,8 +83,8 @@ const fixtures: FixtureTurn[] = [
   ]),
   turn(3, 'tools', [
     {
-      args: { path: '/tmp/nastech-short-session-fixture.txt' },
-      argsText: '{"path":"/tmp/nastech-short-session-fixture.txt"}',
+      args: { path: '~/nastech-short-session-fixture.txt' },
+      argsText: '{"path":"~/nastech-short-session-fixture.txt"}',
       result: { content: 'deterministic fixture output', ok: true },
       toolCallId: 'short-session-tool-3',
       toolName: 'read_file',
@@ -122,8 +122,8 @@ const fixtures: FixtureTurn[] = [
   turn(8, 'mixed', [
     text('Mixed response eight is the final checkpoint. `inline code` and **markdown** remain interactive.'),
     {
-      args: { path: '/tmp' },
-      argsText: '{"path":"/tmp"}',
+      args: { path: '~' },
+      argsText: '{"path":"~"}',
       result: { entries: ['nastech-short-session-fixture.txt'], ok: true },
       toolCallId: 'short-session-tool-8',
       toolName: 'list_directory',

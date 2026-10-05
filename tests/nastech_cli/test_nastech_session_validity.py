@@ -6,12 +6,6 @@ import time
 
 import nastech_cli.auth as auth
 import nastech_cli.auth_nastech as auth_nastech
-from nastech_cli.auth import (
-    NASTECH_SESSION_TERMINAL,
-    NASTECH_SESSION_UNKNOWN,
-    NASTECH_SESSION_VALID,
-    get_nastech_session_validity,
-)
 
 
 def _invoke_jwt(*, seconds: int = 3600) -> str:

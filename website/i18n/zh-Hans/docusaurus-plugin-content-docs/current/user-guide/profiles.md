@@ -232,7 +232,7 @@ nastech update
 ```bash
 nastech profile list           # 显示所有 profile 及其状态
 nastech profile show coder     # 显示某个 profile 的详细信息
-nastech profile rename coder dev-bot   # 重命名（同步更新别名和服务）
+nastech profile rename coder dev-bot   # 重命名（更新别名；移除旧名称的网关服务）
 nastech profile export coder   # 导出为 coder.tar.gz
 nastech profile import coder.tar.gz   # 从归档文件导入
 ```

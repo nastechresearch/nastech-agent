@@ -3,7 +3,7 @@
 
 from typing import Any
 
-from nastech_cli import __version__ as _NASTECH_VERSION
+from nastech_cli.version_info import get_version_info
 from providers import register_provider
 from providers.base import ProviderProfile
 
@@ -36,7 +36,7 @@ fireworks = FireworksProfile(
     default_headers={
         "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
         "X-Title": "Nastech Agent",
-        "User-Agent": f"NastechAgent/{_NASTECH_VERSION}",
+        "User-Agent": f"NastechAgent/{get_version_info().base_version}",
     },
     default_aux_model="accounts/fireworks/models/glm-5p2",
     # Picker safety net when the live catalog fetch fails.

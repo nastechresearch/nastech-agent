@@ -7,7 +7,7 @@ started the proactive keepalive, and nothing adopted a fresh key before a reques
 import base64
 import json
 import time
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from agent.client_lifecycle import ClientLifecycleMixin
 
@@ -84,6 +84,10 @@ def test_keepalive_thread_starts_when_an_agent_routes_to_nastech(monkeypatch, tm
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path / "hh"))
     started = []
     monkeypatch.setattr("nastech_cli.nastech_auth_keepalive.start_nastech_auth_keepalive", lambda: started.append(1))
+    # Tool discovery and the SDK client are irrelevant to the keepalive wiring and dominate runtime.
+    monkeypatch.setattr("model_tools.get_tool_definitions", lambda *a, **k: [])
+    monkeypatch.setattr("model_tools.check_toolset_requirements", lambda *a, **k: {})
+    monkeypatch.setattr("agent.process_bootstrap.OpenAI", MagicMock())
     AIAgent(api_key="k", base_url="https://inference-api.nastechresearch.github.io/v1", provider="nastech",
             model="anthropic/claude-fable-5.1", quiet_mode=True, skip_context_files=True, skip_memory=True)
     assert started == [1]

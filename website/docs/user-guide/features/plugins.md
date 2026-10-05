@@ -150,6 +150,10 @@ User plugins at `~/.nastech/plugins/model-providers/<name>/` override bundled mo
 
 **General plugins and user-installed backends are disabled by default** — discovery finds them (so they show up in `nastech plugins` and `/plugins`), but nothing with hooks or tools loads until you add the plugin's name to `plugins.enabled` in `~/.nastech/config.yaml`. This stops third-party code from running without your explicit consent.
 
+:::note `plugins.enabled` governs plugins only
+[Gateway event hooks](./hooks.md#gateway-event-hooks) under `~/.nastech/hooks/<name>/` are not plugins and are **not** gated by `plugins.enabled` or `plugins.disabled`. That directory is trusted by placement: any subdirectory holding a valid `HOOK.yaml` + `handler.py` is imported by the gateway at startup, and placing the files there is the opt-in. See the [gateway hook trust model](./hooks.md#gateway-hook-trust).
+:::
+
 ```yaml
 plugins:
   enabled:
@@ -157,6 +161,11 @@ plugins:
     - disk-cleanup
   disabled:       # optional deny-list — always wins if a name appears in both
     - noisy-plugin
+  # Optional: deadline (seconds) for each Git clone, fetch or checkout
+  # during plugin installation, including automatic memory-provider migration.
+  # Default 300; values above 3600 are clamped. A subdirectory install
+  # (owner/repo/path/to/plugin) downloads only that folder's files.
+  clone_timeout_seconds: 300
   # Optional: wall-clock cap (seconds) for timeout-bounded in-process Python
   # plugin hook callbacks (hot-path observers + pre_tool_call). Default 30;
   # set 0 to disable; values above 600 are clamped. Timed-out pre_tool_call
@@ -164,6 +173,13 @@ plugins:
   # subagent_stop are never moved onto a timeout worker.
   # Shell hooks keep their own per-entry timeout under the top-level hooks: key.
   hook_callback_timeout: 30
+  # Optional: deadline (seconds) for one plugin's import + register() at load.
+  # A plugin that overruns it is skipped with the reason "load timed out after
+  # Ns" (reported like any other load failure: the startup warning and the
+  # in-session `/plugins` listing) and the remaining plugins keep loading; the
+  # stuck thread is abandoned. Default 10; set 0 to disable; values above 600
+  # are clamped.
+  load_timeout_seconds: 10
 ```
 
 Three ways to flip state:
@@ -187,7 +203,12 @@ Nastech checks out the commit detached, verifies that `HEAD` exactly matches the
 requested SHA, and records the canonical source, installed revision, and pin
 status in the current profile. `nastech plugins update` refuses to move a pinned
 plugin; choose a new exact commit explicitly with
-`nastech plugins install <source> --force --ref <new-commit>`. The
+`nastech plugins install <source> --force --ref <new-commit>`. Like an
+update, a forced reinstall from the source the plugin was installed from
+replaces its code but keeps your files: untracked and git-ignored files stay in
+place, and edits to tracked files are copied to
+`~/.nastech/plugins-backup/<name>-<sha>/`. A reinstall from a different source
+starts clean; to reset a plugin completely, `nastech plugins remove` it first. The
 profile-local install metadata contains no config values, environment values,
 secrets, or capability grants.
 
@@ -218,6 +239,10 @@ it is never written into the plugin's `.git/config` or the install metadata.
 SSH sources (`git@host:owner/repo.git`) authenticate through your ssh-agent as
 before. The same resolution applies to `nastech plugins update`, catalog MCP
 installs from git, and profile distributions fetched from a git URL.
+
+`nastech doctor` sends a configured `GITHUB_TOKEN`/`GH_TOKEN` to `api.github.com`
+(under **API Connectivity**) and, when GitHub rejects it, names the variable and the
+`.env` file that carries the expired token so you can remove or replace it.
 
 ### What the allow-list does NOT gate
 
@@ -302,7 +327,7 @@ Plugins can register the 27 lifecycle events currently accepted by `nastech_cli.
 |---|---|
 | **Directive/control** | `pre_tool_call`, `pre_llm_call`, `pre_verify`, `pre_gateway_dispatch` |
 | **Transform** | `transform_tool_result`, `transform_terminal_output`, `transform_llm_output`, `pre_transcription` |
-| **Observer** | `post_tool_call`, `post_llm_call`, `pre_api_request`, `post_api_request`, `api_request_error`, `on_stream_start`, `on_stream_delta`, `on_stream_end`, `on_interim_message`, `on_session_start`, `on_session_end`, `on_session_finalize`, `on_session_reset`, `agent_loop_stopped`, `on_skill_lifecycle`, `subagent_start`, `subagent_stop`, `pre_approval_request`, `post_approval_response`, `pre_command`, `kanban_task_claimed`, `kanban_task_completed`, `kanban_task_blocked` |
+| **Observer** | `post_tool_call`, `post_llm_call`, `pre_api_request`, `post_api_request`, `api_request_error`, `pre_auxiliary_call`, `post_auxiliary_call`, `on_stream_start`, `on_stream_delta`, `on_stream_end`, `on_interim_message`, `on_session_start`, `on_session_end`, `on_session_finalize`, `on_session_reset`, `agent_loop_stopped`, `on_skill_lifecycle`, `subagent_start`, `subagent_stop`, `pre_approval_request`, `post_approval_response`, `pre_command`, `kanban_task_claimed`, `kanban_task_completed`, `kanban_task_blocked` |
 
 These categories describe current behavior rather than defining future naming rules. Plugin middleware remains a separate registry/surface.
 ## Plugin types
@@ -355,7 +380,7 @@ services.nastech-agent = {
   # Directory plugin (source tree with plugin.yaml)
   extraPlugins = [ (pkgs.fetchFromGitHub { ... }) ];
   # Entry-point plugin (pip package)
-  extraPythonPackages = [ (pkgs.python312Packages.buildPythonPackage { ... }) ];
+  extraPythonPackages = [ (config.services.nastech-agent.package.python.pkgs.buildPythonPackage { ... }) ];
   # Enable in config
   settings.plugins.enabled = [ "my-plugin" ];
 };
@@ -367,31 +392,99 @@ Declarative plugins are symlinked with a `nix-managed-` prefix — they coexist 
 
 ```bash
 nastech plugins                               # unified interactive UI
-nastech plugins list                          # table: enabled / disabled / not enabled
+nastech plugins list                          # table: enabled / disabled / not enabled (bundled backends,
+                                             # platforms and the live memory.provider count as enabled)
 nastech plugins search <term>                 # search the Nastech plugin catalog
 nastech plugins install <name>                # install a catalog entry (repo @ reviewed pinned SHA)
 nastech plugins install user/repo             # install from Git, then prompt Enable? [y/N]
-nastech plugins install user/repo --enable    # install AND enable (no prompt)
+nastech plugins install user/repo --enable    # request enable; dependency consent still applies
 nastech plugins install user/repo --no-enable # install but leave disabled (no prompt)
 nastech plugins update my-plugin              # pull latest (local edits are autostashed and re-applied)
-nastech plugins remove my-plugin              # uninstall
+nastech plugins remove my-plugin              # uninstall; also drops it from plugins.enabled/disabled/entries
+                                             # and resets memory.provider when it was the live provider
 nastech plugins enable my-plugin              # add to allow-list
-nastech plugins disable my-plugin             # remove from allow-list + add to disabled
+nastech plugins disable my-plugin             # remove from allow-list + add to disabled (bundled platforms:
+                                             # either spelling works, e.g. photon-platform or platforms/photon)
 nastech plugins capabilities [my-plugin]      # declared vs granted capabilities
+nastech plugins check-updates                 # read-only: is any installed plugin outdated?
+nastech plugins adopt my-plugin               # track a self-cloned plugin dir (read its git origin)
+nastech plugins trust-update-url my-plugin    # confirm a changed update_url after review
 ```
 
+### Update checks and provenance
+
+Nastech records Git install source and revision in `.install-metadata.json`.
+Unpinned tracked installs compare the saved source's remote HEAD, or a matching
+saved `update_url` feed. Pinned installs remain pinned. Self-cloned directories
+need `nastech plugins adopt NAME` before they become tracked installations.
+Manually copied or provenance-drifted directories receive diagnostic guidance.
+Pip entry-point plugins can report an owning distribution's available version;
+that check does not turn them into Git-managed installs.
+
+`nastech plugins check-updates` leaves plugin files unchanged. A scheduled gateway
+check runs when `plugins.auto_update_check_hours` is due: default 24 hours,
+`0` disables it. Its receipt is available through `nastech pm status` and the
+desktop sync-status view. This is not a hard once-per-day limit if you configure
+a different interval.
+
+By default, updates require `nastech plugins update NAME`. Setting
+`plugins.auto_apply: true` opts tracked Git plugins into unattended updates.
+Both routes use the update security scan. Auto-apply does not manage pinned,
+manual, drifted, or pip-distribution rows.
+
+If a manifest changes or introduces `update_url`, Nastech refuses the new address
+until you approve it with `nastech plugins trust-update-url NAME`. This is a
+feed-source check, not a sandbox against already trusted plugin code.
+
+### Dependency preparation and preservation
+
+Python dependency installation has a separate consent/admission step.
+`plugins install --enable` does not bypass that step. A declined or
+non-interactive dependency install can leave the plugin installed but disabled.
+Node sidecar dependencies have a separate prompt and remain plugin-local.
+
+PM prepares Python dependencies with core and the enabled plugin set before
+publishing the new environment and configuration. A resolution failure preserves
+the previous selection. Restart Nastech when a new selected environment is not
+yet active in the running process.
+
+The enabled set is the union over the default home **and every profile** under
+`profiles/`, read from each `config.yaml` (`plugins.enabled`, `plugins.disabled`,
+`memory.provider`). PM refuses to guess at a home it cannot read: a
+`config.yaml` that is not valid YAML, is not a mapping, or has a non-list
+`plugins.enabled`/`plugins.disabled` or non-string `memory.provider` fails
+dependency preparation for **all** homes (`could not parse plugin selection:
+<path>`), rather than silently dropping that profile's plugins from the next
+environment. Fix or remove the offending file; an empty `config.yaml` is fine.
+
+Ordinary Nastech application updates preserve user plugin directories, including
+wrapper files and external sidecar links. Explicit plugin updates or removals
+can change those files. See [Package management](../../reference/package-management.md)
+and the [plugin authoring guide](../../developer-guide/plugins/index.md#lazy-install-optional-python-dependencies).
 ### One-click install links (Desktop)
 
 Nastech Desktop registers the `nastech://` URL scheme, so a website, README, or
 chat message can link straight to a plugin install:
 
 ```
-nastech://plugin/install?repo=owner/repo            # main install link
+nastech://plugin/install?catalog=NAME               # catalog entry, installs the reviewed pin
+nastech://plugin/install?repo=owner/repo            # any git repo
 nastech://plugin/install?repo=owner/repo&enable=1   # enable the agent plugin after install
 nastech://plugin/install?repo=owner/repo&force=1    # replace an existing install
+nastech://plugin/install?catalog=<name>             # reviewed catalog entry at its pinned commit
 ```
 
-Clicking one opens Nastech and shows a **confirmation dialog** — the repo id,
+The `catalog=<name>` form is what the **Open in Nastech Desktop** button on
+every [Plugin Catalog](./plugin-catalog.md) card uses. Desktop resolves the
+name against the live catalog (the same feed the **Capabilities → Plugins**
+picker shows) and opens the same **reviewed catalog entry** dialog an in-app
+pick does: the agent half installs at the catalog's pinned commit, never the
+branch tip. The link carries no repo URL, and a name that is not in the
+catalog shows an error toast and nothing else — it is never reinterpreted as a
+git path, so a link cannot smuggle an unreviewed repo behind a
+familiar-looking name.
+
+For a `repo=` link, clicking one opens Nastech and shows a **confirmation dialog** — the repo id,
 a "Before you install" note, and GitHub browse + clone links — then
 shallow-clones the repo to detect what it ships (an **agent plugin** —
 backend Python, a **desktop plugin** — app UI, or both). You pick the
@@ -438,7 +531,12 @@ gracefully.
 **Update re-consent:** if a plugin update declares capabilities you haven't
 granted, `nastech plugins update` surfaces the additions and asks again. New
 capabilities stay off until you consent — a plugin update can never silently
-widen its access.
+widen its access. Catalog re-pins go one step further: when the new pin adds
+tools, hooks, Python dependencies, host capabilities or a Desktop UI half the
+installed version did not have, the CLI shows the delta and asks `y/N` before
+anything moves, and the Desktop / dashboard **Update** button opens the same
+confirmation. Declining (or a non-interactive session) leaves the plugin at
+the old pin.
 
 **Non-interactive sessions fail closed:** installing or updating without a
 TTY completes the install, but declared capabilities are *not* granted. Run
@@ -651,13 +749,37 @@ dangerous block names the critical findings that caused it (e.g.
 `1 critical of 42 findings (destructive_root_rm)`), so a single blocking
 line is not hidden behind the total.
 
-Top-level test trees (`tests/`, `test/`, `testing/`, `spec/`, `specs/`,
-`fixtures/` at the plugin root) are still scanned — a plugin's `__init__.py`
-can import from them, so they are runtime code — but a critical finding
-there is capped at **caution**: their fixtures deliberately hold hostile
-strings to prove the plugin rejects them, so it asks for confirmation and
-`--force` overrides it instead of blocking the install outright. The same
-finding in any other file (`setup.sh`, `src/spec/…`) is still **dangerous**.
+Text that cannot run on the host at install time is scored as **context**, not
+as the plugin's behaviour, so it can lower a finding but never delete it —
+every finding stays in the report with file and line:
+
+- **Documentation prose** (`README.md`, `AGENTS.md`, `docs/**/*.md`, `.txt`,
+  `.rst`, `.html`) can never on its own produce **dangerous**: a command or
+  credential path quoted there (an uninstall step, a refusal list naming
+  `~/.ssh`) steps down one severity, and a README removing the plugin's
+  **own** install directory (`rm -rf "$HOME/.nastech/plugins/<name>"`) is a
+  note. Agent-facing shapes keep full severity — prompt injection, Markdown
+  exfil, agent-config edits, `curl … | sh` one-liners, an `authorized_keys`
+  append, a leaked provider key — and so does anything under a bundled
+  `skills/` tree or in `after-install.md`, which the agent reads as
+  instructions.
+- **Test trees and fixtures** (`tests/`, `test/`, `testing/`, `spec/`,
+  `specs/`, `fixtures/` at the plugin root; `__tests__/` and `__fixtures__/`
+  at any depth; `*.test.*`, `*.spec.*`, `test_*.py`, `*_test.*`) are still
+  scanned — a plugin's `__init__.py` can import from them — but a quoted-only
+  hostile string (`verdict_for("rm -rf /")`, a redaction corpus with a fake
+  `sk-…` key) is a note, and test code that would execute on import
+  (`os.system('rm -rf /')`) is capped at **caution**. The same finding in any
+  other file (`setup.sh`, `src/spec/…`) is still **dangerous**.
+- **Whole-line comments and `CHANGELOG.md`** describe a defense; they score as
+  prose does.
+- **Base64 that decodes to a media header** (PNG/JPEG/GIF/WOFF/PDF … in a
+  data URI or JSON scenery) is informational; `base64 -d` piped into a text
+  filter (`grep`, `jq`) is a note, piped into a shell or interpreter it keeps
+  full severity; `sudo` / `env|` as an alternation member of a regex literal
+  (`/approval|sudo|secret/`, a redaction pattern) is a note, in a command
+  string (`subprocess.run("sudo …")`) it is not.
+
 Likewise, a generic sample token (`hardcoded_secret`) inside a runtime `.py`
 file's `if __name__ == "__main__":` self-test block is capped at **caution**
 — the loader imports plugins and never runs that block — while every other
@@ -670,6 +792,57 @@ Scanning is on by default; disable it in `config.yaml`:
 plugins:
   scan_on_install: false
 ```
+
+### Running plugins out of process (`plugins.isolation`)
+
+By default third-party Python plugins are imported into the Nastech process, as they always have been.
+Setting `plugins.isolation: host` moves them into a **plugin host**: one separate Python process per
+profile, started on demand, that imports the profile's user-installed plugins and talks to Nastech over a
+private pipe.
+
+```yaml
+plugins:
+  isolation: host        # default: in_process
+  host:
+    launcher: []         # optional argv prefix for the host, e.g. a sandbox runner
+```
+
+Plugins do not change. They receive the same `ctx` and register tools, hooks, slash commands, skills and
+provider objects (image/video generation, web search, browser, TTS/STT, memory, context engines,
+model-provider profiles) exactly as before; Nastech registers matching entries on its side that call into
+the host. Dashboard plugin APIs are served by the host too. Bundled plugins keep running in-process.
+
+What changes in `host` mode:
+
+- **No shared interpreter.** A plugin's module never enters the Nastech process, so it cannot read
+  another profile's data from memory or patch Nastech internals. Under the multiplex gateway every
+  profile gets its own host, started with only that profile's environment and secrets.
+- **Crashes stay contained.** A plugin that crashes or exits kills its host, not Nastech; the call in
+  flight returns a tool error and Nastech restarts the host and reloads its plugins (bounded retries).
+- **A few surfaces need in-process code** and fail that plugin with a clear reason instead of loading:
+  gateway platform adapters (`register_platform`), approval transports, Telegram/platform handlers,
+  model-provider profiles that build their own SDK client (`create_client`), streaming dashboard
+  endpoints, and plugins that monkeypatch Nastech modules. Run those with `isolation: in_process`.
+
+**Locking it for a shared deployment.** `plugins.isolation` is ordinary profile config, so whoever can
+edit a profile's `config.yaml` can turn it off. When the profiles belong to people you are isolating from
+each other, pin it in the [managed scope](../managed-scope.md) instead; the managed value wins over every
+profile's own config and `nastech config set` refuses to change it:
+
+```yaml
+# /etc/nastech/config.yaml (root-owned, read by every profile on the machine)
+plugins:
+  isolation: host
+  host:
+    launcher: [...]      # pin the sandbox runner too, if you use one
+```
+
+Run the agents' terminal on an isolated backend (Docker, SSH, ...) as well, so the agent itself cannot
+reach the operator's files.
+
+`nastech plugins validate <dir>` and `nastech plugins show <name>` report whether a plugin runs in the host
+and, if not, why. Across the plugin catalog at the time of writing, 299 of 348 entries run in the host
+unchanged.
 
 ### Interactive UI
 
@@ -689,7 +862,7 @@ Plugins
      Context Engine           ▸ compressor
 ```
 
-- **General Plugins section** — checkboxes, toggle with SPACE. Checked = in `plugins.enabled`, unchecked = in `plugins.disabled` (explicit off).
+- **General Plugins section** — checkboxes, toggle with SPACE. A row opens checked when the plugin is active right now: listed in `plugins.enabled`, or a bundled platform, backend or model provider (on without a list entry), or the selected provider of a category. Only rows you flip are written on exit: unticking adds the plugin to `plugins.disabled` (explicit off), ticking adds it to `plugins.enabled` and clears a stale disable. Opening the picker and leaving changes nothing.
 - **Provider Plugins section** — shows current selection. Press ENTER to drill into a radio picker where you choose one active provider.
 - Bundled plugins appear in the same list with a `[bundled]` tag.
 
@@ -752,7 +925,9 @@ In gateway mode:
 - The route and conversation are pinned while dispatch is pending. Nastech drops the request if topic recovery changes the route or the session rotates before handling starts.
 - The request enters the platform adapter's normal message path. Active sessions use the existing busy-session queue rather than starting a competing turn.
 - Returns `True` when the live gateway accepts the request for asynchronous dispatch. This does not confirm that the agent turn or platform delivery has completed.
-- Returns `False` when `session_key` is omitted, the permission is not granted, or no live gateway can accept the request. Unknown or unroutable session keys discovered after asynchronous acceptance are written to the gateway log.
+- Returns `False` when `session_key` is omitted, the permission is not granted, or no live host can accept the request. Unknown or unroutable session keys discovered after asynchronous acceptance are written to the gateway log.
+
+Ink TUI (`nastech --tui`) and the desktop / dashboard chat are a third host. They do not set the classic CLI reference and they do not register on the messaging-gateway injector — those two hosts stay separate so a live gateway cannot clobber the TUI (or the reverse). Pass the session's durable `session_key` (the `ses_…` id), not the ephemeral UI session id. Nastech queues the text on that session's prompt queue: a busy session keeps the message for the next turn, an idle session starts one. A key that is not a live TUI session is left for the messaging gateway when one is running, and is never rerouted to a different chat.
 
 This enables plugins like remote control viewers, messaging bridges, or webhook receivers to feed messages into the conversation from external sources.
 

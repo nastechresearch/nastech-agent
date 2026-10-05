@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
-import { useI18n } from '@/i18n'
 import { type ProfileScope, saveNastechConfigRecord } from '@/nastech'
+import { useI18n } from '@/i18n'
 import { notify, notifyError } from '@/store/notifications'
 
 import { nastechConfigCacheWriter, useNastechConfigRecord } from '../hooks/use-config-record'
@@ -42,7 +42,7 @@ export function readUseRealProfile(record: Record<string, unknown> | undefined):
 export function BrowserRealProfilePanel({ profile }: BrowserRealProfilePanelProps) {
   const { t } = useI18n()
   const copy = t.settings.toolsets.browserRealProfile
-  const { data: config } = useNastechConfigRecord(profile)
+  const { data: config, writeScope } = useNastechConfigRecord(profile)
   const setConfig = nastechConfigCacheWriter(profile)
   const [busy, setBusy] = useState(false)
 
@@ -67,7 +67,8 @@ export function BrowserRealProfilePanel({ profile }: BrowserRealProfilePanelProp
       try {
         // Sparse patch: PUT /api/config deep-merges, and echoing the cached
         // snapshot would overwrite keys other surfaces changed since it loaded.
-        await saveNastechConfigRecord({ browser: { use_real_profile: on } }, profile)
+        await saveNastechConfigRecord({ browser: { use_real_profile: on } }, writeScope ?? profile)
+
         notify({
           kind: 'info',
           title: on ? copy.enabledTitle : copy.disabledTitle,
@@ -80,7 +81,7 @@ export function BrowserRealProfilePanel({ profile }: BrowserRealProfilePanelProp
         setBusy(false)
       }
     },
-    [config, copy, profile, setConfig]
+    [config, copy, profile, setConfig, writeScope]
   )
 
   return (

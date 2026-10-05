@@ -6,7 +6,6 @@ PATH, shadowing an existing nvm. Uninstall must remove those symlinks, but
 only when they still resolve into the Nastech-managed node dir.
 """
 
-import os
 from pathlib import Path
 
 import pytest
@@ -21,6 +20,7 @@ def fake_home(tmp_path, monkeypatch):
     home = tmp_path / "home"
     home.mkdir()
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: home))
+    monkeypatch.setenv("NASTECH_HOME", str(home / ".nastech"))
     (home / ".local" / "bin").mkdir(parents=True)
     return home
 
@@ -30,13 +30,32 @@ def _make_nastech_node(nastech_home: Path) -> Path:
     node_bin = nastech_home / "node" / "bin"
     node_bin.mkdir(parents=True)
     for name in ("node", "npm", "npx"):
-        (node_bin / name).write_text("#!/bin/sh\n")
+        (node_bin / name).write_text("#!/bin/sh\n", encoding="utf-8")
         (node_bin / name).chmod(0o755)
     return node_bin
 
 
 
 
+@pytest.mark.parametrize("owned", [False, True])
+def test_node_link_cleanup_respects_resolved_owner(fake_home, monkeypatch, owned):
+    home = fake_home / ".nastech"
+    link = fake_home / ".local" / "bin" / "node"
+    target = home / "node" / "bin" / "node" if owned else fake_home / "other" / "node"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("retained binary", encoding="utf-8")
+    try:
+        link.symlink_to(target)
+    except OSError as exc:
+        pytest.skip(f"native symlink creation unavailable: {exc}")
+    monkeypatch.setattr(uninstall, "_node_symlink_candidate_dirs", lambda: [link.parent])
+    removed = uninstall.remove_node_symlinks(home)
+    assert removed == ([link] if owned else [])
+    assert link.exists() is (not owned)
+    assert target.read_text(encoding="utf-8") == "retained binary"
+
+
+@pytest.mark.require_symlinks
 def test_leaves_unrelated_symlinks_untouched(fake_home):
     """A node symlink the user repointed at nvm must survive uninstall."""
     nastech_home = fake_home / ".nastech"
@@ -64,6 +83,7 @@ def test_leaves_unrelated_symlinks_untouched(fake_home):
 
 
 
+@pytest.mark.require_symlinks
 def test_removes_fhs_symlinks_in_usr_local_bin(fake_home, tmp_path, monkeypatch):
     """Root FHS installs place node symlinks in /usr/local/bin.
 

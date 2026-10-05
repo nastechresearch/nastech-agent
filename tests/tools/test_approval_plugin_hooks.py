@@ -143,13 +143,6 @@ class TestCliPathFiresHooks:
         assert result["approved"] is True
 
 
-class TestGatewayPathFiresHooks:
-    """Async gateway approval path: NASTECH_GATEWAY_SESSION is set and a
-    gateway notify callback is registered. The agent thread blocks on the
-    approval event until resolve_gateway_approval() is called from another
-    thread."""
-
-
 class TestSmartModeFiresHooks:
     def _configure(self, monkeypatch, verdict):
         monkeypatch.setenv("NASTECH_INTERACTIVE", "1")

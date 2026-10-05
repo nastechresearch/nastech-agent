@@ -12,7 +12,7 @@ import sys
 import time
 from datetime import datetime
 
-import yaml
+import nastech_yaml as yaml
 
 from nastech_cli.cli_commands_mixin import CLICommandsMixin
 

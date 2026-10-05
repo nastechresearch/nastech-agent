@@ -56,7 +56,7 @@ def _run_nastech_flow(config: dict, *, context: str, cancel_exc: tuple, cancel_l
 
 def _run_portal_one_shot(config: dict) -> None:
     """One-shot Nastech Portal setup (``nastech setup --portal`` / ``nastech portal``)."""
-    from nastech_cli.setup import _info, _print_banner, print_error, print_info, print_success
+    from nastech_cli.setup import _info, _print_banner, _record_setup_completed, print_error, print_info, print_success
     _print_banner("│     𓄃 Nastech Setup — Nastech Portal (one-shot)             │")
     _info(None, "  One subscription, 300+ models, plus the Tool Gateway:",
           "    web search, image generation, TTS, browser automation",
@@ -82,6 +82,7 @@ def _run_portal_one_shot(config: dict) -> None:
     print()
     print_success("Portal setup complete.")
     _info("  Run `nastech portal info` to inspect routing.", "  Run `nastech` to start chatting.")
+    _record_setup_completed(config)
 
 
 def _run_first_time_quick_setup(config: dict, nastech_home, is_existing: bool):
@@ -200,7 +201,6 @@ def _blank_slate_minimize_config(config: dict):
     mem["user_profile_enabled"] = False
     config.setdefault("checkpoints", {})["enabled"] = False
     config.setdefault("smart_model_routing", {})["enabled"] = False
-    config.setdefault("display", {})["tool_progress"] = "all"
 
 
 def _set_bundled_skills_opt_out(opt_out: bool, log_label: str, on_success=None, on_error=None) -> None:

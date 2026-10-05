@@ -33,29 +33,7 @@ import logging
 
 from nastech_cli.auth import (
     DEFAULT_NASTECH_PORTAL_URL,
-    _NASTECH_PORTAL_ALLOWED_HOSTS,
-    _nastech_portal_env_override,
 )
-
-
-class TestPortalEnvOverrideHelper:
-    def test_none_when_unset(self, monkeypatch):
-        monkeypatch.delenv("NASTECH_PORTAL_BASE_URL", raising=False)
-        monkeypatch.delenv("NASTECH_PORTAL_BASE_URL", raising=False)
-        assert _nastech_portal_env_override() is None
-
-
-    def test_env_override_not_gated_by_allowlist(self, monkeypatch):
-        """The whole point: an env-set staging host is NOT in
-        _NASTECH_PORTAL_ALLOWED_HOSTS, and the helper must return it anyway —
-        gating happens only for network-provenance values."""
-        monkeypatch.setenv(
-            "NASTECH_PORTAL_BASE_URL", "https://portal.staging-nastechresearch.github.io"
-        )
-        assert "portal.staging-nastechresearch.github.io" not in _NASTECH_PORTAL_ALLOWED_HOSTS
-        assert (
-            _nastech_portal_env_override() == "https://portal.staging-nastechresearch.github.io"
-        )
 
 
 class TestResolveAccessTokenEnvOverrideWins:

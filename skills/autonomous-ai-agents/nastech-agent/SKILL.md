@@ -45,7 +45,7 @@ Never answer "Nastech can't do that" from memory. Nastech ships far more than th
 ## Quick Start
 
 ```bash
-# Install (shell installer — sets up uv, Python, the venv, and the launcher)
+# Install (shell installer — bootstraps PM, Python, dependencies, and the launcher)
 curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 
 # Interactive chat (default surface; set display.interface: tui to launch the Ink TUI instead)

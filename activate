@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# ============================================================================
+# venv-style activation of the Nastech dev environment for an interactive shell.
+#
+#   source ./activate       (bash / zsh, repo root)
+#   source ./activate.fish  (fish)
+#   .\activate.ps1          (PowerShell)
+#
+# Applies the composed pm env (PATH + tool vars) to the CURRENT shell, with
+# save/restore: `deactivate` undoes exactly what activation changed.
+#
+# `nastech` becomes a shell function for this checkout. It runs only while the
+# shell is inside this worktree and refuses outside it, so a sibling worktree
+# keeps its own command. A prompt prefix names the worktree.
+#
+# Scripts and other processes do not source this: they run under
+# `scripts/run-in-nastech-env`. Both build on scripts/_activation.sh.
+#
+# Sync through setup before selecting the environment. PM owns freshness;
+# activation does not maintain a second dependency stamp. It trusts the
+# recorded tool digest instead of re-hashing every entry. `nastech pm
+# install` and `nastech update` keep that check.
+# ============================================================================
+_NASTECH_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Options: `--test-extras a,b` selects the test environment's runtime extras
+# (default: [all]); `--` ends options.
+# A bare `source ./activate` inherits the caller's positional parameters.
+# Ignore unrelated words so scripts with their own arguments can source it.
+_nastech_test_env="--test-environment"
+_nastech_expect_extras=""
+for _nastech_arg in "$@"; do
+    if [ -n "$_nastech_expect_extras" ]; then
+        _nastech_test_env="--test-environment=$_nastech_arg"
+        _nastech_expect_extras=""
+        continue
+    fi
+    case "$_nastech_arg" in
+        --) break ;;
+        --test-extras) _nastech_expect_extras=1 ;;
+        --test-extras=*) _nastech_test_env="--test-environment=${_nastech_arg#--test-extras=}" ;;
+        *) : ;;
+    esac
+done
+if [ -n "$_nastech_expect_extras" ]; then
+    printf '%s\n' 'activate: --test-extras needs a comma-separated list' >&2
+    unset _nastech_arg _nastech_test_env _nastech_expect_extras
+    return 2 2>/dev/null || exit 2
+fi
+unset _nastech_arg _nastech_expect_extras
+
+# shellcheck source=scripts/_activation.sh
+. "$_NASTECH_REPO/scripts/_activation.sh"
+
+if ! nastech_sync "$_NASTECH_REPO" "$_nastech_test_env"; then
+    printf '%s\n' 'activate: setup failed; shell environment unchanged' >&2
+    unset _nastech_test_env
+    return 1 2>/dev/null || exit 1
+fi
+unset _nastech_test_env
+
+# Guard against double-sourcing: venv activate precedent (re-activating is a
+# no-op re-save; we keep it idempotent by deactivating first). Key on the
+# function, not the sentinel: child shells inherit __NASTECH_ACTIVATED from an
+# activated parent but never the function, and there is nothing to undo there.
+if [ "$(type -t deactivate 2>/dev/null)" = "function" ]; then
+    deactivate
+fi
+
+_nastech_script="$(nastech_compose_env "$_NASTECH_REPO" sh)" || {
+    echo "activate: could not compose the environment (see above)" >&2
+    unset _nastech_script
+    return 1 2>/dev/null || exit 1
+}
+_nastech_keys="$(printf '%s\n' "$_nastech_script" | sed -n 's/^export \([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' | tr '\n' ' ')"
+
+# --- snapshot what we are about to change (deactivate restores this) ---
+# __NASTECH_ACTIVATED is part of the composed env below (it carries the
+# installed-state path this environment was built from), so it is snapshotted
+# and exported with every other key — no separate assignment here.
+__NASTECH_SAVED_PATH="$PATH"
+for _nastech_k in $_nastech_keys; do
+    eval "__NASTECH_SAVED_$_nastech_k=\"\${$_nastech_k+set}\""
+    eval "__NASTECH_PRIOR_$_nastech_k=\${$_nastech_k-__NASTECH_UNSET__}"
+done
+nastech_apply_env "$_nastech_script"
+
+# This checkout, not whichever `nastech` PATH finds. A function beats PATH, an
+# alias, and a hashed command, including the MSIX execution alias.
+__NASTECH_WORKTREE="$_NASTECH_REPO"
+# The branch names the worktree. A checkout cannot share a branch with another.
+__NASTECH_WORKTREE_NAME="$(git -C "$_NASTECH_REPO" rev-parse --abbrev-ref HEAD 2>/dev/null || :)"
+if [ -z "$__NASTECH_WORKTREE_NAME" ] || [ "$__NASTECH_WORKTREE_NAME" = HEAD ]; then
+    __NASTECH_WORKTREE_NAME="$(basename "$_NASTECH_REPO")"
+fi
+__NASTECH_SAVED_PS1="${PS1-__NASTECH_UNSET__}"
+__NASTECH_SAVED_PROMPT_COMMAND="${PROMPT_COMMAND-__NASTECH_UNSET__}"
+
+_nastech_worktree_here() {
+    _nastech_top="$(git rev-parse --show-toplevel 2>/dev/null)" || return 1
+    [ "$(cd "$_nastech_top" && pwd -P)" = "$(cd "$__NASTECH_WORKTREE" && pwd -P)" ]
+}
+
+nastech() {
+    _nastech_worktree_here || {
+        printf '%s\n' "nastech: $(pwd) is outside $__NASTECH_WORKTREE; refusing (the installed command is hidden while this checkout is active)" >&2
+        return 1
+    }
+    (
+        cd "$__NASTECH_WORKTREE" || exit 1
+        if [ -n "${PYTHON-}" ]; then
+            exec "$PYTHON" nastech "$@"
+        elif [ -x .venv/Scripts/python.exe ]; then
+            exec .venv/Scripts/python.exe nastech "$@"
+        elif [ -x .venv/bin/python ]; then
+            exec .venv/bin/python nastech "$@"
+        elif [ -x venv/Scripts/python.exe ]; then
+            exec venv/Scripts/python.exe nastech "$@"
+        elif [ -x venv/bin/python ]; then
+            exec venv/bin/python nastech "$@"
+        else
+            exec python nastech "$@"
+        fi
+    )
+}
+
+_nastech_prompt() {
+    if [ "$__NASTECH_SAVED_PS1" = "__NASTECH_UNSET__" ]; then
+        _nastech_base_ps1=""
+    else
+        _nastech_base_ps1="$__NASTECH_SAVED_PS1"
+    fi
+    if _nastech_worktree_here; then
+        PS1="($__NASTECH_WORKTREE_NAME) $_nastech_base_ps1"
+    else
+        PS1="$_nastech_base_ps1"
+    fi
+}
+
+if [ -n "${PROMPT_COMMAND-}" ]; then
+    PROMPT_COMMAND="_nastech_prompt; ${PROMPT_COMMAND}"
+else
+    PROMPT_COMMAND=_nastech_prompt
+fi
+_nastech_prompt
+
+deactivate() {
+    export PATH="$__NASTECH_SAVED_PATH"
+    for _nastech_k in $__NASTECH_KEY_LIST; do
+        eval "_nastech_was=\"\$__NASTECH_SAVED_$_nastech_k\""
+        eval "_nastech_old=\"\$__NASTECH_PRIOR_$_nastech_k\""
+        if [ "$_nastech_was" != "set" ]; then
+            unset "$_nastech_k"
+        else
+            export "$_nastech_k=$_nastech_old"
+        fi
+        unset "__NASTECH_SAVED_$_nastech_k" "__NASTECH_PRIOR_$_nastech_k"
+    done
+    if [ "$__NASTECH_SAVED_PS1" = "__NASTECH_UNSET__" ]; then
+        unset PS1
+    else
+        PS1="$__NASTECH_SAVED_PS1"
+    fi
+    if [ "$__NASTECH_SAVED_PROMPT_COMMAND" = "__NASTECH_UNSET__" ]; then
+        unset PROMPT_COMMAND
+    else
+        PROMPT_COMMAND="$__NASTECH_SAVED_PROMPT_COMMAND"
+    fi
+    unset __NASTECH_SAVED_PATH __NASTECH_KEY_LIST __NASTECH_ACTIVATED \
+          __NASTECH_WORKTREE __NASTECH_WORKTREE_NAME \
+          __NASTECH_SAVED_PS1 __NASTECH_SAVED_PROMPT_COMMAND
+    unset -f deactivate nastech _nastech_worktree_here _nastech_prompt
+    unset _nastech_k _nastech_was _nastech_old _nastech_top
+}
+
+# remember the key list for deactivate (kept out of the loop vars above)
+__NASTECH_KEY_LIST="$_nastech_keys"
+
+# The composition library is not part of the user's shell.
+unset -f nastech_sync nastech_bootstrap_python nastech_compose_env nastech_apply_env \
+         nastech_activation_current nastech_ensure_env
+unset _NASTECH_REPO _nastech_script _nastech_keys _nastech_k _nastech_top

@@ -12,11 +12,11 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { getNastechConfigRecord, saveMcpServers } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { AlertTriangle } from '@/lib/icons'
 import { MCP_DEEPLINK_NAME_RE } from '@/lib/mcp-deeplink'
 import { getServers } from '@/lib/mcp-servers'
-import { getNastechConfigRecord, saveMcpServers } from '@/nastech'
 import { $mcpInstallRequest } from '@/store/mcp-deeplink-install'
 import { notify, readableError } from '@/store/notifications'
 
@@ -117,7 +117,7 @@ export function McpInstallDeepLinkDialog() {
       setNastechConfigCache(previous => (previous ? { ...previous, mcp_servers: nextServers } : previous))
       notify({ kind: 'success', title: m.savedTitle, message: m.savedMessage(trimmedName) })
       $mcpInstallRequest.set(null)
-      navigate(`/skills?tab=mcp&server=${encodeURIComponent(trimmedName)}`)
+      navigate(`/capabilities?tab=connectors&server=${encodeURIComponent(trimmedName)}`)
     } catch (err) {
       setError(readableError(err, m.saveFailed).message)
     } finally {

@@ -24,8 +24,6 @@ esac
 export HOME=/opt/data
 
 cd /opt/data
-# shellcheck disable=SC1091
-. /opt/nastech/.venv/bin/activate
 
 dash_host="${NASTECH_DASHBOARD_HOST:-0.0.0.0}"
 dash_port="${NASTECH_DASHBOARD_PORT:-9119}"

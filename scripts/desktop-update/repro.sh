@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # repro.sh -- reproduce desktop-update paths against a sandboxed NASTECH_HOME.
 #
 # Nothing here touches your real ~/.nastech or checkout. Each mode builds (or
-# reuses) a disposable install under /tmp and drives the REAL code path --
+# reuses) a disposable install under $TMPDIR and drives the REAL code path --
 # the actual installer, the actual orchestrator, the actual `nastech update`.
 #
 #   repro.sh shim          shim UI only: success event after 6s
@@ -18,7 +18,7 @@
 #                          sandbox preflight, opt-out fallbacks) -- asserts
 #                          every outcome without touching a real install
 #
-# The sandbox persists between runs (~/tmp is fine to nuke): fresh reuses
+# The sandbox persists between runs (the scratch dir is fine to nuke): fresh reuses
 # nothing, behind/error reuse the last sandbox install when present because
 # a from-scratch install is minutes.
 #
@@ -93,9 +93,9 @@ case "$MODE" in
     ;;
   gate)
     # Pure-decision matrix for the linux relaunch gate. Builds a fake
-    # checkout layout under /tmp; --self-test-gate prints the decision and
+    # checkout layout under $TMPDIR; --self-test-gate prints the decision and
     # exits without running an update.
-    G="/tmp/nastech-gate-test.$$"
+    G="$(mktemp -d -t nastech-gate-test.XXXXXX)"
     UNPACKED="$G/nastech-agent/apps/desktop/release/linux-unpacked"
     mkdir -p "$UNPACKED"
     touch "$UNPACKED/nastech" && chmod +x "$UNPACKED/nastech"
@@ -136,7 +136,7 @@ case "$MODE" in
     # of the outcome. Each case runs the REAL orchestrator (--no-ui) against
     # a fake install whose `nastech` stub exits 0 instantly, so the flow
     # reaches finish() with FINAL_CODE=0 and exercises the launch leg.
-    L="/tmp/nastech-launch-test.$$"
+    L="$(mktemp -d -t nastech-launch-test.XXXXXX)"
     fails=0
     expect_msg() { # name python-expr
       if python3 -c "import json,sys; d=json.load(open('$L/.nastech-update-result.json')); sys.exit(0 if ($2) else 1)"; then

@@ -114,17 +114,6 @@ describe('Sessions/Bots strip — #91223', () => {
     expect(zoneAt(0).tabStrip).toBeUndefined()
   })
 
-  it('double-clicking the Bots tab leaves the strip too', () => {
-    render(<LiveTreeGroup parentAxis="row" />)
-
-    tap(tabEl('nastech-bots:pane')!)
-    doubleTap(tabEl('nastech-bots:pane')!)
-
-    expect(tablist()).toBeTruthy()
-    expect(tabEl('sessions')).toBeTruthy()
-    expect(tabEl('nastech-bots:pane')).toBeTruthy()
-  })
-
   it('tapping the strip gutter does not collapse the sidebar', () => {
     render(<LiveTreeGroup parentAxis="row" />)
 

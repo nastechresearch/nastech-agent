@@ -15,7 +15,7 @@ Hand-drawn Excalidraw JSON diagrams (arch, flow, seq).
 | | |
 |---|---|
 | Source | Optional — install with `nastech skills install official/creative/excalidraw` |
-| Path | `optional-skills/creative\excalidraw` |
+| Path | `optional-skills/creative/excalidraw` |
 | Version | `1.0.1` |
 | Author | Nastech Agent |
 | License | MIT |

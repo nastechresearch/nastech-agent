@@ -15,7 +15,7 @@ from nastech_cli import config as cfg
 
 def _read(tmp_path, *path):
     """Read a nested value straight from the on-disk config.yaml."""
-    import yaml
+    import nastech_yaml as yaml
     data = yaml.safe_load((tmp_path / "config.yaml").read_text()) or {}
     node = data
     for seg in path:

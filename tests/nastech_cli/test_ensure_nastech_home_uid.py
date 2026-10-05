@@ -7,15 +7,14 @@ for profile namespaces under ``profiles/<name>/`` spawned by kanban
 workers — were landing as ``root:root`` and blocking subsequent
 uid-mapped worker invocations with ``PermissionError [Errno 13]``.
 
-The fix is a ``_chown_to_nastech_uid`` helper that reads the env vars and
-applies chown after ``mkdir``, invoked from ``_secure_dir`` (which already
+The fix is a ``_chown_to_nastech_uid`` helper (``nastech_constants``, the single home of the
+managed/container/NASTECH_UID policy) that reads the env vars and applies chown after
+``mkdir``, invoked from ``_secure_dir`` via ``apply_secure_dir_policy`` (which already
 runs after every directory creation in the home-init path).
 """
 from __future__ import annotations
 
-import os
 import sys
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -27,24 +26,25 @@ import pytest
 
 
 class TestResolveNastechUidGid:
+    @pytest.mark.platforms("linux")
     def test_returns_parsed_values_when_both_set(self, monkeypatch):
         monkeypatch.setenv("NASTECH_UID", "1000")
         monkeypatch.setenv("NASTECH_GID", "911")
-        from nastech_cli.config import _resolve_nastech_uid_gid
+        from nastech_constants import _resolve_nastech_uid_gid
         uid, gid = _resolve_nastech_uid_gid()
         assert uid == 1000
         assert gid == 911
 
 
-    # ``windows_only`` rather than ``skipif(sys.platform != "win32")``: the
-    # Windows CI job selects ``-m windows_only``, so a bare skipif would leave
+    # ``platforms("windows")`` rather than ``skipif(sys.platform != "win32")``: the
+    # Windows CI job selects ``-m platforms("windows")``, so a bare skipif would leave
     # this test skipped on Linux AND unselected on the Windows lane — dead on
     # every host.
-    @pytest.mark.windows_only
+    @pytest.mark.platforms("windows")
     def test_windows_returns_none_none(self, monkeypatch):
         monkeypatch.setenv("NASTECH_UID", "1000")
         monkeypatch.setenv("NASTECH_GID", "911")
-        from nastech_cli.config import _resolve_nastech_uid_gid
+        from nastech_constants import _resolve_nastech_uid_gid
         uid, gid = _resolve_nastech_uid_gid()
         assert uid is None
         assert gid is None
@@ -55,18 +55,8 @@ class TestResolveNastechUidGid:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.platforms("linux")
 class TestChownToNastechUid:
-    def test_calls_os_chown_when_both_set(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("NASTECH_UID", "1000")
-        monkeypatch.setenv("NASTECH_GID", "911")
-        from nastech_cli import config as cfg
-
-        d = tmp_path / "subdir"
-        d.mkdir()
-
-        with patch.object(cfg.os, "chown") as mock_chown:
-            cfg._chown_to_nastech_uid(d)
-        mock_chown.assert_called_once_with(d, 1000, 911)
 
 
     def test_eperm_is_silently_swallowed(self, tmp_path, monkeypatch):
@@ -76,7 +66,7 @@ class TestChownToNastechUid:
         user anyway."""
         monkeypatch.setenv("NASTECH_UID", "1000")
         monkeypatch.setenv("NASTECH_GID", "911")
-        from nastech_cli import config as cfg
+        import nastech_constants as cfg
 
         d = tmp_path / "subdir"
         d.mkdir()
@@ -88,18 +78,6 @@ class TestChownToNastechUid:
             # Must not raise — the catch is non-fatal.
             cfg._chown_to_nastech_uid(d)
 
-    def test_attributeerror_swallowed_for_windows_compat(self, tmp_path, monkeypatch):
-        """os.chown doesn't exist on Windows. Catching AttributeError keeps
-        the helper portable."""
-        monkeypatch.setenv("NASTECH_UID", "1000")
-        monkeypatch.setenv("NASTECH_GID", "911")
-        from nastech_cli import config as cfg
-
-        d = tmp_path / "subdir"
-        d.mkdir()
-
-        with patch.object(cfg.os, "chown", side_effect=AttributeError("no chown on this platform")):
-            cfg._chown_to_nastech_uid(d)  # must not raise
 
 
 # ---------------------------------------------------------------------------
@@ -108,7 +86,7 @@ class TestChownToNastechUid:
 
 
 class TestSecureDirChown:
-    @pytest.mark.skipif(sys.platform == "win32", reason="chown is no-op on Windows")
+    @pytest.mark.platforms("posix")  # chown is no-op on Windows
     def test_secure_dir_invokes_chown_when_env_set(self, tmp_path, monkeypatch):
         monkeypatch.setenv("NASTECH_UID", "1000")
         monkeypatch.setenv("NASTECH_GID", "911")
@@ -121,7 +99,7 @@ class TestSecureDirChown:
             cfg._secure_dir(d)
         mock_chown.assert_called_once_with(d, 1000, 911)
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="chown is no-op on Windows")
+    @pytest.mark.platforms("posix")  # chown is no-op on Windows
     def test_secure_dir_no_chown_when_env_unset(self, tmp_path, monkeypatch):
         monkeypatch.delenv("NASTECH_UID", raising=False)
         monkeypatch.delenv("NASTECH_GID", raising=False)

@@ -1,0 +1,27 @@
+name: agentplaybooks-tools
+repo: https://github.com/matebenyovszky/agentplaybooks
+sha: 819c3491d83c0371b678e2ccd7e95679b8a7d288
+subdir: packages/nastech-portable/agentplaybooks-tools
+description: >-
+  Connect AgentPlaybooks skills and hosted MCP/OpenAPI tools to Nastech, with guided authentication and
+  API-key setup. Requires Node.js 20+ and @agentplaybooks/cli@0.5.0; the CLI is installed separately.
+  Disclosure — skill-only; the separately installed apb CLI does the work. `apb connect
+  --target=nastech --apply` and `apb sync --target=nastech --apply` edit the selected Nastech profile's
+  config.yaml (adding the hosted playbook MCP endpoint and merged MCP definitions, so that playbook's
+  remote tools become available to the agent); local writes require --apply; hosted operations contact
+  agentplaybooks.ai after `apb login`, and `apb push --apply` uploads your project's configuration
+  (secret references, not values).
+maintainer: matebenyovszky
+tier: community
+category: tools
+requires_nastech: ">=0.21.4"
+version: "0.1.0"
+docs_url: https://github.com/matebenyovszky/agentplaybooks/tree/819c3491d83c0371b678e2ccd7e95679b8a7d288/packages/nastech-portable/agentplaybooks-tools
+image: https://raw.githubusercontent.com/matebenyovszky/agentplaybooks/819c3491d83c0371b678e2ccd7e95679b8a7d288/public/plugin-catalog/nastech-tools.png
+readme: true
+platforms: [linux, macos, windows]
+capabilities:
+  provides_tools: []
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: []

@@ -19,11 +19,11 @@ def _ok(payload):
 def _assert_nastech_identity_headers(headers):
     """Both Perplexity endpoints carry the Nastech identity headers (same set as Kimi/OpenCode)
     plus Perplexity's integration header."""
-    from nastech_cli import __version__
+    from nastech_cli.version_info import get_version_info
 
     assert headers["HTTP-Referer"] == "https://nastechresearch.github.io/nastech-agent"
     assert headers["X-Title"] == "Nastech Agent"
-    assert headers["User-Agent"] == f"NastechAgent/{__version__}"
+    assert headers["User-Agent"] == f"NastechAgent/{get_version_info().base_version}"
     assert headers["X-Pplx-Integration"] == "nastech-agent"
 
 

@@ -18,20 +18,10 @@ Bug 2 — OpenRouter appeared authenticated whenever OPENAI_API_KEY was set
     in runtime_provider.py, independent of the overlay).
 """
 
-import os
 from unittest.mock import patch
 
-import pytest
 
 from nastech_cli import models as M
-from nastech_cli.providers import NASTECH_OVERLAYS
-
-
-# --- Bug 2: overlay no longer lists OPENAI_API_KEY --------------------------
-
-def test_openrouter_overlay_does_not_list_openai_api_key():
-    overlay = NASTECH_OVERLAYS["openrouter"]
-    assert "OPENAI_API_KEY" not in overlay.extra_env_vars
 
 
 # --- Bug 1: default OpenAI endpoint filters to curated agentic models -------

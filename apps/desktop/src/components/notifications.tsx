@@ -11,6 +11,7 @@ import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { AlertCircle, AlertTriangle, CheckCircle2, type IconComponent, Info } from '@/lib/icons'
 import { cn } from '@/lib/utils'
+import { noticeIdForToast, recordFriction } from '@/store/desktop-metrics'
 import {
   $notifications,
   type AppNotification,
@@ -21,6 +22,17 @@ import {
 
 type ToneVariant = 'default' | 'destructive' | 'warning' | 'success'
 
+/** A user dismissal (✕, swipe, clear all) is friction, counted by the toast's code-defined id only.
+ *  Timers, action buttons and programmatic clears are not dismissals and go straight to the store. */
+function noteUserDismissed(id: string) {
+  recordFriction('notice_dismissed', noticeIdForToast(id))
+}
+
+function userDismiss(id: string) {
+  noteUserDismissed(id)
+  dismissNotification(id)
+}
+
 const tone: Record<NotificationKind, { icon: IconComponent; iconClass: string; variant: ToneVariant }> = {
   error: { icon: AlertCircle, iconClass: 'text-destructive', variant: 'destructive' },
   warning: { icon: AlertTriangle, iconClass: 'text-primary', variant: 'warning' },
@@ -28,8 +40,7 @@ const tone: Record<NotificationKind, { icon: IconComponent; iconClass: string; v
   success: { icon: CheckCircle2, iconClass: 'text-primary', variant: 'success' }
 }
 
-const STACK_SURFACE =
-  'pointer-events-auto border border-(--stroke-nastech) bg-popover/95 shadow-nastech backdrop-blur-md'
+const STACK_SURFACE = 'pointer-events-auto border border-(--stroke-nastech) bg-popover/95 shadow-nastech backdrop-blur-md'
 
 function partitionNotifications(notifications: AppNotification[]) {
   const defaultStack: AppNotification[] = []
@@ -130,7 +141,16 @@ function TopCenterStack({
           <Button className="-ml-2" onClick={onToggleExpanded} size="xs" type="button" variant="text">
             {expanded ? copy.hide : copy.show} {copy.more(older.length)}
           </Button>
-          <Button className="-mr-2" onClick={clearNotifications} size="xs" type="button" variant="text">
+          <Button
+            className="-mr-2"
+            onClick={() => {
+              notifications.forEach(notification => noteUserDismissed(notification.id))
+              clearNotifications()
+            }}
+            size="xs"
+            type="button"
+            variant="text"
+          >
             {copy.clearAll}
           </Button>
         </div>
@@ -173,7 +193,7 @@ function BottomRightStack({
             {expanded ? copy.hide : copy.show} {copy.more(older.length)}
           </Button>
           <Button
-            onClick={() => notifications.forEach(notification => dismissNotification(notification.id))}
+            onClick={() => notifications.forEach(notification => userDismiss(notification.id))}
             size="xs"
             variant="text"
           >
@@ -200,7 +220,7 @@ export function NotificationDeck({
       getKey={notification => notification.id}
       items={notifications}
       onSwipe={(notification, _side, action) => {
-        void action.depart(() => dismissNotification(notification.id))
+        void action.depart(() => userDismiss(notification.id))
       }}
       surfaceClassName={cn(STACK_SURFACE, 'rounded-lg')}
       swipeDirections={['left', 'right']}
@@ -319,7 +339,7 @@ function NotificationItem({ notification, stack }: { notification: AppNotificati
         className="col-start-3 -mr-1 text-muted-foreground"
         disabled={stack.busy || !stack.active}
         onClick={() => {
-          void stack.depart(() => dismissNotification(notification.id))
+          void stack.depart(() => userDismiss(notification.id))
         }}
         size="icon-xs"
         type="button"

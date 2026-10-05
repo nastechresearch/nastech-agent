@@ -2,9 +2,9 @@ import { useStore } from '@nanostores/react'
 import { useEffect, useMemo, useState } from 'react'
 
 import type { NastechGitWorktree } from '@/global'
+import type { SessionInfo } from '@/nastech'
 import { desktopGit } from '@/lib/desktop-git'
 import { mapPool } from '@/lib/pool'
-import type { SessionInfo } from '@/nastech'
 import { $sidebarWorkspaceNodeOpen, toggleWorkspaceNodeCollapsed } from '@/store/layout'
 import { $worktreeRefreshToken } from '@/store/projects'
 
@@ -15,6 +15,25 @@ export const SIDEBAR_GROUP_PAGE = 5
 
 // Recent sessions previewed under each project in the overview.
 export const PROJECT_PREVIEW_COUNT = 3
+
+// Rows each "Show more" adds once a project's full list is open (an expanded
+// overview row, an entered lane, entered Home). Large enough that 50+ sessions
+// are a click or two away, small enough that a 5000-chat Home never mounts
+// every row at once.
+export const PROJECT_SESSION_PAGE = 50
+
+// Reveal `rows` a page at a time: the first `first`, then PROJECT_SESSION_PAGE
+// per `showMore()`. `more` is the next step's size (0 once everything shows).
+export function useRevealedRows<T>(rows: T[], first: number): { more: number; shown: T[]; showMore: () => void } {
+  const [count, setCount] = useState(first)
+  const shown = rows.length > count ? rows.slice(0, count) : rows
+
+  return {
+    more: Math.min(PROJECT_SESSION_PAGE, rows.length - shown.length),
+    shown,
+    showMore: () => setCount(current => current + PROJECT_SESSION_PAGE)
+  }
+}
 
 // Max concurrent `git worktree list` probes when a project spans many repos.
 const WORKTREE_PROBE_CONCURRENCY = 4

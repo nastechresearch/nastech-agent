@@ -5,16 +5,15 @@ you explicitly enable it.
 
 ## Enable
 
-Pick one:
-
 ```bash
-# Interactive: walks you through credentials + SDK install + enable
+# Interactive: credentials + PM preparation of the langfuse extra + enable
 nastech tools  # → Langfuse Observability
-
-# Manual
-pip install langfuse
-nastech plugins enable observability/langfuse
 ```
+
+Restart Nastech after setup. If dependency preparation fails, retry through
+`nastech tools`; do not inject the SDK into the selected environment with pip.
+For manual source-checkout setup, see the
+[plugin guide](../../../website/docs/user-guide/features/built-in-plugins.md#observabilitylangfuse).
 
 ## Required credentials
 
@@ -47,9 +46,21 @@ NASTECH_LANGFUSE_ENV=production       # environment tag
 NASTECH_LANGFUSE_RELEASE=v1.0.0       # release tag
 NASTECH_LANGFUSE_SAMPLE_RATE=0.5      # sample 50% of traces
 NASTECH_LANGFUSE_MAX_CHARS=12000      # max chars per field (default: 12000)
+NASTECH_LANGFUSE_MAX_DEPTH=4          # max payload depth (default: 4)
 NASTECH_LANGFUSE_CAPTURE=sanitized    # content capture mode (see below)
 NASTECH_LANGFUSE_DEBUG=true           # verbose plugin logging
 ```
+
+`NASTECH_LANGFUSE_MAX_DEPTH` controls nested payload capture in both `sanitized`
+and `full` modes, including tool arguments and JSON tool results. The root is
+depth 0; each dictionary value or array element adds one level. Values beyond
+the limit become `<max-depth>`, including scalars. For deeper MCP responses,
+set it to a higher non-negative integer (for example, `10`) in the Nastech
+process environment. Unset or blank values default to `4`; invalid or negative
+values log a warning and fall back to `4`. `0` keeps only the root level.
+Increasing the depth exports more content and may produce larger traces;
+secret redaction, string-length limits, and the 50-item collection limit remain
+unchanged. `metadata` mode still omits content.
 
 ## Capture modes
 

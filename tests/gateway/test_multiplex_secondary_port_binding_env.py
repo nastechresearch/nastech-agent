@@ -77,3 +77,27 @@ def test_named_gateway_is_never_the_default_profile_process(tmp_path, cmdline, m
     monkeypatch.setattr(gw, "is_windows", lambda: False)
     monkeypatch.setattr(gw.os.path, "isdir", lambda p: p == "/proc")
     assert gw._scan_gateway_pids(set()) == []
+
+
+@pytest.mark.parametrize(
+    ("cmdline", "expected"),
+    [
+        ("NASTECH_HOME={home}2 nastech gateway run", []),        # longer sibling home
+        ("NASTECH_HOME={home}/ nastech gateway run", [424242]),  # trailing-separator spelling
+        ("NASTECH_HOME={home} nastech gateway run", [424242]),   # exact home
+    ],
+)
+def test_scan_gateway_pids_claims_own_home_spellings_not_the_sibling(
+    tmp_path, cmdline, expected, monkeypatch
+):
+    """``_scan_gateway_pids`` drives the mirrored NASTECH_HOME predicate: the process-table
+    fallback must not sweep a longer sibling home's live gateway, while the supervisor
+    trailing-separator spelling (``NASTECH_HOME=/root/.nastech/``) is still its own home."""
+    import nastech_cli.gateway as gw
+    monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
+    rendered = cmdline.format(home=tmp_path)
+    monkeypatch.setattr(gw, "_iter_proc_cmdlines", lambda exclude: iter([(424242, rendered)]))
+    monkeypatch.setattr(gw, "_get_ancestor_pids", set)
+    monkeypatch.setattr(gw, "is_windows", lambda: False)
+    monkeypatch.setattr(gw.os.path, "isdir", lambda p: p == "/proc")
+    assert gw._scan_gateway_pids(set()) == expected

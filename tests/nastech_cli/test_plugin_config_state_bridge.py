@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
-import yaml
+import nastech_yaml as yaml
 
 from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 from nastech_cli.plugins import PluginContext, PluginManager, PluginManifest
