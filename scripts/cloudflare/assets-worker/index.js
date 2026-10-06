@@ -6,9 +6,10 @@
  *   2. The release-channel protocol records that `nastech_cli/source_releases.py`
  *      and `nastech_cli/release_channels.py` read from `_PUBLIC_BASE`.
  *
- * Publication mirrors Hermes: channel records + manifests + candidate feeds are
- * written to Cloudflare object storage (Workers KV in this deployment; R2 in
- * the upstream reference) at the canonical keys:
+ * Publication mirrors the upstream reference layout: channel records +
+ * manifests + candidate feeds are written to Cloudflare object storage
+ * (Workers KV in this deployment; R2 in the upstream reference) at the
+ * canonical keys:
  *     releases/channels/<name>.json           channel records
  *     releases/channel-builds/<buildId>/...   manifest + artifacts
  *     releases/stable/release-candidates.json candidate feed
