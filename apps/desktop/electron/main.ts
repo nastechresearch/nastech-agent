@@ -315,7 +315,7 @@ import {
 import { assertNoSecondLocalBackend, assertNotPassiveSpawn } from './host-backend-singleton'
 import { lookupPublishedSessionToken } from './host-published-token'
 import { claimHostSpawnGate } from './host-spawn-gate'
-import { NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN, isNastechHubClipboardWrite } from './hub-iframe-policy'
+import { isNastechHubClipboardWrite, NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN } from './hub-iframe-policy'
 import { requestHudClose } from './hud-close'
 import { cursorPointInWindow } from './hud-cursor'
 import { startHudGameOverlayWatch } from './hud-game-overlay'
@@ -4202,7 +4202,9 @@ function killNastechOwnedVenvDaemons(updateRoot) {
   let holders = []
 
   try {
-    holders = scanWindowsProcesses().filter(p => isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir))
+    holders = scanWindowsProcesses().filter(p =>
+      isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir)
+    )
   } catch {
     // Best-effort: the uninstall lock probe remains the backstop.
     return

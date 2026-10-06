@@ -43,7 +43,10 @@ function harness() {
     callback.resolve({ code: 'code-1', state: 'expected', error: null })
   })
 
-  Object.defineProperty(window, 'nastechDesktop', { configurable: true, value: { mcpOauth: bridge, api, openExternal } })
+  Object.defineProperty(window, 'nastechDesktop', {
+    configurable: true,
+    value: { mcpOauth: bridge, api, openExternal }
+  })
   let relayed = false
   const rpc = vi.mocked(requestGatewayForAgent)
   rpc.mockImplementation(async (_connection, _profile, method) => {
