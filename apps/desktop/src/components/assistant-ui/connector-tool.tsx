@@ -1,6 +1,6 @@
 import type { ToolCallMessagePartProps } from '@assistant-ui/react'
-import type { ConnectionTargetState, ConnectorsConnectResult } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import type { ConnectionTargetState, ConnectorsConnectResult } from '@nastech/shared'
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useSessionView } from '@/app/chat/session-view'

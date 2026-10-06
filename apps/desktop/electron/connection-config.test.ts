@@ -218,7 +218,11 @@ test('profileRemoteOverride treats a cloud entry as a remote override', () => {
   // entry would (Q6) — the override must be returned, not dropped.
   const config = {
     profiles: {
-      coder: { mode: 'cloud', url: 'https://agent-1.agents.nastech-agent.nastechresearch.workers.dev', authMode: 'oauth' }
+      coder: {
+        mode: 'cloud',
+        url: 'https://agent-1.agents.nastech-agent.nastechresearch.workers.dev',
+        authMode: 'oauth'
+      }
     }
   }
 

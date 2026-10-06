@@ -2,11 +2,11 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import {
-  NASTECH_HUB_FALLBACK_ORIGIN,
-  NASTECH_HUB_ORIGIN,
   isNastechHubClipboardWrite,
   isNastechHubExternalUrl,
-  isNastechHubOrigin
+  isNastechHubOrigin,
+  NASTECH_HUB_FALLBACK_ORIGIN,
+  NASTECH_HUB_ORIGIN
 } from './hub-iframe-policy'
 import { createWindowOpenHandler, describeDeniedUrl } from './window-open-policy'
 
