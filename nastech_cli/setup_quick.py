@@ -61,7 +61,7 @@ def _run_portal_one_shot(config: dict) -> None:
     _info(None, "  One subscription, 300+ models, plus the Tool Gateway:",
           "    web search, image generation, TTS, browser automation",
           "    — all routed through your Nastech Portal sub.", None,
-          "  Sign up: https://portal.nastechresearch.github.io/manage-subscription", None)
+          "  Sign up: https://portal.nastech-agent.nastechresearch.workers.dev/manage-subscription", None)
 
     def _on_error(exc: Exception) -> None:
         from nastech_cli.auth_error_copy import provider_setup_failure_lines
@@ -96,7 +96,7 @@ def _run_first_time_quick_setup(config: dict, nastech_home, is_existing: bool):
     print_header("Nastech Portal", gap=True)
     _info("One subscription, 300+ models, plus the Tool Gateway:",
           "  web search, image generation, TTS, browser automation.",
-          "Sign up: https://portal.nastechresearch.github.io/manage-subscription", None)
+          "Sign up: https://portal.nastech-agent.nastechresearch.workers.dev/manage-subscription", None)
 
     def _on_error(exc: Exception) -> None:
         from nastech_cli.auth_error_copy import provider_setup_failure_lines

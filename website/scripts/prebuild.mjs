@@ -40,7 +40,7 @@ const pluginsOutputFile = join(websiteDir, "static", "api", "plugins.json");
 const pluginsMetaOutputFile = join(websiteDir, "static", "api", "plugins-meta.json");
 const unifiedIndexFile = join(websiteDir, "static", "api", "skills-index.json");
 const UNIFIED_INDEX_URL =
-  "https://nastechresearch.github.io/nastech-agent/docs/api/skills-index.json";
+  "https://nastech-agent.nastechresearch.workers.dev/docs/api/skills-index.json";
 const UNIFIED_INDEX_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
 
 function writeEmptyFallback(reason) {

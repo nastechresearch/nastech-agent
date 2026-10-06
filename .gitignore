@@ -262,6 +262,8 @@ docs/superpowers/*
 # — ignore so `git status` stays clean and update's autostash skips them.
 .update-incomplete
 .update-incomplete.lock
+# Kernel lock `nastech update` holds on the checkout (nastech_cli/update_lock.py).
+.nastech-update.lock
 
 # Checkout fingerprint the __pycache__ tree was last validated against
 # (launch-time stale-bytecode sweep). Runtime state, never a code change.

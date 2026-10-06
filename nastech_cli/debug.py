@@ -219,9 +219,8 @@ class LogSnapshot:
 
 def _primary_log_path(log_name: str) -> Optional[Path]:
     """Where *log_name* would live if present. Doesn't check existence."""
-    from nastech_cli.logs import LOG_FILES
-    filename = LOG_FILES.get(log_name)
-    return (get_nastech_home() / "logs" / filename) if filename else None
+    from nastech_cli.logs import log_file_path
+    return log_file_path(log_name)  # update/handoff: the ROOT home's, whatever profile is active
 
 
 # Logs written by a client process, invisible to a remote/docker/SSH backend running `debug
@@ -609,7 +608,7 @@ def _run_debug_share_nastech(args, *, log_lines: int, redact: bool) -> None:
           "(via Google login) can open it.\n"
           "\nPick up the discussion in:\n"
           "  GitHub Issues        https://github.com/NastechResearch/nastech-agent/issues\n"
-          "  Nastech Portal Support  https://portal.nastechresearch.github.io/help\n"
+          "  Nastech Portal Support  https://portal.nastech-agent.nastechresearch.workers.dev/help\n"
           "  Discord              https://discord.gg/NastechResearch")
 
 

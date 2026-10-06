@@ -10,7 +10,7 @@ Python dependency commands on this page use a
 [PM-prepared source checkout](../reference/package-management.md#developer-workflow).
 After a dependency change, reactivate the checkout and restart Nastech.
 
-[Nastech Cloud](https://portal.nastechresearch.github.io/cloud) runs hosted Nastech Agent instances for you. Normally you manage them from the `/agents` page in the [Nastech Portal](../integrations/nastech-portal.md). This guide connects your **local** Nastech Agent to the Portal's MCP server so you can manage those cloud instances by just asking — "list my cloud agents", "restart the stopped one", "what's it costing me" — without leaving your terminal.
+[Nastech Cloud](https://portal.nastech-agent.nastechresearch.workers.dev/cloud) runs hosted Nastech Agent instances for you. Normally you manage them from the `/agents` page in the [Nastech Portal](../integrations/nastech-portal.md). This guide connects your **local** Nastech Agent to the Portal's MCP server so you can manage those cloud instances by just asking — "list my cloud agents", "restart the stopped one", "what's it costing me" — without leaving your terminal.
 
 It's a standard [MCP](../user-guide/features/mcp.md) server hosted by Nastech Research, gated by the same OAuth login you already use for the Portal. Once connected, Nastech gets two tools it can call on your behalf.
 
@@ -32,7 +32,7 @@ Every call runs against **your** org with your Portal identity, and membership i
 
 ## Prerequisites
 
-- A [Nastech Portal](../integrations/nastech-portal.md) account with [Nastech Cloud](https://portal.nastechresearch.github.io/cloud) access (at least one instance, or the ability to create one).
+- A [Nastech Portal](../integrations/nastech-portal.md) account with [Nastech Cloud](https://portal.nastech-agent.nastechresearch.workers.dev/cloud) access (at least one instance, or the ability to create one).
 - MCP support installed. If you used the standard install script it's already there; otherwise:
 
   ```bash
@@ -45,7 +45,7 @@ You do **not** need a separate API key or client secret — the server uses OAut
 ## Step 1: add the server
 
 ```bash
-nastech mcp add --url https://portal.nastechresearch.github.io/mcp --auth oauth nastech-cloud
+nastech mcp add --url https://portal.nastech-agent.nastechresearch.workers.dev/mcp --auth oauth nastech-cloud
 ```
 
 `--auth oauth` tells Nastech this is an OAuth-protected HTTP server. On first connect Nastech:
@@ -112,7 +112,7 @@ After `nastech mcp add`, the server lives in `~/.nastech/config.yaml`:
 ```yaml
 mcp_servers:
   nastech-cloud:
-    url: "https://portal.nastechresearch.github.io/mcp"
+    url: "https://portal.nastech-agent.nastechresearch.workers.dev/mcp"
     auth: oauth
 ```
 
@@ -125,7 +125,7 @@ The server exposes both read (`agents`) and mutating (`agent`) tools. If you wan
 ```yaml
 mcp_servers:
   nastech-cloud:
-    url: "https://portal.nastechresearch.github.io/mcp"
+    url: "https://portal.nastech-agent.nastechresearch.workers.dev/mcp"
     auth: oauth
     tools:
       include: [agents]
@@ -146,7 +146,7 @@ The stored client registration no longer matches the server (for example, you co
 ```bash
 nastech mcp remove nastech-cloud
 rm -f ~/.nastech/mcp-tokens/nastech-cloud.*
-nastech mcp add --url https://portal.nastechresearch.github.io/mcp --auth oauth nastech-cloud
+nastech mcp add --url https://portal.nastech-agent.nastechresearch.workers.dev/mcp --auth oauth nastech-cloud
 ```
 
 ### The tools aren't showing up after adding the server

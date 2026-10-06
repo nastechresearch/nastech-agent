@@ -95,6 +95,7 @@ export const es: Translations = {
   status: {
     actionFailed: "Acción fallida",
     actionFinished: "Finalizado",
+    actionFinishedOwed: "Actualizado, pero aún pendiente (vuelve a ejecutar `nastech update` para terminar)",
     actions: "Acciones",
     agent: "Agente",
     activeSessions: "Sesiones activas",

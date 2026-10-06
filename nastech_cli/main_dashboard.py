@@ -515,10 +515,11 @@ def _install_hangup_protection(gateway_mode: bool = False):
 
     # Any failure here is non-fatal; we just skip the wrap.
     try:
-        # Late-bound import so tests can monkeypatch
-        # nastech_cli.config.get_nastech_home to simulate setup failure.
-        from nastech_cli.config import get_nastech_home as _get_nastech_home
-        logs_dir = _get_nastech_home() / "logs"
+        # Late-bound import so tests can monkeypatch it to simulate setup failure. The ROOT
+        # home, never a sticky profile's: the update mutates the shared checkout, and the
+        # Desktop and the hand-off scripts read <root>/logs/update.log.
+        from nastech_constants import get_default_nastech_root as _get_root_home
+        logs_dir = _get_root_home() / "logs"
         logs_dir.mkdir(parents=True, exist_ok=True)
         log_file = open(logs_dir / "update.log", "a", buffering=1, encoding="utf-8")
 
@@ -654,7 +655,7 @@ def _maybe_setup_dashboard_auth_interactively(args) -> None:
             "    nastech dashboard register\n"
             "  It provisions a Nastech Portal OAuth client and writes "
             "NASTECH_DASHBOARD_OAUTH_CLIENT_ID into ~/.nastech/.env for you.\n"
-            "  Docs: https://nastechresearch.github.io/nastech-agent/docs/"
+            "  Docs: https://nastech-agent.nastechresearch.workers.dev/docs/"
             "user-guide/features/web-dashboard#authentication-gated-mode"
         )
         sys.exit(0)

@@ -95,6 +95,7 @@ export const uk: Translations = {
   status: {
     actionFailed: "Дія не вдалася",
     actionFinished: "Завершено",
+    actionFinishedOwed: "Оновлено, але роботу ще не завершено (запустіть `nastech update` знову, щоб завершити)",
     actions: "Дії",
     agent: "Агент",
     activeSessions: "Активні сесії",

@@ -147,7 +147,7 @@ def test_staging_portal_does_not_read_productions_mirror(
     )
 
     cold_process()
-    monkeypatch.setenv("NASTECH_INFERENCE_BASE_URL", "https://staging.nastechresearch.github.io")
+    monkeypatch.setenv("NASTECH_INFERENCE_BASE_URL", "https://staging.nastech-agent.nastechresearch.workers.dev")
     monkeypatch.setattr(models_mod, "_urlopen_model_catalog_request", offline)
 
     assert models_reasoning_caps.nastech_model_reasoning_capabilities(
@@ -199,7 +199,7 @@ def test_pricing_fetch_seeds_the_mirror(cold_process, offline, monkeypatch):
         lambda req, *, timeout: _response(_CATALOG),
     )
     models_pricing.fetch_models_with_pricing(
-        base_url="https://inference-api.nastechresearch.github.io"
+        base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev"
     )
 
     cold_process()

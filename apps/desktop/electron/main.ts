@@ -73,7 +73,7 @@ import { dashboardFallbackArgs, serveBackendArgs } from './backend-command'
 import { createBackendConnectionState } from './backend-connection-state'
 import { BackendDialClaims } from './backend-dial-claim'
 import type { HostBackendRecord } from './backend-discovery'
-import { buildDesktopBackendEnv, profileBackendParentEnv } from './backend-env'
+import { buildDesktopBackendEnv, pooledProfileBackendEnv, profileBackendParentEnv } from './backend-env'
 import { createBackendExitRecoveryLatch } from './backend-exit-recovery'
 import { isReauthRequiredError, waitForNastechReady } from './backend-health'
 import {
@@ -315,7 +315,7 @@ import {
 import { assertNoSecondLocalBackend, assertNotPassiveSpawn } from './host-backend-singleton'
 import { lookupPublishedSessionToken } from './host-published-token'
 import { claimHostSpawnGate } from './host-spawn-gate'
-import { isNastechHubClipboardWrite, NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN } from './hub-iframe-policy'
+import { NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN, isNastechHubClipboardWrite } from './hub-iframe-policy'
 import { requestHudClose } from './hud-close'
 import { cursorPointInWindow } from './hud-cursor'
 import { startHudGameOverlayWatch } from './hud-game-overlay'
@@ -4202,9 +4202,7 @@ function killNastechOwnedVenvDaemons(updateRoot) {
   let holders = []
 
   try {
-    holders = scanWindowsProcesses().filter(p =>
-      isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir)
-    )
+    holders = scanWindowsProcesses().filter(p => isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir))
   } catch {
     // Best-effort: the uninstall lock probe remains the backstop.
     return
@@ -8205,7 +8203,7 @@ async function freshGatewayWsUrl(profile) {
 // Canonical Nastech portal base URL, overridable for staging/dev. Mirrors the CLI
 // convention (nastech_cli/auth.py DEFAULT_NASTECH_PORTAL_URL + the same env names)
 // so a single override flips every Nastech surface to the same portal.
-const DEFAULT_NASTECH_PORTAL_URL = 'https://portal.nastechresearch.github.io'
+const DEFAULT_NASTECH_PORTAL_URL = 'https://portal.nastech-agent.nastechresearch.workers.dev'
 
 function resolvePortalBaseUrl() {
   const raw = process.env.NASTECH_PORTAL_BASE_URL || process.env.NASTECH_PORTAL_BASE_URL || DEFAULT_NASTECH_PORTAL_URL
@@ -12342,14 +12340,12 @@ async function runPoolBackendStart(
       cwd: nastechCwd,
       env: desktopBackendSpawnEnv(
         {
-          // Never another profile's dotenv credentials from the Desktop env (#68367).
-          ...profileBackendParentEnv({ nastechHome: NASTECH_HOME, profile }),
-          NASTECH_HOME,
-          ...backend.env,
-          // Pin the gateway's tool/terminal cwd to the same directory we chose for
-          // the child process. Inherited TERMINAL_CWD (or a stale config bridge)
-          // can still point at the install dir even when spawn cwd is home.
-          TERMINAL_CWD: nastechCwd,
+          // Never another profile's dotenv credentials from the Desktop env (#68367), and never
+          // the launch profile's TERMINAL_CWD: a pooled backend serves THIS --profile, whose
+          // placeholder/unset terminal.cwd sessions must resolve their own workspace, not the
+          // app-global one (#87584). The child re-resolves from its profile config like a
+          // standalone `nastech -p X serve`.
+          ...pooledProfileBackendEnv({ nastechHome: NASTECH_HOME, profile, backendEnv: backend.env }),
           NASTECH_DASHBOARD_SESSION_TOKEN: token,
           // Marks this dashboard backend as desktop-spawned so it runs the cron
           // scheduler tick loop (the gateway isn't running under the app).

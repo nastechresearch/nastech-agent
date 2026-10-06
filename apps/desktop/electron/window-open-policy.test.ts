@@ -2,11 +2,11 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import {
+  NASTECH_HUB_FALLBACK_ORIGIN,
+  NASTECH_HUB_ORIGIN,
   isNastechHubClipboardWrite,
   isNastechHubExternalUrl,
-  isNastechHubOrigin,
-  NASTECH_HUB_FALLBACK_ORIGIN,
-  NASTECH_HUB_ORIGIN
+  isNastechHubOrigin
 } from './hub-iframe-policy'
 import { createWindowOpenHandler, describeDeniedUrl } from './window-open-policy'
 
@@ -21,7 +21,7 @@ describe('hub-iframe-policy predicates', () => {
     expect(isNastechHubOrigin('')).toBe(false)
     expect(isNastechHubOrigin(null)).toBe(false)
     expect(isNastechHubOrigin(undefined)).toBe(false)
-    expect(isNastechHubOrigin('https://nastechresearch.github.io/nastech-agent.evil.example')).toBe(false)
+    expect(isNastechHubOrigin('https://nastech-agent.nastechresearch.workers.dev.evil.example')).toBe(false)
     expect(isNastechHubOrigin('https://evil.example')).toBe(false)
     expect(isNastechHubOrigin('file://')).toBe(false)
   })
@@ -103,7 +103,7 @@ describe('createWindowOpenHandler trusted-hub delegation', () => {
     const openExternalUrl = vi.fn()
 
     const handler = createWindowOpenHandler(undefined, {
-      getOpenerOrigin: () => 'https://nastechresearch.github.io/nastech-agent.evil.example',
+      getOpenerOrigin: () => 'https://nastech-agent.nastechresearch.workers.dev.evil.example',
       openExternalUrl
     })
 

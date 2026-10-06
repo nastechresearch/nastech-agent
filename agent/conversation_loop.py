@@ -525,7 +525,7 @@ def _system_prompt_for_hooks(api_kwargs: Any, request_messages: Any) -> Any:
 
 def _is_nastech_inference_route(provider: str, base_url: str) -> bool:
     return (provider or "").strip().lower() == "nastech" or base_url_host_matches(
-        str(base_url or ""), "inference-api.nastechresearch.github.io"
+        str(base_url or ""), "inference-api.nastech-agent.nastechresearch.workers.dev"
     )
 
 

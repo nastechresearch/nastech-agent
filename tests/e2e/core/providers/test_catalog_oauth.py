@@ -35,7 +35,7 @@ from tests.fakes.providers.catalog_oauth import NASTECH_INVOKE_SCOPE, OAuthFake,
 pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="POSIX harness")
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-PROD_NASTECH_INFERENCE = "https://inference-api.nastechresearch.github.io/v1"
+PROD_NASTECH_INFERENCE = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 TURN_TIMEOUT = 120.0
 # Public, credential-free model-metadata catalog (pricing/context lookups); never carries a vendor token.
 CREDENTIAL_FREE_HOSTS = frozenset({"models.dev:443"})

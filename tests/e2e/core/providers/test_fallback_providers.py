@@ -123,8 +123,8 @@ def _expired_nastech_auth() -> dict:
     past = int(time.time()) - 3600
     iso = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(past))
     return {"version": 1, "active_provider": "nastech", "providers": {"nastech": {
-        "portal_base_url": "https://portal.nastechresearch.github.io",
-        "inference_base_url": "https://inference-api.nastechresearch.github.io/v1",
+        "portal_base_url": "https://portal.nastech-agent.nastechresearch.workers.dev",
+        "inference_base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
         "client_id": "nastech-cli", "token_type": "Bearer", "scope": "inference:invoke",
         "access_token": _jwt({"sub": "e2e-user", "scope": "inference:invoke", "exp": past}),
         "refresh_token": "refresh-e2e", "obtained_at": iso, "expires_in": 3600, "expires_at": iso,

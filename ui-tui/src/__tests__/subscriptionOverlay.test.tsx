@@ -117,7 +117,7 @@ const state = (overrides: Partial<SubscriptionStateResponse> = {}): Subscription
   role: 'OWNER',
   current: null,
   tiers: [],
-  portal_url: 'https://portal.nastechresearch.github.io/billing',
+  portal_url: 'https://portal.nastech-agent.nastechresearch.workers.dev/billing',
   ...overrides
 })
 

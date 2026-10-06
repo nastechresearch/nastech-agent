@@ -4,26 +4,26 @@ import { restoreListedSession } from '@/app/session/hooks/use-session-actions/ut
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tip } from '@/components/ui/tooltip'
+import {
+  deleteSession,
+  getNastechConfigRecord,
+  peekConfigReadOrigin,
+  retainConfigReadOrigin,
+  saveNastechConfig,
+  setSessionArchived
+} from '@/nastech'
 import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
 import { pathLeaf } from '@/lib/display-path'
 import { triggerHaptic } from '@/lib/haptics'
 import { Archive, ArchiveOff, FolderOpen, Loader2, Trash2 } from '@/lib/icons'
 import { purgeInFlightTurnJournals } from '@/lib/inflight-turn-journal'
-import {
-  deleteSession,
-  getNastechConfigRecord,
-  listAllProfileSessions,
-  peekConfigReadOrigin,
-  retainConfigReadOrigin,
-  saveNastechConfig,
-  setSessionArchived
-} from '@/nastech'
 import { confirm } from '@/store/confirm'
 import { notify, notifyError } from '@/store/notifications'
 import { applyConfiguredDefaultProjectDir, ensureDefaultWorkspaceCwd } from '@/store/session'
 import { untombstoneSessions } from '@/store/session-removal'
 import { forgetSessionUnread } from '@/store/session-unread'
+import { listEveryArchivedSession } from '@/store/sidebar-archive'
 import type { NastechConfigRecord, SessionInfo } from '@/types/nastech'
 
 import { EmptyState, ListRow, SectionHeading, SettingsContent, SettingsSkeleton, ToggleRow } from './primitives'
@@ -32,8 +32,6 @@ import { useDeepLinkHighlight } from './use-deep-link-highlight'
 import { useSettingDeepLink } from './use-setting-deep-link'
 
 const DEFAULT_AUTO_ARCHIVE_DAYS = 3
-
-const ARCHIVED_FETCH_LIMIT = 200
 
 interface SessionsSettingsProps {
   subpage?: string
@@ -64,8 +62,7 @@ function ArchivedSessionsSettings({ includeDefaultDirectory }: { includeDefaultD
     setLoading(true)
 
     try {
-      const result = await listAllProfileSessions(ARCHIVED_FETCH_LIMIT, 0, 'only')
-      setLocalSessions(result.sessions)
+      setLocalSessions(await listEveryArchivedSession())
     } catch (err) {
       notifyError(err, s.failedLoad)
     } finally {

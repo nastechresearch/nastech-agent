@@ -592,9 +592,9 @@ export default function PluginCatalogPage() {
               </p>
             )}
             <p className={styles.heroSub} style={{ fontSize: "0.85rem", opacity: 0.85 }}>
-              <a href="https://portal.nastechresearch.github.io/terms" target="_blank" rel="noopener noreferrer">Terms</a>
+              <a href="https://portal.nastech-agent.nastechresearch.workers.dev/terms" target="_blank" rel="noopener noreferrer">Terms</a>
               {" • "}
-              <a href="https://portal.nastechresearch.github.io/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+              <a href="https://portal.nastech-agent.nastechresearch.workers.dev/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
             </p>
           </div>
         </header>

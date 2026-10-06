@@ -12,7 +12,7 @@ def build_fallback_parser(subparsers) -> None:
         description="Manage the fallback provider chain.  Fallback providers are tried "
             "in order when the primary model fails with rate-limit, overload, or "
             "connection errors.  See: "
-            "https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/fallback-providers")
+            "https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/features/fallback-providers")
     fallback_subparsers = fallback_parser.add_subparsers(dest="fallback_command")
     fallback_subparsers.add_parser(
         "list", aliases=["ls"], help="Show the current fallback chain (default when no subcommand)")

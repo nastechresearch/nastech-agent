@@ -1,7 +1,7 @@
 {
   "client_id": "https://nastechresearch.github.io/nastech-agent/docs/oauth/client-metadata.json",
   "client_name": "Nastech Agent",
-  "client_uri": "https://nastechresearch.github.io/nastech-agent",
+  "client_uri": "https://nastech-agent.nastechresearch.workers.dev",
   "logo_uri": "https://nastechresearch.github.io/nastech-agent/docs/img/logo.png",
   "application_type": "native",
   "grant_types": ["authorization_code", "refresh_token"],

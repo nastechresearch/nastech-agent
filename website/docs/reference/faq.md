@@ -211,7 +211,7 @@ source ~/.bashrc
 # If you previously installed with sudo, clean up:
 sudo rm /usr/local/bin/nastech
 # Then re-run the standard installer
-curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash
 ```
 
 ---
@@ -653,7 +653,7 @@ If an MCP server crashes mid-request, Nastech will report a timeout. Check the s
 
 #### The Skills Hub page won't load in the desktop app (403 / blocked)
 
-**Cause:** The docs site (`nastechresearch.github.io/nastech-agent`) is served through Vercel, whose WAF denies some residential IP ranges it considers flagged. If your network is on such a range, every request to the domain returns a 403 block page.
+**Cause:** The docs site (`nastech-agent.nastechresearch.workers.dev`) is served through Vercel, whose WAF denies some residential IP ranges it considers flagged. If your network is on such a range, every request to the domain returns a 403 block page.
 
 **Solution:** The Skills Hub picker probes the primary domain and automatically falls back to the equivalent GitHub Pages deployment (`nastechresearch.github.io/nastech-agent`), which serves the same catalog. If the page still fails on both origins, check whether a proxy, DNS filter, or firewall is blocking both hosts — and report the affected range to the maintainers so it can be reviewed on the deployment side.
 
@@ -802,7 +802,7 @@ Skills with very long descriptions are truncated to 40 characters in the Telegra
 
 1. Install Nastech Agent on the new machine:
    ```bash
-   curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+   curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash
    ```
 
 2. On the **source machine**, create a full backup:

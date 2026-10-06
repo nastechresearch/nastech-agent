@@ -290,7 +290,7 @@ class ChannelReader:
         from pm.network import retry_network
 
         def read() -> bytes:
-            with self.opener(Request(url, headers={"Cache-Control": "no-cache", "User-Agent": "nastech-update"}), timeout=30) as response:
+            with self.opener(Request(url, headers={"Cache-Control": "no-cache"}), timeout=30) as response:
                 if response.geturl() != url:
                     raise ChannelError("Channel archive redirects are not permitted")
                 return response.read(MAX_METADATA + 1)

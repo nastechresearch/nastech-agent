@@ -767,7 +767,7 @@ def _get_portal_status_sync():
         # Free tier: a token exists, so logged_in stays true for callers that only ask "is there a
         # credential"; surfaces that render an account must branch on free_tier first.
         "free_tier": bool(auth.get("free_tier")), "account_tier": auth.get("account_tier"),
-        "subscription_url": "https://portal.nastechresearch.github.io/manage-subscription",
+        "subscription_url": "https://portal.nastech-agent.nastechresearch.workers.dev/manage-subscription",
         "features": features}
 
 

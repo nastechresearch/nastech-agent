@@ -95,6 +95,7 @@ export const tr: Translations = {
   status: {
     actionFailed: "İşlem başarısız",
     actionFinished: "Tamamlandı",
+    actionFinishedOwed: "Güncellendi, ancak bekleyen adımlar var (bitirmek için `nastech update` komutunu yeniden çalıştırın)",
     actions: "İşlemler",
     agent: "Agent",
     activeSessions: "Aktif Oturumlar",

@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
-_DOCS_BASE = "https://nastechresearch.github.io/nastech-agent/docs"
+_DOCS_BASE = "https://nastech-agent.nastechresearch.workers.dev/docs"
 _BRACKETED_PASTE_PATTERN = re.compile(r"\x1b\[\s*200~|\x1b\[\s*201~")
 
 
@@ -526,8 +526,10 @@ def setup_telemetry(config: dict):
     """Configure the local shared-metrics subscriber and optional sending."""
     print_header("Shared Metrics")
     _info("Shared metrics contain only bounded counters: activity, session length,",
-          "outcomes, error classes, model routes and token totals, built-in tool, command",
-          "and catalog names, bucketed setup counts, update results and timing, crashes,",
+          "outcomes, error classes (with a fixed-list reason when a memory write or",
+          "context compression is refused, fails or is skipped), model routes and",
+          "token totals, built-in tool, command and catalog names, bucketed setup",
+          "counts, update results and timing, crashes,",
           "startup and reply speed, messaging-platform health, how Nastech gets used",
           "(agent accuracy and efficiency, active time per surface, which features and",
           "settings are used or switched off, provider setup outcomes), and coarse",

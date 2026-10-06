@@ -104,14 +104,14 @@ def test_resolve_nastech_pricing_credentials_normalizes_either_suffix(monkeypatc
         "nastech_cli.auth.resolve_nastech_runtime_credentials", lambda: None
     )
     for override in (
-        "https://stg-inference-api.nastechresearch.github.io",
-        "https://stg-inference-api.nastechresearch.github.io/",
-        "https://stg-inference-api.nastechresearch.github.io/v1",
-        "https://stg-inference-api.nastechresearch.github.io/v1/",
+        "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev",
+        "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev/",
+        "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev/v1",
+        "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev/v1/",
     ):
         monkeypatch.setenv("NASTECH_INFERENCE_BASE_URL", override)
         assert models_pricing._resolve_nastech_pricing_credentials()[1] == (
-            "https://stg-inference-api.nastechresearch.github.io"
+            "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev"
         )
 
 

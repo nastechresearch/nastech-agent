@@ -176,32 +176,32 @@ uv_bootstrap_pin() {
     case "$1" in
         linux-x64)
             UV_PIN_URL="https://github.com/astral-sh/uv/releases/download/0.12.3/uv-x86_64-unknown-linux-gnu.tar.gz"
-            UV_PIN_MIRROR="https://nastech-assets.nastechresearch.github.io/upstream/sha256/600cf9a742aca00d292673b16b5acffaa7b8c269a364ad0c2e79498dcb1fe101"
+            UV_PIN_MIRROR="https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/600cf9a742aca00d292673b16b5acffaa7b8c269a364ad0c2e79498dcb1fe101"
             UV_PIN_SHA256="600cf9a742aca00d292673b16b5acffaa7b8c269a364ad0c2e79498dcb1fe101"
             ;;
         linux-arm64)
             UV_PIN_URL="https://github.com/astral-sh/uv/releases/download/0.12.3/uv-aarch64-unknown-linux-gnu.tar.gz"
-            UV_PIN_MIRROR="https://nastech-assets.nastechresearch.github.io/upstream/sha256/bb66cb52e7b1823aed1183630d8d8e5c958840d584a4c55ec10a4cfc168dcca2"
+            UV_PIN_MIRROR="https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/bb66cb52e7b1823aed1183630d8d8e5c958840d584a4c55ec10a4cfc168dcca2"
             UV_PIN_SHA256="bb66cb52e7b1823aed1183630d8d8e5c958840d584a4c55ec10a4cfc168dcca2"
             ;;
         linux-x64-musl)
             UV_PIN_URL="https://github.com/astral-sh/uv/releases/download/0.12.3/uv-x86_64-unknown-linux-musl.tar.gz"
-            UV_PIN_MIRROR="https://nastech-assets.nastechresearch.github.io/upstream/sha256/0643b9fb8c9fb27458e709ce6ff939695013c41975ff7b02d3f3b138d8d4bdb3"
+            UV_PIN_MIRROR="https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/0643b9fb8c9fb27458e709ce6ff939695013c41975ff7b02d3f3b138d8d4bdb3"
             UV_PIN_SHA256="0643b9fb8c9fb27458e709ce6ff939695013c41975ff7b02d3f3b138d8d4bdb3"
             ;;
         linux-arm64-musl)
             UV_PIN_URL="https://github.com/astral-sh/uv/releases/download/0.12.3/uv-aarch64-unknown-linux-musl.tar.gz"
-            UV_PIN_MIRROR="https://nastech-assets.nastechresearch.github.io/upstream/sha256/fa513fca1eb2913334c944fe9adbdd410274a1cbe8dd05d03699a9eb85311d4e"
+            UV_PIN_MIRROR="https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/fa513fca1eb2913334c944fe9adbdd410274a1cbe8dd05d03699a9eb85311d4e"
             UV_PIN_SHA256="fa513fca1eb2913334c944fe9adbdd410274a1cbe8dd05d03699a9eb85311d4e"
             ;;
         darwin-x64)
             UV_PIN_URL="https://github.com/astral-sh/uv/releases/download/0.12.3/uv-x86_64-apple-darwin.tar.gz"
-            UV_PIN_MIRROR="https://nastech-assets.nastechresearch.github.io/upstream/sha256/4c9f52262a14da336e4a42ed24992d12d0c956acde87619e4611d321dffa602b"
+            UV_PIN_MIRROR="https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/4c9f52262a14da336e4a42ed24992d12d0c956acde87619e4611d321dffa602b"
             UV_PIN_SHA256="4c9f52262a14da336e4a42ed24992d12d0c956acde87619e4611d321dffa602b"
             ;;
         darwin-arm64)
             UV_PIN_URL="https://github.com/astral-sh/uv/releases/download/0.12.3/uv-aarch64-apple-darwin.tar.gz"
-            UV_PIN_MIRROR="https://nastech-assets.nastechresearch.github.io/upstream/sha256/546f7f8a6c70ff13a3a9d2bc958db3427298cebf3e0cb756f9177133b7068843"
+            UV_PIN_MIRROR="https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/546f7f8a6c70ff13a3a9d2bc958db3427298cebf3e0cb756f9177133b7068843"
             UV_PIN_SHA256="546f7f8a6c70ff13a3a9d2bc958db3427298cebf3e0cb756f9177133b7068843"
             ;;
         *)
@@ -337,7 +337,7 @@ check_platform() {
     # install the phone cannot run (no Android wheels in the lock). The
     # signed APT package is the only supported shape there.
     if [ -n "${TERMUX_VERSION:-}" ] || case "${PREFIX:-}" in *com.termux/files/usr*) true ;; *) false ;; esac; then
-        fail "Termux is installed from its APT repository, not install.sh: pkg install nastech-agent (setup: https://nastechresearch.github.io/nastech-agent/docs/getting-started/termux)"
+        fail "Termux is installed from its APT repository, not install.sh: pkg install nastech-agent (setup: https://nastech-agent.nastechresearch.workers.dev/docs/getting-started/termux)"
     fi
     case "$(uname -s 2>/dev/null)" in
         Linux*) : ;;
@@ -491,6 +491,19 @@ stage_repository() {
                 || log_warn "could not disable gc.writeCommitGraph in $INSTALL_DIR"
             git -C "$INSTALL_DIR" config fetch.writeCommitGraph false \
                 || log_warn "could not disable fetch.writeCommitGraph in $INSTALL_DIR"
+            # A treeless (tree:0) checkout from a late-September installer downloads whole
+            # directory snapshots again on every history walk (#129514). Fetch its trees once; the
+            # new filter is recorded only after that succeeds, so `nastech update` retries otherwise.
+            if [ "$(git -C "$INSTALL_DIR" config --get remote.origin.partialclonefilter)" = tree:0 ]; then
+                if run_logged --may-fail "Fetching directory history once (treeless checkout)" \
+                    git -C "$INSTALL_DIR" -c gc.auto=0 -c maintenance.auto=false fetch --refetch \
+                    --filter=blob:none origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"; then
+                    git -C "$INSTALL_DIR" config remote.origin.partialclonefilter blob:none \
+                        || log_warn "could not record the blobless filter in $INSTALL_DIR"
+                else
+                    log_warn "could not fetch the directory history; the next nastech update retries it"
+                fi
+            fi
         fi
         run_logged "Fetching origin/$BRANCH" git -C "$INSTALL_DIR" fetch origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH" \
             || fail "git fetch failed"
@@ -568,14 +581,15 @@ stage_repository() {
         if quiet_output; then progress=(--progress); fi
         staged="$(mktemp -d "$(dirname "$INSTALL_DIR")/.nastech-clone-XXXXXX")" || fail "cannot stage clone"
         for attempt in 1 2 3; do
-            # Treeless: every commit and release tag (runtime identity is the
-            # nearest reachable release; --commit pins and branch switches
-            # still resolve), trees and blobs fetched on demand, so the
-            # download stays close to a --depth 1 clone.
+            # Blobless: every commit, tree and release tag (runtime identity is
+            # the nearest reachable release; --commit pins and branch switches
+            # still resolve), file contents fetched on demand. Not treeless:
+            # a long-lived treeless checkout re-downloads whole trees on every
+            # checkout and history walk (#129712).
             label="Cloning $REPO_URL ($BRANCH) into $INSTALL_DIR"
             [ "$attempt" = 1 ] || label="$label (attempt $attempt of 3)"
             if run_logged "$label" git clone ${progress[@]+"${progress[@]}"} \
-                --filter=tree:0 --branch "$BRANCH" "$REPO_URL" "$staged/tree"; then
+                --filter=blob:none --branch "$BRANCH" "$REPO_URL" "$staged/tree"; then
                 cloned=true
                 break
             fi
@@ -587,7 +601,7 @@ stage_repository() {
             # graph alone, then retry materializing the tree separately.
             log_warn "direct clone failed; trying deferred checkout"
             if run_logged "Cloning history" git clone ${progress[@]+"${progress[@]}"} \
-                --filter=tree:0 --no-checkout --branch "$BRANCH" "$REPO_URL" "$staged/tree"; then
+                --filter=blob:none --no-checkout --branch "$BRANCH" "$REPO_URL" "$staged/tree"; then
                 for attempt in 1 2; do
                     if run_logged "Checking out files (attempt $attempt of 2)" \
                         git -C "$staged/tree" reset --hard HEAD; then

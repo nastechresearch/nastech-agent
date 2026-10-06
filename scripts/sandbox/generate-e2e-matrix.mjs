@@ -141,7 +141,7 @@ function startLabel(from, to) {
 export const SPEC = {
   windows: {
     install: [
-      // irm https://nastech.nastechresearch.github.io/install.ps1 | iex
+      // irm https://nastech.nastech-agent.nastechresearch.workers.dev/install.ps1 | iex
       { method: 'installer-script' },
       // The same one-liner with -IncludeDesktop: builds Nastech.exe AND
       // registers Start Menu / Desktop shortcuts, so it is a second real

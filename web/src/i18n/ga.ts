@@ -95,6 +95,7 @@ export const ga: Translations = {
   status: {
     actionFailed: "Theip ar an ngníomh",
     actionFinished: "Críochnaithe",
+    actionFinishedOwed: "Nuashonraithe, ach fós le críochnú (rith `nastech update` arís chun é a chríochnú)",
     actions: "Gníomhartha",
     agent: "Agent",
     activeSessions: "Seisiúin ghníomhacha",

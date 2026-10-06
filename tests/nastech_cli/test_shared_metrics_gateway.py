@@ -101,7 +101,7 @@ def test_every_gateway_adapter_platform_is_named_and_accepted_by_contract_and_sc
 
     from gateway.config import Platform
 
-    schema = json.loads((Path(contract.__file__).parent / "schemas/nastech.shared_metrics.v3.schema.json").read_text())
+    schema = json.loads((Path(contract.__file__).parent / "schemas/nastech.shared_metrics.v4.schema.json").read_text())
     rows = {
         "platform_health_counter": ("nastech.platform.health", {"error_class": "network", "event": "disconnect"}),
         "platform_delivery_counter": ("nastech.platform.delivery", {"failure_class": "none", "outcome": "sent"}),

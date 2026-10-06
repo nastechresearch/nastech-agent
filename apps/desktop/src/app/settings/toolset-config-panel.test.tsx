@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render as rtlRender, screen, waitFor, within } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { MemoryRouter } from 'react-router'
 import type * as ReactRouterDom from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { ToolsetConfig } from '@/types/nastech'
+import type { ToolsetConfig, WebCapability } from '@/types/nastech'
 
 // Collect the component graph before the behavioral test deadline starts.
 import { ToolsetConfigPanel } from './toolset-config-panel'
@@ -754,7 +754,7 @@ describe('ToolsetConfigPanel', () => {
         flow: 'device_code',
         session_id: 'sess-1',
         user_code: 'NASTECH-1234',
-        verification_url: 'https://portal.nastechresearch.github.io/device?user_code=NASTECH-1234',
+        verification_url: 'https://portal.nastech-agent.nastechresearch.workers.dev/device?user_code=NASTECH-1234',
         poll_interval: 5,
         expires_in: 600
       })
@@ -782,7 +782,7 @@ describe('ToolsetConfigPanel', () => {
 
         await waitFor(() => expect(startOAuthLogin).toHaveBeenCalledWith('nastech'))
         expect(openSpy).toHaveBeenCalledWith(
-          'https://portal.nastechresearch.github.io/device?user_code=NASTECH-1234',
+          'https://portal.nastech-agent.nastechresearch.workers.dev/device?user_code=NASTECH-1234',
           '_blank',
           'noopener,noreferrer'
         )
@@ -899,7 +899,7 @@ describe('ToolsetConfigPanel', () => {
             env_vars: [],
             post_setup: null,
             requires_nastech_auth: false,
-            is_active: false,
+            is_active: true,
             status: 'ready',
             web_backend: 'firecrawl',
             capabilities: ['search', 'extract']
@@ -910,7 +910,10 @@ describe('ToolsetConfigPanel', () => {
     }
 
     it('hides "Use for Extract" on a search-only provider and wires capability selection', async () => {
-      getToolsetConfig.mockResolvedValue(webConfig())
+      // The panel refetches after a capability pick: second load is the server's truth.
+      getToolsetConfig
+        .mockResolvedValueOnce(webConfig())
+        .mockResolvedValue(webConfig({ active_search_backend: 'firecrawl' }))
       selectToolsetProvider.mockResolvedValue({ ok: true, name: 'web', provider: 'SearXNG', capability: 'search' })
 
       render(<ToolsetConfigPanel onConfiguredChange={vi.fn()} toolset="web" />)
@@ -926,8 +929,71 @@ describe('ToolsetConfigPanel', () => {
       fireEvent.click(useForSearch)
 
       await waitFor(() => expect(selectToolsetProvider).toHaveBeenCalledWith('web', 'Firecrawl', 'search'))
-      // Badge tracks the local write without a refetch.
       await waitFor(() => expect(screen.getByText('Search: firecrawl')).toBeTruthy())
+    })
+
+    it('lights the Nastech row for a gateway-served capability and the BYOK row for the own-key one', async () => {
+      const nastech = {
+        name: 'Nastech Subscription',
+        badge: 'subscription',
+        tag: 'Managed web search and extract billed to your subscription',
+        env_vars: [],
+        post_setup: null,
+        requires_nastech_auth: true,
+        managed_nastech_feature: 'web',
+        is_active: false,
+        status: 'ready' as const,
+        web_backend: 'firecrawl',
+        capabilities: ['search', 'extract'] as WebCapability[]
+      }
+
+      // Search through the gateway, extract on the user's own Firecrawl key:
+      // both rows share web_backend 'firecrawl', only the *_via_nastech flags tell them apart.
+      getToolsetConfig.mockResolvedValue(
+        webConfig({
+          active_search_backend: 'perplexity',
+          active_extract_backend: 'firecrawl',
+          search_via_nastech: true,
+          extract_via_nastech: false,
+          providers: [...webConfig().providers, nastech]
+        })
+      )
+
+      render(<ToolsetConfigPanel onConfiguredChange={vi.fn()} toolset="web" />)
+
+      expect(await screen.findByText('Search: Nastech Subscription')).toBeTruthy()
+      expect(screen.getByText('Extract: firecrawl')).toBeTruthy()
+      const nastechRow = screen.getByRole('button', { name: /Nastech Subscription/ })
+      const byokRow = screen.getByRole('button', { name: /^Firecrawl/ })
+      expect(within(nastechRow).getByText('Search backend')).toBeTruthy()
+      expect(within(nastechRow).queryByText('Extract backend')).toBeNull()
+      expect(within(byokRow).getByText('Extract backend')).toBeTruthy()
+      expect(within(byokRow).queryByText('Search backend')).toBeNull()
+    })
+
+    it('marks only the configured row of two sharing one backend name', async () => {
+      // Cloud and self-hosted Firecrawl share web_backend 'firecrawl'; the server's is_active says which
+      // one's credential is set, and only that row carries the capability pills.
+      const selfHosted = {
+        ...webConfig().providers[1],
+        name: 'Firecrawl Self-Hosted',
+        badge: 'free · self-hosted',
+        is_active: false,
+        status: 'needs_keys' as const
+      }
+
+      getToolsetConfig.mockResolvedValue(
+        webConfig({ active_search_backend: 'firecrawl', providers: [selfHosted, webConfig().providers[1]] })
+      )
+
+      render(<ToolsetConfigPanel onConfiguredChange={vi.fn()} toolset="web" />)
+
+      const cloudRow = await screen.findByRole('button', { name: /^Firecrawl(?! Self)/ })
+      const selfRow = screen.getByRole('button', { name: /^Firecrawl Self-Hosted/ })
+      expect(within(cloudRow).getByText('Search backend')).toBeTruthy()
+      expect(within(cloudRow).getByText('Extract backend')).toBeTruthy()
+      expect(within(selfRow).queryByText('Search backend')).toBeNull()
+      expect(within(selfRow).queryByText('Extract backend')).toBeNull()
     })
   })
 })

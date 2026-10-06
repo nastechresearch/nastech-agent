@@ -89,7 +89,7 @@ class ReasoningParamsMixin:
         """True when reasoning extra_body is safe to send: OpenRouter forwards unknown extra_body upstream and
         some routes 400 on ``reasoning``, so gate to known reasoning-capable families and direct Nastech Portal."""
         url = self._base_url_lower
-        if base_url_host_matches(url, "nastechresearch.github.io") or base_url_host_matches(url, "ai-gateway.vercel.sh"):
+        if base_url_host_matches(url, "nastech-agent.nastechresearch.workers.dev") or base_url_host_matches(url, "ai-gateway.vercel.sh"):
             return True
         if base_url_host_matches(url, "models.github.ai") or base_url_host_matches(url, "githubcopilot.com"):
             try:

@@ -93,7 +93,7 @@ The reason is maintenance load, not quality. Every external product absorbed int
 
 Publish these as a **standalone plugin repo** instead:
 
-- Implement the relevant ABC and use the existing plugin discovery path (`~/.nastech/plugins/`, project `.nastech/plugins/`, or a pip entry point) — see [Build a Nastech Plugin](https://nastechresearch.github.io/nastech-agent/docs/guides/build-a-nastech-plugin)
+- Implement the relevant ABC and use the existing plugin discovery path (`~/.nastech/plugins/`, project `.nastech/plugins/`, or a pip entry point) — see [Build a Nastech Plugin](https://nastech-agent.nastechresearch.workers.dev/docs/guides/build-a-nastech-plugin)
 - Register lifecycle hooks (`pre_tool_call`, `post_tool_call`, `pre_llm_call`, `post_llm_call`, `on_session_start`, `on_session_end`), tools (`ctx.register_tool`), and CLI subcommands (`ctx.register_cli_command`) through the surface we already expose — no core changes needed
 - If your plugin needs a capability the framework doesn't expose, that's a feature request to **widen the generic plugin surface** (a new hook or `ctx` method) — never special-case your plugin in core
 - Promote it in the [Nastech Research Discord](https://discord.gg/NastechResearch) `#plugins-skills-and-skins` channel so users can find and install it
@@ -104,7 +104,7 @@ A well-built third-party-product plugin can clear automated review and still be 
 
 ## Submitting a Plugin to the Catalog
 
-A standalone plugin reaches users through the [plugin catalog](https://nastechresearch.github.io/nastech-agent/docs/plugins): a PR to this repo adding one `plugin-catalog/<name>.yaml` file that pins your repo at an exact commit. Read **[Submitting to the plugin catalog](https://nastechresearch.github.io/nastech-agent/docs/developer-guide/plugins/catalog-submission)** before opening one. It covers what to check first (`nastech plugins validate --install-deps`), how review works, and every admission rule. The canonical rules live in [`plugin-catalog/README.md`](plugin-catalog/README.md); if you change them, change the mirrored block in the docs page in the same PR (a test keeps the two identical).
+A standalone plugin reaches users through the [plugin catalog](https://nastech-agent.nastechresearch.workers.dev/docs/plugins): a PR to this repo adding one `plugin-catalog/<name>.yaml` file that pins your repo at an exact commit. Read **[Submitting to the plugin catalog](https://nastech-agent.nastechresearch.workers.dev/docs/developer-guide/plugins/catalog-submission)** before opening one. It covers what to check first (`nastech plugins validate --install-deps`), how review works, and every admission rule. The canonical rules live in [`plugin-catalog/README.md`](plugin-catalog/README.md); if you change them, change the mirrored block in the docs page in the same PR (a test keeps the two identical).
 
 The rules that most often send a submission back: the plugin must extend Nastech only through public hooks, `ctx.register_*` APIs and the Desktop SDK (no patching core code or Desktop markup at runtime), must not update itself, must declare the capabilities it registers, and must disclose risky behaviour.
 
@@ -310,7 +310,7 @@ nastech-agent/
 ├── skills/                   # Bundled skills (copied to ~/.nastech/skills/ on install)
 ├── optional-skills/          # Official optional skills (discoverable via hub, not activated by default)
 ├── tests/                    # Test suite
-├── website/                  # Documentation site (nastechresearch.github.io/nastech-agent)
+├── website/                  # Documentation site (nastech-agent.nastechresearch.workers.dev)
 │
 ├── cli-config.yaml.example   # Example configuration (copied to ~/.nastech/config.yaml)
 └── AGENTS.md                 # Development guide for AI coding assistants
@@ -369,6 +369,7 @@ User message → AIAgent._run_agent_loop()
 - **Error handling**: Catch specific exceptions. Log with `logger.warning()`/`logger.error()` — use `exc_info=True` for unexpected errors so stack traces appear in logs
 - **Error messages**: every user-facing error message names the actual cause and the remediation step — never the proximate symptom. A missing API key is "no OpenRouter API key configured — set `OPENROUTER_API_KEY`", never "payment/credit error"; a failed request logs the exception class and message (secret-redacted) rather than an empty reason; a timed-out long job reports the timeout and where the job went, not a fallback-routing noise string. If you know the cause, say it; if you don't, say what you do know plus what to check — never a placeholder that points somewhere else.
 - **Cross-platform**: Never assume Unix. See [Cross-Platform Compatibility](#cross-platform-compatibility)
+- **Code health ratchet**: `python scripts/check` runs every blocking lint check CI runs, with the same pinned tools. To run it automatically, `python scripts/check --install-hook pre-push` judges the tip of each branch you push, as CI judges the PR as a whole, not each intermediate commit (`--install-hook` alone runs it on every commit instead, judging what you staged; `--uninstall-hook` removes either; `--no-verify` skips once). The hook covers every worktree of your clone, judges each pushed tip with that tip's own checker, prefers the repo's `.venv`/`venv` Python (3.11+), and needs ruff 0.15.10 or `uv` on `PATH`; re-run `--install-hook` after pulling to refresh the hook script. Its code-health part gives every function and file its own cap: new functions stay at cyclomatic complexity ≤ 20, ≤ 300 lines and nesting ≤ 6, files at ≤ 2,000 lines, and code already over a target may only get smaller (a file already past 2,000 lines may not grow: offset the growth by moving an existing function into a `<stem>_<topic>` sibling, or put new tests in a new test file). Pattern rules (blind `except Exception`, missing timeouts, profile-scope hazards such as a hardcoded `~/.nastech` or a new `NASTECH_*` env var) track each existing violation where it sits, so existing debt never blocks you, but a new instance does, even one that replaces an identical violation you removed. Moving code keeps its history: a function or module-level statement moved to another file keeps the cap and the existing violations it had, and so does a moved function you lightly edit, unless a function of that name already exists in the destination (the edited one is then judged against that function's cap). A function you both rename and edit is new code, and so is a copy that leaves the original in place. A file the checker cannot parse or measure fails. TypeScript complexity follows ESLint's `complexity` rule except where `scripts/code_health/ts_units.mjs` says otherwise. Each finding prints its fix; a genuine exception takes a `# health: allow <RULE> -- <why>` comment on the line (or on a comment-only line directly above it), which reviewers read; ruff's `# noqa` does not waive a ratchet finding, and a broad catch that logs must keep the traceback (`logger.exception` or `exc_info=True`). Heuristic rules print as warnings until a frozen replay of merged PRs shows they are precise enough to block. Rules and targets: `scripts/code_health/config.py`. Maintainers switch the whole ratchet with `ENFORCEMENT` there (`blocking`, `advisory` or `off`): it is always read from main (CI: the merge commit's first parent; local runs: `origin/main`), never from the branch under test, so a one-line commit to main reaches every open PR on its next CI run (a re-run reuses the old merge commit) and every local hook after a fetch, and a PR cannot relax its own check; one rule can be demoted with `blocking=False`.
 
 ### Fail loud at integration boundaries
 
@@ -973,9 +974,10 @@ refactor/description   # Code restructuring
 ### Before submitting
 
 1. **Run tests**: use `scripts/run_tests.sh` for the same environment and per-file isolation as CI.
-2. **Test manually**: Run `nastech` and exercise the code path you changed
-3. **Check cross-platform impact**: If you touch file I/O, process management, or terminal handling, consider macOS, Linux, and WSL2
-4. **Keep PRs focused**: One logical change per PR. Don't mix a bug fix with a refactor with a new feature.
+2. **Run the lint checks**: `python scripts/check` (the blocking lint lane, locally).
+3. **Test manually**: Run `nastech` and exercise the code path you changed
+4. **Check cross-platform impact**: If you touch file I/O, process management, or terminal handling, consider macOS, Linux, and WSL2
+5. **Keep PRs focused**: One logical change per PR. Don't mix a bug fix with a refactor with a new feature.
 
 ### PR description
 

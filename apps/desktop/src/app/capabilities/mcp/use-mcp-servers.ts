@@ -2,21 +2,21 @@ import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import {
+  getMcpCatalog,
+  type NastechGateway,
+  type McpCatalogEntry,
+  type McpCatalogResponse,
+  type McpTestResult,
+  type ProfileScope,
+  profileScopeKey,
+  saveMcpServers
+} from '@/nastech'
 import { useI18n } from '@/i18n'
 import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
 import { probeCache, probeKey } from '@/lib/mcp-probe-cache'
 import { getServers, type McpServerEntry, type McpServers } from '@/lib/mcp-servers'
 import { setDisabledTools, toggleToolInServer } from '@/lib/mcp-tool-filter'
-import {
-  getMcpCatalog,
-  type McpCatalogEntry,
-  type McpCatalogResponse,
-  type McpTestResult,
-  type NastechGateway,
-  type ProfileScope,
-  profileScopeKey,
-  saveMcpServers
-} from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 import { $activeSessionId } from '@/store/session'

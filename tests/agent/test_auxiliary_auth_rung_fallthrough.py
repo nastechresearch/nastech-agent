@@ -43,7 +43,7 @@ import agent.auxiliary_client as aux
 
 AUX_MODEL = "z-ai/glm-5.3-flash"
 FALLBACK_MODEL = "fallback-model"
-NASTECH_HOST = "inference-api.nastechresearch.github.io"
+NASTECH_HOST = "inference-api.nastech-agent.nastechresearch.workers.dev"
 
 
 class _ApiError(Exception):

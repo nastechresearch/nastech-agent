@@ -246,17 +246,14 @@ describe('BootFailureOverlay', () => {
   })
 
   it('recovers a cloud connection through the portal cascade instead of native OAuth', async () => {
-    const gatewayUrl = 'https://agent-1.agents.nastechresearch.github.io'
+    const gatewayUrl = 'https://agent-1.agents.nastech-agent.nastechresearch.workers.dev'
     const logout = vi.fn().mockResolvedValue({ ok: true, connected: false })
     const nativeLogin = vi.fn().mockResolvedValue({ ok: true, connected: false })
-
-    const cloudStatus = vi
-      .fn()
-      .mockResolvedValue({ portalBaseUrl: 'https://portal.nastechresearch.github.io', signedIn: false })
+    const cloudStatus = vi.fn().mockResolvedValue({ portalBaseUrl: 'https://portal.nastech-agent.nastechresearch.workers.dev', signedIn: false })
 
     const cloudLogin = vi.fn().mockResolvedValue({
       ok: true,
-      portalBaseUrl: 'https://portal.nastechresearch.github.io',
+      portalBaseUrl: 'https://portal.nastech-agent.nastechresearch.workers.dev',
       signedIn: true
     })
 
@@ -297,7 +294,7 @@ describe('BootFailureOverlay', () => {
   it('shows the Nastech Cloud down recovery when the backend flags isCloudBackendDown', async () => {
     const restore = stubDesktop(remoteToken)
     $desktopBoot.set({
-      error: 'Nastech Cloud agent ares-3009.agents.nastechresearch.github.io is down (HTTP 503: server-side fault).',
+      error: 'Nastech Cloud agent ares-3009.agents.nastech-agent.nastechresearch.workers.dev is down (HTTP 503: server-side fault).',
       fakeMode: false,
       isCloudBackendDown: true,
       message: 'boot failed',
@@ -364,9 +361,7 @@ describe('BootFailureOverlay', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /reinstall the app/i }))
       await waitFor(() =>
-        expect(openExternal).toHaveBeenCalledWith(
-          'https://nastechresearch.github.io/nastech-agent/docs/user-guide/desktop'
-        )
+        expect(openExternal).toHaveBeenCalledWith('https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/desktop')
       )
     } finally {
       restore()

@@ -4,4 +4,4 @@
  * (bundled installs with a damaged payload) and any future doc links point
  * at the same place.
  */
-export const DESKTOP_DOCS_URL = 'https://nastechresearch.github.io/nastech-agent/docs/user-guide/desktop'
+export const DESKTOP_DOCS_URL = 'https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/desktop'

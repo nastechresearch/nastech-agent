@@ -10,7 +10,7 @@ import urllib.request
 from nastech_cli.debug_redaction import redact_debug_support_text
 
 # Overridable via env so the feature can be pointed at staging / a local dev NAS instance.
-NAS_BASE = os.environ.get("NASTECH_DIAGNOSTICS_BASE_URL", "https://portal.nastechresearch.github.io")
+NAS_BASE = os.environ.get("NASTECH_DIAGNOSTICS_BASE_URL", "https://portal.nastech-agent.nastechresearch.workers.dev")
 _REQUEST_TIMEOUT = 30
 _UPLOAD_TIMEOUT = 120  # the PUT carries the gzipped log bundle, so a more generous window
 _USER_AGENT = "nastech-agent/debug-share"

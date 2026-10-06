@@ -379,7 +379,7 @@ _EMPTY_HTML = """\
 <p>This dashboard is bound to a non-loopback host but no authentication
 providers are available.</p>
 <p>Configure the bundled username/password provider or an OAuth provider.
-See the <a href="https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/web-dashboard#authentication-gated-mode">dashboard
+See the <a href="https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/features/web-dashboard#authentication-gated-mode">dashboard
 authentication documentation</a> for setup instructions.</p>
 <p>For auth-free local use, bind to <code>127.0.0.1</code> and connect through
 an SSH tunnel or Tailscale.</p>

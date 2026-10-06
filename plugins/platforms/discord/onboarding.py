@@ -264,7 +264,7 @@ def interactive_setup() -> None:
         "1. Open https://discord.com/developers/applications → New Application",
         "2. Open the Bot page → Reset Token → copy the token",
         "Nastech checks the token, the intents and the invite link for you next.",
-        "Guide: https://nastechresearch.github.io/nastech-agent/docs/user-guide/messaging/discord",
+        "Guide: https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/messaging/discord",
     ):
         print_info(line)
     token, check = _prompt_checked_token(prompt)

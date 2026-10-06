@@ -1,5 +1,8 @@
 import { FIELD_DESCRIPTIONS, FIELD_LABELS } from '@/app/settings/constants'
 
+import { enAuxTasks } from './en_aux_tasks'
+import { enModelMenu } from './en_model_menu'
+import { enSharedMetrics } from './en_shared_metrics'
 import type { Translations } from './types'
 
 export const en: Translations = {
@@ -13,41 +16,7 @@ export const en: Translations = {
       message: 'This file does not exist — it may have been deleted or moved, or it lives on another machine.'
     }
   },
-  sharedMetrics: {
-    consentTitle: 'Help improve Nastech?',
-    consentBody:
-      'Shared metrics contain only bounded counters. Never prompts, files, paths or error text. Collection is local. Sending them to Nastech is a separate opt-in.',
-    whatIsCollected: 'What is collected',
-    collectedIntro: 'Only bounded counters:',
-    collectedActivity: 'Activity, session length, outcomes and error classes',
-    collectedModels: 'Model routes and token totals',
-    collectedNames: 'Built-in tool, command and catalog names',
-    collectedMilestones: 'Bucketed setup counts',
-    collectedReliability: 'Update results and timing, crashes, startup and reply speed, messaging-platform health',
-    collectedUsage:
-      'How Nastech gets used: agent accuracy and efficiency (edit matches, loops, recoveries, tokens and tool calls per task, cache breaks), active time per surface and Desktop mode, which app areas, actions and settings are used, closed quickly or switched off, and provider setup outcomes',
-    collectedMachine:
-      'Coarse machine facts: RAM range, GPU type, Nastech version age and release channel, updates behind, whether a local model server is used',
-    installId:
-      'Sending uploads each daily package to the Nastech telemetry service. Packages carry this profile’s install ID: a stable random UUID with no personal information, reset by deleting the shared-metrics directory.',
-    consentWindow:
-      'Only packages whose entire collection period falls inside a recorded consent window are ever sent — data from before you opt in, or from any gap while sending was off, stays on this machine. Sending can be turned off again at any time.',
-    readDocs: 'Read the full details',
-    share: 'Collect and send to Nastech',
-    local: 'Collect locally only',
-    off: 'No thanks',
-    changeLater: 'You can change this any time in Settings → Safety.',
-    saveFailed: 'Couldn’t save your choice',
-    collectLabel: 'Collect usage stats',
-    collectDesc: 'Bounded counters kept on this device. Never prompts, files, paths or error text.',
-    sendLabel: 'Send usage stats to Nastech',
-    sendDesc:
-      'Upload each daily package to the Nastech telemetry service. Only data from inside a consent window is sent. Needs collection on.',
-    unavailable: 'Update the Nastech backend to change this setting.',
-    stripBody: 'Bounded counters only, never prompts or files.',
-    stripChoices: { share: 'Send to Nastech', local: 'Local only', off: 'No thanks' },
-    stripDetails: 'Details'
-  },
+  sharedMetrics: enSharedMetrics,
   // English editorial copy stays in the shipped JSONL; other locales override it.
   intro: { stock: {}, custom: () => [] },
   connectors: {
@@ -601,7 +570,7 @@ export const en: Translations = {
       inputTitleNamed: session => `Input needed — ${session}`,
       inputBody: 'Nastech is waiting for your response.',
       turnDoneTitle: 'Nastech finished',
-      turnDoneBody: '',
+      turnDoneBody: 'Message complete.',
       turnErrorTitle: 'Turn failed',
       backgroundDoneTitle: 'Background task finished',
       backgroundFailedTitle: 'Background task failed',
@@ -869,6 +838,14 @@ export const en: Translations = {
     resetConfirm: 'Reset all settings to Nastech defaults?',
     exportFailed: 'Export failed',
     resetFailed: 'Reset failed',
+    pluginPages: {
+      blurb: 'Options that installed plugins add. Each plugin gets its own page, and some add sub-pages under it.',
+      empty: 'No plugin has settings yet.',
+      manage: 'Manage plugins',
+      agentSettings: 'Agent settings',
+      pageCount: (n: number) => (n === 1 ? '1 page' : `${n} pages`),
+      missing: 'That plugin has no settings page. It may be disabled or uninstalled.'
+    },
     nav: {
       providers: 'Providers',
       providerAccounts: 'Accounts',
@@ -886,24 +863,16 @@ export const en: Translations = {
       about: 'About',
       billing: 'Billing',
       notifications: 'Notifications',
-      vault: 'Passwords & Logins'
+      vault: 'Passwords & Logins',
+      plugins: 'Plugins'
     },
     plugins: {
       title: 'Desktop plugins',
-      blurb:
-        'Extend this app, not an agent — installed once for the whole app, whichever profile, gateway, or machine you connect to. Bundled or dropped into the desktop-plugins folder; toggles apply live.',
-      count: n => `${n} installed`,
       openFolder: 'Open Desktop plugins folder',
       rescan: 'Rescan',
       reveal: 'Reveal in file manager',
-      enable: 'Enable',
-      disable: 'Disable',
       failed: 'failed',
-      empty: 'No desktop plugins installed yet.',
       kinds: { bundled: 'bundled', disk: 'on disk', runtime: 'runtime' },
-      agentHalfMissing: 'agent half missing here',
-      agentHalfMissingTip:
-        'This is the desktop half of a bundled plugin, but its agent half is not installed on the currently connected backend/profile. Install it from Capabilities → Plugins.',
       installModal: {
         installFromGit: 'Install from Git',
         reviewRepository: 'Review repository',
@@ -1688,11 +1657,13 @@ export const en: Translations = {
       sshErrHostKey:
         'The host key has CHANGED since you last connected. Verify this is expected, then run ssh-keygen -R <host> and reconnect.',
       sshErrNotInstalled:
-        'Nastech is not installed on the remote host. Install it there (curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | sh) or set the Nastech path.',
+        'Nastech is not installed on the remote host. Install it there (curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | sh) or set the Nastech path.',
       sshErrPlatform:
         'Unsupported remote platform. Nastech Desktop SSH mode supports Linux, macOS, and Windows remote hosts.',
       sshErrTimeout: 'SSH connection timed out. The host may be unreachable or asleep.',
       sshErrUpdateRequired: 'Update Nastech on the remote host before connecting with Desktop SSH.',
+      sshErrInteractiveAuth:
+        'Tailscale SSH requires an interactive browser check. In Terminal, run `ssh <host> true`, complete the check, then retry — Nastech runs SSH non-interactively.',
       sshErrUnknown: 'SSH connection failed.'
     },
     keys: {
@@ -1795,6 +1766,8 @@ export const en: Translations = {
       change: 'Change',
       autoUseMain: 'auto · use main model',
       inheritMainEffort: 'inherit · main model effort',
+      inheritsFrom: task => `inherits ${task}`,
+      followTask: task => `Follow ${task}`,
       providerDefault: '(provider default)',
       fallbackAdd: 'Add fallback',
       fallbackEmpty: 'No fallback models — the default model is used unless it fails.',
@@ -1806,19 +1779,7 @@ export const en: Translations = {
       moaAggregator: 'Aggregator',
       moaAggregatorBilled: 'acting model · billed for the run',
       moaReferenceHint: 'advises once per turn by default',
-      tasks: {
-        vision: { label: 'Vision', hint: 'Image analysis' },
-        compression: { label: 'Compression', hint: 'Context compaction' },
-        skills_hub: { label: 'Skills hub', hint: 'Skill search' },
-        approval: { label: 'Approval', hint: 'Smart auto-approve' },
-        mcp: { label: 'MCP', hint: 'MCP tool routing' },
-        title_generation: { label: 'Title gen', hint: 'Session titles' },
-        review: { label: 'Review', hint: '/review reviewer subagent' },
-        triage_specifier: { label: 'Triage specifier', hint: 'Kanban spec fleshing' },
-        kanban_decomposer: { label: 'Kanban decomposer', hint: 'Task decomposition' },
-        profile_describer: { label: 'Profile describer', hint: 'Auto profile descriptions' },
-        curator: { label: 'Curator', hint: 'Skill-usage review' }
-      }
+      tasks: enAuxTasks
     },
     localModels: {
       connectionChanged: 'Local models connection changed',
@@ -2561,7 +2522,7 @@ export const en: Translations = {
         save: 'Save settings',
         saved: (name: string) => `${name} settings saved.`,
         saveFailed: (name: string) => `Could not save ${name} settings`,
-        optional: '(optional)',
+        required: 'Required',
         secretSet: '•••••••• (set)',
         secretStoredAs: (env: string) =>
           `Stored in the profile's .env as ${env}, never in config.yaml; leave blank to keep the current value.`
@@ -4271,10 +4232,10 @@ export const en: Translations = {
       restarting: 'Backend restarting to load the update…',
       notAvailable: 'Update not available for this backend.',
       failed: 'Backend update failed.',
-      noReturn: 'Backend didn’t come back online. The update may not have completed — check the backend host.'
+      noReturn: 'Backend didn’t come back online. The update may not have completed — check the backend host.',
+      owed: steps => `Backend updated, but still owed: ${steps}. Re-run \`nastech update\` to finish them.`
     },
-    // Update-status overlay + version-details (mechanism-aware update UI).
-    appName: 'Nastech',
+    appName: 'Nastech', // Update-status overlay + version-details (mechanism-aware update UI).
     version: (value: string) => `Version ${value}`,
     versionUnavailable: 'Version unavailable',
     checkNow: 'Check now',
@@ -4446,8 +4407,7 @@ export const en: Translations = {
       xai: { short: 'Grok models', description: 'Direct access to xAI Grok models.' },
       local: {
         short: 'self-hosted',
-        description:
-          'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
+        description: 'Point Nastech at a local or self-hosted OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama, etc).'
       }
     },
     backToSignIn: 'Back to sign in',
@@ -4612,22 +4572,7 @@ export const en: Translations = {
     windowControls: 'Window controls',
     paneControls: 'Pane controls',
     appControls: 'App controls',
-    modelMenu: {
-      search: 'Search models',
-      noModels: 'No models found',
-      editModels: 'Edit models…',
-      followDefault: 'Use Settings default',
-      refreshModels: 'Refresh models',
-      favorites: 'Favorites',
-      addFavorite: 'Add to favorites',
-      removeFavorite: 'Remove from favorites',
-      favoriteShortcut: '⇧ Click',
-      fast: 'Fast',
-      free: 'free',
-      cacheRead: 'cached read',
-      priceTitle: (input: string, output: string, cache: string) =>
-        `Input ${input}/Mtok · Output ${output}/Mtok` + (cache ? ` · Cached read ${cache}/Mtok` : '')
-    },
+    modelMenu: enModelMenu,
     modelOptions: {
       noOptions: 'No options for this model',
       options: 'Options',
@@ -4697,6 +4642,9 @@ export const en: Translations = {
       showTerminal: 'Show terminal',
       hideTerminal: 'Hide terminal',
       gateway: 'Gateway',
+      backend: 'Backend',
+      messagingStopped: 'messaging stopped',
+      messagingDegraded: name => `${name} down`,
       gatewayReady: 'ready',
       gatewayNeedsSetup: 'needs setup',
       gatewayUnavailable: 'inference unavailable',
@@ -5505,9 +5453,6 @@ export const en: Translations = {
     sessionUnavailable: 'Session unavailable',
     createSessionFailed: 'Could not create a new session',
     promptFailed: 'Prompt failed',
-    staleSessionTitle: 'Chat out of date',
-    staleSessionBody:
-      'This window was behind another view of the same chat. Latest messages were loaded. Send again if you still want to.',
     providerCredentialRequired: 'Add a provider credential before sending your first message.',
     emptySlashCommand: 'empty slash command',
     slashCommandIgnoredTitle: 'Command not sent',

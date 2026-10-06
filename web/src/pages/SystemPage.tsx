@@ -1049,7 +1049,7 @@ export default function SystemPage() {
                 </span>
               )}
               <a
-                href={portal?.subscription_url || "https://portal.nastechresearch.github.io/manage-subscription"}
+                href={portal?.subscription_url || "https://portal.nastech-agent.nastechresearch.workers.dev/manage-subscription"}
                 target="_blank"
                 rel="noreferrer"
                 className="ml-auto text-xs text-primary underline"

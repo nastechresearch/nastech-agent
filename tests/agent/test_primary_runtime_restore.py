@@ -520,7 +520,7 @@ class TestTryRecoverPrimaryTransport:
         """Portal Claude holds a local Anthropic SDK client — rebuild it."""
         agent = _make_agent(
             provider="nastech",
-            base_url="https://inference-api.nastechresearch.github.io/v1",
+            base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
         )
         agent.api_mode = "anthropic_messages"
         agent.model = "anthropic/claude-opus-4.8"
@@ -529,7 +529,7 @@ class TestTryRecoverPrimaryTransport:
             "model": "anthropic/claude-opus-4.8",
             "provider": "nastech",
             "anthropic_api_key": "portal-jwt",
-            "anthropic_base_url": "https://inference-api.nastechresearch.github.io/v1",
+            "anthropic_base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
             "is_anthropic_oauth": False,
         })
         error = _make_transport_error("ReadTimeout")

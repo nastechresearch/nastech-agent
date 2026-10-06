@@ -71,7 +71,7 @@ def reader_result(source, name, destination=None, repository="NastechResearch/na
         "schema": 1, "request": {"buildId": "build-fixture", "channel": terminal["name"],
         "sequence": 1, "repository": repository, "commit": source.commits[1],
         "sourceVersion": "1.2.3", "version": "0.0.1", "identity": {}, "bundleEnv": {},
-        "publicBase": "https://nastech-assets.nastechresearch.github.io"}, "packages": []})
+        "publicBase": "https://nastech-assets.nastech-agent.nastechresearch.workers.dev"}, "packages": []})
 
 
 def install_reader(monkeypatch, result):
@@ -125,11 +125,9 @@ def test_retirement_adopts_destination_only_after_success(source, monkeypatch, o
     monkeypatch.setattr(update_cmd, "_write_fleet_restart_pending_marker", lambda **kw: None)
     flags = ["--channel", name] if outcome == "transient" else []
     args = source.parser.parse_args(["update", "--yes", *flags])
-    if outcome == "failed":
-        with pytest.raises(SystemExit):
-            update_cmd._cmd_update_impl(args, False)
-    else:
-        update_cmd._cmd_update_impl(args, False)
+    # A completion that answered no terminal receipt ("failed") was SystemExit: after the commit
+    # point it is an owed completion, exit 0 (review P2) -- and still never adopts the destination.
+    update_cmd._cmd_update_impl(args, False)
     expected = {"success": "stable", "already-current": "stable", "failed": name,
                 "transient": name, "concurrent": "my-new-choice"}[outcome]
     assert saved(source)["channel"] == expected
@@ -430,11 +428,13 @@ def test_retirement_waits_for_correlated_completion_process(source, monkeypatch,
                "receipt": deepcopy(update_receipt._current.get().data),
                "channel_retirement": {"original": original, "destination": "stable"}}
     monkeypatch.setattr(update_cmd, "_write_fleet_restart_pending_marker", lambda **kw: None)
-    if outcome == "success":
-        update_cmd._complete_source_update(request)
-    else:
+    if outcome == "failure":  # the child itself answered a correlated failure
         with pytest.raises(SystemExit):
             update_cmd._complete_source_update(request)
+    else:
+        # An uncorrelated or missing answer was SystemExit: after the commit point it is an owed
+        # completion, exit 0 (review P2). Adoption still waits for a verified completion.
+        update_cmd._complete_source_update(request)
     assert saved(source)["channel"] == ("stable" if outcome == "success" else name)
     child_request = json.loads((source.home / "child-request.json").read_text())
     assert child_request["channel_retirement"]["original"] == original

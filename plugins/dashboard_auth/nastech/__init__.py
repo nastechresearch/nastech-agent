@@ -30,7 +30,7 @@ from plugins.dashboard_auth._shared import (
 logger = logging.getLogger(__name__)
 _TAG = "dashboard-auth-nastech"
 
-_DEFAULT_PORTAL_URL = "https://portal.nastechresearch.github.io"
+_DEFAULT_PORTAL_URL = "https://portal.nastech-agent.nastechresearch.workers.dev"
 _SCOPE = "agent_dashboard:access"  # contract C3
 _EXPECTED_CONTRACT_VERSION = 1  # contract C11
 

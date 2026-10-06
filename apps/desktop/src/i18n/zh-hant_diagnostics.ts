@@ -75,7 +75,7 @@ export const zhHantDiagnostics = {
       inputTitleNamed: session => `需要輸入 — ${session}`,
       inputBody: 'Nastech 正在等待你的回應。',
       turnDoneTitle: 'Nastech 已完成',
-      turnDoneBody: '',
+      turnDoneBody: '訊息已完成。',
       turnErrorTitle: '本輪失敗',
       backgroundDoneTitle: '背景工作已完成',
       backgroundFailedTitle: '背景工作失敗',

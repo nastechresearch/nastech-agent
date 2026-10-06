@@ -41,7 +41,7 @@ STEWARD_UPDATE_MESSAGES = {
         "\n"
         "Manage updates from within the desktop app.\n"
         "Prefer a self-managed source install? See:\n"
-        "  https://nastechresearch.github.io/nastech-agent/docs/user-guide/switching-to-source"
+        "  https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/switching-to-source"
     ),
     STEWARD_NIX: (
         "✗ This Nastech runs from the Nix store.\n"

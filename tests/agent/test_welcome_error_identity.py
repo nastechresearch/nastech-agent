@@ -9,8 +9,8 @@ from tests.nastech_cli.anon_portal import make_jwt
 from agent.error_surface import build_error_surface_from_result
 from agent.turn_recovery import max_retries_exhausted_result, nonretryable_client_error_result
 
-WELCOME = "https://welcome-api.nastechresearch.github.io/v1"
-NAMED = "https://inference-api.nastechresearch.github.io/v1"
+WELCOME = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
+NAMED = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 
 
 def agent_for(api_key, base_url):
@@ -136,7 +136,7 @@ def test_anonymous_claim_does_not_classify_other_providers_as_nastech():
 def test_named_account_on_welcome_host_gets_reconnect_copy_without_signin_card():
     """The gateway's mirror 400 keeps its reconnect copy for a signed-in user; the sign-in card would
     ask for a sign-in that already happened."""
-    message = "This endpoint serves anonymous Nastech Agent accounts only. Use https://inference-api.nastechresearch.github.io with your API key or signed-in account."
+    message = "This endpoint serves anonymous Nastech Agent accounts only. Use https://inference-api.nastech-agent.nastechresearch.workers.dev with your API key or signed-in account."
     error = Exception(message)
     error.status_code, error.body = 400, {"status": 400, "message": message}
     agent = agent_for(make_jwt(account_tier="free", client_id="nastech-cli"), WELCOME)

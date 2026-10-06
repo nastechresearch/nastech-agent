@@ -9,10 +9,10 @@ sidebar_position: 2
 
 **One subscription. Every tool built in.**
 
-The Tool Gateway is included with every paid [Nastech Portal](https://portal.nastechresearch.github.io) subscription. It routes Nastech' tool calls — web search, image generation, text-to-speech, and cloud browser automation — through infrastructure Nastech already runs, so you don't have to sign up with a web search vendor, FAL, OpenAI, Browser Use, or anyone else just to make your agent useful.
+The Tool Gateway is included with every paid [Nastech Portal](https://portal.nastech-agent.nastechresearch.workers.dev) subscription. It routes Nastech' tool calls — web search, image generation, text-to-speech, and cloud browser automation — through infrastructure Nastech already runs, so you don't have to sign up with a web search vendor, FAL, OpenAI, Browser Use, or anyone else just to make your agent useful.
 
 <div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap', margin: '1.5rem 0'}}>
-  <a href="https://portal.nastechresearch.github.io/manage-subscription" style={{background: 'var(--ifm-color-primary)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold'}}>Start or manage subscription →</a>
+  <a href="https://portal.nastech-agent.nastechresearch.workers.dev/manage-subscription" style={{background: 'var(--ifm-color-primary)', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold'}}>Start or manage subscription →</a>
 </div>
 
 ## What's included
@@ -80,7 +80,7 @@ Tools marked "active via Nastech subscription" are going through the gateway. An
 
 ## Eligibility
 
-The Tool Gateway is a **paid-subscription** feature. [Upgrade your plan](https://portal.nastechresearch.github.io/manage-subscription) to unlock the gateway.
+The Tool Gateway is a **paid-subscription** feature. [Upgrade your plan](https://portal.nastech-agent.nastechresearch.workers.dev/manage-subscription) to unlock the gateway.
 
 Some accounts are also entitled to a **free tool pool** — a small managed-tool allowance that covers gateway tool calls without a paid subscription. When a free pool is available, the gateway surfaces it and shows a setup prompt on first use, so you can opt in and start using managed tools right away.
 
@@ -167,6 +167,18 @@ web:
   backend: firecrawl   # Nastech now uses FIRECRAWL_API_KEY from .env
 ```
 
+### Mixing your own key and the gateway (web only)
+
+Web search and web extract can each choose their own route. In the desktop app, open **Capabilities → Tools → Web Search & Scraping**: **Use for Search** / **Use for Extract** on the **Nastech Subscription** row sends that capability through the gateway, and the same buttons on a direct row (e.g. **Firecrawl**) send it through your own key. The **Search:** / **Extract:** pills at the top show which route each one takes right now. In `config.yaml` the managed choice is the value `nastech` on the per-capability key:
+
+```yaml
+web:
+  search_backend: firecrawl   # your FIRECRAWL_API_KEY
+  extract_backend: nastech       # the Nastech Tool Gateway (managed Firecrawl)
+```
+
+Picking **Nastech Subscription** for the whole tool (or running `nastech tools`) clears both per-capability keys, so search and extract both go back through the gateway.
+
 ### Legacy `use_gateway` flag (deprecated)
 
 Older Nastech versions used a per-tool `use_gateway: true` boolean to route through the gateway. That flag is **legacy**: it is never written anymore, and the `nastech tools` picker removes it from a category's config when it rewrites the selection. Old configs that still contain `use_gateway: true` are interpreted at read time as the `nastech` selection, so existing setups keep working. Don't set `use_gateway` in new configs — select the provider in `nastech tools` instead.
@@ -204,7 +216,7 @@ Tools routed through the gateway stop working until you renew or swap in direct 
 
 ### Can I see usage or costs per tool?
 
-Yes — the [Nastech Portal dashboard](https://portal.nastechresearch.github.io) breaks usage down by tool so you can see what's driving your bill.
+Yes — the [Nastech Portal dashboard](https://portal.nastech-agent.nastechresearch.workers.dev) breaks usage down by tool so you can see what's driving your bill.
 
 ### Is Modal (serverless terminal) included?
 

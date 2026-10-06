@@ -69,8 +69,8 @@ class NastechProfile(ProviderProfile):
 nastech = NastechProfile(
     name="nastech", aliases=("nastech-portal", "nastechresearch"), env_vars=("NASTECH_API_KEY",),
     display_name="Nastech Research", description="Nastech Research — Nastech model family",
-    signup_url="https://nastechresearch.github.io/", fallback_models=("nastech-3-405b", "nastech-3-70b"),
-    base_url="https://inference-api.nastechresearch.github.io/v1", auth_type="oauth_device_code",
+    signup_url="https://nastech-agent.nastechresearch.workers.dev/", fallback_models=("nastech-3-405b", "nastech-3-70b"),
+    base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1", auth_type="oauth_device_code",
 )
 
 register_provider(nastech)

@@ -4,9 +4,6 @@ import { useNavigate } from 'react-router'
 import { SETTINGS_ROUTE } from '@/app/routes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useI18n } from '@/i18n'
-import { Check, Loader2, Save, Terminal } from '@/lib/icons'
-import { cn } from '@/lib/utils'
 import {
   deleteEnvVar,
   getActionStatus,
@@ -21,6 +18,9 @@ import {
   setEnvVar,
   startOAuthLogin
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import { Check, Loader2, Save, Terminal } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import { upsertDesktopActionTask } from '@/store/activity'
 import { confirm } from '@/store/confirm'
 import { notify, notifyError } from '@/store/notifications'
@@ -97,6 +97,21 @@ function providerStatus(provider: ToolProvider, envState: Record<string, boolean
   }
 
   return providerConfigured(provider, envState) ? 'ready' : 'needs_keys'
+}
+
+/**
+ * Whether a web provider row serves a capability right now. The managed
+ * "Nastech Subscription" row and the BYOK Firecrawl rows resolve to the same
+ * backend name, so the server's `*_via_nastech` flag decides which one is lit.
+ */
+function capabilityServedBy(provider: ToolProvider, backend: null | string | undefined, viaNastech?: boolean): boolean {
+  if (provider.managed_nastech_feature) {
+    return Boolean(viaNastech)
+  }
+
+  // Rows sharing a backend name (cloud vs self-hosted Firecrawl) are told apart by the server's
+  // is_active, which knows which one's credential is set.
+  return Boolean(provider.web_backend && backend === provider.web_backend && !viaNastech && provider.is_active)
 }
 
 interface EnvVarFieldProps {
@@ -725,19 +740,24 @@ export function ToolsetConfigPanel({ toolset, onConfiguredChange, profile }: Too
     setSelecting(provider.name)
 
     try {
-      await selectToolsetProvider(toolset, provider.name, capability, profile)
-      // Mirror the backend write locally so the Search:/Extract: badges track
-      // the new per-capability backend without a refetch.
-      setCfg(current =>
-        current
-          ? {
-              ...current,
-              ...(capability === 'search'
-                ? { active_search_backend: provider.web_backend ?? provider.name }
-                : { active_extract_backend: provider.web_backend ?? provider.name })
-            }
-          : current
-      )
+      const result = await selectToolsetProvider(toolset, provider.name, capability, profile)
+
+      if (result.needs_nastech_auth) {
+        notify({
+          kind: 'warning',
+          title: copy.nastechAuthNeededTitle,
+          message: copy.nastechAuthNeededMessage(provider.name),
+          action: { label: copy.nastechAuthSignIn, onClick: () => void signInToNastechPortal() }
+        })
+        await refresh()
+
+        return
+      }
+
+      // Refetch rather than mirror: whether the capability now rides the Nastech
+      // Tool Gateway or the user's own key is resolved server-side (the
+      // managed and BYOK Firecrawl rows share one web_backend).
+      await refresh()
       notify({
         kind: 'success',
         title: copy.selectedTitle,
@@ -774,6 +794,9 @@ export function ToolsetConfigPanel({ toolset, onConfiguredChange, profile }: Too
     return <p className="px-1 py-3 text-xs text-muted-foreground">{copy.noProviders}</p>
   }
 
+  // The gateway route is labelled with the managed row's own (server-provided) name.
+  const managedRowName = providers.find(p => p.managed_nastech_feature)?.name
+
   return (
     <div className="grid gap-2">
       {toolset === 'web' && cfg.active_search_backend !== undefined && (
@@ -781,8 +804,16 @@ export function ToolsetConfigPanel({ toolset, onConfiguredChange, profile }: Too
         // (web.search_backend / web.extract_backend) — show which backend
         // each capability resolves to right now.
         <div className="flex flex-wrap items-center gap-2 px-1">
-          <Pill>{copy.webSearchActive(cfg.active_search_backend || copy.webCapabilityUnset)}</Pill>
-          <Pill>{copy.webExtractActive(cfg.active_extract_backend || copy.webCapabilityUnset)}</Pill>
+          <Pill>
+            {copy.webSearchActive(
+              (cfg.search_via_nastech && managedRowName) || cfg.active_search_backend || copy.webCapabilityUnset
+            )}
+          </Pill>
+          <Pill>
+            {copy.webExtractActive(
+              (cfg.extract_via_nastech && managedRowName) || cfg.active_extract_backend || copy.webCapabilityUnset
+            )}
+          </Pill>
         </div>
       )}
       {providers.map(provider => {
@@ -790,8 +821,8 @@ export function ToolsetConfigPanel({ toolset, onConfiguredChange, profile }: Too
         const isBackendActive = provider.is_active || cfg?.active_provider === provider.name
         const status = providerStatus(provider, envState)
         const webCaps = toolset === 'web' ? (provider.capabilities ?? []) : []
-        const isSearchBackend = Boolean(provider.web_backend && cfg.active_search_backend === provider.web_backend)
-        const isExtractBackend = Boolean(provider.web_backend && cfg.active_extract_backend === provider.web_backend)
+        const isSearchBackend = capabilityServedBy(provider, cfg.active_search_backend, cfg.search_via_nastech)
+        const isExtractBackend = capabilityServedBy(provider, cfg.active_extract_backend, cfg.extract_via_nastech)
 
         return (
           <div className="overflow-hidden rounded-xl bg-background/60" key={provider.name}>
@@ -882,7 +913,7 @@ export function ToolsetConfigPanel({ toolset, onConfiguredChange, profile }: Too
                     )}
                   </div>
                 )}
-                {provider.requires_nastech_auth && (
+                {provider.requires_nastech_auth && status === 'needs_auth' && (
                   <p className="text-[0.72rem] text-muted-foreground">{copy.nastechIncluded}</p>
                 )}
                 {provider.env_vars.length === 0 ? (

@@ -18,6 +18,7 @@ import { codiconIcon } from '@/components/ui/codicon'
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { KbdCombo } from '@/components/ui/kbd'
+import { getNastechConfigRecord, listAllProfileSessions } from '@/nastech'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
@@ -61,7 +62,6 @@ import { getServers } from '@/lib/mcp-servers'
 import { normalize } from '@/lib/text'
 import { cn } from '@/lib/utils'
 import { resolveVersionStatus } from '@/lib/version-status'
-import { getNastechConfigRecord, listAllProfileSessions } from '@/nastech'
 import { $repoWorktrees } from '@/store/coding-status'
 import {
   $commandPaletteOpen,
@@ -404,7 +404,15 @@ const sessionKeywords = (session: SessionEntry, ...tags: string[]): string[] =>
   [...tags, 'chat', 'session', session.preview, session.git_branch].filter((word): word is string => !!word)
 
 type NonConfigSettingsLabel =
-  'about' | 'archivedChats' | 'gateway' | 'keysSettings' | 'keysTools' | 'mcp' | 'providerAccounts' | 'providerApiKeys'
+  | 'about'
+  | 'archivedChats'
+  | 'gateway'
+  | 'keysSettings'
+  | 'keysTools'
+  | 'mcp'
+  | 'plugins'
+  | 'providerAccounts'
+  | 'providerApiKeys'
 
 const NON_CONFIG_SETTINGS: ReadonlyArray<{
   icon: IconComponent
@@ -455,6 +463,12 @@ const NON_CONFIG_SETTINGS: ReadonlyArray<{
     tab: 'keys&kview=settings'
   },
   { icon: Archive, keywords: ['history', 'archived'], labelKey: 'archivedChats', tab: 'sessions' },
+  {
+    icon: codiconIcon('extensions'),
+    keywords: ['plugins', 'plugin settings', 'plugin options', 'addons', 'add-ons', 'extensions'],
+    labelKey: 'plugins',
+    tab: 'plugins'
+  },
   { icon: Info, keywords: ['version', 'about'], labelKey: 'about', tab: 'about' }
 ]
 

@@ -228,3 +228,26 @@ def test_every_log_file_writes_a_stamp_nastech_logs_since_can_read():
     # gateway.error.log (launchd stderr, not in LOG_FILES) uses the shared stamper.
     from nastech_cli.stderr_timestamp import stamp_line
     assert _parse_line_timestamp(stamp_line("raw gateway stderr")) is not None
+
+
+def test_update_logs_are_read_from_the_root_home_under_a_profile(tmp_path, monkeypatch, capsys):
+    # ``nastech update`` mirrors to <root>/logs/update.log and the hand-off scripts write the root
+    # too; `nastech logs update` under a sticky profile read the profile's (absent) copy.
+    from nastech_cli.logs import list_logs, log_file_path, tail_log
+
+    root = tmp_path / "root"
+    profile = root / "profiles" / "coder"
+    (root / "logs").mkdir(parents=True)
+    (profile / "logs").mkdir(parents=True)
+    (root / "logs" / "update.log").write_text("=== nastech update started 2026-10-03T10:00:00 ===\n✓ Update complete!\n")
+    (profile / "logs" / "agent.log").write_text("2026-10-03 10:00:00,000 INFO run_agent: hi\n")
+    monkeypatch.setenv("NASTECH_HOME", str(profile))
+
+    assert log_file_path("update") == root / "logs" / "update.log"
+    assert log_file_path("handoff") == root / "logs" / "desktop-update-handoff.log"
+    assert log_file_path("agent") == profile / "logs" / "agent.log"
+    tail_log("update", num_lines=5)
+    assert "✓ Update complete!" in capsys.readouterr().out
+    list_logs()
+    listing = capsys.readouterr().out
+    assert "agent.log" in listing and "update.log (root)" in listing

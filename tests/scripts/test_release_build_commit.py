@@ -101,7 +101,7 @@ def test_commit_build_cli_dispatches_only_the_resolved_remote_commit(fixture_rep
         result, calls = invoke('--build-commit', revision)
         assert result.returncode == 0, result.stderr
         assert tip in result.stdout
-        assert f'https://nastech-assets.nastechresearch.github.io/releases/commit/{tip}/index.html' in result.stdout
+        assert f'https://nastech-assets.nastech-agent.nastechresearch.workers.dev/releases/commit/{tip}/index.html' in result.stdout
         assert not any(call[1:3] == ['workflow', 'run'] for call in calls)
     result, calls = invoke('--build-commit', tip, '--publish')
     assert result.returncode == 0, result.stderr

@@ -20,7 +20,7 @@ def _jwt(exp: float, sub: str = "acct-A") -> str:
 
 class _Agent(ClientLifecycleMixin):
     def __init__(self, key):
-        self.provider, self.api_mode, self.api_key, self.base_url = "nastech", "chat_completions", key, "https://inference-api.nastechresearch.github.io/v1"
+        self.provider, self.api_mode, self.api_key, self.base_url = "nastech", "chat_completions", key, "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
         self._client_kwargs, self.adopted = {}, []
 
     def _adopt_openai_credentials(self, api_key, base_url, *, reason):
@@ -88,7 +88,7 @@ def test_keepalive_thread_starts_when_an_agent_routes_to_nastech(monkeypatch, tm
     monkeypatch.setattr("model_tools.get_tool_definitions", lambda *a, **k: [])
     monkeypatch.setattr("model_tools.check_toolset_requirements", lambda *a, **k: {})
     monkeypatch.setattr("agent.process_bootstrap.OpenAI", MagicMock())
-    AIAgent(api_key="k", base_url="https://inference-api.nastechresearch.github.io/v1", provider="nastech",
+    AIAgent(api_key="k", base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1", provider="nastech",
             model="anthropic/claude-fable-5.1", quiet_mode=True, skip_context_files=True, skip_memory=True)
     assert started == [1]
     AIAgent(api_key="k", base_url="https://openrouter.ai/api/v1", provider="openrouter",
