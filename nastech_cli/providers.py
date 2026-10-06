@@ -28,7 +28,7 @@ class NastechOverlay:
 NASTECH_OVERLAYS: Dict[str, NastechOverlay] = {
     "moa": NastechOverlay(auth_type="virtual", base_url_override="moa://local"),
     "openrouter": NastechOverlay(is_aggregator=True, base_url_env_var="OPENROUTER_BASE_URL"),
-    "nastech": NastechOverlay(auth_type="oauth_device_code", base_url_override="https://inference-api.nastechresearch.github.io/v1"),
+    "nastech": NastechOverlay(auth_type="oauth_device_code", base_url_override="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"),
     "openai-codex": NastechOverlay(transport="codex_responses", auth_type="oauth_external",
                                   base_url_override="https://chatgpt.com/backend-api/codex"),
     "openai-api": NastechOverlay(transport="codex_responses", base_url_override="https://api.openai.com/v1",

@@ -986,11 +986,11 @@ class TestNastechPortalContextResolution:
             "x-ai/grok-4.6": {"context_length": 500_000},
         }
         assert mm._resolve_endpoint_context_length(
-            "", "https://inference-api.nastechresearch.github.io/v1"
+            "", "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
         ) is None
         # Non-empty names still fuzzy-match.
         assert mm._resolve_endpoint_context_length(
-            "grok-4.6", "https://inference-api.nastechresearch.github.io/v1"
+            "grok-4.6", "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
         ) == 500_000
         # Single-model endpoints still resolve even with an empty name.
         mock_fetch.return_value = {"only-model": {"context_length": 131_072}}
@@ -1017,7 +1017,7 @@ class TestNastechPortalContextResolution:
             "qwen/qwen3.6-plus": {"context_length": 1_000_000},
         }
 
-        base_url = "https://inference-api.nastechresearch.github.io/v1"
+        base_url = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
         ctx = mm.get_model_context_length(
             model="qwen3.6-plus",
             base_url=base_url,
@@ -1045,7 +1045,7 @@ class TestNastechPortalContextResolution:
         cache_file = tmp_path / "context_length_cache.yaml"
         monkeypatch.setattr(mm, "_get_context_cache_path", lambda: cache_file)
 
-        base_url = "https://inference-api.nastechresearch.github.io/v1"
+        base_url = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
         stale_key = f"qwen3.6-plus@{base_url}"
         other_key = "other-model@https://api.openai.com/v1"
         cache_file.write_text(yaml.safe_dump({"context_lengths": {

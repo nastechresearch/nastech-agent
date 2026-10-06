@@ -43,7 +43,7 @@ class H(BaseHTTPRequestHandler):
         else:
             if os.environ.get("TRACE401"):
                 import traceback; sys.stderr.write("401 path: "+self.path+"\n")
-            body = json.dumps({"error": {"type": "authentication_error", "message": "Your API key is invalid, blocked or out of funds. Please go visit the portal to sort that out: https://portal.nastechresearch.github.io "}}).encode()
+            body = json.dumps({"error": {"type": "authentication_error", "message": "Your API key is invalid, blocked or out of funds. Please go visit the portal to sort that out: https://portal.nastech-agent.nastechresearch.workers.dev "}}).encode()
             with lock: hits["401"] += 1
             self.send_response(401)
         self.send_header("content-type", "application/json"); self.send_header("content-length", str(len(body))); self.end_headers(); self.wfile.write(body)

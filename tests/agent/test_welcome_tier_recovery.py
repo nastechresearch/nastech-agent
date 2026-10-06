@@ -17,8 +17,8 @@ from agent.error_classifier import FailoverReason, classify_api_error
 from agent.turn_retry_state import TurnRetryState
 from tests.nastech_cli.anon_portal import make_jwt
 
-WELCOME = "https://welcome-api.nastechresearch.github.io/v1"
-PAID = "https://inference-api.nastechresearch.github.io/v1"
+WELCOME = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
+PAID = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 
 
 class MockAPIError(Exception):
@@ -110,7 +110,7 @@ class TestOneShotRecoveries:
         from agent.turn_recovery import _recover_welcome_tier
         calls = []
         agent = _agent(_try_refresh_nastech_client_credentials=lambda **kw: calls.append(kw) or True)
-        body = {"status": 400, "message": "Anonymous accounts must use https://welcome-api.nastechresearch.github.io for inference."}
+        body = {"status": 400, "message": "Anonymous accounts must use https://welcome-api.nastech-agent.nastechresearch.workers.dev for inference."}
         classified = _classify(_gateway_error(400, body), base_url=PAID)
         assert classified.error_context["welcome_route"] == "anon_on_paid_host"
         retry = TurnRetryState()
@@ -123,7 +123,7 @@ class TestOneShotRecoveries:
         calls = []
         agent = _agent(api_key=make_jwt(account_tier="free", client_id="nastech-cli"),
                        _try_refresh_nastech_client_credentials=lambda **kw: calls.append(kw) or True)
-        body = {"status": 400, "message": "This endpoint serves anonymous Nastech Agent accounts only. Use https://inference-api.nastechresearch.github.io with your API key or signed-in account."}
+        body = {"status": 400, "message": "This endpoint serves anonymous Nastech Agent accounts only. Use https://inference-api.nastech-agent.nastechresearch.workers.dev with your API key or signed-in account."}
         classified = classify_api_error(_gateway_error(400, body), provider="nastech", base_url=WELCOME, api_key=agent.api_key)
         assert classified.error_context["welcome_route"] == "named_on_welcome_host"
         retry = TurnRetryState()
@@ -134,7 +134,7 @@ class TestOneShotRecoveries:
     def test_a_wrong_host_refusal_whose_heal_fails_falls_through(self):
         from agent.turn_recovery import _recover_welcome_tier
         agent = _agent(_try_refresh_nastech_client_credentials=lambda **kw: False)
-        body = {"status": 400, "message": "Anonymous accounts must use https://welcome-api.nastechresearch.github.io for inference."}
+        body = {"status": 400, "message": "Anonymous accounts must use https://welcome-api.nastech-agent.nastechresearch.workers.dev for inference."}
         assert _recover_welcome_tier(agent, _classify(_gateway_error(400, body), base_url=PAID), TurnRetryState()) is False
 
 

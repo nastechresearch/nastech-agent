@@ -759,7 +759,7 @@ _SSH_HINT_LOOPBACK = (
     "         ssh -N -L {port}:127.0.0.1:{port} <user>@<this-host>\n"
     "       then open the URL above and let it redirect normally.\n"
     "\n"
-    "  See: https://nastechresearch.github.io/nastech-agent/docs/guides/oauth-over-ssh\n")
+    "  See: https://nastech-agent.nastechresearch.workers.dev/docs/guides/oauth-over-ssh\n")
 
 
 def _announce_authorization_url(
@@ -923,7 +923,7 @@ def remove_oauth_tokens(server_name: str, *, nastech_home: str | Path | None = N
 # CIMD (OAuth Client ID Metadata Documents): the client_id IS an HTTPS URL the server fetches for our
 # name/logo/redirect URIs, replacing per-install DCR. The SDK does the protocol; Nastech only decides
 # eligibility. Published from ``website/static/oauth/client-metadata.json``; the github.io origin is
-# deliberate — servers MUST NOT follow redirects when fetching it, and nastechresearch.github.io/nastech-agent/docs/* 301s here.
+# deliberate — servers MUST NOT follow redirects when fetching it, and nastech-agent.nastechresearch.workers.dev/docs/* 301s here.
 _CIMD_CLIENT_METADATA_URL = "https://nastechresearch.github.io/nastech-agent/docs/oauth/client-metadata.json"
 # Loopback ports/hosts declared in that document (exact match, so no ephemeral port under CIMD);
 # below Linux's 32768 ephemeral floor. tests/tools/test_mcp_cimd.py keeps them in sync.

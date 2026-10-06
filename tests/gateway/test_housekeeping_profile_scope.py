@@ -39,7 +39,7 @@ def _profile(home: Path, base_url: str) -> None:
     (home / ".env").write_text(f"NASTECH_INFERENCE_BASE_URL={base_url}\n", encoding="utf-8")
     (home / "auth.json").write_text(json.dumps({"version": 1, "providers": {"nastech": {
         "access_token": "x.y.z", "refresh_token": "r", "expires_at": 0,
-        "portal_base_url": "https://portal.nastechresearch.github.io", "client_id": "c"}}}), encoding="utf-8")
+        "portal_base_url": "https://portal.nastech-agent.nastechresearch.workers.dev", "client_id": "c"}}}), encoding="utf-8")
 
 
 @pytest.fixture

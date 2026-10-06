@@ -23,7 +23,7 @@ def test_resolve_managed_tool_gateway_derives_vendor_origin_from_shared_domain()
     with patch.dict(
         os.environ,
         {
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
+            "TOOL_GATEWAY_DOMAIN": "nastech-agent.nastechresearch.workers.dev",
         },
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
@@ -33,7 +33,7 @@ def test_resolve_managed_tool_gateway_derives_vendor_origin_from_shared_domain()
         )
 
     assert result is not None
-    assert result.gateway_origin == "https://firecrawl-gateway.nastechresearch.github.io"
+    assert result.gateway_origin == "https://firecrawl-gateway.nastech-agent.nastechresearch.workers.dev"
     assert result.nastech_user_token == "nastech-token"
     assert result.managed_mode is True
 
@@ -59,7 +59,7 @@ def test_resolve_managed_tool_gateway_is_inactive_without_nastech_token():
     with patch.dict(
         os.environ,
         {
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
+            "TOOL_GATEWAY_DOMAIN": "nastech-agent.nastechresearch.workers.dev",
         },
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
@@ -72,7 +72,7 @@ def test_resolve_managed_tool_gateway_is_inactive_without_nastech_token():
 
 
 def test_resolve_managed_tool_gateway_is_disabled_without_subscription():
-    with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io"}, clear=False), \
+    with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastech-agent.nastechresearch.workers.dev"}, clear=False), \
          patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=False):
         result = resolve_managed_tool_gateway(
             "firecrawl",
@@ -129,7 +129,7 @@ def test_is_managed_tool_gateway_ready_skips_refresh_for_expired_cached_token(tm
 
     with patch.dict(
         os.environ,
-        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io"},
+        {"TOOL_GATEWAY_DOMAIN": "nastech-agent.nastechresearch.workers.dev"},
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
         assert is_managed_tool_gateway_ready("modal") is True
@@ -142,12 +142,12 @@ def test_connector_gateway_origin_pins_the_deployed_connectors_host():
     # the default resolution must not land on the media/vendor origin.
     with patch.dict(
         os.environ,
-        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io", "TOOL_GATEWAY_SCHEME": "https"},
+        {"TOOL_GATEWAY_DOMAIN": "nastech-agent.nastechresearch.workers.dev", "TOOL_GATEWAY_SCHEME": "https"},
         clear=False,
     ):
         os.environ.pop("CONNECTOR_GATEWAY_URL", None)
         assert managed_gateway_auth.connector_gateway_origin() == (
-            "https://connector-gateway.nastechresearch.github.io"
+            "https://connector-gateway.nastech-agent.nastechresearch.workers.dev"
         )
 
 def test_managed_gateway_origin_honors_the_harness_override():
@@ -160,7 +160,7 @@ def test_managed_gateway_origin_honors_the_harness_override():
             "http://127.0.0.1:3009/api/vendorx/generations"
         )
         assert not managed_gateway_auth.is_managed_nastech_gateway_url(
-            "https://tools.nastechresearch.github.io/api/vendorx/generations"
+            "https://tools.nastech-agent.nastechresearch.workers.dev/api/vendorx/generations"
         )
 
 def test_connector_gateway_origin_honors_its_own_override():
@@ -171,14 +171,14 @@ def test_connector_gateway_origin_honors_its_own_override():
         os.environ,
         {
             "CONNECTOR_GATEWAY_URL": "http://127.0.0.1:3009/",
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
+            "TOOL_GATEWAY_DOMAIN": "nastech-agent.nastechresearch.workers.dev",
         },
         clear=False,
     ):
         os.environ.pop("TOOL_GATEWAY_URL", None)
         assert managed_gateway_auth.connector_gateway_origin() == "http://127.0.0.1:3009"
         assert managed_gateway_auth.managed_gateway_origin() == (
-            "https://tool-gateway.nastechresearch.github.io"
+            "https://tool-gateway.nastech-agent.nastechresearch.workers.dev"
         )
         assert managed_gateway_auth.is_managed_nastech_gateway_url(
             "http://127.0.0.1:3009/v1/connectors/search"
@@ -190,22 +190,22 @@ def test_default_bearer_gate_accepts_both_deployed_hosts_only():
     # and scheme downgrades are all out.
     with patch.dict(
         os.environ,
-        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io", "TOOL_GATEWAY_SCHEME": "https"},
+        {"TOOL_GATEWAY_DOMAIN": "nastech-agent.nastechresearch.workers.dev", "TOOL_GATEWAY_SCHEME": "https"},
         clear=False,
     ):
         os.environ.pop("TOOL_GATEWAY_URL", None)
         os.environ.pop("CONNECTOR_GATEWAY_URL", None)
         for trusted in (
-            "https://connector-gateway.nastechresearch.github.io/v1/connectors/execute",
-            "https://tool-gateway.nastechresearch.github.io/api/vendorx/generations",
+            "https://connector-gateway.nastech-agent.nastechresearch.workers.dev/v1/connectors/execute",
+            "https://tool-gateway.nastech-agent.nastechresearch.workers.dev/api/vendorx/generations",
         ):
             assert managed_gateway_auth.is_managed_nastech_gateway_url(trusted)
         for untrusted in (
-            "https://tools.nastechresearch.github.io/v1/connectors/execute",
-            "https://evil-connector-gateway.nastechresearch.github.io.attacker.dev/v1/connectors",
-            "https://connector-gateway.nastechresearch.github.io.attacker.dev/v1/connectors",
-            "http://connector-gateway.nastechresearch.github.io/v1/connectors",
-            "http://tool-gateway.nastechresearch.github.io/api/vendorx/generations",
+            "https://tools.nastech-agent.nastechresearch.workers.dev/v1/connectors/execute",
+            "https://evil-connector-gateway.nastech-agent.nastechresearch.workers.dev.attacker.dev/v1/connectors",
+            "https://connector-gateway.nastech-agent.nastechresearch.workers.dev.attacker.dev/v1/connectors",
+            "http://connector-gateway.nastech-agent.nastechresearch.workers.dev/v1/connectors",
+            "http://tool-gateway.nastech-agent.nastechresearch.workers.dev/api/vendorx/generations",
         ):
             assert not managed_gateway_auth.is_managed_nastech_gateway_url(untrusted)
 

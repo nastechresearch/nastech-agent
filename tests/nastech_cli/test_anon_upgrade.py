@@ -19,8 +19,8 @@ import pytest
 from nastech_cli import anon_auth
 from nastech_cli.auth import _auth_file_path, _load_auth_store
 
-WELCOME = "https://welcome-api.nastechresearch.github.io/v1"
-INFERENCE = "https://inference-api.nastechresearch.github.io/v1"
+WELCOME = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
+INFERENCE = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 PORTAL = "https://portal.example.test"
 REFRESH_TOKEN = "rt-upgraded-1"
 EMAIL = "sid@example.test"

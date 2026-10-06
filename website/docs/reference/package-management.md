@@ -431,7 +431,7 @@ before starting another Python process.
 ### Syncing after you edit pyproject.toml
 
 1. Edit `pyproject.toml`. Pin every dependency as the
-   [Dependency Pinning Policy](https://github.com/NastechResearch/nastech-agent/blob/main/AGENTS.md#dependency-pinning-policy)
+   [Dependency Pinning Policy](https://github.com/NastechResearch/nastech-agent/blob/main/pm/AGENTS.md#dependency-pinning-policy)
    requires. Express platform limits with PEP 508 markers, or gate a whole
    extra in `[tool.nastech.extras-platforms]`.
 2. Relock:

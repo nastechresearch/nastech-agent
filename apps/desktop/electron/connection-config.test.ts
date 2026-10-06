@@ -218,12 +218,12 @@ test('profileRemoteOverride treats a cloud entry as a remote override', () => {
   // entry would (Q6) — the override must be returned, not dropped.
   const config = {
     profiles: {
-      coder: { mode: 'cloud', url: 'https://agent-1.agents.nastechresearch.github.io', authMode: 'oauth' }
+      coder: { mode: 'cloud', url: 'https://agent-1.agents.nastech-agent.nastechresearch.workers.dev', authMode: 'oauth' }
     }
   }
 
   assert.deepEqual(profileRemoteOverride(config, 'coder'), {
-    url: 'https://agent-1.agents.nastechresearch.github.io',
+    url: 'https://agent-1.agents.nastech-agent.nastechresearch.workers.dev',
     authMode: 'oauth',
     token: undefined
   })
@@ -1542,7 +1542,7 @@ test('gatewayTicketFailure only copies an integer statusCode, not a message pref
 //   1. Cloud + OAuth ticket mint + 503  -> actionable Cloud-down error
 //   2. Cloud + OAuth ticket mint + 401  -> reauth (never Cloud-down)
 test('OAuth ticket-mint 503 surfaces the Cloud-down error (startup boundary)', () => {
-  const baseUrl = 'https://ares-3009.agents.nastechresearch.github.io'
+  const baseUrl = 'https://ares-3009.agents.nastech-agent.nastechresearch.workers.dev'
   const ticketErr = new Error('upstream unavailable') as any
   ticketErr.statusCode = 503
 
@@ -1562,7 +1562,7 @@ test('OAuth ticket-mint 503 surfaces the Cloud-down error (startup boundary)', (
 })
 
 test('OAuth ticket-mint 401 stays on the reauth path (never Cloud-down)', () => {
-  const baseUrl = 'https://ares-3009.agents.nastechresearch.github.io'
+  const baseUrl = 'https://ares-3009.agents.nastech-agent.nastechresearch.workers.dev'
   const ticketErr = new Error('Unauthorized') as any
   ticketErr.statusCode = 401
 

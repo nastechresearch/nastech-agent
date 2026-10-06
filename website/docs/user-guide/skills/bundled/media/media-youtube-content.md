@@ -43,7 +43,7 @@ Use `terminal` with the Python from a PM-prepared Nastech source checkout. The
 Nastech with raw pip or project-discovering `uv run`.
 
 From that checkout, first follow the isolated development-home setup in
-[Package Management](https://nastechresearch.github.io/nastech-agent/docs/reference/package-management#developer-workflow),
+[Package Management](https://nastech-agent.nastechresearch.workers.dev/docs/reference/package-management#developer-workflow),
 then prepare the extra and reactivate before running the helper:
 
 ```bash

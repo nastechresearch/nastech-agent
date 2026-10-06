@@ -100,7 +100,10 @@ _NO_XHIGH_CLAUDE_SUBSTRINGS = ("claude-opus-4-6", "claude-opus-4.6", "claude-son
 # Adaptive families where thinking is mandatory: ``thinking: {"type": "disabled"}`` answers HTTP
 # 400 (Portal flags them ``reasoning.mandatory``). The failure is asymmetric — a missing entry
 # 400s the turn, a spurious one only leaves thinking on — so when in doubt, add the family.
-_MANDATORY_THINKING_CLAUDE_SUBSTRINGS = ("claude-fable",)
+_MANDATORY_THINKING_CLAUDE_SUBSTRINGS = ("claude-fable", "claude-opus-5-5", "claude-opus-5.5")
+# Families whose documented "off" is ``thinking: {"type": "between_tools"}`` (no up-front thinking,
+# short notes between tool calls): ``disabled`` 400s there with a message pointing at it.
+_BETWEEN_TOOLS_OFF_CLAUDE_SUBSTRINGS = ("claude-sonnet-5-5", "claude-sonnet-5.5")
 
 
 def _is_claude_model(model: str | None) -> bool:
@@ -190,7 +193,7 @@ def _accepts_thinking_disable(model: str) -> bool:
     return (
         _is_claude_model(model)
         and _supports_adaptive_thinking(model)
-        and not _model_matches(model, _MANDATORY_THINKING_CLAUDE_SUBSTRINGS)
+        and not _model_matches(model, _MANDATORY_THINKING_CLAUDE_SUBSTRINGS + _BETWEEN_TOOLS_OFF_CLAUDE_SUBSTRINGS)
     )
 
 
@@ -263,6 +266,19 @@ def _claude_code_candidates() -> List[str]:
             if os.path.isfile(path):
                 seen.setdefault(path)
     return list(seen)
+
+
+def find_claude_code_cli(command: str) -> Optional[str]:
+    """Path of a bare Claude Code command name on PATH, else in an install prefix; None for any other command.
+
+    Core's own presence checks (external-process providers, ``claude setup-token``) ask this so they
+    agree with version detection about whether the CLI is installed under a GUI/service PATH."""
+    if command not in _CLAUDE_CODE_NAMES:
+        return None
+    from nastech_platform.resolver import locate_command
+
+    found = locate_command(command, known_dirs=_CLAUDE_CODE_PREFIXES).command
+    return found[0] if found else None
 
 
 def _detect_claude_code_version() -> str:
@@ -343,7 +359,7 @@ def _beta_header(betas: list) -> Dict[str, str]:
 def _attribution_headers() -> Dict[str, str]:
     """Same client-attribution set sent to OpenRouter / Vercel AI Gateway / Fireworks."""
     return {
-        "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent", "X-Title": "Nastech Agent",
+        "HTTP-Referer": "https://nastech-agent.nastechresearch.workers.dev", "X-Title": "Nastech Agent",
         "User-Agent": f"NastechAgent/{get_version_info().base_version}",
     }
 
@@ -545,7 +561,7 @@ _OAUTH_SYSTEM_REPLACEMENTS = (
     ("Nastech Agent", "Claude Code"), ("Nastech agent", "Claude Code"), ("Nastech Research", "Anthropic"),
 )
 # The slug is rewritten only as a standalone prose word. Joined to a host, path, repo, mailbox
-# or quoted as an identifier (``nastechresearch.github.io/nastech-agent``, ``~/.nastech/nastech-agent/venv``,
+# or quoted as an identifier (``nastech-agent.nastechresearch.workers.dev``, ``~/.nastech/nastech-agent/venv``,
 # ``NastechResearch/nastech-agent``, ``skill_view(name='nastech-agent')``) it is an address the model
 # dereferences, and the rewritten form does not exist (#48860). The OPENING quote marks an
 # identifier; a sentence-final ``.`` or a possessive ``'s`` is prose.
@@ -590,6 +606,8 @@ def _thinking_kwargs(reasoning_config: Dict[str, Any], model: str, effective_max
         # Adaptive models think by DEFAULT, so omitting the parameter is not a disable — the user
         # silently keeps paying. Mandatory-thinking models 400 on the disable, so they keep the
         # omission: a silently-ignored disable beats a dead turn.
+        if _model_matches(model, _BETWEEN_TOOLS_OFF_CLAUDE_SUBSTRINGS):
+            return {"thinking": {"type": "between_tools"}}
         return {"thinking": {"type": "disabled"}} if _accepts_thinking_disable(model) else {}
     if "haiku" in model.lower():
         return {}

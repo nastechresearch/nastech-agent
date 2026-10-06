@@ -161,7 +161,7 @@ sys.excepthook = excepthook
 ### 安装
 
 使用独立开发检出和数据目录，不要修改正在运行的生产环境。
-按照 [PM 开发流程](https://nastechresearch.github.io/nastech-agent/docs/reference/package-management#developer-workflow)
+按照 [PM 开发流程](https://nastech-agent.nastechresearch.workers.dev/docs/reference/package-management#developer-workflow)
 激活该检出——PowerShell 使用 `. .\activate.ps1`。`dev` extra 已包含 debugpy，
 但 PM 激活不会同步它（`all` 不含该 extra）。通过 `terminal`，用该检出准备好的
 Python 构建全新的调试/测试环境：

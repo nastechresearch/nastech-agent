@@ -819,7 +819,7 @@ def main() -> int:
         / "nastech_cli"
         / "observability"
         / "schemas"
-        / "nastech.shared_metrics.v3.schema.json",
+        / "nastech.shared_metrics.v4.schema.json",
     )
 
     print("Nastech -> NeMo Relay shared-metrics smoke test passed")

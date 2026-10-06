@@ -156,12 +156,14 @@ def _keyless_backend() -> Optional[str]:
 
 
 def _managed_web_search() -> bool:
-    """True when web_search is on the managed Nastech route: the stored ``nastech`` selection, or a
-    never-configured install whose autodetect lands on the gateway — the entitled Firecrawl gateway, or
-    free Perplexity fast search for any Nastech identity when nothing else is configured (search-only: the
-    extract ladder is untouched). A stored vendor selection never is."""
-    if _configured_backend("search_backend"):
-        return False
+    """True when web_search is on the managed Nastech route: the stored ``nastech`` selection (a
+    ``web.search_backend: nastech`` pin, else the shared one), or a never-configured install whose
+    autodetect lands on the gateway — the entitled Firecrawl gateway, or free Perplexity fast search
+    for any Nastech identity when nothing else is configured (search-only: the extract ladder is
+    untouched). A stored vendor selection never is."""
+    search_pin = _configured_backend("search_backend")
+    if search_pin:
+        return search_pin == NASTECH_MANAGED_PROVIDER
     selected = read_selection("web")
     if selected is not None:
         return selected == NASTECH_MANAGED_PROVIDER
@@ -174,14 +176,19 @@ def _managed_web_search() -> bool:
 
 def _get_search_backend() -> str:
     """Backend for web_search: ``web.search_backend`` (strict, no probe) > ``web.backend`` > autodetect.
-    The managed Nastech route serves search from Perplexity (extract stays on Firecrawl); managed Firecrawl
-    is the per-call fallback, see ``_memoized_search``."""
-    return _configured_backend("search_backend") or ("perplexity" if _managed_web_search() else _get_backend())
+    The managed Nastech route (a ``nastech`` pin or shared selection) serves search from Perplexity (extract
+    stays on Firecrawl); managed Firecrawl is the per-call fallback, see ``_memoized_search``."""
+    pin = _configured_backend("search_backend")
+    if pin and pin != NASTECH_MANAGED_PROVIDER:
+        return pin
+    return "perplexity" if _managed_web_search() else _get_backend()
 
 
 def _get_extract_backend() -> str:
-    """Backend for web_extract: ``web.extract_backend`` (strict, no probe) > ``web.backend`` > autodetect."""
-    return _configured_backend("extract_backend") or _get_backend()
+    """Backend for web_extract: ``web.extract_backend`` (strict, no probe) > ``web.backend`` > autodetect.
+    A ``nastech`` pin is managed Firecrawl; the client picks the gateway route for that capability."""
+    pin = _configured_backend("extract_backend")
+    return "firecrawl" if pin == NASTECH_MANAGED_PROVIDER else pin or _get_backend()
 
 
 def _ddgs_package_importable() -> bool:

@@ -105,11 +105,18 @@ meaningful:
 15. **No skins or forks of bundled plugins.** A change to a bundled plugin is a
    PR against `nastech-agent`, not a competing listing, and vendor-lookalike skins
    are not listed under Nastech branding.
+16. **One listing per plugin lineage.** A fork of a listed community plugin is
+   listed only when it is materially different from the original: a different
+   transport or architecture, or capability the original lacks and its author
+   declined or has not answered a PR for 30 days. Improvements to a listed plugin
+   go upstream as a PR to its author. A fork that renames, rebrands or adds small
+   changes is declined in favour of the original. A listed fork names its origin
+   in its disclosure line (`Derived from <entry>`).
 <!-- admission-rules:end -->
 
 The step-by-step submission guide, with the same rules and what reviewers check,
 lives at
-[Submitting to the plugin catalog](https://nastechresearch.github.io/nastech-agent/docs/developer-guide/plugins/catalog-submission).
+[Submitting to the plugin catalog](https://nastech-agent.nastechresearch.workers.dev/docs/developer-guide/plugins/catalog-submission).
 
 ## Entry schema
 
@@ -151,7 +158,7 @@ so the Desktop catalog and the docs site never fetch from third-party hosts;
 pin the raw URL to the entry's commit and the picture is as immutable as the
 code.
 
-Every entry gets a page at `https://nastechresearch.github.io/nastech-agent/docs/plugins/<name>`
+Every entry gets a page at `https://nastech-agent.nastechresearch.workers.dev/docs/plugins/<name>`
 and every maintainer a page at `/docs/plugins/by/<maintainer>`, both generated
 from these files at docs build time. `screenshots:` fills the page's gallery;
 the build fetches the README (from `subdir` if set, else the repo root) **at the

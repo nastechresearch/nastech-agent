@@ -28,7 +28,7 @@ No admin rights required. The installer goes to `%LOCALAPPDATA%\nastech\` and ad
 **Installer options** use a scriptblock:
 
 ```powershell
-& ([scriptblock]::Create((irm https://nastechresearch.github.io/nastech-agent/install.ps1))) -NonInteractive -Branch main
+& ([scriptblock]::Create((irm https://nastech-agent.nastechresearch.workers.dev/install.ps1))) -NonInteractive -Branch main
 ```
 
 | Parameter | Purpose |

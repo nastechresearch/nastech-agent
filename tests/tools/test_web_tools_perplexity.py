@@ -21,7 +21,7 @@ def _assert_nastech_identity_headers(headers):
     plus Perplexity's integration header."""
     from nastech_cli.version_info import get_version_info
 
-    assert headers["HTTP-Referer"] == "https://nastechresearch.github.io/nastech-agent"
+    assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.workers.dev"
     assert headers["X-Title"] == "Nastech Agent"
     assert headers["User-Agent"] == f"NastechAgent/{get_version_info().base_version}"
     assert headers["X-Pplx-Integration"] == "nastech-agent"

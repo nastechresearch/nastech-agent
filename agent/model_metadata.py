@@ -446,7 +446,7 @@ _URL_TO_PROVIDER: Dict[str, str] = {
     "api.stepfun.ai": "stepfun", "api.stepfun.com": "stepfun", "api.arcee.ai": "arcee", "api.minimax": "minimax",
     "dashscope.aliyuncs.com": "alibaba", "dashscope-intl.aliyuncs.com": "alibaba", "portal.qwen.ai": "qwen-oauth",
     "openrouter.ai": "openrouter", "generativelanguage.googleapis.com": "gemini",
-    "inference-api.nastechresearch.github.io": "nastech", "api.deepseek.com": "deepseek",
+    "inference-api.nastech-agent.nastechresearch.workers.dev": "nastech", "api.deepseek.com": "deepseek",
     "api.githubcopilot.com": "copilot", ".githubcopilot.com": "copilot", "models.github.ai": "copilot",
     "models.inference.ai.azure.com": "copilot",
     "api.fireworks.ai": "fireworks", "opencode.ai": "opencode-go", "api.x.ai": "xai",

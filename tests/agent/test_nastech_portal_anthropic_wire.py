@@ -1,7 +1,7 @@
 """Nastech Portal ``anthropic/*`` models route on the native Messages wire.
 
 Portal serves its ``anthropic/*`` catalog at
-``https://inference-api.nastechresearch.github.io/v1/messages`` alongside the
+``https://inference-api.nastech-agent.nastechresearch.workers.dev/v1/messages`` alongside the
 OpenAI-compatible ``/v1/chat/completions`` used by everything else it proxies.
 These tests pin the contracts that make that routing correct:
 
@@ -33,7 +33,7 @@ def _native_wire_selected(monkeypatch):
     ``test_nastech_anthropic_wire_default.py``."""
     monkeypatch.setattr(_providers, "_nastech_anthropic_wire", lambda: "native")
 
-PORTAL_URL = "https://inference-api.nastechresearch.github.io/v1"
+PORTAL_URL = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 # Staging / preview hosts used via NASTECH_INFERENCE_BASE_URL — not the prod
 # hostname, so Portal behaviour must key off provider=nastech.
 STAGING_URL = "https://ai.wildebeest-newton.ts.net/v1"
@@ -184,7 +184,7 @@ class TestClientShape:
         Bearer token. Hostname matching must reject it."""
         from agent.anthropic_endpoints import _is_nastech_portal_endpoint, _requires_bearer_auth
 
-        spoofed = "https://inference-api.nastechresearch.github.io.attacker.test/v1"
+        spoofed = "https://inference-api.nastech-agent.nastechresearch.workers.dev.attacker.test/v1"
         assert not _is_nastech_portal_endpoint(spoofed)
         assert not _requires_bearer_auth(spoofed)
 

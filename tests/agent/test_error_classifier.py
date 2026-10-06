@@ -204,7 +204,7 @@ class TestClassifyApiError:
                 "status": 404,
                 "message": (
                     "Model 'gpt-5' is not available on the Free Tier. "
-                    "Upgrade at https://portal.nastechresearch.github.io or pick a free model."
+                    "Upgrade at https://portal.nastech-agent.nastechresearch.workers.dev or pick a free model."
                 ),
             },
         )
@@ -222,7 +222,7 @@ class TestClassifyApiError:
                 "message": (
                     "Model 'openai/gpt-5.5-pro' requires available credits. "
                     "Your account balance is too low to use paid models — "
-                    "add credits at https://portal.nastechresearch.github.io or pick a free model."
+                    "add credits at https://portal.nastech-agent.nastechresearch.workers.dev or pick a free model."
                 ),
             },
         )
@@ -2087,7 +2087,7 @@ class TestNastechWelcomeTier:
         assert "welcome_refusal" not in result.error_context
 
     def test_anonymous_jwt_on_the_paid_host_is_deterministic(self):
-        body = {"status": 400, "message": "Anonymous accounts must use https://welcome-api.nastechresearch.github.io for inference."}
+        body = {"status": 400, "message": "Anonymous accounts must use https://welcome-api.nastech-agent.nastechresearch.workers.dev for inference."}
         err = MockAPIError(f"Error code: 400 - {body}", status_code=400, body=body)
         result = classify_api_error(err, provider="nastech", api_key=make_jwt(), model="nastech/welcome")
         assert result.reason == FailoverReason.format_error
@@ -2095,7 +2095,7 @@ class TestNastechWelcomeTier:
         assert result.error_context["welcome_route"] == "anon_on_paid_host"
 
     def test_named_caller_on_the_welcome_host_is_deterministic(self):
-        body = {"status": 400, "message": "This endpoint serves anonymous Nastech Agent accounts only. Use https://inference-api.nastechresearch.github.io with your API key or signed-in account."}
+        body = {"status": 400, "message": "This endpoint serves anonymous Nastech Agent accounts only. Use https://inference-api.nastech-agent.nastechresearch.workers.dev with your API key or signed-in account."}
         err = MockAPIError(f"Error code: 400 - {body}", status_code=400, body=body)
         result = classify_api_error(err, provider="nastech", api_key=make_jwt(account_tier="free"))
         assert result.error_context["welcome_route"] == "named_on_welcome_host"

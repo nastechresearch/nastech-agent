@@ -2,8 +2,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { setSessionArchived } from '@/nastech'
 import { en } from '@/i18n/en'
-import { listAllProfileSessions, setSessionArchived } from '@/nastech'
 import { $messagingSessions, $sessions, setMessagingSessions, setSessions } from '@/store/session'
 import type { SessionInfo } from '@/types/nastech'
 
@@ -14,8 +14,16 @@ vi.mock('@/i18n', () => ({ useI18n: () => ({ t: en }) }))
 vi.mock('@/nastech', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
   getNastechConfigRecord: vi.fn().mockResolvedValue({ config: {} }),
-  listAllProfileSessions: vi.fn(),
   setSessionArchived: vi.fn().mockResolvedValue(undefined)
+}))
+
+// The settings page loads its archived list through the paginating store helper,
+// which reads the sessions API module directly — mock that seam, not the barrel.
+const listEveryArchivedSession = vi.hoisted(() => vi.fn())
+
+vi.mock('@/store/sidebar-archive', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  listEveryArchivedSession
 }))
 
 const archivedMatrixSession = {
@@ -38,7 +46,7 @@ const archivedMatrixSession = {
 beforeEach(() => {
   setSessions([])
   setMessagingSessions([])
-  vi.mocked(listAllProfileSessions).mockResolvedValue({ sessions: [archivedMatrixSession], total: 1 } as never)
+  listEveryArchivedSession.mockReset().mockResolvedValue([archivedMatrixSession])
 })
 
 afterEach(() => {

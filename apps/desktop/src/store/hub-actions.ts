@@ -3,9 +3,6 @@ import { atom, map } from 'nanostores'
 // The Capabilities Skills-list query key, imported rather than re-spelled so a
 // hub (un)install updates the Skills tab, not just the hub.
 import { SKILLS_QUERY_KEY } from '@/app/capabilities/skills/skills-data'
-import { translateNow } from '@/i18n'
-import { queryClient } from '@/lib/query-client'
-import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
 import {
   getActionStatus,
   installSkillFromHub,
@@ -14,6 +11,9 @@ import {
   uninstallSkillFromHub,
   updateSkillsFromHub
 } from '@/nastech'
+import { translateNow } from '@/i18n'
+import { queryClient } from '@/lib/query-client'
+import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
 import { upsertDesktopActionTask } from '@/store/activity'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
@@ -201,7 +201,7 @@ export function closeHubLog(): void {
 const INSTALL_BLOCKED_CURRENT_RE =
   /Not installed:\s+the security scan found\s+(?:(?<findings>\d+)\s+)?high-risk\s+pattern/i
 
-const INSTALL_BLOCKED_UNVERIFIED_RE = /never installs\s+unverified/i
+const INSTALL_BLOCKED_UNVERIFIED_RE = /never\s+installs\s+unverified/i
 
 const INSTALL_BLOCKED_LEGACY_RE =
   /Installation blocked:.*?\((?<source>[a-z_-]+) source \+ (?<verdict>[a-z_]+) verdict, (?<findings>\d+) findings?\)/i

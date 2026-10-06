@@ -80,12 +80,12 @@ $script:UvPinVersion = "0.12.3"
 $script:UvPinFiles = @{
     "win32-x64" = @{
         Url    = "https://github.com/astral-sh/uv/releases/download/0.12.3/uv-x86_64-pc-windows-msvc.zip"
-        MirrorUrl = "https://nastech-assets.nastechresearch.github.io/upstream/sha256/b23350c79e8ad0192b8124af13a0f17e8d4e4549524785e1aef389ae5a06990e"
+        MirrorUrl = "https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/b23350c79e8ad0192b8124af13a0f17e8d4e4549524785e1aef389ae5a06990e"
         Sha256 = "b23350c79e8ad0192b8124af13a0f17e8d4e4549524785e1aef389ae5a06990e"
     }
     "win32-arm64" = @{
         Url    = "https://github.com/astral-sh/uv/releases/download/0.12.3/uv-aarch64-pc-windows-msvc.zip"
-        MirrorUrl = "https://nastech-assets.nastechresearch.github.io/upstream/sha256/4343217d668727b8a8eb5cad92389a1d2eeead93c89940d1b955ba1bb15462eb"
+        MirrorUrl = "https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/4343217d668727b8a8eb5cad92389a1d2eeead93c89940d1b955ba1bb15462eb"
         Sha256 = "4343217d668727b8a8eb5cad92389a1d2eeead93c89940d1b955ba1bb15462eb"
     }
 }
@@ -94,12 +94,12 @@ $script:GitPinVersion = "2.53.0+3"
 $script:GitPinFiles = @{
     "win32-x64" = @{
         Url    = "https://github.com/git-for-windows/git/releases/download/v2.53.0.windows.3/PortableGit-2.53.0.3-64-bit.7z.exe"
-        MirrorUrl = "https://nastech-assets.nastechresearch.github.io/upstream/sha256/b365da794b1d2225eb24d5f5e09ef7792cfd5fa26c3a3586210280c80dff3a2a"
+        MirrorUrl = "https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/b365da794b1d2225eb24d5f5e09ef7792cfd5fa26c3a3586210280c80dff3a2a"
         Sha256 = "b365da794b1d2225eb24d5f5e09ef7792cfd5fa26c3a3586210280c80dff3a2a"
     }
     "win32-arm64" = @{
         Url    = "https://github.com/git-for-windows/git/releases/download/v2.53.0.windows.3/PortableGit-2.53.0.3-arm64.7z.exe"
-        MirrorUrl = "https://nastech-assets.nastechresearch.github.io/upstream/sha256/0db54010054c01f35501cf69e1e32d3710138ecb934d188bd77093afed24300e"
+        MirrorUrl = "https://nastech-assets.nastech-agent.nastechresearch.workers.dev/upstream/sha256/0db54010054c01f35501cf69e1e32d3710138ecb934d188bd77093afed24300e"
         Sha256 = "0db54010054c01f35501cf69e1e32d3710138ecb934d188bd77093afed24300e"
     }
 }
@@ -819,6 +819,19 @@ function Stage-Repository {
                 }
             }
             Disable-TreelessGraphWrites $InstallDir
+            # A treeless (tree:0) checkout from a late-September installer downloads whole
+            # directory snapshots again on every history walk (#129514). Fetch its trees once; the
+            # new filter is recorded only after that succeeds, so `nastech update` retries otherwise.
+            $partialFilter = Invoke-Native { git -C $InstallDir config --get remote.origin.partialclonefilter }
+            if ("$partialFilter".Trim() -eq 'tree:0') {
+                Invoke-Logged -MayFail "Fetching directory history once (treeless checkout)" { git -C $InstallDir -c gc.auto=0 -c maintenance.auto=false fetch --refetch --filter=blob:none origin "+refs/heads/${Branch}:refs/remotes/origin/${Branch}" }
+                if ($LASTEXITCODE) {
+                    Write-Warn "could not fetch the directory history; the next nastech update retries it"
+                } else {
+                    Invoke-Native { git -C $InstallDir config remote.origin.partialclonefilter blob:none }
+                    if ($LASTEXITCODE) { Write-Warn "could not record the blobless filter in $InstallDir" }
+                }
+            }
         }
         Invoke-Logged "Fetching origin/$Branch" { git -C $InstallDir fetch origin "+refs/heads/${Branch}:refs/remotes/origin/${Branch}" }
         if ($LASTEXITCODE) { Fail "git fetch failed" }
@@ -902,13 +915,14 @@ function Stage-Repository {
         try {
             $cloned = $false
             foreach ($attempt in 1..3) {
-                # Treeless: every commit and release tag (runtime identity is the
-                # nearest reachable release; -Commit pins and branch switches
-                # still resolve), trees and blobs fetched on demand, so the
-                # download stays close to a --depth 1 clone.
+                # Blobless: every commit, tree and release tag (runtime identity is
+                # the nearest reachable release; -Commit pins and branch switches
+                # still resolve), file contents fetched on demand. Not treeless:
+                # a long-lived treeless checkout re-downloads whole trees on every
+                # checkout and history walk (#129712).
                 $cloneLabel = "Cloning $RepoUrl ($Branch) into $InstallDir"
                 if ($attempt -gt 1) { $cloneLabel += " (attempt $attempt of 3)" }
-                Invoke-Logged $cloneLabel { git clone @progress --filter=tree:0 --branch $Branch $RepoUrl $tree }
+                Invoke-Logged $cloneLabel { git clone @progress --filter=blob:none --branch $Branch $RepoUrl $tree }
                 if (-not $LASTEXITCODE) { $cloned = $true; break }
                 Remove-Item -LiteralPath $tree -Recurse -Force -ErrorAction SilentlyContinue
                 if ($attempt -lt 3) { Start-Sleep -Seconds ($attempt * 5) }
@@ -917,7 +931,7 @@ function Stage-Repository {
                 # The checkout step is where throttled downloads die: clone the
                 # graph alone, then retry materializing the tree separately.
                 Write-Warn "direct clone failed; trying deferred checkout"
-                Invoke-Logged "Cloning history" { git clone @progress --filter=tree:0 --no-checkout --branch $Branch $RepoUrl $tree }
+                Invoke-Logged "Cloning history" { git clone @progress --filter=blob:none --no-checkout --branch $Branch $RepoUrl $tree }
                 if (-not $LASTEXITCODE) {
                     foreach ($attempt in 1..2) {
                         Invoke-Logged "Checking out files (attempt $attempt of 2)" { git -C $tree reset --hard HEAD }

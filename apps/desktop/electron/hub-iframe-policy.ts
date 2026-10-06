@@ -2,7 +2,7 @@
  * Capability carve-outs for the embedded Skills Hub iframe ONLY.
  *
  * The Skills Hub picker (Bot Mode) embeds the public docs site
- * (`https://nastechresearch.github.io/nastech-agent/docs/skills?embed=picker`, or the
+ * (`https://nastech-agent.nastechresearch.workers.dev/docs/skills?embed=picker`, or the
  * GitHub Pages mirror when Vercel refuses the network). Three default denials
  * make that embed nearly unusable — window.open is killed by the CVE-2026-70608
  * handler, clipboard writes by the session permission handlers, and the frame
@@ -12,7 +12,7 @@
  */
 
 /** The docs site served from Vercel. */
-export const NASTECH_HUB_ORIGIN = 'https://nastechresearch.github.io/nastech-agent'
+export const NASTECH_HUB_ORIGIN = 'https://nastech-agent.nastechresearch.workers.dev'
 /** The equivalent GitHub Pages deployment of the same site. */
 export const NASTECH_HUB_FALLBACK_ORIGIN = 'https://nastechresearch.github.io'
 

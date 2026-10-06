@@ -37,7 +37,7 @@ Key capabilities:
 ## Setup
 
 :::tip Nastech Subscribers
-If you have a paid [Nastech Portal](https://portal.nastechresearch.github.io) subscription, you can use browser automation through the **[Tool Gateway](tool-gateway.md)** without any separate API keys. New installs can run `nastech setup --portal` to log in and turn on every gateway tool at once; existing installs can pick **Nastech Subscription** as the browser provider via `nastech model` or `nastech tools`.
+If you have a paid [Nastech Portal](https://portal.nastech-agent.nastechresearch.workers.dev) subscription, you can use browser automation through the **[Tool Gateway](tool-gateway.md)** without any separate API keys. New installs can run `nastech setup --portal` to log in and turn on every gateway tool at once; existing installs can pick **Nastech Subscription** as the browser provider via `nastech model` or `nastech tools`.
 :::
 
 ### Browser Use cloud mode

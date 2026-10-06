@@ -97,7 +97,7 @@ For an admitted source checkout, `nastech update` runs these phases:
 3. **Post-pull syntax validation + auto-rollback** — after the pull, Nastech compiles the nine critical files every `nastech` invocation imports at startup. If any fails to parse (e.g. an orphan merge-conflict marker, an accidentally truncated file), Nastech rolls the install back so your shell stays bootable: it resets the checkout to the commit it ran before the pull (`git reset --hard <pre-pull-sha>`), or, when the update switched away from a detached checkout or a parked feature branch, returns there with `git checkout --detach <sha>` / `git checkout <branch>` (a branch it cannot check out again is restored detached at the same commit). Re-run `nastech update` once the upstream fix lands.
 4. **Dependency preparation** — PM provisions required tools and prepares a complete Python environment from the new lock, existing extras, and enabled plugin requirements. It validates that environment before publishing its selection. A plugin never fails the update. A plugin that no longer fits the new core is added to `plugins.disabled` in every profile that enables it (a memory provider has `memory.provider` cleared). That covers a `requires-python` that excludes Nastech's Python, a `manifest_version` newer than this Nastech supports, and dependencies that the resolver proves can't resolve alongside core and earlier plugins in config order, or that fail their own build. A download or network failure gets one retry and is disabled if it fails again. The update prints `⚠ Disabled plugin '<name>' in <home>: <reason>`, records it in the receipt's warnings, and continues. Re-enable it with `nastech plugins enable <name>` once the plugin ships a compatible release, or once the network is back. A `requires_nastech` range the running version misses never disables a plugin, because a source checkout without release tags can read as an older release. That plugin sits out instead (`⚠ Left plugin '<name>' … out of this update`), stays enabled, and rejoins once Nastech reports a version it accepts. A secondary profile whose config cannot be read sits out the same way until the config is fixed. Only a core that cannot build on its own fails this step.
 5. **Config migration** — detects new config options added since your version and prompts you to set them
-6. **Desktop rebuild (stage-and-swap)** — if the Nastech Desktop app was built from this checkout, it is rebuilt so the GUI matches the new code. The rebuild packs into a temporary staging directory next to `apps/desktop/release/`, verifies the staged app, and only then renames it over the previous build (on Windows a real-time scanner briefly holding `release/win-unpacked` is ridden out with a few short retries). A rebuild that fails at any point — corrupt Electron download, missing dependency, disk full — leaves the previous app untouched and launchable; the update fails at that step, and `nastech desktop --build-only --force-build` or the next `nastech update` retries the rebuild. On macOS the rebuilt bundle is then copied (with `ditto`, signature intact) over a stale `/Applications/Nastech.app` or `~/Applications/Nastech.app`, so the copy Finder and the Dock launch matches the backend; an installed copy that is currently running is left alone and the update tells you to quit it and run `nastech update` again. If a copy an earlier update installed has since been removed (including dragged to the Trash), the update rebuilds it if needed, puts it back and says so, so Finder, the Dock and Spotlight find Nastech again; `nastech uninstall` removes the app for good. On Windows, when the update finishes from inside the Desktop app it would rebuild (the app completing an interrupted update at launch), the rebuild is skipped with a notice instead: Windows locks a running app's files, and stopping the app would end the update with it. The rest of the update completes; quit Nastech Desktop and run `nastech desktop` from a terminal, or use **Update now** in **Settings → About**, to rebuild and reopen it.
+6. **Desktop rebuild (stage-and-swap)** — if the Nastech Desktop app was built from this checkout, it is rebuilt so the GUI matches the new code. The rebuild packs into a temporary staging directory next to `apps/desktop/release/`, verifies the staged app, and only then renames it over the previous build (on Windows a real-time scanner briefly holding `release/win-unpacked` is ridden out with a few short retries). A rebuild that fails at any point — corrupt Electron download, missing dependency, disk full — leaves the previous app untouched and launchable; the update prints a `⚠` line, still finishes the remaining steps (config migration, gateway restart) and exits 0 with a `build` follow-up in its receipt, and the next launch, `nastech update` or `nastech desktop --build-only --force-build` retries the rebuild. On macOS the rebuilt bundle is then copied (with `ditto`, signature intact) over a stale `/Applications/Nastech.app` or `~/Applications/Nastech.app`, so the copy Finder and the Dock launch matches the backend; an installed copy that is currently running is left alone and the update tells you to quit it and run `nastech update` again. If a copy an earlier update installed has since been removed (including dragged to the Trash), the update rebuilds it if needed, puts it back and says so, so Finder, the Dock and Spotlight find Nastech again; `nastech uninstall` removes the app for good. On Windows, when the update finishes from inside the Desktop app it would rebuild (the app completing an interrupted update at launch), the rebuild is skipped with a notice instead: Windows locks a running app's files, and stopping the app would end the update with it. The rest of the update completes; quit Nastech Desktop and run `nastech desktop` from a terminal, or use **Update now** in **Settings → About**, to rebuild and reopen it.
 7. **Gateway auto-restart**: running gateways are refreshed after the update completes. Service-managed gateways (systemd on Linux, launchd on macOS) restart through the service manager. Manual gateways are relaunched when Nastech can map their PID to a profile. Manually launched `nastech serve` / `nastech dashboard` backends are different: the updater leaves them running and asks their owner to restart them. See [Manual backend restart reminders](#manual-backend-restart-reminders). Backends owned by a running Desktop app remain the app's responsibility.
 8. **Multiplex migration (multi-profile installs)** — once the fleet is verified on the new code, an install with two or more profiles that still run **one gateway per profile** is folded into a single multiplexed default gateway when nothing blocks it (same as `nastech gateway migrate --multiplex --yes`); if a blocker exists (a bot token shared by two profiles, a secondary profile binding a port with no `/p/<profile>/` ingress) the update prints the blockers with their fixes and changes nothing. Single-profile installs are never touched. See [Migrating from per-profile gateways](../user-guide/multi-profile-gateways.md#migrating-from-per-profile-gateways).
 
@@ -168,16 +168,47 @@ git -C $repo rev-list --objects --missing=error --all | Out-Null; $LASTEXITCODE 
 
 ### `.git` keeps growing in a partial clone
 
-The installer's checkout is a partial clone: git downloads trees and blobs on demand, and each
-on-demand download is written as its own small pack. `nastech update` and `nastech update --check`
-fold them back together with `git gc --auto` (git's own `gc.autoPackLimit`, 50 by default), so a
-healthy checkout pays a no-op. They also set `maintenance.commit-graph.enabled`,
-`gc.writeCommitGraph` and `fetch.writeCommitGraph` to `false` in that checkout, because a
-commit-graph write over commits the graph has not seen yet downloads every one of their trees. Leave those settings alone, and leave
-`gc.auto` at its default: `gc.auto=0` stops the fold. The first fold on a checkout that has
-piled up thousands of packs is a full repack and can take several minutes; the update says so
-before it starts, and if the fold runs past 20 minutes it stops and prints the command below.
-To fold by hand (with Nastech closed):
+The installer's checkout is a blobless partial clone: every commit and directory listing is local,
+and git downloads file contents on demand, each on-demand download written as its own small pack.
+Installers from late September 2026 made treeless (`--filter=tree:0`) clones instead. git asks for
+a missing tree without saying which ones it already has, so a treeless checkout downloaded complete
+directory snapshots again on every checkout and path-filtered history walk. `nastech update`
+converts such a checkout once, as its first step after pulling the new code and before the
+dependency work: one `git fetch --refetch --filter=blob:none` brings every commit and tree (about
+120 MB), and later updates stop re-downloading them. Re-running the installer over such a checkout
+converts it the same way. If that fetch fails, the update prints a warning, carries on, and retries
+the conversion next time.
+
+A Nastech Desktop built before the conversion existed runs path-filtered history walks every few
+minutes, so on a treeless checkout it could fill a disk with pack files (one report reached 434 GB)
+and keep going after a failed update. To recover when that already happened:
+
+1. Quit Nastech Desktop, then end any leftover `git rev-list`, `git maintenance` or
+   `git commit-graph` processes; quitting the app does not stop them.
+2. If the disk is completely full, delete the abandoned transfer files to get room back:
+   `rm -f "$repo"/.git/objects/pack/tmp_pack_*` (Windows: delete `tmp_pack_*` in
+   `.git\objects\pack`). Each update also removes them on its own once no git process is running.
+3. Run `nastech update`. It converts the checkout first, then cleans the pack pile down over this
+   and later updates as described below.
+
+If `nastech update` itself cannot start, the conversion by hand is:
+
+```bash
+git -C "$repo" fetch --refetch --filter=blob:none origin
+git -C "$repo" config remote.origin.partialclonefilter blob:none
+``` `nastech update` and `nastech update --check`
+set `maintenance.commit-graph.enabled`, `gc.writeCommitGraph` and `fetch.writeCommitGraph` to
+`false` in that checkout, because a commit-graph write over commits the graph has not seen yet
+downloads every one of their trees. Leave those settings alone, and leave `gc.auto` at its
+default so git's own automatic gc can still fold packs.
+
+Each `nastech update` also spends at most 60 seconds cleaning those packs up, picking up where the
+previous update stopped. It deletes packs whose every object is also stored in another pack, then
+merges the smallest remaining packs while there are more than 50. Nothing stored locally is ever
+lost, and nothing depends on GitHub still serving it. Packs that a killed `git fetch` left pinned
+with a `.keep` file are included; git's own repack never touches those. To fold
+everything at once by hand instead (with Nastech closed; on a large checkout this is a full repack
+that can run for many minutes):
 
 ```bash
 git -C "$repo" -c gc.writeCommitGraph=false gc --auto
@@ -255,7 +286,7 @@ The same inventory is embedded in every real update's receipt (`~/.nastech/logs/
 
 ### Update receipts and the fleet version check
 
-Every `nastech update` run writes a machine-readable receipt to `~/.nastech/logs/update_receipts/` (last 20 kept, `latest.json` always points at the most recent): the pre-update fleet plan, each step taken, anything skipped and why, the gateway restart outcome, and the final fleet version matrix. The SQLite runtime repair is one of those steps (`sqlite_runtime_repair`): a failed repair records the actual reason (for example the `uv sync` error) and the SQLite version pair, a deferred or not-applicable repair lands in the skips with its reason. After the restart phase the updater compares each live gateway's running code against the freshly updated checkout and prints a per-profile matrix — a gateway still serving pre-update code is reported loudly with the exact restart command, and the update exits non-zero so automation never treats a mixed-version fleet as healthy. Both `--plan` and the fleet check ask each running gateway directly over its local control socket (`gateway.sock` in the profile's data directory, a named pipe on Windows) when available, so version and supervisor information comes from the gateway itself; gateways from older versions are still discovered through their state files as before.
+Every `nastech update` run writes a machine-readable receipt to `~/.nastech/logs/update_receipts/` (last 20 kept, `latest.json` always points at the most recent): the pre-update fleet plan, each step taken, anything skipped and why, the gateway restart outcome, and the final fleet version matrix. The SQLite runtime repair is one of those steps (`sqlite_runtime_repair`): a failed repair records the actual reason (for example the `uv sync` error) and the SQLite version pair, a deferred or not-applicable repair lands in the skips with its reason. After the restart phase the updater compares each live gateway's running code against the freshly updated checkout and prints a per-profile matrix — a gateway still serving pre-update code is reported loudly with the exact restart command and recorded as a `gateway_restart` follow-up in the receipt; the code is already in place, so the update still exits 0, and every later command warns until the fleet serves the new code, so a mixed-version fleet is never silently healthy. Both `--plan` and the fleet check ask each running gateway directly over its local control socket (`gateway.sock` in the profile's data directory, a named pipe on Windows) when available, so version and supervisor information comes from the gateway itself; gateways from older versions are still discovered through their state files as before.
 
 A multiplexed default gateway is one process serving several profiles, so it appears once in the matrix and vouches for every profile in its `served_profiles` record. The same coverage clears the "A previous `nastech update` pulled new code but did not restart running gateways" hint: once that gateway (or, after a manual `git pull`, every gateway an update restarted) runs the current code, `nastech gateway restart` is enough — the hint no longer waits for the next `nastech update` to write a fresh receipt. The same is true of the restart obligation left by an update that died before recording which gateways it owed (or by an older updater that never recorded them): once every live gateway runs the current checkout, the obligation is retired and the hint stops. On a host that runs no gateway at all (the Desktop app alone), it is retired once no profile has a gateway that went away without a clean stop and every running backend is restarted by its own supervisor or has its own reminder. That obligation is recorded once per HOST, in the cross-profile rendezvous directory (`$NASTECH_GATEWAY_LOCK_DIR`, else `$XDG_STATE_HOME/nastech/gateway-locks`) as `host-update-restart.json`, so every profile's CLI sees the same one: `nastech -p coder update` and `nastech -p writer update` restart the shared multiplexed gateway once between them, not once each. An obligation left behind by an older per-profile updater (`fleet_restart_pending` in one profile's Nastech home) is still read and cleared. An update whose pre-update plan found no gateway at all owes nothing and leaves no breadcrumb. A backend supervised by Desktop, systemd or launchd is restarted by its supervisor and never blocks this settlement; only a manual backend whose reminder could not be saved keeps the obligation open.
 
@@ -283,7 +314,7 @@ fleet caused only by the deferral does not make the update `partial`.
 
 ### Interrupted gateway restarts
 
-If an earlier update pulled code but did not finish restarting the fleet, the next `nastech update` retries even when the checkout is already current. An empty process scan does not prove recovery: failed systemd units and installed launchd jobs may have no live PID. If discovery or restart fails, or a requested service cannot be verified active, the marker stays pending and the update exits nonzero. Recover the affected services with the printed commands and retry.
+If an earlier update pulled code but did not finish restarting the fleet, the next `nastech update` retries even when the checkout is already current. An empty process scan does not prove recovery: failed systemd units and installed launchd jobs may have no live PID. If discovery or restart fails, or a requested service cannot be verified active, the marker stays pending: the update still exits 0 (the new code is in place), prints a `⚠` line and a `gateway_restart` follow-up in its receipt, every CLI start warns about the owed restart, and the next `nastech update` retries it. Recover the affected services with the printed commands, or rerun `nastech update`.
 
 A failed historical receipt alone does not prove that gateways are still stale. Startup and gateway-status warnings, as well as update catch-up, check for a live successor on the current checkout for every gateway profile recorded in that receipt. A manual gateway restart can settle receipt-only advice without rewriting the historical outcome. Manual backend obligations must first transfer to their separate reminders.
 
@@ -361,7 +392,7 @@ If `git status --short` shows unexpected changes after `nastech update`, stop an
 tail -f ~/.nastech/logs/update.log
 ```
 
-- `Ctrl-C` (SIGINT) and system shutdown (SIGTERM) are still honored — those are deliberate cancellations, not accidents.
+- `Ctrl-C` (SIGINT) and system shutdown (SIGTERM) are still honored — those are deliberate cancellations, not accidents. A `Ctrl-C` after the new code is in place exits 130 and says so: the remaining steps (dependencies, builds, gateway restart) are owed, and the next launch or `nastech update` finishes them.
 
 You no longer need to wrap `nastech update` in `screen` or `tmux` to survive a terminal drop.
 

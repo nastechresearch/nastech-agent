@@ -10,11 +10,6 @@
     "kind": "bare_which"
   },
   {
-    "path": "agent/anthropic_credentials.py",
-    "symbol": "run_oauth_setup_token",
-    "kind": "bare_which"
-  },
-  {
     "path": "agent/lsp/cli.py",
     "symbol": "_backend_warnings",
     "kind": "bare_which"
@@ -255,8 +250,8 @@
     "kind": "bare_which"
   },
   {
-    "path": "nastech_cli/main.py",
-    "symbol": "_exec_in_container",
+    "path": "nastech_cli/main_container.py",
+    "symbol": "exec_in_container",
     "kind": "bare_which"
   },
   {
@@ -361,7 +356,7 @@
   },
   {
     "path": "nastech_cli/source_build.py",
-    "symbol": "build_update_products",
+    "symbol": "_build_desktop_product",
     "kind": "bare_which"
   },
   {

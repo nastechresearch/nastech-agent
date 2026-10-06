@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import type { GoalSnapshot } from '@nastech/shared/gateway-events'
+import { useStore } from '@nanostores/react'
 import { atom } from 'nanostores'
 
 import { $uiState } from './uiStore.js'

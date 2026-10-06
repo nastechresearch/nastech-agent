@@ -14,7 +14,7 @@ from typing import Optional
 import httpx
 
 # Nastech-hosted pairing API; override for PoC/staging with TELEGRAM_ONBOARDING_URL.
-DEFAULT_API_URL = "https://setup.nastechresearch.github.io/nastech-agent"
+DEFAULT_API_URL = "https://setup.nastech-agent.nastechresearch.workers.dev"
 TELEGRAM_ONBOARDING_URL_ENV = "TELEGRAM_ONBOARDING_URL"
 DEFAULT_BOT_NAME = "Nastech Agent"
 DEFAULT_POLL_TIMEOUT = 180

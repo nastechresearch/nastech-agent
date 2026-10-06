@@ -8,7 +8,7 @@ const config: Config = {
   tagline: 'The self-improving AI agent',
   favicon: 'img/favicon.ico',
 
-  url: 'https://nastechresearch.github.io',
+  url: 'https://nastech-agent.nastechresearch.workers.dev',
   baseUrl: '/nastech-agent/docs/',
 
   organizationName: 'NastechResearch',
@@ -147,7 +147,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://nastechresearch.github.io/nastech-agent/',
+          href: 'https://nastech-agent.nastechresearch.workers.dev/',
           label: 'Download',
           position: 'left',
         },
@@ -156,7 +156,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://nastechresearch.github.io/nastech-agent',
+          href: 'https://nastech-agent.nastechresearch.workers.dev',
           label: 'Home',
           position: 'right',
         },
@@ -195,13 +195,13 @@ const config: Config = {
         {
           title: 'More',
           items: [
-            { label: 'Desktop Download', href: 'https://nastechresearch.github.io/nastech-agent/' },
+            { label: 'Desktop Download', href: 'https://nastech-agent.nastechresearch.workers.dev/' },
             { label: 'GitHub', href: 'https://github.com/NastechResearch/nastech-agent' },
-            { label: 'Nastech Research', href: 'https://nastechresearch.github.io' },
+            { label: 'Nastech Research', href: 'https://nastech-agent.nastechresearch.workers.dev' },
           ],
         },
       ],
-      copyright: `Built by <a href="https://nastechresearch.github.io">Nastech Research</a> · MIT License · ${new Date().getFullYear()}`,
+      copyright: `Built by <a href="https://nastech-agent.nastechresearch.workers.dev">Nastech Research</a> · MIT License · ${new Date().getFullYear()}`,
     },
     prism: {
       theme: prismThemes.github,

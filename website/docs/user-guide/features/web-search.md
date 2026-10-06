@@ -45,7 +45,7 @@ A fresh install with **no web credentials at all** gets working `web_search` and
 **Choosing free vs paid explicitly:** in `nastech tools`, Exa, Parallel, and Keenable each appear as two rows — **Free (keyless)** and **Paid (API key)**. Picking Free pins that vendor's anonymous endpoint (even if you later add a key); picking Paid pins the keyed path (a missing key then errors instead of silently downgrading to the free tier). The selection is stored as `web.provider_tier.<name>: free|paid`; leave it unset for auto (key present → paid, otherwise the keyless ring).
 
 :::tip Nastech Subscribers
-If you have a paid [Nastech Portal](https://portal.nastechresearch.github.io) subscription, web search and extract are available through the **[Tool Gateway](tool-gateway.md)** as managed web search — no API key needed. New installs can run `nastech setup --portal` to log in and turn on all gateway tools at once; existing installs can flip just web via `nastech tools`.
+If you have a paid [Nastech Portal](https://portal.nastech-agent.nastechresearch.workers.dev) subscription, web search and extract are available through the **[Tool Gateway](tool-gateway.md)** as managed web search — no API key needed. New installs can run `nastech setup --portal` to log in and turn on all gateway tools at once; existing installs can flip just web via `nastech tools`.
 :::
 
 ---
@@ -426,7 +426,7 @@ web:
 When a per-capability key is empty, that capability falls through to `web.backend`. Only when no **shared** web selection has ever been written (`web.backend` or the managed `nastech tools` row) is the backend auto-detected from whichever API key/URL is present — once a shared selection exists, the runtime always uses it, and adding a key to `.env` does not reroute web traffic. A per-capability key affects only its own capability: setting `web.extract_backend` alone leaves `web_search` on its auto-detected backend.
 
 **Priority order (per capability):**
-1. `web.search_backend` / `web.extract_backend` (explicit per-capability)
+1. `web.search_backend` / `web.extract_backend` (explicit per-capability; `nastech` = managed Tool Gateway for that capability only, see [Tool Gateway](./tool-gateway.md#mixing-your-own-key-and-the-gateway-web-only))
 2. `web.backend` (shared fallback; `nastech` = managed Tool Gateway)
 3. Auto-detect from environment variables (no shared selection written)
 

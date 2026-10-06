@@ -4,8 +4,7 @@ import { atom } from 'nanostores'
 import { recordOnboarding, setDesktopMetricsGate } from './desktop-metrics'
 
 /** Public page describing exactly what shared metrics contain and how consent windows work. */
-export const SHARED_METRICS_DOCS_URL =
-  'https://nastechresearch.github.io/nastech-agent/docs/developer-guide/relay-shared-metrics'
+export const SHARED_METRICS_DOCS_URL = 'https://nastech-agent.nastechresearch.workers.dev/docs/developer-guide/relay-shared-metrics'
 
 export type SharedMetricsConsent = SharedMetricsConsentResult
 
@@ -19,6 +18,20 @@ export const SHARED_METRICS_CHOICES: Record<SharedMetricsChoice, { enabled: bool
 }
 
 export type SharedMetricsRequester = <T = unknown>(method: string, params?: Record<string, unknown>) => Promise<T>
+
+/**
+ * Name the profile on every consent RPC: an unscoped one resolves to the
+ * backend's launch home, so on a shared backend the answer landed in another
+ * profile's config.yaml and the focused profile's offer never retired (#130714).
+ * `custom` is a NASTECH_HOME outside profiles/ the backend cannot resolve by
+ * name; there the ambient route already is that home.
+ */
+export function sharedMetricsProfileRequester(
+  request: SharedMetricsRequester,
+  profile: string
+): SharedMetricsRequester {
+  return profile === 'custom' ? request : (method, params = {}) => request(method, { ...params, profile })
+}
 
 function isConsent(value: unknown): value is SharedMetricsConsent {
   return typeof value === 'object' && value !== null && typeof (value as SharedMetricsConsent).decided === 'boolean'

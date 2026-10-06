@@ -199,7 +199,7 @@ class TestUsageAccountSection:
         runner._session_db = AsyncSessionDB(MagicMock())
         runner._session_db._db.get_session.return_value = {
             "billing_provider": "nastech",
-            "billing_base_url": "https://inference-api.nastechresearch.github.io/v1/",
+            "billing_base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1/",
         }
         runner._session_db._db.get_recent_session_model_route.return_value = {
             "model": "z-ai/glm-5.2",

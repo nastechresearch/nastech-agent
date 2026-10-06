@@ -130,6 +130,7 @@ on:
       - 'setup-nastech.*'
       - 'nastech_bootstrap.py'
       - 'pm/**'
+      - '!pm/**/*.md'
       - 'nastech_cli/update*'
       - 'nastech_cli/*update*'
       - 'nastech_cli/pm*'

@@ -142,21 +142,23 @@ def _zip_overlay_block_reason(
     """
     if not (root / ".git").exists():
         return None
+    from nastech_cli.update_custody import run_git
+
     git_cmd = ["git", "-c", "windows.appendAtomically=false"] if sys.platform == "win32" else ["git"]
-    result = subprocess.run(
+    result = run_git(
         # -uall: a user-level ``status.showUntrackedFiles = no`` must not blind this guard. --ignored=matching:
         # gitignored files are still USER DATA the overlay would delete; ``matching`` reports an ignored dir
         # as one ``dir/`` line. ``--ignored=all`` is NOT a valid git mode (exits 128, would fail-close every update).
         # ``matching`` reports an ignored directory as one ``dir/`` line instead of enumerating its contents
         # (cheaper, same verdict for the top-level filter below). See #87392.
-        git_cmd + ["status", "--porcelain", "--untracked-files=all", "--ignored=matching"],
+        git_cmd, ["status", "--porcelain", "--untracked-files=all", "--ignored=matching"],
         cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if result.returncode == 0 and shipped is None:
         # Before the download the ZIP's entry set is unknown; the tracked root entries stand in for it (the
         # pre-swap re-check gets the real set), so an ignored root entry the swap never touches cannot refuse.
-        tracked = subprocess.run(
-            git_cmd + ["ls-tree", "--name-only", "HEAD"],
+        tracked = run_git(
+            git_cmd, ["ls-tree", "--name-only", "HEAD"],
             cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace",
         )
         shipped = set(tracked.stdout.splitlines()) if tracked.returncode == 0 else None
@@ -365,7 +367,7 @@ def _download_and_swap_zip(branch: str, zip_url: str) -> None:
         print(f"✗ ZIP update failed: {e}")
         # Two-phase replace commits all or rolls all back, so no mixed tree here — don't push a needless reinstall.
         print("  Your existing install was left in place.")
-        print("  Re-run `nastech update` to retry; if the agent won't start, reinstall from https://nastechresearch.github.io/nastech-agent")
+        print("  Re-run `nastech update` to retry; if the agent won't start, reinstall from https://nastech-agent.nastechresearch.workers.dev")
         _m().sys.exit(1)
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)

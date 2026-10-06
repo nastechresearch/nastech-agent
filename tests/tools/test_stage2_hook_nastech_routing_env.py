@@ -20,8 +20,8 @@ from agent.secret_scope import load_env_file
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STAGE2_HOOK = REPO_ROOT / "docker" / "stage2-hook.sh"
 
-PORTAL = "https://portal.staging-nastechresearch.github.io"
-INFERENCE = "https://stg-inference-api.nastechresearch.github.io/v1"
+PORTAL = "https://portal.staging-nastech-agent.nastechresearch.workers.dev"
+INFERENCE = "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 NAMES = ("NASTECH_PORTAL_BASE_URL", "NASTECH_PORTAL_BASE_URL", "NASTECH_INFERENCE_BASE_URL")
 
 
@@ -94,7 +94,7 @@ def test_container_wins_over_stale_line_then_idempotent_then_removed_when_unset(
     home = tmp_path / "home"
     home.mkdir()
     env_file = home / ".env"
-    env_file.write_text("NASTECH_PORTAL_BASE_URL=https://portal.nastechresearch.github.io\nNASTECH_INFERENCE_BASE_URL=https://by-hand/v1\nOTHER=1\n")
+    env_file.write_text("NASTECH_PORTAL_BASE_URL=https://portal.nastech-agent.nastechresearch.workers.dev\nNASTECH_INFERENCE_BASE_URL=https://by-hand/v1\nOTHER=1\n")
 
     first = _run_sync(stage2_text, home, {"NASTECH_PORTAL_BASE_URL": PORTAL})
     assert first.returncode == 0, first.stderr

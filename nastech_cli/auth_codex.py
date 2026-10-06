@@ -23,7 +23,7 @@ from nastech_cli.auth_constants import (
     _decode_jwt_claims, AUTH_LOCK_TIMEOUT_SECONDS, AuthError,
     CODEX_ACCESS_TOKEN_REFRESH_SKEW_SECONDS, CODEX_OAUTH_CLIENT_ID, CODEX_OAUTH_TOKEN_URL,
     CODEX_OAUTH_USER_AGENT, CODEX_RATE_LIMITED_CODE, DEFAULT_CODEX_BASE_URL, _codex_err, httpx)
-from utils import env_float
+from utils import env_float, normalize_proxy_env_vars
 
 if TYPE_CHECKING:  # annotation-only; the runtime import would be a cycle
     from nastech_cli.auth import ProviderConfig
@@ -314,7 +314,7 @@ def _ssl_interop_hint(exc: BaseException) -> str:
         " the larger TLS 1.3 ClientHello that OpenSSL 3.5+ sends by default (post-quantum hybrid"
         " groups). Workaround: point OPENSSL_CONF at a config restricting Groups to classic curves"
         " (x25519:secp256r1:secp384r1:x448), or test with TLS 1.2 — see the Codex note in"
-        " https://nastechresearch.github.io/nastech-agent/docs/integrations/providers"
+        " https://nastech-agent.nastechresearch.workers.dev/docs/integrations/providers"
     )
 
 
@@ -421,6 +421,8 @@ def _codex_http_client(**kwargs: Any) -> "httpx.Client":
     token refresh / device login / usage probes time out where the official Codex CLI (which races families
     per RFC 8305) works.
     """
+    normalize_proxy_env_vars()  # a bracketed-IPv6 NO_PROXY entry ([::1], Clash Verge/mihomo) makes the bare
+    # trust_env client below raise InvalidURL at construction (#118159) — sanitize before building it.
     client = httpx.Client(event_hooks={"response": [_cap_codex_response_body]}, **kwargs)
     with suppress(Exception):
         from agent.process_bootstrap import enable_happy_eyeballs_on_client

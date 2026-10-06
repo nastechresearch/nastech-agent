@@ -28,24 +28,65 @@ pub fn nastech_home() -> PathBuf {
             return PathBuf::from(override_path);
         }
     }
+    platform_default_home()
+}
 
+/// Root of the profile tree that holds this process's home. Mirrors
+/// `nastech_constants.get_default_nastech_root()`: a NASTECH_HOME under the
+/// platform default resolves to the default; otherwise a
+/// `<root>/profiles/<name>` home resolves to `<root>`; any other NASTECH_HOME
+/// is its own root; unset means the platform default. Host-wide state (the
+/// update marker) must live here, never in a per-profile home.
+pub fn nastech_root() -> PathBuf {
+    let env_home = std::env::var("NASTECH_HOME").ok();
+    nastech_root_from(env_home.as_deref(), &platform_default_home())
+}
+
+fn nastech_root_from(env_home: Option<&str>, native_home: &Path) -> PathBuf {
+    let Some(env_home) = env_home.map(str::trim).filter(|s| !s.is_empty()) else {
+        return native_home.to_path_buf();
+    };
+    let env_path = PathBuf::from(env_home);
+    let canonical = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    if canonical(&env_path).starts_with(canonical(native_home)) {
+        return native_home.to_path_buf();
+    }
+    match (env_path.parent(), env_path.parent().and_then(Path::parent)) {
+        (Some(parent), Some(grandparent))
+            if parent.file_name().is_some_and(|name| name == "profiles") =>
+        {
+            grandparent.to_path_buf()
+        }
+        _ => env_path,
+    }
+}
+
+fn platform_default_home() -> PathBuf {
+    platform_default_home_with(&std::env::var("NASTECH_DATA_DIR_SUFFIX").unwrap_or_default())
+}
+
+/// `suffix` is NASTECH_DATA_DIR_SUFFIX, appended literally to the leaf exactly as
+/// `nastech_constants._get_platform_default_nastech_home()` and the desktop's
+/// `platformDefaultNastechHome()` do: channel builds keep their own data dir,
+/// and with it their own update marker.
+fn platform_default_home_with(suffix: &str) -> PathBuf {
     #[cfg(target_os = "windows")]
     {
         // %LOCALAPPDATA%\nastech — matches scripts/install.ps1's $NastechHome.
         if let Some(local_app_data) = dirs::data_local_dir() {
-            return local_app_data.join("nastech");
+            return local_app_data.join(format!("nastech{suffix}"));
         }
     }
 
     // macOS + Linux + fallback: ~/.nastech (matches Python get_nastech_home(),
     // install.sh, and the Electron desktop's resolveNastechHome()).
     if let Some(home) = dirs::home_dir() {
-        return home.join(".nastech");
+        return home.join(format!(".nastech{suffix}"));
     }
 
     // Last resort — current dir, almost certainly wrong but at least
     // doesn't panic.
-    PathBuf::from(".nastech")
+    PathBuf::from(format!(".nastech{suffix}"))
 }
 
 pub fn log_dir() -> PathBuf {
@@ -83,11 +124,12 @@ pub fn installer_dest() -> PathBuf {
 /// mid-update re-locks the venv shim and triggers `force_kill_other_nastech`,
 /// which then kills that legitimate backend in a respawn loop (#50238).
 ///
-/// Lives directly under NASTECH_HOME (same rationale as `installer_dest`) so the
-/// Electron desktop — which resolves NASTECH_HOME identically and pins it into
-/// the updater's env — agrees on the exact path.
+/// Lives directly under the profile-tree ROOT (`nastech_root`), never a
+/// `profiles/<name>` home: it is one host-wide lock shared with
+/// `nastech_cli/update_lock.py` and the Electron gate, so a profile-scoped
+/// NASTECH_HOME must not split it into a second, unguarded file.
 pub fn update_in_progress_marker() -> PathBuf {
-    nastech_home().join(".nastech-update-in-progress")
+    nastech_root().join(".nastech-update-in-progress")
 }
 
 /// Copy the currently-running installer binary to `installer_dest()` so it's
@@ -213,4 +255,46 @@ pub fn open_log_dir(app: tauri::AppHandle) -> Result<(), String> {
     app.opener()
         .open_path(path.to_string_lossy(), None::<&str>)
         .map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn profile_home_resolves_to_its_tree_root() {
+        let native = Path::new("/nonexistent-native/.nastech");
+        assert_eq!(
+            nastech_root_from(Some("/srv/nastech-root/profiles/work"), native),
+            PathBuf::from("/srv/nastech-root"),
+            "a profiles/<name> home must share the root's single update marker"
+        );
+        assert_eq!(
+            nastech_root_from(Some("/srv/nastech-root"), native),
+            PathBuf::from("/srv/nastech-root")
+        );
+        assert_eq!(
+            nastech_root_from(Some("/nonexistent-native/.nastech/profiles/work"), native),
+            native.to_path_buf(),
+            "a home under the platform default resolves to the default"
+        );
+        assert_eq!(nastech_root_from(None, native), native.to_path_buf());
+        assert_eq!(nastech_root_from(Some("  "), native), native.to_path_buf());
+    }
+
+    #[test]
+    fn data_dir_suffix_names_the_default_home_and_its_marker_root() {
+        let plain = platform_default_home_with("");
+        let channel = platform_default_home_with("-channel-build-x");
+        assert_eq!(channel.parent(), plain.parent());
+        assert_eq!(
+            channel.file_name().unwrap().to_string_lossy(),
+            format!(
+                "{}-channel-build-x",
+                plain.file_name().unwrap().to_string_lossy()
+            ),
+            "the suffix is appended to the leaf, as Python and the desktop do"
+        );
+        assert_eq!(nastech_root_from(None, &channel), channel);
+    }
 }

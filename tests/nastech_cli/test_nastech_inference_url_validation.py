@@ -42,7 +42,7 @@ class TestValidatorRules:
         """Sanity check: DEFAULT_NASTECH_INFERENCE_URL must itself validate.
 
         If anyone retargets the default away from
-        ``inference-api.nastechresearch.github.io``, they MUST update the allowlist
+        ``inference-api.nastech-agent.nastechresearch.workers.dev``, they MUST update the allowlist
         in the same change — otherwise the allowlist would reject the
         Portal's own legitimate default and break every install.
         """
@@ -91,7 +91,7 @@ class TestEnvOverrideNotGated:
 
 class TestHealsPoisonedStoredValue:
     """A stored inference_base_url that is NOT in the allowlist (e.g. a
-    stale ``stg-inference-api.nastechresearch.github.io`` persisted before the
+    stale ``stg-inference-api.nastech-agent.nastechresearch.workers.dev`` persisted before the
     allowlist existed) must be HEALED back to the production default on
     the next refresh — not silently retained.
 
@@ -107,7 +107,7 @@ class TestHealsPoisonedStoredValue:
         import nastech_cli.auth as auth
         import nastech_cli.auth_nastech as nastech_cli_auth_nastech
 
-        poisoned = "https://stg-inference-api.nastechresearch.github.io/v1"
+        poisoned = "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev/v1"
         state = {
             "access_token": "tok",
             "refresh_token": "rtok",
@@ -168,7 +168,7 @@ class TestEnvOverrideWins:
     override is a runtime overlay, never written to auth.json).
     """
 
-    STAGING = "https://stg-inference-api.nastechresearch.github.io/v1"
+    STAGING = "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 
     def _patch_no_refresh(self, monkeypatch, auth, state):
         import nastech_cli.auth_nastech as nastech_cli_auth_nastech

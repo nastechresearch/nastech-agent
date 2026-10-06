@@ -211,7 +211,7 @@ unreviewed name index. Install such plugins by `owner/repo` or Git URL instead
 ### Live refresh
 
 The docs build publishes the catalog as one JSON document
-(`https://nastechresearch.github.io/nastech-agent/docs/api/plugin-catalog.json`).
+(`https://nastech-agent.nastechresearch.workers.dev/docs/api/plugin-catalog.json`).
 `search`/`install`/`update` fetch it at most every six hours and cache it under
 `~/.nastech/cache/`, so new entries and removals reach installed clients without
 updating Nastech. Offline, the cached copy is used for up to 24 hours, then the

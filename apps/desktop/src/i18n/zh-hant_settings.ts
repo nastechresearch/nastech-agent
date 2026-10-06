@@ -86,6 +86,14 @@ export const zhHantSettings = {
     resetConfirm: '要將所有設定恢復為 Nastech 預設值嗎？',
     exportFailed: '匯出失敗',
     resetFailed: '重設失敗',
+    pluginPages: {
+      blurb: '已安裝外掛程式加入的選項。每個外掛程式都有自己的頁面，有些還有子頁面。',
+      empty: '還沒有外掛程式提供設定。',
+      manage: '管理外掛程式',
+      agentSettings: '代理程式設定',
+      pageCount: (n: number) => `${n} 個頁面`,
+      missing: '這個外掛程式沒有設定頁面，可能已停用或解除安裝。'
+    },
     nav: {
       providers: '提供方',
       providerAccounts: '帳號',
@@ -103,7 +111,8 @@ export const zhHantSettings = {
       about: '關於',
       billing: '帳單',
       notifications: '通知',
-      vault: '密碼與登入'
+      vault: '密碼與登入',
+      plugins: '外掛程式'
     },
     vault: {
       title: '密碼與登入',
@@ -791,8 +800,7 @@ export const zhHantSettings = {
       description:
         '在 Mac 上按下並放開 ⌘ + Option，在 Windows/Linux 上按下並放開 Ctrl + Alt，即可從任何應用程式將 HUD 帶到前景。預設關閉，僅適用於此裝置。',
       permission: '請在系統設定 → 隱私權與安全性 → 輸入監控中允許 Nastech，然後重試。此手勢不會記錄按鍵或擷取畫面。',
-      unavailable:
-        'HUD 手勢輔助程式無法啟動或意外停止。請重試或重新啟動 Nastech。Nastech 內原有的 HUD 快速鍵仍可使用。',
+      unavailable: 'HUD 手勢輔助程式無法啟動或意外停止。請重試或重新啟動 Nastech。Nastech 內原有的 HUD 快速鍵仍可使用。',
       missingHelper: '此 Nastech 安裝缺少 HUD 手勢輔助程式。請更新或重新安裝 Nastech，然後重試。',
       unsupportedSession: '此桌面工作階段不支援全域修飾鍵輕按事件。Linux 需要 X11；不支援 Wayland。'
     },
@@ -948,10 +956,12 @@ export const zhHantSettings = {
         'SSH 驗證失敗。請將金鑰載入 ssh-agent（ssh-add），或在 ~/.ssh/config 中設定 IdentityFile——Nastech 以非互動方式執行 ssh。',
       sshErrHostKey: '自上次連線以來主機金鑰已變更。請確認這是預期的，然後執行 ssh-keygen -R <host> 並重新連線。',
       sshErrNotInstalled:
-        '遠端主機上未安裝 Nastech。請在遠端安裝（curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | sh）或設定 Nastech 路徑。',
+        '遠端主機上未安裝 Nastech。請在遠端安裝（curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | sh）或設定 Nastech 路徑。',
       sshErrPlatform: '不支援的遠端平台。Nastech Desktop 的 SSH 模式支援 Linux、macOS 和 Windows 遠端主機。',
       sshErrTimeout: 'SSH 連線逾時。主機可能無法存取或處於睡眠狀態。',
       sshErrUpdateRequired: '使用 Desktop SSH 連線前，請更新遠端主機上的 Nastech。',
+      sshErrInteractiveAuth:
+        'Tailscale SSH 需要互動式瀏覽器驗證。請在終端機執行 `ssh <host> true` 完成驗證後重試——Nastech 以非互動方式執行 SSH。',
       sshErrUnknown: 'SSH 連線失敗。'
     },
     keys: {
@@ -993,8 +1003,7 @@ export const zhHantSettings = {
       authenticate: '驗證',
       noOutput: '尚無輸出。',
       deepLinkTitle: '新增 MCP 伺服器？',
-      deepLinkDescription:
-        '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
+      deepLinkDescription: '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
       deepLinkStdioWarning: '此伺服器會使用下方所示指令在你的電腦上執行本機程序。僅在信任其來源時繼續。',
       deepLinkConfirm: '新增伺服器',
       deepLinkNameInvalid: '名稱須為 1-64 個字母、數字、點、連字號或底線。',
@@ -1041,6 +1050,8 @@ export const zhHantSettings = {
       change: '變更',
       autoUseMain: '自動 · 使用主要模型',
       inheritMainEffort: '繼承 · 主要模型推理強度',
+      inheritsFrom: task => `繼承 ${task}`,
+      followTask: task => `跟隨 ${task}`,
       providerDefault: '(提供方預設)',
       moaTitle: '混合代理（Mixture of Agents）',
       moaPreset: '預設',

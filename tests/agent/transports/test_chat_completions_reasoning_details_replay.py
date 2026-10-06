@@ -29,6 +29,6 @@ def test_openrouter_keeps_and_nastech_strips_reasoning_details():
     transport = get_transport("chat_completions")
     kwargs = transport.build_kwargs("m", _HISTORY, base_url="https://openrouter.ai/api/v1")
     assert any("reasoning_details" in m for m in kwargs["messages"])
-    kwargs = transport.build_kwargs("m", _HISTORY, base_url="https://inference-api.nastechresearch.github.io/v1")
+    kwargs = transport.build_kwargs("m", _HISTORY, base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1")
     assert all("reasoning_details" not in m for m in kwargs["messages"]), "Nastech Portal strips (#118182)"
     assert "reasoning_details" in _HISTORY[1]  # durable history is untouched

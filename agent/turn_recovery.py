@@ -346,7 +346,7 @@ def _print_nastech_401_diagnostics(agent: Any, api_error: Exception) -> None:
         agent,
         "   Troubleshooting:",
         "     • Re-authenticate: nastech auth add nastech",
-        "     • Check credits / billing: https://portal.nastechresearch.github.io",
+        "     • Check credits / billing: https://portal.nastech-agent.nastechresearch.workers.dev",
         f"     • Verify stored credentials: {display_nastech_home()}/auth.json",
         "     • Switch providers temporarily: /model <model> --provider openrouter",
     )
@@ -890,7 +890,7 @@ def _print_nonretryable_auth_guidance(
                 "   💡 Nastech Portal OAuth token was rejected (HTTP 401). Your token may be",
                 "      expired, revoked, or your account may be out of credits. To fix:",
                 "      1. Re-authenticate: nastech portal",
-                "      2. Check your portal account: https://portal.nastechresearch.github.io",
+                "      2. Check your portal account: https://portal.nastech-agent.nastechresearch.workers.dev",
             )
             # ``:free`` is OpenRouter slug syntax; Nastech Portal will reject the model
             # name even after a successful re-auth.
@@ -901,6 +901,12 @@ def _print_nonretryable_auth_guidance(
                     "         Nastech Portal won't recognize that model name. Either switch to a",
                     f"         Nastech catalog model, or run `/model openrouter:{model}` to use OpenRouter.",
                 )
+        return
+    from nastech_cli.auth_plugin_providers import plugin_refresh_hook
+    if status_code == 401 and plugin_refresh_hook(str(provider or "")) is not None:
+        # A plugin OAuth grant the pool could not refresh: the fix is a fresh sign-in, not a key.
+        from agent.turn_failure_copy import oauth_relogin_command
+        _vlines(agent, f"   💡 {provider} sign-in was rejected (HTTP 401). Sign in again: `{oauth_relogin_command(provider)}`")
         return
     _vlines(
         agent,

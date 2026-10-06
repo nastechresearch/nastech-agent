@@ -179,14 +179,15 @@ def _nastech_model_catalog(free_tier: bool, portal_url: str, model_ids: list, pr
     from nastech_cli.models_pricing import nastech_policy_allowed_ids, restrict_to_nastech_policy
     from nastech_cli.models import (
         partition_nastech_models_by_tier,
+        union_with_nastech_on_sale_models,
         union_with_portal_free_recommendations,
         union_with_portal_paid_recommendations,
     )
 
     # Free users: union with the Portal's freeRecommendedModels (newly launched free models appear
     # before the curated list catches up), then partition selectable/unavailable by Portal pricing.
-    # Paid users: paidRecommendedModels, no partition. Org policy narrows BEFORE the tier split so a
-    # rescued id still has to pass the free/paid predicate.
+    # Paid users: paidRecommendedModels plus every model on sale right now, no partition. Org policy
+    # narrows BEFORE the tier split so a rescued id still has to pass the free/paid predicate.
     unavailable_models: list[str] = []
     unavailable_message = ""
     _policy_allowed = nastech_policy_allowed_ids()
@@ -200,6 +201,7 @@ def _nastech_model_catalog(free_tier: bool, portal_url: str, model_ids: list, pr
         model_ids, pricing = union_with_portal_free_recommendations(model_ids, pricing, portal_url)
     else:
         model_ids, pricing = union_with_portal_paid_recommendations(model_ids, pricing, portal_url)
+        model_ids = union_with_nastech_on_sale_models(model_ids, pricing)
     _before_policy = model_ids
     model_ids = restrict_to_nastech_policy(model_ids, _policy_allowed, rescue_empty=True)
     _policy_narrowed = model_ids != _before_policy

@@ -75,7 +75,7 @@ _NASTECH_EMPTY_AGENT_KEY_FIELDS: Dict[str, Any] = {
     "agent_key": None, "agent_key_id": None, "agent_key_expires_at": None,
     "agent_key_expires_in": None, "agent_key_reused": None, "agent_key_obtained_at": None}
 
-_NASTECH_STALE_PORTAL_HOSTS: FrozenSet[str] = frozenset({"api.nastechresearch.github.io"})
+_NASTECH_STALE_PORTAL_HOSTS: FrozenSet[str] = frozenset({"api.nastech-agent.nastechresearch.workers.dev"})
 
 
 def _portal_entitlement_message(capability: str) -> str:
@@ -109,9 +109,9 @@ def _migrate_stale_nastech_portal_url(providers: Dict[str, Any]) -> None:
 # the NASTECH_INFERENCE_BASE_URL env override bypasses it (documented dev/staging escape hatch, the
 # user set it themselves).
 _ALLOWED_NASTECH_INFERENCE_HOSTS: FrozenSet[str] = frozenset({
-    "inference-api.nastechresearch.github.io",
+    "inference-api.nastech-agent.nastechresearch.workers.dev",
     # Free-tier (anonymous) host: serves the single ``nastech/welcome`` model.
-    "welcome-api.nastechresearch.github.io"})
+    "welcome-api.nastech-agent.nastechresearch.workers.dev"})
 
 def _nastech_inference_host_allowed(hostname: Optional[str]) -> bool:
     """Production hosts always; otherwise only the host the operator named in
@@ -1480,6 +1480,7 @@ def _pick_nastech_model_after_login(
         get_curated_nastech_model_ids,
         check_nastech_free_tier,
         partition_nastech_models_by_tier,
+        union_with_nastech_on_sale_models,
         union_with_portal_free_recommendations,
         union_with_portal_paid_recommendations,
     )
@@ -1509,6 +1510,9 @@ def _pick_nastech_model_after_login(
             union_with_portal_free_recommendations if free_tier
             else union_with_portal_paid_recommendations)
         model_ids, pricing = union(model_ids, pricing, _portal)
+        if not free_tier:
+            # Paid users also see every model on sale right now (same rule as `nastech model`).
+            model_ids = union_with_nastech_on_sale_models(model_ids, pricing)
         _before_policy = model_ids
         model_ids = restrict_to_nastech_policy(model_ids, _policy_allowed, rescue_empty=True)
         _policy_narrowed = model_ids != _before_policy
@@ -1644,4 +1648,4 @@ def _login_nastech(args, pconfig: ProviderConfig) -> None:
 
 
 def _portal_host(portal_url: Optional[str]) -> str:
-    return urlparse(portal_url or DEFAULT_NASTECH_PORTAL_URL).hostname or "portal.nastechresearch.github.io"
+    return urlparse(portal_url or DEFAULT_NASTECH_PORTAL_URL).hostname or "portal.nastech-agent.nastechresearch.workers.dev"

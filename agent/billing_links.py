@@ -63,7 +63,7 @@ _BY_SLUG: dict[str, _Provider] = {slug: p for p in _PROVIDERS for slug in p.slug
 
 def is_nastech_inference_route(provider: str, base_url: str) -> bool:
     """True when the failing route is the Nastech-managed inference gateway."""
-    return (provider or "").strip().lower() == "nastech" or base_url_host_matches(str(base_url or ""), "inference-api.nastechresearch.github.io")
+    return (provider or "").strip().lower() == "nastech" or base_url_host_matches(str(base_url or ""), "inference-api.nastech-agent.nastechresearch.workers.dev")
 
 
 def _nastech_billing_url() -> Optional[str]:
@@ -72,7 +72,7 @@ def _nastech_billing_url() -> Optional[str]:
         from nastech_cli.nastech_account import nastech_portal_billing_url
         return nastech_portal_billing_url(None)
     except Exception:
-        return "https://portal.nastechresearch.github.io/billing"
+        return "https://portal.nastech-agent.nastechresearch.workers.dev/billing"
 
 
 def _resolve_provider_link(slug: str, base_url: str) -> tuple[str, Optional[str]]:

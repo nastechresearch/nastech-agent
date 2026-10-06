@@ -95,6 +95,7 @@ export const hu: Translations = {
   status: {
     actionFailed: "Művelet sikertelen",
     actionFinished: "Befejezve",
+    actionFinishedOwed: "Frissítve, de még függőben (futtasd újra a `nastech update` parancsot a befejezéshez)",
     actions: "Műveletek",
     agent: "Ügynök",
     activeSessions: "Aktív munkamenetek",

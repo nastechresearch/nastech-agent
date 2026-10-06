@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { type ResolvedOwner, resolveOwnerNow } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { syncSttLease, VOICE_INPUT_LEASE } from '@/lib/stt-lease'
-import { type ResolvedOwner, resolveOwnerNow } from '@/nastech'
 import { recordFeatureUse } from '@/store/desktop-metrics'
 import { notify, notifyError } from '@/store/notifications'
 

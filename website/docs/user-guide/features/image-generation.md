@@ -30,7 +30,7 @@ Prices are FAL's pricing at time of writing; check [fal.ai](https://fal.ai/) for
 ## Setup
 
 :::tip Nastech Subscribers
-If you have a paid [Nastech Portal](https://portal.nastechresearch.github.io) subscription, you can use image generation through the **[Tool Gateway](tool-gateway.md)** without a FAL API key. Your model selection persists across both paths. New installs can run `nastech setup --portal` to log in and turn on every gateway tool at once; existing installs can pick **Nastech Subscription** as the image-gen backend via `nastech tools`.
+If you have a paid [Nastech Portal](https://portal.nastech-agent.nastechresearch.workers.dev) subscription, you can use image generation through the **[Tool Gateway](tool-gateway.md)** without a FAL API key. Your model selection persists across both paths. New installs can run `nastech setup --portal` to log in and turn on every gateway tool at once; existing installs can pick **Nastech Subscription** as the image-gen backend via `nastech tools`.
 
 The **Nastech Subscription** row is the only managed row. Its model picker spans every gateway the subscription runs — the FAL catalog above, native **Krea 2** (`krea-2-medium`, `krea-2-large`, `krea-2-medium-turbo`) and any Nastech Portal image models — each model listed once, and the model you pick decides which gateway serves the request. Free tool-pool accounts see the FAL models only; Krea and Portal models are paid-subscription. With a Krea 2 model selected, `image_generate` also offers Krea's `creativity` setting and its `intensity`, `complexity` and `movement` sliders (-100 to 100).
 

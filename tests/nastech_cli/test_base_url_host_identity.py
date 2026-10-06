@@ -85,10 +85,10 @@ def test_local_endpoint_hostname_detection():
 def test_nastech_portal_host_detection():
     from utils import base_url_host_matches
 
-    assert base_url_host_matches("https://inference-api.nastechresearch.github.io/v1", "nastechresearch.github.io")
-    assert base_url_host_matches("https://portal.nastechresearch.github.io", "nastechresearch.github.io")
-    assert not base_url_host_matches("https://nastechresearch.github.io.evil.io/v1", "nastechresearch.github.io")
-    assert not base_url_host_matches("https://proxy.example/nastechresearch.github.io/v1", "nastechresearch.github.io")
+    assert base_url_host_matches("https://inference-api.nastech-agent.nastechresearch.workers.dev/v1", "nastech-agent.nastechresearch.workers.dev")
+    assert base_url_host_matches("https://portal.nastech-agent.nastechresearch.workers.dev", "nastech-agent.nastechresearch.workers.dev")
+    assert not base_url_host_matches("https://nastech-agent.nastechresearch.workers.dev.evil.io/v1", "nastech-agent.nastechresearch.workers.dev")
+    assert not base_url_host_matches("https://proxy.example/nastech-agent.nastechresearch.workers.dev/v1", "nastech-agent.nastechresearch.workers.dev")
 
 
 # ── Widened class coverage (follow-up to #85737) ─────────────────────────────

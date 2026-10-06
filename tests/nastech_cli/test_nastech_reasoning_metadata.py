@@ -93,9 +93,9 @@ class TestNastechModelReasoningCapabilities:
         from nastech_cli.models_reasoning_caps import nastech_catalog_url
 
         monkeypatch.setenv(
-            "NASTECH_INFERENCE_BASE_URL", "https://staging.nastechresearch.github.io/v1"
+            "NASTECH_INFERENCE_BASE_URL", "https://staging.nastech-agent.nastechresearch.workers.dev/v1"
         )
-        assert nastech_catalog_url() == "https://staging.nastechresearch.github.io/v1/models"
+        assert nastech_catalog_url() == "https://staging.nastech-agent.nastechresearch.workers.dev/v1/models"
 
         monkeypatch.delenv("NASTECH_INFERENCE_BASE_URL")
         assert nastech_catalog_url().endswith("/v1/models")

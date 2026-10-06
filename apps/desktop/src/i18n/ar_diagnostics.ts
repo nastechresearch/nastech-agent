@@ -95,7 +95,7 @@ export const arDiagnostics = {
       inputTitleNamed: session => `مطلوب إدخال — ${session}`,
       inputBody: 'ينتظر Nastech ردّك.',
       turnDoneTitle: 'أنهى Nastech',
-      turnDoneBody: '',
+      turnDoneBody: 'اكتملت الرسالة.',
       turnErrorTitle: 'فشلت الجولة',
       backgroundDoneTitle: 'انتهت المهمة في الخلفية',
       backgroundFailedTitle: 'فشلت المهمة في الخلفية'

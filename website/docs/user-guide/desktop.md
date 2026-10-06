@@ -22,7 +22,7 @@ Pick whichever fits the moment. They share state, so you can start a session in 
 
 ## Install
 
-Download the app from the [Nastech Desktop product page](https://nastechresearch.github.io/nastech-agent/desktop), or follow the [installation instructions for Nastech Desktop](../getting-started/installation.md).
+Download the app from the [Nastech Desktop product page](https://nastech-agent.nastechresearch.workers.dev/desktop), or follow the [installation instructions for Nastech Desktop](../getting-started/installation.md).
 
 If you already have Nastech installed, simply run
 
@@ -372,7 +372,7 @@ The desktop app and the Nastech backend it talks to update on separate clocks �
 
 After any backend update, the app also re-checks its own version and warns with a one-click **Update desktop app** action if the GUI is still behind — so updating a remote backend can never silently leave you on a stale desktop build.
 
-The [manual update process](https://nastechresearch.github.io/nastech-agent/docs/getting-started/updating) also works with the GUI.
+The [manual update process](https://nastech-agent.nastechresearch.workers.dev/docs/getting-started/updating) also works with the GUI.
 
 ## Uninstalling
 
@@ -461,7 +461,7 @@ The connection has two halves: on the backend you protect it with an **auth prov
 
 **Pick a provider based on where the backend lives:**
 
-- **OAuth (Nastech Portal) — preferred for anything reachable beyond your own machine.** Logins are verified against your Nastech account, so this is the option suitable for a VPS, a public host, or any remote backend. Register the dashboard with `nastech dashboard register` (or the Portal [`/local-dashboards`](https://portal.nastechresearch.github.io/local-dashboards) page) to provision its OAuth client, then sign in from the app with **Sign in with Nastech Research**. A self-hosted OIDC provider works the same way if you run your own identity provider.
+- **OAuth (Nastech Portal) — preferred for anything reachable beyond your own machine.** Logins are verified against your Nastech account, so this is the option suitable for a VPS, a public host, or any remote backend. Register the dashboard with `nastech dashboard register` (or the Portal [`/local-dashboards`](https://portal.nastech-agent.nastechresearch.workers.dev/local-dashboards) page) to provision its OAuth client, then sign in from the app with **Sign in with Nastech Research**. A self-hosted OIDC provider works the same way if you run your own identity provider.
 - **Username/password — local / trusted-network use only.** The simplest option when the backend is on the same trusted LAN or reachable only over a VPN (e.g. Tailscale). It protects a single shared credential with no external identity provider, so **do not use it for a dashboard exposed to the public internet** — reach for OAuth there instead.
 
 The rest of this section shows the username/password path because it's the quickest to stand up on a trusted network; for the OAuth path see [Web Dashboard → Default provider: Nastech Research](./features/web-dashboard.md#default-provider-nastech-research).

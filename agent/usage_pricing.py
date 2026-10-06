@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 _ZERO = Decimal("0")
 _ONE_MILLION = Decimal("1000000")
-_NASTECH_DEFAULT_BASE_URL = "https://inference-api.nastechresearch.github.io/v1"
+_NASTECH_DEFAULT_BASE_URL = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 # Pay-per-token first-party APIs whose models.dev rate card is the vendor's own
 # list price, keyed by billing-route provider -> API domain. A model missing from
 # the snapshot below is priced from models.dev only on HTTPS:443 to that domain
@@ -409,7 +409,7 @@ def resolve_billing_route(
         return BillingRoute(provider="openai-codex", model=model, base_url=url, billing_mode="subscription_included")
     if provider_name == "openrouter" or host("openrouter.ai"):
         return BillingRoute(provider="openrouter", model=model, base_url=url, billing_mode="official_models_api")
-    if provider_name == "nastech" or host("inference-api.nastechresearch.github.io"):
+    if provider_name == "nastech" or host("inference-api.nastech-agent.nastechresearch.workers.dev"):
         return BillingRoute(provider="nastech", model=model, base_url=base_url or _NASTECH_DEFAULT_BASE_URL, billing_mode="official_models_api")
     snapshot_provider = _SNAPSHOT_PROVIDER_ALIASES.get(provider_name)
     if snapshot_provider is None:

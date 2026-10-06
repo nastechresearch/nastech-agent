@@ -10,7 +10,7 @@ from providers import register_provider
 from providers.base import OMIT_TEMPERATURE, ProviderProfile
 
 _HEADERS = {
-    "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
+    "HTTP-Referer": "https://nastech-agent.nastechresearch.workers.dev",
     "X-Title": "Nastech Agent",
     "User-Agent": f"NastechAgent/{get_version_info().base_version}",
     # Exclude brotli: httpx's brotlicffi backend has a streaming decode bug on

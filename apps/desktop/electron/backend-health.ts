@@ -118,7 +118,7 @@ export function isServerSideHttpError(error: unknown): {
  *    runs BEFORE the readiness loop; and
  *  - readiness-probe exhaustion in waitForNastechReady().
  *
- * Returns null unless the backend is a *.agents.nastechresearch.github.io host AND the
+ * Returns null unless the backend is a *.agents.nastech-agent.nastechresearch.workers.dev host AND the
  * error classifies as 502/503/504. When it matches, returns an error carrying:
  * isCloudBackendDown, statusCode, detail, and the original cause. The renderer
  * overlay keys on isCloudBackendDown/statusCode; main owns the classification.
@@ -148,7 +148,7 @@ export function makeNastechCloudBackendDownError(baseUrl: string, error: unknown
   const err = new Error(
     `Nastech Cloud agent ${hostname} is down ` +
       `(HTTP ${serverError.statusCode}: server-side fault). ` +
-      'Check https://portal.nastechresearch.github.io for backend status, ' +
+      'Check https://portal.nastech-agent.nastechresearch.workers.dev for backend status, ' +
       'or switch to Local mode in Settings → Gateway. ' +
       'You can also reach out on Discord at discord.gg/NastechResearch ' +
       'for immediate assistance. ' +
@@ -165,7 +165,7 @@ export function makeNastechCloudBackendDownError(baseUrl: string, error: unknown
 
 /**
  * True when the backend URL points at a Nastech-managed Nastech Cloud instance
- * (e.g. ares-3009.agents.nastechresearch.github.io). These are Fly.io-hosted machines
+ * (e.g. ares-3009.agents.nastech-agent.nastechresearch.workers.dev). These are Fly.io-hosted machines
  * the user cannot restart themselves — a 503 from one means the server is down
  * and the recovery path is Portal/Discord/wait.
  */
@@ -173,7 +173,7 @@ export function isNastechCloudAgentUrl(baseUrl: string): boolean {
   try {
     const host = new URL(baseUrl).hostname
 
-    return host.endsWith('.agents.nastechresearch.github.io')
+    return host.endsWith('.agents.nastech-agent.nastechresearch.workers.dev')
   } catch {
     return false
   }

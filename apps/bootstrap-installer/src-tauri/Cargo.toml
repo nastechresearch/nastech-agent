@@ -2,7 +2,7 @@
 name = "nastech-bootstrap"
 version = "0.0.0"
 description = "Nastech Setup — signed installer that drives scripts/install.ps1"
-authors = ["Nastech Research <info@nastechresearch.github.io>"]
+authors = ["Nastech Research <info@nastech-agent.nastechresearch.workers.dev>"]
 edition = "2021"
 rust-version = "1.77"
 
@@ -61,7 +61,9 @@ uuid = { version = "1", features = ["v4"] }
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",
+    "Win32_Storage_FileSystem",
     "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_IO",
     "Win32_System_Threading",
     "Win32_System_Console",
     "Win32_UI_WindowsAndMessaging",

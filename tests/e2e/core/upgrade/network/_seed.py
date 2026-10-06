@@ -10,7 +10,7 @@ a real fetch, checkout and rebuild, never the "already current" branch.
 After the seed the sandbox loses the ``insteadOf`` rewrite: the checkout's origin is the official
 ``https://github.com/NastechResearch/nastech-agent.git`` again, and inside the namespace the only way
 to reach it is the test's proxy, which routes ``github.com`` to a git smart-HTTP server over the
-same bare origin. The partial clone (``--filter=tree:0``) makes every lazy tree/blob fetch of the
+same bare origin. The partial clone (``--filter=blob:none``) makes every lazy blob fetch of the
 checkout cross that proxy too.
 
 ``Installed.run(..., edge=...)`` runs one command under ``bwrap --unshare-net``: no route, no
@@ -35,7 +35,7 @@ from tests.e2e.core.upgrade import _helpers as H
 from tests.e2e.core.upgrade import _install_helpers as I
 from tests.e2e.core.upgrade.network import _netedge as N
 
-ASSETS = "nastech-assets.nastechresearch.github.io"
+ASSETS = "nastech-assets.nastech-agent.nastechresearch.workers.dev"
 REPOSITORY = "NastechResearch/nastech-agent"
 # Hosts a correctly isolated update must never reach directly; with the proxy they appear in
 # the proxy log as "refused" (the proxy has no route for them).
@@ -213,7 +213,7 @@ def assert_isolated(inst: Installed) -> None:
     probe = (
         "import socket,sys\n"
         "bad=[]\n"
-        "for host in ('github.com','pypi.org','nastech-assets.nastechresearch.github.io'):\n"
+        "for host in ('github.com','pypi.org','nastech-assets.nastech-agent.nastechresearch.workers.dev'):\n"
         "    try: socket.getaddrinfo(host,443); bad.append('dns:'+host)\n"
         "    except OSError: pass\n"
         "for ip in ('140.82.112.3','1.1.1.1'):\n"
@@ -231,7 +231,7 @@ def assert_isolated(inst: Installed) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Release-channel records (the R2 objects under https://nastech-assets.nastechresearch.github.io/).
+# Release-channel records (the R2 objects under https://nastech-assets.nastech-agent.nastechresearch.workers.dev/).
 # ---------------------------------------------------------------------------
 
 def canonical(value: object) -> bytes:

@@ -24,7 +24,7 @@ from nastech_cli.proxy.adapters.base import UpstreamAdapter, UpstreamCredential
 
 logger = logging.getLogger(__name__)
 
-# Endpoints inference-api.nastechresearch.github.io actually serves; anything else is a 404 so stray
+# Endpoints inference-api.nastech-agent.nastechresearch.workers.dev actually serves; anything else is a 404 so stray
 # clients cannot leak odd requests upstream.
 _ALLOWED_PATHS: FrozenSet[str] = frozenset({"/chat/completions", "/completions", "/embeddings", "/models"})
 

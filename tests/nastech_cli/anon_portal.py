@@ -14,7 +14,7 @@ import time
 
 import httpx
 
-WELCOME = "https://welcome-api.nastechresearch.github.io/v1"
+WELCOME = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
 PORTAL = "https://portal.example.test"
 
 

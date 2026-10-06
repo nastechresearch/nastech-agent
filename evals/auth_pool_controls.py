@@ -90,7 +90,7 @@ def main():
                         row.update(auth_type="oauth", source="manual:device_code")
                     state = dict(access_token=token("singleton"), refresh_token="fixture-refresh-1",
                                  expires_at=now+3600, portal_base_url=f"http://127.0.0.1:{server.server_port}",
-                                 scope="inference:invoke", inference_base_url="https://inference-api.nastechresearch.github.io/v1")
+                                 scope="inference:invoke", inference_base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1")
                     rows[1].update(source="device_code", **state)
                     providers["nastech"] = state
                 store = home / "auth.json"

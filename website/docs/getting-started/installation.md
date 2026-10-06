@@ -17,7 +17,7 @@ platform-gated features are supported), see **[Platform Support](./platform-supp
 ### Desktop packages on macOS or Windows
 
 Download the package for your platform from the
-[Nastech website](https://nastechresearch.github.io/nastech-agent/).
+[Nastech website](https://nastech-agent.nastechresearch.workers.dev/).
 
 - **Windows:** open the `.appinstaller` download with Windows App Installer.
   It installs the signed MSIX bundle and records its update source.
@@ -42,14 +42,14 @@ For a command-line only install without Nastech Desktop, run:
 
 #### Linux / macOS / WSL2
 ```bash
-curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash
 ```
 
 #### Windows (native)
 
 Run in powershell:
 ```powershell
-iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1) 
+iex (irm https://nastech-agent.nastechresearch.workers.dev/install.ps1) 
 ```
 
 If you want to install & run Nastech Desktop after a command-line only install, simply run
@@ -201,7 +201,7 @@ configuration, and launcher must belong to that user.
 2. As the service user, run the regular installer:
 
    ```bash
-   curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
+   curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash
    ```
 
 3. Add the actual launcher directory to the service user's shell environment:

@@ -338,7 +338,7 @@ class TestDelegateTask(unittest.TestCase):
 
     def _nastech_child_rederives_api_mode_from_model(self):
         parent = _make_mock_parent(depth=0)
-        parent.base_url = "https://inference-api.nastechresearch.github.io/v1"
+        parent.base_url = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
         parent.api_key = "portal-jwt"
         parent.provider = "nastech"
         parent.api_mode = "anthropic_messages"
@@ -1001,7 +1001,7 @@ class TestDelegationProviderIntegration(unittest.TestCase):
         }
         parent = _make_mock_parent(depth=0)
         parent.provider = "nastech"
-        parent.base_url = "https://inference-api.nastechresearch.github.io/v1"
+        parent.base_url = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
         parent.api_key = "nastech-key-abc"
 
         with patch("run_agent.AIAgent") as MockAgent:

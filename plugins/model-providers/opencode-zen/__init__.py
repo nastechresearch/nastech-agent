@@ -14,7 +14,7 @@ from providers.base import ProviderProfile
 # Attribution headers (same values as OpenRouter / Vercel / Fireworks); via
 # default_headers so they survive model switches and credential rotation.
 _ATTRIBUTION_HEADERS = {
-    "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
+    "HTTP-Referer": "https://nastech-agent.nastechresearch.workers.dev",
     "X-Title": "Nastech Agent",
     "User-Agent": f"NastechAgent/{get_version_info().base_version}",
 }

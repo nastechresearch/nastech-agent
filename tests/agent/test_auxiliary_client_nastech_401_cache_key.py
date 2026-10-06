@@ -14,7 +14,7 @@ import pytest
 import agent.auxiliary_client as ac
 
 
-NASTECH_BASE_URL = "https://inference-api.nastechresearch.github.io/v1"
+NASTECH_BASE_URL = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
 
 
 @pytest.fixture(autouse=True)
