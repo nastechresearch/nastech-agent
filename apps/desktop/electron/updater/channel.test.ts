@@ -236,12 +236,14 @@ test('protected canary accepts bounded Windows revisions without relaxing stable
   f.manifest.request.version = f.manifest.request.releaseTag.slice(1)
   f.manifest.request.windowsVersion = '1.2.4.10'
   f.publish()
+
   const resolver = new ChannelResolver({
     build: f.build,
     platform: 'win32',
     arch: 'x64',
     signer: 'CN=Nastech Research'
   })
+
   expect((await resolver.resolve()).kind).toBe('active')
 
   for (const version of ['1.2.4.65536', '65536.2.4.0', '1.2.4.-1', '1.2.4.1.0', '1.2.4.x']) {
