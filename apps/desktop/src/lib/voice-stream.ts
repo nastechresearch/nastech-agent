@@ -1,5 +1,5 @@
-import type { ResolvedOwner } from '@/nastech'
 import { resolveSiblingWsUrl } from '@/lib/sibling-ws-url'
+import type { ResolvedOwner } from '@/nastech'
 
 /**
  * Live dictation STT: mic PCM streams to the host's `/api/audio/transcribe-stream` WebSocket

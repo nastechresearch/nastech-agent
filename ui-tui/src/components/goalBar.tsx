@@ -1,5 +1,5 @@
-import { stringWidth, Text } from '@nastech/ink'
 import { useStore } from '@nanostores/react'
+import { stringWidth, Text } from '@nastech/ink'
 
 import { type GoalLine, useGoalLine } from '../app/goalStatus.js'
 import { $uiState } from '../app/uiStore.js'

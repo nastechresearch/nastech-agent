@@ -175,9 +175,7 @@ describe('deriveBillingView', () => {
     expect(view.status).toBe('normal')
     expect(view.paymentRow?.value).toBe('Visa •••• 4242 - subscription card')
     expect(view.topupRow?.chips?.map(chip => chip.label)).toEqual(['$25', '$50', '$100'])
-    expect(view.plan?.link?.url).toBe(
-      'https://portal.nastechresearch.github.io/manage-subscription?org_id=org_123'
-    )
+    expect(view.plan?.link?.url).toBe('https://portal.nastechresearch.github.io/manage-subscription?org_id=org_123')
     expect(view.usageRows.find(row => row.id === 'subscription_credits')).toMatchObject({
       bar: { value: 0.4 },
       value: '$40 of $100 left'

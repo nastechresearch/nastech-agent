@@ -114,9 +114,7 @@ describe('useStepUpFlow', () => {
     })
 
     result.current.openVerification()
-    expect(window.nastechDesktop?.openExternal).toHaveBeenCalledWith(
-      'https://portal.nastechresearch.github.io/device'
-    )
+    expect(window.nastechDesktop?.openExternal).toHaveBeenCalledWith('https://portal.nastechresearch.github.io/device')
 
     await act(async () => {
       resolveStepUp({ data: { granted: true, ok: true }, ok: true })

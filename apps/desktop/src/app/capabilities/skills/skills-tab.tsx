@@ -1,5 +1,5 @@
-import { compactNumber } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { compactNumber } from '@nastech/shared'
 import { useQuery } from '@tanstack/react-query'
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 
@@ -7,6 +7,12 @@ import { ArchiveSkillConfirmDialog } from '@/app/learning/archive-skill-confirm-
 import { CodeEditor } from '@/components/chat/code-editor'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/i18n'
+import { Loader2 } from '@/lib/icons'
+import { Codecs, persistentAtom } from '@/lib/persisted'
+import { queryClient } from '@/lib/query-client'
+import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
+import { useStoreSelector } from '@/lib/use-session-slice'
 import {
   editLearningNode,
   getLearningNode,
@@ -15,12 +21,6 @@ import {
   profileScopeKey,
   setSkillEnabled
 } from '@/nastech'
-import { useI18n } from '@/i18n'
-import { Loader2 } from '@/lib/icons'
-import { Codecs, persistentAtom } from '@/lib/persisted'
-import { queryClient } from '@/lib/query-client'
-import { invalidateSlashCompletions } from '@/lib/slash-completion-cache'
-import { useStoreSelector } from '@/lib/use-session-slice'
 import { $hubActions, installHubSkill, notifyHubActionFailed, OFFICIAL_SKILLS_KEY } from '@/store/hub-actions'
 import { notify, notifyError } from '@/store/notifications'
 import type { OfficialSkillInfo, SkillInfo } from '@/types/nastech'
