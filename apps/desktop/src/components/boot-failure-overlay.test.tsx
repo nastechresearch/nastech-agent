@@ -249,6 +249,7 @@ describe('BootFailureOverlay', () => {
     const gatewayUrl = 'https://agent-1.agents.nastechresearch.github.io'
     const logout = vi.fn().mockResolvedValue({ ok: true, connected: false })
     const nativeLogin = vi.fn().mockResolvedValue({ ok: true, connected: false })
+
     const cloudStatus = vi
       .fn()
       .mockResolvedValue({ portalBaseUrl: 'https://portal.nastechresearch.github.io', signedIn: false })
@@ -296,8 +297,7 @@ describe('BootFailureOverlay', () => {
   it('shows the Nastech Cloud down recovery when the backend flags isCloudBackendDown', async () => {
     const restore = stubDesktop(remoteToken)
     $desktopBoot.set({
-      error:
-        'Nastech Cloud agent ares-3009.agents.nastechresearch.github.io is down (HTTP 503: server-side fault).',
+      error: 'Nastech Cloud agent ares-3009.agents.nastechresearch.github.io is down (HTTP 503: server-side fault).',
       fakeMode: false,
       isCloudBackendDown: true,
       message: 'boot failed',

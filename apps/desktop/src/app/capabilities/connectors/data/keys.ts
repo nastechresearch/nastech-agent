@@ -1,5 +1,5 @@
-import { type ProfileScope, profileScopeKey } from '@/nastech'
 import { queryClient } from '@/lib/query-client'
+import { type ProfileScope, profileScopeKey } from '@/nastech'
 
 export type ConnectorRead = 'accounts' | 'catalog' | 'list' | 'policy' | 'tools'
 

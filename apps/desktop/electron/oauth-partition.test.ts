@@ -84,9 +84,9 @@ describe('resolveOauthPartition (#92183 per-connection cookie jars)', () => {
       }
     ])
 
-    expect(
-      resolveOauthPartition('https://agent.nastechresearch.github.io/api/status', { registry: reg })
-    ).toBe(LEGACY_OAUTH_PARTITION)
+    expect(resolveOauthPartition('https://agent.nastechresearch.github.io/api/status', { registry: reg })).toBe(
+      LEGACY_OAUTH_PARTITION
+    )
   })
 
   it('keeps token-auth registry remotes on the legacy partition (no cookies involved)', () => {
@@ -98,9 +98,9 @@ describe('resolveOauthPartition (#92183 per-connection cookie jars)', () => {
   it('falls back to the legacy partition for unmatched, portal, and malformed inputs', () => {
     const reg = registry('local', [remote('conn-a', 'https://gw-a.example.com')])
 
-    expect(
-      resolveOauthPartition('https://portal.nastechresearch.github.io/api/agents', { registry: reg })
-    ).toBe(LEGACY_OAUTH_PARTITION)
+    expect(resolveOauthPartition('https://portal.nastechresearch.github.io/api/agents', { registry: reg })).toBe(
+      LEGACY_OAUTH_PARTITION
+    )
     expect(resolveOauthPartition('not a url', { registry: reg })).toBe(LEGACY_OAUTH_PARTITION)
     expect(resolveOauthPartition('', { registry: reg })).toBe(LEGACY_OAUTH_PARTITION)
     expect(resolveOauthPartition('https://gw-a.example.com', { registry: null as any })).toBe(LEGACY_OAUTH_PARTITION)
