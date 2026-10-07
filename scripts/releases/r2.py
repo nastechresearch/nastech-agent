@@ -141,6 +141,9 @@ def auth_header(
 # ---------------------------------------------------------------------------
 
 def s3_endpoint(account_id: str) -> str:
+    override = os.environ.get("NASTECH_S3_ENDPOINT")
+    if override:
+        return override.rstrip("/")
     return f"https://{account_id}.r2.cloudflarestorage.com"
 
 
