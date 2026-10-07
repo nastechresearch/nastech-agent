@@ -74,6 +74,12 @@ const config: Config = {
         ],
       },
     ],
+    [
+      'vercel-analytics',
+      {
+        mode: 'auto',
+      },
+    ],
   ],
 
   presets: [
