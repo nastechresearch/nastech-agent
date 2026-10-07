@@ -8,8 +8,8 @@ const config: Config = {
   tagline: 'The self-improving AI agent',
   favicon: 'img/favicon.ico',
 
-  url: 'https://nastechresearch.github.io',
-  baseUrl: '/nastech-agent/docs/',
+  url: 'https://nastech-agent-docs.vercel.app',
+  baseUrl: '/docs/',
 
   organizationName: 'NastechResearch',
   projectName: 'nastech-agent',
