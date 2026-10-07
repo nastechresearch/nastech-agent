@@ -70,7 +70,7 @@ test('applyBundleEnvironment replays the banner semantics for defaults, runtime 
 
 test('baked defaults precede imported module initialization and reach children without overriding explicit env', async () => {
   const root = mkdtempSync(join(tmpdir(), 'nastech-bundle-env-'))
-  const defaults = { NASTECH_GUEST_ONBOARDING: '1', NASTECH_DATA_DIR_SUFFIX: 'magic-test', NASTECH_SHARED_AUTH_DIR: 'a=b "q"\n$(no)', NASTECH_SKIP_INTRO: '' }
+  const defaults = { NASTECH_GUEST_ONBOARDING: '1', NASTECH_DATA_DIR_SUFFIX: 'magic-test', NASTECH_SHARED_AUTH_DIR: 'a=b "q"\n$(no)', NASTECH_DESKTOP_USER_DATA_DIR: '' }
   const env = { ...process.env }
   for (const key of Object.keys(defaults)) {
     delete env[key]
@@ -85,7 +85,7 @@ test('baked defaults precede imported module initialization and reach children w
     expect(run({})).toEqual({ values: defaults, child: defaults.NASTECH_DATA_DIR_SUFFIX })
     expect(run({ NASTECH_DATA_DIR_SUFFIX: '-explicit', NASTECH_GUEST_ONBOARDING: '' })).toEqual({ values: { ...defaults, NASTECH_DATA_DIR_SUFFIX: '-explicit', NASTECH_GUEST_ONBOARDING: '' }, child: '-explicit' })
     for (const bad of ['[]', 'null', '{"BAD-NAME":"x"}', '{"NASTECH_HOME":1}', '{"NASTECH_HOME":"\\u0000"}',
-      '{"NODE_OPTIONS":"--require=evil"}', '{"PATH":null}', '{"NASTECH_PYTHON":"/untrusted/python"}']) {
+      '{"NODE_OPTIONS":"--require=evil"}', '{"PATH":null}', '{"NASTECH_PYTHON":"/untrusted/python"}', '{"NASTECH_SKIP_INTRO":"1"}']) {
       expect(() => environmentDefaultsBanner(bad)).toThrow()
     }
   } finally {

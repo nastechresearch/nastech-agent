@@ -187,8 +187,8 @@ For local commit builds, `NASTECH_BUNDLE_ENV_JSON` accepts a JSON object whose
 string values are defaults and whose `null` values are explicit clears. For example,
 `{"NASTECH_HOME":null,"NASTECH_DATA_DIR_SUFFIX":"magic-test"}`. Only
 `NASTECH_HOME`, `NASTECH_DATA_DIR_SUFFIX`, `NASTECH_DESKTOP_USER_DATA_DIR`,
-`NASTECH_SHARED_AUTH_DIR`, `NASTECH_GUEST_ONBOARDING`, and `NASTECH_SKIP_INTRO`
-are accepted. Process-control variables such as `NODE_OPTIONS` and `PATH`
+`NASTECH_SHARED_AUTH_DIR`, `NASTECH_GUEST_ONBOARDING`, and
+`NASTECH_PREVIEW_FULL_CONNECTORS` are accepted. Process-control variables such as `NODE_OPTIONS` and `PATH`
 are rejected. These settings are not applied to the build runner itself.
 Commit archive keys still use the SHA, so use a fresh commit for different
 defaults: an existing artifact is never overwritten with different bytes.

@@ -31,15 +31,32 @@
   ...
 }:
 let
-  # Each flag goes on its own continued line, and the leading backslash is
-  # inside the generated string. An empty attribute set then adds no text at
-  # all, and cannot leave a backslash above a blank line. That fault ends the
-  # makeWrapper command early, and the next flag runs as a shell command.
-  extraEnvFlags = lib.concatMapStrings (
-    name: " \\\n      --set ${name} ${lib.escapeShellArg (toString extraEnv.${name})}"
-  ) (lib.attrNames extraEnv);
+  wrapperEnv = {
+    # set NASTECH_DESKTOP_NASTECH to the absolute path of the nix-built `nastech`
+    # binary so the deployment override selects our fully wrapped nastech install.
+    NASTECH_DESKTOP_NASTECH = lib.getExe nastechAgent;
+    ELECTRON_IS_DEV = "0";
+  }
+  # extraEnv overrides the defaults
+  // extraEnv;
 
-  extraRunFlags = lib.concatMapStrings (line: " \\\n      --run ${lib.escapeShellArg line}") extraRun;
+  wrapperArgs = [
+    "--add-flags"
+    "--enable-features=WaylandWindowDecorations"
+    "--add-flags"
+    "${placeholder "out"}/share/nastech-desktop"
+  ]
+  ++ lib.concatLists (
+    lib.mapAttrsToList (name: value: [
+      "--set"
+      name
+      (toString value)
+    ]) wrapperEnv
+  )
+  ++ lib.concatMap (line: [
+    "--run"
+    line
+  ]) extraRun;
 
   # node-pty ships no Electron-tagged prebuild we can trust to match this
   # exact nixpkgs electron version, so it's always compiled from source
@@ -172,17 +189,9 @@ stdenv.mkDerivation {
     substituteInPlace $out/share/nastech-desktop/dist/electron-main.mjs \
       --replace-fail "process.resourcesPath" "'$out/share/nastech-desktop'"
 
-    # Wrap the nixpkgs electron binary to launch our app.  Set
-    # NASTECH_DESKTOP_NASTECH to the absolute path of the nix-built `nastech`
-    # binary so the deployment override selects our fully wrapped binary
-    # before any mutable managed install — venv with all deps,
-    # bundled skills/plugins, runtime PATH (ripgrep/git/ffmpeg/etc).
-    # No reimplementation of the agent resolver in the wrapper.
+    # Wrap the nixpkgs electron binary to launch our app.
     makeWrapper ${lib.getExe electron} $out/bin/nastech-desktop \
-      --add-flags "$out/share/nastech-desktop" \
-      --set NASTECH_DESKTOP_NASTECH "${lib.getExe nastechAgent}" \
-      --set-default ELECTRON_OZONE_PLATFORM_HINT auto \
-      --set ELECTRON_IS_DEV 0${extraEnvFlags}${extraRunFlags}
+      ${lib.escapeShellArgs wrapperArgs}
 
     # XDG launcher entry
     mkdir -p $out/share/applications $out/share/icons/hicolor/1024x1024/apps

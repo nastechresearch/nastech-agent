@@ -70,7 +70,7 @@ def test_failed_commit_summary_publishes_downloads_or_run_links(tmp_path, r2_ser
     summary = tmp_path / 'summary.md'
     jobs = _workflow()['jobs']
     summary_job = commit_summary(jobs)
-    bundle_env = {'NASTECH_HOME': None, 'NASTECH_SKIP_INTRO': '',
+    bundle_env = {'NASTECH_HOME': None, 'NASTECH_DESKTOP_USER_DATA_DIR': '',
                   'NASTECH_SHARED_AUTH_DIR': '<script>\n"café" & value</script>'}
     env = dict(NASTECH_BUILD_COMMIT=sha, NASTECH_PAYLOAD_TAG='', RELEASE_COMMIT=sha,
                GITHUB_REPOSITORY='fixture-owner/fixture-repo',
@@ -97,7 +97,7 @@ def test_failed_commit_summary_publishes_downloads_or_run_links(tmp_path, r2_ser
         page = response.read().decode()
     assert f'href="https://github.com/fixture-owner/fixture-repo/commit/{sha}"' in page
     assert 'Bundle environment' in page and 'NASTECH_HOME' in page and 'Unset' in page
-    assert '<code>NASTECH_SKIP_INTRO</code></td><td><code>&quot;&quot;</code>' in page
+    assert '<code>NASTECH_DESKTOP_USER_DATA_DIR</code></td><td><code>&quot;&quot;</code>' in page
     assert html.escape(json.dumps(bundle_env['NASTECH_SHARED_AUTH_DIR'], ensure_ascii=False)) in page
     assert '<script>' not in page and 'must-not-appear' not in page and 'CI_SECRET' not in page
     links = re.findall(r'\]\((https?://[^)]+)\)', text)

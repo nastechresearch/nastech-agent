@@ -57,6 +57,9 @@ export const arBoot = {
   remoteDisplayBanner: {
     message: reason => `العرض البرمجي نشط — تم اكتشاف شاشة بعيدة (${reason}). تم تعطيل تسريع GPU لمنع الوميض.`
   },
+  butterbar: {
+    goTo: (index, total) => `عرض الإشعار ${index} من ${total}`
+  },
   updates: {
     discontinuedTitle: 'لم يعد إصدار Nastech هذا مدعومًا',
     discontinuedBody: 'لم يعد إصدار Nastech هذا مدعومًا وقد يتوقف عن العمل — ألغِ تثبيته. ستبقى بياناتك على القرص.',
@@ -306,8 +309,7 @@ export const arBoot = {
     copyAuthCode: 'انسخ رمز التفويض وألصقه أدناه.',
     pasteAuthCode: 'ألصق رمز التفويض',
     reopenAuthPage: 'إعادة فتح صفحة التفويض',
-    autoBrowser: provider =>
-      `فتحنا ${provider} في المتصفح. صرّح لـ Nastech هناك وسيتم الاتصال تلقائياً دون نسخ أو لصق.`,
+    autoBrowser: provider => `فتحنا ${provider} في المتصفح. صرّح لـ Nastech هناك وسيتم الاتصال تلقائياً دون نسخ أو لصق.`,
     reopenSignInPage: 'إعادة فتح صفحة تسجيل الدخول',
     waitingAuthorize: 'بانتظار التفويض...',
     externalPending: provider =>
@@ -327,5 +329,5 @@ export const arBoot = {
   }
 } satisfies Pick<
   TranslationOverrides,
-  'boot' | 'remoteDisplayBanner' | 'updates' | 'guidedGreeting' | 'install' | 'onboarding'
+  'boot' | 'remoteDisplayBanner' | 'butterbar' | 'updates' | 'guidedGreeting' | 'install' | 'onboarding'
 >

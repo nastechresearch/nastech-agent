@@ -22,6 +22,10 @@ if __name__ == "__main__":
 
 from pm.environments import owning_home_root, store_root
 
+# ``sys`` attribute a launcher sets before ``import nastech_bootstrap``: pin NASTECH_HOME to the
+# install's default root once the launch-time repair ran (``nastech_bootstrap._pin_launcher_home``).
+PIN_DEFAULT_HOME_FLAG = "_nastech_pin_default_home"
+
 
 def _inline_string_literal(value: str) -> str:
     """Keep inline Python source intact through Windows PowerShell's native argv quoting."""
@@ -44,15 +48,24 @@ def runtime_command(repo_root: Path, args=(), *, module: str = "nastech_cli.main
     python = python or resolve_store_python(root) or Path(sys.executable)
     entry = f"exec({_inline_string_literal(code)})" if code is not None else (
         f"runpy.run_module({_inline_string_literal(module)}, run_name='__main__', alter_sys=True)")
-    default_home = (_inline_string_literal(str(home)) if home is not None else
-                    "str(__import__('nastech_constants').get_default_nastech_root())")
+    # A literal home is pinned up front; the default one needs ``nastech_constants`` from the
+    # checkout, so it is pinned only after ``nastech_bootstrap``'s launch-time repair (see
+    # ``_launcher_script``), here again for a bootstrap that predates that hook.
+    if home is not None:
+        pin, settle = (f"os.environ['NASTECH_HOME'] = os.environ.get('NASTECH_HOME') or "
+                       f"{_inline_string_literal(str(home))}; "), ""
+    else:
+        pin = f"sys.{PIN_DEFAULT_HOME_FLAG} = True; "
+        settle = ("os.environ.get('NASTECH_HOME') or os.environ.__setitem__('NASTECH_HOME', "
+                  "str(__import__('nastech_constants').get_default_nastech_root())); ")
     bootstrap = (
         "import os, sys, runpy; "
         "os.environ.pop('PYTHONHOME', None); os.environ.pop('PYTHONPATH', None); "
         "os.environ.pop('VIRTUAL_ENV', None); "
         f"sys.path.insert(0, {_inline_string_literal(str(root))}); "
-        f"os.environ['NASTECH_HOME'] = os.environ.get('NASTECH_HOME') or {default_home}; "
-        "import nastech_bootstrap; "
+        + pin
+        + "import nastech_bootstrap; "
+        + settle
         + entry
     )
     return [str(python), "-I", "-c", bootstrap, *args]
@@ -292,24 +305,170 @@ def mint_launcher(
     return _write_atomic(out_dir / f"{name}.cmd", lambda p: p.write_text(body, encoding="utf-8"))
 
 
+# A killed move can tear the repair's own code (``nastech_bootstrap``, ``nastech_cli``). With the
+# marker still there, a launcher whose checkout import failed runs the copy of the repair that the
+# updater published beside the marker (``update_cmd_commit.publish_recovery_closure``) once every
+# file hashes to the blob id its manifest names; a missing, torn or foreign closure (or none, from
+# an updater predating it) is rebuilt from git's objects at the marker's ``pre`` with the recorded
+# git or an absolute PATH entry (never one from the current directory) and verified the same way.
+# Stdlib plus that copy only, under the same claim and checkout lock (a live writer still refuses,
+# which exits 1 with the repair's own reason), then a relaunch from the restored tree.
+_CLOSURE_REPAIR = """\
+def _nastech_closure_repair():
+    import contextlib, hashlib, io, shutil, subprocess
+    from pathlib import Path
+    root = Path(__ROOT__)
+    git = root / '.git'
+    try:
+        if git.is_file():
+            text = git.read_text(encoding='utf-8-sig').strip()
+            git = root / text[7:].strip() if text.startswith('gitdir:') else git
+        fields = dict(line.partition('=')[::2] for line in (git / __MARKER__).read_text(encoding='utf-8-sig').splitlines())
+    except OSError:
+        return
+    pre = fields.get('pre', '').strip()
+    if not re.fullmatch('[0-9a-f]{40}|[0-9a-f]{64}', pre):
+        return
+    closure = git / __CLOSURE_DIR__ / pre
+    files = (*__CLOSURE__, __INIT__)
+
+    def blob_id(data):
+        return hashlib.new('sha1' if len(pre) == 40 else 'sha256', b'blob %d\\0' % len(data) + data).hexdigest()
+
+    def verified():
+        try:
+            listed = dict(line.split(' ', 1)[::-1] for line in (closure / __MANIFEST__).read_text(encoding='utf-8-sig').splitlines())
+            return (set(listed) == set(files) and listed[__INIT__] == blob_id(b'')
+                    and all(blob_id((closure / rel).read_bytes()) == oid for rel, oid in listed.items()))
+        except (OSError, ValueError):
+            return False
+
+    if not verified():
+        exe = fields.get('git', '').strip()
+        if not (os.path.isabs(exe) and os.path.isfile(exe)):
+            names = ('git.exe',) if os.name == 'nt' else ('git',)
+            exe = next((os.path.join(d, n) for d in os.environ.get('PATH', '').split(os.pathsep) if os.path.isabs(d)
+                        for n in names if os.path.isfile(os.path.join(d, n))), '')
+        if not exe:
+            return
+
+        def git_out(*args):
+            done = subprocess.run([exe, '--no-replace-objects', '-C', str(root), *args], capture_output=True, timeout=60,
+                                  stdin=subprocess.DEVNULL, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            if done.returncode != 0:
+                raise OSError(done.stderr)
+            return done.stdout
+
+        staging = closure.with_name('.%s.%d.launch' % (pre, os.getpid()))
+        try:
+            ids = {}
+            for entry in git_out('ls-tree', '-z', '--full-tree', pre, '--', *__CLOSURE__).split(b'\\0'):
+                meta, _, rel = entry.decode('utf-8', 'replace').partition('\\t')
+                if meta.split()[1:2] == ['blob']:
+                    ids[rel] = meta.split()[2]
+            blobs = {__INIT__: b''}
+            for rel in __CLOSURE__:
+                blobs[rel] = git_out('cat-file', 'blob', ids[rel])
+                if blob_id(blobs[rel]) != ids[rel]:  # an object that inflates to bytes pre never had
+                    raise OSError('%s does not hash to %s' % (rel, ids[rel]))
+            blobs[__MANIFEST__] = ''.join('%s %s\\n' % (blob_id(data), rel) for rel, data in blobs.items()).encode('utf-8')
+            for rel, data in blobs.items():
+                (staging / rel).parent.mkdir(parents=True, exist_ok=True)
+                (staging / rel).write_bytes(data)
+            shutil.rmtree(closure, ignore_errors=True)
+            os.replace(staging, closure)
+        except (OSError, KeyError, subprocess.SubprocessError):
+            pass
+        finally:
+            shutil.rmtree(staging, ignore_errors=True)
+        if not verified():
+            return
+    for name in [n for n in sys.modules if n.split('.')[0] in ('nastech_cli', 'nastech_bootstrap', 'nastech_constants', 'pm')]:
+        del sys.modules[name]
+    tree = os.path.normcase(os.path.realpath(root))
+    sys.path[:] = [str(closure)] + [p for p in sys.path if p and os.path.normcase(os.path.realpath(p)) != tree
+                                    and not os.path.normcase(os.path.realpath(p)).startswith(tree + os.sep)]
+    sys.dont_write_bytecode = True
+    said = io.StringIO()
+    restored = False
+    try:
+        with contextlib.redirect_stderr(said):
+            from nastech_cli import _early_recovery
+            restored = _early_recovery.restore_interrupted_pull(root)
+    except Exception as exc:
+        said.write('nastech: the checkout cannot start after an interrupted `nastech update`, and it was not '
+                   'repaired: %s\\n' % (exc,))
+    if restored:
+        sys.stderr.write('nastech: the checkout could not start after an interrupted `nastech update`; '
+                         'repaired it with the recovery code saved before the update.\\n' + said.getvalue())
+        _early_recovery.relaunch_after_restore()
+    sys.stderr.write(said.getvalue() or 'nastech: the checkout cannot start after an interrupted `nastech update`; '
+                     'launch again once the update that owns it finishes.\\n')
+    raise SystemExit(1)
+"""
+
+
 def _launcher_script(name: str, repo_root: Path, dependencies: Path | None) -> str:
     module, func = ENTRY_POINTS[name]
     # Profile boot repairs shared launchers: their default must stay at the
     # install's dependency root, not whichever profile triggered publication.
+    #
+    # The launch-time repair of a checkout a killed update left torn (``nastech_bootstrap`` ->
+    # ``_early_recovery.restore_interrupted_pull``) runs before ANY other checkout module is
+    # imported: a merge killed while writing ``nastech_constants.py`` must not stop every launch
+    # before the repair. The default-home pin (which needs ``nastech_constants``) happens inside
+    # ``nastech_bootstrap`` right after the repair (``_PIN_DEFAULT_HOME``), and here again for a
+    # bootstrap that predates that hook.
+    root = str(repo_root.resolve())
+    from nastech_cli._early_recovery import (
+        INTERRUPTED_PULL_MARKER,
+        RECOVERY_CLOSURE,
+        RECOVERY_CLOSURE_DIR,
+        RECOVERY_CLOSURE_INIT,
+        RECOVERY_CLOSURE_MANIFEST,
+    )
+
+    closure_repair = (_CLOSURE_REPAIR.replace("__MARKER__", repr(INTERRUPTED_PULL_MARKER))
+                      .replace("__CLOSURE_DIR__", repr(RECOVERY_CLOSURE_DIR))
+                      .replace("__MANIFEST__", repr(RECOVERY_CLOSURE_MANIFEST))
+                      .replace("__INIT__", repr(RECOVERY_CLOSURE_INIT))
+                      .replace("__CLOSURE__", repr(RECOVERY_CLOSURE))
+                      .replace("__ROOT__", repr(root)))  # last: a path is never re-substituted
     return (
+        # The repair's own stdlib, bound before the checkout root goes on sys.path: a stdlib-named
+        # file in the tree must not run in its place ahead of the closure's verification. The first
+        # line stays the shape gateway.status._BOOTSTRAPS recognises as this launcher (#124318).
         "import os, re, sys\n"
+        "import contextlib, hashlib, io, pathlib, shutil, subprocess\n"
         "os.environ.pop('PYTHONHOME', None)\n"
         "os.environ.pop('PYTHONPATH', None)\n"
-        f"sys.path.insert(0, {str(repo_root.resolve())!r})\n"
-        "if sys.argv[1:2] == ['--print-runtime-command']: sys.dont_write_bytecode = True\n"
-        "from nastech_constants import get_default_nastech_root\n"
-        "os.environ['NASTECH_HOME'] = os.environ.get('NASTECH_HOME') or str(get_default_nastech_root())\n"
+        f"sys.path.insert(0, {root!r})\n"
+        + closure_repair +
         "if sys.argv[1:2] == ['--print-runtime-command']:\n"
+        "    sys.dont_write_bytecode = True\n"
         "    from pathlib import Path\n"
+        "    try:\n"
+        "        from nastech_cli import _early_recovery\n"
+        "    except Exception as exc:\n"
+        "        if _nastech_closure_repair() or not isinstance(exc, ImportError):\n"
+        "            raise\n"
+        "        _early_recovery = None  # a tree without the repair: the imports below report real damage\n"
+        f"    if _early_recovery is not None and _early_recovery.restore_interrupted_pull(Path({root!r})):\n"
+        "        _early_recovery.relaunch_after_restore()\n"
+        "    from nastech_constants import get_default_nastech_root\n"
+        "    os.environ['NASTECH_HOME'] = os.environ.get('NASTECH_HOME') or str(get_default_nastech_root())\n"
         "    from nastech_cli._launchers import print_runtime_command\n"
-        f"    print_runtime_command(Path({str(repo_root.resolve())!r}), sys.argv[2:])\n"
+        f"    print_runtime_command(Path({root!r}), sys.argv[2:])\n"
         "    sys.exit(0)\n"
-        "import nastech_bootstrap\n"
+        f"sys.{PIN_DEFAULT_HOME_FLAG} = True\n"
+        "try:\n"
+        "    import nastech_bootstrap\n"
+        "except Exception:\n"
+        "    _nastech_closure_repair()\n"
+        "    raise\n"
+        "if not os.environ.get('NASTECH_HOME'):\n"
+        "    from nastech_constants import get_default_nastech_root\n"
+        "    os.environ['NASTECH_HOME'] = str(get_default_nastech_root())\n"
         "if sys.argv[1:2] == ['--run-module']:\n"
         "    import runpy\n"
         "    if len(sys.argv) < 3: sys.exit('nastech: --run-module needs a module')\n"

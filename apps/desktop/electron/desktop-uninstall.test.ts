@@ -69,8 +69,19 @@ test('only standard installs allow desktop uninstall; managed kinds have no safe
 test('nativeRemovalInstructions names the steward per kind and OS', () => {
   assert.match(nativeRemovalInstructions('nix', 'linux'), /installed by Nix/)
   assert.match(nativeRemovalInstructions('nix', 'darwin'), /flake or profile/)
+
+  for (const platform of ['linux', 'darwin', 'win32']) {
+    const steps = nativeRemovalInstructions('external', platform, '/usr/lib/nastech/nastech')
+    assert.match(steps, /with that package manager/)
+    assert.doesNotMatch(steps, /Delete|Trash/)
+  }
+
   assert.match(nativeRemovalInstructions('bundled', 'win32'), /Installed apps/)
-  assert.match(nativeRemovalInstructions('bundled', 'darwin'), /Trash/)
+  assert.equal(
+    nativeRemovalInstructions('bundled', 'darwin', '/Applications/Nastech Agent Canary.app'),
+    'Quit the app and drag Nastech Agent Canary.app from /Applications to the Trash.'
+  )
+  assert.match(nativeRemovalInstructions('bundled', 'darwin'), /drag the Nastech app from Applications to the Trash/)
   assert.match(
     nativeRemovalInstructions('bundled', 'linux', '/home/x/Apps/Nastech.AppImage'),
     /\/home\/x\/Apps\/Nastech\.AppImage/
@@ -145,10 +156,7 @@ test('resolveRemovableAppPath uses APPIMAGE on Linux when set', () => {
 })
 
 test('resolveRemovableAppPath finds the unpacked dir on Linux', () => {
-  assert.equal(
-    resolveRemovableAppPath('/opt/nastech/linux-unpacked/nastech', 'linux', {}),
-    '/opt/nastech/linux-unpacked'
-  )
+  assert.equal(resolveRemovableAppPath('/opt/nastech/linux-unpacked/nastech', 'linux', {}), '/opt/nastech/linux-unpacked')
   // A system-package install (/usr/bin) → null, left to apt/dnf.
   assert.equal(resolveRemovableAppPath('/usr/bin/nastech', 'linux', {}), null)
 })

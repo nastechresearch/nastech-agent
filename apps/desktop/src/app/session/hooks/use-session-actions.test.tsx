@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import { registryBackendScopeKey } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { act, cleanup, render, waitFor } from '@testing-library/react'
 import type { MutableRefObject } from 'react'
 import { useEffect, useRef } from 'react'
@@ -11,7 +11,6 @@ import { resolveSessionRpcOwner } from '@/app/contrib/wiring-routing'
 import { $terminalTakeover, setTerminalTakeover } from '@/app/right-sidebar/store'
 import { group } from '@/components/pane-shell/tree/model'
 import { $activeTreeGroup, $layoutTree, noteActiveTreeGroup, revealTreePane } from '@/components/pane-shell/tree/store'
-import { createClientSessionState } from '@/lib/chat-runtime'
 import {
   deleteSession,
   getAllSessionMessages,
@@ -22,6 +21,7 @@ import {
   type SessionResumeResult,
   setSessionArchived
 } from '@/nastech'
+import { createClientSessionState } from '@/lib/chat-runtime'
 import { $clarifyRequests, clearClarifyRequest, setClarifyRequest } from '@/store/clarify'
 import { clearSessionDraft, stashSessionDraft, takeSessionDraft } from '@/store/composer'
 import { $backgroundStatusBySession, type ComposerStatusItem } from '@/store/composer-status'

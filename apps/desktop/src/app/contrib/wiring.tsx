@@ -36,6 +36,7 @@ import { RemoteDisplayBanner } from '@/components/remote-display-banner'
 import { SendDiagnosticsHost } from '@/components/send-diagnostics-dialog'
 import { SharedMetricsConsentDialog } from '@/components/shared-metrics/consent-dialog'
 import { TipHost } from '@/components/tips'
+import { UpdateHoldOverlay } from '@/components/update-hold-overlay'
 import { emitGatewayEvent } from '@/contrib/events'
 import { translateNow } from '@/i18n'
 import { type ChatMessage, chatMessageText } from '@/lib/chat-messages'
@@ -129,9 +130,9 @@ import { SessionSwitcher } from '../session-switcher'
 import { useBackgroundQueueDrain } from '../session/hooks/use-background-queue-drain'
 import { useContextSuggestions } from '../session/hooks/use-context-suggestions'
 import { useCwdActions } from '../session/hooks/use-cwd-actions'
+import { useNastechConfig } from '../session/hooks/use-nastech-config'
 import { useMessageStream } from '../session/hooks/use-message-stream'
 import { useModelControls } from '../session/hooks/use-model-controls'
-import { useNastechConfig } from '../session/hooks/use-nastech-config'
 import { usePreviewRouting } from '../session/hooks/use-preview-routing'
 import { usePromptActions } from '../session/hooks/use-prompt-actions'
 import { useRouteResume } from '../session/hooks/use-route-resume'
@@ -195,38 +196,12 @@ export { WiredPane } from './context'
 // Only the RPCs issued by session creation follow the handoff's profile pin.
 const HANDOFF_CREATE_LEG_METHODS = new Set(['config.set', 'session.close', 'session.create'])
 
-export function ContribWiring({ children }: { children: ReactNode }) {
-  const queryClient = useQueryClient()
-  const location = useLocation()
-  const navigate = useNavigate()
-
-  const busyRef = useRef(false)
-  const creatingSessionRef = useRef(false)
-  // Billing recovery routes to Settings → Billing from surfaces without router
-  // context (the sticky toast). The shell owns `navigate`, so it consumes the
-  // intent counter here; the ref skips the initial mount value.
-  const billingSettingsSeenRef = useRef(0)
-  const poolLimitsSettingsSeenRef = useRef(0)
-  const routeRequestSeenRef = useRef(0)
-  const backendRestartSeenRef = useRef(0)
-  const cronReviewSeenRef = useRef(0)
-  const activeTranscriptSignatureRef = useRef(new Map<string, string>())
-  const activeTranscriptRequestSequenceRef = useRef(0)
-  // Stable identity for the whole callback surface (see WiringActions). Mutated
-  // in place each render so memoized surfaces never re-render on churn.
-  const actionsRef = useRef<WiringActions | null>(null)
-
-  const gatewayState = useStore($gatewayState)
-  const activeSessionId = useStore($activeSessionId)
-  const billingSettingsRequest = useStore($billingSettingsRequest)
-  const poolLimitsSettingsRequest = useStore($poolLimitsSettingsRequest)
+// Generic in-app route intents raised by toast recovery buttons (Open Keys,
+// Open Gateways, Maintenance …) fired from stores with no router context.
+function useRouteRequestNavigation(navigate: ReturnType<typeof useNavigate>): void {
   const routeRequest = useStore($routeRequest)
-  const backendRestartRequest = useStore($backendRestartRequest)
-  const cronReviewRequest = useStore($cronReviewRequest)
-  const currentCwd = useStore($currentCwd)
+  const routeRequestSeenRef = useRef(0)
 
-  // Generic in-app route intents raised by toast recovery buttons (Open Keys,
-  // Open Gateways, Maintenance …) fired from stores with no router context.
   // eslint-disable-next-line no-restricted-syntax -- one-shot request-seen sentinel, not an atom mirror
   useEffect(() => {
     if (!routeRequest || routeRequest.seq === routeRequestSeenRef.current) {
@@ -236,11 +211,23 @@ export function ContribWiring({ children }: { children: ReactNode }) {
     routeRequestSeenRef.current = routeRequest.seq
     navigate(routeRequest.path)
   }, [navigate, routeRequest])
+}
 
-  // "Restart Nastech" from a toast: recycle the local backend the user is
-  // looking at (same IPC the Models page uses), then let the boot hook re-dial.
-  // A remote/cloud connection has no local process to recycle — there the
-  // only meaningful "restart" is re-dialing the connection.
+// Recovery actions raised by toast buttons (Restart Nastech, Open Billing, pool
+// caps, cron review) fire from stores with no router context. Each counter is
+// consumed here: the ref skips the initial mount value, and only a fresh
+// request navigates or recycles the backend.
+function useRecoveryRequestToasts(): void {
+  const navigate = useNavigate()
+  const billingSettingsRequest = useStore($billingSettingsRequest)
+  const poolLimitsSettingsRequest = useStore($poolLimitsSettingsRequest)
+  const backendRestartRequest = useStore($backendRestartRequest)
+  const cronReviewRequest = useStore($cronReviewRequest)
+  const billingSettingsSeenRef = useRef(0)
+  const poolLimitsSettingsSeenRef = useRef(0)
+  const backendRestartSeenRef = useRef(0)
+  const cronReviewSeenRef = useRef(0)
+
   // eslint-disable-next-line no-restricted-syntax -- one-shot request-seen sentinel, not an atom mirror
   useEffect(() => {
     if (backendRestartRequest === backendRestartSeenRef.current) {
@@ -251,9 +238,7 @@ export function ContribWiring({ children }: { children: ReactNode }) {
 
     if (backendRestartRequest > 0) {
       if ($connection.get()?.mode === 'remote') {
-        void reconnectGateway().catch(err =>
-          notifyError(err, translateNow('notifications.errors.restartNastechFailed'))
-        )
+        void reconnectGateway().catch(err => notifyError(err, translateNow('notifications.errors.restartNastechFailed')))
 
         return
       }
@@ -305,6 +290,28 @@ export function ContribWiring({ children }: { children: ReactNode }) {
       navigate(CRON_ROUTE)
     }
   }, [cronReviewRequest, navigate])
+}
+
+export function ContribWiring({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const busyRef = useRef(false)
+  const creatingSessionRef = useRef(false)
+  const activeTranscriptSignatureRef = useRef(new Map<string, string>())
+  const activeTranscriptRequestSequenceRef = useRef(0)
+  // Stable identity for the whole callback surface (see WiringActions). Mutated
+  // in place each render so memoized surfaces never re-render on churn.
+  const actionsRef = useRef<WiringActions | null>(null)
+
+  const gatewayState = useStore($gatewayState)
+  const activeSessionId = useStore($activeSessionId)
+  const currentCwd = useStore($currentCwd)
+
+  useRouteRequestNavigation(navigate)
+  useRecoveryRequestToasts()
+
   const freshDraftReady = useStore($freshDraftReady)
   const resumeFailedSessionId = useStore($resumeFailedSessionId)
   const resumeExhaustedSessionId = useStore($resumeExhaustedSessionId)
@@ -784,9 +791,10 @@ export function ContribWiring({ children }: { children: ReactNode }) {
   })
 
   // Runs outside the selected ChatBar so queues belonging to background
-  // sessions continue once those sessions are idle.
+  // sessions continue once those sessions are idle. The session dispatcher
+  // routes each send to its owner; a disconnected foreground is not a global gate.
   useBackgroundQueueDrain({
-    enabled: gatewayState === 'open',
+    enabled: true,
     runtimeIdByStoredSessionIdRef,
     selectedStoredSessionId,
     submitText
@@ -1303,8 +1311,7 @@ export function ContribWiring({ children }: { children: ReactNode }) {
   const titlebarToolsRight = titlebarToolsRightCss(nativeOverlayWidth, titlebarChrome)
   // WSLg: Electron's native overlay drifts its hit-region under RAIL, so the
   // renderer paints its own min/max/close (main decides via customWindowControls).
-  const customWindowControls =
-    connection?.customWindowControls ?? window.nastechDesktop?.windowControls?.custom ?? false
+  const customWindowControls = connection?.customWindowControls ?? window.nastechDesktop?.windowControls?.custom ?? false
   const appActionsSide = useStore($titlebarAppActionsSide)
   const interfaceMode = useStore($interfaceMode)
   const shownTool = shownInMode(interfaceMode)
@@ -1408,6 +1415,7 @@ export function ContribWiring({ children }: { children: ReactNode }) {
       <UpdatesOverlay />
       <GatewayConnectingOverlay />
       <BootFailureOverlay />
+      <UpdateHoldOverlay />
       <CommandPalette />
       <PluginInstallModal />
       <PetGenerateOverlay />

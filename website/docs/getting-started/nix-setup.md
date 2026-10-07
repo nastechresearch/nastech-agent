@@ -826,14 +826,6 @@ For optional extras declared in nastech-agent's `pyproject.toml`, use `extraDepe
 services.nastech-agent.extraDependencyGroups = [ "messaging" ];
 ```
 
-```nix
-# Enable a memory provider
-services.nastech-agent = {
-  extraDependencyGroups = [ "mem0" ];
-  settings.memory.provider = "mem0";
-};
-```
-
 These groups join the core dependency resolution at build time. Conflicting
 requirements can still fail that resolution. The table lists common groups;
 `pyproject.toml` is authoritative for the complete list and platform markers.
@@ -850,7 +842,6 @@ requirements can still fail that resolution. The table lists common groups;
 | `anthropic` | Native Anthropic SDK (not needed via OpenRouter) |
 | `bedrock` | AWS Bedrock (boto3) |
 | `azure-identity` | Azure Entra ID auth |
-| `mem0` | Mem0 memory provider |
 | `modal` | Modal terminal backend |
 | `daytona` | Daytona terminal backend |
 | `exa` | Exa web search |

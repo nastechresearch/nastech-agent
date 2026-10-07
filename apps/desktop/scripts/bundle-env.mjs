@@ -3,7 +3,7 @@
 // Match scripts/releases/bundle_env.py and the channel request decoder.
 const ALLOWED_KEYS = new Set([
   'NASTECH_HOME', 'NASTECH_DATA_DIR_SUFFIX', 'NASTECH_DESKTOP_USER_DATA_DIR',
-  'NASTECH_SHARED_AUTH_DIR', 'NASTECH_GUEST_ONBOARDING', 'NASTECH_SKIP_INTRO'
+  'NASTECH_SHARED_AUTH_DIR', 'NASTECH_GUEST_ONBOARDING', 'NASTECH_PREVIEW_FULL_CONNECTORS'
 ])
 
 /** Validate a bundle environment object: plain object of identifiers to

@@ -2,8 +2,8 @@ import { compactNumber } from '@nastech/shared'
 import { useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
-import { useI18n } from '@/i18n'
 import { type ProfileScope, profileScopeKey } from '@/nastech'
+import { useI18n } from '@/i18n'
 import type { ToolsetInfo } from '@/types/nastech'
 
 import { ToolChip } from '../../master-detail'

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 
-import { useI18n } from '@/i18n'
 import { type ProfileScope, saveNastechConfigRecord } from '@/nastech'
+import { useI18n } from '@/i18n'
 import { notify, notifyError } from '@/store/notifications'
 
 import { nastechConfigCacheWriter, useNastechConfigRecord } from '../hooks/use-config-record'

@@ -165,7 +165,11 @@ def refresh_nastech_auth_keepalive_once(
         if not get_provider_auth_state("nastech"):
             return False
         try:
-            resolve_nastech_runtime_credentials(timeout_seconds=_timeout_seconds(timeout_seconds))
+            # Nobody is waiting on a keepalive tick: a free-tier browser challenge is announced to the
+            # desktop (so it can clear before a token is needed) but never waited on here.
+            from nastech_cli.anon_challenge import background_caller
+            with background_caller():
+                resolve_nastech_runtime_credentials(timeout_seconds=_timeout_seconds(timeout_seconds))
             logger.debug("Nastech auth keepalive: refreshed singleton auth state")
             return True
         except Exception as exc:

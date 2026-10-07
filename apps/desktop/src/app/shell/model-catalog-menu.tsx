@@ -1,6 +1,6 @@
-import { useStore } from '@nanostores/react'
 import type { ModelOptionProvider, ModelOptionsResult, ModelPricing } from '@nastech/shared'
 import { DEFAULT_REASONING_EFFORT } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import {
   createContext,
@@ -32,6 +32,7 @@ import {
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tip, TipHintLabel } from '@/components/ui/tooltip'
+import type { NastechGateway } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { isSubmitEnter } from '@/lib/ime'
@@ -41,7 +42,6 @@ import { accountResetMs, formatReset, modelResetMs } from '@/lib/provider-limit'
 import { reasoningEffortLabel } from '@/lib/reasoning-effort'
 import { foldIncludes, normalize } from '@/lib/text'
 import { cn } from '@/lib/utils'
-import type { NastechGateway } from '@/nastech'
 import { $customModels, addCustomModel, customModelCandidate, withCustomModels } from '@/store/custom-models'
 import { $favoriteModels, favoriteModelKey, toggleFavoriteModel } from '@/store/favorite-models'
 import { $localModelsEnabled } from '@/store/local-models-flag'
@@ -1189,7 +1189,7 @@ const LOCAL_PROVIDER_SLUG = 'llamacpp'
 
 // Heading for every row group in the list (Favorites, providers, downloads).
 const catalogGroupLabel =
-  'px-2 pb-0.5 pt-0.5 text-[0.625rem] font-semibold uppercase tracking-wider text-(--ui-text-tertiary)'
+  'px-2 pb-0.5 pt-0.5 text-[0.625rem] font-semibold uppercase tracking-wider text-(--ui-text-secondary)'
 
 // A provider inside a mixed Favorites section: the group heading's ink, set
 // in normal case and indented to the model names it labels, so it reads as

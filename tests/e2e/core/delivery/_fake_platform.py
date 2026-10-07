@@ -523,7 +523,7 @@ class GatewayProcess:
             "NASTECH_STATE_DB_GUARD_BYPASS": "1",
             "NASTECH_GATEWAY_LOCK_DIR": str(self.root / "gateway-locks"),
             "TZ": "UTC", "PYTHONHASHSEED": "0", "PYTHONUNBUFFERED": "1", "C12_PARENT_PID": str(os.getpid()),
-            "NASTECH_DISABLE_LAZY_INSTALLS": "1", "TIRITH_ENABLED": "false",
+            "NASTECH_DISABLE_LAZY_INSTALLS": "1",
             "AWS_EC2_METADATA_DISABLED": "true", "NASTECH_HONCHO_HOST": "nastech",
             "PYTHONPATH": f"{REPO_ROOT}{os.pathsep}{os.environ.get('PYTHONPATH', '')}".rstrip(os.pathsep),
         })

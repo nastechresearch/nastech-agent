@@ -13,6 +13,7 @@ import { createGatewayEventDedupe } from '@/app/gateway/gateway-event-dedupe'
 import { reportStartupLatency } from '@/app/gateway/report-startup-latency'
 import { shouldApplyPostBootProgressError } from '@/components/boot-failure-reauth'
 import type { DesktopBootProgress, NastechConnection, NastechWindowState } from '@/global'
+import { NastechGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd } from '@/lib/desktop-fs'
 import {
@@ -22,10 +23,10 @@ import {
 } from '@/lib/gateway-liveness-policy'
 import { resolveDesktopGatewayWsUrl } from '@/lib/gateway-ws-url'
 import { BACKEND_BOOT_WAIT_TIMEOUT_MS, RECONNECT_ATTEMPT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
-import { NastechGateway } from '@/nastech'
 import {
   $desktopBoot,
   applyDesktopBootProgress,
+  applyDesktopUpdateHold,
   completeDesktopBoot,
   failDesktopBoot,
   resumeDesktopBootForRetry,
@@ -156,9 +157,7 @@ const BOOT_RETRY_BASE_DELAY_MS = 2_000
 // own connect timeout.
 
 /** Registry identity whose runtimes died with the primary connection. */
-export function primaryRuntimeConnectionId(
-  connection: Pick<NastechConnection, 'connectionId' | 'mode'>
-): null | string {
+export function primaryRuntimeConnectionId(connection: Pick<NastechConnection, 'connectionId' | 'mode'>): null | string {
   const connectionId = connection.connectionId?.trim()
 
   if (connectionId) {
@@ -933,6 +932,12 @@ export function useGatewayBoot({
       // ticket-mint / host-unreachable failures must stay in the reconnect loop
       // (otherwise a 1–3 min blip bricks reading/drafting behind "couldn't start").
       if ($gatewaySwitching.get() || bootCompleted || bootFailed) {
+        // The blocked-update screen is not a boot step: a pool/profile backend
+        // can meet a hold after the primary booted (R8 M6).
+        if (payload.updateHold !== undefined) {
+          applyDesktopUpdateHold(payload.updateHold)
+        }
+
         if (payload.error && shouldApplyPostBootProgressError(payload.error)) {
           primaryReauthError = payload.error
 
