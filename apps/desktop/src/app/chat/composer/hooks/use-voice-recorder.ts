@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { type ResolvedOwner, resolveOwnerNow } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { syncSttLease, VOICE_INPUT_LEASE } from '@/lib/stt-lease'
 import { fetchVoiceClientConfigFor } from '@/lib/voice-client-direct'
 import { type DictationStreamSession, openDictationStream } from '@/lib/voice-stream'
-import { type ResolvedOwner, resolveOwnerNow } from '@/nastech'
 import { recordFeatureUse } from '@/store/desktop-metrics'
 import { notify, notifyError } from '@/store/notifications'
 
@@ -115,8 +115,7 @@ export function useVoiceRecorder({
         return
       }
 
-      const transcript =
-        (await liveTranscript(dictation)) ?? (await onTranscribeAudio(result.audio, dictation.owner)).trim()
+      const transcript = (await liveTranscript(dictation)) ?? (await onTranscribeAudio(result.audio, dictation.owner)).trim()
 
       if (!live()) {
         return

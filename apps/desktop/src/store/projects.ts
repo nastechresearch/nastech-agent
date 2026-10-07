@@ -10,13 +10,13 @@ import {
   type SidebarProjectTree
 } from '@/app/chat/sidebar/projects/workspace-groups'
 import type { NastechGitBaseBranch, NastechGitBranch } from '@/global'
+import { getNastechConfig, nastechApi, type NastechGateway, type SessionInfo } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { desktopDefaultCwd, isDesktopFsRemoteMode, selectDesktopPaths, writeDesktopFileText } from '@/lib/desktop-fs'
 import { desktopGit } from '@/lib/desktop-git'
 import { isMissingRestEndpoint, isMissingRpcMethod } from '@/lib/gateway-rpc'
 import { isUnderPath } from '@/lib/path-compare'
 import { stampRowsWithOwningConnection } from '@/lib/session-owner-stamp'
-import { getNastechConfig, nastechApi, type NastechGateway, type SessionInfo } from '@/nastech'
 import { revealFile } from '@/store/file-actions'
 import {
   $gateway,
@@ -1655,12 +1655,7 @@ export async function pickProjectFolders(): Promise<string[]> {
 // project already has — or repeats within the pick itself — are skipped, so
 // a multi-select never writes duplicate rows (#68741).
 export async function addProjectFolders(id: string, paths: string[]): Promise<void> {
-  const existing = new Set(
-    $projects
-      .get()
-      .find(proj => proj.id === id)
-      ?.folders?.map(folder => folder.path) ?? []
-  )
+  const existing = new Set($projects.get().find(proj => proj.id === id)?.folders?.map(folder => folder.path) ?? [])
 
   for (const path of new Set(paths.map(path => path.trim()).filter(Boolean))) {
     if (existing.has(path)) {

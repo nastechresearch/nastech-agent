@@ -226,7 +226,7 @@ def test_openai_tts_uses_managed_audio_gateway_when_direct_key_absent(monkeypatc
     _install_fake_openai_module(captured)
     monkeypatch.delenv("VOICE_TOOLS_OPENAI_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.setenv("TOOL_GATEWAY_DOMAIN", "nastechresearch.github.io/nastech-agent")
+    monkeypatch.setenv("TOOL_GATEWAY_DOMAIN", "nastechresearch.github.io")
     monkeypatch.setenv("TOOL_GATEWAY_USER_TOKEN", "nastech-token")
 
     tts_tool = _load_tool_module("tools.tts_tool", "tts_tool.py")
@@ -248,7 +248,7 @@ def test_openai_tts_accepts_openai_api_key_as_direct_fallback(monkeypatch, tmp_p
     _install_fake_openai_module(captured)
     monkeypatch.delenv("VOICE_TOOLS_OPENAI_KEY", raising=False)
     monkeypatch.setenv("OPENAI_API_KEY", "openai-direct-key")
-    monkeypatch.setenv("TOOL_GATEWAY_DOMAIN", "nastechresearch.github.io/nastech-agent")
+    monkeypatch.setenv("TOOL_GATEWAY_DOMAIN", "nastechresearch.github.io")
     monkeypatch.setenv("TOOL_GATEWAY_USER_TOKEN", "nastech-token")
 
     tts_tool = _load_tool_module("tools.tts_tool", "tts_tool.py")
@@ -270,7 +270,7 @@ def test_transcription_uses_model_specific_response_formats(monkeypatch, tmp_pat
     (tmp_path / "config.yaml").write_text("stt:\n  provider: nastech\n")
     monkeypatch.delenv("VOICE_TOOLS_OPENAI_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    monkeypatch.setenv("TOOL_GATEWAY_DOMAIN", "nastechresearch.github.io/nastech-agent")
+    monkeypatch.setenv("TOOL_GATEWAY_DOMAIN", "nastechresearch.github.io")
     monkeypatch.setenv("TOOL_GATEWAY_USER_TOKEN", "nastech-token")
 
     transcription_tools = _load_tool_module(

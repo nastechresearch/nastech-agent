@@ -7,7 +7,7 @@
   <a href="https://github.com/NastechResearch/nastech-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
 </p>
 
-**The native desktop app for [Nastech Agent](../../README.md) — the self-improving AI agent from [Nastech Research](https://nastechresearch.github.io/nastech-agent).** Same agent, same skills, same memory as the CLI and gateway, in a polished native window — chat with streaming tool output, side-by-side previews, a file browser, voice, and settings, no terminal required. Available for **macOS, Windows, and Linux**.
+**The native desktop app for [Nastech Agent](../../README.md) — the self-improving AI agent from [Nastech Research](https://nastechresearch.github.io).** Same agent, same skills, same memory as the CLI and gateway, in a polished native window — chat with streaming tool output, side-by-side previews, a file browser, voice, and settings, no terminal required. Available for **macOS, Windows, and Linux**.
 
 > **Intel Macs:** the `Nastech-Setup.dmg` bootstrap installer is built for
 > Apple Silicon (arm64) only, so on an Intel Mac it reports "not supported on
@@ -119,7 +119,8 @@ publishes Windows and macOS packages; Linux desktop legs are disabled.
 The bundled app carries the Electron shell, native React chat surface, and
 local agent payload. It runs the payload directly from resources. User data
 lives in `NASTECH_HOME` outside the app. Bootstrap builds instead provision a
-source installation; Light is a remote-only variant without a local runtime.
+source installation. A remote-only Light variant exists as a build target but
+is not published.
 
 The app has three boundaries:
 
@@ -267,4 +268,4 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\nastech\nastech-agent\venv"
 
 MIT — see [LICENSE](../../LICENSE).
 
-Built by [Nastech Research](https://nastechresearch.github.io/nastech-agent).
+Built by [Nastech Research](https://nastechresearch.github.io).

@@ -1,7 +1,7 @@
 // FPS counter overlay (NASTECH_TUI_FPS=1). Zero-cost when disabled.
 
-import { useStore } from '@nanostores/react'
 import { Text } from '@nastech/ink'
+import { useStore } from '@nanostores/react'
 
 import { SHOW_FPS } from '../config/env.js'
 import { $fpsState } from '../lib/fpsStore.js'

@@ -21,7 +21,7 @@ from typing import NoReturn
 from nastech_cli._subprocess_compat import no_prompt_git_kwargs as _no_prompt_git_kwargs
 from nastech_cli.config import get_nastech_home  # noqa: F401  (re-exported; patched via update_cmd)
 from nastech_cli import update_handoff as _update_handoff
-from nastech_cli.update_cmd_common import _best_effort
+from nastech_cli.update_cmd_common import _best_effort, _record_stop
 # Captured BEFORE a checkout swap: parent transport/lifecycle never imports new code.
 from nastech_cli.update_completion import run_completion
 from nastech_cli.update_channel import adopt_retired_channel
@@ -871,6 +871,7 @@ def _reconcile_diverged_checkout(git_cmd, branch: str, pre_pull_sha, *, target_r
             print("✗ Merge conflict between local commits and upstream — update stopped, nothing was changed.")
             print(f"  Resolve manually: cd {_m().PROJECT_ROOT} && git merge origin/{branch}")
             print("  Then re-run the update. Local work is untouched.")
+            _record_stop("merge_conflict")
             sys.exit(1)
         return
     # Same branch and proven non-ancestor: an upstream force-push/rebase may lose nothing,
@@ -913,6 +914,7 @@ def _reconcile_diverged_checkout(git_cmd, branch: str, pre_pull_sha, *, target_r
         if reset_result.stderr.strip():
             print(f"  {reset_result.stderr.strip()}")
         print(f"  Try manually: git fetch origin && git reset --hard origin/{branch}")
+        _record_stop("checkout_move_failed")
         sys.exit(1)
 
 
@@ -933,7 +935,7 @@ def _rollback_if_pulled_syntax_error(git_cmd, pre_pull_sha, *, rollback_branch=N
 
 def _roll_back_broken_update(git_cmd, pre_pull_sha, failing_path, syntax_error, *, rollback_branch=None,
                              header="✗ Pulled code has a syntax error in a critical file:",
-                             _windows_gateway_resume=None) -> NoReturn:
+                             _windows_gateway_resume=None, stop_class="syntax_rollback") -> NoReturn:
     """Restore the checkout to *pre_pull_sha* after a startup file failed the syntax check, then
     ``sys.exit(1)``."""
     print()
@@ -1003,6 +1005,7 @@ def _roll_back_broken_update(git_cmd, pre_pull_sha, failing_path, syntax_error, 
     else:
         print("  Could not capture pre-pull SHA — recover manually with:")
         print(f"    cd {_m().PROJECT_ROOT} && git reflog && git reset --hard <prev-sha>")
+    _record_stop(stop_class)
     sys.exit(1)
 
 
@@ -1023,6 +1026,7 @@ def _refuse_unselected_head(git_cmd, target_sha: str, unmoved: str | None) -> No
     if (landed := _landed_off_target(git_cmd, target_sha)) not in (None, unmoved):
         print(f"✗ The checkout landed on {landed[:10]}, not the selected commit {target_sha[:10]} "
               "(a ref moved during the update).")
+        _record_stop("head_moved")
         sys.exit(1)
 
 
@@ -1078,6 +1082,10 @@ def _move_checkout_to(git_cmd, branch, merge_ref, target_sha, pre_pull_sha) -> N
         if ancestry_detail:
             print(f"  {ancestry_detail}")
     print("  Resolve the Git error and re-run `nastech update`; no reset was attempted.")
+    from nastech_cli.update_receipt import git_output_stop_class
+
+    # The shared classifier: an index.lock that EXISTS is another git's; "Permission denied" on it is not.
+    _record_stop(git_output_stop_class(detail, ["merge"], merge_result.returncode) or "checkout_move_failed")
     sys.exit(1)
 
 
@@ -1105,6 +1113,7 @@ def _pull_updates(
         if not is_object_id(target_sha):
             # The marker must name the commit git moves to, or a killed move is unrecoverable.
             print(f"✗ Could not resolve {merge_ref} to a commit. No update was applied.")
+            _record_stop("target_unresolved")
             sys.exit(1)
         movement_baseline = _update_movement_baseline(
             git_cmd, pre_pull_sha, pre_sync_sha, rollback_branch, target_sha)
@@ -1112,12 +1121,14 @@ def _pull_updates(
             # Channel verification is a precondition: refuse before anything moves.
             print(f"✗ {merge_ref} resolves to {target_sha[:10]}, not the selected channel commit "
                   f"{expected_sha[:10]}. No update was applied.")
+            _record_stop("head_moved")
             sys.exit(1)
         # The commit point: the tail, the fleet restart and the marker are durable BEFORE git writes.
         refused = _commit.arm_commit_point(git_cmd, _m().PROJECT_ROOT, target_sha, pre=pre_pull_sha,
                                            target=target_sha, stash=auto_stash_ref)
         if refused:
             print(f"✗ {refused}.")
+            _record_stop("commit_point_refused")
             sys.exit(1)
         try:
             # The paused gateways' tree gate must know this move's target before git writes a file.
@@ -1276,6 +1287,7 @@ def _exit_after_failed_branch_switch(
             print(f"  ℹ️  Local changes preserved in stash (ref: {auto_stash_ref})")
             print("  Restore manually with: git stash apply")
             _clear_pending_autostash()
+        _record_stop("checkout_move_failed")
         sys.exit(1)
     # Nothing moved: restore the stash before bailing so the user isn't stranded.
     if auto_stash_ref is not None:
@@ -1284,11 +1296,22 @@ def _exit_after_failed_branch_switch(
             checkout_move=_moves_for(_windows_gateway_resume))
     if track_result.args in (_ARM_REFUSED, _REF_MOVED):
         print(f"✗ {detail}.")
+        _record_stop("commit_point_refused" if track_result.args is _ARM_REFUSED else "head_moved")
     else:
         print(f"✗ Branch '{branch}' does not exist locally or on origin.")
         if detail:
             print(f"  {detail.splitlines()[0]}")
+        _record_stop(_missing_branch_stop(git_cmd, branch))
     sys.exit(1)
+
+
+def _missing_branch_stop(git_cmd, branch) -> str:
+    """``branch_missing`` unless the branch resolves (then git refused the switch). Never raises."""
+    try:
+        return "checkout_move_failed" if any(
+            _resolved_commit(git_cmd, ref) for ref in (f"refs/heads/{branch}", f"origin/{branch}")) else "branch_missing"
+    except Exception:  # health: allow BLE001 -- metrics only: the exit it names must not change
+        return "checkout_move_failed"
 
 
 @dataclass
@@ -1330,6 +1353,7 @@ def _apply_parked_branch_guard(
         print()
         print(f"⚠ Update finished — code update SKIPPED{_branch_head_suffix(git_cmd, _m().PROJECT_ROOT)}")
         _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
+        _record_stop("parked_branch_blocked")
         sys.exit(1)
     if not switch_block_reason.startswith("unmerged:"):
         print(f"  ⚠ Checkout was parked on '{current_branch}' (fully merged) — switching back to {branch}...")
@@ -1345,6 +1369,7 @@ def _apply_parked_branch_guard(
     # --branch typos used to surface via the checkout failing, which this path skips.
     if _git_run(git_cmd, ["rev-parse", "--verify", "--quiet", f"origin/{branch}"]).returncode != 0:
         print(f"✗ Branch '{branch}' does not exist locally or on origin.")
+        _record_stop("branch_missing")
         sys.exit(1)
     print(
         f"  ℹ On branch '{current_branch}' — updating it in place from "
@@ -1453,7 +1478,8 @@ def _prepare_checkout_for_update(
                 _clear_pending_autostash()
             _roll_back_broken_update(git_cmd, pre_sync_sha, broken.path, broken.error,
                                      header=_upstream_broken_header(broken),
-                                     _windows_gateway_resume=_windows_gateway_resume)
+                                     _windows_gateway_resume=_windows_gateway_resume,
+                                     stop_class="target_syntax_error")
         post_sync_sha = _capture_head_sha(git_cmd, _m().PROJECT_ROOT)
         if pre_sync_sha and post_sync_sha and pre_sync_sha != post_sync_sha:
             synced_count = _count_commits_between(
@@ -1567,6 +1593,7 @@ def _prepare_git_command(*, checkout_move=None) -> tuple[bool, list, bool]:
     if use_zip_update and sys.platform != "win32":
         print("✗ Not a git repository. Please reinstall:")
         print("  curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash")
+        _record_stop("not_git_checkout")
         sys.exit(1)
 
     from nastech_cli._subprocess_compat import expose_pm_git
@@ -1624,6 +1651,7 @@ def _verify_head_after_pull(
             f"git -C {_m().PROJECT_ROOT} checkout {branch} && nastech update")
         _commit.disarm_commit_obligations()  # nothing moved: no tail is owed (refused if HEAD did)
         _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
+        _record_stop("detached_head")
         sys.exit(1)
 
     # HEAD must be on the target or "Code updated!" is a lie; an IN-PLACE update is the one
@@ -1638,6 +1666,7 @@ def _verify_head_after_pull(
             "  Switch to the target branch and retry: "
             f"git -C {_m().PROJECT_ROOT} checkout {branch} && nastech update")
         _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
+        _record_stop("unexpected_branch")
         sys.exit(1)
     return post_pull_sha
 
@@ -1679,6 +1708,8 @@ def _handle_update_called_process_error(
             print(f"✗ {stage}.")
             print(f"  Details: {e}")
             _print_called_process_error_tail(e)
+        if stop := _completion_receipt.git_error_stop_class(e):
+            _record_stop(stop)
         _finalize_receipt("failed", 'Update receipt finalize failed: %s')
         sys.exit(1)
 
@@ -1736,6 +1767,7 @@ def _apply_pulled_update(
         if pinned is not None and observed != pinned:
             print("✗ Checkout no longer matches the selected channel commit. No completion was applied.")
             _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
+            _record_stop("head_moved")
             sys.exit(1)
         completion_request["expected_sha"] = pinned or observed
     _complete_source_update(completion_request)
@@ -1753,7 +1785,20 @@ def _cmd_update_impl(args, gateway_mode: bool):
         root = _m().PROJECT_ROOT
         print(f"✗ Cannot update while a Git {git_operation} is in progress in {root}.")
         print(f"  Finish it or run `git {git_operation} --abort`, then re-run `nastech update`.")
+        _record_stop("git_in_progress", without_receipt="failed")  # before the receipt opens: a metrics row only
         sys.exit(1)
+
+    # Self-heal abandoned .git/*.lock files (a crashed fetch) and aborted-transfer pack temps
+    # before anything else touches the checkout. Run at START, not only in the apply path
+    # below: a run that dies between here and the fetch would otherwise leave the next run to
+    # fail with "File exists" until an operator removed the lock by hand (#132089). Idempotent,
+    # and _sweep_stale skips everything while a git process holds it. A killed update's
+    # index.lock is younger than the sweep's age floor, so it goes here once its git is proven
+    # dead (we hold the update lock: no other update's git can own it).
+    from nastech_cli.gitlock import release_dead_index_lock
+    if release_dead_index_lock(_m().PROJECT_ROOT):
+        print("  (removed .git/index.lock left by a git that was killed)")
+    _check.clear_git_debris(_m().PROJECT_ROOT)
 
     opts = _resolve_update_options(args, gateway_mode)
     gw_input_fn, assume_yes = opts.gw_input_fn, opts.assume_yes
@@ -1813,6 +1858,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         except (OSError, ValueError, subprocess.SubprocessError) as exc:
             print(f"✗ Could not resolve the {selected_channel} source channel: {exc}. No update was applied.")
             _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
+            _record_stop("channel_unresolved")
             sys.exit(1)
         if target.retired:
             print(f"→ {selected_channel} retired; source destination: {target.channel}")
@@ -1844,17 +1890,6 @@ def _cmd_update_impl(args, gateway_mode: bool):
         return
 
     try:
-        # Self-heal abandoned .git/*.lock files (crashed fetch) or the fetch fails "File exists".
-        from nastech_cli.gitlock import clear_stale_git_locks, clear_stale_tmp_packs
-        cleared = clear_stale_git_locks(_m().PROJECT_ROOT)
-        if cleared:
-            print("  (removed stale git lock(s): %s)" % ", ".join(cleared))
-        swept = clear_stale_tmp_packs(_m().PROJECT_ROOT)
-        if swept:
-            print("  (removed %d aborted-fetch pack temp file(s))" % len(swept))
-        # A partial clone must never write a commit-graph (#127711); keep its keys in place.
-        from nastech_cli.gitlock import settle_partial_clone_maintenance
-        settle_partial_clone_maintenance(_m().PROJECT_ROOT)
         _check.report_pack_tidy(_m().PROJECT_ROOT)
         # Shallow installer checkouts collect one `.git/shallow` graft per past depth-1 fetch
         # (#105951); stale grafts break merge-base and push this run into the divergence path.
@@ -1891,6 +1926,8 @@ def _cmd_update_impl(args, gateway_mode: bool):
                       " should_include_obj' in https://nastechresearch.github.io/nastech-agent/docs/getting-started/updating")
             _print_fetch_failure(fetch_result.stderr)
             _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
+            _record_stop("git_timeout" if fetch_result.returncode == 124 else "disk_full"
+                         if "No space left on device" in (fetch_result.stderr or "") else "fetch_failed")
             sys.exit(1)
 
         current_branch = _current_branch_name(git_cmd, check=True)

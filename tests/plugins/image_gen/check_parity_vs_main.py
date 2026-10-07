@@ -165,7 +165,7 @@ SCENARIOS: list[tuple[str, str, dict[str, str]]] = [
         "managed-gateway-only",
         "",
         {
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent",
+            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
             "TOOL_GATEWAY_USER_TOKEN": "nastech-token",
         },
     ),

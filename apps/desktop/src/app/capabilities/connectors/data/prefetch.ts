@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 
-import { queryClient } from '@/lib/query-client'
 import type { ProfileScope } from '@/nastech'
+import { queryClient } from '@/lib/query-client'
 
 import type { ConnectorCardModel } from '../types'
 

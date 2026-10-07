@@ -183,7 +183,7 @@ class TestRouteFallback:
         assert state["inference_base_url"].rstrip("/") == WELCOME
 
     def test_disallowed_inference_host_heals_to_welcome_literal(self, portal):
-        portal.inference_base_url = "https://welcome-api.staging-nastechresearch.github.io/nastech-agent/v1"
+        portal.inference_base_url = "https://welcome-api.staging-nastechresearch.github.io/v1"
         anon_auth.ensure_portal_identity(explicit=True)
         from nastech_cli.runtime_provider import resolve_runtime_provider
         runtime = resolve_runtime_provider()

@@ -3,8 +3,8 @@ import { useMemo } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { CountSkeleton } from '@/components/ui/skeleton'
-import { useI18n } from '@/i18n'
 import { getSkillContent, type ProfileScope, profileScopeKey } from '@/nastech'
+import { useI18n } from '@/i18n'
 import type { SkillInfo } from '@/types/nastech'
 
 import { PanelPill } from '../../overlays/panel'

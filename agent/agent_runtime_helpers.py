@@ -33,6 +33,7 @@ from agent.error_classifier import FailoverReason
 from agent.retry_utils import parse_retry_after_seconds, reset_delay_from_message
 from agent.message_metadata import MERGED_TURN_PREFIX
 from agent.turn_context import drop_stale_api_content
+from agent.agent_runtime_helpers_placeholders import _INTERRUPTED_PLACEHOLDER
 from utils import base_url_host_matches, base_url_hostname, env_var_enabled, atomic_json_write
 logger = logging.getLogger(__name__)
 
@@ -1814,7 +1815,7 @@ def anthropic_prompt_cache_policy(
     is_kimi = _model_name_is_kimi_family(eff_model) or "moonshot" in model_lower
     is_openrouter = base_url_host_matches(eff_base_url, "openrouter.ai")
     # Nastech Portal proxies to OpenRouter; treat as OpenRouter-equivalent for cache layout.
-    is_nastech_portal = base_url_host_matches(eff_base_url, "nastechresearch.github.io/nastech-agent")
+    is_nastech_portal = base_url_host_matches(eff_base_url, "nastechresearch.github.io")
     is_anthropic_wire = eff_api_mode == "anthropic_messages"
     is_native_anthropic = is_anthropic_wire and (
         eff_provider == "anthropic" or base_url_hostname(eff_base_url) == "api.anthropic.com"
@@ -2677,10 +2678,6 @@ def repair_tool_call(agent, tool_name: str) -> str | None:
     matches = get_close_matches(lowered, agent.valid_tool_names, n=1, cutoff=0.7)
     return matches[0] if matches else None
 
-
-# Placeholder for an empty non-final message the provider would reject. Kept identical to the stub
-# placeholder in chat_completion_helpers so healed transcripts read consistently.
-_INTERRUPTED_PLACEHOLDER = "[response interrupted]"
 
 # Escalate repeated heals once per session window, then stay quiet. Default threshold; tunable via
 # ``agent.sanitizer_heal_escalation_threshold`` (<= 0 disables).

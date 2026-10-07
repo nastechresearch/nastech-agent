@@ -158,11 +158,7 @@ function dropReclaimClaim(claim: string) {
 }
 
 /** Count consecutive empty-lock polls, then reclaim a dead lock or back off. */
-function waitOnContendedRepairLock(
-  repairPath: string,
-  emptyPolls: number,
-  holderIsLive: RepairLockHolderJudge
-): number {
+function waitOnContendedRepairLock(repairPath: string, emptyPolls: number, holderIsLive: RepairLockHolderJudge): number {
   let polls: number
 
   try {

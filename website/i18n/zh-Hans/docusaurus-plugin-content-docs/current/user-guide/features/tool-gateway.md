@@ -156,7 +156,7 @@ nastech status
 若使用自建或自定义网关，可在 `~/.nastech/.env` 中用环境变量覆盖端点：
 
 ```bash
-TOOL_GATEWAY_DOMAIN=nastechresearch.github.io/nastech-agent     # 网关路由基础域名
+TOOL_GATEWAY_DOMAIN=nastechresearch.github.io     # 网关路由基础域名
 TOOL_GATEWAY_SCHEME=https                 # http 或 https（默认 https）
 TOOL_GATEWAY_USER_TOKEN=your-token        # 鉴权 Token（通常由程序自动填充）
 FIRECRAWL_GATEWAY_URL=https://...         # 单独覆盖 Firecrawl 端点

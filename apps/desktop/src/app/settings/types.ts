@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import type { IconComponent } from '@/lib/icons'
 import type { NastechGateway } from '@/nastech'
+import type { IconComponent } from '@/lib/icons'
 import type { EnvVarInfo } from '@/types/nastech'
 
 export type SettingsView =

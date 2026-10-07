@@ -325,7 +325,7 @@ def test_stable_zip_consumes_the_same_commit_through_the_real_swap(update_tree, 
     def local_open(request, *args, **kwargs):
         url = request.full_url if isinstance(request, urllib.request.Request) else request
         parsed = urlsplit(url)
-        assert parsed.scheme == 'https' and parsed.netloc in {'api.github.com', 'github.com', 'nastechresearch.github.io/nastech-agent'}, url
+        assert parsed.scheme == 'https' and parsed.netloc in {'api.github.com', 'github.com', 'nastech-assets.nastechresearch.github.io'}, url
         urls.append(url)
         local = f'http://127.0.0.1:{server.server_port}{parsed.path}'
         if parsed.query:
