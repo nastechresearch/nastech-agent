@@ -54,7 +54,7 @@ _KEY_URL = "https://www.perplexity.ai/account/api"
 # OpenCode, plus Perplexity's integration header. No per-user identifier and no separate
 # request; the call already carries the user's own API key.
 _HEADERS = {
-    "HTTP-Referer": "https://nastech-agent.nastechresearch.workers.dev",
+    "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
     "X-Title": "Nastech Agent",
     "User-Agent": f"NastechAgent/{get_version_info().base_version}",
     "X-Pplx-Integration": "nastech-agent",

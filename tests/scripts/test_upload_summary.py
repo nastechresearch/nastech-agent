@@ -7,7 +7,7 @@ from scripts.releases import r2, upload_summary
 from scripts.releases.r2_scope import R2Scope
 
 
-BASE = "https://nastech-assets.nastech-agent.nastechresearch.workers.dev"
+BASE = "https://nastechresearch.github.io/nastech-agent"
 KEY = "releases/commit/" + "a" * 40 + "/NastechBundled-1.2.3-win-x64.msix"
 
 

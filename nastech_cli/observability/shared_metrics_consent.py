@@ -29,7 +29,7 @@ OFFER_CHOICES = (
     ("No thanks", False, False),
 )
 _NO_THANKS = len(OFFER_CHOICES) - 1
-DOCS_URL = "https://nastech-agent.nastechresearch.workers.dev/docs/developer-guide/relay-shared-metrics"
+DOCS_URL = "https://nastechresearch.github.io/nastech-agent/docs/developer-guide/relay-shared-metrics"
 _OFFER_DESCRIPTION = "\n".join((
     "Shared metrics are bounded counters: activity, outcomes, error classes (with a",
     "fixed-list reason when a memory write or compression fails), model routes,",

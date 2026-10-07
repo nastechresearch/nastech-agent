@@ -106,10 +106,10 @@ def _is_deepseek_anthropic_endpoint(base_url: str | None) -> bool:
 
 def _is_nastech_portal_endpoint(base_url: str | None) -> bool:
     """Nastech Portal's Anthropic Messages route (Bearer JWT, verbatim catalog ids, native
-    thinking-signature replay). Trusted hosts only: prod ``inference-api.nastech-agent.nastechresearch.workers.dev`` or the
+    thinking-signature replay). Trusted hosts only: prod ``inference-api.nastechresearch.github.io`` or the
     operator-set ``NASTECH_INFERENCE_BASE_URL`` host (exact hostname equality, so neither lookalike
     domains nor sibling hosts of the override match)."""
-    if base_url_host_matches(base_url or "", "inference-api.nastech-agent.nastechresearch.workers.dev"):
+    if base_url_host_matches(base_url or "", "inference-api.nastechresearch.github.io"):
         return True
     try:
         from nastech_cli.auth import _nastech_inference_env_override

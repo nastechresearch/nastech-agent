@@ -24,7 +24,7 @@ from tools.skills_hub_sources import BrowseShSource, LobeHubSource, UrlSource, W
 # Log-record parity with the origin module.
 logger = logging.getLogger("tools.skills_hub")
 
-NASTECH_INDEX_URL = "https://nastech-agent.nastechresearch.workers.dev/docs/api/skills-index.json"
+NASTECH_INDEX_URL = "https://nastechresearch.github.io/nastech-agent/docs/api/skills-index.json"
 NASTECH_INDEX_TTL = 6 * 3600  # 6 hours
 
 

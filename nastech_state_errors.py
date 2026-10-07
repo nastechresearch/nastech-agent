@@ -199,7 +199,7 @@ _STATE_DB_REPLACED_MSG = (
     "writes to this file. Divert transcripts to sessions/<id>.jsonl (and the "
     "gateway pending_messages spool) and restore or reopen after operator intervention."
 )
-STORAGE_RECOVERY_DOCS_URL = "https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/session-storage-recovery"
+STORAGE_RECOVERY_DOCS_URL = "https://nastechresearch.github.io/nastech-agent/docs/user-guide/session-storage-recovery"
 
 # Two layers (#110054): the first sentence is for the person reading a chat bubble or a banner (what
 # happened, nothing is lost, the one thing to do); the rest is the operator detail. The phrase

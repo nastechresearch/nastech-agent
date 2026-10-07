@@ -82,7 +82,7 @@ class TestBuildAnthropicClient:
             )
             kwargs = mock_sdk.Anthropic.call_args[1]
             headers = kwargs["default_headers"]
-            assert headers["HTTP-Referer"] == "https://nastech-agent.nastechresearch.workers.dev"
+            assert headers["HTTP-Referer"] == "https://nastechresearch.github.io/nastech-agent"
             assert headers["X-Title"] == "Nastech Agent"
             from nastech_cli.version_info import get_version_info
             assert headers["User-Agent"] == f"NastechAgent/{get_version_info().base_version}"
@@ -1809,7 +1809,7 @@ def test_oauth_system_prompt_sanitizer_preserves_docs_url():
                 "role": "system",
                 "content": (
                     "Nastech Agent by Nastech Research uses nastech-agent skills. "
-                    "Docs: https://nastech-agent.nastechresearch.workers.dev/docs ; "
+                    "Docs: https://nastechresearch.github.io/nastech-agent/docs ; "
                     "interpreter ~/.nastech/nastech-agent/venv/bin/python ; "
                     "source github.com/NastechResearch/nastech-agent ; mail nastech-agent@example.com ; "
                     "skill_view(name='nastech-agent') ; nastech-agent's docs ; built by nastech-agent."
@@ -1825,7 +1825,7 @@ def test_oauth_system_prompt_sanitizer_preserves_docs_url():
 
     system_text = "\n".join(block["text"] for block in kwargs["system"])
     assert "Claude Code by Anthropic uses claude-code skills." in system_text
-    assert "https://nastech-agent.nastechresearch.workers.dev/docs" in system_text
+    assert "https://nastechresearch.github.io/nastech-agent/docs" in system_text
     # Paths and repo slugs are addresses too: a subagent told to run
     # ``~/.nastech/claude-code/venv/bin/python`` fails on a file that does not exist.
     assert "~/.nastech/nastech-agent/venv/bin/python" in system_text

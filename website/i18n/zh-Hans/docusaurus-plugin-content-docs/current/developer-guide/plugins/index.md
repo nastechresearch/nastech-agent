@@ -23,7 +23,7 @@ Nastech 有多种不同的可插拔接口——有些使用 Python `register_*` 
 | **网页搜索/提取后端** | [网页搜索提供商插件](../web-search-provider-plugin.md) |
 | **云浏览器后端**（Browserbase 类 CDP 会话提供商） | [浏览器提供商插件](../browser-provider-plugin.md) |
 | **密钥管理器后端**（保险库 / 密码管理器 / 系统钥匙串） | [密钥源插件](../secret-source-plugin.md) |
-| **仪表盘 OIDC/认证提供商** | [Web 仪表盘 — 自定义提供商](https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/features/web-dashboard#custom-providers) — `ctx.register_dashboard_auth_provider()` |
+| **仪表盘 OIDC/认证提供商** | [Web 仪表盘 — 自定义提供商](https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/web-dashboard#custom-providers) — `ctx.register_dashboard_auth_provider()` |
 | **TTS 后端**（任意 CLI——Piper、VoxCPM、Kokoro、声音克隆等） | [TTS 自定义命令提供商](../../user-guide/features/tts.md#自定义命令提供商)——配置驱动，无需 Python |
 | **STT 后端**（自定义 whisper / ASR CLI） | [语音消息转录](../../user-guide/features/tts.md#语音消息转录stt)——将 `NASTECH_LOCAL_STT_COMMAND` 设置为 shell 模板 |
 | **通过 MCP 接入外部工具**（文件系统、GitHub、Linear、任意 MCP 服务器） | [MCP](../../user-guide/features/mcp.md)——在 `config.yaml` 中声明 `mcp_servers.<name>` |

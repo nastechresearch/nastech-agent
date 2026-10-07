@@ -28,7 +28,7 @@ What makes Nastech different:
 
 **This skill is a hub.** The body covers identity, quick start, spawning/orchestration, and hard invariants. Everything else lives in reference files — **load the matching reference (below) before answering**; do not answer detail questions from the body alone.
 
-**Docs:** https://nastech-agent.nastechresearch.workers.dev/docs/
+**Docs:** https://nastechresearch.github.io/nastech-agent/docs/
 
 ## Scope & Verification
 
@@ -36,7 +36,7 @@ This skill is a concise operating guide, not the complete source of truth for ev
 
 Good verification targets, cheapest first:
 
-- **Every shipped feature, one line each: https://nastech-agent.nastechresearch.workers.dev/docs/llms.txt.** Start here for any "can Nastech do X?" or "how do I do X?" — it indexes the entire documentation set with a link to the page that answers. It is generated from the docs tree on every build, so it is never behind the product. Fetch it with `web_extract`, or `curl -s https://nastech-agent.nastechresearch.workers.dev/docs/llms.txt` when web tools are off. The whole documentation set in one file is at `/docs/llms-full.txt`.
+- **Every shipped feature, one line each: https://nastechresearch.github.io/nastech-agent/docs/llms.txt.** Start here for any "can Nastech do X?" or "how do I do X?" — it indexes the entire documentation set with a link to the page that answers. It is generated from the docs tree on every build, so it is never behind the product. Fetch it with `web_extract`, or `curl -s https://nastechresearch.github.io/nastech-agent/docs/llms.txt` when web tools are off. The whole documentation set in one file is at `/docs/llms-full.txt`.
 - CLI commands: `nastech --help`, `nastech <command> --help`, and `nastech_cli/main.py`
 - Source tree: https://github.com/NastechResearch/nastech-agent
 
@@ -46,7 +46,7 @@ Never answer "Nastech can't do that" from memory. Nastech ships far more than th
 
 ```bash
 # Install (shell installer — bootstraps PM, Python, dependencies, and the launcher)
-curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash
+curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 
 # Interactive chat (default surface; set display.interface: tui to launch the Ink TUI instead)
 nastech
@@ -88,7 +88,7 @@ Profiles use `~/.nastech/profiles/<name>/` with the same layout. When a profile 
 
 | User wants... | Load |
 |---|---|
-| **Anything not listed below — "can Nastech do X?", "how do I set up X?"** | **https://nastech-agent.nastechresearch.workers.dev/docs/llms.txt** |
+| **Anything not listed below — "can Nastech do X?", "how do I set up X?"** | **https://nastechresearch.github.io/nastech-agent/docs/llms.txt** |
 | Bots that chat, run routines, or message each other; the Bots tab | docs: `/user-guide/bot-mode` |
 | CLI commands, subcommands, flags, "how do I run X" | `references/cli-reference.md` |
 | In-session slash commands | `references/slash-commands.md` |

@@ -176,7 +176,7 @@ async def test_status_command_uses_most_recent_persisted_model_route(tmp_path):
             "sess-1",
             model="upstage/solar-pro4:free",
             billing_provider="nastech",
-            billing_base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1/",
+            billing_base_url="https://inference-api.nastechresearch.github.io/v1/",
             input_tokens=60,
             api_call_count=6,
         )
@@ -185,7 +185,7 @@ async def test_status_command_uses_most_recent_persisted_model_route(tmp_path):
         db.update_session_billing_route(
             "sess-1",
             provider="nastech",
-            base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1/",
+            base_url="https://inference-api.nastechresearch.github.io/v1/",
         )
 
         result = await runner._handle_message(_make_event("/status"))

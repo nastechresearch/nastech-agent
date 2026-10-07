@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 #: environment variable: AGENTS.md reserves NASTECH_* for secrets, and an inherited variable
 #: could silently redirect consented metrics to any host with nothing visible in config.
 #: Tests and the staging E2E write this key into a throwaway profile instead.
-DEFAULT_ENDPOINT = "https://telemetry.nastech-agent.nastechresearch.workers.dev/v1/telemetry"
+DEFAULT_ENDPOINT = "https://telemetry.nastechresearch.github.io/v1/telemetry"
 
 _LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "[::1]"})
 

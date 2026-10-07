@@ -116,7 +116,7 @@ meaningful:
 
 The step-by-step submission guide, with the same rules and what reviewers check,
 lives at
-[Submitting to the plugin catalog](https://nastech-agent.nastechresearch.workers.dev/docs/developer-guide/plugins/catalog-submission).
+[Submitting to the plugin catalog](https://nastechresearch.github.io/nastech-agent/docs/developer-guide/plugins/catalog-submission).
 
 ## Entry schema
 
@@ -158,7 +158,7 @@ so the Desktop catalog and the docs site never fetch from third-party hosts;
 pin the raw URL to the entry's commit and the picture is as immutable as the
 code.
 
-Every entry gets a page at `https://nastech-agent.nastechresearch.workers.dev/docs/plugins/<name>`
+Every entry gets a page at `https://nastechresearch.github.io/nastech-agent/docs/plugins/<name>`
 and every maintainer a page at `/docs/plugins/by/<maintainer>`, both generated
 from these files at docs build time. `screenshots:` fills the page's gallery;
 the build fetches the README (from `subdir` if set, else the repo root) **at the

@@ -32,7 +32,7 @@ def test_nonretryable_401_result_classifies_as_auth_for_the_ui():
     result = nonretryable_client_error_result(
         _Agent(), error, classified, status_code=401, api_kwargs=None, api_messages=[], messages=[],
         conversation_history=None, api_call_count=1, approx_tokens=10, provider="nastech",
-        base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1", model="m",
+        base_url="https://inference-api.nastechresearch.github.io/v1", model="m",
     )
     assert result["failure_reason"] == classified.reason.value
     assert result["failure_retryable"] is classified.retryable is False

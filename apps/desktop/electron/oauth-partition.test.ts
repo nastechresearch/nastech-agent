@@ -79,13 +79,13 @@ describe('resolveOauthPartition (#92183 per-connection cookie jars)', () => {
       {
         id: 'cloud-1',
         kind: 'cloud',
-        url: 'https://agent.nastech-agent.nastechresearch.workers.dev',
+        url: 'https://agent.nastechresearch.github.io',
         authMode: 'oauth'
       }
     ])
 
     expect(
-      resolveOauthPartition('https://agent.nastech-agent.nastechresearch.workers.dev/api/status', { registry: reg })
+      resolveOauthPartition('https://agent.nastechresearch.github.io/api/status', { registry: reg })
     ).toBe(LEGACY_OAUTH_PARTITION)
   })
 
@@ -99,7 +99,7 @@ describe('resolveOauthPartition (#92183 per-connection cookie jars)', () => {
     const reg = registry('local', [remote('conn-a', 'https://gw-a.example.com')])
 
     expect(
-      resolveOauthPartition('https://portal.nastech-agent.nastechresearch.workers.dev/api/agents', { registry: reg })
+      resolveOauthPartition('https://portal.nastechresearch.github.io/api/agents', { registry: reg })
     ).toBe(LEGACY_OAUTH_PARTITION)
     expect(resolveOauthPartition('not a url', { registry: reg })).toBe(LEGACY_OAUTH_PARTITION)
     expect(resolveOauthPartition('', { registry: reg })).toBe(LEGACY_OAUTH_PARTITION)
@@ -228,7 +228,7 @@ describe('resolveOauthPartition with connectionId (pre-save sign-in identity)', 
       {
         id: 'cloud-1',
         kind: 'cloud',
-        url: 'https://agent.nastech-agent.nastechresearch.workers.dev',
+        url: 'https://agent.nastechresearch.github.io',
         authMode: 'oauth'
       }
     ])
@@ -243,7 +243,7 @@ describe('resolveOauthPartition with connectionId (pre-save sign-in identity)', 
       LEGACY_OAUTH_PARTITION
     )
     expect(
-      resolveOauthPartition('https://agent.nastech-agent.nastechresearch.workers.dev', {
+      resolveOauthPartition('https://agent.nastechresearch.github.io', {
         registry: reg,
         connectionId: 'cloud-1'
       })

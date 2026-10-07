@@ -11,8 +11,8 @@ import pytest
 
 from nastech_cli import anon_auth
 
-WELCOME = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
-PAID = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
+WELCOME = "https://welcome-api.nastechresearch.github.io/v1"
+PAID = "https://inference-api.nastechresearch.github.io/v1"
 
 
 # ── Auxiliary client: the welcome host serves exactly one model ──────────────────────────────────

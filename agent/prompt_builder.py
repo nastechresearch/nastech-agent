@@ -173,7 +173,7 @@ NASTECH_AGENT_HELP_GUIDANCE = (
     # resolution). No "when the two differ" clause: docs-are-authoritative already carries the precedence.
     "You run on Nastech Agent (by Nastech Research). When the user needs help with Nastech itself — configuring, "
     "setting up, using, extending, or troubleshooting it — or when you need to understand your own features, "
-    "tools, or capabilities, the documentation at https://nastech-agent.nastechresearch.workers.dev/docs is your "
+    "tools, or capabilities, the documentation at https://nastechresearch.github.io/nastech-agent/docs is your "
     "authoritative reference and always holds the latest, most up-to-date information. The `nastech-agent` "
     "skill has the actual commands and proven workflows — load it with skill_view(name='nastech-agent') "
     "before configuring, modifying, or troubleshooting Nastech so you don't guess or invent workarounds."
@@ -183,7 +183,7 @@ NASTECH_AGENT_HELP_GUIDANCE = (
 NASTECH_AGENT_HELP_GUIDANCE_NO_SKILLS = (
     "You run on Nastech Agent (by Nastech Research). When the user needs help with Nastech itself — configuring, "
     "setting up, using, extending, or troubleshooting it — or when you need to understand your own features, "
-    "tools, or capabilities, the documentation at https://nastech-agent.nastechresearch.workers.dev/docs is the "
+    "tools, or capabilities, the documentation at https://nastechresearch.github.io/nastech-agent/docs is the "
     "authoritative reference and always holds the latest, most up-to-date information. Point the user there "
     "(or read it yourself if you have a way to fetch web content)."
 )

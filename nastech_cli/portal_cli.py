@@ -7,9 +7,9 @@ import webbrowser
 from nastech_cli.colors import Colors, color
 from nastech_cli.config import load_config
 
-DEFAULT_PORTAL_URL = "https://portal.nastech-agent.nastechresearch.workers.dev"
-SUBSCRIPTION_URL = "https://portal.nastech-agent.nastechresearch.workers.dev/manage-subscription"
-DOCS_URL = "https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/features/tool-gateway"
+DEFAULT_PORTAL_URL = "https://portal.nastechresearch.github.io"
+SUBSCRIPTION_URL = "https://portal.nastechresearch.github.io/manage-subscription"
+DOCS_URL = "https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/tool-gateway"
 # Static `portal tools` catalog — the partners Tool Gateway routes to today: (key, label, partner).
 _CATALOG = [
     ("web", "Web search & extract", "Nastech-managed"),

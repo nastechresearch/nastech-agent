@@ -655,7 +655,7 @@ def _maybe_setup_dashboard_auth_interactively(args) -> None:
             "    nastech dashboard register\n"
             "  It provisions a Nastech Portal OAuth client and writes "
             "NASTECH_DASHBOARD_OAUTH_CLIENT_ID into ~/.nastech/.env for you.\n"
-            "  Docs: https://nastech-agent.nastechresearch.workers.dev/docs/"
+            "  Docs: https://nastechresearch.github.io/nastech-agent/docs/"
             "user-guide/features/web-dashboard#authentication-gated-mode"
         )
         sys.exit(0)

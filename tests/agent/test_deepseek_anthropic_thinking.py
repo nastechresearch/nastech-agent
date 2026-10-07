@@ -105,7 +105,7 @@ class TestDeepSeekAnthropicPreservesThinking:
                     assert "cache_control" not in b
 
 
-@pytest.mark.parametrize("url", [None, "https://api.anthropic.com", "https://inference-api.nastech-agent.nastechresearch.workers.dev/anthropic"])
+@pytest.mark.parametrize("url", [None, "https://api.anthropic.com", "https://inference-api.nastechresearch.github.io/anthropic"])
 def test_deepseek_model_name_does_not_override_native_signature_contract(url):
     from agent.anthropic_message_convert import _manage_thinking_signatures
     block = {"type": "thinking", "thinking": "signed native reasoning", "signature": "sig"}

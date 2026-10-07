@@ -93,7 +93,7 @@ The reason is maintenance load, not quality. Every external product absorbed int
 
 Publish these as a **standalone plugin repo** instead:
 
-- Implement the relevant ABC and use the existing plugin discovery path (`~/.nastech/plugins/`, project `.nastech/plugins/`, or a pip entry point) — see [Build a Nastech Plugin](https://nastech-agent.nastechresearch.workers.dev/docs/guides/build-a-nastech-plugin)
+- Implement the relevant ABC and use the existing plugin discovery path (`~/.nastech/plugins/`, project `.nastech/plugins/`, or a pip entry point) — see [Build a Nastech Plugin](https://nastechresearch.github.io/nastech-agent/docs/guides/build-a-nastech-plugin)
 - Register lifecycle hooks (`pre_tool_call`, `post_tool_call`, `pre_llm_call`, `post_llm_call`, `on_session_start`, `on_session_end`), tools (`ctx.register_tool`), and CLI subcommands (`ctx.register_cli_command`) through the surface we already expose — no core changes needed
 - If your plugin needs a capability the framework doesn't expose, that's a feature request to **widen the generic plugin surface** (a new hook or `ctx` method) — never special-case your plugin in core
 - Promote it in the [Nastech Research Discord](https://discord.gg/NastechResearch) `#plugins-skills-and-skins` channel so users can find and install it
@@ -104,7 +104,7 @@ A well-built third-party-product plugin can clear automated review and still be 
 
 ## Submitting a Plugin to the Catalog
 
-A standalone plugin reaches users through the [plugin catalog](https://nastech-agent.nastechresearch.workers.dev/docs/plugins): a PR to this repo adding one `plugin-catalog/<name>.yaml` file that pins your repo at an exact commit. Read **[Submitting to the plugin catalog](https://nastech-agent.nastechresearch.workers.dev/docs/developer-guide/plugins/catalog-submission)** before opening one. It covers what to check first (`nastech plugins validate --install-deps`), how review works, and every admission rule. The canonical rules live in [`plugin-catalog/README.md`](plugin-catalog/README.md); if you change them, change the mirrored block in the docs page in the same PR (a test keeps the two identical).
+A standalone plugin reaches users through the [plugin catalog](https://nastechresearch.github.io/nastech-agent/docs/plugins): a PR to this repo adding one `plugin-catalog/<name>.yaml` file that pins your repo at an exact commit. Read **[Submitting to the plugin catalog](https://nastechresearch.github.io/nastech-agent/docs/developer-guide/plugins/catalog-submission)** before opening one. It covers what to check first (`nastech plugins validate --install-deps`), how review works, and every admission rule. The canonical rules live in [`plugin-catalog/README.md`](plugin-catalog/README.md); if you change them, change the mirrored block in the docs page in the same PR (a test keeps the two identical).
 
 The rules that most often send a submission back: the plugin must extend Nastech only through public hooks, `ctx.register_*` APIs and the Desktop SDK (no patching core code or Desktop markup at runtime), must not update itself, must declare the capabilities it registers, and must disclose risky behaviour.
 
@@ -310,7 +310,7 @@ nastech-agent/
 ├── skills/                   # Bundled skills (copied to ~/.nastech/skills/ on install)
 ├── optional-skills/          # Official optional skills (discoverable via hub, not activated by default)
 ├── tests/                    # Test suite
-├── website/                  # Documentation site (nastech-agent.nastechresearch.workers.dev)
+├── website/                  # Documentation site (nastechresearch.github.io/nastech-agent)
 │
 ├── cli-config.yaml.example   # Example configuration (copied to ~/.nastech/config.yaml)
 └── AGENTS.md                 # Development guide for AI coding assistants

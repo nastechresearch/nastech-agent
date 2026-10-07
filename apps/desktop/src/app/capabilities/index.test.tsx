@@ -274,7 +274,7 @@ describe('CapabilitiesView toolset management', { timeout: 60_000 }, () => {
       window.dispatchEvent(
         new MessageEvent('message', {
           data: { type: 'nastech-skill-pick', name: 'web-research', identifier: 'web-research' },
-          origin: 'https://nastech-agent.nastechresearch.workers.dev'
+          origin: 'https://nastechresearch.github.io/nastech-agent'
         })
       )
     })

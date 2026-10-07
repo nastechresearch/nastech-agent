@@ -21,7 +21,7 @@ describe('hub-iframe-policy predicates', () => {
     expect(isNastechHubOrigin('')).toBe(false)
     expect(isNastechHubOrigin(null)).toBe(false)
     expect(isNastechHubOrigin(undefined)).toBe(false)
-    expect(isNastechHubOrigin('https://nastech-agent.nastechresearch.workers.dev.evil.example')).toBe(false)
+    expect(isNastechHubOrigin('https://nastechresearch.github.io/nastech-agent.evil.example')).toBe(false)
     expect(isNastechHubOrigin('https://evil.example')).toBe(false)
     expect(isNastechHubOrigin('file://')).toBe(false)
   })
@@ -103,7 +103,7 @@ describe('createWindowOpenHandler trusted-hub delegation', () => {
     const openExternalUrl = vi.fn()
 
     const handler = createWindowOpenHandler(undefined, {
-      getOpenerOrigin: () => 'https://nastech-agent.nastechresearch.workers.dev.evil.example',
+      getOpenerOrigin: () => 'https://nastechresearch.github.io/nastech-agent.evil.example',
       openExternalUrl
     })
 

@@ -1850,7 +1850,7 @@ def anthropic_prompt_cache_policy(
     is_kimi = _model_name_is_kimi_family(eff_model) or "moonshot" in model_lower
     is_openrouter = base_url_host_matches(eff_base_url, "openrouter.ai")
     # Nastech Portal proxies to OpenRouter; treat as OpenRouter-equivalent for cache layout.
-    is_nastech_portal = base_url_host_matches(eff_base_url, "nastech-agent.nastechresearch.workers.dev")
+    is_nastech_portal = base_url_host_matches(eff_base_url, "nastechresearch.github.io/nastech-agent")
     is_anthropic_wire = eff_api_mode == "anthropic_messages"
     is_native_anthropic = is_anthropic_wire and (
         eff_provider == "anthropic" or base_url_hostname(eff_base_url) == "api.anthropic.com"

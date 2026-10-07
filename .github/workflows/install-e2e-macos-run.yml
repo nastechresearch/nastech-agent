@@ -51,7 +51,7 @@ on:
         description: 'Bootstrap dmg to install OLD with. Default: the latest published one — what a user downloads today.'
         required: false
         type: string
-        default: https://nastech-assets.nastech-agent.nastechresearch.workers.dev/Nastech-Setup.dmg
+        default: https://nastechresearch.github.io/nastech-agent/Nastech-Setup.dmg
       bundle-manifest-url:
         description: 'URL of the JSON schema-1 bundle manifest for the packaged-app arm. Empty (default) means the bundled arm does not run — native packaged coverage only runs when the caller pins a real signed OLD/NEW pair.'
         required: false

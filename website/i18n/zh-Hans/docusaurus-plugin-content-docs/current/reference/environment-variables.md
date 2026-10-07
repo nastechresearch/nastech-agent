@@ -179,7 +179,7 @@ description: "Nastech Agent 使用的所有环境变量完整参考"
 
 | 变量 | 描述 |
 |----------|-------------|
-| `TOOL_GATEWAY_DOMAIN` | Tool Gateway 路由的基础域名（默认：`nastech-agent.nastechresearch.workers.dev`） |
+| `TOOL_GATEWAY_DOMAIN` | Tool Gateway 路由的基础域名（默认：`nastechresearch.github.io/nastech-agent`） |
 | `TOOL_GATEWAY_SCHEME` | gateway URL 的 HTTP 或 HTTPS 协议（默认：`https`） |
 | `TOOL_GATEWAY_USER_TOKEN` | Tool Gateway 的认证 token（通常由 Nastech 认证自动填充） |
 | `FIRECRAWL_GATEWAY_URL` | 专门覆盖 Firecrawl gateway 端点的 URL |
@@ -598,7 +598,7 @@ Graph 事件（Teams 会议、日历、聊天等）的入站变更通知监听�
 export NASTECH_WRITE_SAFE_ROOT=/path/to/project:/home/you/.nastech
 ```
 
-取消设置或从 `.env` 中移除此变量可恢复常规写入（仍受凭证路径拒绝列表约束——见[文件写入安全](https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/security#file-write-safety)）。
+取消设置或从 `.env` 中移除此变量可恢复常规写入（仍受凭证路径拒绝列表约束——见[文件写入安全](https://nastechresearch.github.io/nastech-agent/docs/user-guide/security#file-write-safety)）。
 
 ## 界面
 

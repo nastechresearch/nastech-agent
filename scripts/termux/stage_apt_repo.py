@@ -266,7 +266,7 @@ def stage(
                 "Package": fields["Package"],
                 "Version": fields["Version"],
                 "Architecture": arch,
-                "Maintainer": fields.get("Maintainer", "Nastech Agent <noreply@nastech-agent.nastechresearch.workers.dev>"),
+                "Maintainer": fields.get("Maintainer", "Nastech Agent <noreply@nastechresearch.github.io>"),
                 "Installed-Size": fields.get("Installed-Size", "0"),
                 "Description": fields.get("Description", "Nastech Agent"),
                 "Filename": filename,
@@ -515,7 +515,7 @@ def main(argv: list | None = None) -> int:
     ap.add_argument("--pool", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
     # nastech-nightly is the suite actually published today
-    # (https://nastech-assets.nastech-agent.nastechresearch.workers.dev/releases/termux/nightly/,
+    # (https://nastechresearch.github.io/nastech-agent/releases/termux/nightly/,
     # verified 2026-09-06); nastech-stable/nastech-canary are what CI stages
     # for the stable/canary channels.
     ap.add_argument(

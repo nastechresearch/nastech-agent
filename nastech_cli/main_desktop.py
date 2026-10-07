@@ -1789,7 +1789,7 @@ def cmd_gui(args: argparse.Namespace):
             print(
                 "  This Nastech came from Homebrew, which does not ship the desktop app's\n"
                 "  source tree, so it cannot be built from this install.\n"
-                "  Install the desktop app from https://nastech-agent.nastechresearch.workers.dev,\n"
+                "  Install the desktop app from https://nastechresearch.github.io/nastech-agent,\n"
                 "  or run `nastech desktop` from a source checkout."
             )
         sys.exit(1)

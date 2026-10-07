@@ -1978,7 +1978,7 @@ export const deOverrides = {
       sshErrHostKey:
         'Der Host-Key hat sich seit Ihrer letzten Verbindung GEÄNDERT. Prüfen Sie, ob das erwartet ist, führen Sie dann ssh-keygen -R <host> aus und verbinden Sie sich erneut.',
       sshErrNotInstalled:
-        'Nastech ist auf dem Remote-Host nicht installiert. Installieren Sie es dort (curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | sh) oder legen Sie den Nastech-Pfad fest.',
+        'Nastech ist auf dem Remote-Host nicht installiert. Installieren Sie es dort (curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | sh) oder legen Sie den Nastech-Pfad fest.',
       sshErrPlatform:
         'Nicht unterstützte Remote-Plattform. Der Desktop-SSH-Modus von Nastech unterstützt Linux-, macOS- und Windows-Remote-Hosts.',
       sshErrTimeout: 'SSH-Verbindung ist ausgelaufen. Der Host ist möglicherweise nicht erreichbar oder schläft.',

@@ -53,7 +53,7 @@ def _free_tier_state() -> dict:
         "anon_token": "anon_status",
         "access_token": _jwt(),
         "expires_at": "2999-01-01T00:00:00+00:00",
-        "inference_base_url": "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1",
+        "inference_base_url": "https://welcome-api.nastechresearch.github.io/v1",
     }
 
 def _account_state() -> dict:

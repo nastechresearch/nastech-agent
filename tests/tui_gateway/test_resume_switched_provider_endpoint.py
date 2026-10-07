@@ -13,7 +13,7 @@ from nastech_cli.cli_model_switch_mixin import stored_session_route
 from nastech_state import SessionDB
 from tui_gateway.server import _stored_session_runtime_overrides
 
-NASTECH_ROUTE = {"base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1", "api_mode": "chat_completions"}
+NASTECH_ROUTE = {"base_url": "https://inference-api.nastechresearch.github.io/v1", "api_mode": "chat_completions"}
 
 
 @pytest.mark.parametrize("row_origin", ["gateway_model_switch", "row_written_by_older_build"])

@@ -1249,7 +1249,7 @@ function GatewayConnectionSettings({ embedded, standalone }: { embedded: boolean
                     <span>
                       {g.cloudNoAgents.before}
                       <ExternalLink
-                        href="https://portal.nastech-agent.nastechresearch.workers.dev/agents"
+                        href="https://portal.nastechresearch.github.io/agents"
                         showExternalIcon={false}
                       >
                         {g.cloudNoAgents.linkText}

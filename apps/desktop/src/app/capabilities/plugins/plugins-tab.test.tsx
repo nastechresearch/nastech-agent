@@ -239,7 +239,7 @@ describe('PluginsTab', () => {
           tier: 'community',
           type: 'nastech-plugin-pick'
         },
-        origin: 'https://nastech-agent.nastechresearch.workers.dev'
+        origin: 'https://nastechresearch.github.io/nastech-agent'
       })
     )
 
@@ -334,7 +334,7 @@ describe('PluginsTab', () => {
           subdir: 'nested-plugin',
           type: 'nastech-plugin-pick'
         },
-        origin: 'https://nastech-agent.nastechresearch.workers.dev'
+        origin: 'https://nastechresearch.github.io/nastech-agent'
       })
     )
 
@@ -681,7 +681,7 @@ describe('PluginsTab catalog UX', () => {
           repo: 'https://github.com/example/demo-weather',
           type: 'nastech-plugin-pick'
         },
-        origin: 'https://nastech-agent.nastechresearch.workers.dev'
+        origin: 'https://nastechresearch.github.io/nastech-agent'
       })
     )
 
@@ -714,7 +714,7 @@ describe('PluginsTab catalog UX', () => {
           repo: 'https://github.com/example/demo-weather',
           type: 'nastech-plugin-pick'
         },
-        origin: 'https://nastech-agent.nastechresearch.workers.dev'
+        origin: 'https://nastechresearch.github.io/nastech-agent'
       })
     )
 

@@ -101,7 +101,7 @@ describe('useStepUpFlow', () => {
       gatewayMock.emit('billing.step_up.verification', {
         payload: {
           user_code: 'ABCD-1234',
-          verification_url: 'https://portal.nastech-agent.nastechresearch.workers.dev/device'
+          verification_url: 'https://portal.nastechresearch.github.io/device'
         },
         type: 'billing.step_up.verification'
       })
@@ -110,12 +110,12 @@ describe('useStepUpFlow', () => {
     expect(result.current.phase).toBe('verifying')
     expect(result.current.verification).toEqual({
       code: 'ABCD-1234',
-      url: 'https://portal.nastech-agent.nastechresearch.workers.dev/device'
+      url: 'https://portal.nastechresearch.github.io/device'
     })
 
     result.current.openVerification()
     expect(window.nastechDesktop?.openExternal).toHaveBeenCalledWith(
-      'https://portal.nastech-agent.nastechresearch.workers.dev/device'
+      'https://portal.nastechresearch.github.io/device'
     )
 
     await act(async () => {

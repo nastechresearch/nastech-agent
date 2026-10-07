@@ -167,7 +167,7 @@ class TestRouteFallback:
         assert state["inference_base_url"].rstrip("/") == WELCOME
 
     def test_disallowed_inference_host_heals_to_welcome_literal(self, portal):
-        portal.inference_base_url = "https://welcome-api.staging-nastech-agent.nastechresearch.workers.dev/v1"
+        portal.inference_base_url = "https://welcome-api.staging-nastechresearch.github.io/nastech-agent/v1"
         anon_auth.ensure_portal_identity(explicit=True)
         from nastech_cli.runtime_provider import resolve_runtime_provider
         runtime = resolve_runtime_provider()
@@ -179,7 +179,7 @@ class TestRouteFallback:
         _portal, stored, effective, _client = _nastech_effective_routing(guest)
         assert stored.rstrip("/") == WELCOME and effective.rstrip("/") == WELCOME
         _portal, stored, _effective, _client = _nastech_effective_routing({"refresh_token": "r"})
-        assert stored.rstrip("/") == "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
+        assert stored.rstrip("/") == "https://inference-api.nastechresearch.github.io/v1"
 
     def test_shared_store_shape_keeps_a_guest_on_the_welcome_host(self, portal):
         from nastech_cli.auth_nastech import _nastech_shared_shape
@@ -235,7 +235,7 @@ class TestModelPin:
     def test_pin_keys_on_the_welcome_host_not_on_guest_state(self, portal):
         anon_auth.ensure_portal_identity(explicit=True)  # guest singleton exists
         assert anon_auth.route_is_welcome_host(WELCOME)
-        assert not anon_auth.route_is_welcome_host("https://inference-api.nastech-agent.nastechresearch.workers.dev/v1")
+        assert not anon_auth.route_is_welcome_host("https://inference-api.nastechresearch.github.io/v1")
         assert not anon_auth.route_is_welcome_host("")
 
     def test_agent_init_pins_only_on_welcome_route(self, portal):
@@ -243,7 +243,7 @@ class TestModelPin:
         from run_agent import AIAgent
         welcome = AIAgent(provider="nastech", base_url=WELCOME, api_key="k", model="openai/gpt-5",
                           quiet_mode=True, skip_context_files=True, skip_memory=True)
-        paid = AIAgent(provider="nastech", base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1", api_key="k",
+        paid = AIAgent(provider="nastech", base_url="https://inference-api.nastechresearch.github.io/v1", api_key="k",
                        model="nastech/paid-model", quiet_mode=True, skip_context_files=True, skip_memory=True)
         assert welcome.model == anon_auth.GUEST_MODEL
         assert paid.model == "nastech/paid-model"
@@ -286,7 +286,7 @@ class TestRotationNeverRewritesTheConversationModel:
 
     def _agent(self, api_mode="chat_completions", model="nastech/paid-model"):
         from types import SimpleNamespace
-        return SimpleNamespace(provider="nastech", api_mode=api_mode, base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
+        return SimpleNamespace(provider="nastech", api_mode=api_mode, base_url="https://inference-api.nastechresearch.github.io/v1",
                                api_key="k", model=model, _client_kwargs={}, _credential_pool_entry_id="p",
                                _reapply_route_client_config=lambda **kw: None, _replace_primary_openai_client=lambda **kw: None,
                                _anthropic_client=SimpleNamespace(close=lambda: None),
@@ -305,7 +305,7 @@ class TestRotationNeverRewritesTheConversationModel:
         from types import SimpleNamespace
         from agent.client_lifecycle import ClientLifecycleMixin
         agent = self._agent(model=anon_auth.GUEST_MODEL); agent.base_url = WELCOME
-        ok = ClientLifecycleMixin._swap_credential(agent, SimpleNamespace(id="p2", runtime_api_key="key", runtime_base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"))
+        ok = ClientLifecycleMixin._swap_credential(agent, SimpleNamespace(id="p2", runtime_api_key="key", runtime_base_url="https://inference-api.nastechresearch.github.io/v1"))
         assert ok is True and agent.model == anon_auth.GUEST_MODEL
 
 

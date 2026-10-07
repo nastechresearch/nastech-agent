@@ -12,7 +12,7 @@ class UpstreamCredential:
     """A resolved bearer + base URL ready to forward to."""
 
     bearer: str  # token only, no ``Bearer`` prefix
-    base_url: str  # e.g. ``https://inference-api.nastech-agent.nastechresearch.workers.dev/v1``
+    base_url: str  # e.g. ``https://inference-api.nastechresearch.github.io/v1``
     token_type: str = "Bearer"
     expires_at: Optional[str] = None  # ISO-8601, informational
 

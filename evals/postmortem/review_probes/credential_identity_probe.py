@@ -55,7 +55,7 @@ if MODE=='main':
     spec=importlib.util.spec_from_file_location('main_prep',Path(__file__).with_name('main-turn_iteration_prep.py')); mod=importlib.util.module_from_spec(spec);sys.modules[spec.name]=mod;spec.loader.exec_module(mod);prepare_iteration=mod.prepare_iteration
 
 def store(token):
-    exp=claims(token)['exp']; state={'portal_base_url':'https://portal.nastech-agent.nastechresearch.workers.dev','inference_base_url':'https://inference-api.nastech-agent.nastechresearch.workers.dev/v1','client_id':'nastech-cli','token_type':'Bearer','scope':'inference:invoke','access_token':token,'refresh_token':'fixture-refresh-never-send','expires_at':datetime.fromtimestamp(exp,timezone.utc).isoformat(),'expires_in':3600,'agent_key':token,'agent_key_expires_at':datetime.fromtimestamp(exp,timezone.utc).isoformat()}
+    exp=claims(token)['exp']; state={'portal_base_url':'https://portal.nastechresearch.github.io','inference_base_url':'https://inference-api.nastechresearch.github.io/v1','client_id':'nastech-cli','token_type':'Bearer','scope':'inference:invoke','access_token':token,'refresh_token':'fixture-refresh-never-send','expires_at':datetime.fromtimestamp(exp,timezone.utc).isoformat(),'expires_in':3600,'agent_key':token,'agent_key_expires_at':datetime.fromtimestamp(exp,timezone.utc).isoformat()}
     (home/'nastech'/'auth.json').write_text(json.dumps({'version':1,'active_provider':'nastech','providers':{'nastech':state}}), encoding='utf-8')
 results=[]
 for case, own_sub, store_sub, ttl in [('same-account','account-A','account-A',30),('explicit-account','account-A','account-B',30),('far-from-expiry','account-A','account-B',3000)]:

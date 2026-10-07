@@ -684,8 +684,8 @@ class TestValidateRequestedModelNastechPortalRecommendations:
         api_models = api_models if api_models is not None else ["inclusionai/ling-2.6-flash"]
         probe_payload = {
             "models": api_models,
-            "probed_url": "https://portal.nastech-agent.nastechresearch.workers.dev/v1/models",
-            "resolved_base_url": "https://portal.nastech-agent.nastechresearch.workers.dev/v1",
+            "probed_url": "https://portal.nastechresearch.github.io/v1/models",
+            "resolved_base_url": "https://portal.nastechresearch.github.io/v1",
             "suggested_base_url": None,
             "used_fallback": False,
         }
@@ -698,7 +698,7 @@ class TestValidateRequestedModelNastechPortalRecommendations:
         with patch("nastech_cli.models.fetch_api_models", return_value=api_models), \
              patch("nastech_cli.models.probe_api_models", return_value=probe_payload), \
              patch("nastech_cli.models.fetch_nastech_recommended_models", side_effect=_fetch_portal), \
-             patch("nastech_cli.models._resolve_nastech_portal_url", return_value="https://portal.nastech-agent.nastechresearch.workers.dev"), \
+             patch("nastech_cli.models._resolve_nastech_portal_url", return_value="https://portal.nastechresearch.github.io"), \
              patch("nastech_cli.models._model_in_provider_catalog", return_value=False):
             return validate_requested_model(model, "nastech")
 

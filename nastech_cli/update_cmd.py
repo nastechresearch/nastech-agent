@@ -1320,7 +1320,7 @@ def _prepare_git_command() -> tuple[bool, list, bool]:
     use_zip_update = not git_dir.exists()
     if use_zip_update and sys.platform != "win32":
         print("✗ Not a git repository. Please reinstall:")
-        print("  curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash")
+        print("  curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash")
         sys.exit(1)
 
     from nastech_cli._subprocess_compat import expose_pm_git
@@ -1640,7 +1640,7 @@ def _cmd_update_impl(args, gateway_mode: bool):
         if fetch_result.returncode != 0:
             if is_partial_clone_pack_objects_crash(fetch_result.stderr or ""):
                 print("✗ git still crashed after marking this checkout's packs. See 'Fetch fails with"
-                      " should_include_obj' in https://nastech-agent.nastechresearch.workers.dev/docs/getting-started/updating")
+                      " should_include_obj' in https://nastechresearch.github.io/nastech-agent/docs/getting-started/updating")
             _print_fetch_failure(fetch_result.stderr)
             _m()._resume_windows_gateways_after_update(_windows_gateway_resume)
             sys.exit(1)

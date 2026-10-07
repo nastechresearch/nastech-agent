@@ -11,7 +11,7 @@ from agent.message_sanitization import stale_thinking_reaches_wire
 from agent.model_metadata import estimate_tokens_rough
 
 ANTHROPIC = ("anthropic", "https://api.anthropic.com")
-NASTECH = ("nastech", "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1/messages")
+NASTECH = ("nastech", "https://inference-api.nastechresearch.github.io/v1/messages")
 OPENROUTER = ("openrouter", "https://openrouter.ai/api/v1")
 KIMI = ("anthropic", "https://api.kimi.com/coding")
 

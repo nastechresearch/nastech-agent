@@ -52,7 +52,7 @@ Pick the row that matches your goal:
 
 ## 1. Install Nastech Agent
 ### With the Nastech Desktop installer on macOS or Windows (recommended)
-To easily install the command-line and desktop applications, [download the Nastech Desktop installer](https://nastech-agent.nastechresearch.workers.dev/) from our website and run it.
+To easily install the command-line and desktop applications, [download the Nastech Desktop installer](https://nastechresearch.github.io/nastech-agent/) from our website and run it.
 
 ### Without Nastech Desktop:
 For a command-line only install without Nastech Desktop, run:
@@ -61,14 +61,14 @@ For aarch64 Android devices, use the separate [Termux APT guide](./termux.md).
 
 #### Linux / macOS / WSL2
 ```bash
-curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash
+curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 ```
 
 #### Windows (native)
 
 Run in powershell:
 ```powershell
-iex (irm https://nastech-agent.nastechresearch.workers.dev/install.ps1) 
+iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1) 
 ```
 
 After it finishes, reload your shell:

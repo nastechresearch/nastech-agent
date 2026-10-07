@@ -519,7 +519,7 @@ class TestNestedDictModelDefaultPairing:
                 },
                 "providers": {
                     "nastech": {
-                        "base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
+                        "base_url": "https://inference-api.nastechresearch.github.io/v1",
                     },
                 },
             },

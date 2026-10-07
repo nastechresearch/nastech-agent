@@ -27,7 +27,7 @@ import { $sendDiagnostics, confirmSendDiagnostics, dismissSendDiagnostics } from
 
 const SUPPORT_LINKS = [
   { key: 'github', url: 'https://github.com/NastechResearch/nastech-agent/issues' },
-  { key: 'portal', url: 'https://portal.nastech-agent.nastechresearch.workers.dev/help' },
+  { key: 'portal', url: 'https://portal.nastechresearch.github.io/help' },
   { key: 'discord', url: 'https://discord.gg/NastechResearch' }
 ] as const
 

@@ -103,7 +103,7 @@ LIVE_CASES: tuple[LiveCase, ...] = (
     LiveCase("nastech-portal", "nastech", "NASTECH_API_KEY",
              ("deepseek/deepseek-v4-flash", "qwen/qwen3.7-flash", "google/gemini-2.5-flash-lite",
               "openai/gpt-4.1-nano"),
-             ("inference-api.nastech-agent.nastechresearch.workers.dev", "portal.nastech-agent.nastechresearch.workers.dev"), 0.30, 1.20),
+             ("inference-api.nastechresearch.github.io", "portal.nastechresearch.github.io"), 0.30, 1.20),
     LiveCase("anthropic-direct", "anthropic", "ANTHROPIC_API_KEY",
              ("claude-haiku-4-5", "claude-haiku-4-5-20251001"), ("api.anthropic.com",), 1.0, 5.0,
              cache_expected=True, pad_tokens=4600, native_anthropic=True),

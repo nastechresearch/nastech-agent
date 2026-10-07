@@ -17,8 +17,8 @@ use, web search, and 22 messaging platforms were absent from the index every
 LLM reads to learn what Nastech does.
 
 Both publish at:
-  https://nastech-agent.nastechresearch.workers.dev/docs/llms.txt
-  https://nastech-agent.nastechresearch.workers.dev/docs/llms-full.txt
+  https://nastechresearch.github.io/nastech-agent/docs/llms.txt
+  https://nastechresearch.github.io/nastech-agent/docs/llms-full.txt
 
 The `/docs/` prefix is not a mistake — Docusaurus serves `website/static/`
 at the `docs/` base path. Clients and IDE plugins that probe the classic
@@ -39,7 +39,7 @@ WEBSITE = SCRIPT_DIR.parent
 DOCS = WEBSITE / "docs"
 STATIC = WEBSITE / "static"
 
-SITE_BASE = "https://nastech-agent.nastechresearch.workers.dev/docs"
+SITE_BASE = "https://nastechresearch.github.io/nastech-agent/docs"
 
 # The product story: which pages lead, and in what order. Everything not named
 # here is still indexed — ABSORB decides where it lands — so this list is safe
@@ -344,8 +344,8 @@ def emit_llms_full() -> str:
             "Started, Using Nastech, Features, Messaging, Integrations, Guides, "
             "Developer Guide, Reference, then everything else.\n"
         ),
-        "Canonical site: https://nastech-agent.nastechresearch.workers.dev/docs\n",
-        "Short index: https://nastech-agent.nastechresearch.workers.dev/docs/llms.txt\n",
+        "Canonical site: https://nastechresearch.github.io/nastech-agent/docs\n",
+        "Short index: https://nastechresearch.github.io/nastech-agent/docs/llms.txt\n",
         "\n---\n\n",
     ]
 

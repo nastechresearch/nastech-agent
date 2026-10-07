@@ -13,7 +13,7 @@ After a dependency change, reactivate the checkout and restart Nastech.
 Nastech Agent supports both text-to-speech output and voice message transcription across all messaging platforms.
 
 :::tip Nastech Subscribers
-If you have a paid [Nastech Portal](https://portal.nastech-agent.nastechresearch.workers.dev) subscription, OpenAI TTS is available through the **[Tool Gateway](tool-gateway.md)** without a separate OpenAI API key. New installs can run `nastech setup --portal` to log in and turn on every gateway tool at once; existing installs can pick **Nastech Subscription** for just TTS via `nastech model` or `nastech tools`.
+If you have a paid [Nastech Portal](https://portal.nastechresearch.github.io) subscription, OpenAI TTS is available through the **[Tool Gateway](tool-gateway.md)** without a separate OpenAI API key. New installs can run `nastech setup --portal` to log in and turn on every gateway tool at once; existing installs can pick **Nastech Subscription** for just TTS via `nastech model` or `nastech tools`.
 :::
 
 ## Text-to-Speech

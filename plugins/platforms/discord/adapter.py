@@ -431,7 +431,7 @@ def _format_privileged_intents_guidance(*, needs_members: bool) -> str:
             "Fix: https://discord.com/developers/applications → your application "
             "→ Bot → Privileged Gateway Intents → enable the intent(s) listed "
             "above → Save Changes, then restart the gateway.",
-            "Docs: https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/messaging/discord",
+            "Docs: https://nastechresearch.github.io/nastech-agent/docs/user-guide/messaging/discord",
         ]
     )
     return "\n".join(lines)

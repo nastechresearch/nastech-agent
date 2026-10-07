@@ -74,14 +74,14 @@ class TestFirecrawlClientConfig:
 
     def test_tool_gateway_domain_builds_firecrawl_gateway_origin(self):
         """Shared gateway domain should derive the Firecrawl vendor hostname."""
-        with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastech-agent.nastechresearch.workers.dev"}):
+        with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent"}):
             with patch("tools.managed_tool_gateway.read_nastech_access_token", return_value="nastech-token"):
                 with patch("plugins.web.firecrawl.provider.Firecrawl") as mock_fc:
                     from plugins.web.firecrawl.provider import _get_firecrawl_client
                     result = _get_firecrawl_client()
                     mock_fc.assert_called_once_with(
                         api_key="nastech-token",
-                        api_url="https://firecrawl-gateway.nastech-agent.nastechresearch.workers.dev",
+                        api_url="https://firecrawl-gateway.nastechresearch.github.io",
                     )
                     assert result is mock_fc.return_value
 

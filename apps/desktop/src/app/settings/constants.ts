@@ -49,7 +49,7 @@ export const PROVIDER_GROUPS: ProviderPrefix[] = [
     prefix: 'NASTECH_',
     name: 'Nastech Portal',
     description: 'Hosted Nastech & Nastech-trained models',
-    docsUrl: 'https://portal.nastech-agent.nastechresearch.workers.dev',
+    docsUrl: 'https://portal.nastechresearch.github.io',
     priority: 0
   },
   {

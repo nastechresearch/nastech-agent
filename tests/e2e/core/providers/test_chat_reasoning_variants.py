@@ -127,7 +127,7 @@ def test_long_session_does_not_wedge_on_replayed_reasoning_budget(tmp_path) -> N
     h = Home(tmp_path)
     answers: list[str] = []
     with FakeChatVariantServer(script, reasoning_budget_chars=4000) as srv:
-        h.write(_impersonated_config("inference-api.nastech-agent.nastechresearch.workers.dev"), dotenv={"OPENAI_API_KEY": "sk-fake"})
+        h.write(_impersonated_config("inference-api.nastechresearch.github.io"), dotenv={"OPENAI_API_KEY": "sk-fake"})
         gw = TuiGateway(h, _proxy_env(srv))
         try:
             created = gw.call("session.create", {"cols": 120})
@@ -137,7 +137,7 @@ def test_long_session_does_not_wedge_on_replayed_reasoning_budget(tmp_path) -> N
         finally:
             gw.close()
         records = srv.main_records()
-    assert records and {r["host"] for r in records} == {"inference-api.nastech-agent.nastechresearch.workers.dev"}, "precondition: impersonated"
+    assert records and {r["host"] for r in records} == {"inference-api.nastechresearch.github.io"}, "precondition: impersonated"
     rejected = [i for i, r in enumerate(records) if r.get("response") == "route_rejection"]
     assert rejected == [], f"route budget crossed at requests {rejected}: replayed reasoning_details reached the wire"
     leaked = [(i, m) for i, r in enumerate(records) for m in chat_messages(r["body"], "assistant")

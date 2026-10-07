@@ -462,7 +462,7 @@ def build_parser(parent_subparsers: argparse._SubParsersAction) -> argparse.Argu
         description="Durable SQLite-backed task board shared across Nastech profiles. "
                     "Tasks are claimed atomically, can depend on other tasks, and "
                     "are executed by a named profile in an isolated workspace. "
-                    "See https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/features/kanban.",
+                    "See https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/kanban.",
     )
     # --board scopes every subcommand to one board's DB; when omitted the
     # resolution is NASTECH_KANBAN_BOARD, then the persisted current-board

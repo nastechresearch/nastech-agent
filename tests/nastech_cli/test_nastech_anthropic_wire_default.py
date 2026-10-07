@@ -9,7 +9,7 @@ import pytest
 from nastech_cli import providers as _providers
 from nastech_cli import runtime_provider as rp
 
-PORTAL = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
+PORTAL = "https://inference-api.nastechresearch.github.io/v1"
 
 
 def _cfg(tmp_path, body: str, monkeypatch):

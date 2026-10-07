@@ -204,7 +204,7 @@ def free_tier_route() -> bool:
     return has_free_tier_account() and resolve_provider("auto") == "nastech"
 
 
-WELCOME_HOSTS = frozenset({"welcome-api.nastech-agent.nastechresearch.workers.dev"})
+WELCOME_HOSTS = frozenset({"welcome-api.nastechresearch.github.io"})
 # Dev-only: extra hostnames that count as the welcome host, comma-separated (for example
 # ``127.0.0.1`` while ``NASTECH_INFERENCE_BASE_URL`` points at a local stand-in). Read from the
 # environment, which the user controls, so it sits at the same trust level as the URL override

@@ -1831,7 +1831,7 @@ DEFAULT_CONFIG = {
         "chronos": {
             # NAS/portal base URL that arms/cancels one-shots and mints the inbound fire JWT (used
             # as the expected issuer).
-            "portal_url": "https://portal.nastech-agent.nastechresearch.workers.dev",
+            "portal_url": "https://portal.nastechresearch.github.io",
             # This agent's publicly reachable base URL; NAS POSTs {callback_url}/api/cron/fire. ""
             # -> Chronos unavailable, resolver falls back to the built-in ticker.
             "callback_url": "",
@@ -2044,7 +2044,7 @@ DEFAULT_CONFIG = {
     # release. Default URL is served by the docs-site GitHub Pages deploy.
     "model_catalog": {
         "enabled": True,
-        "url": "https://nastech-agent.nastechresearch.workers.dev/docs/api/model-catalog.json",
+        "url": "https://nastechresearch.github.io/nastech-agent/docs/api/model-catalog.json",
         # Disk cache TTL in minutes. The gateway refreshes in the background on this cadence; the
         # CLI refetches on the next /model or `nastech model` once the cache is older. Network
         # failures silently use the stale cache. Legacy `ttl_hours` is honoured if set.
@@ -2343,7 +2343,7 @@ DEFAULT_CONFIG = {
             "send": False,
             # Ingest endpoint (override for staging/local). Deliberately NOT env- overridable.
             # Non-HTTPS refused unless the host is localhost.
-            "endpoint": "https://telemetry.nastech-agent.nastechresearch.workers.dev/v1/telemetry",
+            "endpoint": "https://telemetry.nastechresearch.github.io/v1/telemetry",
         },
     },
 
@@ -2905,7 +2905,7 @@ OPTIONAL_ENV_VARS = {
         password=False, advanced=True),
     "TOOL_GATEWAY_DOMAIN": _tool(
         "Shared tool-gateway domain suffix for Nastech Subscribers only, used to derive vendor "
-        "hosts, e.g. nastech-agent.nastechresearch.workers.dev -> firecrawl-gateway.nastech-agent.nastechresearch.workers.dev",
+        "hosts, e.g. nastechresearch.github.io/nastech-agent -> firecrawl-gateway.nastechresearch.github.io",
         "Tool-gateway domain suffix", None, password=False, advanced=True),
     "TOOL_GATEWAY_SCHEME": _tool(
         "Shared tool-gateway URL scheme for Nastech Subscribers only, used to derive vendor hosts "
