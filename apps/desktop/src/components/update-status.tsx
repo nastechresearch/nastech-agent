@@ -25,7 +25,7 @@ import {
 } from '@/store/updates'
 
 const RELEASE_NOTES_URL = 'https://github.com/NastechResearch/nastech-agent/releases'
-const INSTALLER_URL = 'https://nastech-agent.nastechresearch.workers.dev/'
+const INSTALLER_URL = 'https://nastechresearch.github.io/nastech-agent/'
 
 export type UpdateStatusTone = 'idle' | 'available' | 'error' | 'unsupported'
 

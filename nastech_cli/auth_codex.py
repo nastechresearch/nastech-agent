@@ -314,7 +314,7 @@ def _ssl_interop_hint(exc: BaseException) -> str:
         " the larger TLS 1.3 ClientHello that OpenSSL 3.5+ sends by default (post-quantum hybrid"
         " groups). Workaround: point OPENSSL_CONF at a config restricting Groups to classic curves"
         " (x25519:secp256r1:secp384r1:x448), or test with TLS 1.2 — see the Codex note in"
-        " https://nastech-agent.nastechresearch.workers.dev/docs/integrations/providers"
+        " https://nastechresearch.github.io/nastech-agent/docs/integrations/providers"
     )
 
 

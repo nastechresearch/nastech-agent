@@ -29,7 +29,7 @@ def is_managed_nastech_gateway_url(
     (:func:`managed_gateway_origin`) and the connectors host
     (:func:`connector_gateway_origin`). Each is compared as an exact
     ``(scheme, netloc)`` pair — never as a name or a domain suffix — so
-    ``evil-connector-gateway.nastech-agent.nastechresearch.workers.dev.attacker.dev`` and an ``http``
+    ``evil-connector-gateway.nastechresearch.github.io.attacker.dev`` and an ``http``
     downgrade of a real host both stay outside the set.
 
     Anything granting a URL extra trust — our bearer, reading files off disk to

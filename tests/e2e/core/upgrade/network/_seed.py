@@ -35,7 +35,7 @@ from tests.e2e.core.upgrade import _helpers as H
 from tests.e2e.core.upgrade import _install_helpers as I
 from tests.e2e.core.upgrade.network import _netedge as N
 
-ASSETS = "nastech-assets.nastech-agent.nastechresearch.workers.dev"
+ASSETS = "nastechresearch.github.io/nastech-agent"
 REPOSITORY = "NastechResearch/nastech-agent"
 # Hosts a correctly isolated update must never reach directly; with the proxy they appear in
 # the proxy log as "refused" (the proxy has no route for them).
@@ -213,7 +213,7 @@ def assert_isolated(inst: Installed) -> None:
     probe = (
         "import socket,sys\n"
         "bad=[]\n"
-        "for host in ('github.com','pypi.org','nastech-assets.nastech-agent.nastechresearch.workers.dev'):\n"
+        "for host in ('github.com','pypi.org','nastechresearch.github.io/nastech-agent'):\n"
         "    try: socket.getaddrinfo(host,443); bad.append('dns:'+host)\n"
         "    except OSError: pass\n"
         "for ip in ('140.82.112.3','1.1.1.1'):\n"
@@ -231,7 +231,7 @@ def assert_isolated(inst: Installed) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Release-channel records (the R2 objects under https://nastech-assets.nastech-agent.nastechresearch.workers.dev/).
+# Release-channel records (the R2 objects under https://nastechresearch.github.io/nastech-agent/).
 # ---------------------------------------------------------------------------
 
 def canonical(value: object) -> bytes:

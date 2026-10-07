@@ -94,7 +94,7 @@ def _classify(exc: BaseException, rules: Sequence[_Rule], other: str) -> str:
 
 
 def sign_in_failure_lines(
-    exc: BaseException, *, service_host: str = "portal.nastech-agent.nastechresearch.workers.dev", retry_command: str = "nastech portal",
+    exc: BaseException, *, service_host: str = "portal.nastechresearch.github.io", retry_command: str = "nastech portal",
 ) -> list:
     """Lines to print when a device-code / browser sign-in fails for any non-timeout reason."""
     from nastech_cli.observability.shared_metrics_setup import note_sign_in_failure

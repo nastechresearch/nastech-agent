@@ -1308,7 +1308,7 @@ export const ru = defineLocale({
       sshErrHostKey:
         'Ключ хоста ИЗМЕНИЛСЯ с последнего подключения. Убедитесь, что это ожидаемо, затем выполните ssh-keygen -R <host> и переподключитесь.',
       sshErrNotInstalled:
-        'Nastech не установлен на удалённой машине. Установите его там (curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | sh) или задайте путь к Nastech.',
+        'Nastech не установлен на удалённой машине. Установите его там (curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | sh) или задайте путь к Nastech.',
       sshErrPlatform:
         'Неподдерживаемая удалённая платформа. SSH-режим Nastech Desktop поддерживает удалённые хосты Linux, macOS и Windows.',
       sshErrTimeout: 'SSH-соединение истекло. Хост может быть недоступен или «спит».',

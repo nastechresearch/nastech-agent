@@ -75,7 +75,7 @@ _NASTECH_EMPTY_AGENT_KEY_FIELDS: Dict[str, Any] = {
     "agent_key": None, "agent_key_id": None, "agent_key_expires_at": None,
     "agent_key_expires_in": None, "agent_key_reused": None, "agent_key_obtained_at": None}
 
-_NASTECH_STALE_PORTAL_HOSTS: FrozenSet[str] = frozenset({"api.nastech-agent.nastechresearch.workers.dev"})
+_NASTECH_STALE_PORTAL_HOSTS: FrozenSet[str] = frozenset({"api.nastechresearch.github.io"})
 
 
 def _portal_entitlement_message(capability: str) -> str:
@@ -109,9 +109,9 @@ def _migrate_stale_nastech_portal_url(providers: Dict[str, Any]) -> None:
 # the NASTECH_INFERENCE_BASE_URL env override bypasses it (documented dev/staging escape hatch, the
 # user set it themselves).
 _ALLOWED_NASTECH_INFERENCE_HOSTS: FrozenSet[str] = frozenset({
-    "inference-api.nastech-agent.nastechresearch.workers.dev",
+    "inference-api.nastechresearch.github.io",
     # Free-tier (anonymous) host: serves the single ``nastech/welcome`` model.
-    "welcome-api.nastech-agent.nastechresearch.workers.dev"})
+    "welcome-api.nastechresearch.github.io"})
 
 def _nastech_inference_host_allowed(hostname: Optional[str]) -> bool:
     """Production hosts always; otherwise only the host the operator named in
@@ -1673,4 +1673,4 @@ def _login_nastech(args, pconfig: ProviderConfig) -> None:
 
 
 def _portal_host(portal_url: Optional[str]) -> str:
-    return urlparse(portal_url or DEFAULT_NASTECH_PORTAL_URL).hostname or "portal.nastech-agent.nastechresearch.workers.dev"
+    return urlparse(portal_url or DEFAULT_NASTECH_PORTAL_URL).hostname or "portal.nastechresearch.github.io"

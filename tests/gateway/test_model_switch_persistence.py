@@ -202,7 +202,7 @@ class TestFallbackEvictionHonorsChannelOverrides:
     def test_fallback_off_the_channel_model_still_evicts(self, monkeypatch):
         assert self._evicted_after_turn(monkeypatch, _make_source(), "fallback/model") is True
 
-    _WELCOME = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
+    _WELCOME = "https://welcome-api.nastechresearch.github.io/v1"
 
     @pytest.mark.parametrize("global_model", ["nastech/welcome", "default/model"])
     def test_the_welcome_host_pins_its_model_over_the_channel_model(self, monkeypatch, global_model):
@@ -241,7 +241,7 @@ class TestFallbackEvictionHonorsChannelOverrides:
         """The agent was built on the session's /model choice, so drift is measured from it."""
         assert self._evicted_after_turn(
             monkeypatch, _make_source(), agent_model, global_model="backing/model", session_model="nastech/welcome",
-            session_provider=session_provider, provider="nastech", base_url="https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
+            session_provider=session_provider, provider="nastech", base_url="https://inference-api.nastechresearch.github.io/v1",
             **({"_nastech_model_switch": switch} if switch else {}),
         ) is evicted
 

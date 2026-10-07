@@ -423,7 +423,7 @@ export function BootFailureOverlay() {
       {
         key: 'portal',
         label: copy.cloudDownCheckPortal,
-        onClick: () => openExternalLink('https://portal.nastech-agent.nastechresearch.workers.dev'),
+        onClick: () => openExternalLink('https://portal.nastechresearch.github.io'),
         icon: <ExternalLink />
       },
       localAction,

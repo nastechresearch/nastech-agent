@@ -27,7 +27,7 @@ Nastech 的 Termux 软件包适用于 aarch64（arm64-v8a）设备，目前处�
    ```bash
    mkdir -p "$PREFIX/etc/apt/keyrings"
    curl -fsSL \
-     https://nastech-assets.nastech-agent.nastechresearch.workers.dev/releases/termux/canary/key.asc \
+     https://nastechresearch.github.io/nastech-agent/releases/termux/canary/key.asc \
      -o "$PREFIX/etc/apt/keyrings/nastech-agent.asc"
    ```
 
@@ -49,7 +49,7 @@ Nastech 的 Termux 软件包适用于 aarch64（arm64-v8a）设备，目前处�
 
    ```bash
    printf '%s\n' \
-     "deb [signed-by=$PREFIX/etc/apt/keyrings/nastech-agent.asc] https://nastech-assets.nastech-agent.nastechresearch.workers.dev/releases/termux/canary nastech-canary main" \
+     "deb [signed-by=$PREFIX/etc/apt/keyrings/nastech-agent.asc] https://nastechresearch.github.io/nastech-agent/releases/termux/canary nastech-canary main" \
      > "$PREFIX/etc/apt/sources.list.d/nastech-agent.list"
    ```
 

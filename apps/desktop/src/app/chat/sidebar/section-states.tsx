@@ -81,7 +81,7 @@ export function SidebarLoadErrorState({ onRetry }: { onRetry: () => void }) {
 }
 
 const SESSION_STORAGE_RECOVERY_URL =
-  'https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/session-storage-recovery#when-the-three-steps-do-not-work'
+  'https://nastechresearch.github.io/nastech-agent/docs/user-guide/session-storage-recovery#when-the-three-steps-do-not-work'
 
 interface SidebarStorageCorruptNoticeProps {
   openRecoveryGuide?: (url: string) => void

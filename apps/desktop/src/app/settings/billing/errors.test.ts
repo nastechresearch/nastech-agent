@@ -42,7 +42,7 @@ describe('resolveRefusal', () => {
       const resolved = resolveRefusal({
         kind: kind as BillingRefusal['kind'],
         message: 'Server message.',
-        portalUrl: 'https://portal.nastech-agent.nastechresearch.workers.dev/billing',
+        portalUrl: 'https://portal.nastechresearch.github.io/billing',
         retryAfter: 90
       })
 

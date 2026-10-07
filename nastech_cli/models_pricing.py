@@ -299,7 +299,7 @@ def _resolve_openrouter_api_key() -> str:
     return os.getenv("OPENROUTER_API_KEY", "").strip()
 
 
-_DEFAULT_NASTECH_INFERENCE_BASE = "https://inference-api.nastech-agent.nastechresearch.workers.dev"
+_DEFAULT_NASTECH_INFERENCE_BASE = "https://inference-api.nastechresearch.github.io"
 
 
 def _resolve_nastech_pricing_credentials() -> tuple[str, str]:

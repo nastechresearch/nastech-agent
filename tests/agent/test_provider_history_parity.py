@@ -36,7 +36,7 @@ def test_native_carriers_follow_only_their_owner_on_each_request():
     assert "reasoning_details" not in transport.convert_messages(only_native, base_url=OPENROUTER)[0]
 
 
-NASTECH_PORTAL = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
+NASTECH_PORTAL = "https://inference-api.nastechresearch.github.io/v1"
 
 
 def test_nastech_portal_strips_replayed_reasoning_details_from_wire():
@@ -49,14 +49,14 @@ def test_nastech_portal_strips_replayed_reasoning_details_from_wire():
     original = deepcopy(history)
     transport = ChatCompletionsTransport()
 
-    for base_url in (NASTECH_PORTAL, "https://stg-inference-api.nastech-agent.nastechresearch.workers.dev/v1"):
+    for base_url in (NASTECH_PORTAL, "https://stg-inference-api.nastechresearch.github.io/v1"):
         wire = transport.convert_messages(deepcopy(history), base_url=base_url)
         assert "reasoning_details" not in wire[0]
         assert history == original
 
     # Substring lookalikes never matched the allowlist; they still strip (strict routes).
     assert "reasoning_details" not in transport.convert_messages(
-        deepcopy(history), base_url="https://nastech-agent.nastechresearch.workers.dev.evil.io/v1")[0]
+        deepcopy(history), base_url="https://nastechresearch.github.io/nastech-agent.evil.io/v1")[0]
 
 
 def test_openrouter_replay_unchanged_by_portal_strip():

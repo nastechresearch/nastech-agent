@@ -39,7 +39,7 @@ import nastech_yaml as yaml  # noqa: E402
 
 DEFAULT_CATALOG_DIR = REPO_ROOT / "plugin-catalog"
 DEFAULT_OUTPUT = REPO_ROOT / "website" / "static" / "api" / "plugin-stars.json"
-LIVE_URL = "https://nastech-agent.nastechresearch.workers.dev/docs/api/plugin-stars.json"
+LIVE_URL = "https://nastechresearch.github.io/nastech-agent/docs/api/plugin-stars.json"
 _GITHUB_REPO_RE = re.compile(r"^https://github\.com/([^/\s]+)/([^/\s#?]+?)(?:\.git)?/?$")
 
 

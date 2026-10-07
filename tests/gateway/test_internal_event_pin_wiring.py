@@ -432,7 +432,7 @@ async def test_internal_event_never_reuses_prompt_pin_from_another_privacy_polic
 # config reads are substituted), not the ``_capture`` stub above.
 # ---------------------------------------------------------------------------
 
-_WELCOME = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
+_WELCOME = "https://welcome-api.nastechresearch.github.io/v1"
 
 
 class _TurnAgent:

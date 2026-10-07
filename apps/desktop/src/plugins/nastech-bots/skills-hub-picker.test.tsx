@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { translateBots } from './i18n-test-helper'
 
-const HUB_ORIGIN = 'https://nastech-agent.nastechresearch.workers.dev'
+const HUB_ORIGIN = 'https://nastechresearch.github.io/nastech-agent'
 const FALLBACK_HUB_ORIGIN = 'https://nastechresearch.github.io'
 
 const mocks = vi.hoisted(() => ({

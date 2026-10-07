@@ -4,7 +4,7 @@ import { runFreeTierChallenge } from './free-tier-challenge'
 
 const challenge = {
   type: 'browser',
-  url: 'https://portal.nastech-agent.nastechresearch.workers.dev/challenge?code=abc',
+  url: 'https://portal.nastechresearch.github.io/challenge?code=abc',
   required: true,
   expires_in: 600,
   message: 'A quick check first.'

@@ -190,12 +190,12 @@ def test_codex_override_never_runs_on_the_default_providers_endpoint(store_facto
     store = store_factory()
     session_key = store.get_or_create_session(_make_source()).session_key
     store.set_model_override(session_key, {"model": "gpt-6-luna-900k", "provider": "openai-codex",
-                                           "base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"})
+                                           "base_url": "https://inference-api.nastechresearch.github.io/v1"})
     runner = _make_runner(store_factory())
     codex = {"provider": "openai-codex", "api_key": "codex-tok", "api_mode": "codex_responses",
              "base_url": "https://chatgpt.com/backend-api/codex"}
     nastech = {"provider": "nastech", "api_key": "nastech-key", "api_mode": "chat_completions",
-            "base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"}
+            "base_url": "https://inference-api.nastechresearch.github.io/v1"}
     calls = iter([RuntimeError("refresh blip"), codex if codex_on_turn == "recovers" else RuntimeError("gone")])
 
     def _for_provider(provider, target_model=None):

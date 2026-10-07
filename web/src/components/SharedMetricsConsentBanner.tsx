@@ -5,7 +5,7 @@ import { useProfileScope } from "@/contexts/useProfileScope";
 import { useI18n } from "@/i18n";
 
 const DOCS_URL =
-  "https://nastech-agent.nastechresearch.workers.dev/docs/developer-guide/relay-shared-metrics";
+  "https://nastechresearch.github.io/nastech-agent/docs/developer-guide/relay-shared-metrics";
 const STORAGE_KEY = "sharedMetricsOfferDismissed";
 
 /**

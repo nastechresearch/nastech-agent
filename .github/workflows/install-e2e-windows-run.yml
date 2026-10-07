@@ -76,7 +76,7 @@ on:
         description: 'Bootstrap installer to install OLD with. Default: the latest published one — what a user downloads today.'
         required: false
         type: string
-        default: https://nastech-assets.nastech-agent.nastechresearch.workers.dev/Nastech-Setup.exe
+        default: https://nastechresearch.github.io/nastech-agent/Nastech-Setup.exe
       timeout-minutes:
         description: 'Job timeout. The install leg does real toolchain work and the update leg a full Electron rebuild.'
         required: false

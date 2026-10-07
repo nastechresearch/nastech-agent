@@ -53,7 +53,7 @@ description: "与 Nastech Agent 的第一次对话——从安装到开始聊天
 
 ### 在 macOS 或 Windows 上使用 Nastech Desktop 安装器（推荐）
 
-如需同时安装命令行与桌面应用，请从我们的官网[下载 Nastech Desktop 安装器](https://nastech-agent.nastechresearch.workers.dev/)并运行。
+如需同时安装命令行与桌面应用，请从我们的官网[下载 Nastech Desktop 安装器](https://nastechresearch.github.io/nastech-agent/)并运行。
 
 ### 不使用 Nastech Desktop：
 
@@ -61,13 +61,13 @@ description: "与 Nastech Agent 的第一次对话——从安装到开始聊天
 
 ```bash
 # Linux / macOS / WSL2
-curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash
+curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash
 ```
 
 源码脚本通过 PM 准备运行时。桌面软件包、Docker、Nix 和 Termux APT 是独立的安装方式。
 请勿使用 `pip install nastech-agent` 替代受管理的安装。
 
-Windows 原生安装可在 PowerShell 中运行 `iex (irm https://nastech-agent.nastechresearch.workers.dev/install.ps1)`，无需 WSL。
+Windows 原生安装可在 PowerShell 中运行 `iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1)`，无需 WSL。
 aarch64 Android 设备请使用 [Termux APT 指南](./termux.md)，而非上述脚本。
 
 安装完成后，重新加载 shell：

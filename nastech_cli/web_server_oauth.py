@@ -144,7 +144,7 @@ def _external_process_cli_command(provider_id: str, default: str) -> str:
 _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
     # status_fn None → dispatched via auth.get_<provider>_auth_status.
     {"id": "nastech", "name": "Nastech Portal", "flow": "device_code", "cli_command": "nastech auth add nastech",
-     "docs_url": "https://portal.nastech-agent.nastechresearch.workers.dev", "status_fn": None},
+     "docs_url": "https://portal.nastechresearch.github.io", "status_fn": None},
     {"id": "openai-codex", "name": "ChatGPT or Codex Subscription", "flow": "device_code",
      "cli_command": "nastech auth add openai-codex", "docs_url": "https://platform.openai.com/docs",
      "status_fn": None},
@@ -158,7 +158,7 @@ _OAUTH_PROVIDER_CATALOG: tuple[Dict[str, Any], ...] = (
     # Device code works in remote shells/containers without a reachable 127.0.0.1 callback.
     {"id": "xai-oauth", "name": "xAI Grok OAuth (SuperGrok / Premium+)", "flow": "device_code",
      "cli_command": "nastech auth add xai-oauth",
-     "docs_url": "https://nastech-agent.nastechresearch.workers.dev/docs/guides/xai-grok-oauth", "status_fn": None},
+     "docs_url": "https://nastechresearch.github.io/nastech-agent/docs/guides/xai-grok-oauth", "status_fn": None},
     # `copilot login` is the non-interactive subcommand; `copilot /login` is not valid
     # (slash-commands only exist inside an interactive session).
     {"id": "copilot-acp", "name": "GitHub Copilot (ACP)", "flow": "external", "cli_command": "copilot login",

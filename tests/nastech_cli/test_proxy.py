@@ -54,7 +54,7 @@ def test_nastech_adapter_never_waits_on_a_free_tier_challenge_under_its_lock(tmp
     def resolve(**_kwargs):
         seen.append(anon_challenge._background.get())
         return {"api_key": "k", "expires_at": "2099-01-01T00:00:00Z",
-                "base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"}
+                "base_url": "https://inference-api.nastechresearch.github.io/v1"}
 
     with patch("nastech_cli.proxy.adapters.nastech_portal.resolve_nastech_runtime_credentials", side_effect=resolve):
         NastechPortalAdapter().get_credential()
@@ -90,7 +90,7 @@ def test_nastech_adapter_concurrent_refresh_serialized(tmp_path, monkeypatch):
             return {
                 "api_key": f"key-{idx}",
                 "expires_at": "2099-01-01T00:00:00Z",
-                "base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
+                "base_url": "https://inference-api.nastechresearch.github.io/v1",
             }
         finally:
             in_flight.clear()

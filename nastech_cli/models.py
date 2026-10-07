@@ -403,7 +403,7 @@ def fetch_nastech_recommended_models(
     process restarts. ``force_refresh`` bypasses both caches. Stale disk data remains a fallback
     on live failure; reading it never renews its freshness.
     """
-    base = (portal_base_url or "https://portal.nastech-agent.nastechresearch.workers.dev").rstrip("/")
+    base = (portal_base_url or "https://portal.nastechresearch.github.io").rstrip("/")
     now = time.monotonic()
     cache_key = (_pricing_profile_key(), base)
     cached = _nastech_recommended_cache.get(cache_key)
@@ -440,7 +440,7 @@ def _resolve_nastech_portal_url() -> str:
         portal = str(state.get("portal_base_url") or "").strip()
         return (portal or str(DEFAULT_NASTECH_PORTAL_URL)).rstrip("/")
     except Exception:
-        return "https://portal.nastech-agent.nastechresearch.workers.dev"
+        return "https://portal.nastechresearch.github.io"
 
 
 def _extract_model_name(entry: Any) -> Optional[str]:

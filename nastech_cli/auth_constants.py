@@ -52,12 +52,12 @@ AUTH_STORE_VERSION = 1
 AUTH_LOCK_TIMEOUT_SECONDS = 15.0
 
 # Nastech Portal defaults
-DEFAULT_NASTECH_PORTAL_URL = "https://portal.nastech-agent.nastechresearch.workers.dev"
-DEFAULT_NASTECH_INFERENCE_URL = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
+DEFAULT_NASTECH_PORTAL_URL = "https://portal.nastechresearch.github.io"
+DEFAULT_NASTECH_INFERENCE_URL = "https://inference-api.nastechresearch.github.io/v1"
 # The free tier's (anonymous account) inference host. NAS hands it to the client on every token
 # exchange (``inference_base_url``); this literal is the fallback when that field is absent or fails
 # the host allowlist, because the paid host cross-refuses an anonymous JWT with a 400.
-DEFAULT_NASTECH_WELCOME_URL = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
+DEFAULT_NASTECH_WELCOME_URL = "https://welcome-api.nastechresearch.github.io/v1"
 DEFAULT_NASTECH_CLIENT_ID = "nastech-cli"
 NASTECH_INFERENCE_INVOKE_SCOPE = "inference:invoke"
 NASTECH_BILLING_MANAGE_SCOPE = "billing:manage"
@@ -106,7 +106,7 @@ QWEN_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 DEFAULT_SPOTIFY_ACCOUNTS_BASE_URL = "https://accounts.spotify.com"
 DEFAULT_SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1"
 DEFAULT_SPOTIFY_REDIRECT_URI = "http://127.0.0.1:43827/spotify/callback"
-SPOTIFY_DOCS_URL = "https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/features/spotify"
+SPOTIFY_DOCS_URL = "https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/spotify"
 SPOTIFY_DASHBOARD_URL = "https://developer.spotify.com/dashboard"
 SPOTIFY_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 # OpenRouter PKCE (https://openrouter.ai/docs/guides/overview/auth/oauth): the "token" endpoint
@@ -115,7 +115,7 @@ OPENROUTER_AUTH_URL = "https://openrouter.ai/auth"
 OPENROUTER_AUTH_KEYS_URL = "https://openrouter.ai/api/v1/auth/keys"
 OPENROUTER_OAUTH_DOCS_URL = "https://openrouter.ai/docs/guides/overview/auth/oauth"
 
-OAUTH_OVER_SSH_DOCS_URL = "https://nastech-agent.nastechresearch.workers.dev/docs/guides/oauth-over-ssh"
+OAUTH_OVER_SSH_DOCS_URL = "https://nastechresearch.github.io/nastech-agent/docs/guides/oauth-over-ssh"
 DEFAULT_SPOTIFY_SCOPE = " ".join((
     "user-modify-playback-state", "user-read-playback-state", "user-read-currently-playing",
     "user-read-recently-played", "playlist-read-private", "playlist-read-collaborative",

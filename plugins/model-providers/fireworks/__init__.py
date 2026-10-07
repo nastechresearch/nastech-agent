@@ -34,7 +34,7 @@ fireworks = FireworksProfile(
     # Attribution headers (canonical Nastech set); via default_headers so they
     # survive switch_model and credential rotation.
     default_headers={
-        "HTTP-Referer": "https://nastech-agent.nastechresearch.workers.dev",
+        "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
         "X-Title": "Nastech Agent",
         "User-Agent": f"NastechAgent/{get_version_info().base_version}",
     },

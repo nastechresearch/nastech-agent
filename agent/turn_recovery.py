@@ -346,7 +346,7 @@ def _print_nastech_401_diagnostics(agent: Any, api_error: Exception) -> None:
         agent,
         "   Troubleshooting:",
         "     • Re-authenticate: nastech auth add nastech",
-        "     • Check credits / billing: https://portal.nastech-agent.nastechresearch.workers.dev",
+        "     • Check credits / billing: https://portal.nastechresearch.github.io",
         f"     • Verify stored credentials: {display_nastech_home()}/auth.json",
         "     • Switch providers temporarily: /model <model> --provider openrouter",
     )
@@ -917,7 +917,7 @@ def _print_nonretryable_auth_guidance(
                 "   💡 Nastech Portal OAuth token was rejected (HTTP 401). Your token may be",
                 "      expired, revoked, or your account may be out of credits. To fix:",
                 "      1. Re-authenticate: nastech portal",
-                "      2. Check your portal account: https://portal.nastech-agent.nastechresearch.workers.dev",
+                "      2. Check your portal account: https://portal.nastechresearch.github.io",
             )
             # ``:free`` is OpenRouter slug syntax; Nastech Portal will reject the model
             # name even after a successful re-auth.

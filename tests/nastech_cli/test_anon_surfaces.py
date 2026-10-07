@@ -30,7 +30,7 @@ from nastech_cli import (
 from nastech_cli.auth import _load_auth_store  # noqa: F401  (store import name kept for parity with core tests)
 from nastech_constants import get_nastech_home
 
-WELCOME = "https://welcome-api.nastech-agent.nastechresearch.workers.dev/v1"
+WELCOME = "https://welcome-api.nastechresearch.github.io/v1"
 # Words that must never appear on a user-facing free-tier surface.
 _FORBIDDEN = re.compile(r"guest|anonymous|user id|org id|nas_user|nas_organisation", re.IGNORECASE)
 
@@ -62,7 +62,7 @@ def _account_state() -> dict:
         "auth_method": "oauth_device_code", "client_id": "nastech-cli",
         "access_token": _jwt(sub="nas_user:real", client_id="nastech-cli", account_tier="standard", paid_access=True),
         "refresh_token": "rt_live", "expires_at": "2030-01-01T00:00:00+00:00",
-        "portal_base_url": "https://portal.nastech-agent.nastechresearch.workers.dev", "inference_base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
+        "portal_base_url": "https://portal.nastechresearch.github.io", "inference_base_url": "https://inference-api.nastechresearch.github.io/v1",
     }
 
 

@@ -3,7 +3,7 @@
   "updated_at": "2026-10-06T20:59:58Z",
   "metadata": {
     "source": "nastech-agent repo",
-    "docs": "https://nastech-agent.nastechresearch.workers.dev/docs/reference/model-catalog"
+    "docs": "https://nastechresearch.github.io/nastech-agent/docs/reference/model-catalog"
   },
   "providers": {
     "openrouter": {

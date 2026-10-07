@@ -177,7 +177,7 @@ def creds():
         return dict(api_key=key, base_url="https://api.anthropic.com", provider="anthropic")
     from nastech_cli.auth_nastech import resolve_nastech_runtime_credentials
     c = resolve_nastech_runtime_credentials()
-    return dict(api_key=c["api_key"], base_url=c.get("base_url") or "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1", provider="nastech")
+    return dict(api_key=c["api_key"], base_url=c.get("base_url") or "https://inference-api.nastechresearch.github.io/v1", provider="nastech")
 CRED = creds()
 WORKDIR = tempfile.mkdtemp(prefix="cacheprobe-")
 # seed ~35K tokens of file content so the loop's context grows fast and realistically (tool results, not user text)

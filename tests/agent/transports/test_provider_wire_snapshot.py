@@ -80,7 +80,7 @@ BASE_URLS = {
 # and local endpoints. Keys are ``base-url:<label>``; they sit outside the registry coverage check.
 BASE_URL_ONLY = {
     "base-url:openrouter": ("anthropic/claude-opus-5.5", "https://openrouter.ai/api/v1"),
-    "base-url:nastech": ("anthropic/claude-opus-5.5", "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"),
+    "base-url:nastech": ("anthropic/claude-opus-5.5", "https://inference-api.nastechresearch.github.io/v1"),
     "base-url:kimi": ("kimi-k3", "https://api.moonshot.ai/v1"),
     "base-url:kimi-coding": ("kimi-k3", "https://api.kimi.com/coding/v1"),
     "base-url:tokenhub": ("hunyuan-t1", "https://tokenhub.tencentmaas.com/v1"),

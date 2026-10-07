@@ -116,7 +116,7 @@ def test_agent_401_refresh_passes_failed_bearer_as_stale_hint(monkeypatch):
     agent.provider = "nastech"
     agent.api_mode = "chat_completions"
     agent.api_key = "jwt-that-just-401d"
-    agent.base_url = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
+    agent.base_url = "https://inference-api.nastechresearch.github.io/v1"
     agent._client_kwargs = {}
     monkeypatch.setattr(agent, "_replace_primary_openai_client", lambda **k: True)
 

@@ -1,5 +1,5 @@
-import { isGatewayReauthRequired } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { isGatewayReauthRequired } from '@nastech/shared'
 import { useEffect, useRef, useState } from 'react'
 
 import { RemoteSetupFields } from '@/components/remote-setup/fields'
@@ -1248,7 +1248,10 @@ function GatewayConnectionSettings({ embedded, standalone }: { embedded: boolean
                     <AlertCircle className="mt-0.5 size-4 shrink-0" />
                     <span>
                       {g.cloudNoAgents.before}
-                      <ExternalLink href="https://portal.nastech-agent.nastechresearch.workers.dev/agents" showExternalIcon={false}>
+                      <ExternalLink
+                        href="https://portal.nastechresearch.github.io/agents"
+                        showExternalIcon={false}
+                      >
                         {g.cloudNoAgents.linkText}
                       </ExternalLink>
                       {g.cloudNoAgents.after}

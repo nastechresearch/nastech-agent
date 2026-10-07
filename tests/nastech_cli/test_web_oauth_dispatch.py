@@ -50,9 +50,9 @@ def _fake_nastech_device_data():
     return {
         "device_code": "device-code",
         "user_code": "NASTECH-1234",
-        "verification_uri": "https://portal.nastech-agent.nastechresearch.workers.dev/device",
+        "verification_uri": "https://portal.nastechresearch.github.io/device",
         "verification_uri_complete": (
-            "https://portal.nastech-agent.nastechresearch.workers.dev/device?user_code=NASTECH-1234"
+            "https://portal.nastechresearch.github.io/device?user_code=NASTECH-1234"
         ),
         "expires_in": 600,
         "interval": 5,
@@ -60,7 +60,7 @@ def _fake_nastech_device_data():
 
 
 def _invoke_scope_refusal():
-    request = httpx.Request("POST", "https://portal.nastech-agent.nastechresearch.workers.dev/oauth/device/code")
+    request = httpx.Request("POST", "https://portal.nastechresearch.github.io/oauth/device/code")
     response = httpx.Response(
         400,
         json={
@@ -475,7 +475,7 @@ def test_nastech_dashboard_poller_preserves_effective_scope_when_token_omits_sco
         "created_at": time.time(),
         "status": "pending",
         "error_message": None,
-        "portal_base_url": "https://portal.nastech-agent.nastechresearch.workers.dev",
+        "portal_base_url": "https://portal.nastechresearch.github.io",
         "client_id": "nastech-cli",
         "device_code": "device-code",
         "interval": 5,

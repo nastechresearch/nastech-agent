@@ -151,7 +151,7 @@ def nastech_portal_billing_url(account_info: Optional[NastechPortalAccountInfo] 
     try:
         from nastech_cli.auth import DEFAULT_NASTECH_PORTAL_URL
     except Exception:
-        DEFAULT_NASTECH_PORTAL_URL = "https://portal.nastech-agent.nastechresearch.workers.dev"
+        DEFAULT_NASTECH_PORTAL_URL = "https://portal.nastechresearch.github.io"
 
     base = account_info.portal_base_url if account_info is not None else None
     if not _nonblank(base):
@@ -481,7 +481,7 @@ def _pool_entry_is_portal_oauth(entry: Any) -> bool:
 
 
 def _fetch_nastech_account_info(access_token: str, portal_base_url: Optional[str] = None) -> dict[str, Any]:
-    base = (portal_base_url or "https://portal.nastech-agent.nastechresearch.workers.dev").rstrip("/")
+    base = (portal_base_url or "https://portal.nastechresearch.github.io").rstrip("/")
     headers = {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
     req = urllib.request.Request(f"{base}/api/oauth/account", headers=headers)
     with urllib.request.urlopen(req, timeout=8) as resp:

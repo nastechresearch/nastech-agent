@@ -36,8 +36,8 @@ _PRE_UPDATE_SNAPSHOT_MAX_FILE_SIZE = 1 << 30  # 1 GiB
 #: Reinstalling through the official installer swaps in a Python whose SQLite is safe; the
 #: one-liner differs per OS (mirrors ``uninstall._REINSTALL_HINT``). windows -> command
 _REINSTALL_ONE_LINER = {
-    True: "iex (irm https://nastech-agent.nastechresearch.workers.dev/install.ps1)",
-    False: "curl -fsSL https://nastech-agent.nastechresearch.workers.dev/install.sh | bash",
+    True: "iex (irm https://nastechresearch.github.io/nastech-agent/install.ps1)",
+    False: "curl -fsSL https://nastechresearch.github.io/nastech-agent/install.sh | bash",
 }
 
 
@@ -102,7 +102,7 @@ def _print_curator_first_run_notice() -> None:
     )
     print("  Preview now:  nastech curator run --dry-run")
     print("  Pause it:     nastech curator pause")
-    print("  Docs:         https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/features/curator")
+    print("  Docs:         https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/curator")
 
 
 def _print_fts_optimize_available_notice() -> None:

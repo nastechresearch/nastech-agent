@@ -3193,7 +3193,7 @@
  },
  "base-url:nastech": {
   "api_mode": "chat_completions",
-  "base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
+  "base_url": "https://inference-api.nastechresearch.github.io/v1",
   "high": {
    "extra_body": {
     "reasoning": {
@@ -8208,7 +8208,7 @@
  },
  "nastech": {
   "api_mode": "chat_completions",
-  "base_url": "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1",
+  "base_url": "https://inference-api.nastechresearch.github.io/v1",
   "high": {
    "extra_body": {
     "reasoning": {

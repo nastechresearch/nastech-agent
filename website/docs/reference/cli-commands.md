@@ -433,7 +433,7 @@ Inspect Nastech Portal auth, Tool Gateway routing, and reach the subscription pa
 | Subcommand | Description |
 |------------|-------------|
 | `status` (default) | Portal auth state + per-tool Tool Gateway routing summary. Also shown when no subcommand is given. |
-| `open` | Open `portal.nastech-agent.nastechresearch.workers.dev/manage-subscription` in your default browser. |
+| `open` | Open `portal.nastechresearch.github.io/manage-subscription` in your default browser. |
 | `tools` | List every Tool Gateway partner (Firecrawl, FAL, OpenAI TTS, Browser Use, Modal) and which are routed via Nastech. |
 
 For configuration of the gateway itself, see [Tool Gateway](../user-guide/features/tool-gateway.md). For the one-shot setup path, see `nastech setup --portal` above.

@@ -38,7 +38,10 @@ describe('resolveRemoteOauthTicket', () => {
   })
 
   it('classifies only confirmed auth rejection as reauth and retains the pre-mint session copy', async () => {
-    for (const baseUrl of ['https://gateway.example.com', 'https://lab.agents.nastech-agent.nastechresearch.workers.dev']) {
+    for (const baseUrl of [
+      'https://gateway.example.com',
+      'https://lab.agents.nastechresearch.github.io'
+    ]) {
       for (const hadNativeSession of [false, true]) {
         for (const statusCode of [401, 403, 500, 502, 503, 504, undefined]) {
           let nativeSession = hadNativeSession
@@ -67,7 +70,8 @@ describe('resolveRemoteOauthTicket', () => {
           const authRejected = statusCode === 401 || statusCode === 403
           expect(isReauthRequiredError(error)).toBe(authRejected)
           expect(error.isCloudBackendDown === true).toBe(
-            baseUrl.includes('.agents.nastech-agent.nastechresearch.workers.dev') && [502, 503, 504].includes(statusCode ?? 0)
+            baseUrl.includes('.agents.nastechresearch.github.io') &&
+              [502, 503, 504].includes(statusCode ?? 0)
           )
 
           if (authRejected) {

@@ -14,7 +14,7 @@ from tools.tool_backend_helpers import managed_nastech_tools_enabled
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_TOOL_GATEWAY_DOMAIN = "nastech-agent.nastechresearch.workers.dev"
+_DEFAULT_TOOL_GATEWAY_DOMAIN = "nastechresearch.github.io/nastech-agent"
 _DEFAULT_TOOL_GATEWAY_SCHEME = "https"
 _NASTECH_ACCESS_TOKEN_REFRESH_SKEW_SECONDS = 120
 

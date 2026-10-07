@@ -427,14 +427,17 @@ test('isServerSideHttpError detects 502/503/504', () => {
 
 test('isNastechCloudAgentUrl detects cloud agent hosts', () => {
   // Positive cases
-  assert.equal(isNastechCloudAgentUrl('https://ares-3009.agents.nastech-agent.nastechresearch.workers.dev'), true)
-  assert.equal(isNastechCloudAgentUrl('https://ares-3009.agents.nastech-agent.nastechresearch.workers.dev/api/health'), true)
-  assert.equal(isNastechCloudAgentUrl('http://test.agents.nastech-agent.nastechresearch.workers.dev'), true)
+  assert.equal(isNastechCloudAgentUrl('https://ares-3009.agents.nastechresearch.github.io'), true)
+  assert.equal(
+    isNastechCloudAgentUrl('https://ares-3009.agents.nastechresearch.github.io/api/health'),
+    true
+  )
+  assert.equal(isNastechCloudAgentUrl('http://test.agents.nastechresearch.github.io'), true)
 
   // Negative cases
   assert.equal(isNastechCloudAgentUrl('http://127.0.0.1:9000'), false)
   assert.equal(isNastechCloudAgentUrl('https://gateway.example.com'), false)
-  assert.equal(isNastechCloudAgentUrl('https://nastech-agent.nastechresearch.workers.dev'), false)
+  assert.equal(isNastechCloudAgentUrl('https://nastechresearch.github.io/nastech-agent'), false)
   assert.equal(isNastechCloudAgentUrl('not-a-url'), false)
 })
 
@@ -443,7 +446,7 @@ test('waitForNastechReady classifies a persistent cloud agent 503 as cloud-backe
   const currentTime = { value: 0 }
 
   try {
-    await waitForNastechReady('https://ares-3009.agents.nastech-agent.nastechresearch.workers.dev', {
+    await waitForNastechReady('https://ares-3009.agents.nastechresearch.github.io', {
       fetchPublicJson: async () => {
         attempts++
         // Always return 503
@@ -537,7 +540,10 @@ test('isServerSideHttpError structured path excludes 500/401/403/404/429 even wh
 test('makeNastechCloudBackendDownError produces the Cloud shape and preserves cause', () => {
   const err = new Error('upstream unavailable') as any
   err.statusCode = 503
-  const result = makeNastechCloudBackendDownError('https://ares-3009.agents.nastech-agent.nastechresearch.workers.dev', err)
+  const result = makeNastechCloudBackendDownError(
+    'https://ares-3009.agents.nastechresearch.github.io',
+    err
+  )
   assert.ok(result)
   assert.equal((result as any).isCloudBackendDown, true)
   assert.equal((result as any).statusCode, 503)
@@ -547,7 +553,10 @@ test('makeNastechCloudBackendDownError produces the Cloud shape and preserves ca
 test('makeNastechCloudBackendDownError returns null for a Cloud 401 (routes to reauth)', () => {
   const err = new Error('Unauthorized') as any
   err.statusCode = 401
-  assert.equal(makeNastechCloudBackendDownError('https://ares-3009.agents.nastech-agent.nastechresearch.workers.dev', err), null)
+  assert.equal(
+    makeNastechCloudBackendDownError('https://ares-3009.agents.nastechresearch.github.io', err),
+    null
+  )
 })
 
 test('makeNastechCloudBackendDownError returns null for a non-Cloud 503 (generic remote failure)', () => {
@@ -559,7 +568,7 @@ test('makeNastechCloudBackendDownError returns null for a non-Cloud 503 (generic
 
 test('makeNastechCloudBackendDownError preserves legacy string-prefix compatibility', () => {
   const result = makeNastechCloudBackendDownError(
-    'https://ares-3009.agents.nastech-agent.nastechresearch.workers.dev',
+    'https://ares-3009.agents.nastechresearch.github.io',
     new Error('503: Service Unavailable')
   )
 

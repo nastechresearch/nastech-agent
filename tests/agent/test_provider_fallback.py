@@ -203,7 +203,7 @@ class TestFallbackChainAdvancement:
         """
         from nastech_cli import providers as _providers
         monkeypatch.setattr(_providers, "_nastech_anthropic_wire", lambda: "native")
-        portal = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
+        portal = "https://inference-api.nastechresearch.github.io/v1"
         fbs = [
             {
                 "provider": "nastech",
@@ -252,7 +252,7 @@ class TestFallbackChainAdvancement:
         assert agent._anthropic_client is not None
 
     def test_nastech_non_anthropic_fallback_stays_on_chat_completions(self):
-        portal = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
+        portal = "https://inference-api.nastechresearch.github.io/v1"
         fbs = [{"provider": "nastech", "model": "nastech-4-405b"}]
         agent = _make_agent(fallback_model=fbs)
         with (

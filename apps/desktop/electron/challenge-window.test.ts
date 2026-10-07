@@ -11,7 +11,7 @@ import {
   parseChallengeRequest
 } from './challenge-window'
 
-const PORTAL = 'https://portal.nastech-agent.nastechresearch.workers.dev'
+const PORTAL = 'https://portal.nastechresearch.github.io'
 const URL_OK = `${PORTAL}/challenge?code=abc`
 
 function makeSession() {
@@ -89,7 +89,7 @@ test('only <portal>/challenge URLs are ever loadable', () => {
     `${PORTAL}.evil.example/challenge`,
     `${PORTAL}/login`,
     `${PORTAL}/challenges`,
-    'http://portal.nastech-agent.nastechresearch.workers.dev/challenge',
+    'http://portal.nastechresearch.github.io/challenge',
     'javascript:alert(1)',
     'file:///etc/passwd',
     ''

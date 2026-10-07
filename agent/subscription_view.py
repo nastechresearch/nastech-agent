@@ -243,7 +243,7 @@ def is_upgrade(state: SubscriptionState, tier_id: str) -> bool:
 
 # ── Dev fixtures (env-var driven, no live portal) ────────────────────────────
 
-_DEV_FIXTURE_PORTAL = "https://portal.nastech-agent.nastechresearch.workers.dev/billing"
+_DEV_FIXTURE_PORTAL = "https://portal.nastechresearch.github.io/billing"
 _DEV_TIER_SPECS = (("free", "Free", 0, "0", "0"), ("plus", "Plus", 1, "20", "1000"),
                    ("super", "Super", 2, "40", "3000"), ("ultra", "Ultra", 3, "80", "7000"))
 _DEV_FIXTURE_ALIASES = {"logged_out": "logged-out", "loggedout": "logged-out", "mid-tier": "mid",

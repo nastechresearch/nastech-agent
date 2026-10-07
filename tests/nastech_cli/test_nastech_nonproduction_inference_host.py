@@ -16,10 +16,10 @@ import pytest
 
 from nastech_cli import auth_nastech
 
-PROD_INFERENCE = "https://inference-api.nastech-agent.nastechresearch.workers.dev/v1"
-ENV_INFERENCE = "https://inference.example-env.nastech-agent.nastechresearch.workers.dev/v1"
-OTHER_NASTECH_HOST = "https://portal.nastech-agent.nastechresearch.workers.dev/v1"  # Nastech-owned, but not an inference gateway
-NONPROD_PORTAL = "https://portal.example-env.nastech-agent.nastechresearch.workers.dev"
+PROD_INFERENCE = "https://inference-api.nastechresearch.github.io/v1"
+ENV_INFERENCE = "https://inference.example-env.nastechresearch.github.io/v1"
+OTHER_NASTECH_HOST = "https://portal.nastechresearch.github.io/v1"  # Nastech-owned, but not an inference gateway
+NONPROD_PORTAL = "https://portal.example-env.nastechresearch.github.io"
 
 
 @pytest.mark.parametrize("helper, var", [
@@ -31,15 +31,15 @@ def test_routing_overrides_follow_the_profile_scope_and_fail_closed_without_one(
     miss, and a call with NO scope gets None — never the launch profile's ambient value."""
     from agent import secret_scope as ss
 
-    monkeypatch.setenv(var, "https://launch.example.nastech-agent.nastechresearch.workers.dev")
+    monkeypatch.setenv(var, "https://launch.example.nastechresearch.github.io")
     monkeypatch.delenv("NASTECH_PORTAL_BASE_URL_LEGACY", raising=False)
-    assert helper() == "https://launch.example.nastech-agent.nastechresearch.workers.dev"
+    assert helper() == "https://launch.example.nastechresearch.github.io"
 
     ss.set_multiplex_active(True)
     try:
-        token = ss.set_secret_scope({var: "https://profile.example.nastech-agent.nastechresearch.workers.dev"})
+        token = ss.set_secret_scope({var: "https://profile.example.nastechresearch.github.io"})
         try:
-            assert helper() == "https://profile.example.nastech-agent.nastechresearch.workers.dev"
+            assert helper() == "https://profile.example.nastechresearch.github.io"
         finally:
             ss.reset_secret_scope(token)
         token = ss.set_secret_scope({})
