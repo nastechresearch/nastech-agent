@@ -43,4 +43,4 @@ function unwrapExpectedNotFound(value: unknown): unknown {
   return value
 }
 
-export { isExpectedNotFoundSentinel, NASTECH_API_EXPECTED_404, unwrapExpectedNotFound }
+export { NASTECH_API_EXPECTED_404, isExpectedNotFoundSentinel, unwrapExpectedNotFound }

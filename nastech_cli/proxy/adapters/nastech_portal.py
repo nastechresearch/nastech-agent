@@ -6,6 +6,7 @@ import logging
 import threading
 from typing import Any, Dict, FrozenSet, Optional
 
+from nastech_cli.anon_challenge import background_caller
 from nastech_cli.auth import (
     AuthError,
     DEFAULT_NASTECH_INFERENCE_URL,
@@ -72,9 +73,12 @@ class NastechPortalAdapter(UpstreamAdapter):
             if state is None:
                 raise RuntimeError("Not logged into Nastech Portal. Run `nastech auth add nastech` first.")
             try:
-                refreshed = resolve_nastech_runtime_credentials(
-                    force_refresh=force_refresh, stale_access_token=stale_access_token or None
-                )
+                # Every proxied request queues on self._lock: a free-tier browser challenge is
+                # announced and raised, never waited on while holding it.
+                with background_caller():
+                    refreshed = resolve_nastech_runtime_credentials(
+                        force_refresh=force_refresh, stale_access_token=stale_access_token or None
+                    )
             except Exception as exc:
                 if isinstance(exc, AuthError) and _is_terminal_nastech_refresh_error(exc):
                     _quarantine_nastech_oauth_state(state, exc, reason="proxy_refresh_failure")

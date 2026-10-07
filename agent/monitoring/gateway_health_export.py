@@ -50,7 +50,7 @@ _OBSERVABLE_METRIC_NAMES = (
     "nastech.gateway.background_delegations", "nastech.platform.up", "nastech.platform.degraded",
     "nastech.cron.scheduler.heartbeat_age_seconds", "nastech.cron.scheduler.last_success_age_seconds",
     "nastech.cron.scheduler.catch_up_occurrences", "nastech.cron.jobs.enabled", "nastech.cron.jobs.running",
-    "nastech.cron.jobs.overdue",
+    "nastech.cron.jobs.overdue", "nastech.cron.store.writable", "nastech.cron.store.skipped_runs",
 )
 
 

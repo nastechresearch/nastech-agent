@@ -119,7 +119,14 @@ import {
   buildBrowserWindowUrl
 } from './browser-windows'
 import { createBundleSkewChecker } from './bundle-skew'
-import { detectBundleSwap, readBundleSwapStamp } from './bundle-swap'
+import {
+  BUNDLE_SWAP_RELAUNCH_FAILSAFE_MS,
+  detectBundleSwap,
+  readBundleSwapStamp,
+  relaunchIntoSwappedBundle
+} from './bundle-swap'
+import { CHALLENGE_PARTITION } from './challenge-window'
+import { registerChallengeWindowIpc } from './challenge-window-ipc'
 import { registerChatOnboardingWindow } from './chat-onboarding-window'
 import { provisionCliLinks } from './cli-provision'
 import { closeStopFailureMessage, finishWindowsCloseStop, type RuntimeLock } from './close-stop-kill'
@@ -281,7 +288,6 @@ import { probeGatewayWebSocket, spawnedBackendProbeOptions } from './gateway-ws-
 import { windowsGitCandidates } from './git-binary-candidates'
 import { registerGitIpc } from './git-ipc'
 import { desktopBackendSpawnEnv, guestOnboardingEnabled } from './guest-onboarding'
-import { readAndConsumeHandoffResult } from './handoff-result'
 import {
   assertExistingPathForOpen,
   ATTACHMENT_UPLOAD_DEFAULT_MAX_BYTES,
@@ -308,6 +314,7 @@ import {
 import {
   type AttachedBackend,
   attachOrReserveSpawn,
+  checkoutHeadIdentity,
   HOST_SPAWN_GATE_STALE_MS,
   spawnLedgerPath,
   type SpawnReservation
@@ -315,7 +322,7 @@ import {
 import { assertNoSecondLocalBackend, assertNotPassiveSpawn } from './host-backend-singleton'
 import { lookupPublishedSessionToken } from './host-published-token'
 import { claimHostSpawnGate } from './host-spawn-gate'
-import { isNastechHubClipboardWrite, NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN } from './hub-iframe-policy'
+import { NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN, isNastechHubClipboardWrite } from './hub-iframe-policy'
 import { requestHudClose } from './hud-close'
 import { cursorPointInWindow } from './hud-cursor'
 import { startHudGameOverlayWatch } from './hud-game-overlay'
@@ -365,6 +372,7 @@ import {
   assertManagedUpdatePreflightClear,
   executeManagedRemoteUpdate,
   fenceManagedSshBootstrapPublication,
+  joinManagedUpdatesForApply,
   ManagedConnectionUpdateGate,
   managedSshDrainBlocker,
   managedSshRecoveryScopes,
@@ -442,7 +450,7 @@ import {
 } from './pool-spawn-coordinator'
 import { createPoolStopper } from './pool-stop'
 import { poolTouchKeys } from './pool-touch-scope'
-import { createPortalSession } from './portal-session'
+import { createPortalSession, resolvePortalBaseUrl } from './portal-session'
 import {
   createKeepAwake,
   type KeepAwakeMode,
@@ -477,18 +485,20 @@ import {
 import { migrateActiveProfileIfMissing as migrateActiveProfileIfMissingPure } from './profile-migration'
 import { prepareProfileRenameLifecycle, profileRenameFromRequest } from './profile-rename-routing'
 import {
+  applyRemoteProfileSessionOutcomes,
   assembleSidebarSessionSlices,
   buildSidebarSessionSliceParams,
+  composeUnifiedSessionResponse,
   fetchPrimaryProfileSessions,
   fetchRegistrySessionRows,
   fetchRemoteProfileSessions,
   findRemoteOwnerProfileForSession,
   hasPinnedRegistrySessionSource,
   isAllProfilesSessionListRequest,
-  mergeProfileSessionWindow,
   pathWithRemoteOwnerScope,
   type RegistrySessionSource,
   remoteProfileQueryScope,
+  settleRemoteProfileSessions,
   shouldIncludeLocalRegistrySessionSource,
   spliceRegistrySessionRows,
   tagRegistrySessionResponse,
@@ -590,8 +600,23 @@ import {
   windowOpacityFor,
   windowOpacityOptions
 } from './translucency'
-import { updateGateReason, waitForUpdateClearance } from './update-gate'
-import { readLiveUpdateMarker, updateHandoffConflict, writeUpdateMarker } from './update-marker'
+import {
+  UPDATE_HANDOFF_DWELL_MS,
+  UPDATE_WAIT_POLL_MS,
+  UPDATE_WAIT_TIMEOUT_MS,
+  waitForUpdateClearance
+} from './update-gate'
+import { parkedRunReport } from './update-handoff-report'
+import type { UpdateHoldWire } from './update-hold-types'
+import {
+  createUpdateHoldScreen,
+  type MarkerGateCallbacks,
+  markerGateProbe,
+  registerUpdateHoldIpc,
+  waitForPoolUpdateClearance
+} from './update-hold-wiring'
+import { describeSkippedPrewrite, readLiveUpdateMarker, updateHandoffConflict, writeUpdateMarker } from './update-marker'
+import { heldWaitMessage, holdTicker } from './update-marker-gate'
 import { updateConnectionsBeforeLocal } from './update-order'
 import {
   resolveUpdaterMechanism,
@@ -601,6 +626,7 @@ import {
 } from './updater'
 import {
   observeUpdaterHandoff,
+  repairMacUpdaterHelper,
   resolveInstallationLauncher,
   resolveStagedUpdaterBinary,
   resolveVenvDir,
@@ -2236,7 +2262,10 @@ let bootProgressState = {
   retryable: false,
   running: false,
   statusCode: null,
-  timestamp: Date.now()
+  timestamp: Date.now(),
+  // The blocked boot screen (R8 D3): set while an update hold keeps the local
+  // backend from starting, null otherwise.
+  updateHold: null as UpdateHoldWire | null
 }
 
 // Chromium owns its --log-file for the life of the process, so the startup
@@ -2964,20 +2993,6 @@ function directoryExists(filePath) {
 // own relaunch hits our single-instance lock and quits). Marker parsing +
 // staleness self-heal live in update-marker.ts (unit-tested).
 
-// How long we'll park the launch waiting for a live update to finish before
-// giving up and starting the backend anyway (belt-and-suspenders alongside the
-// marker's own age ceiling; covers a stuck-but-alive updater).
-const UPDATE_WAIT_TIMEOUT_MS = 20 * 60 * 1000
-const UPDATE_WAIT_POLL_MS = 1000
-// How long the desktop lingers on the "updating, don't reopen" overlay after
-// spawning the detached updater, before it quits to release the venv shim. The
-// old 600ms was long enough to register the child process but far too short for
-// the user to READ the overlay — the window just vanished, looked like a crash,
-// and the user relaunched mid-update (the #50238 restart-loop trigger). A
-// couple of seconds lets the message land and bridges the gap until the
-// updater's own progress window appears. (#50419)
-const UPDATE_HANDOFF_DWELL_MS = 2500
-
 // Gate deps shared by the primary-window boot path and the pool-backend
 // spawn path. Consulting the on-disk marker, the in-process updateInFlight
 // flag, AND the successful detached hand-off state is load-bearing (#73822):
@@ -2988,106 +3003,92 @@ const UPDATE_HANDOFF_DWELL_MS = 2500
 // The hand-off state closes the later Windows `cmd start` wrapper gap: the
 // wrapper exits 0 before the real PowerShell script claims the marker, and
 // `finally` clears updateInFlight immediately after the hand-off is accepted.
-function updateGateDeps() {
+function updateGateDeps(callbacks: MarkerGateCallbacks = {}) {
   return {
-    hasLiveMarker: () => Boolean(readLiveUpdateMarker(NASTECH_HOME)),
+    hasLiveMarker: markerGateProbe(
+      { nastechHome: NASTECH_HOME, isWindows: IS_WINDOWS, log: rememberLog, updateRoot: resolveUpdateRoot },
+      callbacks
+    ),
     isUpdateInFlight: () => updateInFlight,
-    isHandoffActive: () => isQuittingForHandoff,
-    // The latest receipt is cross-process truth: a `nastech update` that failed
-    // records outcome "failed" even when its marker write/release raced a
-    // crash (#122206). Only a TERMINAL failure counts — "running" must keep
-    // parking, and "partial" kept the install usable.
-    hasFailedReceipt: () => {
-      const receipt = readLatestSyncReceipt()
-
-      return receipt?.outcome === 'failed'
-    }
+    isHandoffActive: () => isQuittingForHandoff
   }
 }
 
-// One-shot guard for the automatic bundle-swap relaunch below: the relaunched
-// instance carries this flag so a stamp that still mismatches (unreadable
-// resources, exotic packaging) can never produce a relaunch loop.
-const BUNDLE_SWAP_RELAUNCH_FLAG = '--nastech-bundle-swap-relaunched'
+// The blocked boot screen (R8 D3) every update wait publishes its hold on.
+const updateHoldScreen = createUpdateHoldScreen({
+  nastechHome: NASTECH_HOME,
+  log: rememberLog,
+  bootHold: () => bootProgressState.updateHold,
+  updateBootProgress
+})
 
-// How long the parked instance waits for its own scheduled exit to land before
-// giving up and booting the stale build anyway. Better a torn renderer with a
-// banner than a window that never comes back.
-const BUNDLE_SWAP_RELAUNCH_FAILSAFE_MS = 15_000
-
-// The detached updater swaps the packaged bundle on disk AFTER `nastech update`
-// exits (posix.sh mac_swap / windows.ps1). An instance reopened mid-update —
-// the #50238 gesture the gate above exists for — was launched from the
-// PRE-swap bundle, and the updater's `open` leg then merely focuses us (single
-// instance), so no process ever loads the new build. Letting boot proceed here
-// runs the new runtime under the old renderer: exactly the skew
-// detectRendererSkew() warns about, except the Updates card already says
-// "latest", so the warning's own remedy has nothing to run.
-//
-// This is the earliest point where the swap is PROVABLE — it happens while we
-// are parked on the gate, so checking any sooner (at `ready`, before the gate)
-// only ever compares a stamp with itself. Relaunching here also keeps the
-// boot-progress window up for the whole wait instead of leaving the user with
-// no window at all.
-//
-// Returns true when the relaunch was scheduled; the caller must park rather
-// than continue booting, because the process exits underneath it.
-function relaunchIntoSwappedBundle() {
-  if (!IS_PACKAGED || process.argv.includes(BUNDLE_SWAP_RELAUNCH_FLAG)) {
-    return false
-  }
-
-  if (!detectBundleSwap(INSTALL_STAMP, readBundleSwapStamp(process.resourcesPath))) {
-    return false
-  }
-
-  rememberLog('[updates] app bundle was swapped during the update; relaunching into the new build')
-
-  try {
-    app.relaunch({
-      args: [...buildNoSandboxRelaunchArgs(process.argv.slice(1)), BUNDLE_SWAP_RELAUNCH_FLAG]
-    })
-  } catch (err) {
-    rememberLog(`[updates] bundle-swap relaunch failed: ${err?.message || err}; continuing with the current build`)
-
-    return false
-  }
-
-  void exitAfterBackendShutdown(0)
-
-  return true
-}
+const clearUpdateHold = updateHoldScreen.clear
+const showUpdateHold = updateHoldScreen.show
 
 // Block until no live update is in progress (or we hit the wait timeout).
 // Emits a boot-progress phase so the renderer shows "Update in progress…"
 // rather than a frozen splash. Returns true if it parked at all.
 async function waitForUpdateToFinish() {
   let announced = false
-  let parkedOnFailedReceipt = false
+  let longWaitAnnounced = false
+  const parkedRun = parkedRunReport()
+  // A dead marker whose checkout a leftover process still holds (R6), or whose
+  // ownership the helper could not establish (the blocked screen, R8 D3).
+  const hold = holdTicker({ show: state => showUpdateHold(state), clear: () => clearUpdateHold() })
+  // The wait ended because the user chose Start anyway, not because the
+  // update finished (R8 m7): no bundle-swap relaunch mid-hold.
+  let overridden = false
 
-  const outcome = await waitForUpdateClearance(updateGateDeps(), {
-    signal: localBackendLifecycle.signal,
-    abandonOn: reason => {
-      // The update that owns the gate already recorded a terminal failure
-      // (#122206): parking the full 20-minute budget on a receipt that says
-      // "failed" strands the window behind a dead updater (486 silent polls
-      // measured). Stop waiting; the failure dialog below carries the
-      // recovery guidance and the backend's own launch path finishes only
-      // what is safely retryable, bounded by venv_sync's completion-retry
-      // backoff.
-      if (reason === 'failed-receipt') {
-        parkedOnFailedReceipt = true
-        rememberLog('[updates] latest update receipt records a failure; not parking the boot on it')
-
-        return true
-      }
-
-      return false
+  const gateDeps = updateGateDeps({
+    onLiveMarker: marker => {
+      parkedRun.park(marker)
+      overridden = false
     },
-    onWaitTick: async reason => {
+    onHeld: hold.onHeld,
+    onOverride: () => {
+      overridden = true
+    }
+  })
+
+  const outcome = await waitForUpdateClearance(gateDeps, {
+    signal: localBackendLifecycle.signal,
+    onWaitTick: async (reason, waitedMs) => {
       if (!announced) {
         announced = true
         rememberLog(`[updates] update in progress (${reason}); deferring backend start until it finishes`)
+      }
+
+      // Never a timeout (R8 D3): past the grace the boot shows the blocked
+      // screen and stays parked until the hold ends, the user quits, or the
+      // user confirms Start anyway (registerUpdateHoldIpc).
+      const { held: heldNow, shown } = hold.tick(reason)
+
+      if (shown) {
+        return
+      }
+
+      if (reason === 'marker' && heldNow) {
+        await advanceBootProgress('backend.update-wait', heldWaitMessage(heldNow), 12)
+
+        return
+      }
+
+      // A live update owner is waited out, never aged out (C1 rule 3): booting
+      // a backend into a half-replaced runtime is the failure this gate exists
+      // for. Past the old ceiling, say so instead of silently counting down.
+      if (reason === 'marker' && waitedMs >= UPDATE_WAIT_TIMEOUT_MS) {
+        if (!longWaitAnnounced) {
+          longWaitAnnounced = true
+          rememberLog('[updates] update still running past 20 minutes; its owner is alive, so the boot keeps waiting')
+        }
+
+        await advanceBootProgress(
+          'backend.update-wait',
+          'An update is still running — Nastech will start automatically when it finishes. Its progress is in logs/update.log.',
+          12
+        )
+
+        return
       }
 
       await advanceBootProgress(
@@ -3100,59 +3101,17 @@ async function waitForUpdateToFinish() {
     timeoutMs: UPDATE_WAIT_TIMEOUT_MS
   })
 
-  // The detached hand-off script (scripts/desktop-update/windows.ps1) runs hidden;
-  // its result file is the ONLY way the user learns a detached update
-  // failed. Consume it exactly once, here, right where boot passes the
-  // update gate — success gets a log line, failure gets a real dialog
-  // (previously a failed detached update was indistinguishable from
-  // "nothing happened").
-  try {
-    const result = readAndConsumeHandoffResult(NASTECH_HOME)
+  clearUpdateHold()
 
-    if (result && result.ok && result.manual) {
-      // Update landed but the user must act (reopen/reinstall/sandbox). On
-      // machines with no shim browser and no notifier this dialog is the
-      // FIRST time the message is visible — it must not be a log line.
-      rememberLog(`[updates] detached update finished with manual action (branch ${result.branch}): ${result.message}`)
-      dialog.showMessageBox({
-        type: 'warning',
-        title: 'Nastech update',
-        message: 'The update finished, but needs one more step',
-        detail: result.message
-      })
-    } else if (result && result.ok) {
-      rememberLog(`[updates] detached update finished OK (branch ${result.branch})`)
-    } else if (result) {
-      rememberLog(`[updates] detached update FAILED (exit ${result.exitCode}): ${result.message}`)
-      const handoffLogPath = path.join(NASTECH_HOME, 'logs', 'desktop-update-handoff.log')
-
-      // Async so boot is not blocked behind the dialog; the response handlers
-      // reuse the menu's open-updates path (queued until the renderer is ready)
-      // and the same reveal primitive as 'nastech:logs:reveal'.
-      void dialog
-        .showMessageBox({
-          type: 'error',
-          title: 'Nastech update',
-          message: "Nastech couldn't finish updating",
-          detail:
-            "You're still on the previous version and can keep using it. Try the update again, or open the update log to report the problem.\n\n" +
-            `Details: ${result.message}`,
-          buttons: ['Try again', 'Open log', 'Close'],
-          defaultId: 0,
-          cancelId: 2,
-          noLink: true
-        })
-        .then(({ response }) => {
-          if (response === 0) {
-            sendOpenUpdatesRequested()
-          } else if (response === 1) {
-            shell.showItemInFolder(handoffLogPath)
-          }
-        })
-    }
-  } catch (err) {
-    rememberLog(`[updates] could not read hand-off result: ${err.message}`)
-  }
+  // A detached update's result file is the only way the user learns it
+  // failed: consumed once, here, where boot passes the update gate.
+  parkedRun.report({
+    nastechHome: NASTECH_HOME,
+    log: rememberLog,
+    dialog,
+    shell,
+    openUpdates: sendOpenUpdatesRequested
+  })
 
   if (outcome === 'cancelled') {
     localBackendLifecycle.assertCanStart()
@@ -3164,12 +3123,20 @@ async function waitForUpdateToFinish() {
 
   if (outcome === 'timeout') {
     rememberLog('[updates] update still in progress after wait timeout; starting backend anyway')
-  } else if (parkedOnFailedReceipt) {
-    // The gate closed on a terminal failure, not a live update: no swap to
-    // relaunch into (the update never succeeded), so boot the current build
-    // and let the failure dialog above carry the recovery guidance.
-    rememberLog('[updates] proceeding with backend start despite the failed update receipt')
-  } else if (relaunchIntoSwappedBundle()) {
+  } else if (overridden) {
+    rememberLog('[updates] proceeding with backend start over a held update (user chose Start anyway); no relaunch')
+  } else if (
+    relaunchIntoSwappedBundle({
+      isPackaged: IS_PACKAGED,
+      argv: process.argv,
+      running: INSTALL_STAMP,
+      resourcesPath: process.resourcesPath,
+      relaunch: extraArgs =>
+        app.relaunch({ args: [...buildNoSandboxRelaunchArgs(process.argv.slice(1)), ...extraArgs] }),
+      exit: () => void exitAfterBackendShutdown(0),
+      log: rememberLog
+    })
+  ) {
     await advanceBootProgress('backend.update-restart', 'Restarting Nastech to load the updated app…', 14)
     // Park while the scheduled exit lands so this stale build never starts a
     // backend; the failsafe below only runs if the exit somehow does not.
@@ -3975,7 +3942,7 @@ function resolveCheckoutUpdateStrategy(): UpdaterStrategy {
     rememberLog,
     startNastech,
     stopBackendsForUpdate,
-    repairMacUpdaterHelper,
+    repairMacUpdaterHelper: updater => repairMacUpdaterHelper(updater, { isMac: IS_MAC, log: rememberLog }),
     preflightStateDb: async (home: string, log: (message: string) => void): Promise<void> => {
       const root: string = resolveUpdateRoot()
 
@@ -4101,34 +4068,6 @@ function resolveUpdaterBinary() {
   return resolveStagedUpdaterBinary(NASTECH_HOME, { fileExists, isWindows: IS_WINDOWS })
 }
 
-function repairMacUpdaterHelper(updater) {
-  if (!IS_MAC || !updater) {
-    return
-  }
-
-  try {
-    execFileSync('/usr/bin/xattr', ['-cr', updater], { stdio: 'ignore' })
-  } catch (err) {
-    rememberLog(`[updates] macOS updater helper quarantine repair skipped: ${err.message}`)
-  }
-
-  try {
-    execFileSync('/usr/bin/codesign', ['--verify', updater], { stdio: 'ignore' })
-
-    return
-  } catch {
-    // Unsigned or invalid helper. Apply a local ad-hoc signature so Gatekeeper
-    // does not block the staged updater before it can run.
-  }
-
-  try {
-    execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', updater], { stdio: 'ignore' })
-    rememberLog('[updates] repaired macOS updater helper signature')
-  } catch (err) {
-    rememberLog(`[updates] macOS updater helper signature repair skipped: ${err.message}`)
-  }
-}
-
 // Path to the venv shim whose lock decides whether `nastech update` can write
 // fresh entry points. On Windows this is the file the running backend
 // `nastech.exe` holds open; on POSIX it's never mandatory-locked.
@@ -4202,9 +4141,7 @@ function killNastechOwnedVenvDaemons(updateRoot) {
   let holders = []
 
   try {
-    holders = scanWindowsProcesses().filter(p =>
-      isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir)
-    )
+    holders = scanWindowsProcesses().filter(p => isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir))
   } catch {
     // Best-effort: the uninstall lock probe remains the backstop.
     return
@@ -4829,10 +4766,15 @@ async function applyUpdates(): Promise<UpdaterApplyResultWire> {
       // wait so long for that PID — never start that deadline while quit would
       // still be gated on a managed SSH update or its recovery transaction
       // (before-quit joins the same operations; the updater must not race them).
-      await waitForManagedUpdateOperations(() => [
-        ...managedConnectionUpdates.values(),
-        ...managedConnectionRecoveries.values()
-      ])
+      // Bounded (review H3): a refusal leaves the remote operations running.
+      const managedBusy = await joinManagedUpdatesForApply(
+        () => [...managedConnectionUpdates.values(), ...managedConnectionRecoveries.values()],
+        rememberLog
+      )
+
+      if (managedBusy) {
+        return managedBusy
+      }
 
       const packaged: UpdaterStrategy | null = await resolvePackagedUpdateStrategy()
       const strategy: UpdaterStrategy = packaged ?? resolveCheckoutUpdateStrategy()
@@ -4870,7 +4812,7 @@ async function handOffWindowsBootstrapRecovery(reason) {
     return false
   }
 
-  const handoffConflict = updateHandoffConflict(NASTECH_HOME)
+  const handoffConflict = await updateHandoffConflict(NASTECH_HOME)
 
   if (handoffConflict) {
     // Same hazard as applyUpdates (#75778): a live foreign updater already
@@ -4914,8 +4856,15 @@ async function handOffWindowsBootstrapRecovery(reason) {
   // before the updater writes its own marker, and the same stale-updater
   // exclusion: a pre-#74782 binary would refuse its own pre-written claim and
   // strand the very recovery meant to heal the install.
+  //
+  // Exclusive create only (A7 rule 3): over any existing marker the pre-write
+  // is skipped — the staged updater claims (and reclaims) for itself.
   if (Number.isInteger(child.pid) && stagedUpdaterSupportsPrewrittenMarker(updater)) {
-    writeUpdateMarker(NASTECH_HOME, child.pid)
+    const prewrite = await writeUpdateMarker(NASTECH_HOME, child.pid)
+
+    if (!prewrite.ok) {
+      rememberLog(`[bootstrap] skipping marker pre-write: ${describeSkippedPrewrite(prewrite)}`)
+    }
   } else if (Number.isInteger(child.pid)) {
     rememberLog(
       `[bootstrap] skipping marker pre-write: staged updater predates self-adopt (${updater}); it would refuse its own claim`
@@ -5006,10 +4955,6 @@ function readBootstrapMarker() {
 // "already installed" off the filesystem alone, not just the marker.
 async function isSourceRuntimeUsable(root: string): Promise<boolean> {
   return (await resolveSourceInstallationBackend(root, [], { nastechHome: NASTECH_HOME })) !== null
-}
-
-function isActiveRuntimeUsable(): Promise<boolean> {
-  return isSourceRuntimeUsable(ACTIVE_NASTECH_ROOT)
 }
 
 function activeRuntimeState(backend: SourceBackend | null): ActiveRuntimeState {
@@ -8202,17 +8147,6 @@ async function freshGatewayWsUrl(profile) {
 //     with that agent's session cookie — no prompt. Each agent still completes
 //     its own PKCE exchange; SSO removes the human click, not a security check.
 
-// Canonical Nastech portal base URL, overridable for staging/dev. Mirrors the CLI
-// convention (nastech_cli/auth.py DEFAULT_NASTECH_PORTAL_URL + the same env names)
-// so a single override flips every Nastech surface to the same portal.
-const DEFAULT_NASTECH_PORTAL_URL = 'https://portal.nastechresearch.github.io'
-
-function resolvePortalBaseUrl() {
-  const raw = process.env.NASTECH_PORTAL_BASE_URL || process.env.NASTECH_PORTAL_BASE_URL || DEFAULT_NASTECH_PORTAL_URL
-
-  return String(raw).trim().replace(/\/+$/, '')
-}
-
 const { hasLivePortalSession, hasPortalAccessToken, renewPortalAccessSilently, openPortalLoginWindow } =
   createPortalSession({
     isReady: () => app.isReady(),
@@ -9724,7 +9658,7 @@ const managedConnectionUpdateGate = new ManagedConnectionUpdateGate(
 const managedConnectionUpdates = new Map<string, Promise<any>>()
 const managedConnectionRecoveries = new Map<string, Promise<void>>()
 const managedPrimaryRestoreOwners = new Map<string, { correlationId: string; profile: string; source: any }>()
-let managedUpdateQuitWait: Promise<void> | null = null
+let managedUpdateQuitWait: Promise<unknown> | null = null
 let managedUpdateQuitWaitDone = false
 
 function assertCanMutateManagedPrimaryRouting() {
@@ -12279,22 +12213,18 @@ async function runPoolBackendStart(
   // during applyUpdates' critical section starts a backend on the runtime
   // being replaced. No boot-progress UI here — pool backends boot
   // silently for background profiles — so we only log while parked.
-  {
-    let poolAnnounced = false
-
-    await waitForUpdateClearance(updateGateDeps(), {
-      signal: localBackendLifecycle.signal,
-      isCancelled: (): boolean => backendPool.get(poolKey) !== entry,
-      onWaitTick: reason => {
-        if (!poolAnnounced) {
-          poolAnnounced = true
-          rememberLog(`[updates] update in progress (${reason}); deferring pool backend start for profile "${profile}"`)
-        }
-      },
-      pollMs: UPDATE_WAIT_POLL_MS,
-      timeoutMs: UPDATE_WAIT_TIMEOUT_MS
-    })
-  }
+  await waitForPoolUpdateClearance({
+    profile,
+    poolKey,
+    gateDeps: updateGateDeps,
+    signal: localBackendLifecycle.signal,
+    isCancelled: (): boolean => backendPool.get(poolKey) !== entry,
+    log: rememberLog,
+    showHold: showUpdateHold,
+    clearHold: clearUpdateHold,
+    pollMs: UPDATE_WAIT_POLL_MS,
+    timeoutMs: UPDATE_WAIT_TIMEOUT_MS
+  })
 
   profileDeletionGate.assertCanStart(profile)
 
@@ -12798,6 +12728,13 @@ function hostBackendAttachDeps() {
     // Skip ledger records whose backend is already gone before dialling
     // anything: the ledger survives the process it describes (#123586).
     isPidAlive: isPidAliveWindows,
+    // Attach only to a backend booted from this checkout's HEAD: a CLI/launchd
+    // serve that outlived an update answers 503 "Restart required", and Restart
+    // would re-adopt the same stale process forever.
+    expectedCodeIdentity: () =>
+      checkoutHeadIdentity(resolveUpdateRoot(), isGitCheckout, (args, options) =>
+        execGit(resolveGitBinary(), args, options)
+      ),
     log: rememberLog,
     readLedger: (target: string) => {
       try {
@@ -16054,6 +15991,17 @@ ipcMain.handle('nastech:bootstrap:repair', async (): Promise<{ ok: boolean; bund
 
   return { ok: true }
 })
+
+registerUpdateHoldIpc(ipcMain, {
+  isPrimaryBootSender: event =>
+    Boolean(mainWindow && !mainWindow.isDestroyed() && event.sender === mainWindow.webContents),
+  bootProgress: () => bootProgressState,
+  currentHold: updateHoldScreen.current,
+  log: rememberLog,
+  flushLog: flushDesktopLogBufferSync,
+  quit: () => app.quit()
+})
+
 ipcMain.handle('nastech:bootstrap:continue-local', async () => {
   rememberLog('[bootstrap] local install selected by renderer; continuing first-launch bootstrap')
   continueFirstRunLocalBootstrap()
@@ -16076,7 +16024,6 @@ ipcMain.handle('nastech:bootstrap:cancel', async () => {
 
   return { ok: false, cancelled: false }
 })
-ipcMain.handle('nastech:boot-progress:get', async () => bootProgressState)
 ipcMain.handle('nastech:bootstrap:get', async () => getBootstrapState())
 ipcMain.handle('nastech:local-backend:probe', async () => {
   // Resolution only. ensureRuntime/runBootstrap must not start from a hover
@@ -17462,23 +17409,26 @@ async function mergeRemoteProfileSessions(searchParams, remoteProfiles, registry
   const profileTotals = { ...(base.profile_totals || {}) }
   let total = (Number(base.total) || 0) - remoteProfiles.reduce((n, p) => n + (profileTotals[p] || 0), 0)
 
-  // Swap each remote profile's stale local rows/total for the remote's real ones.
-  await Promise.all(
-    remoteProfiles.map(async name => {
-      const list = await remoteSessionList(name, remoteParams).catch(() => null)
-
-      if (!list) {
-        delete profileTotals[name] // dead remote → drop its stale local total too
-
-        return
-      }
-
-      const rows = rowsOf(list)
-      merged.push(...rows)
-      profileTotals[name] = Number(list.total) || rows.length
-      total += profileTotals[name]
-    })
+  // Swap each remote profile's stale local rows/total for the remote's real
+  // ones. #75712: each remote fetch runs under its own bounded budget and
+  // settles — one unavailable remote no longer holds the whole aggregate (and
+  // the sidebar behind it) hostage for the 180s backend readiness wait. A
+  // dead or still-pending remote contributes no rows, drops its stale local
+  // total, and is NAMED in the response `errors` instead of silently
+  // vanishing; the fetch itself keeps running so a remote that is merely slow
+  // to boot lands on a later refresh.
+  const remoteOutcomes = await settleRemoteProfileSessions(remoteProfiles, name =>
+    remoteSessionList(name, remoteParams)
   )
+
+  const { total: remoteTotal, errors: remoteErrors } = applyRemoteProfileSessionOutcomes(
+    remoteOutcomes,
+    merged,
+    profileTotals,
+    total
+  )
+
+  total = remoteTotal
 
   // Registry gateways (v2 connections): splice every CONNECTED gateway's rows
   // into the unified list. Only already-pooled backends are read — a sidebar
@@ -17499,12 +17449,7 @@ async function mergeRemoteProfileSessions(searchParams, remoteProfiles, registry
   const recency = s => s?.[order] ?? s?.started_at ?? 0
   merged.sort((a, b) => recency(b) - recency(a))
 
-  return {
-    ...(base as any),
-    sessions: mergeProfileSessionWindow(merged, offset, limit),
-    total,
-    profile_totals: profileTotals
-  }
+  return composeUnifiedSessionResponse(base, merged, offset, limit, total, profileTotals, remoteErrors)
 }
 
 // Every CONNECTED registry gateway as a session source: resolved descriptors
@@ -18520,6 +18465,15 @@ ipcMain.on('nastech:devtools:disable-f12', (_event, on) => {
   }
 })
 
+// Free-tier browser challenge: a hidden portal window (electron/challenge-window.ts).
+registerChallengeWindowIpc({
+  isReady: () => app.isReady(),
+  getSession: () => session.fromPartition(CHALLENGE_PARTITION),
+  resolvePortalBaseUrl,
+  createWindow: options => new BrowserWindow(options),
+  rememberLog
+})
+
 ipcMain.handle('nastech:openExternal', async (_event, url) => {
   const result = await openExternalUrl(url)
 
@@ -18774,7 +18728,9 @@ function resolveNastechVersion(scope: { connectionId?: string; profile?: string 
 const checkRendererSkew = createBundleSkewChecker(
   INSTALL_STAMP,
   (args, options) => execGit(resolveGitBinary(), args, options),
-  { isUpdating: () => updateGateReason(updateGateDeps()) !== null }
+  // Only a LIVE marker defers the warning: Desktop never deletes a dead one,
+  // so a leftover file would otherwise suppress it indefinitely.
+  { isUpdating: async () => updateInFlight || isQuittingForHandoff || Boolean(await readLiveUpdateMarker(NASTECH_HOME)) }
 )
 
 async function detectRendererSkew() {
@@ -19153,7 +19109,9 @@ registerDesktopUninstallIpc({
   stamp: INSTALL_STAMP,
   fallbackSummary: fallbackUninstallSummary,
   probeSummary: probeUninstallSummary,
-  runUninstall: runDesktopUninstall
+  runUninstall: runDesktopUninstall,
+  removableAppPath: () => resolveRemovableAppPath(process.execPath, process.platform, process.env),
+  openAppsSettings: () => shell.openExternal('ms-settings:appsfeatures')
 })
 
 // Download a VS Code Marketplace extension and return the raw color-theme JSON

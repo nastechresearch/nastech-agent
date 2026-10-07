@@ -142,6 +142,8 @@ _pf86="$(env | sed -n 's/^ProgramFiles(x86)=//p' | head -n1)"
 #     the real install.ps1 (it writes HKCU PATH); NASTECH_E2E_MACHINE_ROOT,
 #     NASTECH_E2E_PROFILES_ROOT and NASTECH_E2E_ARTIFACTS place its fake machines,
 #     their user profiles and the transcripts CI uploads.
+#   * NASTECH_E2E_STRICT_ACCEPTANCE makes tests/e2e/core/_pending_fixes.py's
+#     known gaps hard failures in an acceptance run (workflow dispatch input).
 #
 # These are test-infrastructure knobs, not credentials — same class as the
 # NASTECH_RUN_SLOW_PET_TESTS / NASTECH_E2E_BROWSER / NASTECH_RUN_E2E opt-ins
@@ -155,7 +157,8 @@ TEST_ENV=()
 for _test_var in NASTECH_TEST_IMAGE NASTECH_TEST_WORKERS NASTECH_TEST_PATHS \
   NASTECH_TEST_FILE_TIMEOUT NASTECH_TEST_FILE_RETRIES NASTECH_TEST_SLICE \
   SSL_CERT_FILE SSL_CERT_DIR NASTECH_GATEWAY_LOCK_DIR NASTECH_E2E_REQUIRE_TUI CI GITHUB_ACTIONS \
-  NASTECH_E2E_WINDOWS_INSTALL NASTECH_E2E_MACHINE_ROOT NASTECH_E2E_PROFILES_ROOT NASTECH_E2E_ARTIFACTS; do
+  NASTECH_E2E_WINDOWS_INSTALL NASTECH_E2E_MACHINE_ROOT NASTECH_E2E_PROFILES_ROOT NASTECH_E2E_ARTIFACTS \
+  NASTECH_E2E_STRICT_ACCEPTANCE; do
   if [ -n "${!_test_var:-}" ]; then
     TEST_ENV+=("$_test_var=${!_test_var}")
   fi

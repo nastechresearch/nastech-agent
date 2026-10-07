@@ -148,14 +148,15 @@ def test_commit_bundle_environment_is_literal_and_validated(fixture_repo):
     repo, _, invoke = fixture_repo
     tip = git(repo, 'rev-parse', 'HEAD')
     values = {'NASTECH_GUEST_ONBOARDING': '1', 'NASTECH_DATA_DIR_SUFFIX': 'magic-test',
-              'NASTECH_SKIP_INTRO': '', 'NASTECH_SHARED_AUTH_DIR': 'a=b "quote"\n$(not-a-command)'}
+              'NASTECH_DESKTOP_USER_DATA_DIR': '', 'NASTECH_SHARED_AUTH_DIR': 'a=b "quote"\n$(not-a-command)'}
     flags = [part for key, value in values.items() for part in ('--bundle-env', f'{key}={value}')]
     result, calls = invoke('--build-commit', tip, '--publish', *flags)
     assert result.returncode == 0, result.stderr
     dispatch = next(call for call in calls if call[1:3] == ['workflow', 'run'])
     assert json.loads(next(field.split('=', 1)[1] for field in dispatch if field.startswith('bundle_env='))) == values
     for invalid in (['--bundle-env', 'MISSING'], ['--bundle-env', 'BAD-NAME=x'],
-                    ['--bundle-env', 'NODE_OPTIONS=--require=evil'], ['--bundle-unset', 'PATH'],
+                    ['--bundle-env', 'NODE_OPTIONS=--require=evil'], ['--bundle-env', 'NASTECH_SKIP_INTRO=1'],
+                    ['--bundle-unset', 'PATH'],
                     ['--bundle-env', 'NASTECH_HOME=x', '--bundle-env', 'NASTECH_HOME=y']):
         result, calls = invoke('--build-commit', tip, '--publish', *invalid)
         assert result.returncode != 0 and not calls

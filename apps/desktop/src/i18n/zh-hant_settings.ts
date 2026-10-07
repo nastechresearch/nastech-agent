@@ -800,8 +800,7 @@ export const zhHantSettings = {
       description:
         '在 Mac 上按下並放開 ⌘ + Option，在 Windows/Linux 上按下並放開 Ctrl + Alt，即可從任何應用程式將 HUD 帶到前景。預設關閉，僅適用於此裝置。',
       permission: '請在系統設定 → 隱私權與安全性 → 輸入監控中允許 Nastech，然後重試。此手勢不會記錄按鍵或擷取畫面。',
-      unavailable:
-        'HUD 手勢輔助程式無法啟動或意外停止。請重試或重新啟動 Nastech。Nastech 內原有的 HUD 快速鍵仍可使用。',
+      unavailable: 'HUD 手勢輔助程式無法啟動或意外停止。請重試或重新啟動 Nastech。Nastech 內原有的 HUD 快速鍵仍可使用。',
       missingHelper: '此 Nastech 安裝缺少 HUD 手勢輔助程式。請更新或重新安裝 Nastech，然後重試。',
       unsupportedSession: '此桌面工作階段不支援全域修飾鍵輕按事件。Linux 需要 X11；不支援 Wayland。'
     },
@@ -1004,8 +1003,7 @@ export const zhHantSettings = {
       authenticate: '驗證',
       noOutput: '尚無輸出。',
       deepLinkTitle: '新增 MCP 伺服器？',
-      deepLinkDescription:
-        '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
+      deepLinkDescription: '一個連結要求將此 MCP 伺服器加入 Nastech。請檢查下方的完整設定——它來自該連結，而非 Nastech。',
       deepLinkStdioWarning: '此伺服器會使用下方所示指令在你的電腦上執行本機程序。僅在信任其來源時繼續。',
       deepLinkConfirm: '新增伺服器',
       deepLinkNameInvalid: '名稱須為 1-64 個字母、數字、點、連字號或底線。',
@@ -1070,6 +1068,7 @@ export const zhHantSettings = {
         mcp: { label: 'MCP', hint: 'MCP 工具路由' },
         title_generation: { label: '標題生成', hint: '工作階段標題' },
         review: { label: '評審', hint: '/review 評審子代理' },
+        voice_chat: { label: '語音聊天', hint: '語音模式回覆' },
         triage_specifier: { label: '分類指定', hint: '看板任務規格補全' },
         kanban_decomposer: { label: '看板分解', hint: '任務拆解' },
         profile_describer: { label: '設定檔描述', hint: '自動生成設定檔描述' },
@@ -1097,6 +1096,7 @@ export const zhHantSettings = {
       modelsTitle: '模型',
       recommended: '推薦',
       recommendedReason: {
+        'product-default': '這台機器的預設模型，由其製造商選定。',
         'best-quality-resident': '在完全駐留 GPU 且保持全速的模型中品質最高。推薦會在品質與該硬體的預計速度之間權衡。',
         'speed-gated-quality':
           '有更高品質的模型可以裝入這台機器，但受記憶體頻寬限制回應會太慢——這是保持流暢的最佳模型。',

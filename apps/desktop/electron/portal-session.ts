@@ -23,6 +23,17 @@ interface CookieWindowOptions {
 
 type CookieWindowOutcome = 'landed' | 'closed' | 'timeout' | Error
 
+// Canonical Nastech portal base URL, overridable for staging/dev. Mirrors the CLI
+// convention (nastech_cli/auth.py DEFAULT_NASTECH_PORTAL_URL + the same env names)
+// so a single override flips every Nastech surface to the same portal.
+const DEFAULT_NASTECH_PORTAL_URL = 'https://portal.nastechresearch.github.io'
+
+export function resolvePortalBaseUrl() {
+  const raw = process.env.NASTECH_PORTAL_BASE_URL || process.env.NASTECH_PORTAL_BASE_URL || DEFAULT_NASTECH_PORTAL_URL
+
+  return String(raw).trim().replace(/\/+$/, '')
+}
+
 // Portal credentials belong to NAS, independently of the selected gateway.
 // Read the jar on every operation so provider changes never latch in Desktop.
 export function createPortalSession({

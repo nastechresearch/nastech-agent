@@ -6,112 +6,125 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 890 commits affecting 2807 files.
-- **Source revision:** `e97923c38acb`.
-- **Previous source revision:** `af8839df1038`.
+- **Changes incorporated:** 859 commits affecting 2875 files.
+- **Source revision:** `a3ed4a173070`.
+- **Previous source revision:** `e97923c38acb`.
 
 ## Technical coverage
 
-- **.coderabbit.yaml/:** 1 changed files.
-- **.github/:** 11 changed files.
+- **.github/:** 14 changed files.
 - **.gitignore/:** 1 changed files.
-- **AGENTS.md/:** 7 changed files.
-- **CONTRIBUTING.md/:** 8 changed files.
-- **agent/:** 137 changed files.
-- **apps/:** 476 changed files.
+- **CONTRIBUTING.es.md/:** 2 changed files.
+- **CONTRIBUTING.md/:** 2 changed files.
+- **agent/:** 77 changed files.
+- **apps/:** 503 changed files.
 - **cli-config.yaml.example/:** 3 changed files.
-- **cli.py/:** 3 changed files.
-- **contributors/:** 37 changed files.
-- **cron/:** 4 changed files.
-- **gateway/:** 47 changed files.
-- **locales/:** 11 changed files.
-- **nastech_cli/:** 406 changed files.
-- **nastech_platform/:** 3 changed files.
-- **plugin-catalog/:** 191 changed files.
-- **plugins/:** 62 changed files.
-- **pm/:** 14 changed files.
-- **providers/:** 6 changed files.
-- **scripts/:** 115 changed files.
-- **skills/:** 1 changed files.
-- **tests/:** 669 changed files.
-- **tests-js/:** 12 changed files.
-- **tools/:** 77 changed files.
-- **tui_gateway/:** 45 changed files.
-- **ui-tui/:** 1 changed files.
-- **utils.py/:** 1 changed files.
-- **web/:** 39 changed files.
-- **website/:** 78 changed files.
+- **cli.py/:** 1 changed files.
+- **contributors/:** 20 changed files.
+- **cron/:** 77 changed files.
+- **evals/:** 5 changed files.
+- **gateway/:** 79 changed files.
+- **locales/:** 110 changed files.
+- **model_tools.py/:** 1 changed files.
+- **nastech_bootstrap.py/:** 3 changed files.
+- **nastech_cli/:** 492 changed files.
+- **nastech_constants.py/:** 1 changed files.
+- **nastech_constants_scratch.py/:** 3 changed files.
+- **nastech_platform/:** 4 changed files.
+- **nastech_state.py/:** 2 changed files.
+- **nastech_state_messages.py/:** 1 changed files.
+- **nastech_state_portability.py/:** 1 changed files.
+- **nastech_state_sessions.py/:** 1 changed files.
+- **nastech_state_usage.py/:** 1 changed files.
+- **nix/:** 3 changed files.
+- **optional-skills/:** 10 changed files.
+- **plugin-catalog/:** 62 changed files.
+- **plugins/:** 54 changed files.
+- **pm/:** 22 changed files.
+- **pyproject.toml/:** 1 changed files.
+- **run_agent.py/:** 1 changed files.
+- **scripts/:** 106 changed files.
+- **skills/:** 3 changed files.
+- **tests/:** 761 changed files.
+- **tests-js/:** 1 changed files.
+- **tools/:** 87 changed files.
+- **toolsets.py/:** 2 changed files.
+- **tui_gateway/:** 37 changed files.
+- **ui-tui/:** 20 changed files.
+- **uv.lock/:** 1 changed files.
+- **web/:** 48 changed files.
+- **website/:** 82 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(tts): let PCM-streaming plugin TTS providers join the streaming path
-- feat(catalog): add limbic entry
-- feat(plugin-catalog): add nastech-tenuo
-- feat(plugin-catalog): add session-lens
-- feat(catalog): add nastech-gemini-live
-- feat(plugin-catalog): add banner image for openclawcash-agentwallet
-- feat(plugin-catalog): add openclawcash-agentwallet
-- feat(telemetry): ask once more where a "No thanks" may never have been seen
-- feat(plugin-catalog): add cursor-provider v0.3.5
-- feat(plugin-catalog): bump pushover-nastech-plugin to 1.2.0
-- feat(plugin-catalog): show a card image for stt-vocab
-- feat(plugin-catalog): add stt-vocab
-- 65 additional new capabilities updates are included in this verified snapshot.
+- feat(plugin-catalog): add switchbot-control
+- feat(plugins): a portable package can ask Nastech to gate its MCP server
+- feat(catalog): add Kinprove genealogy research recipes
+- feat(catalog): pin Jot 0.2.0 with current screenshots
+- feat(catalog): add Jot notes for Nastech Desktop
+- feat(plugin-catalog): add gbrain-pointer (community GBrain memory provider)
+- feat(plugin-catalog): add alice-voice plugin
+- feat(plugin-catalog): add pastdotdev memory provider
+- feat(plugin-catalog): add klipper-print-watch
+- feat(plugin-catalog): stalkchain banner and update
+- feat(plugin-catalog): bump stream-speed to 1.1.0
+- feat(plugin-catalog): bump aux-ledger to 1.1.0
+- 36 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix: an unopenable checkout lock reads held to every Python reader, as the scripts and Desktop read it
-- fix: the F2 replacement-claim regressions run under a psutil-less live-system guard
-- fix: the update's Windows child runner and the probe runner share one kill-and-drain
-- fix: every Python identity reader judges our own pid by one incarnation rule
-- fix: a Ctrl-C'd build runner can no longer kill the custodian of its detached writers
-- fix: Desktop SSH marker readers judge the v2 marker with update_lock's one parser and identity rule
-- fix: a historical takeover reaches its child on a cp1252 Windows pipe
-- fix: a group kill of the build's caller no longer kills the custodian of its detached writers
-- fix: a background git hook never keeps a completed update's checkout locked
-- fix: Desktop SSH readers clear a dead v2 update claim instead of stranding it
-- fix: a reader reports the live claim that replaced its stale marker snapshot
-- fix(update): the watched fetch's timeout drains its pipes for a bounded time
-- 421 additional reliability and fixes updates are included in this verified snapshot.
+- fix(update): skip the restore import check only for non-runtime files
+- fix(update): a stash with no Python is never rejected by the import probe (#130101)
+- fix: POSIX update pause drains turns first and survives a killed update cleanly
+- fix(update): a replayed gateway gets its own profile's environment, not the updater's
+- fix(gateway): decode the re-entered .cmd launcher directly; keep the base64 form untouched in the test
+- fix(gateway): a gateway re-entered through a dependency-syncing launcher is a gateway
+- fix(update): adopt a serving gateway through the canonical identity reader
+- fix(update): the POSIX gateway pause never blocks an update
+- fix(update): Windows keeps resuming after the fleet restart, never twice
+- fix(update): a terminal-launched gateway is paused instead of mistaken for a supervised one
+- fix(update): adopt a paused gateway's home only through its runtime lock, never a process scan
+- fix(update): pause POSIX gateways before the first checkout move, restart them after deps
+- 501 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Performance
 
-- perf(providers): memoize the bare-name custom check on the config signature
-- perf(compaction): cap the typed-boundary bisect at budget*4 chars
+- perf(cron): skip the skipped-run count in `cron list`
+- perf(cron): let a failed scan save count as the degraded tick's probe
 
 ### Documentation
 
-- docs(update): nastech_cli/AGENTS.md keeps the post-commit rule within the size cap
-- docs(update): nastech_cli/AGENTS.md states the post-commit exit rule and points at its table
-- docs(update): post-commit contract in the compacted update-pipeline docs
-- docs(update): maintenance docstring says profile sync is best-effort per profile (review F1-profile-sync, declined)
-- docs(update): profile sync is owed only when the step escapes; one post-commit Windows resume (m6, M4)
-- docs(update): receipt-store and gateway-marker rules after the commit point
-- docs(update): dependency follow-up, Ctrl-C after commit, root-home readers, fleet exit 0
-- docs(models): the answer_in_reasoning opt-in is re-read on the active route
-- docs(models): document the answer_in_reasoning custom-provider opt-in
-- docs(user-stories): add 45 business and professional stories (#133708)
-- docs(ssl): note SSL_CERT_FILE sits on top of the platform store
-- docs(discord): state what the slash role flag means
-- 15 additional documentation updates are included in this verified snapshot.
+- docs(plugin-catalog): show the official Ace Data Cloud logo
+- docs(cron): name nastech_bootstrap as the pre-ack relaunch in the worker docstrings
+- docs(kanban): document archived as a manual-move source in the workflow contract
+- docs(cron): store gauges are host-wide; notices use the owning profile's language
+- docs(cron): note that a gateway restart mid-outage drops the one-shot carve-out
+- docs(cron): document the unwritable-store headline, notices and fix steps
+- docs(cron): say occurrences.py also holds the catch-up counter marker
+- docs: crash-cell oracle, strict acceptance and derived update routing
+- docs: crash-cell matrix for source updates
+- docs(stt): xAI STT model pin wording + auto-detect format note
+- docs(stt): clarify xAI model default
+- docs(telemetry): the send explainer and Desktop consent window name the fresh-install note
+- 2 additional documentation updates are included in this verified snapshot.
 
 ### Improvements
 
-- test(update): the L3 lease test's fake --prepared child writes its result
-- refactor(cli): container exec routing moves out of main.py into main_container.py
-- test: browser tree-kill unit tests no longer SIGKILL real processes under PID 999
-- test: v2-marker delegate fixtures record the delegate's real creation time
-- test: R2's custody test stalls git with a clean filter, not a hook the updater no longer runs
-- test(update): the F54 control job sets its breakaway flag through the extended limits
-- test(update): fake win32 for update_custody only, not the whole process
-- test(update): the borrowed-home tail fixture patches the custody spawn
-- chore(update): waive the deliberate catch-alls and unbounded update children for the health ratchet
-- test(update): new lock tests write/read bytes (Windows footgun gate)
-- test(update): gc custody is asserted through run_git; drop the dead spawn_kwargs (review N-coverage)
-- refactor(update): drop the gc-fold custody exception (#132927 removed the fold)
-- 339 additional improvements updates are included in this verified snapshot.
+- chore(catalog): review disclosure for switchbot-control
+- chore(plugin-catalog): bump switchbot-control to bb68cb4
+- chore: map contributor email for lazyants
+- chore: map contributor email for praggybuilds
+- chore(catalog): review disclosure for gbrain-pointer
+- Re-pin agora to v2.0.10
+- chore(catalog): review disclosure for alice-voice
+- chore(plugin-catalog): bump pinned-folders entry sha to v0.1.4
+- chore(catalog): review disclosure for kimchi-acp-provider
+- catalog: pin kimchi-nastech@d6ffe628 — make --yolo opt-in per review
+- catalog: add kimchi-acp-provider (Kimchi harness over ACP stdio)
+- chore(catalog): pastdotdev disclosure form + contributor map for Kiloris
+- 270 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

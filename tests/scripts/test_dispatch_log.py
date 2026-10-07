@@ -60,7 +60,7 @@ def test_pre_build_setup_prints_the_dispatch_before_any_other_work():
     ("commit", {}),
     ("channel", {"CHANNEL": "magic-test"}),
     ("channel", {"CHANNEL": "magic-test", "BRANDING": "stable"}),
-    ("commit", {"BUNDLE_ENV_JSON": json.dumps({"NASTECH_SKIP_INTRO": "1", "NASTECH_HOME": None})}),
+    ("commit", {"BUNDLE_ENV_JSON": json.dumps({"NASTECH_DATA_DIR_SUFFIX": "-test", "NASTECH_HOME": None})}),
 ])
 def test_printed_command_is_the_dispatcher_command(kind, extra):
     values = env(BUILD_COMMIT=SHA, **extra)
@@ -126,7 +126,7 @@ def test_module_prints_the_report_from_the_process_environment(monkeypatch, caps
 
 
 def test_bundle_env_round_trips_the_cli_flags():
-    baked = parse_assignments(["NASTECH_SKIP_INTRO=1"], ["NASTECH_HOME"])
+    baked = parse_assignments(["NASTECH_SHARED_AUTH_DIR=/shared"], ["NASTECH_HOME"])
     facts = dispatch_log.describe(env(BUILD_COMMIT=SHA, BUNDLE_ENV_JSON=json.dumps(baked)))
     flags = dispatch_log.command_flags(facts)
-    assert flags == ["--build-commit", SHA, "--bundle-unset", "NASTECH_HOME", "--bundle-env", "NASTECH_SKIP_INTRO=1"]
+    assert flags == ["--build-commit", SHA, "--bundle-unset", "NASTECH_HOME", "--bundle-env", "NASTECH_SHARED_AUTH_DIR=/shared"]

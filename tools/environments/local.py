@@ -596,16 +596,27 @@ _SANE_PATH = ("/opt/homebrew/bin:/opt/homebrew/sbin:"
 # ``_SENTINEL`` distinguishes "not resolved yet" from a resolved ``None``.
 _SENTINEL = object()
 _NASTECH_BIN_DIR: "str | None | object" = _SENTINEL
+# True when the cached dir is a sealed payload's own launcher dir (see below).
+_NASTECH_BIN_DIR_IS_PAYLOAD = False
 
 
 def _resolve_nastech_bin_dir() -> str | None:
     """Directory holding the ``nastech`` console-script, or None (cached). A gateway
     launched by systemd/cron/a desktop launcher lacks the install dir on PATH and bare
-    ``nastech`` exits 127. Order: ``which``; absolute ``sys.argv[0]`` naming a real
-    nastech executable; ``sys.executable``'s dir if it holds the shim."""
-    global _NASTECH_BIN_DIR
+    ``nastech`` exits 127. Order: a sealed payload's own launcher dir; ``which``; absolute
+    ``sys.argv[0]`` naming a real nastech executable; ``sys.executable``'s dir if it holds
+    the shim."""
+    global _NASTECH_BIN_DIR, _NASTECH_BIN_DIR_IS_PAYLOAD
     if _NASTECH_BIN_DIR is not _SENTINEL:
         return _NASTECH_BIN_DIR  # type: ignore[return-value]
+    from pm.environments import payload_command_dir
+
+    # A payload's venv also holds a `nastech`, but on Windows its redirector names the
+    # build machine's interpreter, so PATH order must not decide which copy children get.
+    payload_dir = payload_command_dir(Path(__file__).resolve().parents[2])
+    if payload_dir is not None and payload_dir.is_dir():
+        _NASTECH_BIN_DIR, _NASTECH_BIN_DIR_IS_PAYLOAD = str(payload_dir), True
+        return _NASTECH_BIN_DIR
     which = shutil.which("nastech")
     argv0 = sys.argv[0] if sys.argv else ""
     base = os.path.basename(argv0).lower()
@@ -619,12 +630,18 @@ def _resolve_nastech_bin_dir() -> str | None:
     else:
         candidate = exe_dir if exe_dir and os.path.isfile(os.path.join(exe_dir, shim)) else None
     _NASTECH_BIN_DIR = candidate if candidate and os.path.isdir(candidate) else None
+    _NASTECH_BIN_DIR_IS_PAYLOAD = False
     return _NASTECH_BIN_DIR
 
 
 def _prepend_nastech_bin_dir(existing_path: str) -> str:
-    """Prepend the nastech install dir to ``existing_path`` if missing."""
+    """Prepend the nastech install dir to ``existing_path`` if missing. A sealed payload's
+    launcher dir moves to the front even when already listed: a login PATH can list
+    another install's ``nastech`` ahead of it."""
     bin_dir = _resolve_nastech_bin_dir()
+    if bin_dir and _NASTECH_BIN_DIR_IS_PAYLOAD:
+        rest = [entry for entry in existing_path.split(os.pathsep) if entry and entry != bin_dir]
+        return os.pathsep.join([bin_dir, *rest])
     return _prepend_missing_path_entries(existing_path, [bin_dir] if bin_dir else [])
 
 

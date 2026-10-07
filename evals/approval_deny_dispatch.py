@@ -18,8 +18,8 @@ with tempfile.TemporaryDirectory(prefix="nastech-deny-dispatch-") as directory:
     os.environ.update(PATH=directory + ":/usr/bin:/bin", HOME=directory, NASTECH_HOME=directory,
                       NASTECH_INTERACTIVE="1", TERMINAL_ENV="local")
     (home / "config.yaml").write_text(
-        'approvals:\n  mode: "off"\n  deny: ["sudo *", "printf SAFE", "git status"]\n'
-        'security:\n  tirith_enabled: false\n', encoding="utf-8")
+        'approvals:\n  mode: "off"\n  deny: ["sudo *", "printf SAFE", "git status"]\n',
+        encoding="utf-8")
     executable = home / "sudo"
     executable.write_text('#!/bin/sh\nprintf "OWNED_EXECUTABLE_REACHED\\n"\n', encoding="utf-8")
     executable.chmod(0o700)

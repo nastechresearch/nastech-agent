@@ -14,10 +14,8 @@ os.environ.update(
     HOME=str(HOME),
     NASTECH_HOME=str(HOME),
     NASTECH_DISABLE_PLUGINS="1",
-    # The scrub above drops the test harness's hermetic switch. Without it, GatewayRunner()
-    # in this fresh home starts tirith's startup install on a background thread (PM runtime,
-    # Python and uv downloaded and unpacked while the cases run) and its buffers land in the
-    # process-wide tracemalloc window the archive case measures.
+    # The scrub above drops the test harness's hermetic switch; keep lazy PM installs off so no
+    # background download's buffers land in the tracemalloc window the archive case measures.
     NASTECH_DISABLE_LAZY_INSTALLS="1",
     NO_PROXY="127.0.0.1,localhost",
 )
