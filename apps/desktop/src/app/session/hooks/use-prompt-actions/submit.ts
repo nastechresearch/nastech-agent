@@ -1,6 +1,7 @@
 import type { PromptSubmitResult } from '@nastech/shared'
 import { type MutableRefObject, useCallback } from 'react'
 
+import { getSession, PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { translateNow, type Translations } from '@/i18n'
 import { type ChatMessage, finalizeInterruptedMessages, textPart } from '@/lib/chat-messages'
 import { optimisticAttachmentRef } from '@/lib/chat-runtime'
@@ -12,7 +13,6 @@ import {
   stopVoicePlayback,
   takeVoicePlaybackInterrupted
 } from '@/lib/voice-playback'
-import { getSession, PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
 import {
   $composerAttachments,
   type ComposerAttachment,
@@ -900,6 +900,7 @@ export function useSubmitPrompt(deps: SubmitPromptDeps) {
           // will be spoken by the voice model. Wins over HUD for this turn.
           ...(options?.surface && { surface: options.surface }),
           ...(options?.surface && options.voiceContext && { voice_context: options.voiceContext }),
+          ...(options?.voiceTurn && { voice_turn: true }),
           // A queue drain is a "run after" message, never a live-turn
           // correction. The flag tells the gateway's busy path to hold it for
           // the next turn untouched — without it, losing the settle race

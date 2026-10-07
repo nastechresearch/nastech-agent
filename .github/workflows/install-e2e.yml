@@ -135,7 +135,7 @@ on:
       - 'nastech_cli/*update*'
       - 'nastech_cli/pm*'
       - 'nastech_cli/*install*'
-      - 'nastech_cli/_early_recovery.py'
+      - 'nastech_cli/_early_recovery*.py'
       - 'nastech_cli/_launchers.py'
       - 'nastech_cli/managed_uv.py'
       - 'nastech_cli/venv_sync.py'

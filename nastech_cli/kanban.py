@@ -22,6 +22,7 @@ from nastech_cli import kanban_db_dispatch as kbd
 from nastech_cli import kanban_db_workspace as kbw
 from nastech_cli import kanban_db_notify as kbn
 from nastech_cli import kanban_swarm as ks
+from nastech_cli import kanban_workflow
 from nastech_cli.kanban_output import (
     _ATTACHMENT_FIELDS, _RUNS_RUN_FIELDS, _SHOW_RUN_FIELDS, _bulk_apply, _err,
     _fmt_counts, _fmt_task_line, _fmt_ts, _json_out, _obj_dict, _print_json,
@@ -1139,7 +1140,7 @@ def _cmd_stats(args: argparse.Namespace) -> int:
     if _json_out(args, stats):
         return 0
     print("By status:")
-    for k in ("triage", "todo", "scheduled", "ready", "running", "blocked", "done"):
+    for k in kanban_workflow.DEFAULT_WORKFLOW.keys():
         print(f"  {k:8s}  {stats['by_status'].get(k, 0)}")
     if stats["by_assignee"]:
         print("\nBy assignee:")

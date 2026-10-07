@@ -73,8 +73,11 @@ def _(rid, params: dict) -> dict:
     _record_send_consent_change(enabled=send)
     if not enabled:
         from nastech_cli.observability.shared_metrics_desktop import purge_onboarding_latches
+        from nastech_cli.observability.shared_metrics_process import purge_pending_receipts
+        from nastech_constants import get_nastech_home
 
         purge_onboarding_latches()
+        purge_pending_receipts(get_nastech_home())
     if params.get("first_run") is True:
         _shared_metrics_record_setup_completed(cfg)
     return _ok(rid, _shared_metrics_consent(cfg))

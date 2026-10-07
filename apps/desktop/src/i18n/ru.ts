@@ -3,6 +3,7 @@ import { defineFieldCopy } from '@/app/settings/field-copy'
 import { defineLocale } from './define-locale'
 import { ruAuxTasks } from './ru_aux_tasks'
 import { ruModelMenu } from './ru_model_menu'
+import { ruNotices } from './ru_notices'
 import { ruPluginSettings } from './ru_plugins'
 import { ruSharedMetrics } from './ru_shared_metrics'
 
@@ -259,10 +260,7 @@ export const ru = defineLocale({
       creditsTitle: 'Кредиты'
     }
   },
-  remoteDisplayBanner: {
-    message: reason =>
-      `Включён программный рендеринг — обнаружен удалённый дисплей (${reason}). GPU-ускорение отключено, чтобы избежать мерцания.`
-  },
+  ...ruNotices,
 
   billingBlock: {
     titleNastech: 'Кредиты Nastech закончились',
@@ -1520,8 +1518,7 @@ export const ru = defineLocale({
       useBackend: 'Использовать этот бэкенд',
       nastechIncluded: 'Входит в подписку Nastech — войдите в Nastech Portal, чтобы активировать.',
       nastechAuthNeededTitle: 'Войдите в Nastech Portal',
-      nastechAuthNeededMessage: provider =>
-        `${provider} сохранён, но не активируется, пока вы не войдёте в Nastech Portal.`,
+      nastechAuthNeededMessage: provider => `${provider} сохранён, но не активируется, пока вы не войдёте в Nastech Portal.`,
       nastechAuthSignIn: 'Войти',
       nastechAuthDoneTitle: 'Nastech Portal подключён',
       nastechAuthDoneMessage: 'Ваши бэкенды по подписке теперь активны.',
@@ -3748,8 +3745,7 @@ export const ru = defineLocale({
       address: 'Адрес',
       addressPlaceholder: 'Введите адрес',
       blankPageBody: 'Введите адрес выше, чтобы просматривать, или попросите Nastech открыть страницу.',
-      finishedRestarting: message =>
-        `Nastech завершил перезапуск сервера предпросмотра${message ? `: ${message}` : ''}`,
+      finishedRestarting: message => `Nastech завершил перезапуск сервера предпросмотра${message ? `: ${message}` : ''}`,
       failedRestarting: message => `Перезапуск сервера не удался: ${message}`,
       unknownError: 'неизвестная ошибка',
       restartedTitle: 'Сервер предпросмотра перезапущен',

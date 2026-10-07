@@ -507,6 +507,56 @@ def _legacy_post_swap_invocation(argv: list[str]) -> tuple[Path, list[str]] | No
 # without this, ``pm`` is unimportable and the launch silently skips PM adoption.
 harden_import_path(str(_root))
 
+
+def _settle_interrupted_update() -> None:
+    """Put back the tree a killed ``nastech update`` left half-moved, before PM, launch preparation or
+    any Nastech package imports from it (``nastech_cli._early_recovery``; ``nastech_cli.main`` repeats the
+    call for entries that never reach this module). A killed ZIP swap can leave ``nastech_cli/`` itself
+    moved aside: the journal-driven restore then runs from that moved-aside copy, the code that wrote
+    the journal. Root files are never absent mid-swap (``update_cmd_zip._commit_staged_replacements``)."""
+    try:
+        from nastech_cli import _early_recovery as recovery
+    except ImportError:
+        moved_aside = _root / "nastech_cli.nastech-update-old" / "_early_recovery.py"
+        if not (_root / ".nastech-update-zip-swap").is_file() or not moved_aside.is_file():
+            return  # not a torn update: the imports below report the real damage
+        import types
+
+        # The moved-aside directory stands in as ``nastech_cli`` (its ``__init__`` not run), so the
+        # repair's own ``from nastech_cli import update_lock`` finds the custody code beside it:
+        # without that the restore refuses to repair unguarded. Dropped again unless it relaunches.
+        package = types.ModuleType("nastech_cli")
+        package.__path__ = [str(moved_aside.parent), str(_root / "nastech_cli")]
+        sys.modules["nastech_cli"] = package
+        try:
+            from nastech_cli import _early_recovery as recovery
+
+            if recovery.restore_interrupted_pull(_root):
+                recovery.relaunch_after_restore()
+        finally:
+            for name in [n for n in sys.modules if n == "nastech_cli" or n.startswith("nastech_cli.")]:
+                del sys.modules[name]
+        return
+    if recovery.restore_interrupted_pull(_root):
+        recovery.relaunch_after_restore()
+
+
+_settle_interrupted_update()
+
+
+def _pin_launcher_home() -> None:
+    """A minted launcher (``nastech_cli._launchers``) pins ``NASTECH_HOME`` to the install's default
+    root. That needs ``nastech_constants`` from the checkout, so the launcher asks for it here, after
+    the repair above: a merge killed while writing ``nastech_constants.py`` must not keep the repair
+    from ever running. The flag name is ``_launchers.PIN_DEFAULT_HOME_FLAG``."""
+    if getattr(sys, "_nastech_pin_default_home", False) and not os.environ.get("NASTECH_HOME"):
+        from nastech_constants import get_default_nastech_root
+
+        os.environ["NASTECH_HOME"] = str(get_default_nastech_root())
+
+
+_pin_launcher_home()
+
 _legacy_post_swap = _legacy_post_swap_invocation(sys.argv[1:])
 if _legacy_post_swap is not None:
     # This continuation exists precisely because the replacement tree may not

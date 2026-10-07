@@ -204,9 +204,7 @@ describe('installFoundInPageForwarder', () => {
     // Drive the fake's emit directly — this exercises the same code path
     // as Electron's actual `webContents.emit('found-in-page', …)`.
     wc.emit('found-in-page', {}, { activeMatchOrdinal: 2, matches: 5 })
-    assert.deepEqual(wc.calls.send, [
-      { channel: 'nastech:found-in-page', payload: { activeMatchOrdinal: 2, count: 5 } }
-    ])
+    assert.deepEqual(wc.calls.send, [{ channel: 'nastech:found-in-page', payload: { activeMatchOrdinal: 2, count: 5 } }])
   })
 
   test('skips send when webContents is destroyed at fire time', () => {

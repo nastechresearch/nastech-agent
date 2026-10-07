@@ -3,9 +3,6 @@ import { type ReactElement, useCallback, useEffect, useRef, useState } from 'rea
 
 import { Button } from '@/components/ui/button'
 import { SearchField } from '@/components/ui/search-field'
-import { useI18n } from '@/i18n'
-import { Cpu, Download, FolderOpen, Loader2, Search } from '@/lib/icons'
-import { cn } from '@/lib/utils'
 import {
   downloadBrowsedModel,
   type HFFileGroup,
@@ -14,6 +11,9 @@ import {
   searchHFModels,
   sideloadLocalModel
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import { Cpu, Download, FolderOpen, Loader2, Search } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import {
   isCurrentLocalModelsOwner,
   localModelsNotificationTitle,

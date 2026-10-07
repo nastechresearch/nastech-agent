@@ -410,6 +410,11 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   setPreviewGuestHidden: (webContentsId, hidden) =>
     ipcRenderer.send('nastech:preview-guest-hidden', { webContentsId, hidden: Boolean(hidden) }),
   openExternal: url => ipcRenderer.invoke('nastech:openExternal', url),
+  freeTierChallenge: {
+    // Load the account service's challenge page in a hidden window (revealed
+    // only if the page asks for the human). Resolves with how it ended.
+    run: request => ipcRenderer.invoke('nastech:freeTierChallenge:run', request)
+  },
   mcpOauth: {
     // One-shot loopback listener for MCP OAuth against remote backends: bind
     // on this machine, hand redirectUri to mcp.servers.oauth.start, then wait
@@ -634,6 +639,12 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   continueBootstrapLocal: () => ipcRenderer.invoke('nastech:bootstrap:continue-local'),
   recycleBackend: profile => ipcRenderer.invoke('nastech:backend:recycle', profile),
   resetBootstrap: () => ipcRenderer.invoke('nastech:bootstrap:reset'),
+  updateHold: {
+    recheck: () => ipcRenderer.invoke('nastech:update-hold:recheck'),
+    quit: () => ipcRenderer.invoke('nastech:update-hold:quit'),
+    startAnyway: (request: { holdId: string; confirmed: true }) =>
+      ipcRenderer.invoke('nastech:update-hold:start-anyway', request)
+  },
   repairBootstrap: () => ipcRenderer.invoke('nastech:bootstrap:repair'),
   cancelBootstrap: () => ipcRenderer.invoke('nastech:bootstrap:cancel'),
   onBootstrapEvent: callback => {
@@ -648,7 +659,8 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   getRemoteDisplayReason: () => ipcRenderer.invoke('nastech:get-remote-display-reason'),
   uninstall: {
     summary: () => ipcRenderer.invoke('nastech:uninstall:summary'),
-    run: mode => ipcRenderer.invoke('nastech:uninstall:run', { mode })
+    run: mode => ipcRenderer.invoke('nastech:uninstall:run', { mode }),
+    openAppsSettings: () => ipcRenderer.invoke('nastech:uninstall:openAppsSettings')
   },
   updates: {
     check: opts => ipcRenderer.invoke('nastech:updates:check', opts),

@@ -186,6 +186,17 @@ test.each(['NODE_OPTIONS', 'PATH', 'NASTECH_PYTHON'])(
   }
 )
 
+test('channel manifest drops retired bundle keys but rejects unknown names', async (): Promise<void> => {
+  const f = await fixture()
+  f.manifest.request.bundleEnv.NASTECH_SKIP_INTRO = '1'
+  expect(decodeChannelManifest(JSON.stringify(f.manifest)).request.bundleEnv).toEqual({})
+
+  f.manifest.request.bundleEnv.NASTECH_UNKNOWN = '1'
+  expect((): void => {
+    decodeChannelManifest(JSON.stringify(f.manifest))
+  }).toThrow('Invalid bundle environment name')
+})
+
 test('receiver kind mirrors the identity comparison between retired channel and destination', async (): Promise<void> => {
   const f = await retiredFixture()
 
@@ -236,12 +247,7 @@ test('protected canary accepts bounded Windows revisions without relaxing stable
   f.manifest.request.version = f.manifest.request.releaseTag.slice(1)
   f.manifest.request.windowsVersion = '1.2.4.10'
   f.publish()
-  const resolver = new ChannelResolver({
-    build: f.build,
-    platform: 'win32',
-    arch: 'x64',
-    signer: 'CN=Nastech Research'
-  })
+  const resolver = new ChannelResolver({ build: f.build, platform: 'win32', arch: 'x64', signer: 'CN=Nastech Research' })
   expect((await resolver.resolve()).kind).toBe('active')
 
   for (const version of ['1.2.4.65536', '65536.2.4.0', '1.2.4.-1', '1.2.4.1.0', '1.2.4.x']) {

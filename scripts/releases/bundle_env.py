@@ -7,7 +7,7 @@ import json
 # Keep this list aligned with the Desktop bundle banner and channel decoder.
 _ALLOWED = frozenset({
     "NASTECH_HOME", "NASTECH_DATA_DIR_SUFFIX", "NASTECH_DESKTOP_USER_DATA_DIR",
-    "NASTECH_SHARED_AUTH_DIR", "NASTECH_GUEST_ONBOARDING", "NASTECH_SKIP_INTRO",
+    "NASTECH_SHARED_AUTH_DIR", "NASTECH_GUEST_ONBOARDING", "NASTECH_PREVIEW_FULL_CONNECTORS",
 })
 
 
