@@ -1,5 +1,5 @@
 name = "nastech-agent"
-main = "src/index.js"
+main = "index.js"
 compatibility_date = "2026-10-05"
 workers_dev = true
 
@@ -9,3 +9,5 @@ id = "ff12d5a5324d44b599d8319edabc4adb"
 
 [observability]
 enabled = true
+
+[previews]
