@@ -2136,7 +2136,7 @@ telemetry:
   shared_metrics:
     enabled: false
     send: false
-    # endpoint: https://telemetry.nastech-agent.nastechresearch.workers.dev/v1/telemetry
+    # endpoint: https://telemetry.nastechresearch.github.io/v1/telemetry
 
 
 # =============================================================================
@@ -2202,7 +2202,7 @@ updates:
 # dashboard:
 #   oauth:
 #     client_id: ""    # agent:{instance_id}; Portal provisions this at deploy
-#     portal_url: ""   # blank → default https://portal.nastech-agent.nastechresearch.workers.dev
+#     portal_url: ""   # blank → default https://portal.nastechresearch.github.io
 #
 #   # Force the absolute base URL the OAuth callback (and any other public
 #   # URL the dashboard hands to external systems) is built from. Set this
@@ -2279,7 +2279,7 @@ updates:
 #     are skipped with a startup warning (never a silent clobber)
 #   - a source's override_existing lets it beat .env/shell values, but
 #     never another secret source's claim
-# Docs: https://nastech-agent.nastechresearch.workers.dev/docs/user-guide/secrets/
+# Docs: https://nastechresearch.github.io/nastech-agent/docs/user-guide/secrets/
 #
 # secrets:
 #   # Optional explicit ordering of enabled sources.

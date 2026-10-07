@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import { compactNumber } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import type * as React from 'react'
 
 import { type NewSessionSplitHandler, startNewProjectDrag, startNewSessionDrag } from '@/app/chat/new-session-drag'

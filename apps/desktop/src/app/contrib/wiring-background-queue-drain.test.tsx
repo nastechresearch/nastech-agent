@@ -10,14 +10,7 @@ import {
   getQueuedPrompts
 } from '@/store/composer-queue'
 import { $activeConnectionId } from '@/store/connections'
-import {
-  $activeSessionId,
-  $connection,
-  $gatewayState,
-  $selectedStoredSessionId,
-  setSessions,
-  setSessionsLoading
-} from '@/store/session'
+import { $activeSessionId, $connection, $gatewayState, $selectedStoredSessionId, setSessions, setSessionsLoading } from '@/store/session'
 import { clearAllSessionStates } from '@/store/session-states'
 import { makeSessionInfo } from '@/test/session-info'
 

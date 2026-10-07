@@ -76,12 +76,7 @@ describe('resolveOauthPartition (#92183 per-connection cookie jars)', () => {
 
   it('keeps cloud connections on the legacy partition (silent portal cascade needs the shared jar)', () => {
     const reg = registry('local', [
-      {
-        id: 'cloud-1',
-        kind: 'cloud',
-        url: 'https://agent.nastechresearch.github.io',
-        authMode: 'oauth'
-      }
+      { id: 'cloud-1', kind: 'cloud', url: 'https://agent.nastechresearch.github.io', authMode: 'oauth' }
     ])
 
     expect(resolveOauthPartition('https://agent.nastechresearch.github.io/api/status', { registry: reg })).toBe(
@@ -225,12 +220,7 @@ describe('resolveOauthPartition with connectionId (pre-save sign-in identity)', 
       { id: 'local', kind: 'local' },
       remote('conn-a', 'https://gw-a.example.com'),
       remote('tok-1', 'https://gw-t.example.com', { authMode: 'token' }),
-      {
-        id: 'cloud-1',
-        kind: 'cloud',
-        url: 'https://agent.nastechresearch.github.io',
-        authMode: 'oauth'
-      }
+      { id: 'cloud-1', kind: 'cloud', url: 'https://agent.nastechresearch.github.io', authMode: 'oauth' }
     ])
 
     expect(resolveOauthPartition('https://gw-a.example.com', { registry: reg, connectionId: 'conn-a' })).toBe(
@@ -242,12 +232,9 @@ describe('resolveOauthPartition with connectionId (pre-save sign-in identity)', 
     expect(resolveOauthPartition('https://gw-t.example.com', { registry: reg, connectionId: 'tok-1' })).toBe(
       LEGACY_OAUTH_PARTITION
     )
-    expect(
-      resolveOauthPartition('https://agent.nastechresearch.github.io', {
-        registry: reg,
-        connectionId: 'cloud-1'
-      })
-    ).toBe(LEGACY_OAUTH_PARTITION)
+    expect(resolveOauthPartition('https://agent.nastechresearch.github.io', { registry: reg, connectionId: 'cloud-1' })).toBe(
+      LEGACY_OAUTH_PARTITION
+    )
   })
 
   it('keeps a v1-migrated entry on the legacy jar even when named by id', () => {

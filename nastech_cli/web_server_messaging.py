@@ -367,7 +367,7 @@ def _restart_gateway_after_whatsapp_onboarding(profile: Optional[str] = None) ->
     return _restart_gateway_after(profile, what="WhatsApp onboarding", label="WhatsApp onboarding")
 
 
-_TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.nastechresearch.github.io"
+_TELEGRAM_ONBOARDING_DEFAULT_URL = "https://setup.nastechresearch.github.io/nastech-agent"
 _TELEGRAM_ONBOARDING_USER_AGENT = f"NastechDashboard/{get_version_info().base_version}"
 
 

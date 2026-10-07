@@ -2,9 +2,9 @@ import { act, cleanup, render } from '@testing-library/react'
 import { useRef } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type * as NastechModule from '@/nastech'
 import { textPart } from '@/lib/chat-messages'
 import { createClientSessionState } from '@/lib/chat-runtime'
-import type * as NastechModule from '@/nastech'
 import { $sessionTiles, publishSessionState } from '@/store/session-states'
 
 vi.mock('@/nastech', async importOriginal => {

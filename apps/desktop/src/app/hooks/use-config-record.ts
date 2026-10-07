@@ -1,7 +1,6 @@
 import { useStore } from '@nanostores/react'
 import { replaceEqualDeep, useQuery } from '@tanstack/react-query'
 
-import { queryClient } from '@/lib/query-client'
 import {
   getNastechConfigRecord,
   peekConfigReadOrigin,
@@ -9,6 +8,7 @@ import {
   profileScopeKey,
   retainConfigReadOrigin
 } from '@/nastech'
+import { queryClient } from '@/lib/query-client'
 import { $activeConnectionId } from '@/store/connections'
 import type { NastechConfigRecord } from '@/types/nastech'
 

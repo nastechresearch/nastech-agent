@@ -23,7 +23,7 @@ def test_resolve_managed_tool_gateway_derives_vendor_origin_from_shared_domain()
     with patch.dict(
         os.environ,
         {
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent",
+            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
         },
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
@@ -59,7 +59,7 @@ def test_resolve_managed_tool_gateway_is_inactive_without_nastech_token():
     with patch.dict(
         os.environ,
         {
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent",
+            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
         },
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
@@ -72,7 +72,7 @@ def test_resolve_managed_tool_gateway_is_inactive_without_nastech_token():
 
 
 def test_resolve_managed_tool_gateway_is_disabled_without_subscription():
-    with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent"}, clear=False), \
+    with patch.dict(os.environ, {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io"}, clear=False), \
          patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=False):
         result = resolve_managed_tool_gateway(
             "firecrawl",
@@ -129,7 +129,7 @@ def test_is_managed_tool_gateway_ready_skips_refresh_for_expired_cached_token(tm
 
     with patch.dict(
         os.environ,
-        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent"},
+        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io"},
         clear=False,
     ), patch.object(managed_tool_gateway, "managed_nastech_tools_enabled", return_value=True):
         assert is_managed_tool_gateway_ready("modal") is True
@@ -142,7 +142,7 @@ def test_connector_gateway_origin_pins_the_deployed_connectors_host():
     # the default resolution must not land on the media/vendor origin.
     with patch.dict(
         os.environ,
-        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent", "TOOL_GATEWAY_SCHEME": "https"},
+        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io", "TOOL_GATEWAY_SCHEME": "https"},
         clear=False,
     ):
         os.environ.pop("CONNECTOR_GATEWAY_URL", None)
@@ -171,7 +171,7 @@ def test_connector_gateway_origin_honors_its_own_override():
         os.environ,
         {
             "CONNECTOR_GATEWAY_URL": "http://127.0.0.1:3009/",
-            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent",
+            "TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io",
         },
         clear=False,
     ):
@@ -190,7 +190,7 @@ def test_default_bearer_gate_accepts_both_deployed_hosts_only():
     # and scheme downgrades are all out.
     with patch.dict(
         os.environ,
-        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io/nastech-agent", "TOOL_GATEWAY_SCHEME": "https"},
+        {"TOOL_GATEWAY_DOMAIN": "nastechresearch.github.io", "TOOL_GATEWAY_SCHEME": "https"},
         clear=False,
     ):
         os.environ.pop("TOOL_GATEWAY_URL", None)

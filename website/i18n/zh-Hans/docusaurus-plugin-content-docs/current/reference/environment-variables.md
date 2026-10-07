@@ -179,7 +179,7 @@ description: "Nastech Agent 使用的所有环境变量完整参考"
 
 | 变量 | 描述 |
 |----------|-------------|
-| `TOOL_GATEWAY_DOMAIN` | Tool Gateway 路由的基础域名（默认：`nastechresearch.github.io/nastech-agent`） |
+| `TOOL_GATEWAY_DOMAIN` | Tool Gateway 路由的基础域名（默认：`nastechresearch.github.io`） |
 | `TOOL_GATEWAY_SCHEME` | gateway URL 的 HTTP 或 HTTPS 协议（默认：`https`） |
 | `TOOL_GATEWAY_USER_TOKEN` | Tool Gateway 的认证 token（通常由 Nastech 认证自动填充） |
 | `FIRECRAWL_GATEWAY_URL` | 专门覆盖 Firecrawl gateway 端点的 URL |

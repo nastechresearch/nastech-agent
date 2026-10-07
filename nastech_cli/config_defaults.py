@@ -2900,7 +2900,7 @@ OPTIONAL_ENV_VARS = {
         password=False, advanced=True),
     "TOOL_GATEWAY_DOMAIN": _tool(
         "Shared tool-gateway domain suffix for Nastech Subscribers only, used to derive vendor "
-        "hosts, e.g. nastechresearch.github.io/nastech-agent -> firecrawl-gateway.nastechresearch.github.io",
+        "hosts, e.g. nastechresearch.github.io -> firecrawl-gateway.nastechresearch.github.io",
         "Tool-gateway domain suffix", None, password=False, advanced=True),
     "TOOL_GATEWAY_SCHEME": _tool(
         "Shared tool-gateway URL scheme for Nastech Subscribers only, used to derive vendor hosts "

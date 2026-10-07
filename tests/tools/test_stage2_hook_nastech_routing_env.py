@@ -20,7 +20,7 @@ from agent.secret_scope import load_env_file
 REPO_ROOT = Path(__file__).resolve().parents[2]
 STAGE2_HOOK = REPO_ROOT / "docker" / "stage2-hook.sh"
 
-PORTAL = "https://portal.staging-nastechresearch.github.io/nastech-agent"
+PORTAL = "https://portal.staging-nastechresearch.github.io"
 INFERENCE = "https://stg-inference-api.nastechresearch.github.io/v1"
 NAMES = ("NASTECH_PORTAL_BASE_URL", "NASTECH_PORTAL_BASE_URL", "NASTECH_INFERENCE_BASE_URL")
 

@@ -71,6 +71,7 @@ test('resolveRemoteSshDashboardProfile never sends a conn: pool key to the remot
   assert.equal(resolveRemoteSshDashboardProfile('', 'bob'), 'bob')
   assert.equal(resolveRemoteSshDashboardProfile('', 'default'), '')
   assert.equal(resolveRemoteSshDashboardProfile('writer', 'conn:mac-mini::default'), 'writer')
+  assert.equal(resolveRemoteSshDashboardProfile('default', 'mac-mini'), '')
 })
 
 test('normAuthMode coerces to token unless explicitly oauth', () => {
@@ -218,11 +219,7 @@ test('profileRemoteOverride treats a cloud entry as a remote override', () => {
   // entry would (Q6) — the override must be returned, not dropped.
   const config = {
     profiles: {
-      coder: {
-        mode: 'cloud',
-        url: 'https://agent-1.agents.nastechresearch.github.io',
-        authMode: 'oauth'
-      }
+      coder: { mode: 'cloud', url: 'https://agent-1.agents.nastechresearch.github.io', authMode: 'oauth' }
     }
   }
 

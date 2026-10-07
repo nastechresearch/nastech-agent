@@ -56,7 +56,7 @@ def test_nastech_portal_strips_replayed_reasoning_details_from_wire():
 
     # Substring lookalikes never matched the allowlist; they still strip (strict routes).
     assert "reasoning_details" not in transport.convert_messages(
-        deepcopy(history), base_url="https://nastechresearch.github.io/nastech-agent.evil.io/v1")[0]
+        deepcopy(history), base_url="https://nastechresearch.github.io.evil.io/v1")[0]
 
 
 def test_openrouter_replay_unchanged_by_portal_strip():

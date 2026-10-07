@@ -434,7 +434,7 @@ test('isNastechCloudAgentUrl detects cloud agent hosts', () => {
   // Negative cases
   assert.equal(isNastechCloudAgentUrl('http://127.0.0.1:9000'), false)
   assert.equal(isNastechCloudAgentUrl('https://gateway.example.com'), false)
-  assert.equal(isNastechCloudAgentUrl('https://nastechresearch.github.io/nastech-agent'), false)
+  assert.equal(isNastechCloudAgentUrl('https://nastechresearch.github.io'), false)
   assert.equal(isNastechCloudAgentUrl('not-a-url'), false)
 })
 
@@ -537,9 +537,7 @@ test('isServerSideHttpError structured path excludes 500/401/403/404/429 even wh
 test('makeNastechCloudBackendDownError produces the Cloud shape and preserves cause', () => {
   const err = new Error('upstream unavailable') as any
   err.statusCode = 503
-
   const result = makeNastechCloudBackendDownError('https://ares-3009.agents.nastechresearch.github.io', err)
-
   assert.ok(result)
   assert.equal((result as any).isCloudBackendDown, true)
   assert.equal((result as any).statusCode, 503)

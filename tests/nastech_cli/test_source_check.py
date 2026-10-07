@@ -89,7 +89,7 @@ def installation(tmp_path, monkeypatch):
 
     def local(request, *args, **kwargs):
         url = urlsplit(request.full_url)
-        assert url.hostname in {"api.github.com", "nastechresearch.github.io/nastech-agent"}
+        assert url.hostname in {"api.github.com", "nastech-assets.nastechresearch.github.io"}
         rewritten = urllib.request.Request(
             f"http://127.0.0.1:{server.server_port}{url.path}" + (f"?{url.query}" if url.query else ""),
             headers=dict(request.header_items()))

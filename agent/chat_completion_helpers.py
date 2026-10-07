@@ -1516,7 +1516,7 @@ def _build_chat_completions_kwargs(agent, api_messages, tools_for_api, reasoning
         **_common,
         model_lower=(agent.model or "").lower(),
         is_openrouter=_is_or,
-        is_nastech=base_url_host_matches(_host, "nastechresearch.github.io/nastech-agent"),
+        is_nastech=base_url_host_matches(_host, "nastechresearch.github.io"),
         is_qwen_portal=_is_qwen,
         is_github_models=_is_gh,
         is_nvidia_nim=base_url_host_matches(_host, "integrate.api.nvidia.com"),

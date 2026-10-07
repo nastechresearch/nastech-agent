@@ -11,6 +11,7 @@ import {
 import { atom } from 'nanostores'
 
 import type { NastechConnection } from '@/global'
+import { NastechGateway, setApiRequestConnection } from '@/nastech'
 import { translateNow } from '@/i18n'
 import {
   decideLivenessForceClose,
@@ -25,7 +26,6 @@ import {
   SOURCE_SWITCH_DIAL_TIMEOUT_MS,
   withTimeout
 } from '@/lib/with-timeout'
-import { NastechGateway, setApiRequestConnection } from '@/nastech'
 import { notifyError, RECOVERY_ACTIONS } from '@/store/notifications'
 import { markNativeNotifyBaseline } from '@/store/notify-baseline'
 import { setConnection, setGatewayState } from '@/store/session'
