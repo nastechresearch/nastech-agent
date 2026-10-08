@@ -1,6 +1,6 @@
 # Nastech Update Report #1
 
-- upstream sha : `7dab93b06e2bb3757dc18229169efcee1b5b47a3`
+- upstream sha : `cc75e8f4021f7efab99158f57601be4d691a6da9`
 - source       : `/home/runner/work/100Ways/100Ways/upstream-agent`
 - snapshot     : `Nastech-Update#1`
 - gate         : **PASS**
@@ -31,9 +31,9 @@
 
 ## Brand
 
-- total files : 17828
-- renamed     : 3010 (folders and file names)
-- text-rewritten : 17649
+- total files : 17848
+- renamed     : 3016 (folders and file names)
+- text-rewritten : 17669
 - locked-copied  : 139
 - binary-copied  : 8
 - owned assets   : 34 (our logo/banner/mascot override upstream)
@@ -45,132 +45,157 @@
 
 ## Direct upstream tree delta
 
-- complete: +19 ~92 -0 ↪0
-- MODIFIED `agent/agent_runtime_helpers.py`
-- ADDED `agent/agent_runtime_helpers_placeholders.py`
-- MODIFIED `agent/conversation_loop.py`
-- MODIFIED `agent/credential_pool.py`
-- MODIFIED `agent/credential_pool_admin.py`
-- MODIFIED `agent/interrupt_control.py`
-- MODIFIED `agent/message_sanitization.py`
-- MODIFIED `agent/terminal_approval_batch.py`
-- MODIFIED `agent/tool_executor.py`
-- MODIFIED `agent/turn_api_call.py`
-- MODIFIED `agent/turn_iteration_prep.py`
-- MODIFIED `apps/desktop/README.md`
-- MODIFIED `apps/desktop/e2e/update/build-fail.spec.ts`
-- ADDED `apps/desktop/src/app/cron/index.test.tsx`
+- complete: +20 ~116 -0 ↪0
+- MODIFIED `agent/turn_facade_lease.py`
+- MODIFIED `agent/usage_pricing.py`
+- MODIFIED `apps/desktop/DESIGN.md`
+- MODIFIED `apps/desktop/e2e/fixtures.ts`
+- MODIFIED `apps/desktop/electron/desktop-installation.test.ts`
+- MODIFIED `apps/desktop/electron/desktop-installation.ts`
+- MODIFIED `apps/desktop/electron/desktop-uninstall-ipc.test.ts`
+- MODIFIED `apps/desktop/electron/entry.ts`
+- MODIFIED `apps/desktop/electron/handoff-result-producer.test.ts`
+- MODIFIED `apps/desktop/electron/handoff-result.test.ts`
+- MODIFIED `apps/desktop/electron/handoff-result.ts`
+- MODIFIED `apps/desktop/electron/host-backend-singleton-orphan-reap.test.ts`
+- MODIFIED `apps/desktop/electron/link-title-window.test.ts`
+- MODIFIED `apps/desktop/electron/link-title-window.ts`
+- MODIFIED `apps/desktop/electron/main.ts`
+- ADDED `apps/desktop/electron/remote-lifecycle-profile-missing.test.ts`
+- MODIFIED `apps/desktop/electron/remote-lifecycle.ts`
+- MODIFIED `apps/desktop/electron/remote-update-marker-programs.test.ts`
+- MODIFIED `apps/desktop/electron/update-marker-corpus.test.ts`
+- MODIFIED `apps/desktop/electron/update-marker-gate.test.ts`
+- MODIFIED `apps/desktop/electron/update-marker-gate.ts`
+- MODIFIED `apps/desktop/electron/update-marker-readonly.test.ts`
+- MODIFIED `apps/desktop/electron/update-marker.test.ts`
+- MODIFIED `apps/desktop/electron/updater/checkout-handoff.test.ts`
+- MODIFIED `apps/desktop/electron/updater/marker-helper.test.ts`
+- MODIFIED `apps/desktop/electron/updater/marker-helper.ts`
+- MODIFIED `apps/desktop/electron/windows-remote-lifecycle.test.ts`
+- MODIFIED `apps/desktop/electron/windows-remote-lifecycle.ts`
+- MODIFIED `apps/desktop/electron/zoom.test.ts`
+- MODIFIED `apps/desktop/electron/zoom.ts`
+- MODIFIED `apps/desktop/src/api/messaging.ts`
+- MODIFIED `apps/desktop/src/api/system.ts`
+- MODIFIED `apps/desktop/src/app/chat/composer/hooks/use-composer-draft.ts`
+- MODIFIED `apps/desktop/src/app/chat/composer/hooks/use-voice-recorder.ts`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/project-dialog.test.tsx`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/projects/project-menu.test.tsx`
+- MODIFIED `apps/desktop/src/app/chat/sidebar/projects/project-menu.tsx`
+- MODIFIED `apps/desktop/src/app/contrib/wiring-background-queue-drain.test.tsx`
+- MODIFIED `apps/desktop/src/app/cron/index.test.tsx`
 - MODIFIED `apps/desktop/src/app/cron/index.tsx`
-- MODIFIED `apps/desktop/src/app/overlays/panel.tsx`
-- MODIFIED `apps/desktop/src/app/settings/gateway-settings.test.tsx`
-- MODIFIED `apps/desktop/src/app/settings/gateway-settings.tsx`
+- MODIFIED `apps/desktop/src/app/open-session.test.ts`
+- MODIFIED `apps/desktop/src/app/settings/constants.ts`
+- MODIFIED `apps/desktop/src/app/settings/model-settings.test.tsx`
+- MODIFIED `apps/desktop/src/app/settings/model-settings.tsx`
+- MODIFIED `apps/desktop/src/app/settings/uninstall-section.test.tsx`
+- MODIFIED `apps/desktop/src/app/shell/butterbar.tsx`
+- MODIFIED `apps/desktop/src/app/shell/model-catalog-menu.test.tsx`
+- MODIFIED `apps/desktop/src/app/shell/model-catalog-menu.tsx`
+- MODIFIED `apps/desktop/src/components/assistant-ui/catalog-advanced-dialog.tsx`
+- MODIFIED `apps/desktop/src/components/assistant-ui/catalog-install-tool.tsx`
+- MODIFIED `apps/desktop/src/components/assistant-ui/markdown-text.media-md.test.tsx`
+- MODIFIED `apps/desktop/src/components/assistant-ui/markdown-text.tsx`
+- MODIFIED `apps/desktop/src/components/pane-shell/tree/renderer/tree-split.test.tsx`
+- ADDED `apps/desktop/src/hooks/use-media-image.frames.test.tsx`
+- MODIFIED `apps/desktop/src/i18n/ar_common.ts`
+- MODIFIED `apps/desktop/src/i18n/de.ts`
+- ADDED `apps/desktop/src/i18n/de_projects.ts`
 - MODIFIED `apps/desktop/src/i18n/en.ts`
-- ADDED `apps/desktop/src/i18n/en_billing.ts`
+- ADDED `apps/desktop/src/i18n/en_projects.ts`
+- MODIFIED `apps/desktop/src/i18n/en_shared_metrics.ts`
+- MODIFIED `apps/desktop/src/i18n/es.ts`
+- ADDED `apps/desktop/src/i18n/es_projects.ts`
+- MODIFIED `apps/desktop/src/i18n/fr.ts`
+- ADDED `apps/desktop/src/i18n/fr_projects.ts`
+- MODIFIED `apps/desktop/src/i18n/ja.ts`
+- ADDED `apps/desktop/src/i18n/ja_projects.ts`
+- MODIFIED `apps/desktop/src/i18n/ru.ts`
+- ADDED `apps/desktop/src/i18n/ru_projects.ts`
 - MODIFIED `apps/desktop/src/i18n/types.ts`
-- ADDED `apps/desktop/src/i18n/types_billing.ts`
-- ADDED `contributors/emails/alrcatraz@gmx.com`
-- MODIFIED `cron/executions.py`
-- MODIFIED `cron/jobs.py`
-- MODIFIED `cron/scheduler.py`
-- ADDED `cron/scheduler_liveness.py`
-- MODIFIED `cron/scheduler_ownership.py`
-- MODIFIED `cron/store_health.py`
-- MODIFIED `gateway/cron_store_notices.py`
-- MODIFIED `nastech_cli/_early_recovery.py`
-- MODIFIED `nastech_cli/_old_updater.py`
-- MODIFIED `nastech_cli/auth_commands.py`
-- MODIFIED `nastech_cli/auth_oauth_grants.py`
-- MODIFIED `nastech_cli/gitlock.py`
-- MODIFIED `nastech_cli/kanban_db_workspace.py`
-- MODIFIED `nastech_cli/main.py`
-- MODIFIED `nastech_cli/observability/schemas/nastech.shared_metrics.v4.schema.json`
-- MODIFIED `nastech_cli/observability/shared_metrics_contract.py`
-- MODIFIED `nastech_cli/observability/shared_metrics_update.py`
-- MODIFIED `nastech_cli/update_cmd.py`
-- MODIFIED `nastech_cli/update_cmd_commit.py`
-- MODIFIED `nastech_cli/update_cmd_common.py`
-- MODIFIED `nastech_cli/update_cmd_git.py`
-- MODIFIED `nastech_cli/update_cmd_stash.py`
-- MODIFIED `nastech_cli/update_cmd_zip.py`
-- MODIFIED `nastech_cli/update_receipt.py`
-- MODIFIED `nastech_cli/version_info.py`
-- MODIFIED `nastech_cli/worktree_ops.py`
+- ADDED `apps/desktop/src/i18n/types_projects.ts`
+- MODIFIED `apps/desktop/src/i18n/zh-hant.ts`
+- MODIFIED `apps/desktop/src/i18n/zh.ts`
+- ADDED `apps/desktop/src/i18n/zh_projects.ts`
+- MODIFIED `apps/desktop/src/i18n/zh_shared_metrics.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/group-chat-view-members.test.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/group-round-prompt.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/group-rounds.test.ts`
+- MODIFIED `apps/desktop/src/plugins/nastech-bots/group-turns.ts`
+- MODIFIED `apps/desktop/src/store/butterbar.ts`
+- MODIFIED `apps/desktop/src/store/free-tier-challenge.test.ts`
+- MODIFIED `apps/desktop/src/store/free-tier-challenge.ts`
+- MODIFIED `apps/desktop/src/store/layout-dismissed-projects.test.ts`
+- MODIFIED `apps/desktop/src/store/layout.ts`
+- MODIFIED `apps/desktop/src/store/projects.ts`
+- MODIFIED `apps/desktop/src/store/session-states.test.ts`
+- MODIFIED `apps/desktop/src/store/zoom.ts`
+- MODIFIED `apps/desktop/src/styles.css`
+- MODIFIED `gateway/run.py`
+- MODIFIED `nastech_cli/auth.py`
+- ADDED `nastech_cli/auth_external_process.py`
+- MODIFIED `nastech_cli/dashboard_auth/routes.py`
+- MODIFIED `nastech_cli/kanban_boards.py`
+- MODIFIED `nastech_cli/kanban_db.py`
+- ADDED `nastech_cli/kanban_db_boards.py`
+- MODIFIED `nastech_cli/kanban_db_connect.py`
+- MODIFIED `nastech_cli/model_switch_providers.py`
+- MODIFIED `nastech_cli/models.py`
+- MODIFIED `nastech_cli/models_catalog_static.py`
+- MODIFIED `nastech_cli/source_build.py`
+- ADDED `nastech_cli/web_build_limits.py`
+- MODIFIED `nastech_state_compression.py`
+- MODIFIED `nastech_state_search.py`
 - MODIFIED `locales/_keys.desktop.json`
-- ADDED `plugin-catalog/agent-hold-em.yaml`
-- ADDED `plugin-catalog/nastech-field-notes.yaml`
-- MODIFIED `pm/cli.py`
-- ADDED `pm/install_states.py`
-- MODIFIED `scripts/run_tests_parallel.py`
-- MODIFIED `scripts/smoke_nemo_relay_shared_metrics.py`
-- MODIFIED `tests/acp_adapter/test_events.py`
-- MODIFIED `tests/agent/test_close_interrupted_tool_sequence.py`
-- MODIFIED `tests/agent/test_concurrent_interrupt.py`
-- MODIFIED `tests/agent/test_credential_pool_profile_oauth_fork.py`
-- MODIFIED `tests/agent/test_interrupt_issuer_attribution.py`
-- MODIFIED `tests/agent/test_partial_stream_finish_reason.py`
-- ADDED `tests/agent/test_replay_echo_retirement.py`
-- MODIFIED `tests/agent/test_run_agent.py`
-- ADDED `tests/agent/test_run_agent_interrupt_hook.py`
-- MODIFIED `tests/agent/test_sanitiser_escalation.py`
-- MODIFIED `tests/agent/test_steer.py`
-- MODIFIED `tests/agent/test_thinking_only_sanitizer.py`
-- MODIFIED `tests/agent/test_turn_api_call_interrupt.py`
-- MODIFIED `tests/agent/test_turn_finalizer_interrupt_alternation.py`
-- MODIFIED `tests/ci/test_update_ci_routing.py`
-- MODIFIED `tests/ci/workflow_steps.py`
-- MODIFIED `tests/cron/test_cron_inactivity_timeout.py`
-- MODIFIED `tests/cron/test_due_scan_save_failure.py`
-- ADDED `tests/cron/test_execution_progress_stamp.py`
-- MODIFIED `tests/cron/test_stale_running_recovery.py`
+- MODIFIED `plugin-catalog/claude-subscription-directsdk.yaml`
+- MODIFIED `plugin-catalog/nastech-monitoring-dashboard.yaml`
+- MODIFIED `plugins/kanban/dashboard/plugin_api.py`
+- MODIFIED `scripts/build/web.mjs`
+- MODIFIED `scripts/ci/classify_changes.py`
+- MODIFIED `tests/agent/test_turn_facade_lease.py`
+- MODIFIED `tests/agent/test_usage_pricing.py`
+- MODIFIED `tests/agent/transports/test_chat_completions.py`
+- ADDED `tests/agent/transports/test_profile_hook_keyword_compat.py`
 - MODIFIED `tests/fixtures/resolution_allowlist.json`
-- MODIFIED `tests/nastech_cli/test_gitlock.py`
-- MODIFIED `tests/nastech_cli/test_kanban_worktree_teardown.py`
-- MODIFIED `tests/nastech_cli/test_shared_metrics_install_failures.py`
-- MODIFIED `tests/nastech_cli/test_shared_metrics_reliability.py`
-- ADDED `tests/nastech_cli/test_shared_metrics_update_stop_reasons.py`
-- MODIFIED `tests/nastech_cli/test_update_custody.py`
-- MODIFIED `tests/nastech_cli/test_version_info.py`
-- ADDED `tests/pm/test_install_states_gc.py`
-- MODIFIED `tests/scripts/desktop_update/test_desktop_update_windows_marker.py`
-- MODIFIED `tests/scripts/desktop_update/windows_handoff_support.py`
-- MODIFIED `tests/scripts/test_run_tests_parallel.py`
-- MODIFIED `tests/tools/test_mcp_failure_classification.py`
-- MODIFIED `tests/tools/test_mcp_oauth.py`
-- MODIFIED `tests/tools/test_mcp_oauth_bidirectional.py`
-- MODIFIED `tests/tools/test_process_heartbeat.py`
-- MODIFIED `tools/mcp_oauth.py`
-- MODIFIED `tools/mcp_oauth_manager.py`
-- MODIFIED `tools/mcp_tool_errors.py`
-- MODIFIED `tools/mcp_tool_handlers.py`
-- MODIFIED `tools/terminal_tool.py`
-- ADDED `web/src/components/StructuredReasoning.test.tsx`
-- ADDED `web/src/components/StructuredReasoning.tsx`
-- ADDED `web/src/lib/reasoning-markup.test.ts`
-- ADDED `web/src/lib/reasoning-markup.ts`
-- MODIFIED `web/src/pages/SessionsPage.test.tsx`
+- MODIFIED `tests/gateway/test_windows_venv_import_guard.py`
+- MODIFIED `tests/nastech_cli/test_api_key_providers.py`
+- ADDED `tests/nastech_cli/test_bare_custom_picker_row.py`
+- MODIFIED `tests/nastech_cli/test_dashboard_auth_middleware.py`
+- MODIFIED `tests/nastech_cli/test_external_process_auth_status.py`
+- MODIFIED `tests/nastech_cli/test_kanban_boards.py`
+- MODIFIED `tests/nastech_cli/test_kanban_core_functionality.py`
+- MODIFIED `tests/nastech_cli/test_models_relay_base_url.py`
+- ADDED `tests/nastech_cli/test_web_build_limits.py`
+- ADDED `tests/nastech_state/test_fts_rebuild_corruption_class.py`
+- MODIFIED `tests/plugins/test_kanban_board_lifecycle_api.py`
+- MODIFIED `tests/plugins/test_kanban_dashboard_plugin.py`
+- ADDED `tests/tools/test_browser_windows_headless.py`
+- MODIFIED `tools/browser_tool_lightpanda_fallback.py`
+- MODIFIED `tools/browser_tool_session.py`
+- ADDED `web/src/components/AuthWidget.test.tsx`
+- MODIFIED `web/src/components/AuthWidget.tsx`
+- ADDED `web/src/components/auth-widget-visibility.ts`
+- MODIFIED `web/src/lib/api.test.ts`
+- MODIFIED `web/src/lib/api.ts`
 - MODIFIED `web/src/pages/SessionsPage.tsx`
-- ADDED `web/src/pages/SessionsPage_sources.tsx`
-- MODIFIED `website/docs/developer-guide/relay-shared-metrics.md`
-- MODIFIED `website/docs/getting-started/installation.md`
-- MODIFIED `website/docs/reference/package-management.md`
-- MODIFIED `website/docs/user-guide/desktop.md`
-- MODIFIED `website/docs/user-guide/features/cron.md`
-- MODIFIED `website/docs/user-guide/profiles.md`
-- MODIFIED `website/i18n/zh-Hans/docusaurus-plugin-content-docs/current/user-guide/profiles.md`
+- MODIFIED `website/docs/user-guide/features/web-dashboard.md`
+- MODIFIED `website/static/api/model-catalog.json`
 
 ## Scan
 
-17888 files scanned [audio=5, binary=8, doc=4, font=13, image=174, text=17684]
+17908 files scanned [audio=5, binary=8, doc=4, font=13, image=174, text=17704]
 
 
 ## Diff
 
-2877 renamed, 0 rewritten, 14391 identical, 141 locked, 0 missing, 32 owned, 387 reconciled
+2883 renamed, 0 rewritten, 14405 identical, 141 locked, 0 missing, 32 owned, 387 reconciled
 
 
 ## Fork check (vs nastech-agent)
 
-- 17419 identical, 450 updated (+0/-0 lines), 19 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 0 locked/binary, 0 collision-safe relocated, 60 preserved fork-local files, 0 violations
+- 17772 identical, 116 updated (+0/-0 lines), 20 added, 0 missing, 0 fork-local-unpreserved, 0 stale-upstream, 0 locked/binary, 0 collision-safe relocated, 60 preserved fork-local files, 0 violations
 
 - features: fork 56 -> branded 56
 
