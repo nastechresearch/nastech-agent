@@ -6,71 +6,68 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 97 commits affecting 2877 files.
-- **Source revision:** `7dab93b06e2b`.
-- **Previous source revision:** `a3ed4a173070`.
+- **Changes incorporated:** 57 commits affecting 2883 files.
+- **Source revision:** `cc75e8f4021f`.
+- **Previous source revision:** `7dab93b06e2b`.
 
 ## Technical coverage
 
-- **agent/:** 44 changed files.
-- **apps/:** 15 changed files.
-- **contributors/:** 1 changed files.
-- **cron/:** 12 changed files.
-- **gateway/:** 2 changed files.
+- **agent/:** 4 changed files.
+- **apps/:** 117 changed files.
+- **gateway/:** 1 changed files.
 - **locales/:** 1 changed files.
-- **nastech_cli/:** 39 changed files.
-- **plugin-catalog/:** 7 changed files.
-- **pm/:** 4 changed files.
+- **nastech_cli/:** 17 changed files.
+- **nastech_state_compression.py/:** 1 changed files.
+- **nastech_state_search.py/:** 5 changed files.
+- **plugin-catalog/:** 2 changed files.
+- **plugins/:** 2 changed files.
 - **scripts/:** 2 changed files.
-- **tests/:** 78 changed files.
-- **tools/:** 6 changed files.
-- **web/:** 11 changed files.
-- **website/:** 11 changed files.
+- **tests/:** 30 changed files.
+- **tools/:** 2 changed files.
+- **web/:** 7 changed files.
+- **website/:** 2 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(telemetry): updates that stop before applying say why
-- feat(plugin-catalog): add nastech-field-notes — pitfalls and local core patches
+- feat(models): add anthropic/claude-haiku-5.5 to OpenRouter and Nastech Portal catalogs (#134759)
 
 ### Reliability and fixes
 
-- fix(mcp): reject fabricated DCR for providers without RFC 7591 registration (#78190)
-- fix(kanban): only sweep a parent workspace once the parent itself is terminal
-- fix(pm): an interrupted orphan reclaim leaves a dir the next pass still finds
-- fix(pm): orphan reclaim runs on every prune pass and keeps checkouts it cannot see
-- fix(pm): reclaim dependency state of deleted checkouts (pm gc + startup worktree prune)
-- fix(desktop): hide unknown cloud agent status
-- fix(web): scope structured reasoning UI to assistant messages
-- fix(update): review the macOS lock scan's lsof/ps lookups; keep it stdlib-only
-- fix(update): the macOS lock scan finds ps when the launcher's PATH has none
-- fix(update): on macOS only a git working in this checkout keeps a dead index.lock
-- fix(update): the start-of-update index.lock reclaim never takes a live git's lock
-- fix(update): only a killed update's index.lock is reclaimed at once
-- 37 additional reliability and fixes updates are included in this verified snapshot.
+- fix(ci): route web_build_limits.py to the update e2e lanes
+- fix(agent): bound lease lock tolerance by the row's committed expiry
+- fix(agent): stop a locked lease refresh once its lifetime runs out
+- fix(agent): do not interrupt a turn when lease refresh hits a SQLite lock
+- fix(kanban): dashboard rejects stale archived/deleted board slugs
+- fix(kanban): connect()/init_db() refuse to recreate dead boards
+- fix(kanban): board identity requires board.json; archive leaves a tombstone
+- fix(gateway): stop _ensure_windows_gateway_venv_imports leaking PYTHONPATH into global environment
+- fix(desktop): the link-title window cannot become visible
+- fix(browser): pin local Chromium headless on Windows
+- fix(web): bound the dashboard build's CPU and heap (#63338)
+- fix(dashboard): hide AuthWidget on 401 via ApiError status
+- 20 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(telemetry): how update dashboards count a partial run
-- docs(agent): say skipped-result content uses str.replace for {name}
-- docs: stop presenting Desktop Light as a shipped download
+- docs(web): note the dashboard build's resource caps (#63338)
 
 ### Improvements
 
-- test(desktop): cover empty cloud agent status
-- refactor(web): move session source config to SessionsPage_sources sibling; satisfy code-health ratchet
-- test(web): behaviour coverage for structured reasoning transcript rendering
-- Fix reasoning markup rendering in dashboard
-- test(ci): the CI replay does not run Git Bash under x64 emulation on Windows arm64
-- test(ci): the CI replay names a silent step's exit code
-- chore(desktop): refresh locales/_keys.desktop.json for cron.queuedRun
-- refactor(desktop-i18n): move billingBlock copy into en_billing sibling
-- test: detached-writer custody tests read a pid from a beat that can never be empty
-- test(e2e/desktop): give the build-fail updater its manual-outcome grace before asserting it exited
-- test(desktop-update): a hand-off log read racing Add-Content retries, not fails
-- test(telemetry): pre-apply exit classes, parked parity, receipt-less refusals; docs + smoke
-- 31 additional improvements updates are included in this verified snapshot.
+- chore(plugin-catalog): bump nastech-monitoring-dashboard to e4825262
+- test(agent): release the lease-test lock on a refusal signal, not a timer
+- refactor(kanban): split board metadata/lifecycle into kanban_db_boards; fix ratchet findings
+- test(gateway): venv import setup must not leak PYTHONPATH into global environ (#57467)
+- test(desktop): fold the MEDIA pdf card case into the existing media suite
+- test(desktop): pin the preview height clamp's viewport growth and ceiling
+- chore(plugin-catalog): pin claude-subscription-directsdk to 4bc79c7 (Haiku 5.5) (#134749)
+- fmt(js): `npm run fix` on merge (#134737)
+- style(desktop): sort the projects-sibling imports per perfectionist
+- refactor(desktop): move sidebar projects copy into per-locale siblings for #73091
+- test(desktop): store-level dismiss/restore round-trip for auto projects
+- chore(desktop): regenerate locales/_keys.desktop.json for undo-hide keys
+- 11 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
