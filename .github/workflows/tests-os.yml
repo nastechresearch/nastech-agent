@@ -187,7 +187,11 @@ jobs:
         env:
           # These files spawn nested PowerShell trees. CPU-count parallelism
           # starves cold child startup before the fixture's idle deadline.
-          NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && (runner.arch == 'ARM64' && '16' || '16') || '' }}
+          # Hermes runs 16 workers on 32-core Windows runners; this repo has
+          # only the free 4-core windows-latest, so 16 workers here simply
+          # starved every PowerShell child into timeouts. Match the runner's
+          # core count instead.
+          NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && '4' || '' }}
           NASTECH_TEST_SLICE: ${{ matrix.slice || '' }}
           # Belt-and-suspenders with tests/conftest.py's env blanking: no
           # test may reach a real provider API.
