@@ -125,7 +125,13 @@ describe.skipIf(process.platform === 'win32')('runMarkerHelper against a real sc
 
   test('a verdict only the other op can give is an error, never clearance (R8 m7)', async () => {
     const { root, home } = fakeHelperCheckout()
-    const opts = { updateRoot: root, nastechHome: home, desktopPid: 4242, runId: 'desk-4242-abc-0001', isWindows: false }
+    const opts = {
+      updateRoot: root,
+      nastechHome: home,
+      desktopPid: 4242,
+      runId: 'desk-4242-abc-0001',
+      isWindows: false
+    }
 
     for (const [op, verdict, expected] of [
       ['reclaim', 'live 31337', 'live'],

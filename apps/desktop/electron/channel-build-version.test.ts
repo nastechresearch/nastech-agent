@@ -447,7 +447,11 @@ test('actual MSIX manifest writer consumes the channel quad across rollover inst
       const output: string = execFileSync(process.execPath, ['-e', script], {
         cwd: root,
         encoding: 'utf8',
-        env: { ...process.env, NASTECH_DESKTOP_VARIANT: 'bundled', _NASTECH_CHANNEL_REQUEST_JSON: JSON.stringify(build) }
+        env: {
+          ...process.env,
+          NASTECH_DESKTOP_VARIANT: 'bundled',
+          _NASTECH_CHANNEL_REQUEST_JSON: JSON.stringify(build)
+        }
       })
 
       const row: ManifestFacts = JSON.parse(output.trim().split('\n').at(-1)!)

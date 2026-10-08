@@ -4974,7 +4974,8 @@ export const frOverrides = {
       askRestart: 'Demander à Nastech de redémarrer le serveur',
       lookingRestart: taskId => `Nastech recherche un serveur d'aperçu à redémarrer (${taskId})`,
       restartingTitle: "Redémarrage du serveur d'aperçu",
-      restartingMessage: "Nastech travaille en arrière-plan. Surveillez la console d'aperçu pour suivre la progression.",
+      restartingMessage:
+        "Nastech travaille en arrière-plan. Surveillez la console d'aperçu pour suivre la progression.",
       startRestartFailed: message => `Impossible de démarrer le redémarrage du serveur : ${message}`,
       restartFailed: 'Échec du redémarrage du serveur',
       hideConsole: "Masquer la console d'aperçu",
