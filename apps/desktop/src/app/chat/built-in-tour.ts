@@ -10,10 +10,10 @@
 
 import type { TourPreset } from '@nastech/shared'
 
-import { getLocalCatalog, getLocalModelsStatus } from '@/nastech'
 import { runtimeTranslations } from '@/i18n'
 import { localSetupEligible } from '@/lib/tips/local-cta'
 import { startTour, type TourResult } from '@/lib/tour'
+import { getLocalCatalog, getLocalModelsStatus } from '@/nastech'
 import { $interfaceMode } from '@/store/interface-mode'
 import { $localModelsEnabled } from '@/store/local-models-flag'
 import { $connection } from '@/store/session'

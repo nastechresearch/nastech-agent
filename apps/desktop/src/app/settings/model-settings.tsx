@@ -1,6 +1,6 @@
+import { useStore } from '@nanostores/react'
 import type { ModelOptionProvider } from '@nastech/shared'
 import { DEFAULT_REASONING_EFFORT, REASONING_EFFORT_VALUES } from '@nastech/shared'
-import { useStore } from '@nanostores/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 
@@ -9,14 +9,21 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { useI18n } from '@/i18n'
+import { isCodeSkewRestartRequired } from '@/lib/code-skew-error'
+import { AlertTriangle, Cpu, Loader2 } from '@/lib/icons'
+import { isSubmitEnter } from '@/lib/ime'
+import { catalogProviderMatches, findCatalogProvider } from '@/lib/model-options'
+import { composerServiceTier } from '@/lib/model-status-label'
+import { cn } from '@/lib/utils'
 import {
   getAuxiliaryModels,
   getGlobalModelInfo,
   getGlobalModelOptions,
   getMoaModels,
   getRecommendedDefaultModel,
-  saveNastechConfig,
   saveMoaModels,
+  saveNastechConfig,
   setEnvVar,
   setModelAssignment
 } from '@/nastech'
@@ -28,19 +35,12 @@ import type {
   ModelAssignmentRequest,
   StaleAuxAssignment
 } from '@/nastech'
-import { useI18n } from '@/i18n'
-import { isCodeSkewRestartRequired } from '@/lib/code-skew-error'
-import { AlertTriangle, Cpu, Loader2 } from '@/lib/icons'
-import { isSubmitEnter } from '@/lib/ime'
-import { catalogProviderMatches, findCatalogProvider } from '@/lib/model-options'
-import { composerServiceTier } from '@/lib/model-status-label'
-import { cn } from '@/lib/utils'
 import { $customModels, withCustomModels } from '@/store/custom-models'
 import { setMainModelAssignment } from '@/store/model-assignment'
 import { notify, notifyError, readableError } from '@/store/notifications'
 import { startManualLocalEndpoint, startManualOnboarding, startManualProviderOAuth } from '@/store/onboarding'
 
-import { nastechConfigCacheWriter, invalidateNastechConfig, useNastechConfigRecord } from '../hooks/use-config-record'
+import { invalidateNastechConfig, nastechConfigCacheWriter, useNastechConfigRecord } from '../hooks/use-config-record'
 import { useOnProfileSwitch } from '../hooks/use-on-profile-switch'
 import { PanelEmpty } from '../overlays/panel'
 
@@ -179,6 +179,7 @@ function switchProviderFor(
       }
 
       setSelectedModel('')
+
       return slug
     })
 
