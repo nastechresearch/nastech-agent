@@ -309,7 +309,7 @@ build. Source checkouts are separate: `main` is their only valid channel.
 
 `--build-commit` prints its deterministic downloads-page URL before dispatch,
 including in dry runs:
-`https://nastech-assets.nastechresearch.github.io/releases/commit/<full-sha>/index.html`.
+`https://nastech-assets.nastechresearch.workers.dev/releases/commit/<full-sha>/index.html`.
 `CLOUDFLARE_R2_PUBLIC_URL` overrides the public origin. After admission, the
 commit summary runs even when a build or assembly job fails; it lists only
 receipt-backed existing downloads and marks missing binaries as not built.

@@ -1,7 +1,7 @@
 """Release-channel records: the updater follows the stable record exactly, or refuses.
 
 A source install subscribed to ``stable`` resolves its target from the channel record at
-``https://nastech-assets.nastechresearch.github.io/releases/channels/stable.json`` and the build manifest
+``https://nastech-assets.nastechresearch.workers.dev/releases/channels/stable.json`` and the build manifest
 it names (digest-pinned). The edge serves those objects (a fake of the R2 bucket, behind the
 TLS-inspecting proxy that is the namespace's only egress) and the git server behind the same
 proxy serves the source. In every cell origin/main has moved past what stable pins, so "the

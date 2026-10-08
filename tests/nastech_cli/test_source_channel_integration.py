@@ -71,7 +71,7 @@ def reader_result(source, name, destination=None, repository="NastechResearch/na
         "schema": 1, "request": {"buildId": "build-fixture", "channel": terminal["name"],
         "sequence": 1, "repository": repository, "commit": source.commits[1],
         "sourceVersion": "1.2.3", "version": "0.0.1", "identity": {}, "bundleEnv": {},
-        "publicBase": "https://nastech-assets.nastechresearch.github.io"}, "packages": []})
+        "publicBase": "https://nastech-assets.nastechresearch.workers.dev"}, "packages": []})
 
 
 def install_reader(monkeypatch, result):
