@@ -5,10 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import { useI18n } from '@/i18n'
-import { triggerHaptic } from '@/lib/haptics'
-import { Check, Globe, Loader2, Plus, Save, Trash2, Zap } from '@/lib/icons'
-import { cn } from '@/lib/utils'
 import {
   activateCustomEndpoint,
   deleteCustomEndpoint,
@@ -16,6 +12,10 @@ import {
   saveCustomEndpoint,
   validateCustomEndpoint
 } from '@/nastech'
+import { useI18n } from '@/i18n'
+import { triggerHaptic } from '@/lib/haptics'
+import { Check, Globe, Loader2, Plus, Save, Trash2, Zap } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import { confirm } from '@/store/confirm'
 import { notify, notifyError } from '@/store/notifications'
 import { $settingsRequestProfile } from '@/store/settings-scope'

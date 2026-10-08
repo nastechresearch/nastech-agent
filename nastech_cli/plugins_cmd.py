@@ -11,10 +11,11 @@ import logging
 import os
 import shutil
 import sys
+import threading
 from pathlib import Path
 from typing import Any, NoReturn, Optional
 
-from nastech_constants import get_nastech_home
+from nastech_constants import get_nastech_home, nastech_home_key
 from nastech_cli.config import cfg_get
 from nastech_cli.plugin_capabilities import _child_dict
 # Tests patch these two on the facade; the install/remove siblings read them through it.
@@ -117,43 +118,6 @@ def _table(columns, **kwargs):
     for header, style in columns:
         table.add_column(header, style=style, no_wrap=(header == "Name"))
     return table
-
-
-RUNNING_GATEWAY_PLUGIN_MUTATION_ERROR = (
-    "the messaging gateway is running and its loaded plugin callbacks import from the "
-    "installed checkouts. Run `nastech gateway stop`, apply the change, then `nastech gateway "
-    "start`. To skip this check pass --allow-live-gateway (callbacks may fail until restart)."
-)
-
-
-def _gateway_is_running() -> bool:
-    """Is the active profile's gateway live? Same liveness read as the dashboard status
-    surfaces (``resolve_gateway_liveness``), never mutating the profile's identity files."""
-    from nastech_cli.profiles import _check_gateway_running
-
-    try:
-        return _check_gateway_running(get_nastech_home())
-    except Exception:
-        # A failed probe must not strand an uninstallable plugin (issue #70473's fix may not
-        # become its own lock-out); treat unknown liveness as not running.
-        logger.exception("gateway liveness probe failed; proceeding without the live-gateway guard")
-        return False
-
-
-def _refuse_live_gateway_mutation(action: str, *, allow_live_gateway: bool = False) -> None:
-    """Fail before any mutating git operation on an installed plugin (#70473).
-
-    Pulling, re-cloning or deleting a checkout under a running gateway breaks its
-    already-loaded plugin callbacks (a deferred relative import hits files the
-    operation just removed). *action* names the refusal ("update", "remove", ...).
-    """
-    if allow_live_gateway:
-        return
-    if _gateway_is_running():
-        raise PluginOperationError(
-            f"Cannot {action} plugin files while {RUNNING_GATEWAY_PLUGIN_MUTATION_ERROR}",
-            failure_class="already_installed",
-        )
 
 
 def _is_tty() -> bool:
@@ -638,19 +602,32 @@ def _forget_plugin_config(aliases: set) -> dict[str, Any]:
     return result
 
 
+# One lock per Nastech home. The Desktop install card enables several plugins at once, each on its own
+# thread; without it every thread read the same config version and all but the first commit were
+# refused as stale. The version check in PM stays: it still catches an edit from another process.
+_SELECTION_LOCKS: dict[str, threading.Lock] = {}
+_SELECTION_LOCKS_GUARD = threading.Lock()
+
+
+def _selection_lock() -> threading.Lock:
+    with _SELECTION_LOCKS_GUARD:
+        return _SELECTION_LOCKS.setdefault(nastech_home_key(), threading.Lock())
+
+
 def _set_plugin_enabled(name: str, *, enable: bool, aliases=(), console=None) -> None:
     """Submit the command's delta with the version of the selection it read."""
     from pm.plugins_state import read_home_selection
 
-    expected_config = _plugin_selection_version()
-    config = read_home_selection(get_nastech_home()) or {}
-    plugins = config.get("plugins") or {}
-    enabled = set(plugins.get("enabled") or ())
-    disabled = set(plugins.get("disabled") or ())
-    _apply_activation(enabled, disabled, name, aliases, enable=enable)
-    _admit_and_save_plugin_sets(enabled, disabled, console=console,
-                               action=f"{'Enable' if enable else 'Disable'} '{name}'",
-                               expected_config=expected_config, plugin=name if enable else None)
+    with _selection_lock():
+        expected_config = _plugin_selection_version()
+        config = read_home_selection(get_nastech_home()) or {}
+        plugins = config.get("plugins") or {}
+        enabled = set(plugins.get("enabled") or ())
+        disabled = set(plugins.get("disabled") or ())
+        _apply_activation(enabled, disabled, name, aliases, enable=enable)
+        _admit_and_save_plugin_sets(enabled, disabled, console=console,
+                                   action=f"{'Enable' if enable else 'Disable'} '{name}'",
+                                   expected_config=expected_config, plugin=name if enable else None)
 
 
 def _apply_activation(enabled: set, disabled: set, key: str, aliases, *, enable: bool) -> None:
@@ -1040,21 +1017,20 @@ _PLUGIN_ACTIONS = {
         ref=getattr(args, "ref", None),
         allow_removed=getattr(args, "allow_removed", False),
         no_deps=getattr(args, "no_deps", False),
-        yes_deps=getattr(args, "yes_deps", False),
-        allow_live_gateway=getattr(args, "allow_live_gateway", False)),
+        yes_deps=getattr(args, "yes_deps", False)),
     "search": lambda args: _catalog().cmd_search(
         getattr(args, "term", "") or "", json_output=getattr(args, "json", False)),
     "browse": lambda args: _catalog().cmd_search(""),
     "validate": lambda args: _catalog().cmd_validate(
         args.path, as_json=getattr(args, "json", False), install_deps=getattr(args, "install_deps", False)),
-    "update": lambda args: cmd_update(args.name, allow_live_gateway=getattr(args, "allow_live_gateway", False)),
+    "update": lambda args: cmd_update(args.name),
     "adopt": lambda args: cmd_adopt(args.name),
     "trust-update-url": lambda args: cmd_trust_update_url(args.name),
     "check-updates": lambda args: cmd_check_updates(args),
     "check": lambda args: cmd_check_updates(args),
-    "remove": lambda args: cmd_remove(args.name, allow_live_gateway=getattr(args, "allow_live_gateway", False)),
-    "rm": lambda args: cmd_remove(args.name, allow_live_gateway=getattr(args, "allow_live_gateway", False)),
-    "uninstall": lambda args: cmd_remove(args.name, allow_live_gateway=getattr(args, "allow_live_gateway", False)),
+    "remove": lambda args: cmd_remove(args.name),
+    "rm": lambda args: cmd_remove(args.name),
+    "uninstall": lambda args: cmd_remove(args.name),
     "enable": lambda args: cmd_enable(
         args.name,
         allow_tool_override=_tri_state_flag(args, "allow_tool_override", "no_allow_tool_override")),

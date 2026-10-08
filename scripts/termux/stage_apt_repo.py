@@ -515,7 +515,7 @@ def main(argv: list | None = None) -> int:
     ap.add_argument("--pool", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
     # nastech-nightly is the suite actually published today
-    # (https://nastech-assets.nastechresearch.workers.dev/releases/termux/nightly/,
+    # (https://nastech-assets.nastechresearch.github.io/releases/termux/nightly/,
     # verified 2026-09-06); nastech-stable/nastech-canary are what CI stages
     # for the stable/canary channels.
     ap.add_argument(

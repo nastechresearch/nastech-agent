@@ -7,10 +7,10 @@ import { useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
+import { getElevenLabsVoices, getNastechConfigSchema, saveNastechConfig } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { triggerHaptic } from '@/lib/haptics'
 import { isSubmitEnter } from '@/lib/ime'
-import { getElevenLabsVoices, getNastechConfigSchema, saveNastechConfig } from '@/nastech'
 import { confirm } from '@/store/confirm'
 import {
   $dataUrlReadMaxMb,
@@ -37,6 +37,7 @@ import { PanelEmpty } from '../overlays/panel'
 
 import { ConfigField } from './config-field'
 import { configSubpageForField } from './config-subpages'
+import { DeveloperSettings } from './developer-settings'
 import {
   clearsEnabledToolsets,
   diffConfig,
@@ -485,6 +486,7 @@ function ConfigSettingsInner({
           />
           <PoolLimitsSetting />
           <QuickEntrySettings />
+          <DeveloperSettings />
         </>
       )}
       {/* Device-local attach/preview byte cap (main-process IPC guard). Chat is

@@ -109,7 +109,7 @@ param(
 
     [string]$WorkRoot = $(if ($env:NASTECH_E2E_WORKROOT) { $env:NASTECH_E2E_WORKROOT } else { Join-Path $env:TEMP "nastech-desktop-gui-e2e" }),
 
-    [string]$SetupExeUrl = "https://nastech-assets.nastechresearch.workers.dev/Nastech-Setup.exe",
+    [string]$SetupExeUrl = "https://nastech-assets.nastechresearch.github.io/Nastech-Setup.exe",
 
     # Driver dependencies come from the current checkout lockfile.
     [string]$DriverNode = $env:NASTECH_E2E_NODE
@@ -1139,7 +1139,7 @@ function Invoke-GuiUpdateDesktopRoute([string]$TargetSha) {
         $prevEap = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
         try {
-            & $node $driver $desktopExe $proof (Read-State).old 2>&1 |
+            & $node $driver $desktopExe $proof (Read-State).old $TargetSha 2>&1 |
                 ForEach-Object { Write-Host "  $_" }
             $driveExit = $LASTEXITCODE
         } finally {
