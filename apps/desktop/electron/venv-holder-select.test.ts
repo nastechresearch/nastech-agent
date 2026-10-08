@@ -30,10 +30,7 @@ test('Windows path prefix match is ordinal case-insensitive', () => {
 
 test('excludes external venv holders that are not the hindsight daemon', () => {
   // a user terminal running the nastech CLI from the venv — must NOT be killed
-  assert.equal(
-    isNastechOwnedVenvDaemon('C:\\Nastech\\venv\\Scripts\\nastech.exe', 'nastech chat -q "hi"', SCRIPTS),
-    false
-  )
+  assert.equal(isNastechOwnedVenvDaemon('C:\\Nastech\\venv\\Scripts\\nastech.exe', 'nastech chat -q "hi"', SCRIPTS), false)
   // an unrelated python script using the venv interpreter
   assert.equal(
     isNastechOwnedVenvDaemon('C:\\Nastech\\venv\\Scripts\\python.exe', 'python C:\\tools\\import.py', SCRIPTS),

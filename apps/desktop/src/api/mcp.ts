@@ -114,11 +114,10 @@ export function setMcpServerEnabled(name: string, enabled: boolean): Promise<{ o
   })
 }
 
-export function getMcpCatalog(profile?: ProfileScope, detectApps = false): Promise<McpCatalogResponse> {
+export function getMcpCatalog(profile?: ProfileScope): Promise<McpCatalogResponse> {
   return window.nastechDesktop.api<McpCatalogResponse>({
     ...capabilityScoped(profile),
-    path: `/api/mcp/catalog${detectApps ? '?detect_apps=true' : ''}`,
-    ...(detectApps ? { timeoutMs: 5000 } : {})
+    path: '/api/mcp/catalog'
   })
 }
 
@@ -127,13 +126,11 @@ export function installMcpCatalogEntry(
   env: Record<string, string> = {},
   profile?: ProfileScope
 ): Promise<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }> {
-  return window.nastechDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>(
-    {
-      ...capabilityScoped(profile),
-      path: '/api/mcp/catalog/install',
-      method: 'POST',
-      body: { name, env, enable: true },
-      timeoutMs: 60_000
-    }
-  )
+  return window.nastechDesktop.api<{ ok: boolean; name?: string; pid?: number; action?: string; background?: boolean }>({
+    ...capabilityScoped(profile),
+    path: '/api/mcp/catalog/install',
+    method: 'POST',
+    body: { name, env, enable: true },
+    timeoutMs: 60_000
+  })
 }

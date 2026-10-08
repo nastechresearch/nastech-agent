@@ -1,15 +1,11 @@
 name = "nastech-agent"
-main = "index.js"
+main = "src/index.js"
 compatibility_date = "2026-10-05"
 workers_dev = true
 
 [[kv_namespaces]]
 binding = "NASTECH_ASSETS"
 id = "ff12d5a5324d44b599d8319edabc4adb"
-
-[[r2_buckets]]
-binding = "R2"
-bucket_name = "nastech-assets"
 
 [observability]
 enabled = true

@@ -249,9 +249,7 @@ describe('BootFailureOverlay', () => {
     const gatewayUrl = 'https://agent-1.agents.nastechresearch.github.io'
     const logout = vi.fn().mockResolvedValue({ ok: true, connected: false })
     const nativeLogin = vi.fn().mockResolvedValue({ ok: true, connected: false })
-    const cloudStatus = vi
-      .fn()
-      .mockResolvedValue({ portalBaseUrl: 'https://portal.nastechresearch.github.io', signedIn: false })
+    const cloudStatus = vi.fn().mockResolvedValue({ portalBaseUrl: 'https://portal.nastechresearch.github.io', signedIn: false })
 
     const cloudLogin = vi.fn().mockResolvedValue({
       ok: true,
@@ -363,9 +361,7 @@ describe('BootFailureOverlay', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /reinstall the app/i }))
       await waitFor(() =>
-        expect(openExternal).toHaveBeenCalledWith(
-          'https://nastechresearch.github.io/nastech-agent/docs/user-guide/desktop'
-        )
+        expect(openExternal).toHaveBeenCalledWith('https://nastechresearch.github.io/nastech-agent/docs/user-guide/desktop')
       )
     } finally {
       restore()

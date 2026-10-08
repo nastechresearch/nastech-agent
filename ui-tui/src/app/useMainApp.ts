@@ -1,4 +1,3 @@
-import { useStore } from '@nanostores/react'
 import {
   forceRedraw,
   type ScrollBoxHandle,
@@ -11,6 +10,7 @@ import {
 } from '@nastech/ink'
 import type { SessionControlSnapshot } from '@nastech/shared/gateway-events'
 import { JSON_RPC_METHOD_NOT_FOUND, type ServerRequest } from '@nastech/shared/json-rpc-channel'
+import { useStore } from '@nanostores/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DASHBOARD_TUI_MODE, NATIVE_MODE, STARTUP_RESUME_ID } from '../config/env.js'

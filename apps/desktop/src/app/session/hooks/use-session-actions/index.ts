@@ -11,10 +11,18 @@ import {
 import { defaultNewSessionTarget, prepareDefaultNewSession } from '@/app/session/new-session-route'
 import { revealTreePane } from '@/components/pane-shell/tree/store'
 import { setWorkspaceScope } from '@/components/pane-shell/workspace-scope'
+import {
+  deleteSession,
+  fetchStoredTranscriptAcrossBackends,
+  getAllSessionMessages,
+  getLatestSessionMessages,
+  setSessionArchived
+} from '@/nastech'
 import { useI18n } from '@/i18n'
 import {
   type ChatMessage,
   preserveLocalAssistantErrors,
+  QUESTION_CARD_TOOLS,
   restorePendingClarifyToolCall,
   settlePendingClarifyToolCall,
   stripPendingClarifyProjectionForCache,
@@ -25,13 +33,6 @@ import { isMissingRpcMethod } from '@/lib/gateway-rpc'
 import { purgeInFlightTurnJournals, recoverInFlightTurnJournal } from '@/lib/inflight-turn-journal'
 import { latestSessionTodoSnapshot } from '@/lib/todos'
 import { setSessionYolo } from '@/lib/yolo-session'
-import {
-  deleteSession,
-  fetchStoredTranscriptAcrossBackends,
-  getAllSessionMessages,
-  getLatestSessionMessages,
-  setSessionArchived
-} from '@/nastech'
 import { $clarifyRequests, clearClarifyRequest } from '@/store/clarify'
 import { announceGoneSessionDraft, announceNewSessionDraftKey, migrateSessionDraft } from '@/store/composer'
 import { clearQueuedPrompts, migrateQueuedPrompts } from '@/store/composer-queue'
@@ -166,6 +167,7 @@ import {
 } from '../session-context-drift'
 import { singleFlightSessionResume } from '../use-prompt-actions/single-flight-resume'
 
+import { branchCreateKey } from './branch-create-key'
 import { sessionCreateOverrideParams, type SessionCreateOverrides, type SessionSeedMessage } from './create-overrides'
 import { markSessionCreatedThisRun, sessionCreatedThisRun } from './created-this-run'
 import { captureDisplayHydration } from './display-hydration'
@@ -248,42 +250,6 @@ export interface BranchLoadedSessionOptions {
   messages: ChatMessage[]
   runtimeId: null | string
   storedSessionId: null | string
-}
-
-const branchMessagesFingerprint = (messages: BranchMessage[]): string =>
-  JSON.stringify(messages.map(({ content, role }) => [role, content]))
-
-// Identity of one branch create, so a re-entered branch action (a retried
-// renderer transition, a double right-click) rides the create already in
-// flight instead of minting a second child. The OWNER is part of the identity:
-// the same parent id served by two connections is two different sessions.
-function branchCreateKey({
-  branchCount,
-  branchMessages,
-  cwd,
-  ownerRoute,
-  parentStoredId,
-  profile,
-  sourceSessionId
-}: {
-  branchCount?: number
-  branchMessages: BranchMessage[]
-  cwd?: string
-  ownerRoute?: SessionOwnerRoute
-  parentStoredId: null | string
-  profile?: null | string
-  sourceSessionId: null | string
-}): string {
-  return JSON.stringify({
-    branchCount: branchCount ?? null,
-    connectionId: ownerRoute?.connectionId || null,
-    cwd: cwd?.trim() || null,
-    messages: sourceSessionId ? null : branchMessagesFingerprint(branchMessages),
-    ownerProfile: ownerRoute?.profile || null,
-    parentStoredId,
-    profile: profile?.trim() || null,
-    sourceSessionId
-  })
 }
 
 // How long we keep creatingSessionRef after create/fork navigate before giving up
@@ -424,7 +390,7 @@ function withoutEarlyClarifyProjection(messages: ChatMessage[], requestId: strin
       part =>
         !(
           part.type === 'tool-call' &&
-          part.toolName === 'clarify' &&
+          QUESTION_CARD_TOOLS.has(part.toolName) &&
           part.result === undefined &&
           part.toolCallId === requestId
         )

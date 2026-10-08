@@ -89,8 +89,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     }
   },
   chatOnboarding: {
-    grow: request => ipcRenderer.send('nastech:chat-onboarding:grow', request),
-    soloBoot: () => ipcRenderer.send('nastech:chat-onboarding:solo-boot')
+    size: mode => ipcRenderer.send('nastech:window:size', mode)
   },
   petOverlay: {
     // Main renderer → main process: window lifecycle + drag. `request` is

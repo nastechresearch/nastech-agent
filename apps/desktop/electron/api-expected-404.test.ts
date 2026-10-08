@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 
 import { test } from 'vitest'
 
-import { isExpectedNotFoundSentinel, NASTECH_API_EXPECTED_404, unwrapExpectedNotFound } from './api-expected-404'
+import { NASTECH_API_EXPECTED_404, isExpectedNotFoundSentinel, unwrapExpectedNotFound } from './api-expected-404'
 
 test('a handler-produced sentinel is recognized', () => {
   assert.equal(isExpectedNotFoundSentinel({ [NASTECH_API_EXPECTED_404]: '404: {"detail":"Session not found"}' }), true)

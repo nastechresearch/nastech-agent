@@ -1,6 +1,6 @@
-import { useStore } from '@nanostores/react'
 import type { ModelOptionProvider, ModelPricing } from '@nastech/shared'
 import { fuzzyRank, modelSearchText } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import { type ReactElement, useMemo, useRef, useState } from 'react'
 
@@ -98,7 +98,7 @@ export function ModelPickerDialog({
   const localModelsEnabled = $localModelsEnabled.get()
 
   const owner: LocalModelsOwner = useLocalModelsOwner(profile, ownerConnectionId)
-  const localStatus = useLocalModelsStatus(owner, open && localModelsEnabled)
+  const localStatus = useLocalModelsStatus(owner, open && localModelsEnabled, true)
 
   const loadingModels: Record<string, LocalModelLoadProgress> = localStatus.data?.loading ?? {}
 

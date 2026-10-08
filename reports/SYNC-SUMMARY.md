@@ -6,68 +6,101 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 57 commits affecting 2883 files.
-- **Source revision:** `cc75e8f4021f`.
-- **Previous source revision:** `7dab93b06e2b`.
+- **Changes incorporated:** 228 commits affecting 2888 files.
+- **Source revision:** `0240fa4a8412`.
+- **Previous source revision:** `cc75e8f4021f`.
 
 ## Technical coverage
 
-- **agent/:** 4 changed files.
-- **apps/:** 117 changed files.
-- **gateway/:** 1 changed files.
-- **locales/:** 1 changed files.
-- **nastech_cli/:** 17 changed files.
-- **nastech_state_compression.py/:** 1 changed files.
-- **nastech_state_search.py/:** 5 changed files.
-- **plugin-catalog/:** 2 changed files.
-- **plugins/:** 2 changed files.
-- **scripts/:** 2 changed files.
-- **tests/:** 30 changed files.
-- **tools/:** 2 changed files.
-- **web/:** 7 changed files.
-- **website/:** 2 changed files.
+- **.github/:** 6 changed files.
+- **agent/:** 93 changed files.
+- **apps/:** 849 changed files.
+- **contributors/:** 2 changed files.
+- **gateway/:** 23 changed files.
+- **locales/:** 99 changed files.
+- **model_tools.py/:** 4 changed files.
+- **nastech_cli/:** 102 changed files.
+- **nastech_platform/:** 6 changed files.
+- **nastech_state.py/:** 4 changed files.
+- **nastech_state_tool_retries.py/:** 3 changed files.
+- **optional-skills/:** 129 changed files.
+- **plugin-catalog/:** 3 changed files.
+- **plugins/:** 6 changed files.
+- **pm/:** 31 changed files.
+- **run_agent.py/:** 4 changed files.
+- **scripts/:** 16 changed files.
+- **skills/:** 2 changed files.
+- **tests/:** 88 changed files.
+- **tools/:** 44 changed files.
+- **toolsets.py/:** 7 changed files.
+- **tui_gateway/:** 124 changed files.
+- **ui-tui/:** 20 changed files.
+- **website/:** 114 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(models): add anthropic/claude-haiku-5.5 to OpenRouter and Nastech Portal catalogs (#134759)
+- feat(release): add a changelog subcommand and point oversized drafts at it
+- feat(desktop): the dimmed composer comes back after 5s without scrolling
+- feat(desktop): show the free-tier sign-in offer when the backend says it is due
+- feat(free-tier): offer sign-in after finished tasks, backing off
+- feat(desktop): Terms and Privacy butterbar for free-tier users
+- feat: the setup handoff carries what setup learned, and the task chat talks first (#129419)
+- feat(setup): the setup chat can connect an app the user asks for now (#129203)
+- feat(start_chat): a handoff from the setup profile marks onboarding complete
+- feat(desktop): setup_choose question cards and the start_chat handoff card
+- feat(onboarding): /initiate-setup built-in on every surface; the first message offers it
+- feat(skills): initiate-setup reads a pre-read user scan at skill load
+- feat(setup): the setup profile runs inline shell at skill load
+- 6 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(ci): route web_build_limits.py to the update e2e lanes
-- fix(agent): bound lease lock tolerance by the row's committed expiry
-- fix(agent): stop a locked lease refresh once its lifetime runs out
-- fix(agent): do not interrupt a turn when lease refresh hits a SQLite lock
-- fix(kanban): dashboard rejects stale archived/deleted board slugs
-- fix(kanban): connect()/init_db() refuse to recreate dead boards
-- fix(kanban): board identity requires board.json; archive leaves a tombstone
-- fix(gateway): stop _ensure_windows_gateway_venv_imports leaking PYTHONPATH into global environment
-- fix(desktop): the link-title window cannot become visible
-- fix(browser): pin local Chromium headless on Windows
-- fix(web): bound the dashboard build's CPU and heap (#63338)
-- fix(dashboard): hide AuthWidget on 401 via ApiError status
-- 20 additional reliability and fixes updates are included in this verified snapshot.
+- fix(release): read the Nastech version line in the Nix check and accept rc.N attempt refs
+- fix(desktop): never idle-reap a local profile backend (#134942)
+- fix(update): a whole-second marker creation time in our own second is still us
+- fix(release): the stable MSIX smoke accepts the release-time package quad
+- fix(termux): upgrade libc++ in the wheelhouse builder so cmake starts
+- fix(release): build the default flake package for the Nix identity check
+- fix(tui_gateway): a bare mid-turn model pick gets its confirm before it is queued
+- fix(desktop): tag every line of a multi-line waiter script error
+- fix(desktop): make the relaunch waiter's script log per-attempt, UTF-8 and bounded
+- fix(desktop): log why the MSIX relaunch waiter failed to start
+- fix(release): abandon clears every outstanding attempt of the version
+- fix(release): read attempt claims from the remote, not local tags
+- 99 additional reliability and fixes updates are included in this verified snapshot.
+
+### Performance
+
+- perf(state): pre-filter the per-turn tool-retry scan with LIKE
 
 ### Documentation
 
-- docs(web): note the dashboard build's resource caps (#63338)
+- docs(plugins): list the built-in author tools at the top of the plugin guide
+- docs(security): /yolo survives a TUI/Desktop resume too
+- docs(desktop): say which app checks setup runs
+- docs: regenerate the initiate-setup skill page
+- docs: escape <machine> so the docs site builds
+- docs(first-task): reach a first result faster with hard limits and per-ask first moves (#130247)
+- docs(catalog): target_scope no longer names the setup profile
+- docs(delegation): list start_chat among the tools subagents cannot call
 
 ### Improvements
 
-- chore(plugin-catalog): bump nastech-monitoring-dashboard to e4825262
-- test(agent): release the lease-test lock on a refusal signal, not a timer
-- refactor(kanban): split board metadata/lifecycle into kanban_db_boards; fix ratchet findings
-- test(gateway): venv import setup must not leak PYTHONPATH into global environ (#57467)
-- test(desktop): fold the MEDIA pdf card case into the existing media suite
-- test(desktop): pin the preview height clamp's viewport growth and ceiling
-- chore(plugin-catalog): pin claude-subscription-directsdk to 4bc79c7 (Haiku 5.5) (#134749)
-- fmt(js): `npm run fix` on merge (#134737)
-- style(desktop): sort the projects-sibling imports per perfectionist
-- refactor(desktop): move sidebar projects copy into per-locale siblings for #73091
-- test(desktop): store-level dismiss/restore round-trip for auto projects
-- chore(desktop): regenerate locales/_keys.desktop.json for undo-hide keys
-- 11 additional improvements updates are included in this verified snapshot.
+- refactor(approval): one session /yolo contract for CLI, TUI/Desktop and the messaging gateway
+- test(install-e2e): the windows source update check reads staged main, not GitHub main
+- Update .github/workflows/nix.yml
+- ci(release): also build the desktop package from the stamped source
+- Merge pull request #134916 from Nastechresearch/fix/relaunch-waiter-log-review
+- Merge pull request #134884 from Nastechresearch/fix/release-abandon-all-of-version
+- Merge pull request #134911 from Nastechresearch/fix/relaunch-waiter-diagnostics
+- Merge pull request #134905 from Nastechresearch/fix/release-seed-0215
+- refactor(tui-gateway): restore session /yolo once in session.resume, test in its own file
+- chore(contributors): map jonh-dev's commit email
+- test(tui_gateway): pin the large-context boundary and the no-agent pick
+- revert: dashboard-auth token exchange breaks on gzip IdP responses (partial revert of #133938)
+- 78 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
