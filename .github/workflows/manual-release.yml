@@ -57,11 +57,24 @@ jobs:
           RELEASE_DATE: ${{ inputs.release_date }}
         run: |
           set -euo pipefail
-          args=(--bump "$BUMP")
-          if [ -n "$RELEASE_DATE" ]; then
-            args+=(--date "$RELEASE_DATE")
-          fi
-          python3 scripts/release.py "${args[@]}" --output release-preview.md
+          # PREVIEW writes notes only: the claim, version computation, tag and
+          # GitHub release belong to the publish job below (release.py release).
+          last="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          {
+            echo "### Nastech release preview (bump: \`$BUMP\`)"
+            echo
+            echo "- Release commit: \`$(git rev-parse HEAD)\`"
+            echo "- Last tag: \`${last:-none}\`"
+            if [ -n "$RELEASE_DATE" ]; then
+              echo "- Release date override: \`$RELEASE_DATE\`"
+            fi
+            echo
+            echo "### Commits"
+            echo
+            echo '```'
+            git log -30 --oneline
+            echo '```'
+          } > release-preview.md
           cat release-preview.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Explain publish boundary
@@ -109,8 +122,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          args=(--bump "$BUMP")
+          # The stable flow is `release.py release --commit SHA --bump X`
+          # (claim, cut a draft, dispatch the gate); --autopublish publishes on
+          # green. --date is a global flag, so it must precede the subcommand.
+          args=()
           if [ -n "$RELEASE_DATE" ]; then
             args+=(--date "$RELEASE_DATE")
           fi
-          python3 scripts/release.py "${args[@]}" --publish
+          args+=(release --commit "$(git rev-parse HEAD)" --bump "$BUMP" --remote origin --autopublish)
+          python3 scripts/release.py "${args[@]}"

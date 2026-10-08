@@ -506,7 +506,7 @@ def commit_prefix_for(commit: str) -> str:
 # Public download origin for object keys. CI supplies the authoritative
 # value as CLOUDFLARE_R2_PUBLIC_URL; the documented production origin is the
 # fallback so a local command can still name a page it is about to publish.
-DEFAULT_PUBLIC_URL = "https://nastech-assets.nastechresearch.github.io"
+DEFAULT_PUBLIC_URL = "https://nastech-agent.nastechresearch.workers.dev"
 
 
 def public_base_url(explicit: str | None = None) -> str:
