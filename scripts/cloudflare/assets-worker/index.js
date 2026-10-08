@@ -24,33 +24,33 @@
  */
 
 const BRAND = {
-  name: "Nastech Agent",
-  tagline: "Open-source autonomous AI agent — one core across CLI, messaging, TUI, and desktop.",
-  color: "#f59e0b",
-  color2: "#7c3aed",
-};
+  name: 'Nastech Agent',
+  tagline: 'Open-source autonomous AI agent — one core across CLI, messaging, TUI, and desktop.',
+  color: '#f59e0b',
+  color2: '#7c3aed'
+}
 
 const JSON_HEADERS = {
-  "content-type": "application/json; charset=utf-8",
-  "cache-control": "no-cache",
-  "access-control-allow-origin": "*",
-};
+  'content-type': 'application/json; charset=utf-8',
+  'cache-control': 'no-cache',
+  'access-control-allow-origin': '*'
+}
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body, null, 2), {
     status,
-    headers: JSON_HEADERS,
-  });
+    headers: JSON_HEADERS
+  })
 }
 
 function html(body, status = 200) {
   return new Response(body, {
     status,
     headers: {
-      "content-type": "text/html; charset=utf-8",
-      "cache-control": "no-store",
-    },
-  });
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store'
+    }
+  })
 }
 
 const LANDING = `<!doctype html>
@@ -99,46 +99,136 @@ const LANDING = `<!doctype html>
   </div>
   <footer>Deployed via Cloudflare Workers &bullet; <a href="/health">health</a></footer>
 </body>
-</html>`;
+</html>`
+
+// ---- Bucket front (R2) ----------------------------------------------------
+
+function contentTypeFor(key, stored) {
+  if (stored) return stored
+  if (key.endsWith('.json')) return 'application/json; charset=utf-8'
+  if (key.endsWith('.html')) return 'text/html; charset=utf-8'
+  if (key.endsWith('.txt') || key.endsWith('.asc')) return 'text/plain; charset=utf-8'
+  return 'application/octet-stream'
+}
+
+function r2Headers(key, obj) {
+  const meta = obj.httpMetadata || {}
+  const headers = {
+    'content-type': contentTypeFor(key, meta.contentType),
+    'cache-control': meta.cacheControl || 'no-cache',
+    etag: obj.httpEtag || obj.etag,
+    'accept-ranges': 'bytes',
+    'access-control-allow-origin': '*'
+  }
+  if (meta.contentEncoding) headers['content-encoding'] = meta.contentEncoding
+  if (meta.contentDisposition) headers['content-disposition'] = meta.contentDisposition
+  return headers
+}
+
+// Serve an object straight from the R2 bucket: real 200/206/304 responses,
+// stored metadata, byte ranges, never a redirect (protocol contract above).
+// Returns null when the key is absent or unbound so callers can fall through.
+async function serveFromBucket(env, key, request) {
+  if (!env.R2 || !key) return null
+  // Pass the request's own conditional/range headers to R2 (the documented
+  // pattern): R2 evaluates If-None-Match / If-Modified-Since / Range and
+  // returns metadata only when the condition fails.
+  const options = {}
+  const conditional = request.headers.get('if-none-match') || request.headers.get('if-modified-since')
+  if (conditional) options.onlyIf = request.headers
+  const rangeHeader = request.headers.get('range')
+  if (rangeHeader) options.range = request.headers
+  let obj
+  try {
+    obj = await env.R2.get(key, options)
+  } catch (err) {
+    // A conditional or range the bucket rejects must never surface as 5xx:
+    // fall back to one unconditional full read (200).
+    try {
+      obj = await env.R2.get(key)
+    } catch (err2) {
+      return null
+    }
+    if (obj === null) return null
+    const headers = r2Headers(key, obj)
+    headers['content-length'] = String(obj.size)
+    const body = request.method === 'HEAD' ? null : obj.body
+    return new Response(body, { headers })
+  }
+  if (obj === null) return null
+  if (obj.body === undefined || obj.body === null) {
+    // The conditional failed (if-none-match hit): metadata only -> 304.
+    const headers = r2Headers(key, obj)
+    delete headers['content-type']
+    return new Response(null, { status: 304, headers })
+  }
+  const headers = r2Headers(key, obj)
+  let status = 200
+  // R2 reports a range even on full reads, so only a range the client
+  // actually asked for may downgrade the response to 206.
+  if (rangeHeader && obj.range && obj.range.offset !== undefined) {
+    const length = obj.range.length !== undefined ? obj.range.length : obj.size - obj.range.offset
+    headers['content-range'] = `bytes ${obj.range.offset}-${obj.range.offset + length - 1}/${obj.size}`
+    headers['content-length'] = String(length)
+    status = 206
+  } else if (rangeHeader && obj.range && obj.range.suffix !== undefined) {
+    headers['content-range'] = `bytes ${obj.size - obj.range.suffix}-${obj.size - 1}/${obj.size}`
+    headers['content-length'] = String(obj.range.suffix)
+    status = 206
+  } else {
+    headers['content-length'] = String(obj.size)
+  }
+  const body = request.method === 'HEAD' ? null : obj.body
+  return new Response(body, { status, headers })
+}
 
 export default {
   async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const path = url.pathname;
+    const url = new URL(request.url)
+    const path = url.pathname
 
-    // Landing site
-    if (path === "/" || path === "/index.html") {
-      return html(LANDING);
+    // Canonical root: no object lives at the bare host root, so / answers a
+    // protocol-correct 404 instead of demo HTML (the reader and the egress
+    // probes treat any 200 as content).
+    if (path === '/' || path === '/index.html') {
+      return json({ error: 'NotFound', path }, 404)
     }
 
     // Health
-    if (path === "/health") {
-      return json({ ok: true, service: "nastech-agent", time: new Date().toISOString() });
+    if (path === '/health') {
+      return json({ ok: true, service: 'nastech-agent', time: new Date().toISOString() })
     }
 
-    // Everything under /releases/ is served from the KV store (publication
-    // target). Unknown objects answer a protocol-correct 404, never a redirect.
-    if (path.startsWith("/releases/")) {
-      const key = path.replace(/^\/+/, "");
-      const value = await env.NASTECH_ASSETS.get(key, "text");
+    const key = path.replace(/^\/+/, '')
+
+    // R2 bucket first: every published object (channel records, artifacts,
+    // pins, the termux repo) lives in the bucket and serves with real
+    // 200/206/304 responses, never a redirect.
+    const fromBucket = await serveFromBucket(env, key, request)
+    if (fromBucket) return fromBucket
+
+    // Publication keys fall back to the KV store (seeded channel records).
+    // Unknown objects answer a protocol-correct 404, never a redirect.
+    if (path.startsWith('/releases/')) {
+      const value = await env.NASTECH_ASSETS.get(key, 'text')
       if (value !== null) {
-        const isArchive = key.endsWith("/") || key.startsWith("releases/tag/");
+        const isArchive = key.endsWith('/') || key.startsWith('releases/tag/')
         return new Response(value, {
           headers: {
-            "content-type": isArchive ? "application/octet-stream" : "application/json; charset=utf-8",
-            "cache-control": "no-cache",
-            "access-control-allow-origin": "*",
-          },
-        });
+            'content-type': isArchive ? 'application/octet-stream' : 'application/json; charset=utf-8',
+            'cache-control': 'no-cache',
+            'access-control-allow-origin': '*'
+          }
+        })
       }
       // Channel records missing -> ChannelNotFound (branch fallback for main).
-      const channelMatch = key.match(/^releases\/channels\/([A-Za-z0-9_.-]+)\.json$/);
+      const channelMatch = key.match(/^releases\/channels\/([A-Za-z0-9_.-]+)\.json$/)
       if (channelMatch) {
-        return json({ error: "ChannelNotFound", channel: channelMatch[1] }, 404);
+        return json({ error: 'ChannelNotFound', channel: channelMatch[1] }, 404)
       }
-      return json({ error: "NotFound", path }, 404);
+      return json({ error: 'NotFound', path }, 404)
     }
 
-    return json({ error: "NotFound", path }, 404);
-  },
-};
+    return json({ error: 'NotFound', path }, 404)
+  }
+}
