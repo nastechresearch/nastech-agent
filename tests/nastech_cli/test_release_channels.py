@@ -141,6 +141,39 @@ def test_passive_reads_and_missing_objects_make_one_attempt(monkeypatch):
     assert waits == []
 
 
+def test_channel_reads_send_an_identifying_user_agent(monkeypatch):
+    """The asset host is behind Cloudflare: urllib's default UA is answered with 403 (error 1010).
+
+    Channel reads are the update's first network call, so the reader has to identify itself the
+    way the source-release reader already does instead of sending no User-Agent at all.
+    """
+    from nastech_cli.release_channels import ChannelReader
+
+    seen = []
+
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def geturl(self):
+            return "https://releases.example/releases/channels/main.json"
+
+        def read(self, _limit):
+            return b"{}"
+
+    def opener(request, timeout):
+        assert timeout == 30
+        seen.append(request.get_header("User-agent"))
+        return Response()
+
+    reader = ChannelReader("https://releases.example", opener=opener)
+    reader.read_bytes("releases/channels/main.json")
+    assert seen == ["nastech-update"]
+
+
 def test_reader_rejects_cycles_identity_substitution_and_cross_authority():
     from nastech_cli.release_channels import ChannelReader, ChannelError, canonical_json
     with object_server() as (url, objects, headers, requests, faults):

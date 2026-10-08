@@ -13,7 +13,11 @@ import urllib.request
 from nastech_cli.update_channel import STABLE_TAG_RE, is_canary_tag
 
 logger = logging.getLogger(__name__)
-_PUBLIC_BASE = "https://nastech-assets.nastechresearch.github.io"
+# CI supplies the authoritative value as CLOUDFLARE_R2_PUBLIC_URL (the repo
+# variable names this same origin): the fork's R2-backed asset host. A host
+# that cannot answer at all is worse than an unpublished record — a TLS/DNS
+# failure raises ChannelError before the ChannelNotFound branch fallback.
+_PUBLIC_BASE = "https://nastech-agent.nastechresearch.workers.dev"
 OFFICIAL_REPOSITORY = "NastechResearch/nastech-agent"
 _GITHUB_ORIGIN = re.compile(
     r"^(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/)"

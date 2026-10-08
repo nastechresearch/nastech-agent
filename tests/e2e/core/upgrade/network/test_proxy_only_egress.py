@@ -4,7 +4,7 @@ Every command runs in its own network namespace (no route, no DNS; proven per mo
 ``_seed.assert_isolated``). The proxy is what a corporate network runs: it tunnels ``CONNECT``,
 inspects TLS with the company's own root, may demand credentials, and refuses every host it has no
 route for, logging it. The installed checkout was cloned from the official GitHub URL, so the
-update's channel read (``nastech-assets.nastechresearch.github.io``), its git fetch and every lazy blob
+update's channel read (``nastech-agent.nastechresearch.workers.dev``), its git fetch and every lazy blob
 fetch of the partial clone (``github.com``) have to cross the proxy, and the cell reads the
 proxy's log to show they did.
 
