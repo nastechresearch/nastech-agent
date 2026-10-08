@@ -169,7 +169,7 @@ function buildManifest(
       windowsVersion: `0.0.${sequence}.0`,
       identity,
       bundleEnv: {},
-      publicBase: 'https://nastech-assets.nastechresearch.github.io'
+      publicBase: 'https://nastech-agent.nastechresearch.workers.dev'
     },
     packages: [
       {
