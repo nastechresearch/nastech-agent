@@ -38,7 +38,9 @@ describe('VersionDetails', () => {
       visible: ['Runtime', 'Embedded runtime']
     },
     {
-      version: { nastechRuntime: { type: 'external', source: { type: 'git', root: '/home/u/.nastech/nastech-agent' } } },
+      version: {
+        nastechRuntime: { type: 'external', source: { type: 'git', root: '/home/u/.nastech/nastech-agent' } }
+      },
       visible: ['Runtime', 'git (/home/u/.nastech/nastech-agent)'],
       absent: ['External (uses the machine runtime)']
     },

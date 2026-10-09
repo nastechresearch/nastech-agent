@@ -1,7 +1,7 @@
 'use client'
 
-import type { SetupChooseKind } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import type { SetupChooseKind } from '@nastech/shared'
 import { Puzzle } from 'lucide-react'
 import { type CSSProperties, type FC, type ReactNode, useId, useState } from 'react'
 

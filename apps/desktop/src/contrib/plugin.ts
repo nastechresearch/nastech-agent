@@ -14,9 +14,9 @@
 
 import type { ReadableAtom } from 'nanostores'
 
-import { pluginRest, type PluginRestOptions, pluginSocket } from '@/nastech'
 import { createPluginI18n, type PluginI18n } from '@/i18n'
 import { readKey, writeKey } from '@/lib/storage'
+import { pluginRest, type PluginRestOptions, pluginSocket } from '@/nastech'
 import { dispatchPluginNativeNotification, type PluginNativeNotificationInput } from '@/store/native-notifications'
 import { $petActive } from '@/store/pet'
 import { clearPetMessages, type PetSayOptions, sayPetMessage } from '@/store/pet-plugin-messages'

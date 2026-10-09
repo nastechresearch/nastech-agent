@@ -321,7 +321,7 @@ import {
 import { assertNoSecondLocalBackend, assertNotPassiveSpawn } from './host-backend-singleton'
 import { lookupPublishedSessionToken } from './host-published-token'
 import { claimHostSpawnGate } from './host-spawn-gate'
-import { NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN, isNastechHubClipboardWrite } from './hub-iframe-policy'
+import { isNastechHubClipboardWrite, NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN } from './hub-iframe-policy'
 import { requestHudClose } from './hud-close'
 import { cursorPointInWindow } from './hud-cursor'
 import { startHudGameOverlayWatch } from './hud-game-overlay'
@@ -4126,7 +4126,9 @@ function killNastechOwnedVenvDaemons(updateRoot) {
   let holders = []
 
   try {
-    holders = scanWindowsProcesses().filter(p => isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir))
+    holders = scanWindowsProcesses().filter(p =>
+      isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir)
+    )
   } catch {
     // Best-effort: the uninstall lock probe remains the backstop.
     return
@@ -18694,7 +18696,9 @@ const checkRendererSkew = createBundleSkewChecker(
   (args, options) => execGit(resolveGitBinary(), args, options),
   // Only a LIVE marker defers the warning: Desktop never deletes a dead one,
   // so a leftover file would otherwise suppress it indefinitely.
-  { isUpdating: async () => updateInFlight || isQuittingForHandoff || Boolean(await readLiveUpdateMarker(NASTECH_HOME)) }
+  {
+    isUpdating: async () => updateInFlight || isQuittingForHandoff || Boolean(await readLiveUpdateMarker(NASTECH_HOME))
+  }
 )
 
 async function detectRendererSkew() {

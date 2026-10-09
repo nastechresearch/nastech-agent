@@ -24,10 +24,10 @@
 
 import { atom, computed } from 'nanostores'
 
-import { getLocalCatalog, getLocalModelsStatus } from '@/nastech'
 import { isOnboardingEnabled } from '@/lib/onboarding-enabled'
 import { Codecs, persistentAtom } from '@/lib/persisted'
 import { readKey } from '@/lib/storage'
+import { getLocalCatalog, getLocalModelsStatus } from '@/nastech'
 import type { LocalCatalogModel, LocalModelsStatus } from '@/types/nastech'
 
 import { $localModelsEnabled } from './local-models-flag'
