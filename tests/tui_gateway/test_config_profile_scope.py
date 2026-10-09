@@ -12,7 +12,7 @@ from pathlib import Path
 
 import nastech_yaml as yaml
 
-import tui_gateway.server as server
+from tui_gateway import server
 from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 
 

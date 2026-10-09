@@ -30,8 +30,8 @@ def _jwt_with_exp(offset_seconds: int) -> str:
 def _pool_only_codex_home(tmp_path, monkeypatch, *, access_tokens: list):
     """NASTECH_HOME whose only Codex credentials live in ``credential_pool.openai-codex``; the token
     endpoint is a transient failure (the credential itself is still good)."""
-    import nastech_cli.auth as auth
-    import nastech_cli.codex_models as codex_models
+    from nastech_cli import auth
+    from nastech_cli import codex_models
 
     home = tmp_path / "nastech"
     home.mkdir()
@@ -97,7 +97,7 @@ def test_status_snapshot_leaves_round_robin_order_and_counts_untouched(tmp_path,
 
 
 def test_read_only_resolver_never_probes_or_mutates_an_exhausted_pool(tmp_path, monkeypatch):
-    import nastech_cli.auth_codex as auth_codex
+    from nastech_cli import auth_codex
     from nastech_cli.auth import resolve_codex_runtime_credentials
 
     home, _ = _pool_only_codex_home(
@@ -178,7 +178,7 @@ def test_status_snapshot_never_refreshes_an_expired_singleton(tmp_path, monkeypa
     The token is already expired (not merely expiring): ``load_pool`` mirrors the singleton as a
     ``device_code`` pool entry and ``pool.peek`` would answer for a still-valid token, so only an
     expired one drives ``get_codex_auth_status()`` down to the singleton resolver under test."""
-    import nastech_cli.auth as auth
+    from nastech_cli import auth
     from nastech_cli.auth import resolve_codex_runtime_credentials
 
     expired = {"access_token": _jwt_with_exp(-60), "refresh_token": "singleton-refresh"}
@@ -229,8 +229,8 @@ def test_status_snapshot_leaves_the_auth_store_manifest_byte_identical(tmp_path,
 def test_model_picker_catalog_never_refreshes_the_stored_codex_login(tmp_path, monkeypatch):
     """#68004: ``/model`` reports the stored login as-is — an expired token means the hardcoded
     catalog, not a spent refresh token."""
-    import nastech_cli.auth as auth
-    import nastech_cli.codex_models as codex_models
+    from nastech_cli import auth
+    from nastech_cli import codex_models
     from nastech_cli.models import _codex_catalog
 
     expired = {"access_token": _jwt_with_exp(-60), "refresh_token": "singleton-refresh"}

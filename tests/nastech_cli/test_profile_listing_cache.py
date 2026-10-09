@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-import nastech_cli.profiles as profiles
+from nastech_cli import profiles
 
 
 @pytest.fixture(autouse=True)

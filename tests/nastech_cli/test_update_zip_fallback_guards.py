@@ -18,7 +18,7 @@ from unittest.mock import patch
 import pytest
 
 from nastech_cli import main as nastech_main
-import nastech_cli.main_install_repair as main_install_repair
+from nastech_cli import main_install_repair
 from nastech_cli import update_cmd
 
 

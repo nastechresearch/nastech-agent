@@ -29,9 +29,9 @@ def profile_home(tmp_path, monkeypatch):
 
 
 def test_models_and_runtimes_resolve_to_the_shared_root(profile_home):
-    root, profile = profile_home
-    import nastech_cli.local_runtime.binaries as binaries
-    import nastech_cli.local_runtime.bootstrap as bootstrap
+    root, _profile = profile_home
+    from nastech_cli.local_runtime import binaries
+    from nastech_cli.local_runtime import bootstrap
 
     models = bootstrap.models_dir()
     runtimes = binaries.runtimes_root()
@@ -48,10 +48,10 @@ def test_all_runtime_state_follows_runtimes_root(profile_home):
     """Presets, window overrides, server state, and the api key all live
     under runtimes_root() — one resolver, so profile-scoping bugs cannot
     come back one file at a time."""
-    root, profile = profile_home
+    root, _profile = profile_home
     from nastech_cli.local_runtime.growth import window_overrides_path
     from nastech_cli.local_runtime.presets import read_preset_decisions
-    import nastech_cli.local_runtime.binaries as binaries
+    from nastech_cli.local_runtime import binaries
 
     shared = root / "runtimes" / "llamacpp"
     assert window_overrides_path() == shared / "window_overrides.json"
@@ -73,8 +73,8 @@ def test_default_profile_paths_unchanged(tmp_path, monkeypatch):
 
     importlib.reload(nastech_constants)
     try:
-        import nastech_cli.local_runtime.binaries as binaries
-        import nastech_cli.local_runtime.bootstrap as bootstrap
+        from nastech_cli.local_runtime import binaries
+        from nastech_cli.local_runtime import bootstrap
 
         assert bootstrap.models_dir() == root / "models"
         assert binaries.runtimes_root() == root / "runtimes" / "llamacpp"

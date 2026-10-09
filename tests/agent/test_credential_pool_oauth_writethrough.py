@@ -30,7 +30,7 @@ from agent.credential_pool import (
     load_pool,
 )
 from nastech_cli import auth as A
-import nastech_cli.auth_codex as auth_codex
+from nastech_cli import auth_codex
 
 
 def _write_store(path, store):

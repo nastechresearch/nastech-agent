@@ -891,7 +891,7 @@ if __name__ == "__main__":  # pragma: no cover - exercised as a background proce
     # sender's wake-up, and any other argv exits 2 before a Nastech import.
     if sys.argv[1:2] == ["--run-delivery"]:
         try:
-            import nastech_bootstrap  # noqa: F401
+            import nastech_bootstrap
         except (Exception, SystemExit) as exc:
             # A pinned live intent means the sender may already have admitted this DM and was
             # told not to resend; a bare repair hint would read as "NOT delivered". Without an

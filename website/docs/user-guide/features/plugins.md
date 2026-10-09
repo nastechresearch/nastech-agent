@@ -191,6 +191,11 @@ nastech plugins enable <name>      # add to allow-list
 nastech plugins disable <name>     # remove from allow-list + add to disabled
 ```
 
+If you saved a tool selection (`nastech tools`, so `platform_toolsets` lists toolsets explicitly), disabling a
+plugin also takes its toolset out of those saved lists, and enabling it puts the toolset back. The CLI and the
+Desktop/TUI/dashboard switch behave the same. With no saved selection the lists are left alone: a plugin's
+toolset is on by default.
+
 After `nastech plugins install owner/repo`, you're asked `Enable 'name' now? [y/N]` — defaults to no. Skip the prompt for scripted installs with `--enable` or `--no-enable`. A memory provider (a plugin whose `__init__.py` registers a `MemoryProvider`) asks `Use 'name' as the memory provider now?` instead: yes (or `--enable`) sets `memory.provider`, which is the only switch that activates a provider; no leaves it for `nastech memory setup`.
 
 For a reproducible install, pin a full immutable commit (tags, branches, and

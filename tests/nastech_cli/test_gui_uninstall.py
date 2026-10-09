@@ -38,7 +38,7 @@ def test_gui_install_summary_shape(tmp_path, monkeypatch):
     nastech_home = tmp_path / ".nastech"
     _make_agent(nastech_home)
     _make_gui_build(nastech_home)
-    monkeypatch.setattr(gu, "packaged_gui_app_paths", lambda: [])
+    monkeypatch.setattr(gu, "packaged_gui_app_paths", list)
     monkeypatch.setattr(gu, "desktop_userdata_dir", lambda: tmp_path / "none")
 
     summary = gu.gui_install_summary(nastech_home)
@@ -102,7 +102,7 @@ def test_remove_path_handles_symlink(tmp_path):
 
 def test_uninstall_args_namespace_mode_mapping():
     """_UninstallArgs maps mode → the gui/full flags run_uninstall reads."""
-    import nastech_cli.uninstall as uninstall
+    from nastech_cli import uninstall
 
     gui = uninstall._UninstallArgs(mode="gui")
     assert gui.gui is True and gui.full is False and gui.yes is True

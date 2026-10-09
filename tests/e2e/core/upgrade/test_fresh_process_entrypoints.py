@@ -119,7 +119,7 @@ _POST_PURGE_IMPORTS = (
 # What the pre-hand-off ``nastech update`` process had imported before the pull.
 _OLD_UPDATER_GRAPH = ("nastech_cli.main", "nastech_cli.update_cmd", "nastech_cli.config", "nastech_cli.gateway")
 
-_READY_RE = re.compile(r"^NASTECH_(?:BACKEND|DASHBOARD)_READY port=(\d+)", re.M)  # electron/backend-ready.ts
+_READY_RE = re.compile(r"^NASTECH_(?:BACKEND|DASHBOARD)_READY port=(\d+)", re.MULTILINE)  # electron/backend-ready.ts
 
 
 # --------------------------------------------------------------------------- packaging model

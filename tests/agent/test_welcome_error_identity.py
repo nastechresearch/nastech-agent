@@ -100,7 +100,7 @@ def test_auxiliary_anonymous_cooldown_does_not_outlive_signing_in(tmp_path, monk
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
     record_nastech_rate_limit(headers={"retry-after": "600"}, anonymous=True)
     runtime = [make_jwt(), WELCOME]
-    monkeypatch.setattr(aux, "_read_nastech_auth", lambda: {})
+    monkeypatch.setattr(aux, "_read_nastech_auth", dict)
     monkeypatch.setattr(aux, "_resolve_nastech_runtime_api", lambda **kw: tuple(runtime))
     unhealthy = []
     monkeypatch.setattr(aux, "_mark_provider_unhealthy", lambda *a, **kw: unhealthy.append(kw.get("ttl")))

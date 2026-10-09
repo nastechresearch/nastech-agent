@@ -106,7 +106,7 @@ def test_promotion_preserves_independent_desktop_digest():
         raise AssertionError(argv)
 
     promote_stable('v1.2.3', slim, run=run)
-    assert f'nastechresearch/nastech-agent:v1.2.3-desktop' in inspected
+    assert 'nastechresearch/nastech-agent:v1.2.3-desktop' in inspected
     assert {tuple(cmd[4:]) for cmd in created} == {
         ('-t', 'nastechresearch/nastech-agent:stable', '-t', 'nastechresearch/nastech-agent:latest',
          f'nastechresearch/nastech-agent@{slim}'),

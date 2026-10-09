@@ -8,9 +8,9 @@ from types import SimpleNamespace
 
 import pytest
 
-import nastech_cli.gateway as gateway
-import nastech_cli.gateway_windows as gateway_windows
-import nastech_cli.setup as setup
+from nastech_cli import gateway
+from nastech_cli import gateway_windows
+from nastech_cli import setup
 
 
 _BREAKAWAY_MARKER = "_NASTECH_GATEWAY_BREAKAWAY"
@@ -134,7 +134,7 @@ def test_build_gateway_argv_keeps_venv_console_python_for_uv_venv(monkeypatch, t
         encoding="utf-8",
     )
 
-    import nastech_cli.gateway as gateway
+    from nastech_cli import gateway
 
     monkeypatch.setattr(gateway, "PROJECT_ROOT", project)
     monkeypatch.setattr(gateway, "get_python_path", lambda: str(venv_python))
@@ -324,7 +324,7 @@ def test_install_scheduled_task_recreates_instead_of_change(monkeypatch, tmp_pat
         raise AssertionError(f"unexpected schtasks args: {args}")
 
     monkeypatch.setattr(gateway_windows, "_exec_schtasks", fake_schtasks)
-    ok, detail = gateway_windows._install_scheduled_task("Nastech_Gateway_alice", script_path)
+    ok, _detail = gateway_windows._install_scheduled_task("Nastech_Gateway_alice", script_path)
 
     assert ok is True
     assert "/Change" not in [arg for call in calls for arg in call]
@@ -693,7 +693,7 @@ def _arrange_uninstalled_start(monkeypatch):
     monkeypatch.delenv("NASTECH_NONINTERACTIVE", raising=False)
     monkeypatch.setattr(gateway_windows, "_assert_windows", lambda: None)
     monkeypatch.setattr(gateway_windows, "_print_start_attestation_warning", lambda: None)
-    monkeypatch.setattr(gateway_windows, "_gateway_pids", lambda: [])
+    monkeypatch.setattr(gateway_windows, "_gateway_pids", list)
     monkeypatch.setattr(gateway_windows, "is_task_registered", lambda: False)
     monkeypatch.setattr(gateway_windows, "is_startup_entry_installed", lambda: False)
     monkeypatch.setattr(gateway_windows, "install", lambda **kwargs: installs.append(kwargs))

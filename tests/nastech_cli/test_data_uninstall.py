@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import nastech_cli.uninstall as uninstall
+from nastech_cli import uninstall
 
 
 @pytest.fixture

@@ -243,7 +243,7 @@ class TestWatcherRespawnLive:
         old = subprocess.Popen([sys.executable, "-c", "pass"])
         old.wait(timeout=30)
 
-        import nastech_cli.gateway as gateway
+        from nastech_cli import gateway
 
         assert gateway._spawn_gateway_restart_watcher(
             old.pid, [sys.executable, "-c", stub]
@@ -284,7 +284,7 @@ class TestResumeVerificationLive:
         monkeypatch.setenv("NASTECH_HOME", str(tmp_path / "home"))
         (tmp_path / "home").mkdir(parents=True, exist_ok=True)
 
-        import nastech_cli.gateway as gateway
+        from nastech_cli import gateway
         import nastech_cli.main as hm
         from nastech_cli.update_cmd import _resume_windows_gateways_after_update
 

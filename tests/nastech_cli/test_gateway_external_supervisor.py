@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import nastech_cli.gateway as gateway
+from nastech_cli import gateway
 
 
 def _clear_native_supervisor_markers(monkeypatch):

@@ -11,7 +11,7 @@ import subprocess
 
 import pytest
 
-import nastech_cli.gateway_windows as gateway_windows
+from nastech_cli import gateway_windows
 
 
 @pytest.mark.platforms("windows")

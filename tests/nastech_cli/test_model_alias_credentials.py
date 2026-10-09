@@ -747,7 +747,7 @@ class TestOneshotPassesAliasCredential:
             "nastech_cli.runtime_provider.resolve_runtime_provider", _fake_resolve
         )
         monkeypatch.setattr("nastech_cli.config.load_config", lambda *a, **k: {})
-        import nastech_cli.oneshot as oneshot
+        from nastech_cli import oneshot
 
         # _run_agent holds the alias wiring; run_oneshot() wraps it in a
         # catch-all that would swallow the sentinel.

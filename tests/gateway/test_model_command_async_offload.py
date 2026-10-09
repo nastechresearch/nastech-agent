@@ -44,7 +44,7 @@ def _isolated_config(tmp_path, monkeypatch):
     nastech_home.mkdir()
     (nastech_home / "config.yaml").write_text("model:\n  default: gpt-x\n  provider: openrouter\nproviders: {}\n", encoding="utf-8")
     monkeypatch.setattr(gateway_run, "_nastech_home", nastech_home)
-    monkeypatch.setattr("agent.models_dev.fetch_models_dev", lambda: {})
+    monkeypatch.setattr("agent.models_dev.fetch_models_dev", dict)
     return nastech_home
 
 

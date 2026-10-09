@@ -31,7 +31,7 @@ class TestLoginNastech:
 
     def _run(self, monkeypatch, tmp_path):
         import nastech_cli.auth as auth_mod
-        import nastech_cli.auth_nastech as auth_nastech
+        from nastech_cli import auth_nastech
         import nastech_cli.nastech_subscription as ns
 
         seen: dict = {}
@@ -72,7 +72,6 @@ class TestLoginNastech:
 
         def _capture(model_ids, **kwargs):
             seen["model_ids"] = list(model_ids)
-            return None
 
         monkeypatch.setattr(auth_mod, "_prompt_model_selection", _capture)
 

@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 import nastech_yaml as yaml
 
-import tui_gateway.server as server
+from tui_gateway import server
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from rich.console import Console
 
-import nastech_cli.banner as banner
+from nastech_cli import banner
 import model_tools
 import tools.mcp_tool_discovery
 
@@ -41,7 +41,7 @@ def test_empty_model_shows_the_free_tier_route_when_it_carries_inference(tmp_pat
     When nothing resolves the red "no model configured" line stays."""
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path / ".nastech"))
     (tmp_path / ".nastech").mkdir()
-    import nastech_cli.anon_auth as anon_auth
+    from nastech_cli import anon_auth
 
     def render(carries: bool) -> str:
         with (

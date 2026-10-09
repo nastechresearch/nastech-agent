@@ -5,7 +5,7 @@ import subprocess
 import pytest
 
 from nastech_cli import main, main_desktop
-from tests.nastech_cli.test_source_build import source_checkout, source_products, _events  # noqa: F401
+from tests.nastech_cli.test_source_build import source_checkout, source_products, _events
 
 
 @pytest.fixture

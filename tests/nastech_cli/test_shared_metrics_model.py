@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 from nastech_cli import lifecycle
 from nastech_cli.observability import relay_shared_metrics
-from tests.nastech_cli.test_relay_shared_metrics_runtime import (  # noqa: F401 - fixture
+from tests.nastech_cli.test_relay_shared_metrics_runtime import (
     _stored_values,
     direct_runtime,
 )
@@ -80,7 +80,7 @@ def test_every_emitted_tool_call_counts_once_with_its_issue(direct_runtime, tmp_
 
 
 def test_tool_call_quality_records_nothing_while_disabled(direct_runtime, tmp_path, monkeypatch):
-    monkeypatch.setattr("nastech_cli.config.read_raw_config_readonly", lambda: {})
+    monkeypatch.setattr("nastech_cli.config.read_raw_config_readonly", dict)
     _validate(_agent("openrouter", "anthropic/claude-sonnet"), [_tool_call("c1", "nope", "{")])
     assert not (tmp_path / "nastech-home" / "telemetry").exists() or not _stored_values(
         tmp_path, "nastech.model_tool_quality.count")

@@ -1,0 +1,17 @@
+name: nastech-kame-provider
+repo: https://github.com/Kame696/kame-api-rotation-for-nastech
+sha: cab5372d18d233da905c9f84a343359d2bc26564
+subdir: nastech-kame-provider
+description: "Companion to nastech-kame-api-rotation (install both). A model-provider plugin that re-registers Nastech' bundled API-key profiles unchanged except for create_client and create_messages_client, which return the rotation plugin's key-rotating client; otherwise None and Nastech builds its own. Same endpoints as Nastech, no third-party service, no core override."
+maintainer: Kame696
+tier: community
+category: models
+requires_nastech: ">=0.21.4"
+version: "1.8.2.2"
+docs_url: https://github.com/Kame696/kame-api-rotation-for-nastech/tree/v1.8.2.2/nastech-kame-provider#readme
+readme: true
+capabilities:
+  provides_tools: []
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: []

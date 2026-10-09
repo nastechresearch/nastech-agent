@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Endpoints inference-api.nastechresearch.github.io actually serves; anything else is a 404 so stray
 # clients cannot leak odd requests upstream.
-_ALLOWED_PATHS: FrozenSet[str] = frozenset({"/chat/completions", "/completions", "/embeddings", "/models"})
+_ALLOWED_PATHS: frozenset[str] = frozenset({"/chat/completions", "/completions", "/embeddings", "/models"})
 
 
 class NastechPortalAdapter(UpstreamAdapter):
@@ -46,7 +46,7 @@ class NastechPortalAdapter(UpstreamAdapter):
         return "Nastech Portal"
 
     @property
-    def allowed_paths(self) -> FrozenSet[str]:
+    def allowed_paths(self) -> frozenset[str]:
         return _ALLOWED_PATHS
 
     def is_authenticated(self) -> bool:
@@ -103,7 +103,7 @@ class NastechPortalAdapter(UpstreamAdapter):
 
     # auth.json access — kept local so nastech_cli.auth's public surface does not grow.
 
-    def _read_state(self) -> Optional[Dict[str, Any]]:
+    def _read_state(self) -> Optional[dict[str, Any]]:
         try:
             with _auth_store_lock():
                 store = _load_auth_store()
@@ -115,7 +115,7 @@ class NastechPortalAdapter(UpstreamAdapter):
 
     def _save_state(
         self,
-        state: Dict[str, Any],
+        state: dict[str, Any],
         *,
         quarantine_error: Optional[AuthError] = None,
         quarantine_reason: Optional[str] = None,

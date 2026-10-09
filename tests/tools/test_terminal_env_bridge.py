@@ -10,7 +10,7 @@ import os
 
 import pytest
 
-import tools.terminal_tool as terminal_tool
+from tools import terminal_tool
 from nastech_constants import get_nastech_home
 
 

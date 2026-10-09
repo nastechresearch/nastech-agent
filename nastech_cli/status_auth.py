@@ -99,7 +99,7 @@ def _render_api_keys(ctx):
 
 def _render_auth_providers(ctx):
     _status._section("Auth Providers")
-    import nastech_cli.auth as auth
+    from nastech_cli import auth
     try:
         # Read-only display: the refresh-free snapshot, so `nastech status` never performs an OAuth
         # refresh or burns a single-use refresh token.
@@ -202,4 +202,4 @@ def _render_apikey_providers(ctx):
         _status._row("LM Studio", ok, msg, 16, " ")
 
 
-import nastech_cli.status as _status  # noqa: E402  (bottom: nastech_cli.status imports this module)
+import nastech_cli.status as _status

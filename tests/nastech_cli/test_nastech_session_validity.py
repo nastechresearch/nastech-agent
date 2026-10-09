@@ -4,8 +4,8 @@ import base64
 import json
 import time
 
-import nastech_cli.auth as auth
-import nastech_cli.auth_nastech as auth_nastech
+from nastech_cli import auth
+from nastech_cli import auth_nastech
 
 
 def _invoke_jwt(*, seconds: int = 3600) -> str:

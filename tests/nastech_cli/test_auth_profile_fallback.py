@@ -297,7 +297,7 @@ def test_write_credential_pool_targets_profile_not_global(profile_env):
 
 def test_auth_lock_reentrancy_is_scoped_after_profile_context_switch(profile_env):
     """Changing profile context cannot inherit another store's lock depth."""
-    import nastech_cli.auth as auth
+    from nastech_cli import auth
     from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 
     profile_b = profile_env["global"] / "profiles" / "reviewer"

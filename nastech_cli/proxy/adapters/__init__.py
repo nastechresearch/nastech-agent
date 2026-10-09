@@ -7,7 +7,7 @@ from nastech_cli.proxy.adapters.nastech_portal import NastechPortalAdapter
 from nastech_cli.proxy.adapters.xai import XAIGrokAdapter
 
 # Keyed by the ``nastech proxy start --provider <name>`` value.
-ADAPTERS: Dict[str, Type[UpstreamAdapter]] = {"nastech": NastechPortalAdapter, "xai": XAIGrokAdapter}
+ADAPTERS: dict[str, type[UpstreamAdapter]] = {"nastech": NastechPortalAdapter, "xai": XAIGrokAdapter}
 
 
 def get_adapter(name: str) -> UpstreamAdapter:
@@ -19,4 +19,4 @@ def get_adapter(name: str) -> UpstreamAdapter:
     return ADAPTERS[key]()
 
 
-__all__ = ["UpstreamAdapter", "ADAPTERS", "get_adapter"]
+__all__ = ["ADAPTERS", "UpstreamAdapter", "get_adapter"]

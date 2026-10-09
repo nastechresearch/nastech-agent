@@ -33,7 +33,7 @@ sys.path.insert(0, REPO_ROOT)
 # Ensure NASTECH_HOME is set for imports that touch it at module level.
 os.environ.setdefault("NASTECH_HOME", os.path.join(os.path.expanduser("~"), ".nastech"))
 
-from nastech_cli.models import (  # noqa: E402
+from nastech_cli.models import (
     OPENROUTER_MODELS,
     PREFERRED_SILENT_DEFAULT_MODEL,
     _PROVIDER_MODELS,

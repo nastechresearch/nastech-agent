@@ -177,7 +177,7 @@ def test_resolve_nastech_runtime_credentials_invoke_jwt_is_idempotent(
     monkeypatch,
 ):
     import nastech_cli.auth as auth_mod
-    import nastech_cli.auth_nastech as auth_nastech
+    from nastech_cli import auth_nastech
 
     nastech_home = tmp_path / "nastech"
     nastech_home.mkdir(parents=True, exist_ok=True)
@@ -290,7 +290,7 @@ def test_nastech_inference_auth_logs_do_not_include_secret_values(
     caplog,
 ):
     import nastech_cli.auth as auth_mod
-    import nastech_cli.auth_nastech as auth_nastech
+    from nastech_cli import auth_nastech
 
     nastech_home = tmp_path / "nastech"
     token = _invoke_jwt(seconds=3600)
@@ -432,7 +432,7 @@ class TestLoginNastechSkipKeepsCurrent:
     def _patch_login_internals(self, monkeypatch, *, prompt_returns):
         """Patch OAuth + model-list + prompt so _login_nastech doesn't hit network."""
         import nastech_cli.auth as auth_mod
-        import nastech_cli.auth_nastech as auth_nastech
+        from nastech_cli import auth_nastech
         import nastech_cli.models as models_mod
         from nastech_cli import models_pricing
         import nastech_cli.nastech_subscription as ns
@@ -462,7 +462,6 @@ class TestLoginNastechSkipKeepsCurrent:
 
         def _check_nastech_free_tier(**kwargs):
             free_tier_calls.append(kwargs)
-            return None
 
         monkeypatch.setattr(models_mod, "check_nastech_free_tier", _check_nastech_free_tier)
         monkeypatch.setattr(
@@ -478,7 +477,7 @@ class TestLoginNastechSkipKeepsCurrent:
         import nastech_yaml as yaml
         from nastech_cli.auth import PROVIDER_REGISTRY, _login_nastech
 
-        nastech_home, config_path, auth_path = self._setup_home_with_openrouter(
+        _nastech_home, config_path, auth_path = self._setup_home_with_openrouter(
             tmp_path, monkeypatch,
         )
         self._patch_login_internals(monkeypatch, prompt_returns=None)
@@ -509,7 +508,7 @@ class TestLoginNastechSkipKeepsCurrent:
         import nastech_yaml as yaml
         from nastech_cli.auth import PROVIDER_REGISTRY, _login_nastech
 
-        nastech_home, config_path, auth_path = self._setup_home_with_openrouter(
+        _nastech_home, config_path, auth_path = self._setup_home_with_openrouter(
             tmp_path, monkeypatch,
         )
         self._patch_login_internals(
@@ -754,7 +753,7 @@ def test_runtime_refresh_503_preserves_nastech_oauth_credentials(
     re-login during a Portal outage (#120976) or a Vercel Security Checkpoint deny/challenge on
     the token endpoint (#120602)."""
     import nastech_cli.auth as auth_mod
-    import nastech_cli.auth_nastech as auth_nastech
+    from nastech_cli import auth_nastech
 
     nastech_home = tmp_path / "nastech"
     access_token = _invoke_jwt(seconds=3600)
@@ -944,7 +943,7 @@ def test_try_import_shared_rehydrates_on_success(shared_store_env, monkeypatch):
     every field persist_nastech_credentials() needs.
     """
     from nastech_cli import auth as auth_mod
-    import nastech_cli.auth_nastech as auth_nastech
+    from nastech_cli import auth_nastech
 
     auth_mod._write_shared_nastech_state(_full_state_fixture())
     fresh_jwt = _invoke_jwt(seconds=7200)
@@ -1002,7 +1001,7 @@ class TestStalePortalBaseUrlMigration:
     ):
         """An allowlisted production host is still unsafe over plain HTTP."""
         from nastech_cli import auth as auth_mod
-        import nastech_cli.auth_nastech as auth_nastech
+        from nastech_cli import auth_nastech
 
         nastech_home = tmp_path / "nastech"
         monkeypatch.setenv("NASTECH_HOME", str(nastech_home))

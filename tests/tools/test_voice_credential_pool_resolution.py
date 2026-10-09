@@ -42,7 +42,7 @@ def _no_dotenv(monkeypatch):
     """Keep the developer's real ~/.nastech/.env out of these tests."""
     import nastech_cli.config as config_mod
 
-    monkeypatch.setattr(config_mod, "load_env", lambda: {})
+    monkeypatch.setattr(config_mod, "load_env", dict)
     yield
 
 

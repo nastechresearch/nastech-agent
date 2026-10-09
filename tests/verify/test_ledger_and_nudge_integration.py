@@ -201,7 +201,7 @@ def test_nudge_keeps_plain_wording_without_recipe_start(nastech_home):
 
 def test_nudge_recipe_detection_failure_is_silent(nastech_home, monkeypatch):
     # A broken recipe detector must never break the nudge path.
-    import agent.verify.recipes as recipes
+    from agent.verify import recipes
 
     def boom(_root):
         raise RuntimeError("detector exploded")

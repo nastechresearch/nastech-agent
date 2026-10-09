@@ -18,7 +18,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def _offline_model_inventory(monkeypatch):
     """Stub the shared model inventory so ACP tests never hit the network."""
-    import nastech_cli.inventory as inventory
+    from nastech_cli import inventory
 
     class _StubPickerContext:
         def with_overrides(self, **_kwargs):

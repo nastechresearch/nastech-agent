@@ -3,7 +3,7 @@
 
 import pytest
 
-import nastech_cli.gateway as gateway
+from nastech_cli import gateway
 
 pytestmark = pytest.mark.platforms("linux")
 

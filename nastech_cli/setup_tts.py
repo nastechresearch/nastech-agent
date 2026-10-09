@@ -270,4 +270,4 @@ def setup_tts(config: dict):
     _setup_tts_provider(config)
 
 
-import nastech_cli.setup as _setup  # noqa: E402  (bottom: nastech_cli.setup imports this module)
+import nastech_cli.setup as _setup

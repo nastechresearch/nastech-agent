@@ -20,7 +20,7 @@ def _config_edit(tmp_path, monkeypatch, cfg, *, template):
 
 def _setup_agent_enter(tmp_path, monkeypatch, cfg):
     """`nastech setup agent` on a fresh home, pressing Enter (the offered default) on every prompt."""
-    import nastech_cli.setup as setup
+    from nastech_cli import setup
 
     monkeypatch.setattr(setup, "prompt", lambda question, default=None, *a, **k: default or "")
     monkeypatch.setattr(setup, "prompt_yes_no", lambda *a, **k: False)
@@ -44,7 +44,7 @@ def _blank_slate(tmp_path, monkeypatch, cfg):
 
 def _doctor_fix(tmp_path, monkeypatch, cfg):
     """`nastech doctor --fix` on a home with no config.yaml: the real config-file check, fix enabled."""
-    import nastech_cli.doctor as doctor
+    from nastech_cli import doctor
     from nastech_cli.doctor_config import _check_config_file
 
     root = tmp_path / "checkout"  # only the template, so a stray cli-config.yaml cannot short-circuit the seed

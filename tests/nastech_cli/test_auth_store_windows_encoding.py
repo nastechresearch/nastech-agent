@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-import nastech_cli.auth as auth
+from nastech_cli import auth
 
 
 # --- helpers ---------------------------------------------------------------

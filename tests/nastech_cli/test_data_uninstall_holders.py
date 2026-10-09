@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 from nastech_cli import uninstall
-from tests.nastech_cli.test_data_uninstall import layout  # noqa: F401 — isolated layout
+from tests.nastech_cli.test_data_uninstall import layout
 
 
 @pytest.mark.parametrize("mode", ["confirmed", "cancel", "dry-run"])

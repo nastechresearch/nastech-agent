@@ -13,8 +13,8 @@ from dataclasses import asdict
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import nastech_cli.update_inventory as update_inventory
-import nastech_cli.main_dashboard as main_dashboard
+from nastech_cli import update_inventory
+from nastech_cli import main_dashboard
 
 def _ledger_entry(**over):
     entry = {

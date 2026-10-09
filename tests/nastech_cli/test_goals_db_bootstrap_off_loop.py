@@ -25,7 +25,7 @@ import time
 
 import pytest
 
-import nastech_cli.goals as goals
+from nastech_cli import goals
 
 
 class _RecordingDB:

@@ -26,7 +26,7 @@ import pytest
 
 import nastech_cli.mcp_startup as startup
 from nastech_constants import nastech_home_key
-import tui_gateway.entry as entry
+from tui_gateway import entry
 
 
 @pytest.fixture

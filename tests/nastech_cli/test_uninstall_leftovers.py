@@ -33,7 +33,7 @@ def launch_agents(fake_home, monkeypatch):
         lambda: agents / "ai.nastech.gateway.plist", raising=False,
     )
     # _remove_launchd_gateway imports it from nastech_cli.gateway at call time.
-    import nastech_cli.gateway as gateway
+    from nastech_cli import gateway
     monkeypatch.setattr(gateway, "get_launchd_plist_path", lambda: agents / "ai.nastech.gateway.plist")
     return agents
 

@@ -13,8 +13,8 @@ only the profile-root location is pointed at tmp_path.
 import nastech_yaml as yaml
 from pathlib import Path
 
-import nastech_cli.update_cmd as update_cmd
-import nastech_cli.update_cmd_config as update_cmd_config
+from nastech_cli import update_cmd
+from nastech_cli import update_cmd_config
 
 
 def _write_profile(root: Path, name: str, version: int) -> Path:

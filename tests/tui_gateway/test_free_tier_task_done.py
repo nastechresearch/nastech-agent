@@ -8,7 +8,7 @@ import types
 
 import pytest
 
-import tui_gateway.server as server
+from tui_gateway import server
 from nastech_cli import anon_auth, free_tier_offer
 from nastech_cli.profiles import SETUP_PROFILE_MARKER
 from tui_gateway.free_tier_task_done import note_task_done

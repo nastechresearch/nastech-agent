@@ -9,7 +9,7 @@ threads) — which showed up as the post-banner freeze before the first prompt.
 
 from types import SimpleNamespace
 
-import nastech_cli.goals as goals
+from nastech_cli import goals
 from cli import NastechCLI
 
 

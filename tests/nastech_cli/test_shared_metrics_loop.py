@@ -12,7 +12,7 @@ from nastech_cli.observability import relay_shared_metrics
 from nastech_cli.observability import shared_metrics_loop as loop
 from nastech_cli.observability.shared_metrics import SharedMetricsStore
 from nastech_constants import reset_nastech_home_override, set_nastech_home_override
-from tests.nastech_cli.test_relay_shared_metrics_runtime import direct_runtime  # noqa: F401
+from tests.nastech_cli.test_relay_shared_metrics_runtime import direct_runtime
 
 _LOOP_METRICS = {
     "nastech.memory.op.count", "nastech.curator.run.count", "nastech.delegation.run.count",
@@ -30,7 +30,7 @@ def _rows(home: Path, metric: str) -> list[tuple[dict, int]]:
 
 
 @pytest.fixture
-def home(direct_runtime, tmp_path):  # noqa: F811
+def home(direct_runtime, tmp_path):
     path = tmp_path / "nastech-home"
     path.mkdir(parents=True, exist_ok=True)
     return path

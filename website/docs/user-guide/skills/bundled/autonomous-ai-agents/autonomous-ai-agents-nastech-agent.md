@@ -1,14 +1,14 @@
 ---
-title: "Nastech Agent — Use, configure, theme, extend, and orchestrate Nastech Agent"
+title: "Nastech Agent — Configure, theme, extend, and orchestrate Nastech Agent"
 sidebar_label: "Nastech Agent"
-description: "Use, configure, theme, extend, and orchestrate Nastech Agent"
+description: "Configure, theme, extend, and orchestrate Nastech Agent"
 ---
 
 {/* This page is auto-generated from the skill's SKILL.md by website/scripts/generate-skill-docs.py. Edit the source SKILL.md, not this page. */}
 
 # Nastech Agent
 
-Use, configure, theme, extend, and orchestrate Nastech Agent.
+Configure, theme, extend, and orchestrate Nastech Agent.
 
 ## Skill metadata
 

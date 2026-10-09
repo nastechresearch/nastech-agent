@@ -56,7 +56,7 @@ def _pool_entry(provider: str, **fields):
 def test_nastech_model_routes_registered_plugin_profiles_to_the_generic_flow(plugin, monkeypatch, tmp_path):
     """Selecting an admitted external-process or OAuth plugin in `nastech model` persists config.model;
     an api_key profile still takes the api-key flow and an unknown slug stays a no-op."""
-    import nastech_cli.main as main
+    from nastech_cli import main
     from nastech_cli import auth
     from nastech_cli.config import load_config
 

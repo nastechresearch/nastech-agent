@@ -3,7 +3,7 @@
 from argparse import Namespace
 
 
-import nastech_cli.sessions_cmd as sessions_cmd
+from nastech_cli import sessions_cmd
 
 
 

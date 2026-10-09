@@ -8,7 +8,7 @@ the raw session record, neither of which creates a new environment.
 import pytest
 
 import nastech_constants
-import tools.terminal_tool as terminal_tool
+from tools import terminal_tool
 from tools.file_operations import ShellFileOperations
 
 

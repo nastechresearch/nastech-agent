@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 pytest.importorskip("fastapi")
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture()
@@ -22,7 +22,7 @@ def client(_isolate_nastech_home, monkeypatch):
     (freebie / "config.yaml").write_text("model: {}\n", encoding="utf-8")
 
     from nastech_constants import get_nastech_home
-    import nastech_cli.nastech_account as nastech_account
+    from nastech_cli import nastech_account
 
     # The launch profile's account is paid, the "freebie" profile's is free tier.
     monkeypatch.setattr(nastech_account, "get_nastech_portal_account_info", lambda **_k: SimpleNamespace(

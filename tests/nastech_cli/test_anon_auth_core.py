@@ -16,7 +16,7 @@ import pytest
 
 from nastech_cli import anon_auth
 from nastech_cli.auth import _load_auth_store, resolve_provider
-from tests.nastech_cli.anon_portal import PORTAL, WELCOME, install_portal, make_jwt as _jwt  # noqa: F401
+from tests.nastech_cli.anon_portal import PORTAL, WELCOME, install_portal, make_jwt as _jwt
 
 
 @pytest.fixture

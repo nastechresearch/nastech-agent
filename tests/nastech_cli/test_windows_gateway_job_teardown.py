@@ -20,7 +20,7 @@ Two fixes under test:
    updater's Job Object teardown.
 """
 
-import nastech_cli.gateway as gateway
+from nastech_cli import gateway
 
 # ---------------------------------------------------------------------------
 # 1. Watcher template contract
