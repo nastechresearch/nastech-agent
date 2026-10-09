@@ -104,7 +104,10 @@ try {
     # 1. Same path for both: refused, before any download.
     $r = Invoke-ResolvedPaths @('-NastechHome', $home1, '-InstallDir', $home1)
     Assert-True ($r.ExitCode -ne 0) 'same NastechHome and InstallDir is refused (non-zero exit)'
-    Assert-True ($r.All -match 'tool store would land inside the checkout') 'refusal names the tool-store cause'
+    # Collapse whitespace first: Windows PowerShell 5.1 wraps the thrown refusal
+    # at an 80-column host width, splitting the phrase across lines, while
+    # PowerShell 7 uses 120 and keeps it whole. Both must pass.
+    Assert-True (($r.All -replace '\s+', ' ') -match 'tool store would land inside the checkout') 'refusal names the tool-store cause'
 
     # 2. NastechHome nested inside InstallDir: refused for the same reason.
     $r = Invoke-ResolvedPaths @('-NastechHome', $insideHome, '-InstallDir', $insideDir)

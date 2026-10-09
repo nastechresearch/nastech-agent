@@ -45,8 +45,12 @@ jobs:
   install-update:
     name: Windows install.ps1 + nastech update E2E
     runs-on: windows-latest
-    # A typical run is ~17 min; one slow runner took 28 min for the same work (run 36295230146).
-    timeout-minutes: 75
+    # Hermes runs this on a 32-core windows-latest image (~17 min). This repo
+    # only has the free 4-core windows-latest, where the per-install Node
+    # dependency build is the long pole (one install already exceeded 25 min at
+    # 6-way worker contention). The lane needs both a lower worker count and a
+    # larger wall-clock budget than upstream's comment assumes.
+    timeout-minutes: 120
     steps:
       - name: Checkout code
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
@@ -78,8 +82,12 @@ jobs:
           NASTECH_E2E_MACHINE_ROOT: ${{ runner.temp }}\wm
           NASTECH_E2E_PROFILES_ROOT: C:\Users
           NASTECH_E2E_ARTIFACTS: ${{ runner.temp }}\win-update-e2e
-          # One journey per file, all in parallel (each is mostly network + subprocess wait).
-          NASTECH_TEST_WORKERS: '6'
+          # One journey per file, in parallel (each is mostly network + subprocess
+          # wait). Hermes runs 6 on a 32-core host; on the free 4-core
+          # windows-latest 6 concurrent installs starve each other's npm ci /
+          # native build until the harness install timeout fires. Match the
+          # runner's core count, as the os-tests Windows row already does.
+          NASTECH_TEST_WORKERS: '4'
           # test_crash_cells.py runs its whole journey (install, gateway phase, six crash cells)
           # inside one file: ~2,100 s on a normal runner, past 2,400 s on a slow one.
           NASTECH_TEST_FILE_TIMEOUT: '3600'
