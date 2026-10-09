@@ -189,6 +189,8 @@ links.new(bg.outputs[0], output.inputs[0])
 ## Rendering
 
 ```python
+import os, tempfile
+
 scene = bpy.context.scene
 
 # Resolution
@@ -197,7 +199,7 @@ scene.render.resolution_y = 1080
 scene.render.resolution_percentage = 100
 
 # Output
-scene.render.filepath = '/tmp/render.png'
+scene.render.filepath = os.path.join(tempfile.gettempdir(), 'render.png')
 scene.render.image_settings.file_format = 'PNG'  # PNG, JPEG, OPEN_EXR
 
 # Engine
@@ -213,7 +215,7 @@ bpy.ops.render.render(write_still=True)
 # Animation render
 scene.frame_start = 1
 scene.frame_end = 250
-scene.render.filepath = '/tmp/anim_'
+scene.render.filepath = os.path.join(tempfile.gettempdir(), 'anim_')
 scene.render.image_settings.file_format = 'PNG'
 bpy.ops.render.render(animation=True)
 ```

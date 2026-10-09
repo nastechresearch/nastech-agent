@@ -153,7 +153,7 @@ icing.data.materials.append(mat_icing)
 ## Recipe 4: Turntable Animation
 
 ```python
-import bpy, math
+import bpy, math, os, tempfile
 
 # Assume scene already has objects
 
@@ -185,7 +185,7 @@ for fc in pivot.animation_data.action.fcurves:
         kp.interpolation = 'LINEAR'
 
 # Render settings
-scene.render.filepath = '/tmp/turntable_'
+scene.render.filepath = os.path.join(tempfile.gettempdir(), 'turntable_')
 scene.render.image_settings.file_format = 'PNG'
 scene.render.resolution_x = 1080
 scene.render.resolution_y = 1080
@@ -194,12 +194,12 @@ scene.render.resolution_y = 1080
 ## Recipe 5: Render to File and Verify
 
 ```python
-import bpy, os
+import bpy, os, tempfile
 
 scene = bpy.context.scene
 scene.render.resolution_x = 1920
 scene.render.resolution_y = 1080
-scene.render.filepath = '/tmp/blender_render.png'
+scene.render.filepath = os.path.join(tempfile.gettempdir(), 'blender_render.png')
 scene.render.image_settings.file_format = 'PNG'
 
 # Use Cycles for quality
@@ -211,13 +211,14 @@ scene.cycles.use_denoising = True
 bpy.ops.render.render(write_still=True)
 
 # Verify
-result = os.path.exists('/tmp/blender_render.png')
+result = os.path.exists(os.path.join(tempfile.gettempdir(), 'blender_render.png'))
 ```
 
 Then from the agent, view the render:
 ```python
 # After execute_blender_code returns, verify and view
+import os, tempfile
 from nastech_tools import terminal
-terminal("ls -la /tmp/blender_render.png")
+terminal(f"ls -la {os.path.join(tempfile.gettempdir(), 'blender_render.png')}")
 # Use vision_analyze to inspect the render
 ```

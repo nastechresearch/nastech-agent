@@ -48,8 +48,8 @@ eval result is not captured in Blender 5.x. To get values out:
 - Write results to a temp file and read back:
 
 ```python
-import json
-open('/tmp/result.json', 'w').write(json.dumps([o.name for o in bpy.data.objects]))
+import json, os, tempfile
+open(os.path.join(tempfile.gettempdir(), 'result.json'), 'w').write(json.dumps([o.name for o in bpy.data.objects]))
 ```
 
 ### 6. Errors come back as error strings — always check
@@ -109,8 +109,8 @@ In Blender 5.x, EEVEE is `'BLENDER_EEVEE'` (not `'BLENDER_EEVEE_NEXT'`,
 which was Blender 4.x). Discover available engines at runtime:
 
 ```python
-import json
-open('/tmp/engines.json', 'w').write(json.dumps(
+import json, os, tempfile
+open(os.path.join(tempfile.gettempdir(), 'engines.json'), 'w').write(json.dumps(
     list(bpy.types.RenderSettings.bl_rna.properties['engine'].enum_items.keys())))
 ```
 
