@@ -30,7 +30,7 @@ def test_managed_env_beats_user_env(env_homes, monkeypatch):
 def test_no_managed_env_is_noop(env_homes, monkeypatch):
     from nastech_cli.env_loader import load_nastech_dotenv
 
-    home, managed = env_homes  # managed dir exists but has no .env
+    home, _managed = env_homes  # managed dir exists but has no .env
     monkeypatch.setenv("SOME_VALUE", "from_shell")
     (home / ".env").write_text("SOME_VALUE=from_user\n", encoding="utf-8")
     load_nastech_dotenv(nastech_home=str(home))

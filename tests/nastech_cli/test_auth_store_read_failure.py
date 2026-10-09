@@ -15,7 +15,7 @@ import json
 
 import pytest
 
-import nastech_cli.auth as auth
+from nastech_cli import auth
 
 @pytest.fixture
 def store_file(tmp_path):

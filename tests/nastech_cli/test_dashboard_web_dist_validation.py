@@ -18,7 +18,7 @@ import pytest
 
 @pytest.fixture()
 def main_mod():
-    import nastech_cli.main as main
+    from nastech_cli import main
     return main
 
 

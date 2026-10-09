@@ -992,7 +992,7 @@ class TestProfileHomeExemptsNastechRoot:
         import tools.file_tools_write_guards as ft
         from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 
-        root, profile = self._profile_layout(tmp_path)
+        _root, profile = self._profile_layout(tmp_path)
         repo = tmp_path / "repo"
         (repo / ".nastech").mkdir(parents=True)
         monkeypatch.delenv("NASTECH_HOME", raising=False)

@@ -15,7 +15,7 @@ import pytest
 from nastech_cli import anon_auth, anon_sign_in, free_tier_bootstrap
 from nastech_cli.auth import _load_auth_store
 
-from tests.nastech_cli.anon_portal import PORTAL, WELCOME, install_portal  # noqa: F401
+from tests.nastech_cli.anon_portal import PORTAL, WELCOME, install_portal
 
 
 @pytest.fixture

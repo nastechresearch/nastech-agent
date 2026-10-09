@@ -5,7 +5,7 @@ from unittest.mock import patch, mock_open
 
 import pytest
 
-import nastech_cli.gateway as gateway
+from nastech_cli import gateway
 import nastech_constants
 from nastech_platform.host import runtime as host_runtime
 

@@ -459,7 +459,7 @@ class TestSameNameUserMcpTable:
         nastech_cli/main.py stays pinned, and honour ``CODEX_HOME`` like every codex sibling."""
         import json
 
-        import nastech_cli.main as main
+        from nastech_cli import main
 
         codex_home = tmp_path / "alt-codex"
         codex_home.mkdir()

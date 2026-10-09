@@ -57,7 +57,6 @@ nastech skills uninstall <skill-name>
 
 | Skill | Description |
 |-------|-------------|
-| [**blender-mcp**](../user-guide/skills/optional/creative/creative-blender-mcp.md) | Drive Blender via the catalog blender MCP, with bpy recipes. |
 | [**ai-presenter-video**](../user-guide/skills/optional/creative/creative-ai-presenter-video.md) | Make a verified AI presenter video from script + image. |
 | [**archify**](../user-guide/skills/optional/creative/creative-archify.md) | Validated interactive HTML diagrams, upstream-maintained. |
 | [**ascii-art**](../user-guide/skills/optional/creative/creative-ascii-art.md) | ASCII art: pyfiglet, cowsay, boxes, image-to-ascii. |
@@ -65,6 +64,7 @@ nastech skills uninstall <skill-name>
 | [**auteur**](../user-guide/skills/optional/creative/creative-auteur.md) | Design and build cinematic, award-level web pages. |
 | [**baoyu-article-illustrator**](../user-guide/skills/optional/creative/creative-baoyu-article-illustrator.md) | Article illustrations: type × style × palette consistency. |
 | [**baoyu-comic**](../user-guide/skills/optional/creative/creative-baoyu-comic.md) | Knowledge comics (知识漫画): educational, biography, tutorial. |
+| [**blender-mcp**](../user-guide/skills/optional/creative/creative-blender-mcp.md) | Drive Blender via the catalog blender MCP, with bpy recipes. |
 | [**brag**](../user-guide/skills/optional/creative/creative-brag.md) | Project launch video via Hyperframes, upstream-maintained. |
 | [**brag-slim**](../user-guide/skills/optional/creative/creative-brag-slim.md) | Launch video from a project or URL, upstream-maintained. |
 | [**comfyui**](../user-guide/skills/optional/creative/creative-comfyui.md) | Generate images, video, and audio via diffusion workflows. |
@@ -101,8 +101,8 @@ nastech skills uninstall <skill-name>
 |-------|-------------|
 | [**actual-setup**](../user-guide/skills/optional/devops/devops-actual-setup.md) | Set up Actual Computer (actual.inc) inference in Nastech. |
 | [**docker-management**](../user-guide/skills/optional/devops/devops-docker-management.md) | Manage Docker containers, images, volumes, and Compose. |
-| [**nastech-s6-container-supervision**](../user-guide/skills/optional/devops/devops-nastech-s6-container-supervision.md) | Modify or debug s6 services in the Nastech Docker image. |
 | [**inference-sh-cli**](../user-guide/skills/optional/devops/devops-inference-sh-cli.md) | Run 150+ AI apps (image, video, LLM) via inference.sh CLI. |
+| [**nastech-s6-container-supervision**](../user-guide/skills/optional/devops/devops-nastech-s6-container-supervision.md) | Modify or debug s6 services in the Nastech Docker image. |
 | [**pinggy-tunnel**](../user-guide/skills/optional/devops/devops-pinggy-tunnel.md) | Zero-install localhost tunnels over SSH via Pinggy. |
 | [**setup-wizard-generator**](../user-guide/skills/optional/devops/devops-setup-wizard-generator.md) | Generate a bash wizard guiding a human through manual setup. |
 | [**watchers**](../user-guide/skills/optional/devops/devops-watchers.md) | Poll RSS, JSON APIs, and GitHub with watermark dedup. |

@@ -1,14 +1,5 @@
 {
   "apps/bootstrap-installer/public/nastech-bantu.jpg": "installer/nastech-bantu.jpg",
-  "apps/bootstrap-installer/src-tauri/icons/128x128.png": "installer/128x128.png",
-  "apps/bootstrap-installer/src-tauri/icons/128x128@2x.png": "installer/128x128@2x.png",
-  "apps/bootstrap-installer/src-tauri/icons/32x32.png": "installer/32x32.png",
-  "apps/bootstrap-installer/src-tauri/icons/icon.icns": "installer/icon.icns",
-  "apps/bootstrap-installer/src-tauri/icons/icon.ico": "installer/icon.ico",
-  "apps/desktop/assets/icon.icns": "desktop/icon.icns",
-  "apps/desktop/assets/icon.ico": "desktop/icon.ico",
-  "apps/desktop/assets/icon.png": "desktop/icon.png",
-  "apps/desktop/public/apple-touch-icon.png": "desktop/apple-touch-icon.png",
   "apps/desktop/public/nastech-bantu.jpg": "desktop/nastech-bantu.jpg",
   "apps/desktop/public/nastech-frames/nastech-frame-0.png": "desktop/nastech-frames/nastech-frame-0.png",
   "apps/desktop/public/nastech-frames/nastech-frame-1.png": "desktop/nastech-frames/nastech-frame-1.png",
@@ -24,13 +15,5 @@
   "assets/banner.png": "assets/banner.png",
   "plugins/nastech-achievements/docs/assets/achievements-dashboard-hd.png": "achievements-dashboard-hd.png",
   "plugins/nastech-achievements/docs/assets/achievements-tier-showcase-hd.png": "achievements-tier-showcase-hd.png",
-  "web/public/favicon.ico": "web/favicon.ico",
-  "website/static/img/apple-touch-icon.png": "website/apple-touch-icon.png",
-  "website/static/img/favicon-16x16.png": "website/favicon-16x16.png",
-  "website/static/img/favicon-32x32.png": "website/favicon-32x32.png",
-  "website/static/img/favicon.ico": "website/favicon.ico",
-  "website/static/img/favicon.svg": "website/favicon.svg",
-  "website/static/img/logo.png": "website/logo.png",
-  "website/static/img/nastech-agent-banner.png": "website/nastech-agent-banner.png",
-  "website/static/img/nastech-logo.png": "website/nastech-logo.png"
+  "website/static/img/nastech-agent-banner.png": "website/nastech-agent-banner.png"
 }

@@ -15,7 +15,7 @@ from unittest.mock import patch
 import pytest
 import nastech_yaml as yaml
 
-import nastech_cli.memory_setup as memory_setup
+from nastech_cli import memory_setup
 from nastech_cli.profiles import create_profile, rename_profile
 from plugins.memory.holographic import HolographicMemoryProvider, _load_plugin_config
 

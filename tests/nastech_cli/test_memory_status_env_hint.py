@@ -5,7 +5,7 @@ provider reports unavailable, status lists the missing env vars and surfaces
 the systemd/gateway ``.env``-inheritance gotcha that most often causes it.
 """
 
-import nastech_cli.memory_setup as memory_setup
+from nastech_cli import memory_setup
 
 
 class _UnavailableProvider:

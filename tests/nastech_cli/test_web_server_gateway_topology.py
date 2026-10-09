@@ -391,7 +391,7 @@ class TestStatusEndpointTopology:
 
         from gateway.status import GatewayLiveness
         import nastech_cli.web_routers.status as status_router
-        import nastech_cli.web_server_profiles as web_server_profiles
+        from nastech_cli import web_server_profiles
 
         home = tmp_path / ".nastech"  # the shipped default root: basename != profile id
         home.mkdir()

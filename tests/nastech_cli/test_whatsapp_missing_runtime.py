@@ -11,7 +11,7 @@ def _missing_package(monkeypatch):
     import nastech_constants
 
     monkeypatch.setattr(nastech_constants, "find_node_executable", lambda executable: None)
-    monkeypatch.setattr(nastech_constants, "with_nastech_node_path", lambda: {})
+    monkeypatch.setattr(nastech_constants, "with_nastech_node_path", dict)
     monkeypatch.setattr(pm, "ensure", lambda package, explicit: SimpleNamespace(env={}))
     monkeypatch.setattr(pm, "installed_package", lambda package: None)
 

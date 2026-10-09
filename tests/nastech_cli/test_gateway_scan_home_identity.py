@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-import nastech_cli.gateway as gateway
+from nastech_cli import gateway
 from nastech_cli import dashboard_procs
 
 # Named ``nastech`` so ``python <dir>/nastech gateway run`` satisfies the canonical gateway matcher.

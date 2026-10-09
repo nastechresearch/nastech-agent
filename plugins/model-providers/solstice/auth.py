@@ -28,7 +28,7 @@ def _nas_base_url() -> str:
     return _nastech_portal_base_url(get_provider_auth_state("nastech") or {})
 
 
-def _nas_request(method: str, path: str, *, json: Mapping[str, Any] | None = None) -> Dict[str, Any]:
+def _nas_request(method: str, path: str, *, json: Mapping[str, Any] | None = None) -> dict[str, Any]:
     from nastech_cli.auth import _default_verify, resolve_nastech_access_token
     from nastech_cli.auth_constants import httpx
 
@@ -50,7 +50,7 @@ def _nas_request(method: str, path: str, *, json: Mapping[str, Any] | None = Non
     return response.json()
 
 
-def discover_client() -> Dict[str, str]:
+def discover_client() -> dict[str, str]:
     """``client_id`` / ``authorize_url`` / ``scope`` NAS serves for the shared Google client."""
     payload = _nas_request("GET", _CONFIG_PATH)
     missing = [k for k in ("client_id", "authorize_url", "scope") if not str(payload.get(k) or "").strip()]

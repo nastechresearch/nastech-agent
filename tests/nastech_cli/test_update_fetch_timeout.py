@@ -8,7 +8,7 @@ fetch-failure path prints one clear line. Local git (network=False) is unbounded
 import subprocess
 from unittest.mock import MagicMock, patch
 
-import nastech_cli.update_cmd as update_cmd
+from nastech_cli import update_cmd
 
 
 def _timeout(cmd, **kwargs):

@@ -23,7 +23,7 @@ def test_picked_model_runs_the_quickstart_job_and_reports_how_it_ended(monkeypat
     """The CLI starts the same quickstart job the desktop's button does and reports that job's
     terminal state; only a finished job claims the default changed."""
     import nastech_cli.main_provider_setup as provider_setup
-    import nastech_cli.setup as setup
+    from nastech_cli import setup
     from nastech_cli.model_setup_flows_local import _model_flow_local
     from nastech_cli.web_routers import local_models as lm
 

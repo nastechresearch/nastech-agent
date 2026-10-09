@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from cli import NastechCLI
 from nastech_cli.main_tui_launch import _print_tui_exit_summary
 
-import nastech_cli.main  # noqa: F401 — _print_tui_exit_summary imports it lazily; load it at collection time
+import nastech_cli.main
 
 
 def _make_cli(session_id="20260524_000001_abc123"):

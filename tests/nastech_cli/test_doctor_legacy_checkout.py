@@ -5,7 +5,7 @@ import subprocess
 
 import pytest
 
-import nastech_cli.doctor as doctor
+from nastech_cli import doctor
 from nastech_cli.doctor_state import check_legacy_desktop_checkout
 
 

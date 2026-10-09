@@ -39,8 +39,8 @@ from pathlib import Path
 # re-typed regex (nastech_cli/__init__.py is import-light).
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from nastech_cli import update_channel  # noqa: E402
-from nastech_cli.steward import UPDATE_MECHANISMS  # noqa: E402
+from nastech_cli import update_channel
+from nastech_cli.steward import UPDATE_MECHANISMS
 
 STAMP_SCHEMA_VERSION = 2
 _REPO_ROOT = Path(__file__).parent.parent.resolve()

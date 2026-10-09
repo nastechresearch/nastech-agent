@@ -31,7 +31,7 @@ def test_fleet_config_migration_live_windows(tmp_path, monkeypatch):
     )
     monkeypatch.setenv("NASTECH_HOME", str(active))
 
-    import nastech_cli.update_cmd as update_cmd
+    from nastech_cli import update_cmd
     from nastech_cli.config import DEFAULT_CONFIG
 
     latest = int(DEFAULT_CONFIG["_config_version"])

@@ -36,7 +36,7 @@ def test_output_path_rejects_bare_dotdot():
 
 def test_output_path_rejects_nastech_oauth_store(tmp_path, monkeypatch):
     """TTS output_path must not bypass the shared protected-file write guard."""
-    import agent.file_safety as file_safety
+    from agent import file_safety
 
     nastech_home = tmp_path / "nastech-home"
     nastech_home.mkdir()
@@ -103,7 +103,7 @@ def test_media_directive_in_path_is_rejected_before_any_echo(tmp_path):
 
 def test_output_path_rejects_mcp_token_directory(tmp_path, monkeypatch):
     """TTS output_path must not write synthesized audio over MCP token files."""
-    import agent.file_safety as file_safety
+    from agent import file_safety
 
     nastech_home = tmp_path / "nastech-home"
     token_dir = nastech_home / "mcp-tokens"

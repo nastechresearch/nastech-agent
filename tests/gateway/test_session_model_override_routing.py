@@ -122,7 +122,7 @@ fallback_providers:
             "credential_pool": None,
         }
 
-    import nastech_cli.runtime_provider as runtime_provider
+    from nastech_cli import runtime_provider
 
     monkeypatch.setattr(runtime_provider, "resolve_runtime_provider", fake_resolve_runtime_provider)
 

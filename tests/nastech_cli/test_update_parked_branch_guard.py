@@ -28,8 +28,8 @@ from types import SimpleNamespace
 import pytest
 
 from nastech_cli import main as nastech_main
-import nastech_cli.main_web_build as main_web_build
-import nastech_cli.main_install_repair as main_install_repair
+from nastech_cli import main_web_build
+from nastech_cli import main_install_repair
 from nastech_cli import update_cmd
 
 
@@ -86,7 +86,7 @@ def _no_config(monkeypatch):
     """Isolate the guard from the machine's real config.yaml."""
     import nastech_cli.config as nastech_config
 
-    monkeypatch.setattr(nastech_config, "load_config", lambda: {})
+    monkeypatch.setattr(nastech_config, "load_config", dict)
 
 
 # ---------------------------------------------------------------------------
@@ -293,7 +293,7 @@ def test_parked_branch_guard_skips_cherry_on_a_partial_clone_when_git_ignores_no
     """Git before 2.44 ignores GIT_NO_LAZY_FETCH, so the no-lazy-fetch child alone would still
     fetch without bound there (#124767, git 2.43). A partial clone must not reach cherry at all:
     with the override emptied, as old git effectively sees it, the assessment starts no fetch."""
-    import nastech_cli.update_cmd_git as update_cmd_git
+    from nastech_cli import update_cmd_git
     monkeypatch.setattr(update_cmd_git, "NO_LAZY_FETCH_ENV", {})
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")

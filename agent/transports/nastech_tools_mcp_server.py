@@ -12,7 +12,7 @@ from __future__ import annotations
 # bootstrap's scratch/TMPDIR exports must not fire in those library importers.
 if __name__ == "__main__":
     try:
-        import nastech_bootstrap  # noqa: F401
+        import nastech_bootstrap
     except ModuleNotFoundError:
         pass  # a partial ``nastech update`` can leave the bootstrap unregistered
 

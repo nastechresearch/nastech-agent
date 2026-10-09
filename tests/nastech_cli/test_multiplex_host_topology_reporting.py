@@ -30,7 +30,7 @@ def served_host(tmp_path, monkeypatch):
     monkeypatch.setenv("NASTECH_PROFILE", "served")
     monkeypatch.setenv("NASTECH_GATEWAY_LOCK_DIR", str(locks))
     monkeypatch.setattr("nastech_constants.get_default_nastech_root", lambda: root)
-    monkeypatch.setattr("nastech_cli.gateway.find_gateway_pids", lambda: [])
+    monkeypatch.setattr("nastech_cli.gateway.find_gateway_pids", list)
     monkeypatch.setattr("gateway.status.is_gateway_runtime_lock_active", lambda lock_path=None: False)
     hr.publish_record(hr.ROLE_GATEWAY, profiles=("default", "served"))
     return root

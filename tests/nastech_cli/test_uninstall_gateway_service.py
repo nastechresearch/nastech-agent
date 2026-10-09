@@ -14,8 +14,8 @@ import platform
 
 import pytest
 
-import nastech_cli.gateway as gateway
-import nastech_cli.uninstall as uninstall
+from nastech_cli import gateway
+from nastech_cli import uninstall
 
 
 @pytest.fixture

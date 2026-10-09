@@ -11,7 +11,7 @@ Usage::
 # IMPORTANT: nastech_bootstrap must be the very first import — UTF-8 stdio
 # on Windows.  No-op on POSIX.  See nastech_bootstrap.py for full rationale.
 try:
-    import nastech_bootstrap  # noqa: F401
+    import nastech_bootstrap
 except ModuleNotFoundError as exc:
     # Partial ``nastech update`` (git-reset landed, ``uv pip install -e .`` did not).
     if exc.name != "nastech_bootstrap":
@@ -111,8 +111,8 @@ def _print_version() -> None:
 
 
 def _run_check() -> None:
-    import acp  # noqa: F401
-    from acp_adapter.server import NastechACPAgent  # noqa: F401
+    import acp
+    from acp_adapter.server import NastechACPAgent
 
     print("Nastech ACP check OK")
 

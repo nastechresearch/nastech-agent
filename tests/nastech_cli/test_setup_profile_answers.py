@@ -7,7 +7,7 @@ from nastech_cli import profiles, setup_profile
 
 def test_resent_setup_prompt_keeps_the_recorded_picks(tmp_path, monkeypatch):
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
-    monkeypatch.setattr(setup_profile, "read_state", lambda: {})
+    monkeypatch.setattr(setup_profile, "read_state", dict)
     monkeypatch.setattr("nastech_cli.anon_auth.free_tier_route", lambda: None)
     setup_profile.record_cards("s1", {"pick_ids": ["github"], "picks": {"plugins": ["blender"]}})
 

@@ -325,4 +325,4 @@ def setup_terminal_backend(config: dict):
     _setup.print_success(f"Terminal backend set to: {selected_backend}")
 
 
-import nastech_cli.setup as _setup  # noqa: E402  (bottom: nastech_cli.setup imports this module)
+import nastech_cli.setup as _setup

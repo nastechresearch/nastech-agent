@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 import pytest
 
-import nastech_cli.source_check as source_check
+from nastech_cli import source_check
 
 SHA_A = "a" * 40
 SHA_B = "b" * 40

@@ -68,7 +68,7 @@ def two_homes(tmp_path, monkeypatch):
 
 def _record_credential_chores(monkeypatch):
     """Replace the credential-reading chores with recorders of (home, Nastech override) they see."""
-    import agent.curator as curator
+    from agent import curator
     from nastech_cli.auth_nastech import _nastech_inference_env_override
     from nastech_constants import get_nastech_home
 

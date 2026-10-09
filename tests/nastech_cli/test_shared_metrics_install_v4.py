@@ -12,7 +12,7 @@ import pytest
 import nastech_cli.observability.relay_shared_metrics as relay
 import nastech_cli.observability.shared_metrics_install as install
 import nastech_cli.observability.shared_metrics_startup as startup
-import tui_gateway.server as server
+from tui_gateway import server
 from nastech_cli.observability import shared_metrics_contract as contract
 from nastech_platform.host import facts
 

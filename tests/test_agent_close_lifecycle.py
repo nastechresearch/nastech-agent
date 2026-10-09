@@ -27,7 +27,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import nastech_bootstrap  # noqa: F401  (process boot before tui_gateway.server)
+import nastech_bootstrap
 
 
 class RecordingAgent:

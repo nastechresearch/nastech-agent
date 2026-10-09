@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-import nastech_cli.models as models
+from nastech_cli import models
 
 
 class _RecordingProfile:

@@ -16,8 +16,8 @@ import time
 
 import pytest
 
-import nastech_cli.auth as auth
-import nastech_cli.auth_codex as auth_codex
+from nastech_cli import auth
+from nastech_cli import auth_codex
 from nastech_cli.auth import AuthError, _refresh_codex_auth_tokens, resolve_codex_runtime_credentials
 
 STALE = {"access_token": "stale-access", "refresh_token": "stale-refresh"}

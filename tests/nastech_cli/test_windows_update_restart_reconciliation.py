@@ -23,7 +23,7 @@ from unittest.mock import patch
 
 import pytest
 
-import nastech_cli.gateway_windows as gateway_windows
+from nastech_cli import gateway_windows
 import nastech_cli.main as hm
 
 

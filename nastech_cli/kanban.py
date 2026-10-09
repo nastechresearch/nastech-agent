@@ -32,7 +32,7 @@ from nastech_cli.kanban_boards import _dispatch_boards
 from nastech_cli.kanban_ops import (
     _cmd_daemon, _kanban_config, _cmd_dispatch, _cmd_gc, _cmd_repair, _cmd_tail, _cmd_watch,
 )
-from nastech_cli.kanban_parser import build_parser  # noqa: F401  (re-exported: nastech_cli.main, run_slash)
+from nastech_cli.kanban_parser import build_parser
 
 
 # --- Flag parsing helpers ---

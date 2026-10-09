@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-import nastech_cli.gitlock as gitlock
+from nastech_cli import gitlock
 
 
 def git(repo, *args, check=True):

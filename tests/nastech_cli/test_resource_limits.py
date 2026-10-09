@@ -205,7 +205,7 @@ async def test_gateway_startup_applies_limit_before_gateway_initialization(monke
 
 def test_serve_startup_applies_limit_before_web_server(monkeypatch):
     from nastech_cli import main as cli_main
-    import nastech_cli.main_web_build as main_web_build
+    from nastech_cli import main_web_build
     import nastech_cli.plugins
     import nastech_cli.web_server
 
@@ -336,7 +336,7 @@ def test_dashboard_lifecycle_flags_skip_limit_adjustment(monkeypatch, lifecycle_
         "apply_nofile_soft_limit",
         lambda: calls.append("limit"),
     )
-    monkeypatch.setattr(dashboard_procs, "_scan_dashboard_processes", lambda: [])
+    monkeypatch.setattr(dashboard_procs, "_scan_dashboard_processes", list)
     monkeypatch.setattr(cli_main, "_find_stale_dashboard_pids", lambda **_: [])
     monkeypatch.setattr(nastech_cli_main_dashboard, "_find_stale_dashboard_pids", lambda **_: [])
 

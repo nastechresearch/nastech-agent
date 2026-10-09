@@ -13,7 +13,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from nastech_cli import update_cmd
-import nastech_cli.update_cmd_fleet as update_cmd_fleet
+from nastech_cli import update_cmd_fleet
 import nastech_cli.update_cmd_fleet_verify as fleet_verify
 from nastech_constants import get_nastech_home
 

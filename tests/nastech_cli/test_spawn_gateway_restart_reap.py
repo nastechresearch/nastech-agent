@@ -18,7 +18,7 @@ from nastech_cli import gateway as gw
 
 @pytest.fixture(autouse=True)
 def reset_restart_cooldown():
-    import nastech_cli.web_server as web_server
+    from nastech_cli import web_server
 
     web_server._LAST_GATEWAY_RESTART = None
     yield

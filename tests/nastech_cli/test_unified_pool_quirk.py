@@ -187,8 +187,8 @@ def test_vulkan_device_type_decides_discrete_vs_unified(monkeypatch, tmp_path, d
     """A discrete AMD/Intel card behind a Vulkan engine budgets its own memory with RAM as spill;
     an integrated one (ggml IGPU) keeps the RAM-as-unified budget, never both pools. The engine is
     the one config.yaml names, read through the real config loader."""
-    import nastech_cli.local_runtime.binaries as binaries
-    import nastech_cli.local_runtime.devices as devices
+    from nastech_cli.local_runtime import binaries
+    from nastech_cli.local_runtime import devices
 
     total = 16304 << 20
     home = tmp_path / ".nastech"

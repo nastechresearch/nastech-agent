@@ -6,101 +6,146 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 228 commits affecting 2888 files.
-- **Source revision:** `0240fa4a8412`.
-- **Previous source revision:** `cc75e8f4021f`.
+- **Changes incorporated:** 337 commits affecting 2898 files.
+- **Source revision:** `73162b00eefd`.
+- **Previous source revision:** `0240fa4a8412`.
 
 ## Technical coverage
 
-- **.github/:** 6 changed files.
-- **agent/:** 93 changed files.
-- **apps/:** 849 changed files.
-- **contributors/:** 2 changed files.
-- **gateway/:** 23 changed files.
-- **locales/:** 99 changed files.
-- **model_tools.py/:** 4 changed files.
-- **nastech_cli/:** 102 changed files.
-- **nastech_platform/:** 6 changed files.
-- **nastech_state.py/:** 4 changed files.
-- **nastech_state_tool_retries.py/:** 3 changed files.
-- **optional-skills/:** 129 changed files.
-- **plugin-catalog/:** 3 changed files.
-- **plugins/:** 6 changed files.
-- **pm/:** 31 changed files.
-- **run_agent.py/:** 4 changed files.
-- **scripts/:** 16 changed files.
-- **skills/:** 2 changed files.
-- **tests/:** 88 changed files.
-- **tools/:** 44 changed files.
-- **toolsets.py/:** 7 changed files.
-- **tui_gateway/:** 124 changed files.
-- **ui-tui/:** 20 changed files.
-- **website/:** 114 changed files.
+- **.github/:** 10 changed files.
+- **acp_adapter/:** 8 changed files.
+- **agent/:** 273 changed files.
+- **apps/:** 51 changed files.
+- **batch_runner.py/:** 2 changed files.
+- **cli-config.yaml.example/:** 1 changed files.
+- **cli.py/:** 4 changed files.
+- **contributors/:** 19 changed files.
+- **cron/:** 26 changed files.
+- **evals/:** 42 changed files.
+- **gateway/:** 116 changed files.
+- **lefthook.yml/:** 1 changed files.
+- **mcp_serve.py/:** 1 changed files.
+- **mini_swe_runner.py/:** 2 changed files.
+- **model_tools.py/:** 1 changed files.
+- **nastech_cli/:** 346 changed files.
+- **nastech_logging.py/:** 1 changed files.
+- **nastech_platform/:** 2 changed files.
+- **nastech_startup_watchdog.py/:** 1 changed files.
+- **nastech_state.py/:** 2 changed files.
+- **nastech_state_compression.py/:** 2 changed files.
+- **nastech_state_coverage.py/:** 2 changed files.
+- **nastech_state_dbfile.py/:** 1 changed files.
+- **nastech_state_gateway.py/:** 2 changed files.
+- **nastech_state_health.py/:** 1 changed files.
+- **nastech_state_holders.py/:** 1 changed files.
+- **nastech_state_identity.py/:** 1 changed files.
+- **nastech_state_lockguard.py/:** 1 changed files.
+- **nastech_state_lockowners.py/:** 1 changed files.
+- **nastech_state_maintenance.py/:** 2 changed files.
+- **nastech_state_messages.py/:** 2 changed files.
+- **nastech_state_portability.py/:** 4 changed files.
+- **nastech_state_profile_repair.py/:** 1 changed files.
+- **nastech_state_registry.py/:** 1 changed files.
+- **nastech_state_repair.py/:** 1 changed files.
+- **nastech_state_rewind.py/:** 1 changed files.
+- **nastech_state_schema.py/:** 1 changed files.
+- **nastech_state_search.py/:** 2 changed files.
+- **nastech_state_sessions.py/:** 2 changed files.
+- **nastech_state_telegram.py/:** 1 changed files.
+- **nastech_state_titles.py/:** 1 changed files.
+- **nastech_state_tool_retries.py/:** 1 changed files.
+- **nastech_state_usage.py/:** 2 changed files.
+- **nastech_state_wal.py/:** 1 changed files.
+- **nastech_time.py/:** 1 changed files.
+- **optional-skills/:** 52 changed files.
+- **package-lock.json/:** 1 changed files.
+- **package.json/:** 2 changed files.
+- **plugin-catalog/:** 236 changed files.
+- **plugins/:** 131 changed files.
+- **pm/:** 8 changed files.
+- **ruff.strict.toml/:** 11 changed files.
+- **run_agent.py/:** 3 changed files.
+- **scripts/:** 58 changed files.
+- **skills/:** 18 changed files.
+- **tests/:** 1688 changed files.
+- **tests-js/:** 5 changed files.
+- **tools/:** 272 changed files.
+- **toolset_distributions.py/:** 1 changed files.
+- **toolsets.py/:** 3 changed files.
+- **trajectory_compressor.py/:** 2 changed files.
+- **tui_gateway/:** 31 changed files.
+- **ui-tui/:** 3 changed files.
+- **website/:** 43 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(release): add a changelog subcommand and point oversized drafts at it
-- feat(desktop): the dimmed composer comes back after 5s without scrolling
-- feat(desktop): show the free-tier sign-in offer when the backend says it is due
-- feat(free-tier): offer sign-in after finished tasks, backing off
-- feat(desktop): Terms and Privacy butterbar for free-tier users
-- feat: the setup handoff carries what setup learned, and the task chat talks first (#129419)
-- feat(setup): the setup chat can connect an app the user asks for now (#129203)
-- feat(start_chat): a handoff from the setup profile marks onboarding complete
-- feat(desktop): setup_choose question cards and the start_chat handoff card
-- feat(onboarding): /initiate-setup built-in on every surface; the first message offers it
-- feat(skills): initiate-setup reads a pre-read user scan at skill load
-- feat(setup): the setup profile runs inline shell at skill load
-- 6 additional new capabilities updates are included in this verified snapshot.
+- feat(desktop): plugin SDK pet bubble (ctx.pet.say)
+- feat(plugin-catalog): bump nastech-pickup to 0.2.0
+- feat(plugin-catalog): add redline plugin
+- feat(catalog): refresh OpenViking pin and honor display titles
+- feat(catalog): list nastech-openwhispr (community, voice)
+- feat(plugin-catalog): add print-job-watch
+- feat(catalog): bump nastech-pokemon to v0.7.0
+- feat(plugin-catalog): bump error-ledger to 1.2.0
+- feat(plugin-catalog): nastech-dreaming 2.2.0 (final)
+- feat(plugin-catalog): nastech-dreaming 2.2.0 — trust_feedback
+- feat(plugin-catalog): nastech-dreaming 2.2.0 (final sha)
+- feat(plugin-catalog): nastech-dreaming 2.2.0
+- 26 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(release): read the Nastech version line in the Nix check and accept rc.N attempt refs
-- fix(desktop): never idle-reap a local profile backend (#134942)
-- fix(update): a whole-second marker creation time in our own second is still us
-- fix(release): the stable MSIX smoke accepts the release-time package quad
-- fix(termux): upgrade libc++ in the wheelhouse builder so cmake starts
-- fix(release): build the default flake package for the Nix identity check
-- fix(tui_gateway): a bare mid-turn model pick gets its confirm before it is queued
-- fix(desktop): tag every line of a multi-line waiter script error
-- fix(desktop): make the relaunch waiter's script log per-attempt, UTF-8 and bounded
-- fix(desktop): log why the MSIX relaunch waiter failed to start
-- fix(release): abandon clears every outstanding attempt of the version
-- fix(release): read attempt claims from the remote, not local tags
-- 99 additional reliability and fixes updates are included in this verified snapshot.
+- fix(update): a Desktop-only Node dependency failure no longer blocks the TUI and web UI
+- fix(memory): keep a runaway-recall ceiling when prefetch spilling is off
+- fix(memory): make external prefetch spilling opt-in
+- fix(gateway): ignore other Unix users' gateway processes in the process scan
+- fix(plugins): a linked plugins/<name> slot reads "already installed", not a bad manifest
+- fix(memory): a failed agent-start provider install is not retried by every process start
+- fix(tts): a failed synthesis no longer deletes an existing file
+- fix(memory): detect providers past the first 8 KB of __init__.py
+- fix(browser): end timeout=None captured waits when the supervisor loop closes
+- fix(browser): fence captured CDP dispatch and retain late replies
+- fix(mcp): a failed OAuth catalog install from a card or the agent says why, instead of `exception`
+- fix(plugin-catalog): bump web-search-plus to 4.3.5
+- 42 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Performance
 
-- perf(state): pre-filter the per-turn tool-retry scan with LIKE
+- perf(update): the product tail trusts the npm closure the PM step just verified
+- perf(install): a pinned install checks out only the pin, not the branch tip first
+- perf(desktop): skip restaging native inputs whose receipt still matches
+- perf(desktop): cache the React Compiler pass by content, so an update recompiles only the files it changed
+- perf(desktop): reuse the compiled renderer when only the install stamp changed
+- perf(install): a pinned install.ps1 clone checks out only the pin, before it publishes
 
 ### Documentation
 
-- docs(plugins): list the built-in author tools at the top of the plugin guide
-- docs(security): /yolo survives a TUI/Desktop resume too
-- docs(desktop): say which app checks setup runs
-- docs: regenerate the initiate-setup skill page
-- docs: escape <machine> so the docs site builds
-- docs(first-task): reach a first result faster with hard limits and per-ask first moves (#130247)
-- docs(catalog): target_scope no longer names the setup profile
-- docs(delegation): list start_chat among the tools subagents cannot call
+- docs(catalog): clarify OpenViking managed cloud setup
+- docs(catalog): simplify OpenViking description and refresh guide
+- docs(gateway): a service definition belongs to the home it pins
+- docs(plugin-catalog): update Ace Data Cloud installation guide
+- docs(catalog): pin kanban-gantt 1.4.2 and add its catalogue card
+- docs(plugin-catalog): bump SHA to b77f5df (canonical externalSideEffects)
+- docs(plugin-catalog): bump SHA to b9a8067 with full supersession history
+- docs(plugin-catalog): note the pending doctor namespace fix
 
 ### Improvements
 
-- refactor(approval): one session /yolo contract for CLI, TUI/Desktop and the messaging gateway
-- test(install-e2e): the windows source update check reads staged main, not GitHub main
-- Update .github/workflows/nix.yml
-- ci(release): also build the desktop package from the stamped source
-- Merge pull request #134916 from Nastechresearch/fix/relaunch-waiter-log-review
-- Merge pull request #134884 from Nastechresearch/fix/release-abandon-all-of-version
-- Merge pull request #134911 from Nastechresearch/fix/relaunch-waiter-diagnostics
-- Merge pull request #134905 from Nastechresearch/fix/release-seed-0215
-- refactor(tui-gateway): restore session /yolo once in session.resume, test in its own file
-- chore(contributors): map jonh-dev's commit email
-- test(tui_gateway): pin the large-context boundary and the no-agent pick
-- revert: dashboard-auth token exchange breaks on gzip IdP responses (partial revert of #133938)
-- 78 additional improvements updates are included in this verified snapshot.
+- test(gateway): process scan skips other uids' gateways unless root
+- refactor(desktop): move plugin-contract type re-exports out of the SDK barrel
+- catalog: add dashboard-auth-feishu
+- chore(catalog): merge-side review chores for enchanted-composer (sweep 1009)
+- catalog: re-pin Enchanted Composer after review
+- catalog: add Enchanted Composer
+- chore: map contributor email for silentpr0
+- chore(catalog): merge-side review chores for redline (sweep 1009)
+- plugin-catalog: redline re-pin to 6fbb0f9 (review fixes)
+- chore: map contributor email for hellohanchen
+- chore(catalog): merge-side review chores for huddo (sweep 1009)
+- plugin-catalog: huddo 0.7.1 (re-pin to a86d3aa)
+- 219 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

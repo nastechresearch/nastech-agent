@@ -947,7 +947,7 @@ class TestSecretFileReadRedaction:
     @pytest.fixture
     def nastech_home(self, tmp_path, monkeypatch):
         """A Nastech home with no ``.nastech`` segment, like ``%LOCALAPPDATA%\\nastech``."""
-        import agent.file_safety as file_safety
+        from agent import file_safety
 
         home = tmp_path / "nastech"
         home.mkdir()

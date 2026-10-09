@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-import nastech_cli.main_install_repair as main_install_repair
+from nastech_cli import main_install_repair
 from nastech_cli import gateway as gateway_mod
 from nastech_cli import gateway_windows
 from nastech_cli import main as cli_main

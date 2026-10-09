@@ -398,6 +398,8 @@ Preview GUI cleanup with `nastech uninstall --gui --dry-run`. It lists the remov
 Running `nastech uninstall --gui` from a **source checkout** (a `nastech desktop` dev build) removes `apps/desktop/{dist,release,node_modules}` and the desktop build stamp. The workspace-root `node_modules` stays installed because it is shared with the TUI, dashboard and other workspaces. Rebuild the GUI with `nastech desktop` if you need it again.
 :::
 
+`nastech update` keeps a desktop app current once it has been built in the checkout, even on a server that never opens it. On a headless Linux host, or when the desktop app's own Node dependencies fail to install (for example a compiler too old for `node-pty`), the update still builds the TUI and web UI, reports the desktop build as owed, and suggests `nastech uninstall --gui`. After that uninstall, later updates skip the desktop app.
+
 ## CLI reference: `nastech desktop`
 
 To launch via the CLI, simply run `nastech desktop`. By default it installs workspace Node dependencies, builds the current OS's unpacked Electron app, then launches that packaged artifact.

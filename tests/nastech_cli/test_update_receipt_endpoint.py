@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-import nastech_cli.web_server as web_server
+from nastech_cli import web_server
 import nastech_cli.web_server_gateway as _web_server_gateway
 
 

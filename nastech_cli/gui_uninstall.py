@@ -48,7 +48,7 @@ def desktop_install_record() -> Path:
     """Where ``nastech update`` records the installed ``Nastech.app`` copies it keeps current. The apps
     are machine-wide, so the record sits under the default root whichever profile runs; deleting it
     is what stops an uninstalled app from being put back by the next update."""
-    from nastech_constants import get_default_nastech_root  # noqa: PLC0415
+    from nastech_constants import get_default_nastech_root
     return get_default_nastech_root() / "desktop-installed-apps.json"
 
 

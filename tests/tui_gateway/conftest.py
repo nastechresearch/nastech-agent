@@ -7,4 +7,4 @@ the real install root through ``nastech_constants`` and exits the process when t
 Importing it once here, before any window opens, keeps boot out of the mocked import.
 """
 
-import nastech_bootstrap  # noqa: F401
+import nastech_bootstrap

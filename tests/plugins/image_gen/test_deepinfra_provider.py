@@ -40,7 +40,7 @@ def test_list_models_filters_by_image_gen_tag(monkeypatch):
     """Plugin-side wiring: list_models() returns only ``image-gen``-tagged
     catalog entries and surfaces pricing + default dims when present."""
     import json
-    import nastech_cli.models as models
+    from nastech_cli import models
 
     class _Resp:
         def __enter__(self): return self

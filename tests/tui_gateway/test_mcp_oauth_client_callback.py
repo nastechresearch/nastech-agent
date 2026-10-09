@@ -128,7 +128,7 @@ def test_start_flow_client_redirect_skips_gateway_listener(monkeypatch):
 
     # The connection-card path does not require a dashboard web server: it binds the same backend
     # receiver, registers the flow for callback relay, and carries the SSH paste hint in detail.
-    import nastech_cli.mcp_config as mcp_config
+    from nastech_cli import mcp_config
 
     monkeypatch.setattr(
         mcp_config,

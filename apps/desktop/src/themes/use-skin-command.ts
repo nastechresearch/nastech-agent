@@ -44,11 +44,14 @@ export function useSkinCommand() {
       }
 
       const normalized = arg.toLowerCase()
-      const targetName = ALIASES[normalized] || normalized
+      const alias = ALIASES[normalized]
 
-      const target = availableThemes.find(
-        t => t.name.toLowerCase() === targetName || t.label.toLowerCase() === normalized
-      )
+      // An alias resolves by theme name first: `/skin nastech` must reach the
+      // Classic pick, not match the stock theme whose *label* is "Nastech".
+      // Label matching only applies when no alias was named.
+      const target =
+        availableThemes.find(t => t.name.toLowerCase() === (alias ?? normalized)) ??
+        (alias ? undefined : availableThemes.find(t => t.label.toLowerCase() === normalized))
 
       if (!target) {
         return `Unknown desktop theme: ${arg}\nAvailable: ${availableThemes.map(t => t.name).join(', ')}`

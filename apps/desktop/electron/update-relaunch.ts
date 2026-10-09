@@ -276,7 +276,7 @@ function buildRelaunchScript({ pid, execPath, args, env, cwd }) {
 
   // NOTE: `exec` replaces the watcher process with the relaunched app, so the
   // re-exec inherits exactly the env/cwd we set above.
-  return `#!/bin/bash
+  return `#!/usr/bin/env bash
 set -u
 APP_PID=${Number(pid)}
 # Wait up to ~30s for a graceful exit, then SIGKILL: a hung/zombie parent must

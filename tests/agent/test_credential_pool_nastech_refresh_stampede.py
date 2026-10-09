@@ -20,7 +20,7 @@ import json
 import logging
 
 import nastech_cli.auth as auth_mod
-import nastech_cli.auth_nastech as auth_nastech
+from nastech_cli import auth_nastech
 from agent.credential_pool import CredentialPool, PooledCredential
 
 from tests.nastech_cli.test_auth_nastech_provider import _invoke_jwt, _setup_nastech_auth

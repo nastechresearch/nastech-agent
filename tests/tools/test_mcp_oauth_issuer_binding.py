@@ -12,10 +12,10 @@ import pytest
 
 pytest.importorskip("mcp")
 
-from mcp.shared.auth import OAuthToken  # noqa: E402
+from mcp.shared.auth import OAuthToken
 
-from tools.mcp_oauth import NastechTokenStorage  # noqa: E402
-from tools.mcp_oauth_provider import bind_issuer_from_context, enforce_refresh_token_issuer  # noqa: E402
+from tools.mcp_oauth import NastechTokenStorage
+from tools.mcp_oauth_provider import bind_issuer_from_context, enforce_refresh_token_issuer
 
 
 def _token_file(tmp_path):

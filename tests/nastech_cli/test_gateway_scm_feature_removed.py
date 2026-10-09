@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 
-import nastech_cli.config_defaults as config_defaults
+from nastech_cli import config_defaults
 from nastech_cli.subcommands import gateway as gateway_subcommands
 
 

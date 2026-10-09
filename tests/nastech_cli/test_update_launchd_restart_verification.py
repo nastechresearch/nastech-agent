@@ -25,7 +25,7 @@ import subprocess
 import pytest
 
 import nastech_cli.gateway as gateway_cli
-import nastech_cli.update_cmd as update_cmd
+from nastech_cli import update_cmd
 
 LABEL = "ai.nastech.gateway"
 

@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 def _w():
-    import nastech_cli.gateway_windows as gateway_windows  # facade binding is the seam for tests
+    from nastech_cli import gateway_windows  # facade binding is the seam for tests
 
     return gateway_windows
 

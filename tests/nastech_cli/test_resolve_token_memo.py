@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-import nastech_cli.auth as auth
+from nastech_cli import auth
 
 
 @pytest.fixture(autouse=True)

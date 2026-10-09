@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-import tui_gateway.server as server
+from tui_gateway import server
 from agent.secret_scope import build_profile_secret_scope, reset_secret_scope, set_secret_scope
 from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 

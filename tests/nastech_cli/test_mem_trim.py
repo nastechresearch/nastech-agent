@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
-import nastech_cli.mem_trim as mem_trim
+from nastech_cli import mem_trim
 
 
 @pytest.fixture(autouse=True)
