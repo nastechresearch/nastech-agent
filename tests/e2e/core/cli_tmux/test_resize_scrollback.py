@@ -112,7 +112,7 @@ def test_resizes_keep_each_transcript_line_once_in_tmux_scrollback(tmp_path: Pat
             # still-cooked tty: the kernel echoes them (a plain transcript row) and hands the app
             # text + Enter in one read, which it takes for a pasted newline — the question sits
             # unsent in a two-line draft. The status bar is painted by the running app, in raw mode.
-            wait_for("\u2624 fake-model \u2502", timeout=120)
+            wait_for("\U00013103 fake-model \u2502", timeout=120)
             time.sleep(2.0)
 
             ask(1)

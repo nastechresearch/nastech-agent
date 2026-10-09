@@ -109,7 +109,8 @@ Keyframe animation:
 
 Render to file:
 
-    bpy.context.scene.render.filepath = "/tmp/render.png"
+    import os, tempfile
+    bpy.context.scene.render.filepath = os.path.join(tempfile.gettempdir(), "render.png")
     bpy.context.scene.render.engine = 'CYCLES'
     bpy.ops.render.render(write_still=True)
 
@@ -123,7 +124,7 @@ Render to file:
   Blender isn't running or the addon isn't connected — fix that, don't retry.
 - Break complex scenes into multiple smaller `execute_blender_code` calls to
   avoid bridge timeouts.
-- Render output paths must be absolute (`/tmp/render.png`), not relative —
+- Render output paths must be absolute (`os.path.join(tempfile.gettempdir(), "render.png")`), not relative —
   they resolve on the BLENDER host's filesystem, which matters if Nastech and
   Blender run on different machines.
 - `shade_smooth()` requires the object to be selected and in object mode.

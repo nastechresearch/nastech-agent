@@ -200,7 +200,7 @@ test('buildRelaunchScript embeds pid/exec/args/env/cwd and is valid bash', () =>
   })
 
   // Structural assertions.
-  assert.match(script, /^#!\/bin\/bash/)
+  assert.match(script, /^#!\/usr\/bin\/env bash/)
   assert.match(script, /APP_PID=4242/)
   assert.match(script, /kill -9 "\$APP_PID"/)
   assert.match(script, /rm -f -- "\$0"/)
