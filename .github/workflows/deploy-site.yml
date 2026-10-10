@@ -196,6 +196,7 @@ jobs:
           # The docs build is staged under /docs/, while installers and legacy
           # links are intentionally published at the project root.
           cp scripts/install.sh _site/install.sh
+          cp scripts/install.ps1 _site/install.ps1
           cat > _site/index.html <<'HTML'
           <!doctype html>
           <meta charset="utf-8">
