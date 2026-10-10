@@ -534,7 +534,7 @@ def _case_preserving_replacement(replacement: str):
     ``~/.nastech/config.yaml`` (the real Nastech home) instead of the broken
     ``~/.Nastech/config.yaml``.
     """
-    def _sub(match: "re.Match[str]") -> str:
+    def _sub(match: re.Match[str]) -> str:
         matched = match.group(0)
         if matched and matched.islower():
             return replacement.lower()

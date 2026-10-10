@@ -210,7 +210,7 @@ LOCAL_RUNTIME_ROOT_DIRS: frozenset[str] = frozenset({"models", "runtimes", "node
 
 # get_default_nastech_root() memo keyed on (native home, expanded NASTECH_HOME) so it stays
 # fresh when a test or plugin mutates either input; saves ~80us/call at 31+ sites.
-_default_nastech_root_memo: "tuple[str, str, Path] | None" = None
+_default_nastech_root_memo: tuple[str, str, Path] | None = None
 
 
 def get_default_nastech_root(*, home: str | Path | None = None) -> Path:

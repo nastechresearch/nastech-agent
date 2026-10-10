@@ -55,7 +55,7 @@ test('explicit homes and userData retain precedence, and suffixed Windows homes 
 
   const windowsHome: string = 'C:\\Users\\test'
   const windowsEnv: NodeJS.ProcessEnv = { NASTECH_DATA_DIR_SUFFIX: 'magic-test' }
-  const expected: string = path.win32.join(windowsHome, 'AppData', 'Local', 'nastechmagic-test')
+  const expected: string = path.win32.join(windowsHome, 'AppData', 'Local', 'hermesmagic-test')
 
   assert.equal(
     resolveDesktopNastechHome({

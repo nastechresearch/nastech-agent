@@ -103,7 +103,7 @@ def _serve_ready(home: WinHome) -> tuple[subprocess.Popen, int]:
     """Spawn serve and wait for its READY port. A daemon pump keeps draining stdout after
     READY, as the Desktop does, so a full pipe can never stall the backend."""
     proc = _spawn_serve(home)
-    found: "queue.Queue[int | None]" = queue.Queue()
+    found: queue.Queue[int | None] = queue.Queue()
     seen: list[str] = []
 
     def pump() -> None:
@@ -128,14 +128,6 @@ def _serve_ready(home: WinHome) -> tuple[subprocess.Popen, int]:
     return proc, port
 
 
-def _kill_raced_its_target(killed: subprocess.CompletedProcess) -> bool:
-    """taskkill reports an already-exited target as failure (128 not found; 255 raced
-    "no running instance"). That is not a failure: there was nothing left to kill."""
-    err = (killed.stderr or b"").decode("utf-8", "replace").lower()
-    return killed.returncode in (128, 255) and (
-        "no running instance" in err or "not found" in err or "could not be terminated" in err)
-
-
 def test_serve_tree_kill_leaves_no_orphans_and_reboots(tmp_path: Path) -> None:
     with FakeLLMServer() as srv:
         home = make_home(tmp_path, srv.base_url)
@@ -148,10 +140,7 @@ def test_serve_tree_kill_leaves_no_orphans_and_reboots(tmp_path: Path) -> None:
             assert first.pid in owned, f"ownership scan cannot see serve pid {first.pid} (saw {owned})"
 
             killed = taskkill_tree(first.pid)
-            # The target may exit on its own while taskkill /T /F walks the tree, so the
-            # parent leg can come back already-gone. Accept that; the ownership and port
-            # assertions below are what actually prove the tree left nothing behind.
-            assert killed.returncode == 0 or _kill_raced_its_target(killed), killed.stderr
+            assert killed.returncode == 0, killed.stderr
             # Ownership, not ancestry: anything the backend spawned detached (a broken
             # parent link taskkill /T cannot follow) still carries this profile's
             # NASTECH_HOME / cwd, and is an orphan the Desktop quit leaves behind.

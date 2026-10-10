@@ -91,11 +91,6 @@ jobs:
           - name: Windows-only tests
             runner: windows-latest
             marker: windows
-            # The Windows row shares the 4-core runner with 4 workers; a file
-            # that drives the desktop-update hand-off spawns PowerShell trees
-            # and can exceed the 300 s default. 45 min leaves room for one
-            # 900 s per-file cap (plus the default single retry).
-            timeout: 45
           - name: Windows-only tests (arm64)
             runner: windows-latest
             marker: windows
@@ -192,18 +187,8 @@ jobs:
         env:
           # These files spawn nested PowerShell trees. CPU-count parallelism
           # starves cold child startup before the fixture's idle deadline.
-          # Hermes runs 16 workers on 32-core Windows runners; this repo has
-          # only the free 4-core windows-latest, so 16 workers here simply
-          # starved every PowerShell child into timeouts. Match the runner's
-          # core count instead.
-          NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && '4' || '' }}
+          NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && (runner.arch == 'ARM64' && '16' || '16') || '' }}
           NASTECH_TEST_SLICE: ${{ matrix.slice || '' }}
-          # e2e-windows below already runs NASTECH_TEST_FILE_TIMEOUT=900 on the
-          # same 4-core image. The Windows-only row needs the same headroom:
-          # its desktop-update hand-off file spawns PowerShell children and was
-          # killed at the 300 s default. Harmless for the macOS rows (their
-          # whole file set finishes in well under 900 s).
-          NASTECH_TEST_FILE_TIMEOUT: '900'
           # Belt-and-suspenders with tests/conftest.py's env blanking: no
           # test may reach a real provider API.
           OPENROUTER_API_KEY: ''

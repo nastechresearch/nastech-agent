@@ -103,7 +103,7 @@ class Backend:
         self.port: int | None = None
         self.clients: list[WSClient] = []
 
-    def start(self, *, timeout: float = 90.0) -> "Backend":
+    def start(self, *, timeout: float = 90.0) -> Backend:
         operator_root = (Path(_operator_home()) / ".nastech").resolve()
         assert operator_root not in (self.nastech_home.resolve(), *self.nastech_home.resolve().parents), (
             f"sandbox {self.nastech_home} sits inside the operator's Nastech home {operator_root}")
@@ -136,7 +136,7 @@ class Backend:
     def ws_url(self) -> str:
         return f"ws://127.0.0.1:{self.port}/api/ws?token={self.token}"
 
-    def connect(self, name: str) -> "WSClient":
+    def connect(self, name: str) -> WSClient:
         client = WSClient(self.ws_url, name)
         self.clients.append(client)
         return client

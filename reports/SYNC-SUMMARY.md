@@ -6,146 +6,123 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 337 commits affecting 2898 files.
-- **Source revision:** `73162b00eefd`.
-- **Previous source revision:** `0240fa4a8412`.
+- **Changes incorporated:** 207 commits affecting 2905 files.
+- **Source revision:** `f925b01791fe`.
+- **Previous source revision:** `73162b00eefd`.
 
 ## Technical coverage
 
-- **.github/:** 10 changed files.
-- **acp_adapter/:** 8 changed files.
-- **agent/:** 273 changed files.
-- **apps/:** 51 changed files.
-- **batch_runner.py/:** 2 changed files.
-- **cli-config.yaml.example/:** 1 changed files.
-- **cli.py/:** 4 changed files.
-- **contributors/:** 19 changed files.
-- **cron/:** 26 changed files.
-- **evals/:** 42 changed files.
-- **gateway/:** 116 changed files.
-- **lefthook.yml/:** 1 changed files.
+- **.github/:** 4 changed files.
+- **Dockerfile/:** 1 changed files.
+- **acp_adapter/:** 3 changed files.
+- **agent/:** 161 changed files.
+- **apps/:** 77 changed files.
+- **cli.py/:** 1 changed files.
+- **contributors/:** 16 changed files.
+- **cron/:** 13 changed files.
+- **evals/:** 5 changed files.
+- **gateway/:** 104 changed files.
+- **locales/:** 3 changed files.
 - **mcp_serve.py/:** 1 changed files.
-- **mini_swe_runner.py/:** 2 changed files.
-- **model_tools.py/:** 1 changed files.
-- **nastech_cli/:** 346 changed files.
+- **nastech_bootstrap.py/:** 1 changed files.
+- **nastech_cli/:** 218 changed files.
+- **nastech_constants.py/:** 1 changed files.
 - **nastech_logging.py/:** 1 changed files.
-- **nastech_platform/:** 2 changed files.
-- **nastech_startup_watchdog.py/:** 1 changed files.
+- **nastech_platform/:** 3 changed files.
+- **nastech_startup_watchdog.py/:** 2 changed files.
 - **nastech_state.py/:** 2 changed files.
-- **nastech_state_compression.py/:** 2 changed files.
-- **nastech_state_coverage.py/:** 2 changed files.
+- **nastech_state_common.py/:** 1 changed files.
 - **nastech_state_dbfile.py/:** 1 changed files.
-- **nastech_state_gateway.py/:** 2 changed files.
-- **nastech_state_health.py/:** 1 changed files.
-- **nastech_state_holders.py/:** 1 changed files.
-- **nastech_state_identity.py/:** 1 changed files.
-- **nastech_state_lockguard.py/:** 1 changed files.
-- **nastech_state_lockowners.py/:** 1 changed files.
+- **nastech_state_errors.py/:** 1 changed files.
+- **nastech_state_guard.py/:** 1 changed files.
 - **nastech_state_maintenance.py/:** 2 changed files.
-- **nastech_state_messages.py/:** 2 changed files.
-- **nastech_state_portability.py/:** 4 changed files.
-- **nastech_state_profile_repair.py/:** 1 changed files.
+- **nastech_state_portability.py/:** 1 changed files.
+- **nastech_state_readpool.py/:** 2 changed files.
 - **nastech_state_registry.py/:** 1 changed files.
 - **nastech_state_repair.py/:** 1 changed files.
-- **nastech_state_rewind.py/:** 1 changed files.
 - **nastech_state_schema.py/:** 1 changed files.
-- **nastech_state_search.py/:** 2 changed files.
-- **nastech_state_sessions.py/:** 2 changed files.
-- **nastech_state_telegram.py/:** 1 changed files.
-- **nastech_state_titles.py/:** 1 changed files.
-- **nastech_state_tool_retries.py/:** 1 changed files.
-- **nastech_state_usage.py/:** 2 changed files.
-- **nastech_state_wal.py/:** 1 changed files.
-- **nastech_time.py/:** 1 changed files.
-- **optional-skills/:** 52 changed files.
-- **package-lock.json/:** 1 changed files.
-- **package.json/:** 2 changed files.
-- **plugin-catalog/:** 236 changed files.
-- **plugins/:** 131 changed files.
-- **pm/:** 8 changed files.
-- **ruff.strict.toml/:** 11 changed files.
-- **run_agent.py/:** 3 changed files.
-- **scripts/:** 58 changed files.
-- **skills/:** 18 changed files.
-- **tests/:** 1688 changed files.
-- **tests-js/:** 5 changed files.
-- **tools/:** 272 changed files.
-- **toolset_distributions.py/:** 1 changed files.
-- **toolsets.py/:** 3 changed files.
-- **trajectory_compressor.py/:** 2 changed files.
-- **tui_gateway/:** 31 changed files.
-- **ui-tui/:** 3 changed files.
-- **website/:** 43 changed files.
+- **nastech_state_search.py/:** 1 changed files.
+- **nastech_state_sessions.py/:** 1 changed files.
+- **optional-skills/:** 15 changed files.
+- **package.json/:** 1 changed files.
+- **plugin-catalog/:** 81 changed files.
+- **plugins/:** 81 changed files.
+- **pm/:** 16 changed files.
+- **providers/:** 1 changed files.
+- **pyproject.toml/:** 1 changed files.
+- **registration_lifecycle.py/:** 1 changed files.
+- **ruff.strict.toml/:** 5 changed files.
+- **run_agent.py/:** 2 changed files.
+- **scripts/:** 26 changed files.
+- **skills/:** 9 changed files.
+- **tests/:** 372 changed files.
+- **tools/:** 120 changed files.
+- **trajectory_compressor.py/:** 3 changed files.
+- **tui_gateway/:** 22 changed files.
+- **utils.py/:** 2 changed files.
+- **uv.lock/:** 2 changed files.
+- **website/:** 49 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(desktop): plugin SDK pet bubble (ctx.pet.say)
-- feat(plugin-catalog): bump nastech-pickup to 0.2.0
-- feat(plugin-catalog): add redline plugin
-- feat(catalog): refresh OpenViking pin and honor display titles
-- feat(catalog): list nastech-openwhispr (community, voice)
-- feat(plugin-catalog): add print-job-watch
-- feat(catalog): bump nastech-pokemon to v0.7.0
-- feat(plugin-catalog): bump error-ledger to 1.2.0
-- feat(plugin-catalog): nastech-dreaming 2.2.0 (final)
-- feat(plugin-catalog): nastech-dreaming 2.2.0 — trust_feedback
-- feat(plugin-catalog): nastech-dreaming 2.2.0 (final sha)
-- feat(plugin-catalog): nastech-dreaming 2.2.0
-- 26 additional new capabilities updates are included in this verified snapshot.
+- feat(relay): emit compaction marks from the compression attempt record
+- feat(plugin-catalog): add jp-edinet
+- feat(plugin-catalog): add nastech-adaptive-effort plugin
+- feat(plugin-catalog): add beam plugin
+- feat(plugin-catalog): repin radio-dm-gateway to f3f8049 after the repository rename
+- feat(plugin-catalog): remove old meshtastic-gateway file name
+- feat(plugin-catalog): rename meshtastic-gateway to radio-dm-gateway
+- feat(plugin-catalog): add meshtastic-gateway
+- feat(plugin-catalog): bump command-ledger to 1.1.0
+- feat(plugin-catalog): bump approval-ledger to 1.1.0
+- feat(plugin-catalog): memory-shield 1.1.2 (review fixes)
+- feat(plugin-catalog): memory-shield 1.1.1 (bounded hook scan)
+- 12 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(update): a Desktop-only Node dependency failure no longer blocks the TUI and web UI
-- fix(memory): keep a runaway-recall ceiling when prefetch spilling is off
-- fix(memory): make external prefetch spilling opt-in
-- fix(gateway): ignore other Unix users' gateway processes in the process scan
-- fix(plugins): a linked plugins/<name> slot reads "already installed", not a bad manifest
-- fix(memory): a failed agent-start provider install is not retried by every process start
-- fix(tts): a failed synthesis no longer deletes an existing file
-- fix(memory): detect providers past the first 8 KB of __init__.py
-- fix(browser): end timeout=None captured waits when the supervisor loop closes
-- fix(browser): fence captured CDP dispatch and retain late replies
-- fix(mcp): a failed OAuth catalog install from a card or the agent says why, instead of `exception`
-- fix(plugin-catalog): bump web-search-plus to 4.3.5
-- 42 additional reliability and fixes updates are included in this verified snapshot.
-
-### Performance
-
-- perf(update): the product tail trusts the npm closure the PM step just verified
-- perf(install): a pinned install checks out only the pin, not the branch tip first
-- perf(desktop): skip restaging native inputs whose receipt still matches
-- perf(desktop): cache the React Compiler pass by content, so an update recompiles only the files it changed
-- perf(desktop): reuse the compiled renderer when only the install stamp changed
-- perf(install): a pinned install.ps1 clone checks out only the pin, before it publishes
+- fix(relay): stop waiting on Relay after one stalled compaction mark
+- fix(relay): bound compaction marks and skip unused prune estimates
+- fix(relay): mark a micro-compaction in a rotated child on the turn it ran in
+- fix(relay): keep the empty_transcript class on its attempt mark
+- fix(relay): record why an overflow compaction ran in overflow_reason
+- fix(relay): mark a second rotating compaction on the turn it ran in
+- fix(relay): align the nastech.compaction v1 contract with what Nastech emits
+- fix(relay): emit no compaction mark from an uninstrumented turn or a detached fork
+- fix(compression): report committed effects without leaking metric state
+- fix(compression): log one attempt record when an engine returns an empty transcript
+- fix(compression): keep a late-unwinding attempt's own id, session and trigger
+- fix(compression): log one attempt record when the Codex route raises
+- 58 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(catalog): clarify OpenViking managed cloud setup
-- docs(catalog): simplify OpenViking description and refresh guide
-- docs(gateway): a service definition belongs to the home it pins
-- docs(plugin-catalog): update Ace Data Cloud installation guide
-- docs(catalog): pin kanban-gantt 1.4.2 and add its catalogue card
-- docs(plugin-catalog): bump SHA to b77f5df (canonical externalSideEffects)
-- docs(plugin-catalog): bump SHA to b9a8067 with full supersession history
-- docs(plugin-catalog): note the pending doctor namespace fix
+- docs(relay): document the summarizer fields as free-form identifiers
+- docs(relay): list the gateway reset after compression exhaustion as unmarked
+- docs(update): CLI reference names stable as the default and --set-channel main as the way back
+- docs(skills): note inline-shell scoping for nested, external_dirs and unreadable-lock cases
+- docs(telemetry): v4 takes additive values in place after its stable release
+- docs(image_gen): state the fallback rule as no server accepted the request
+- docs(tool-gateway): attribute the 429 retries to the gateway
+- docs(loops): soften backend-lifetime wording
 
 ### Improvements
 
-- test(gateway): process scan skips other uids' gateways unless root
-- refactor(desktop): move plugin-contract type re-exports out of the SDK barrel
-- catalog: add dashboard-auth-feishu
-- chore(catalog): merge-side review chores for enchanted-composer (sweep 1009)
-- catalog: re-pin Enchanted Composer after review
-- catalog: add Enchanted Composer
-- chore: map contributor email for silentpr0
-- chore(catalog): merge-side review chores for redline (sweep 1009)
-- plugin-catalog: redline re-pin to 6fbb0f9 (review fixes)
-- chore: map contributor email for hellohanchen
-- chore(catalog): merge-side review chores for huddo (sweep 1009)
-- plugin-catalog: huddo 0.7.1 (re-pin to a86d3aa)
-- 219 additional improvements updates are included in this verified snapshot.
+- test(relay): make stalled mark assertion scheduler independent
+- test(relay): publish one attempt mark when the Codex route raises
+- test(relay): call a failed summary attempt failed, not aborted
+- test(compression): cover the attempt record of a rotating session-backed commit
+- test(compression): prove each automatic call site passes its trigger label
+- refactor(compression): move attempt telemetry helpers and the Codex route into siblings
+- chore(plugin-catalog): claude-code-theme requires Nastech 0.21.6 (registerSettingsPage)
+- plugin-catalog: add claude-code-theme
+- chore: map obierlaire contributor email
+- chore(plugin-catalog): lowrouter disclosure uses the catalog's 'Disclosure —' form
+- plugin-catalog: add lowrouter
+- chore(plugin-catalog): crew 0.8.1, re-pin to e698850
+- 93 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

@@ -24,7 +24,7 @@
     "audit:fix:tui": "npm audit fix --workspace ui-tui",
     "check": "npm run --ws check",
     "fix": "npm run --ws fix",
-    "prepare": "node -e \"const{existsSync}=require('fs');const{spawnSync}=require('child_process');if(!existsSync('.git'))process.exit(0);const probe=spawnSync('lefthook',['--version'],{stdio:'ignore',shell:true});if(probe.error||probe.status!==0)process.exit(0);process.exit(spawnSync('lefthook',['install'],{stdio:'inherit',shell:true}).status??0)\""
+    "prepare": "node -e \"const {existsSync}=require('fs');const {spawnSync}=require('child_process');if(existsSync('.git'))spawnSync('lefthook',['install'],{stdio:'inherit',shell:true})\""
   },
   "repository": {
     "type": "git",
