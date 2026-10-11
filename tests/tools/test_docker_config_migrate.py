@@ -39,6 +39,7 @@ def _run_migration(nastech_home: Path, **env_overrides: str) -> subprocess.Compl
         env=env,
         capture_output=True,
         text=True,
+        check=False,
     )
 
 

@@ -24,7 +24,7 @@
     "audit:fix:tui": "npm audit fix --workspace ui-tui",
     "check": "npm run --ws check",
     "fix": "npm run --ws fix",
-    "prepare": "node -e \"const{existsSync}=require('fs');const{spawnSync}=require('child_process');if(!existsSync('.git'))process.exit(0);const probe=spawnSync('lefthook',['--version'],{stdio:'ignore',shell:true});if(probe.error||probe.status!==0)process.exit(0);process.exit(spawnSync('lefthook',['install'],{stdio:'inherit',shell:true}).status??0)\""
+    "prepare": "node -e \"const {existsSync}=require('fs');const {spawnSync}=require('child_process');if(existsSync('.git'))spawnSync('lefthook',['install'],{stdio:'inherit',shell:true})\""
   },
   "repository": {
     "type": "git",
@@ -37,11 +37,13 @@
   "homepage": "https://github.com/NastechResearch/Nastech-Agent#readme",
   "devDependencies": {
     "@eslint/js": "9.39.5",
+    "eslint": "10.12.0",
     "eslint-plugin-perfectionist": "5.10.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-unused-imports": "4.4.1",
     "globals": "17.7.0",
-    "lefthook": "^2.1.14",
+    "lefthook": "2.1.14",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.64.0"
   },
   "overrides": {

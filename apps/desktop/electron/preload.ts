@@ -664,8 +664,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   updates: {
     check: opts => ipcRenderer.invoke('nastech:updates:check', opts),
     apply: opts => ipcRenderer.invoke('nastech:updates:apply', opts),
-    getBranch: () => ipcRenderer.invoke('nastech:updates:branch:get'),
-    setBranch: name => ipcRenderer.invoke('nastech:updates:branch:set', name),
+    setChannel: name => ipcRenderer.invoke('nastech:updates:channel:set', name),
     onProgress: callback => {
       const listener = (_event, payload) => callback(payload)
       ipcRenderer.on('nastech:updates:progress', listener)

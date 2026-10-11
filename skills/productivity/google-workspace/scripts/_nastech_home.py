@@ -20,8 +20,8 @@ import os
 from pathlib import Path
 
 try:
-    from nastech_constants import display_nastech_home as display_nastech_home
-    from nastech_constants import get_nastech_home as get_nastech_home
+    from nastech_constants import display_nastech_home
+    from nastech_constants import get_nastech_home
 except (ModuleNotFoundError, ImportError):
 
     def get_nastech_home() -> Path:

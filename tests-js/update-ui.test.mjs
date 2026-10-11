@@ -170,7 +170,7 @@ test.skipIf(process.platform === 'win32')('probe Git reaches the staged main eve
   } finally {
     fs.rmSync(root, { recursive: true, force: true })
   }
-}, 30_000)
+})
 
 test.skipIf(process.platform === 'win32')('historical venv install without a PM launcher still checks staged Git main', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'desktop-legacy-branch-'))
@@ -212,7 +212,7 @@ test.skipIf(process.platform === 'win32')('historical venv install without a PM 
   } finally {
     fs.rmSync(root, { recursive: true, force: true })
   }
-}, 30_000)
+})
 
 test.skipIf(process.platform === 'win32')('preloaded historical Desktop Git check reads staged origin rather than the public API', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'desktop-historical-probe-'))
@@ -251,7 +251,7 @@ test.skipIf(process.platform === 'win32')('preloaded historical Desktop Git chec
   } finally {
     fs.rmSync(root, { recursive: true, force: true })
   }
-}, 30_000)
+})
 
 test('preloaded Electron-style execFile transports explicit branch into the checker', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'desktop-branch-probe-'))
