@@ -9,8 +9,8 @@ import pytest
 import nastech_yaml as yaml
 
 from tests.nastech_cli.plugin_worker_support import (
-    plugin_world as plugin_world,
-    isolated_python as isolated_python,
+    plugin_world as plugin_world,  # noqa: PLC0414 -- the self-alias is load-bearing: it suppresses F811 for the pytest fixture parameter shadowing this import
+    isolated_python as isolated_python,  # noqa: PLC0414 -- the self-alias is load-bearing: it suppresses F811 for the pytest fixture parameter shadowing this import
 )
 
 

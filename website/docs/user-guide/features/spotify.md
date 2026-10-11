@@ -1,6 +1,6 @@
 # Spotify
 
-Nastech can control Spotify — playback, queue, search, playlists, saved tracks/albums, and listening history — through the official **`spotify` plugin** from the [plugin catalog](./plugins.md). It uses Spotify's Web API with PKCE OAuth. The plugin is maintained by Nastech Research in [NastechResearch/nastech-spotify](https://github.com/NastechResearch/nastech-spotify) and is not part of Nastech core. Tokens are stored in `~/.nastech/auth.json` and refreshed automatically on 401; you only log in once per machine (refresh tokens expire after ~6 months; re-run `nastech spotify login` when they do).
+Nastech can control Spotify — playback, queue, search, playlists, saved tracks/albums, and listening history — through the official **`spotify` plugin** from the [plugin catalog](./plugins.md). It uses Spotify's Web API with PKCE OAuth. The plugin is maintained by Nastech Research in [NastechResearch/nastech-official-plugins](https://github.com/NastechResearch/nastech-official-plugins/tree/main/spotify) and is not part of Nastech core. Tokens are stored in `~/.nastech/auth.json` and refreshed automatically on 401; you only log in once per machine (refresh tokens expire after ~6 months; re-run `nastech spotify login` when they do).
 
 Unlike Nastech' built-in OAuth integrations, Spotify requires every user to register their own lightweight developer app. Spotify does not let third parties ship a public OAuth app that anyone can use. It takes about two minutes and `nastech spotify login` walks you through it.
 

@@ -431,6 +431,7 @@ def test_repo_gitignores_the_legacy_bin_dir():
     result = subprocess.run(
         [git, "-C", str(repo_root), "check-ignore", "-q", "bin/nastech.exe"],
         capture_output=True, env=env,
+        check=False,
     )
     assert result.returncode == 0, (
         "bin/nastech.exe is not gitignored — nastech update's autostash "

@@ -5,7 +5,7 @@ description: "Vietnamese (Tieng Viet) language pack for Nastech Agent — full U
 maintainer: moken627-hub
 tier: community
 category: general
-requires_nastech: '>=0.22'
+requires_nastech: '>=0.21.6'
 docs_url: https://github.com/moken627-hub/nastech-lang-vi#readme
 version: "1.1.1"
 platforms: []

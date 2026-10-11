@@ -34,7 +34,7 @@ def desktop_userdata_dir() -> Path:
     return _env_dir("XDG_CONFIG_HOME", home / ".config") / "Nastech"
 
 
-def source_built_gui_artifacts(nastech_home: Path) -> "list[Path]":
+def source_built_gui_artifacts(nastech_home: Path) -> list[Path]:
     """GUI build artifacts produced by ``nastech desktop`` inside the checkout (same ``nastech-agent/`` layout
     install.sh uses). The workspace-root node_modules is shared with the TUI, dashboard and other
     workspaces, so only the desktop workspace's own dependencies belong to GUI removal."""
@@ -52,7 +52,7 @@ def desktop_install_record() -> Path:
     return get_default_nastech_root() / "desktop-installed-apps.json"
 
 
-def packaged_gui_app_paths() -> "list[Path]":
+def packaged_gui_app_paths() -> list[Path]:
     """Standard install locations of the packaged desktop distributable for the current OS. Every candidate
     is returned; the caller filters to those that exist. Never globs system-wide — only the well-known
     electron-builder output locations for the "Nastech" product."""
@@ -93,7 +93,7 @@ def gui_is_installed(nastech_home: Path) -> bool:
     ))
 
 
-def gui_install_summary(nastech_home: "Path | None" = None) -> dict:
+def gui_install_summary(nastech_home: Path | None = None) -> dict:
     """JSON-serializable snapshot of what's installed, for the desktop UI to render via IPC."""
     home: Path = nastech_home if nastech_home is not None else get_nastech_home()
     userdata = desktop_userdata_dir()
@@ -133,7 +133,7 @@ def _remove_path(path: Path) -> bool:
         return False
 
 
-def uninstall_gui(nastech_home: "Path | None" = None, *, remove_userdata: bool = True) -> "list[Path]":
+def uninstall_gui(nastech_home: Path | None = None, *, remove_userdata: bool = True) -> list[Path]:
     """Remove the desktop GUI's artifacts, leaving the agent + user data intact."""
     home: Path = nastech_home if nastech_home is not None else get_nastech_home()
     removed: list[Path] = []
