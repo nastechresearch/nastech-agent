@@ -57,6 +57,7 @@ def test_standalone_without_nastech_reports_setup_not_ambient_installs(command, 
         capture_output=True,
         text=True,
         timeout=15,
+        check=False,
     )
     assert result.returncode == 1
     assert "Nastech environment" in result.stdout

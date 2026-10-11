@@ -725,7 +725,7 @@ class TestAuxiliaryClientProviderPriority:
             "scope": "inference:invoke",
         }
         with patch("agent.auxiliary_client._read_nastech_auth", return_value=nastech_auth), \
-             patch("agent.auxiliary_client.OpenAI") as mock, \
+             patch("agent.auxiliary_client.OpenAI"), \
              patch("nastech_cli.models.get_nastech_recommended_aux_model", return_value=None):
             _client, model = get_text_auxiliary_client()
         assert model == _NASTECH_MODEL

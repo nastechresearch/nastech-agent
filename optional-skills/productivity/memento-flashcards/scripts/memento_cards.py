@@ -12,7 +12,7 @@ import os
 import sys
 import tempfile
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from pathlib import Path
 
 _NASTECH_HOME = Path(os.environ.get("NASTECH_HOME", Path.home() / ".nastech"))
@@ -23,7 +23,7 @@ RETIRED_SENTINEL = "9999-12-31T23:59:59+00:00"
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _iso(dt: datetime) -> str:

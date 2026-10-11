@@ -24,6 +24,7 @@ print('PM interpreter and application dependencies load as nastech')
         ["docker", "run", "--rm", "--network", "none", "--user", "nastech",
          "--entrypoint", "/opt/nastech/.venv/bin/python", built_image, "-c", probe],
         capture_output=True, text=True, timeout=60,
+        check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -44,5 +45,6 @@ assert Path('/opt/nastech/node_modules/typescript/bin/tsc').is_file()
         ["docker", "run", "--rm", "--network", "none", "--user", "nastech",
          "--entrypoint", "/opt/nastech/.venv/bin/python", built_image, "-c", probe],
         capture_output=True, text=True, timeout=60,
+        check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr

@@ -366,7 +366,7 @@ def _resolve_direct_command(nastech_path: str) -> list[str]:
     No assumption about python.exe beside an external bin launcher is valid.
     """
     out = subprocess.run([nastech_path, "--print-runtime-command"], capture_output=True,
-                         text=True, encoding="utf-8", errors="replace", timeout=30)
+                         text=True, encoding="utf-8", errors="replace", timeout=30, check=False)
     if out.returncode != 0:
         raise ValueError("could not resolve Nastech runtime; refresh this installation's launcher")
     try:
@@ -420,8 +420,8 @@ def inspect_nastech(nastech_path: str) -> dict[str, Any]:
     path = os.path.abspath(nastech_path)
     if not os.path.isabs(nastech_path) or not os.path.isfile(path):
         raise ValueError("Nastech path is not an executable file")
-    version = subprocess.run([path, "--version"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
-    help_result = subprocess.run([path, "serve", "--help"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20)
+    version = subprocess.run([path, "--version"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20, check=False)
+    help_result = subprocess.run([path, "serve", "--help"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=20, check=False)
     help_text = help_result.stdout + help_result.stderr
     return {
         "path": path,

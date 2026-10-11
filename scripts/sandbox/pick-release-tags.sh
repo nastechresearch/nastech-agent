@@ -25,13 +25,7 @@
 # empty matrix.
 #
 # Only vYYYY.M.D[.N] release tags are considered; the repo also carries
-# backup/* and one-off tags that are not releases. A tag must also be
-# Nastech-branded: the install/update E2E installs the sampled tag with its
-# own scripts/install.sh and then drives `nastech update` from that layout,
-# so a pre-rebrand tag (whose installer still lays out ~/.hermes) fails the
-# E2E's home/command assertions before the update machinery under test even
-# runs. Branding is detected from the tag's own install.sh, not HEAD's, so
-# the filter stays data-driven as releases land.
+# backup/* and one-off tags that are not releases.
 
 set -euo pipefail
 
@@ -72,23 +66,11 @@ fi
 
 # sort -V orders v2026.4.8 before v2026.4.13 (numeric), which a plain
 # lexicographic sort gets wrong.
-mapfile -t all_tags < <(
+mapfile -t tags < <(
   git -C "$REPO" tag --list 'v*' \
     | grep -E '^v[0-9]{4}\.[0-9]+\.[0-9]+(\.[0-9]+)?$' \
     | sort -V
 )
-
-# Drop pre-rebrand tags: a sampled matrix row must install via its own
-# scripts/install.sh into the current Nastech layout. A tag whose installer
-# does not reference NASTECH_HOME cannot be updated from in the E2E.
-tags=()
-for candidate in "${all_tags[@]}"; do
-  # NOTE: no `grep -q` here — it exits on first match and SIGPIPEs git
-  # (141) under pipefail, which would reject every tag wholesale.
-  if git -C "$REPO" show "$candidate:scripts/install.sh" 2>/dev/null | grep 'NASTECH_HOME' >/dev/null; then
-    tags+=("$candidate")
-  fi
-done
 
 total="${#tags[@]}"
 if [ "$total" -eq 0 ]; then

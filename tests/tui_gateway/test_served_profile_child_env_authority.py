@@ -92,7 +92,7 @@ def test_real_child_observes_only_the_routed_profile(homes):
     finally:
         reset_nastech_home_override(token)
     probe = "import json,os;print(json.dumps({k:os.environ.get(k) for k in ('NASTECH_HOME','A_MARKER','B_MARKER','OPENAI_API_KEY')}))"
-    out = subprocess.run([sys.executable, "-c", probe], env=env, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    out = subprocess.run([sys.executable, "-c", probe], env=env, capture_output=True, text=True, encoding="utf-8", timeout=60, check=False)
     seen = json.loads(out.stdout.strip().splitlines()[-1])
     assert seen == {"NASTECH_HOME": str(b), "A_MARKER": None, "B_MARKER": "b", "OPENAI_API_KEY": None}
     assert Path(seen["NASTECH_HOME"]) == b

@@ -361,7 +361,7 @@ _NASTECH_RECOMMENDED_CACHE_TTL: int = 600  # seconds (10 minutes)
 _nastech_recommended_cache: dict[tuple[str, str], tuple[dict[str, Any], float]] = {}
 
 
-def _nastech_recommended_disk_path() -> "Path":
+def _nastech_recommended_disk_path() -> Path:
     from nastech_constants import get_nastech_home
     return get_nastech_home() / "cache" / "nastech_recommended_cache.json"
 
@@ -2899,7 +2899,7 @@ def _custom_endpoint_fingerprint(
 
 
 def _cache_entry_valid(
-    entry: Any, fp: str, *, allow_empty: bool = False) -> "TypeGuard[dict[str, Any]]":
+    entry: Any, fp: str, *, allow_empty: bool = False) -> TypeGuard[dict[str, Any]]:
     """Well-formed cache row for fingerprint *fp*. Requires a numeric ``at`` so corrupt disk state
     degrades to a cache miss instead of raising; empty model lists are valid only when the caller
     opts into an authoritative empty catalog."""
