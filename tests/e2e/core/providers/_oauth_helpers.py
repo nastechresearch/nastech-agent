@@ -90,7 +90,7 @@ def nastech_argv(*args: str) -> list[str]:
 def run_nastech(fh: FakeHome, args: list[str], *, extra_env: dict[str, str] | None = None,
                timeout: float = 120.0) -> subprocess.CompletedProcess:
     return subprocess.run(nastech_argv(*args), env=fh.env(extra_env), cwd=str(fh.root), stdin=subprocess.DEVNULL,
-                          capture_output=True, text=True, timeout=timeout)
+                          capture_output=True, text=True, timeout=timeout, check=False)
 
 
 def spawn_nastech(fh: FakeHome, args: list[str], *, extra_env: dict[str, str] | None = None,

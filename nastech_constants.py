@@ -210,7 +210,7 @@ LOCAL_RUNTIME_ROOT_DIRS: frozenset[str] = frozenset({"models", "runtimes", "node
 
 # get_default_nastech_root() memo keyed on (native home, expanded NASTECH_HOME) so it stays
 # fresh when a test or plugin mutates either input; saves ~80us/call at 31+ sites.
-_default_nastech_root_memo: "tuple[str, str, Path] | None" = None
+_default_nastech_root_memo: tuple[str, str, Path] | None = None
 
 
 def get_default_nastech_root(*, home: str | Path | None = None) -> Path:
@@ -448,8 +448,9 @@ def _run_version_probe(argv: list[str], **kwargs):
     import subprocess
     try:
         from nastech_cli._subprocess_compat import windows_hide_flags
-        return subprocess.run(
-            argv, capture_output=True, timeout=10, creationflags=windows_hide_flags(), **kwargs
+        return subprocess.run(  # noqa: PLW1510 -- forwarding wrapper: callers pass subprocess kwargs via **kwargs (check may arrive through it); an explicit check=False would raise TypeError
+            argv, capture_output=True, timeout=10, creationflags=windows_hide_flags(), **kwargs,
+        
         )
     except (OSError, subprocess.TimeoutExpired, ValueError):
         return None

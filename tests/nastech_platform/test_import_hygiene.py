@@ -12,6 +12,7 @@ def test_platform_modules_only_import_stdlib_and_nastech_platform() -> None:
 import sys
 before = set(sys.modules)
 import nastech_platform.host.facts
+import nastech_platform.host.gpu_adapters
 import nastech_platform.host.runtime
 import nastech_platform.host.products
 import nastech_platform.declaration

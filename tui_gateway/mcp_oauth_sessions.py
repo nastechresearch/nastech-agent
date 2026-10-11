@@ -114,7 +114,7 @@ def start_flow(
 
 def _lookup(
     session_id: str, server_name: str, nastech_home: Optional[str] = None,
-) -> "tuple[dict[str, Any] | None, str | None]":
+) -> tuple[dict[str, Any] | None, str | None]:
     """Find a session belonging to the caller's resolved profile."""
     from nastech_constants import nastech_home_key
     with _sessions_lock:

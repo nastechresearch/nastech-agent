@@ -460,7 +460,6 @@ class TestSetupLogging:
 
         nastech_logging.setup_logging(nastech_home=nastech_home, log_level="WARNING")
 
-        root = logging.getLogger()
         agent_handlers = [
             h for h in nastech_logging._queued_file_handlers
             if isinstance(h, RotatingFileHandler)
