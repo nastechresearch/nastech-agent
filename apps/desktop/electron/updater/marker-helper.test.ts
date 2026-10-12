@@ -125,6 +125,7 @@ describe.skipIf(process.platform === 'win32')('runMarkerHelper against a real sc
 
   test('a verdict only the other op can give is an error, never clearance (R8 m7)', async () => {
     const { root, home } = fakeHelperCheckout()
+
     const opts = {
       updateRoot: root,
       nastechHome: home,
