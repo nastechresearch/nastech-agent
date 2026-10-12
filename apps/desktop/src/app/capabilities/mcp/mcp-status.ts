@@ -1,11 +1,11 @@
 import { compactNumber } from '@nastech/shared'
 
-import { getUsageAnalytics, type McpTestResult, type ProfileScope } from '@/nastech'
 import type { Translations } from '@/i18n'
 import { estimateServerTokens, serverUsageCount } from '@/lib/mcp-cost'
 import { NEEDS_AUTH_RE } from '@/lib/mcp-probe-cache'
 import { type McpServerEntry, serverEnabled } from '@/lib/mcp-servers'
 import { countEnabledTools } from '@/lib/mcp-tool-filter'
+import { getUsageAnalytics, type McpTestResult, type ProfileScope } from '@/nastech'
 
 export const MCP_CATALOG_KEY = ['mcp-catalog'] as const
 
