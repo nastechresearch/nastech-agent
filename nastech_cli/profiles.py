@@ -274,7 +274,7 @@ _RESERVED_NAMES = frozenset({"nastech", "default", "test", "tmp", "root", "sudo"
 _NASTECH_SUBCOMMANDS = frozenset({
     "chat", "model", "gateway", "setup", "whatsapp", "login", "logout",
     "status", "cron", "doctor", "dump", "config", "pairing", "skills", "tools",
-    "mcp", "sessions", "insights", "version", "update", "uninstall", "profile", "plugins", "honcho", "acp",
+    "mcp", "connectors", "sessions", "insights", "version", "update", "uninstall", "profile", "plugins", "honcho", "acp",
 })
 
 

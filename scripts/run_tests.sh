@@ -144,6 +144,11 @@ _pf86="$(env | sed -n 's/^ProgramFiles(x86)=//p' | head -n1)"
 #     their user profiles and the transcripts CI uploads.
 #   * NASTECH_E2E_STRICT_ACCEPTANCE makes tests/e2e/core/_pending_fixes.py's
 #     known gaps hard failures in an acceptance run (workflow dispatch input).
+#   * NASTECH_TEST_SSH_HOST / _USER / _PORT / _KEY and NASTECH_TEST_DOCKER_IMAGE
+#     arm the real-backend tests (tests/tools/test_ssh_environment.py,
+#     tests/tools/test_docker_backend_real.py); remote-backends.yml points them at
+#     a throwaway sshd container and a small public image. The key is a
+#     per-run throwaway, never a credential.
 #
 # These are test-infrastructure knobs, not credentials — same class as the
 # NASTECH_RUN_SLOW_PET_TESTS / NASTECH_E2E_BROWSER / NASTECH_RUN_E2E opt-ins
@@ -158,7 +163,8 @@ for _test_var in NASTECH_TEST_IMAGE NASTECH_TEST_WORKERS NASTECH_TEST_PATHS \
   NASTECH_TEST_FILE_TIMEOUT NASTECH_TEST_FILE_RETRIES NASTECH_TEST_SLICE \
   SSL_CERT_FILE SSL_CERT_DIR NASTECH_GATEWAY_LOCK_DIR NASTECH_E2E_REQUIRE_TUI CI GITHUB_ACTIONS \
   NASTECH_E2E_WINDOWS_INSTALL NASTECH_E2E_MACHINE_ROOT NASTECH_E2E_PROFILES_ROOT NASTECH_E2E_ARTIFACTS \
-  NASTECH_E2E_STRICT_ACCEPTANCE; do
+  NASTECH_E2E_STRICT_ACCEPTANCE NASTECH_TEST_SSH_HOST NASTECH_TEST_SSH_USER NASTECH_TEST_SSH_PORT \
+  NASTECH_TEST_SSH_KEY NASTECH_TEST_DOCKER_IMAGE; do
   if [ -n "${!_test_var:-}" ]; then
     TEST_ENV+=("$_test_var=${!_test_var}")
   fi
