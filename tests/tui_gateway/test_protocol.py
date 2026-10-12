@@ -39,8 +39,10 @@ def server():
     # server's ``current_transport()`` never reads (first-in-process test sees ``_stdio_transport`` as caller).
     import tui_gateway.server_requests
     import tui_gateway.transport
+    import nastech_constants  # real get_process_nastech_home: a mocked one put state.db under the cwd (repo)
     with patch.dict("sys.modules", {
-        "nastech_constants": MagicMock(get_nastech_home=MagicMock(return_value="/tmp/nastech_test")),
+        "nastech_constants": MagicMock(get_nastech_home=MagicMock(return_value="/tmp/nastech_test"),
+                                      get_process_nastech_home=nastech_constants.get_process_nastech_home),
         "nastech_cli.env_loader": MagicMock(),
         "nastech_cli.banner": MagicMock(),
         "nastech_state": MagicMock(),
@@ -68,8 +70,6 @@ def server():
     from tui_gateway import server_requests
     server_requests.reset_for_tests()
     mod._live_transports.clear()
-
-
 
 
 @pytest.fixture()

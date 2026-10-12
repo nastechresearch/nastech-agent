@@ -6,136 +6,87 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 332 commits affecting 2904 files.
-- **Source revision:** `cca83848ec79`.
-- **Previous source revision:** `73162b00eefd`.
+- **Changes incorporated:** 140 commits affecting 2907 files.
+- **Source revision:** `835c3dd038d9`.
+- **Previous source revision:** `cca83848ec79`.
 
 ## Technical coverage
 
-- **.github/:** 7 changed files.
-- **CONTRIBUTING.es.md/:** 3 changed files.
-- **CONTRIBUTING.md/:** 3 changed files.
-- **Dockerfile/:** 1 changed files.
-- **acp_adapter/:** 3 changed files.
-- **agent/:** 235 changed files.
-- **apps/:** 129 changed files.
-- **batch_runner.py/:** 1 changed files.
-- **cli.py/:** 2 changed files.
-- **contributors/:** 22 changed files.
-- **cron/:** 14 changed files.
-- **evals/:** 47 changed files.
-- **gateway/:** 118 changed files.
-- **justfile/:** 1 changed files.
-- **lefthook.yml/:** 4 changed files.
-- **locales/:** 4 changed files.
-- **mcp_serve.py/:** 1 changed files.
-- **nastech_bootstrap.py/:** 1 changed files.
-- **nastech_cli/:** 316 changed files.
-- **nastech_constants.py/:** 2 changed files.
-- **nastech_logging.py/:** 1 changed files.
-- **nastech_platform/:** 3 changed files.
-- **nastech_startup_watchdog.py/:** 2 changed files.
-- **nastech_state.py/:** 2 changed files.
-- **nastech_state_common.py/:** 1 changed files.
-- **nastech_state_dbfile.py/:** 1 changed files.
-- **nastech_state_errors.py/:** 1 changed files.
-- **nastech_state_guard.py/:** 1 changed files.
-- **nastech_state_maintenance.py/:** 2 changed files.
-- **nastech_state_portability.py/:** 1 changed files.
-- **nastech_state_readpool.py/:** 2 changed files.
-- **nastech_state_registry.py/:** 1 changed files.
-- **nastech_state_repair.py/:** 1 changed files.
-- **nastech_state_schema.py/:** 1 changed files.
-- **nastech_state_search.py/:** 1 changed files.
-- **nastech_state_sessions.py/:** 1 changed files.
-- **nastech_yaml.py/:** 1 changed files.
-- **optional-skills/:** 22 changed files.
-- **package-lock.json/:** 2 changed files.
-- **package.json/:** 3 changed files.
-- **plugin-catalog/:** 124 changed files.
-- **plugins/:** 124 changed files.
-- **pm/:** 24 changed files.
-- **providers/:** 1 changed files.
-- **pyproject.toml/:** 1 changed files.
-- **registration_lifecycle.py/:** 1 changed files.
-- **ruff.pre-commit.toml/:** 2 changed files.
-- **ruff.strict.toml/:** 9 changed files.
-- **ruff.toml/:** 4 changed files.
-- **run_agent.py/:** 2 changed files.
-- **scripts/:** 56 changed files.
-- **skills/:** 22 changed files.
-- **tests/:** 983 changed files.
-- **tools/:** 146 changed files.
-- **trajectory_compressor.py/:** 4 changed files.
-- **tui_gateway/:** 24 changed files.
-- **utils.py/:** 2 changed files.
-- **uv.lock/:** 2 changed files.
-- **website/:** 81 changed files.
+- **.github/:** 27 changed files.
+- **.gitignore/:** 1 changed files.
+- **agent/:** 3 changed files.
+- **apps/:** 164 changed files.
+- **contributors/:** 2 changed files.
+- **gateway/:** 18 changed files.
+- **lefthook.yml/:** 1 changed files.
+- **locales/:** 104 changed files.
+- **nastech_cli/:** 17 changed files.
+- **optional-skills/:** 67 changed files.
+- **plugin-catalog/:** 8 changed files.
+- **scripts/:** 48 changed files.
+- **tests/:** 168 changed files.
+- **tests-js/:** 2 changed files.
+- **tools/:** 51 changed files.
+- **tui_gateway/:** 19 changed files.
+- **ui-tui/:** 39 changed files.
+- **website/:** 34 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(evals): reasoning-replay consumption harness
-- feat(desktop): plugins run built-in app actions (ctx.runAction)
-- feat(plugin-catalog): bump stream-speed to 1.2.0
-- feat(plugin-catalog): bump aux-ledger to 1.2.0
-- feat(plugin-catalog): add Model Router v0.4.1
-- feat(plugin-catalog): add jp-kokkai
-- feat(plugin-catalog): add doc-markdown
-- feat(desktop): version details name the update channel; the overlay links to change it
-- feat(plugins): core-made Codex requests so plugins never hold the token
-- feat(relay): emit compaction marks from the compression attempt record
-- feat(plugin-catalog): add jp-edinet
-- feat(plugin-catalog): add nastech-adaptive-effort plugin
-- 21 additional new capabilities updates are included in this verified snapshot.
+- feat(check): run the blob-size guard in scripts/check
+- feat(ci): reject PRs that add binaries or new files over 500 KiB
+- feat(ci): report files a CI job leaves in the checkout
+- feat(release): offer to abandon a blocking attempt from an interactive terminal
+- feat(ci): new config keys and slash commands must ship with docs
+- feat(desktop): list, name and rename several accounts per connector
+- feat(tui,cli): reconnect repairs the chosen account by id, retired accounts fold
+- feat(tui): /connectors manages named connector accounts
+- feat(cli): nastech connectors lists, connects, renames and removes accounts
+- feat(connectors): account rows say when an account is retired, and a repair can name one by id
+- feat(cli): the connection card says which name Nastech gave an account
+- feat(connectors): gateway contracts for named connector accounts
+- 7 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(update): the main channel follows the git branch without reading an R2 record
-- fix(evals): reasoning-replay treats Anthropic refusals like xAI 403s
-- fix(evals): reasoning-replay harness measures opaque carriers reliably
-- fix: Alibaba's content guardrail ends the turn instead of a 4-minute retry loop
-- fix: /steer, /branch and compaction accounting keep reasoning intact
-- fix: encrypted reasoning items are never deleted from retained history
-- fix: Bedrock Converse reasoning survives a reload from state.db
-- fix: Gemini/Copilot signatures survive reloads; an error body can't switch off DeepSeek replay
-- fix: compaction salvage no longer strips reasoning from retained turns
-- fix: OpenAI and xAI models keep reasoning across turns and through compaction
-- fix: Gemini and Copilot keep their reasoning carriers across turns
-- fix(anthropic): Haiku 5.5 thinks adaptively
-- 94 additional reliability and fixes updates are included in this verified snapshot.
+- fix(release): a Store submission failure never blocks publishing
+- fix(release): the Store submit reads the CLI's PascalCase submission keys
+- fix(check): blob-size exempts untracked copies and reads --head's allowlist (review)
+- fix(desktop): the Persistent Shell description says what the toggle does
+- fix(terminal): make persistent_shell / TERMINAL_*_PERSISTENT actually work
+- fix(release): the Store submit reads the submission with 'get', not 'status'
+- fix(tests): keep MagicMock home paths out of the repo checkout
+- fix(release): abandon only the approved attempt, and only after the new cut is viable
+- fix(install-e2e): chat smoke waits for the app to show the mock model before sending
+- fix(gateway): offer an admitted completion again when its turn cannot confirm the owner
+- fix(gateway): keep the pre-flight's proof through a completion's turn
+- fix(gateway): read a raw api_server completion's notice policy in its served profile
+- 51 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(catalog): pin kanban-gantt 1.5.0
-- docs(plugin-catalog): qualify qdrant verbose-log claim (md_search echoes the query)
-- docs: official plugin links point at nastech-official-plugins
-- docs(plugin-catalog): rule 11 — credentials come through Nastech, never from files
-- docs(relay): document the summarizer fields as free-form identifiers
-- docs(relay): list the gateway reset after compression exhaustion as unmarked
-- docs(update): CLI reference names stable as the default and --set-channel main as the way back
-- docs(skills): note inline-shell scoping for nested, external_dirs and unreadable-lock cases
-- docs(telemetry): v4 takes additive values in place after its stable release
-- docs(image_gen): state the fallback rule as no server accepted the request
-- docs(tool-gateway): attribute the 429 retries to the gateway
-- docs(loops): soften backend-lifetime wording
+- docs(terminal): profile functions and aliases last one command with persistence on
+- docs: multiple named connector accounts
+- docs(ci): prompt-surface changes need one core approval, not two
+- docs: Accent Picker links point at nastech-official-plugins (#136446)
 
 ### Improvements
 
-- chore(memory): holographic leaves core for its community catalog plugin (re-land #136424)
-- chore(health): waive pre-existing broad excepts in the restored holographic provider
-- Revert "chore(memory): holographic leaves core for its community catalog plugin"
-- refactor(evals): split reasoning-replay summarize into per-cell helpers
-- chore(memory): holographic leaves core for its community catalog plugin
-- test: LSP hard-kill test no longer races its own cleanup
-- refactor: move the Codex recovery rungs out of turn_recovery
-- refactor: move the stream tool-call accumulator out of the chat-completions facade
-- Revert "contributors: drop internal comment line"
-- contributors: drop internal comment line
-- chore: map contributor email for jcperdomoybarra
-- chore(catalog): merge-side review chores for browser-toggle (sweep 1011)
-- 169 additional improvements updates are included in this verified snapshot.
+- test(release): a failed Store job leaves the publish phase green; stable-publish still gates it
+- fmt(js): `npm run fix` on merge (#136847)
+- test(terminal): the local default reaches the environment too; config comment matches the docs
+- ci(clean-worktree): run only when every earlier step passed
+- Merge pull request #136756 from Nastechresearch/fix/desktop-smoke-wait-for-mock-model
+- ci(remote-backends): debian 13 for the test sshd, container setup as a mounted script
+- ci(remote-backends): fail on skips from the runner's parsed counts (review)
+- ci: run the SSH and Docker terminal backends against a real sshd and daemon
+- ci(release): refuse Intel-less retirement targets and define opt-in platforms once
+- test(release): an SSH-signed pre-flag claim reads the opt-in platform keys as false
+- ci(release): stop building macOS Intel and Termux in stable releases by default
+- Code health blocks new wall-clock sleeps in tests (HX013), adds a shared wait_until helper (#136644)
+- 42 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
