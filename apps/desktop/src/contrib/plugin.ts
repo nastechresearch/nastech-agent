@@ -15,7 +15,6 @@
 import type { ReadableAtom } from 'nanostores'
 
 import { createPluginI18n, type PluginI18n } from '@/i18n'
-import { pluginRest, type PluginRestOptions, pluginSocket } from '@/nastech'
 import {
   listPluginAppActions,
   type PluginAppActionId,
