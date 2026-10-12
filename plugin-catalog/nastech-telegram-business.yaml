@@ -1,12 +1,14 @@
 name: nastech-telegram-business
-repo: https://github.com/NastechResearch/nastech-telegram-business
-sha: e905f3bc5eeaa5a9dab9bc5155601b3ebec75757
+repo: https://github.com/NastechResearch/nastech-official-plugins
+sha: abec9e822a23089943dd1d476a104bf746f19f86
+subdir: telegram-business
 description: 'Observe-with-approval Telegram Business Mode (secretary bot): every drafted customer reply
   needs owner approval before it is sent.'
 maintainer: NastechResearch
 tier: official
 category: platform
-docs_url: https://github.com/NastechResearch/nastech-telegram-business
+docs_url: https://github.com/NastechResearch/nastech-official-plugins/tree/main/telegram-business
+image: https://raw.githubusercontent.com/NastechResearch/nastech-official-plugins/abec9e822a23089943dd1d476a104bf746f19f86/assets/telegram-business.jpg
 platforms: []
 capabilities:
   provides_tools: []

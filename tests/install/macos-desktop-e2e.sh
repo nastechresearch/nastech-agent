@@ -292,6 +292,9 @@ phase_update() {
   # shellcheck disable=SC1090
   . "$STATE"
   arm_redirect
+  local pin_nastech
+  pin_nastech="$(source_nastech "$INSTALL_DIR")" || fail "no installed command to record the update channel"
+  source_build_env pin_source_main_channel "$pin_nastech" || fail "could not record the main update channel"
   # Snapshot every plugin tree BEFORE the upgrade moves anything: fixtures
   # seeded here must survive through the verify after the update lands.
   preserve_before_upgrade

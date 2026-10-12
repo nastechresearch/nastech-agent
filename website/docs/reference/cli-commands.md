@@ -94,6 +94,7 @@ The install also ships `nastech-agent`, a minimal runner that sends one query an
 | `nastech memory` | Configure external memory provider. Plugin-specific subcommands (e.g. `nastech honcho`) register automatically when their provider is active. |
 | `nastech acp` | Run Nastech as an ACP server for editor integration. |
 | `nastech mcp` | Manage MCP server configurations and run Nastech as an MCP server. |
+| `nastech connectors` | List, connect, rename and disconnect hosted connector accounts. |
 | `nastech plugins` | Manage Nastech Agent plugins (install, enable, disable, remove). |
 | `nastech portal` | Nastech Portal status, subscription link, and Tool Gateway routing. See [Tool Gateway](../user-guide/features/tool-gateway.md). |
 | `nastech tools` | Configure enabled tools per platform. |
@@ -1628,6 +1629,24 @@ Manage MCP (Model Context Protocol) server configurations and run Nastech as an 
 | `login <name>` | Force re-authentication for an OAuth-based MCP server. |
 
 See [MCP Config Reference](./mcp-config-reference.md), [Use MCP with Nastech](../guides/use-mcp-with-nastech.md), and [MCP Server Mode](../user-guide/features/mcp.md#running-nastech-as-an-mcp-server).
+
+## `nastech connectors`
+
+```bash
+nastech connectors <subcommand>
+```
+
+Manage hosted connector accounts (apps such as Gmail reached through the Nastech tool gateway). Needs a Nastech Portal sign-in. One app can have several named accounts; see [Multiple connector accounts](../user-guide/features/tool-gateway.md#multiple-connector-accounts).
+
+| Subcommand | Description |
+|------------|-------------|
+| `list` | List connectors and whether each is connected. |
+| `accounts [app] [--all]` | List accounts, for one app or all of them. `--all` includes retired accounts. |
+| `connect <app> [--alias NAME] [--reconnect [--force]]` | Print the link to connect an account, then wait until it is connected or the deadline passes. Ctrl-C stops waiting. `--alias` names the account; a new name adds another account. `--reconnect` repairs the named account and deletes nothing; on an account that is already connected it says so and does nothing unless `--force` is given. |
+| `rename <app> <name-or-label> --to <new>` | Rename an account. An unnamed account is matched by its app label. |
+| `disconnect <app> [--alias NAME] [--yes]` | Remove an account. Asks to confirm unless you pass `--yes`. |
+
+Rename needs a Nastech Portal version that supports it. Until then it reports "This Nastech Portal cannot rename connector accounts yet."
 
 ## `nastech plugins`
 
