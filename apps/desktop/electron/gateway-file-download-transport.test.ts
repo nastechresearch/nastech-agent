@@ -253,6 +253,7 @@ test('cookie connection timeout aborts before headers and never opens a dialog',
   const rejected: Promise<void> = expect(pending).rejects.toThrow(
     'Timed out connecting to Nastech backend after 2000ms'
   )
+
   await vi.advanceTimersByTimeAsync(2000)
   await rejected
   expect(request.aborted).toBe(true)
