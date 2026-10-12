@@ -14,8 +14,8 @@
 
 import type { ReadableAtom } from 'nanostores'
 
-import { pluginRest, type PluginRestOptions, pluginSocket } from '@/nastech'
 import { createPluginI18n, type PluginI18n } from '@/i18n'
+import { pluginRest, type PluginRestOptions, pluginSocket } from '@/nastech'
 import {
   listPluginAppActions,
   type PluginAppActionId,
@@ -36,9 +36,9 @@ import { type PluginSettingsPage, settingsPageContribution } from './settings-pa
 export type { PluginSettingsPage, PluginSettingsSubpage } from './settings-pages'
 import type { Contribution } from './types'
 
+export type { PluginAppActionId, PluginAppActionInfo, PluginRunActionResult } from '@/lib/keybinds/plugin-actions'
 export type { NastechOpenTarget } from '@/lib/nastech-open-target'
 export type { PluginRestOptions } from '@/nastech'
-export type { PluginAppActionId, PluginAppActionInfo, PluginRunActionResult } from '@/lib/keybinds/plugin-actions'
 export type { PluginNativeNotificationInput, PluginNotificationAction } from '@/store/native-notifications'
 export type { PetMessageTone, PetSayOptions } from '@/store/pet-plugin-messages'
 

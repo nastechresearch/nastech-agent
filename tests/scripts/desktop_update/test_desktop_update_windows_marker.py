@@ -50,7 +50,7 @@ def _creation_time(pid: int) -> str:
         ['powershell', '-NoProfile', '-Command',
          f"$c = (Get-CimInstance Win32_Process -Filter 'ProcessId={pid}').CreationDate; "
          "[DateTimeOffset]::new($c.ToUniversalTime()).ToUnixTimeMilliseconds().ToString()"],
-        capture_output=True, text=True, timeout=60, check=True,
+        capture_output=True, text=True, timeout=180, check=True,
     ).stdout.strip()
     return f'{int(out) / 1000:.3f}'
 
@@ -65,7 +65,7 @@ def _protected_pid() -> int:
     rows = subprocess.run(
         ['powershell', '-NoProfile', '-Command',
          'Get-CimInstance Win32_Process | ForEach-Object { \'{0} {1}\' -f $_.ProcessId, $_.Name }'],
-        capture_output=True, text=True, timeout=60, check=True,
+        capture_output=True, text=True, timeout=180, check=True,
     ).stdout.splitlines()
     for row in rows:
         pid, _, name = row.strip().partition(' ')
@@ -301,7 +301,7 @@ def _parent_pid(pid: int) -> int:
     out = subprocess.run(
         ['powershell', '-NoProfile', '-Command',
          f"(Get-CimInstance Win32_Process -Filter 'ProcessId={pid}').ParentProcessId"],
-        capture_output=True, text=True, timeout=60, check=True,
+        capture_output=True, text=True, timeout=180, check=True,
     ).stdout.strip()
     return int(out or 0)
 

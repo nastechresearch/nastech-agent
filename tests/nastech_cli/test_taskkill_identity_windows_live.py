@@ -46,6 +46,10 @@ class TestTerminatePidIdentityLive:
         from gateway.status import get_process_start_time, terminate_pid
 
         proc = _spawn_sleeper()
+        # Give real-time scan (Defender) a beat to finish with the fresh process
+        # object before fingerprinting and taskkilling it — the same "give the
+        # OS a beat" pattern the dead-PID sibling test uses for process teardown.
+        time.sleep(1.0)
         try:
             start = get_process_start_time(proc.pid)
             assert start is not None, "live process must have a fingerprint"
