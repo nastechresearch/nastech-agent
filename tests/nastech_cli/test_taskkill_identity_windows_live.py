@@ -18,6 +18,8 @@ import time
 
 import pytest
 
+from tests.waiting import wait_until
+
 pytestmark = pytest.mark.platforms("windows")  # live taskkill-identity probes are Windows-only
 
 
@@ -46,13 +48,12 @@ class TestTerminatePidIdentityLive:
         from gateway.status import get_process_start_time, terminate_pid
 
         proc = _spawn_sleeper()
-        # Give real-time scan (Defender) a beat to finish with the fresh process
-        # object before fingerprinting and taskkilling it — the same "give the
-        # OS a beat" pattern the dead-PID sibling test uses for process teardown.
-        time.sleep(1.0)
         try:
-            start = get_process_start_time(proc.pid)
-            assert start is not None, "live process must have a fingerprint"
+            # Poll for the fresh process's fingerprint instead of sleeping a fixed beat
+            # (HX013): a fast runner returns at once, a slow one still passes, and the
+            # real-time scan is not raced.
+            start = wait_until(lambda: get_process_start_time(proc.pid),
+                               what="the live process fingerprint")
             terminate_pid(proc.pid, force=True, expected_start_time=start)
             assert proc.wait(timeout=30) is not None
         finally:
