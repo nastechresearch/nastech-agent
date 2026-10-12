@@ -36,7 +36,7 @@ def _cleanup(proc: subprocess.Popen) -> None:
     except OSError:
         pass
     try:
-        proc.wait(timeout=10)
+        proc.wait(timeout=20)
     except Exception:
         pass
 
@@ -54,7 +54,7 @@ class TestTerminatePidIdentityLive:
             start = get_process_start_time(proc.pid)
             assert start is not None, "live process must have a fingerprint"
             terminate_pid(proc.pid, force=True, expected_start_time=start)
-            assert proc.wait(timeout=15) is not None
+            assert proc.wait(timeout=30) is not None
         finally:
             _cleanup(proc)
 
@@ -79,7 +79,7 @@ class TestTerminatePidIdentityLive:
         # fingerprint is presented against the new (different) live process.
         victim = _spawn_sleeper(1)
         stale_start = get_process_start_time(victim.pid)
-        victim.wait(timeout=30)
+        victim.wait(timeout=60)
 
         impostor = _spawn_sleeper()
         try:
@@ -101,7 +101,7 @@ class TestTerminatePidIdentityLive:
         proc = _spawn_sleeper(1)
         pid = proc.pid
         start = get_process_start_time(pid)
-        proc.wait(timeout=30)
+        proc.wait(timeout=60)
         # Give the OS a beat to drop the process object.
         time.sleep(0.5)
         if get_process_start_time(pid) == start:

@@ -87,7 +87,7 @@ def _dead_pid() -> int:
     return proc.pid
 
 
-def _run(home: Path, *args: str, install: Path | None = None, timeout: int = 120):
+def _run(home: Path, *args: str, install: Path | None = None, timeout: int = 240):
     command = ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(SCRIPT),
                '-InstallRoot', str(install or home / 'nastech-agent'), '-NoUi', *args]
     env = {**os.environ, 'NASTECH_HOME': str(home), 'NASTECH_RUNTIME_DIR': str(home / 'empty-store')}

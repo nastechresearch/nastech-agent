@@ -194,6 +194,11 @@ jobs:
           # starves cold child startup before the fixture's idle deadline.
           NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && '4' || '' }}
           NASTECH_TEST_SLICE: ${{ matrix.slice || '' }}
+          # Per-file cap. A plain standard runner is much slower than
+          # upstream's 32-core image: a file that drives the desktop-update
+          # hand-off spawns PowerShell trees and overruns the 300 s default,
+          # so lift it to the same 900 s the e2e-windows job below uses.
+          NASTECH_TEST_FILE_TIMEOUT: '900'
           # Belt-and-suspenders with tests/conftest.py's env blanking: no
           # test may reach a real provider API.
           OPENROUTER_API_KEY: ''
