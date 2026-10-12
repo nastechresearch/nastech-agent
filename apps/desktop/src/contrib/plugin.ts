@@ -24,6 +24,7 @@ import {
   runPluginAppAction
 } from '@/lib/keybinds/plugin-actions'
 import { readKey, writeKey } from '@/lib/storage'
+import { pluginRest, type PluginRestOptions, pluginSocket } from '@/nastech'
 import { dispatchPluginNativeNotification, type PluginNativeNotificationInput } from '@/store/native-notifications'
 import { $petActive } from '@/store/pet'
 import { clearPetMessages, type PetSayOptions, sayPetMessage } from '@/store/pet-plugin-messages'

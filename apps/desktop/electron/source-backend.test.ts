@@ -198,7 +198,10 @@ test.skipIf(process.platform === 'win32')(
 
       fs.unlinkSync(fixture.launcher)
       assert.equal(
-        await resolveSourceInstallationBackend(fixture.root, serveBackendArgs(), { nastechHome: env.NASTECH_HOME, env }),
+        await resolveSourceInstallationBackend(fixture.root, serveBackendArgs(), {
+          nastechHome: env.NASTECH_HOME,
+          env
+        }),
         null,
         'a missing PM command must not fall back to the stale venv'
       )

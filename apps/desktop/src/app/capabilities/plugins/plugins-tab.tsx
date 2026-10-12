@@ -19,7 +19,6 @@ import { $pluginRecords, enablePackageDesktopHalf, type PluginRecord, setPluginE
 import { useContributions } from '@/contrib/react/use-contributions'
 import { discoverRuntimePlugins, uninstallDiskPlugin } from '@/contrib/runtime-loader'
 import { pluginSettingsRouteHref, SETTINGS_PLUGINS_AREA } from '@/contrib/settings-pages'
-import type { ProfileScope } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { DESKTOP_PLUGIN_TOOLSETS } from '@/lib/desktop-toolsets'
 import { triggerHaptic } from '@/lib/haptics'
@@ -27,6 +26,7 @@ import { FolderOpen, Loader2, Monitor, Package, RefreshCw, Trash2 } from '@/lib/
 import { CATALOG_ORIGIN, CATALOG_PICKER_URL } from '@/lib/plugin-catalog'
 import { queryClient } from '@/lib/query-client'
 import { cn } from '@/lib/utils'
+import type { ProfileScope } from '@/nastech'
 import {
   $agentPluginBusy,
   $agentPlugins,
