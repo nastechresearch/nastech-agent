@@ -8,7 +8,7 @@ const config: Config = {
   tagline: 'The self-improving AI agent',
   favicon: 'img/favicon.ico',
 
-  url: 'https://nastechresearch.com',
+  url: 'https://nastechresearch.github.io/nastech-agent',
   baseUrl: '/docs/',
 
   organizationName: 'NastechResearch',
