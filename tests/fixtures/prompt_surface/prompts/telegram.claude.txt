@@ -42,7 +42,7 @@ After difficult/iterative tasks, offer to save as a skill. If a skill you loaded
     - claude-code: Delegate coding to Claude Code CLI (features, PRs).
     - codex: Delegate coding to OpenAI Codex CLI (features, PRs).
     - computer-use: Drive the desktop background-first; escalate on signal.
-    - nastech-agent: Use, configure, theme, extend, and orchestrate Nastech Agent.
+    - nastech-agent: Configure, theme, extend, and orchestrate Nastech Agent.
     - opencode: Delegate coding to OpenCode CLI (features, PR review).
   creative: Creative content generation — ASCII art, hand-drawn style diagrams, and visual design tools.
     - architecture-diagram: Dark-themed SVG architecture/cloud/infra diagrams as HTML.
@@ -90,8 +90,8 @@ After difficult/iterative tasks, offer to save as a skill. If a skill you loaded
     - codebase-inspection: Inspect codebases w/ pygount: LOC, languages, ratios.
     - dogfood: Exploratory QA of web apps: find bugs, evidence, reports.
     - github: GitHub via gh CLI: PRs, issues, reviews, repos, auth.
-    - nastech-agent-skill-authoring: Author in-repo SKILL.md files: frontmatter and structure.
     - inspecting-nastech-desktop-dom: Read the live Nastech desktop DOM/CSS over CDP.
+    - nastech-agent-skill-authoring: Author in-repo SKILL.md files: frontmatter and structure.
     - node-inspect-debugger: Debug Node.js via --inspect + Chrome DevTools Protocol CLI.
     - python-debugpy: Debug Python: pdb REPL + debugpy remote (DAP).
     - requesting-code-review: Pre-commit review: security scan, quality gates, auto-fix.
