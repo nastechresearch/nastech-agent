@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from nastech_cli.plugin_validate_core_override import check_core_override
 from nastech_cli.plugin_validate_desktop import check_desktop_surface
+from nastech_cli.plugin_validate_private_imports import check_private_imports
 from nastech_cli.plugin_validate_locales import check_language_packs
 from nastech_cli.plugins_manifest import _CONFIG_SCHEMA_TYPES
 
@@ -535,6 +536,7 @@ def validate_plugin_dir(
     _check_trusted_inbound(report, recorded)
     _check_security_scan(report, plugin_dir)
     check_core_override(report, plugin_dir)
+    check_private_imports(report, plugin_dir)
     check_desktop_surface(report, plugin_dir)
     check_language_packs(report, manifest, plugin_dir)
     from nastech_cli.plugin_isolation_audit import audit_plugin_dir

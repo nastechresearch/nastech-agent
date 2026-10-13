@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import type { ModelOptionsResult } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 

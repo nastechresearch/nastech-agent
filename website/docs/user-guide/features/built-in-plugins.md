@@ -57,7 +57,6 @@ The repo ships these bundled plugins under `plugins/`. All are opt-in — enable
 |---|---|---|
 | `disk-cleanup` | hooks + slash command | Auto-track ephemeral files and clean them on session end |
 | `security-guidance` | hooks | Pattern-match dangerous code on `write_file`/`patch` and append a security warning (or block) — 25 rules (Apache-2.0 fork of Anthropic's `claude-plugins-official` patterns) |
-| `observability/langfuse` | hooks | Trace turns / LLM calls / tools to [Langfuse](https://langfuse.com) |
 | `teams_pipeline` | standalone | Microsoft Teams meeting pipeline — Graph-backed, transcript-first meeting summaries |
 | `google_meet` | standalone | Join Meet calls, live-caption transcription, optional realtime duplex audio |
 | `image_gen/openai` | image backend | OpenAI GPT Image 2 and 2.5 Flare/Sunburst generation and editing (API key) |
@@ -139,76 +138,20 @@ The file is still written. The model reads the warning in the next turn's tool m
 
 **What it does not do (yet):** the upstream Anthropic plugin has two more layers — an LLM diff review on each agent turn that touched files, and an agentic commit-time review that traces data flow across files. Neither is ported. The agent can already run those reviews on demand via `delegate_task`.
 
-### observability/langfuse
+### Langfuse (moved to the plugin catalog)
 
-Traces Nastech turns, LLM calls, and tool invocations to [Langfuse](https://langfuse.com) — an open-source LLM observability platform. One span per turn, one generation per API call, one tool observation per tool call. Usage totals, per-type token counts, and cost estimates come out of Nastech' canonical `agent.usage_pricing` numbers, so the Langfuse dashboard sees the same breakdown (input / output / `cache_read_input_tokens` / `cache_creation_input_tokens` / `reasoning_tokens`) that appears in `nastech logs`.
-
-The plugin is fail-open: no SDK installed, no credentials, or a transient Langfuse error — all turn into a silent no-op in the hook. The agent loop is never impacted.
-
-**Setup (interactive — recommended):**
+Langfuse tracing is no longer bundled with Nastech. It ships as the official
+[`langfuse`](https://github.com/NastechResearch/nastech-official-plugins/tree/main/langfuse) catalog plugin, with the same hooks, `NASTECH_LANGFUSE_*`
+environment variables and capture modes:
 
 ```bash
-nastech tools          # → Langfuse Observability → Cloud or Self-Hosted
+nastech plugins install langfuse
 ```
 
-The wizard collects your keys, prepares the declared `langfuse` extra through PM
-when needed, and enables `observability/langfuse`. Restart Nastech and the next
-turn ships a trace. If preparation fails, retry through `nastech tools`; do not
-install the SDK into the selected environment with pip.
-
-**Setup (manual):**
-
-For a source checkout, first follow the [PM developer workflow](../../reference/package-management.md#developer-workflow)
-with the intended Nastech home. Use the checkout's prepared Python:
-
-```bash
-python -c "import pm; pm.sync_venv(['langfuse'], explicit=True)"
-source ./activate
-python nastech plugins enable observability/langfuse
-```
-
-Use `. .\activate.ps1` for PowerShell activation. Then put the credentials in
-the active home's `.env` (`$NASTECH_HOME/.env`, normally `~/.nastech/.env`):
-
-```bash
-NASTECH_LANGFUSE_PUBLIC_KEY=pk-lf-...
-NASTECH_LANGFUSE_SECRET_KEY=sk-lf-...
-NASTECH_LANGFUSE_BASE_URL=https://cloud.langfuse.com   # or your self-hosted URL
-```
-
-**How it works:**
-
-| Hook | Behaviour |
-|---|---|
-| `pre_api_request` / `pre_llm_call` | Open (or reuse) a per-turn root span "Nastech turn". Start a `generation` child observation for this API call with serialized recent messages as input. |
-| `post_api_request` / `post_llm_call` | Close the generation, attach `usage_details`, `cost_details`, `finish_reason`, assistant output + tool calls. If no tool calls and non-empty content, close the turn. |
-| `pre_tool_call` | Start a `tool` child observation with sanitized `args`. |
-| `post_tool_call` | Close the tool observation with sanitized `result`. `read_file` payloads get summarized (head + tail + omitted-line count) so a huge file read stays under `NASTECH_LANGFUSE_MAX_CHARS`. |
-
-Session grouping keys off the Nastech session ID (or task ID for sub-agents) via `langfuse.propagate_attributes`, so everything in a single `nastech chat` session lives under one Langfuse session.
-
-**Verify:**
-
-```bash
-nastech plugins list                 # observability/langfuse should show "enabled"
-nastech chat -q "hello"              # check the Langfuse UI for a "Nastech turn" trace
-```
-
-**Optional tuning** (in `.env`):
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `NASTECH_LANGFUSE_ENV` | — | Environment tag on traces (`production`, `staging`, …) |
-| `NASTECH_LANGFUSE_RELEASE` | — | Release/version tag |
-| `NASTECH_LANGFUSE_SAMPLE_RATE` | `1.0` | Sampling rate passed to the SDK (0.0–1.0) |
-| `NASTECH_LANGFUSE_MAX_CHARS` | `12000` | Per-field truncation for message content / tool args / tool results |
-| `NASTECH_LANGFUSE_DEBUG` | `false` | Verbose plugin logging to `agent.log` |
-
-Nastech-prefixed and standard SDK env vars (`LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL`) are both accepted — Nastech-prefixed wins when both are set.
-
-**Performance:** the Langfuse client is cached after the first hook call. If credentials or SDK are missing, that decision is also cached — subsequent hooks fast-return without re-checking env vars or reloading config.
-
-**Disabling:** `nastech plugins disable observability/langfuse`. The plugin module is still discovered, but no module code runs until you re-enable.
+Profiles that had `observability/langfuse` enabled get the plugin installed and
+enabled automatically by `nastech update` (or on the first start after updating),
+and keep tracing to the same Langfuse project. Setup, tuning and capture modes
+are documented in the [plugin's README](https://github.com/NastechResearch/nastech-official-plugins/tree/main/langfuse).
 
 ### NeMo Relay native integration (migration note)
 

@@ -1,5 +1,5 @@
-import { useStore } from '@nanostores/react'
 import type { OnboardingStateResult } from '@nastech/shared'
+import { useStore } from '@nanostores/react'
 import { useEffect } from 'react'
 
 import { isOnboardingEnabled } from '@/lib/onboarding-enabled'

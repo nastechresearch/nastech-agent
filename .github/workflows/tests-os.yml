@@ -194,6 +194,11 @@ jobs:
           # starves cold child startup before the fixture's idle deadline.
           NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && '4' || '' }}
           NASTECH_TEST_SLICE: ${{ matrix.slice || '' }}
+          # e2e-windows already runs NASTECH_TEST_FILE_TIMEOUT=900 on the
+          # same 4-core image; the Windows-only row needs the same headroom
+          # (its desktop-update hand-off file was killed at the 300 s
+          # default). Harmless for the macOS rows.
+          NASTECH_TEST_FILE_TIMEOUT: '900'
           # Belt-and-suspenders with tests/conftest.py's env blanking: no
           # test may reach a real provider API.
           OPENROUTER_API_KEY: ''

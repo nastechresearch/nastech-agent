@@ -360,8 +360,8 @@ _READ_DENIED_DIRS = (
      "is inside the Nastech real-profile browser snapshot (copied cookies/logins) and cannot be read directly."),
     # vault.key + vault.json.enc sit side by side; key + ciphertext = plaintext, so the whole dir is one credential.
     ("vault",
-     "is the Nastech credential vault directory and cannot be read directly (secrets are filled server-side by browser_vault_fill).",
-     "is inside the Nastech credential vault (encrypted secrets + local key) and cannot be read directly (browser_vault_fill resolves them server-side)."),
+     "is the Nastech credential vault directory and cannot be read directly (secrets are filled server-side by browser_vault).",
+     "is inside the Nastech credential vault (encrypted secrets + local key) and cannot be read directly (browser_vault resolves them server-side)."),
 )
 
 

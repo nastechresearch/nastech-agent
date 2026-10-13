@@ -68,11 +68,12 @@ from tests.fakes.fake_llm_provider import write_nastech_home
 REPO_ROOT = Path(__file__).resolve().parents[4]
 OPT_IN_ENV = "NASTECH_E2E_WINDOWS_INSTALL"
 # Upstream's 1500 s install / 1200 s update budgets assume a 32-core Windows
-# runner. On the free 4-core windows-latest the fresh install's Node
-# dependency build alone runs past 25 min at 6-way worker contention (run
-# 37822129210), so widen the harness budgets for the smaller image.
-INSTALL_TIMEOUT = 2400.0
-UPDATE_TIMEOUT = 1800.0
+# runner. This repo runs the free 4-core windows-latest under the 2x
+# standard-runner rule (a fresh install's Node dependency build alone runs
+# past 25 min at 6-way worker contention; run 37822129210): double both so
+# the harness budget never trips before the lane's own 900 s per-file cap.
+INSTALL_TIMEOUT = 3000.0
+UPDATE_TIMEOUT = 2400.0
 CMD_TIMEOUT = 300.0
 GATEWAY_READY_TIMEOUT = 240.0
 CANONICAL_URLS = (

@@ -2,8 +2,8 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
-import { useI18n } from '@/i18n'
 import type { ProfileScope } from '@/nastech'
+import { useI18n } from '@/i18n'
 import { notifyError } from '@/store/notifications'
 
 import { McpJsonEditor } from '../mcp/mcp-editor'

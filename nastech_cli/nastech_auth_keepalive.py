@@ -162,7 +162,14 @@ def refresh_nastech_auth_keepalive_once(
         )
         if pool_result is not None:
             return pool_result
-        if not get_provider_auth_state("nastech"):
+        state = get_provider_auth_state("nastech")
+        if not state:
+            return False
+        # Mid-life twin of start_nastech_auth_keepalive's guard (a guest minted after the thread
+        # started): its tokens are minted on demand, and an inference mint here would put a guest
+        # who only uses connectors through the free-inference challenge every tick.
+        from nastech_cli.anon_auth import is_guest_state
+        if is_guest_state(state):
             return False
         try:
             # Nobody is waiting on a keepalive tick: a free-tier browser challenge is announced to the

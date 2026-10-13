@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
-import { isToolEnabled } from '@/lib/mcp-tool-filter'
 import type { ProfileScope } from '@/nastech'
+import { isToolEnabled } from '@/lib/mcp-tool-filter'
 
 import { okProbe } from '../mcp/mcp-status'
 import type { McpServersController } from '../mcp/use-mcp-servers'

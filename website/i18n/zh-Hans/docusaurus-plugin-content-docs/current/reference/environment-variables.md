@@ -159,7 +159,7 @@ description: "Nastech Agent 使用的所有环境变量完整参考"
 
 ### Langfuse 可观测性
 
-内置 [`observability/langfuse`](../user-guide/features/built-in-plugins.md#observabilitylangfuse) 插件的环境变量。在 `~/.nastech/.env` 中设置。在这些变量生效之前，还必须启用该插件（`nastech plugins enable observability/langfuse`，或在 `nastech plugins` 中勾选）。
+官方目录插件 [`langfuse`](https://github.com/NastechResearch/nastech-official-plugins/tree/main/langfuse)（原内置的 `observability/langfuse`）的环境变量。在 `~/.nastech/.env` 中设置。在这些变量生效之前，必须先安装该插件（`nastech plugins install langfuse`）。
 
 | 变量 | 描述 |
 |----------|-------------|
@@ -170,6 +170,8 @@ description: "Nastech Agent 使用的所有环境变量完整参考"
 | `NASTECH_LANGFUSE_RELEASE` | trace 上的发布/版本标签 |
 | `NASTECH_LANGFUSE_SAMPLE_RATE` | SDK 采样率 0.0–1.0（默认：`1.0`） |
 | `NASTECH_LANGFUSE_MAX_CHARS` | 序列化载荷的每字段截断长度（默认：`12000`） |
+| `NASTECH_LANGFUSE_MAX_DEPTH` | 捕获的工具输入/输出保留的嵌套深度，超出部分变为 `<max-depth>`（默认：`4`；无效值会告警并使用默认值） |
+| `NASTECH_LANGFUSE_CAPTURE` | 内容捕获模式：`metadata`（不含内容）、`sanitized`（默认：密钥脱敏 + 截断）或 `full`（仅截断） |
 | `NASTECH_LANGFUSE_DEBUG` | `true` 可将详细插件日志输出到 `agent.log` |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_BASE_URL` | 标准 Langfuse SDK 变量名。当对应的 `NASTECH_LANGFUSE_*` 未设置时作为回退。 |
 

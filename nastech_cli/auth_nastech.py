@@ -442,7 +442,7 @@ def _nastech_shared_shape(src: dict[str, Any]) -> dict[str, Any]:
         "inference_base_url": src.get("inference_base_url") or (
             DEFAULT_NASTECH_WELCOME_URL if src.get("auth_method") == "anonymous" else DEFAULT_NASTECH_INFERENCE_URL),
         "obtained_at": src.get("obtained_at"), "expires_at": src.get("expires_at"),
-        **{k: src[k] for k in ("auth_method", "account_tier", "anon_token", "user_id", "org_id")
+        **{k: src[k] for k in ("auth_method", "account_tier", "anon_token", "user_id", "org_id", "connectors_token")
            if src.get(k) not in (None, "")}}
 
 
@@ -1111,6 +1111,10 @@ def _resolve_nastech_runtime_credentials(
     with _provider_state_transaction("nastech") as (auth_store, state, state_source_path):
         if not state:
             raise _nastech_err("Nastech is not logged into Nastech Portal.", "nastech_auth_missing", relogin=True)
+        from nastech_cli.anon_auth import guest_without_free_tier
+        if guest_without_free_tier(state):
+            # Not terminal (no relogin): the identity stays for connectors.
+            raise _nastech_err("Nastech is not logged into Nastech Portal.", "nastech_auth_missing")
         run = _NastechRuntimeResolve(
             auth_store, state, state_source_path, force_refresh=force_refresh,
             stale_access_token=stale_access_token, timeout_seconds=timeout_seconds)
@@ -1216,9 +1220,10 @@ def _nastech_status_from_state(
 
 def _compute_nastech_auth_status() -> dict[str, Any]:
     """Uncached implementation of get_nastech_auth_status(). See that function."""
+    from nastech_cli.anon_auth import guest_without_free_tier
     from nastech_cli.auth import get_provider_auth_state, resolve_nastech_runtime_credentials
     state = get_provider_auth_state("nastech")
-    if not state:
+    if not state or guest_without_free_tier(state):
         return _snapshot_nastech_pool_status()
     base_status = _nastech_status_from_state(
         state, logged_in=bool(state.get("access_token")), source="auth_store")
@@ -1271,12 +1276,13 @@ def get_nastech_auth_status_local() -> dict[str, Any]:
     ``logged_in`` = usable invoke JWT, or a refresh token not terminally quarantined — not proof
     the server still accepts it.
     """
+    from nastech_cli.anon_auth import guest_without_free_tier
     from nastech_cli.auth import get_provider_auth_state
     try:
         state = get_provider_auth_state("nastech")
     except Exception:
         state = None
-    if not state:
+    if not state or guest_without_free_tier(state):
         return _snapshot_nastech_pool_status()
     jwt_reason = _state_invoke_jwt_status(state, state.get("access_token"))
     last_err = _terminal_quarantine_marker(state)

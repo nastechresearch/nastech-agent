@@ -321,7 +321,9 @@ def _add_nastech_oauth_credential(args, provider: str) -> PooledCredential:
     # Codex-style auto-import: a shared Nastech credential at <nastech-root>/shared/nastech_auth.json
     # (written by any previous login) makes `nastech --profile <name> auth add nastech --type oauth`
     # a one-tap operation for multi-profile users.
-    if auth_mod._read_shared_nastech_state():
+    from nastech_cli.anon_auth import is_guest_state
+
+    if (shared := auth_mod._read_shared_nastech_state()) and not is_guest_state(shared):
         try:
             found = f"Found existing Nastech OAuth credentials at {auth_mod._nastech_shared_store_path()}"
         except RuntimeError:

@@ -623,3 +623,12 @@ class TestManifestMatchesInRepoLists:
                 for entry in json.load(fh)["providers"]["openrouter"]["models"]
             ]
         assert "inclusionai/ling-3.0-flash:free" in manifest_ids
+
+    def test_nastech_lists_portal_served_muse_spark_but_not_contributor_twins(self):
+        """The Portal serves plain muse-spark 1.2/1.3; only the -contributor twins are OpenRouter-only."""
+        from nastech_cli.models_catalog_static import _PROVIDER_MODELS
+
+        nastech = _PROVIDER_MODELS["nastech"]
+        for version in ("1.2", "1.3"):
+            assert f"meta/muse-spark-{version}" in nastech
+            assert f"meta/muse-spark-{version}-contributor" not in nastech
