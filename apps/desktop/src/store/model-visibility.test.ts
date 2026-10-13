@@ -57,11 +57,7 @@ describe('model visibility', () => {
       modelVisibilityKey('nastech', 'nastech-4')
     ])
 
-    const providers = [
-      provider('claude-sub', ['sonnet', 'haiku', 'opus']),
-      provider('nastech', ['nastech-4', 'nastech-5'])
-    ]
-
+    const providers = [provider('claude-sub', ['sonnet', 'haiku', 'opus']), provider('nastech', ['nastech-4', 'nastech-5'])]
     const visible = effectiveVisibleKeys(stored, providers, known)
 
     expect(visible.has(modelVisibilityKey('claude-sub', 'opus'))).toBe(true)

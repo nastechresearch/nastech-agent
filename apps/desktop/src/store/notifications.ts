@@ -285,7 +285,16 @@ function showNotification(input: NotificationInput, errorCategory: ErrorToastCat
   if (duration > 0) {
     timers.set(
       id,
-      window.setTimeout(() => dismissNotification(id), duration)
+      window.setTimeout(() => {
+        // This timer can outlive its jsdom window: vitest tears the
+        // environment down between files, and a late auto-dismiss then
+        // runs with no window, producing a ReferenceError that vitest
+        // reports as an unhandled error. Drop the dismissal once the
+        // environment is gone.
+        if (typeof window !== 'undefined') {
+          dismissNotification(id)
+        }
+      }, duration)
     )
   }
 

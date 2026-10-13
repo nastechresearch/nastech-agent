@@ -6,87 +6,99 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 140 commits affecting 2907 files.
-- **Source revision:** `835c3dd038d9`.
-- **Previous source revision:** `cca83848ec79`.
+- **Changes incorporated:** 498 commits affecting 2932 files.
+- **Source revision:** `6e7b83a2f1c0`.
+- **Previous source revision:** `835c3dd038d9`.
 
 ## Technical coverage
 
-- **.github/:** 27 changed files.
-- **.gitignore/:** 1 changed files.
-- **agent/:** 3 changed files.
-- **apps/:** 164 changed files.
-- **contributors/:** 2 changed files.
-- **gateway/:** 18 changed files.
-- **lefthook.yml/:** 1 changed files.
-- **locales/:** 104 changed files.
-- **nastech_cli/:** 17 changed files.
-- **optional-skills/:** 67 changed files.
-- **plugin-catalog/:** 8 changed files.
-- **scripts/:** 48 changed files.
-- **tests/:** 168 changed files.
-- **tests-js/:** 2 changed files.
-- **tools/:** 51 changed files.
-- **tui_gateway/:** 19 changed files.
-- **ui-tui/:** 39 changed files.
-- **website/:** 34 changed files.
+- **.github/:** 5 changed files.
+- **agent/:** 40 changed files.
+- **apps/:** 219 changed files.
+- **contributors/:** 38 changed files.
+- **evals/:** 4 changed files.
+- **gateway/:** 1 changed files.
+- **locales/:** 22 changed files.
+- **model_tools.py/:** 4 changed files.
+- **nastech_cli/:** 94 changed files.
+- **plugin-catalog/:** 255 changed files.
+- **plugins/:** 79 changed files.
+- **pm/:** 8 changed files.
+- **pyproject.toml/:** 2 changed files.
+- **scripts/:** 25 changed files.
+- **tests/:** 206 changed files.
+- **tools/:** 104 changed files.
+- **toolsets.py/:** 1 changed files.
+- **tui_gateway/:** 23 changed files.
+- **uv.lock/:** 2 changed files.
+- **web/:** 4 changed files.
+- **website/:** 38 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(check): run the blob-size guard in scripts/check
-- feat(ci): reject PRs that add binaries or new files over 500 KiB
-- feat(ci): report files a CI job leaves in the checkout
-- feat(release): offer to abandon a blocking attempt from an interactive terminal
-- feat(ci): new config keys and slash commands must ship with docs
-- feat(desktop): list, name and rename several accounts per connector
-- feat(tui,cli): reconnect repairs the chosen account by id, retired accounts fold
-- feat(tui): /connectors manages named connector accounts
-- feat(cli): nastech connectors lists, connects, renames and removes accounts
-- feat(connectors): account rows say when an account is retired, and a repair can name one by id
-- feat(cli): the connection card says which name Nastech gave an account
-- feat(connectors): gateway contracts for named connector accounts
-- 7 additional new capabilities updates are included in this verified snapshot.
+- feat(plugin-catalog): add auto-pin plugin
+- feat(catalog): add wicked-memory tools plugin
+- feat(catalog): add TTS Buddy native speech provider
+- feat(plugin-catalog): bump approval-ledger to 1.2.0
+- feat(plugin-catalog): bump error-ledger to 1.3.0
+- feat(plugin-catalog): add channel3 shopping plugin
+- feat(plugin-catalog): pin heartbeat2 to v0.1.1 (catalog review conditions)
+- feat(plugin-catalog): add heartbeat2 plugin
+- feat(plugin-catalog): re-pin Index 0.48.5 to 1214c61
+- feat(plugin-catalog): pin Index to 0.48.5 (7f4c3ed)
+- feat(plugin-catalog): pin Index to 0.48.4 (87e714d)
+- feat(plugin-catalog): add nastech-mobile platform adapter entry
+- 56 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(release): a Store submission failure never blocks publishing
-- fix(release): the Store submit reads the CLI's PascalCase submission keys
-- fix(check): blob-size exempts untracked copies and reads --head's allowlist (review)
-- fix(desktop): the Persistent Shell description says what the toggle does
-- fix(terminal): make persistent_shell / TERMINAL_*_PERSISTENT actually work
-- fix(release): the Store submit reads the submission with 'get', not 'status'
-- fix(tests): keep MagicMock home paths out of the repo checkout
-- fix(release): abandon only the approved attempt, and only after the new cut is viable
-- fix(install-e2e): chat smoke waits for the app to show the mock model before sending
-- fix(gateway): offer an admitted completion again when its turn cannot confirm the owner
-- fix(gateway): keep the pre-flight's proof through a completion's turn
-- fix(gateway): read a raw api_server completion's notice policy in its served profile
-- 51 additional reliability and fixes updates are included in this verified snapshot.
+- fix(desktop): a catalog link that launches Desktop opens the install dialog
+- fix(desktop): the catalog lookup falls back only for a backend without the method
+- fix(desktop): a malformed catalog lookup reply reads as unavailable; the gateway validates names with the CLI's own rule
+- fix(desktop): catalog deep links ask the backend for the entry
+- fix(update): --version, the dashboard and a remote backend name a stable rollback too (#137714)
+- fix(desktop): the rollback dialog names its button and claims no changes (#137714)
+- fix(desktop): a stable release older than the checkout is offered as a rollback (#137714)
+- fix(desktop): preserve stable update channel context
+- fix(update): a stable release older than the checkout reads as a rollback (#137714)
+- fix(install): a rerun keeps an install on the update channel it chose (#137714)
+- fix(plugin-catalog): only plain UTF-8 data may ship compressed
+- fix(plugin-catalog): rule 17 gate reads a single gzipped file instead of failing it
+- 138 additional reliability and fixes updates are included in this verified snapshot.
+
+### Performance
+
+- perf(prompt): fixed prefix back under the post-diet size (-2.1k tokens per request)
 
 ### Documentation
 
-- docs(terminal): profile functions and aliases last one command with persistence on
-- docs: multiple named connector accounts
-- docs(ci): prompt-surface changes need one core approval, not two
-- docs: Accent Picker links point at nastech-official-plugins (#136446)
+- docs(plugin-catalog): inline disclosure line in the nastech-mobile description
+- docs(tools): the refresh docstring and publish guard say when schema bytes count
+- docs(plugins): catalog rule 9 notes validate warns on private core imports
+- docs(plugins): place lifecycle Routing after the example; list the routed delegation keys
+- docs(shared-metrics): connector naming, error classes and the three new rows
+- docs(pm): 3-day release age checked at lock time; plugins trust core's lock
+- docs(auth): spell out the unknown sk-ant-* default in _is_oauth_token
+- docs: pin released provider with API-key onboarding
+- docs: use AceDataCloudModelProviderNastech repository name
 
 ### Improvements
 
-- test(release): a failed Store job leaves the publish phase green; stable-publish still gates it
-- fmt(js): `npm run fix` on merge (#136847)
-- test(terminal): the local default reaches the environment too; config comment matches the docs
-- ci(clean-worktree): run only when every earlier step passed
-- Merge pull request #136756 from Nastechresearch/fix/desktop-smoke-wait-for-mock-model
-- ci(remote-backends): debian 13 for the test sshd, container setup as a mounted script
-- ci(remote-backends): fail on skips from the runner's parsed counts (review)
-- ci: run the SSH and Docker terminal backends against a real sshd and daemon
-- ci(release): refuse Intel-less retirement targets and define opt-in platforms once
-- test(release): an SSH-signed pre-flag claim reads the opt-in platform keys as false
-- ci(release): stop building macOS Intel and Termux in stable releases by default
-- Code health blocks new wall-clock sleeps in tests (HX013), adds a shared wait_until helper (#136644)
-- 42 additional improvements updates are included in this verified snapshot.
+- fmt(js): `npm run fix` on merge (#137796)
+- catalog: add agent-ledger v0.4.4 (e9eba11)
+- chore(catalog): reviewed disclosure for holographic
+- plugin-catalog: bump holographic to 0.13.0
+- plugin-catalog: bump holographic to 0.12.0
+- plugin-catalog: bump holographic to 0.11.0
+- plugin-catalog: bump holographic to 0.10.0
+- plugin-catalog: bump holographic to 0.9.0
+- plugin-catalog: bump holographic to 0.8.0
+- plugin-catalog: bump holographic to 0.7.0
+- plugin-catalog: bump holographic to 0.6.2
+- refactor: keep the rollback wiring inside the code-health caps (#137714)
+- 258 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

@@ -1,10 +1,10 @@
 import { type MutableRefObject, useCallback, useRef, useState } from 'react'
 
 import { setTerminalFontFamilyFromConfig } from '@/app/right-sidebar/terminal/terminal-font'
+import { getNastechConfig, getNastechConfigDefaults } from '@/nastech'
 import { BUILTIN_PERSONALITIES, normalizePersonalityValue, personalityNamesFromConfig } from '@/lib/chat-runtime'
 import { composerServiceTier } from '@/lib/model-status-label'
 import { normalize } from '@/lib/text'
-import { getNastechConfig, getNastechConfigDefaults } from '@/nastech'
 import { setDisplayTimestampsFromConfig } from '@/store/display-timestamps'
 import { setShowReasoningFromConfig } from '@/store/reasoning-disclosure'
 import {

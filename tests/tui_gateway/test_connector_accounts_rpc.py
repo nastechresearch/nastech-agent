@@ -17,6 +17,8 @@ from tui_gateway import server
 def _gate(monkeypatch):
     live.reset_for_tests()
     monkeypatch.setattr("tools.connectors.connectors_available", lambda: True)
+    monkeypatch.setattr("tools.connectors.ensure_guest_identity", lambda: None)
+    monkeypatch.setattr("tools.connectors.managed.ensure_guest_identity", lambda: None)
     yield
     live.reset_for_tests()
 
@@ -55,6 +57,9 @@ def test_account_connect_with_an_alias_mints_that_account(monkeypatch):
     minted = threading.Event()
 
     class Client:
+        def __init__(self, **_):
+            pass
+
         def connections(self, names, *, reinitiate=False, alias=None, **_):
             mints.append((tuple(names), reinitiate, alias))
             minted.set()
@@ -89,6 +94,9 @@ def test_a_session_retry_for_another_account_does_not_re_mint_the_open_one(monke
     mints = []
 
     class Client:
+        def __init__(self, **_):
+            pass
+
         def connections(self, names, **kwargs):
             mints.append((tuple(names), kwargs.get("alias")))
             return {"results": []}
@@ -126,6 +134,9 @@ def test_a_session_retry_with_the_open_accounts_id_reissues_it(monkeypatch):
     mints = []
 
     class Client:
+        def __init__(self, **_):
+            pass
+
         def connections(self, names, **kwargs):
             mints.append((tuple(names), kwargs.get("connection_id")))
             return {"results": [{"connector": n, "status": "initiated", "connect_url": "https://l/2",

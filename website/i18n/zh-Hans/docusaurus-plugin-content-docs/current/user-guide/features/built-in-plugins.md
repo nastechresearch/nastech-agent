@@ -56,7 +56,6 @@ nastech plugins disable disk-cleanup
 | 插件 | 类型 | 用途 |
 |---|---|---|
 | `disk-cleanup` | hook + 斜杠命令 | 自动追踪临时文件并在会话结束时清理 |
-| `observability/langfuse` | hook | 将轮次 / LLM 调用 / 工具追踪到 [Langfuse](https://langfuse.com) |
 | `google_meet` | 独立插件 | 加入 Meet 通话、实时字幕转录、可选实时双工音频 |
 | `image_gen/openai` | 图像后端 | OpenAI `gpt-image-2` 图像生成后端（FAL 的替代方案） |
 | `image_gen/openai-codex` | 图像后端 | 通过 Codex OAuth 使用 OpenAI 图像生成 |
@@ -114,72 +113,17 @@ nastech plugins disable disk-cleanup
 
 **再次禁用：** `nastech plugins disable disk-cleanup`。
 
-### observability/langfuse
+### Langfuse（已移至插件目录）
 
-将 Nastech 的轮次、LLM 调用和工具调用追踪到 [Langfuse](https://langfuse.com)——一个开源 LLM 可观测性平台。每轮一个 span，每次 API 调用一个 generation，每次工具调用一个 tool observation。用量总计、各类型 token 数量和成本估算来自 Nastech 的标准 `agent.usage_pricing` 数据，因此 Langfuse 仪表盘看到的分类（input / output / `cache_read_input_tokens` / `cache_creation_input_tokens` / `reasoning_tokens`）与 `nastech logs` 中显示的一致。
-
-该插件采用失败开放（fail-open）策略：未安装 SDK、无凭据或 Langfuse 出现瞬时错误——所有情况都会在 hook 中静默处理为无操作。agent 循环不受任何影响。
-
-**设置：**
+Langfuse 追踪不再随 Nastech 内置，而是作为官方目录插件 [`langfuse`](https://github.com/NastechResearch/nastech-official-plugins/tree/main/langfuse) 提供，
+hook、`NASTECH_LANGFUSE_*` 环境变量和捕获模式保持不变：
 
 ```bash
-nastech tools  # → Langfuse Observability → Cloud 或 Self-Hosted
+nastech plugins install langfuse
 ```
 
-向导收集凭据，按需通过 PM 准备已声明的 `langfuse` extra，并启用插件。
-完成后重启 Nastech；准备失败时通过 `nastech tools` 重试，不要直接 pip 安装到选中的环境。
-
-源码检出的手动设置：先按照 [PM 开发流程](../../reference/package-management.md#developer-workflow)
-激活目标检出并选择正确的 Nastech 数据目录，然后执行：
-
-```bash
-python -c "import pm; pm.sync_venv(['langfuse'], explicit=True)"
-source ./activate
-python nastech plugins enable observability/langfuse
-```
-
-PowerShell 使用 `. .\activate.ps1` 激活。将凭据写入活动数据目录的 `.env`
-（`$NASTECH_HOME/.env`，通常为 `~/.nastech/.env`）：
-
-```bash
-NASTECH_LANGFUSE_PUBLIC_KEY=pk-lf-...
-NASTECH_LANGFUSE_SECRET_KEY=sk-lf-...
-NASTECH_LANGFUSE_BASE_URL=https://cloud.langfuse.com   # 或你的自托管 URL
-```
-
-**工作原理：**
-
-| Hook | 行为 |
-|---|---|
-| `pre_api_request` / `pre_llm_call` | 打开（或复用）每轮的根 span "Nastech turn"。为本次 API 调用启动一个 `generation` 子 observation，将最近的消息序列化为输入。 |
-| `post_api_request` / `post_llm_call` | 关闭 generation，附加 `usage_details`、`cost_details`、`finish_reason`、助手输出和工具调用。如果没有工具调用且内容非空，则关闭本轮。 |
-| `pre_tool_call` | 启动一个带有经过清理的 `args` 的 `tool` 子 observation。 |
-| `post_tool_call` | 关闭 tool observation，附加经过清理的 `result`。`read_file` 的内容会被摘要化（头部 + 尾部 + 省略行数），以使大文件读取保持在 `NASTECH_LANGFUSE_MAX_CHARS` 以内。 |
-
-会话分组基于 Nastech 会话 ID（或子 agent 的任务 ID），通过 `langfuse.propagate_attributes` 实现，因此单次 `nastech chat` 会话中的所有内容都归属于同一个 Langfuse session。
-
-**验证：**
-
-```bash
-nastech plugins list                 # observability/langfuse 应显示 "enabled"
-nastech chat -q "hello"              # 在 Langfuse UI 中检查是否有 "Nastech turn" trace
-```
-
-**可选调优**（在 `.env` 中）：
-
-| 变量 | 默认值 | 用途 |
-|---|---|---|
-| `NASTECH_LANGFUSE_ENV` | — | trace 上的环境标签（`production`、`staging` 等） |
-| `NASTECH_LANGFUSE_RELEASE` | — | 发布/版本标签 |
-| `NASTECH_LANGFUSE_SAMPLE_RATE` | `1.0` | 传递给 SDK 的采样率（0.0–1.0） |
-| `NASTECH_LANGFUSE_MAX_CHARS` | `12000` | 消息内容 / 工具参数 / 工具结果的单字段截断长度 |
-| `NASTECH_LANGFUSE_DEBUG` | `false` | 向 `agent.log` 输出详细插件日志 |
-
-Nastech 前缀的环境变量和标准 SDK 环境变量（`LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`、`LANGFUSE_BASE_URL`）均被接受——两者同时设置时，Nastech 前缀的优先。
-
-**性能：** Langfuse 客户端在第一次 hook 调用后被缓存。如果凭据或 SDK 缺失，该决定也会被缓存——后续 hook 会快速返回，不再重新检查环境变量或重新加载配置。
-
-**禁用：** `nastech plugins disable observability/langfuse`。插件模块仍会被发现，但在你重新启用之前不会运行任何模块代码。
+已启用 `observability/langfuse` 的配置文件会在 `nastech update`（或更新后的首次启动）时自动安装并启用该插件，
+继续向同一个 Langfuse 项目发送 trace。安装、调优和捕获模式见[插件 README](https://github.com/NastechResearch/nastech-official-plugins/tree/main/langfuse)。
 
 ### google_meet
 

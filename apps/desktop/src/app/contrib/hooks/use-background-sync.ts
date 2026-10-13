@@ -8,6 +8,7 @@ import {
 } from '@/app/chat/transcript-backfill'
 import { sessionCreatedThisRun } from '@/app/session/hooks/use-session-actions/created-this-run'
 import { preserveLocalPendingTurnMessages } from '@/app/session/hooks/use-session-actions/utils'
+import { getLatestSessionMessages, type ProfileScope } from '@/nastech'
 import {
   type ChatMessage,
   preserveLocalAssistantErrors,
@@ -18,7 +19,6 @@ import {
 import { createClientSessionState } from '@/lib/chat-runtime'
 import { sessionListFingerprint, sessionMessagesSignature } from '@/lib/session-signatures'
 import { latestSessionTodos, latestSessionTodoSnapshot } from '@/lib/todos'
-import { getLatestSessionMessages, type ProfileScope } from '@/nastech'
 import { pendingSessionReplay } from '@/store/gateway'
 import { $sidebarShowArchived } from '@/store/layout'
 import { $changeEventsAvailable, $cronChangeTick, $projectsChangeTick, $sessionsChangeTick } from '@/store/live-sync'

@@ -3,9 +3,9 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { createElement } from 'react'
 import { afterEach, expect, it, vi } from 'vitest'
 
-import { queryClient } from '@/lib/query-client'
 import type * as NastechApi from '@/nastech'
 import { bindConfigReadOrigin, getNastechConfigRecord } from '@/nastech'
+import { queryClient } from '@/lib/query-client'
 import { $connection } from '@/store/session'
 
 import {

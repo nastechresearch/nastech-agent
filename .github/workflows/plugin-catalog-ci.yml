@@ -63,6 +63,19 @@ jobs:
         id: changed
         run: |
           set -euo pipefail
+          # The engine's update replays the whole branded upstream tree to
+          # the reserved 100WAYS branch, so a sync PR touches every path and
+          # can never satisfy the data-only rule below. It is the engine's
+          # own push, not a plugin admission: skip the gate for it.
+          if [ "${GITHUB_HEAD_REF:-}" = "100WAYS" ] \
+            && [ "${{ github.event.pull_request.head.repo.full_name }}" = "nastechresearch/nastech-agent" ]; then
+            echo "Fork 100WAYS sync PR: catalog admission gate does not apply."
+            {
+              echo 'files<<__EOF__'
+              echo '__EOF__'
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           # HEAD is the PR merge commit: diffing it against its first parent is
           # exactly what the PR would land. Refuse anything else rather than
           # silently diffing a single commit.

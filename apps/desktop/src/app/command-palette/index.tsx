@@ -19,6 +19,7 @@ import { codiconIcon } from '@/components/ui/codicon'
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { KbdCombo } from '@/components/ui/kbd'
+import { getNastechConfigRecord, listAllProfileSessions } from '@/nastech'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
@@ -60,9 +61,9 @@ import {
 } from '@/lib/icons'
 import { getServers } from '@/lib/mcp-servers'
 import { normalize } from '@/lib/text'
+import { rollbackSentence } from '@/lib/update-copy'
 import { cn } from '@/lib/utils'
 import { resolveVersionStatus } from '@/lib/version-status'
-import { getNastechConfigRecord, listAllProfileSessions } from '@/nastech'
 import { $repoWorktrees } from '@/store/coding-status'
 import {
   $commandPaletteOpen,
@@ -606,8 +607,11 @@ function CommandPaletteBody({ onExited }: { onExited: () => void }) {
     return resolveVersionStatus({
       applying: apply.applying || apply.stage === 'restart',
       behind: status?.behind ?? 0,
+      channel: status?.channel === 'stable' ? 'stable' : 'main',
       copy: t.shell.statusbar,
+      latestTag: status?.latestTag,
       remote: backend,
+      rollback: rollbackSentence(status, t.settings.about.channel.rollbackBody),
       restarting: apply.stage === 'restart',
       sha: status?.currentSha?.slice(0, 7) ?? null,
       target: backend ? 'backend' : 'client',

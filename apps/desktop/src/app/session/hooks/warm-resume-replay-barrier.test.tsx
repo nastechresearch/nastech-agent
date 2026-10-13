@@ -5,9 +5,9 @@ import { useRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import { reconcileActiveTranscript } from '@/app/contrib/hooks/use-background-sync'
+import { getLatestSessionMessages } from '@/nastech'
 import { chatMessageText, toChatMessages } from '@/lib/chat-messages'
 import { resetInFlightTurnJournalStateForTests } from '@/lib/inflight-turn-journal'
-import { getLatestSessionMessages } from '@/nastech'
 import { setPrimaryGateway } from '@/store/gateway'
 import { $activeGatewayProfile } from '@/store/profile'
 import {

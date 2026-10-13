@@ -93,7 +93,6 @@ Outputs (99 files):
 from __future__ import annotations
 
 import argparse
-import base64
 import io
 import json
 import math
@@ -305,8 +304,6 @@ class IconArt:
         self.girls = {color: assets / f"nastech-bantu-{color}.svg" for color in ("black", "white")}
         self.backgrounds = assets / "backgrounds"
         self.paths: dict[str, str] = {}
-        self.images: dict[str, str] = {}
-        self.raster: dict[str, bool] = {}
         self.bboxes: dict[str, tuple[float, float, float, float]] = {}
         self.master = compose_svg(self, "black", "squircle-light.svg")
         self.master_dark = compose_svg(self, "white", "squircle-dark.svg")
@@ -331,83 +328,15 @@ def girl_path(art: IconArt, girl: str) -> str:
     return art.paths[girl]
 
 
-def _art_cache(art: IconArt, name: str) -> dict:
-    """Per-`art` cache for a render input, created on first use.
-
-    `IconArt` owns the caches, but callers (and tests) may pass a minimal
-    stand-in carrying only the fields they exercise; creating the cache lazily
-    keeps raster detection from requiring attributes the stand-in never set."""
-    cache = getattr(art, name, None)
-    if cache is None:
-        cache = {}
-        try:
-            setattr(art, name, cache)
-        except (AttributeError, TypeError):
-            pass
-    return cache
-
-
-def girl_is_raster(art: IconArt, girl: str) -> bool:
-    """True when the girl master ships raster art (<image>) rather than a
-    vector <path>. The fork's NasTech mascot is an embedded PNG, so it has to
-    be composed as an image instead of recolored as a path.
-
-    A pre-supplied vector `<path>` always wins: a caller that already resolved
-    the girl (or a stand-in that only carries `paths`) is reporting vector art
-    and must not be asked to open a master file it never provided."""
-    if girl in getattr(art, "paths", {}):
-        return False
-    cache = _art_cache(art, "raster")
-    if girl not in cache:
-        src = art.girls[girl].read_text(encoding="utf-8-sig")
-        cache[girl] = re.search(r"<path\b", src) is None and re.search(r"<image\b", src) is not None
-    return cache[girl]
-
-
-def girl_image(art: IconArt, girl: str) -> str:
-    """The girl `<image>` element (raster master) with editor metadata stripped
-    the same way `girl_path` strips it from the vector master."""
-    cache = _art_cache(art, "images")
-    if girl not in cache:
-        src = art.girls[girl].read_text(encoding="utf-8-sig")
-        m = re.search(r"<image\b.*?/>", src, re.DOTALL)
-        assert m, f"no <image> found in {art.girls[girl].name}"
-        image = re.sub(r'\s+(inkscape|sodipodi):[a-zA-Z-]+="[^"]*"', "", m.group(0))
-        cache[girl] = image
-    return cache[girl]
-
-
-def _raster_bbox(art: IconArt, girl: str) -> tuple[float, float, float, float]:
-    """Alpha bounding box of the embedded raster, in the master's own
-    coordinate space. Measured from the PNG itself rather than a resvg render
-    so placement never depends on how resvg fits the master's viewBox."""
-    image = ET.fromstring(
-        f'<svg xmlns="http://www.w3.org/2000/svg">{girl_image(art, girl)}</svg>'
-    ).find("{http://www.w3.org/2000/svg}image")
-    assert image is not None, f"no <image> found in {art.girls[girl].name}"
-    x, y = float(image.get("x", "0")), float(image.get("y", "0"))
-    w, h = float(image.get("width")), float(image.get("height"))
-    href = image.get("href") or image.get("{http://www.w3.org/1999/xlink}href")
-    m = re.fullmatch(r"data:[^;,]+;base64,(.*)", href or "", re.DOTALL)
-    assert m, f"unsupported image href in {art.girls[girl].name}"
-    raster = Image.open(io.BytesIO(base64.b64decode(m.group(1))))
-    bx, by, bx2, by2 = raster.getchannel("A").point(lambda v: 255 if v > 0 else 0).getbbox()
-    sx, sy = w / raster.width, h / raster.height
-    return (x + bx * sx, y + by * sy, (bx2 - bx) * sx, (by2 - by) * sy)
-
-
 def girl_bbox(art: IconArt, girl: str) -> tuple[float, float, float, float]:
     """Art bounding box in the girl SVG's coordinate space, measured by
     rendering once and taking the alpha bbox (robust to art changes)."""
     if girl not in art.bboxes:
-        if girl_is_raster(art, girl):
-            art.bboxes[girl] = _raster_bbox(art, girl)
-        else:
-            data = resvg_py.svg_to_bytes(svg_path=str(art.girls[girl]), width=512, height=512)
-            im = Image.open(io.BytesIO(data))
-            bx, by, bx2, by2 = im.getchannel("A").point(lambda v: 255 if v > 0 else 0).getbbox()
-            s = GIRL_VIEWBOX / 512.0
-            art.bboxes[girl] = (bx * s, by * s, (bx2 - bx) * s, (by2 - by) * s)
+        data = resvg_py.svg_to_bytes(svg_path=str(art.girls[girl]), width=512, height=512)
+        im = Image.open(io.BytesIO(data))
+        bx, by, bx2, by2 = im.getchannel("A").point(lambda v: 255 if v > 0 else 0).getbbox()
+        s = GIRL_VIEWBOX / 512.0
+        art.bboxes[girl] = (bx * s, by * s, (bx2 - bx) * s, (by2 - by) * s)
     return art.bboxes[girl]
 
 
@@ -419,11 +348,10 @@ def girl_layer(
     box's aspect is preserved via 'meet', so the girl never distorts."""
     bx, by, bw, bh = girl_bbox(art, girl)
     x, y, w, h = box
-    art_svg = girl_image(art, girl) if girl_is_raster(art, girl) else girl_path(art, girl)
     return (
         f'<svg x="{x}" y="{y}" width="{w}" height="{h}" viewBox="{bx} {by} {bw} {bh}" '
         f'preserveAspectRatio="{align} meet">\n'
-        f"    {art_svg}\n"
+        f"    {girl_path(art, girl)}\n"
         "  </svg>"
     )
 
@@ -531,13 +459,9 @@ def drag_bottom_nodes(path: ET.Element, *, cutoff: float, band: float, distance:
 
 def portrait_layer(art: IconArt, girl: str, bg: str, join_bottom: float) -> ET.Element:
     """The registered girl with her lowest nodes dragged down to `join_bottom`
-    (the border's inner edge) so hair meets the ring instead of floating.
-
-    Raster masters have no nodes to drag, so the image is placed as-is."""
+    (the border's inner edge) so hair meets the ring instead of floating."""
     box = GIRL_BOXES[bg]
     portrait = ET.fromstring(girl_layer(art, girl, box, align="xMidYMax"))
-    if girl_is_raster(art, girl):
-        return portrait
     _, y, portrait_width, portrait_height = box
     _, by, bw, bh = girl_bbox(art, girl)
     scale = min(portrait_width / bw, portrait_height / bh)

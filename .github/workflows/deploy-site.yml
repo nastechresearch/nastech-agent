@@ -36,19 +36,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-vercel:
-    # Triggered automatically on release publish (production cuts) and
-    # manually via `gh workflow run deploy-site.yml` when an out-of-band
-    # main commit needs to ship live before the next release tag — e.g.
-    # a skills-index PR that doesn't touch website/** paths and so
-    # doesn't auto-deploy via the deploy-docs path.
-    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Trigger Vercel Deploy
-        run: curl -fsS --retry 3 --retry-delay 10 -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"
-
   deploy-docs:
     if: github.repository == 'NastechResearch/nastech-agent'
     runs-on: ubuntu-latest

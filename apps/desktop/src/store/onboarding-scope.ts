@@ -1,5 +1,5 @@
-import { RECONNECT_ATTEMPT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
 import { getApiRequestConnection, getApiRequestProfile, type ProfileScope } from '@/nastech'
+import { RECONNECT_ATTEMPT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
 import { requestGatewayForAgent } from '@/store/gateway'
 
 export interface OnboardingScope {
