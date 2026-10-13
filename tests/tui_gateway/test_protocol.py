@@ -1938,7 +1938,12 @@ def test_approval_for_a_ws_client_that_never_advertised_settles_the_queue_entry(
         waited = time.monotonic() - t0
     finally:
         approval_mod.unregister_gateway_notify("ws-old-approval")
-    assert waited < 1, decision
+    # The withdrawal must settle the queue entry well before the 3s approval timeout this
+    # test configures — that is the #112548 regression guard. Bound it by the configured
+    # timeout rather than a fixed race: a standard (4-core) GitHub runner under 2x worker
+    # oversubscription routinely needs 1-2.5s just to reach the poll, while the regression
+    # path (no withdrawal) always exceeds the whole window.
+    assert waited < wait_mod._ctx._get_approval_timeout(), decision
     assert decision["choice"] is None and decision["cancelled"]
     assert peer.frames == []
     assert "ws-old-approval" not in approval_mod._gateway_queues

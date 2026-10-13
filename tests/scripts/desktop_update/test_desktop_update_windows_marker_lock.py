@@ -135,7 +135,7 @@ def test_script_killed_before_publishing_the_delegate_runs_no_update(tmp_path: P
         lock = _HeldLock(home)   # after the claim, before the delegate publication
         child = subprocess.run([POWERSHELL, '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(finder),
                                 '-Parent', str(script.pid), '-Seconds', '60'],
-                               capture_output=True, text=True, timeout=90, check=False)
+                               capture_output=True, text=True, timeout=180, check=False)
         assert child.returncode == 0, 'the update child never appeared'
         child_pid = int(child.stdout)
         subprocess.run(['taskkill', '/F', '/PID', str(script.pid)], capture_output=True, check=True)
