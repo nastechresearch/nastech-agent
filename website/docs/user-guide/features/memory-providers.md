@@ -552,7 +552,7 @@ Hindsight reads `$NASTECH_HOME/hindsight/config.json` (per profile home), `~/.hi
 ### Holographic
 
 :::info Plugin catalog
-Holographic is maintained by [itpartypattaya](https://github.com/itpartypattaya/nastech-plugin-holographic) and installed from the [plugin catalog](./plugins.md) rather than bundled with Nastech. It is the provider that used to ship in-tree, with the same provider name, settings and database. Existing setups are migrated automatically — see [Migrating from bundled Holographic](#migrating-from-bundled-holographic).
+Holographic is maintained by [nastechtest](https://github.com/nastechtest/nastech-plugin-holographic) and installed from the [plugin catalog](./plugins.md) rather than bundled with Nastech. It is the provider that used to ship in-tree, with the same provider name, settings and database. Existing setups are migrated automatically — see [Migrating from bundled Holographic](#migrating-from-bundled-holographic).
 :::
 
 Local SQLite fact store with FTS5 full-text search, trust scoring, and HRR (Holographic Reduced Representations) for compositional algebraic queries.
@@ -588,7 +588,7 @@ nastech config set memory.provider holographic
 - `contradict` — automated detection of conflicting facts
 - Trust scoring with asymmetric feedback (+0.05 helpful / -0.10 unhelpful)
 
-The catalog plugin has its own release notes and options beyond this list; see its [README](https://github.com/itpartypattaya/nastech-plugin-holographic) for the current tool actions and settings.
+The catalog plugin has its own release notes and options beyond this list; see its [README](https://github.com/nastechtest/nastech-plugin-holographic) for the current tool actions and settings.
 
 #### Migrating from bundled Holographic
 
@@ -824,7 +824,7 @@ published through the [plugin catalog](./plugins.md). Hindsight moved first (see
 [Migrating from bundled Supermemory](#migrating-from-bundled-supermemory)), Mem0 (see
 [Migrating from bundled Mem0](#migrating-from-bundled-mem0)) and OpenViking (see
 [Migrating from bundled OpenViking](#migrating-from-bundled-openviking)) and Holographic (now
-maintained by itpartypattaya, see
+maintained by nastechtest, see
 [Migrating from bundled Holographic](#migrating-from-bundled-holographic)). RetainDB and
 ByteRover leave core on October 15, 2026; their standalone repositories are unmaintained and
 open for a new maintainer. Nothing changes for you: the
