@@ -64,7 +64,7 @@ Do not use the desktop/server `install.sh` or a glibc Linux archive on this targ
    The repository key fingerprint is:
 
    ```text
-   C572 B5FD D1A2 9CCF A9A9 12B6 840B 0848 E139 156D
+   7F58 93A2 C517 FF53 185B 7C66 BE65 AFD0 8530 2A09
    ```
 
    If the fingerprint differs, stop. Do not disable signature verification.
