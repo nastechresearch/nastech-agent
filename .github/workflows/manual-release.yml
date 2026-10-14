@@ -1,9 +1,22 @@
 name: Nastech Release
 
 # This workflow is intentionally manual-only. It never runs for a push, pull
-# request, tag, schedule, or release event. The default action is a dry-run
-# preview. Publishing requires both an explicit PUBLISH selection and the
-# repository's configured release-publish environment approval, if enabled.
+# request, tag, schedule, or release event.
+#
+# It is a thin, protected wrapper over the stable release pipeline
+# (`scripts/releases/`, see website/docs/developer-guide/stable-releases.md):
+#
+#   PREVIEW  -> `release.py changelog` prints the notes the next draft would
+#               carry. It claims nothing, tags nothing and needs no secrets.
+#   PUBLISH  -> `release.py release` claims the next attempt, cuts the draft
+#               release, and dispatches `Stable Release` (the gate). The
+#               protected `release-publish` environment approves the claim
+#               before the tag is pushed.
+#
+# The `Stable Release` gate publishes, not this workflow. Publishing the draft
+# from the GitHub UI by hand skips the vX.Y.Z receipt tag, the update feeds,
+# the Docker aliases and the Store check, and leaves the attempt permanently
+# outstanding — never do it.
 
 on:
   workflow_dispatch:
@@ -17,18 +30,24 @@ on:
           - patch
           - minor
           - major
-      release_date:
-        description: "Optional CalVer date override, formatted YYYY.M.D"
-        required: false
-        type: string
       action:
-        description: "PREVIEW only generates notes; PUBLISH creates the version commit, tag, and GitHub release"
+        description: "PREVIEW prints the notes only; PUBLISH claims an attempt and starts the Stable Release gate"
         required: true
         default: PREVIEW
         type: choice
         options:
           - PREVIEW
           - PUBLISH
+      autopublish:
+        description: "PUBLISH only: publish as soon as the gate is green (off leaves a draft until a later green claim resolves it)"
+        required: false
+        default: true
+        type: boolean
+      no_changelog:
+        description: "PUBLISH only: claim with an empty commit list. Use when the auto-generated body exceeds GitHub's 125000-character limit; paste curated notes into the draft afterwards"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -45,7 +64,9 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
+          # The changelog walks commits and the tag math reads the full tag list.
           fetch-depth: 0
+          fetch-tags: true
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -54,22 +75,21 @@ jobs:
       - name: Generate release preview
         env:
           BUMP: ${{ inputs.bump }}
-          RELEASE_DATE: ${{ inputs.release_date }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          args=(--bump "$BUMP")
-          if [ -n "$RELEASE_DATE" ]; then
-            args+=(--date "$RELEASE_DATE")
-          fi
-          python3 scripts/release.py "${args[@]}" --output release-preview.md
+          python3 scripts/release.py changelog \
+            --commit "$(git rev-parse origin/main)" \
+            --bump "$BUMP" \
+            --remote origin | tee release-preview.md
           cat release-preview.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Explain publish boundary
         run: |
           if [ "${{ inputs.action }}" = "PUBLISH" ]; then
-            echo "Publish was explicitly requested; the protected publish job will run after this preview." >> "$GITHUB_STEP_SUMMARY"
+            echo "Publish was requested; the protected publish job claims the attempt and starts the Stable Release gate." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Preview complete. No commit, tag, GitHub release, or deployment was created." >> "$GITHUB_STEP_SUMMARY"
+            echo "Preview complete. No attempt ref, tag, draft, or workflow dispatch was created." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload release preview
@@ -87,11 +107,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: release-publish
     permissions:
-      contents: write
+      contents: write # Claim the attempt ref and create the draft release
+      actions: write # release.py dispatches the Stable Release gate
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
+          # The tag math reads the full tag list; the claim walks commits.
           fetch-depth: 0
+          fetch-tags: true
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -102,15 +125,19 @@ jobs:
           git config user.name "nastechresearch[bot]"
           git config user.email "nastechresearch[bot]@users.noreply.github.com"
 
-      - name: Create approved release
+      - name: Claim the attempt and start the gate
         env:
           BUMP: ${{ inputs.bump }}
-          RELEASE_DATE: ${{ inputs.release_date }}
+          AUTOPUBLISH: ${{ inputs.autopublish }}
+          NO_CHANGELOG: ${{ inputs.no_changelog }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          args=(--bump "$BUMP")
-          if [ -n "$RELEASE_DATE" ]; then
-            args+=(--date "$RELEASE_DATE")
+          args=(release --commit "$(git rev-parse origin/main)" --bump "$BUMP" --remote origin)
+          if [ "$AUTOPUBLISH" = "true" ]; then
+            args+=(--autopublish)
           fi
-          python3 scripts/release.py "${args[@]}" --publish
+          if [ "$NO_CHANGELOG" = "true" ]; then
+            args+=(--no-changelog)
+          fi
+          python3 scripts/release.py "${args[@]}"
