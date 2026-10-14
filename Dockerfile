@@ -280,7 +280,13 @@ FROM runtime_base AS python_deps
 # Source binding is created after the source copy below.
 COPY pyproject.toml uv.lock ./
 RUN touch ./README.md
+# --cache puts uv's cache at /opt/nastech/uv-cache, the seed path that
+# pm.packages.uv_cache_dir() merges into $NASTECH_HOME/cache/uv on first use.
+# Do not leave the cache at its default: NASTECH_HOME is not set yet in this
+# stage, so the default is /root/.nastech/cache/uv, which nothing reads. A plugin
+# install then runs with an empty cache and builds python-olm from source.
 RUN python3 -m pm.build_env --source /opt/nastech --python /usr/local/bin/python3 \
+    --cache /opt/nastech/uv-cache \
     --out /opt/nastech/.venv --no-install-project --sealed --record-selection \
     --extra all --extra messaging --extra otlp --extra anthropic --extra bedrock \
     --extra azure-identity --extra matrix --extra google-chat

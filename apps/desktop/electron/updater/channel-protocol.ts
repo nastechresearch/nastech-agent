@@ -96,7 +96,7 @@ const VERSION =
 const ARCHIVE_REF = /^rc\.(?:[1-9]\d*)-v(?:0|[1-9]\d{0,2})\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/
 
 // Published channel builds may still carry these retired bundle environment keys.
-const RETIRED_BUNDLE_ENV_KEYS = new Set(['NASTECH_SKIP_INTRO'])
+const RETIRED_BUNDLE_ENV_KEYS = new Set(['NASTECH_SKIP_INTRO', 'NASTECH_GUEST_ONBOARDING'])
 
 function parseChannelJson(body: string): unknown {
   const parsed: unknown = JSON.parse(body)
@@ -373,7 +373,6 @@ function request(fields: Fields): ChannelRequest {
     'NASTECH_DATA_DIR_SUFFIX',
     'NASTECH_DESKTOP_USER_DATA_DIR',
     'NASTECH_SHARED_AUTH_DIR',
-    'NASTECH_GUEST_ONBOARDING',
     'NASTECH_PREVIEW_FULL_CONNECTORS'
   ])
 

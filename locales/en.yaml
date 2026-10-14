@@ -439,7 +439,6 @@ gateway:
     last_activity: "**Last Activity:** {timestamp}"
     model: "**Model:** `{model}`"
     model_provider: "**Model:** `{model}` ({provider})"
-    free_tier: "Nastech · free tier · nastech/welcome · /login to sign in"
     context: "**Context:** {used} / {total} ({pct}%)"
     context_used: "**Context:** ~{used} tokens"
     tokens: "**Lifetime tokens billed:** {tokens} _(not your current context size; use `/context`)_"
@@ -798,9 +797,6 @@ gateway:
     ack_task: "Planning: {task}"
     ack_conversation: "Planning from this conversation's context…"
 
-  initiate_setup:
-    ack: "Starting setup…"
-
   init:
     start_failed: "Could not start /init — please try again."
     ack_update: "Updating AGENTS.md from a project scan…"
@@ -870,7 +866,6 @@ gateway:
   startup:
     handoff_thread_title: "Nastech — {title}"
     restarted: "♻ Gateway restarted successfully. Your session continues."
-    free_tier_line: "Inference: Nastech free tier (nastech/welcome). Sign in for more: /login"
     online: "♻️ Gateway online — Nastech is back and ready."
     db_corrupt: "⚠️ Session database corruption detected. Messages may not be persisted. Recovery options:\n1. Run `nastech {profile_arg}doctor --fix`\n2. Stop the gateway, then recover with:\n   nastech {profile_arg}sessions recover --source {db_path} --inspect-only\n   (if it reports recoverable) nastech {profile_arg}sessions recover --source {db_path} --output recovered-state.db\n   — recovery snapshots the damaged file first; do NOT run `sqlite3 ... \".recover\"` against the live state.db, a vulnerable sqlite3 CLI can corrupt it further\n3. Restore from a backup in {backups_dir}/\nRun `nastech {profile_arg}doctor` for sanitized diagnostics."
     db_fts_corrupt: "⚠️ Session database reported a corruption error confined to the search index (FTS5); the message tables are not damaged. Messages may not be persisted until it is repaired: run `nastech {profile_arg}doctor --fix`, then restart the gateway. Do not run recovery tools or restore a backup unless `nastech {profile_arg}doctor` confirms damage."
@@ -1630,8 +1625,6 @@ slash:
     description: "Re-run a prompt on a recurring interval in this session"
   plan:
     description: "Write a markdown implementation plan to .nastech/plans/ without executing anything"
-  initiate-setup:
-    description: "Run the first-run setup: learn about you and set Nastech up around you"
   moa:
     description: "Run one prompt through the default Mixture of Agents preset, then restore your model"
   subgoal:
@@ -3020,8 +3013,6 @@ cli:
     plan:
       planning: "📋 Planning: {task}"
       from_conversation: "📋 Planning from this conversation's context..."
-    initiate_setup:
-      starting: "🧭 Starting setup..."
     init:
       updating: "⚡ Updating AGENTS.md from a project scan..."
       generating: "⚡ Generating AGENTS.md from a project scan..."

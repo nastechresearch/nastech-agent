@@ -18,11 +18,10 @@ def isolated_home(tmp_path, monkeypatch):
     home.mkdir()
     (home / ".env").write_text("", encoding="utf-8")
     monkeypatch.setenv("NASTECH_HOME", str(home))
-    monkeypatch.delenv("NASTECH_GUEST_ONBOARDING", raising=False)
     for var in ("OPENAI_API_KEY", "OPENROUTER_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_BASE_URL",
                 "OPENROUTER_BASE_URL", "NASTECH_INFERENCE_PROVIDER", "NASTECH_API_KEY"):
         monkeypatch.delenv(var, raising=False)
-    monkeypatch.setattr("agent.bedrock_adapter.has_aws_credentials", lambda: False)
+    monkeypatch.setattr("agent.bedrock_adapter.has_aws_credentials", lambda *_a, **_kw: False)
     from nastech_cli import free_tier_bootstrap as fb
     fb.reset_for_tests()
     return home

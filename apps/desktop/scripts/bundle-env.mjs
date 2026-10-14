@@ -1,9 +1,9 @@
-// Defaults must run before bundled modules resolve paths or onboarding flags.
+// Defaults must run before bundled modules resolve paths or feature flags.
 // An esbuild define would replace reads, not populate the child process env.
 // Match scripts/releases/bundle_env.py and the channel request decoder.
 const ALLOWED_KEYS = new Set([
   'NASTECH_HOME', 'NASTECH_DATA_DIR_SUFFIX', 'NASTECH_DESKTOP_USER_DATA_DIR',
-  'NASTECH_SHARED_AUTH_DIR', 'NASTECH_GUEST_ONBOARDING', 'NASTECH_PREVIEW_FULL_CONNECTORS'
+  'NASTECH_SHARED_AUTH_DIR', 'NASTECH_PREVIEW_FULL_CONNECTORS'
 ])
 
 /** Validate a bundle environment object: plain object of identifiers to

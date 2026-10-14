@@ -33,6 +33,48 @@ def nastech_vendored_dirs() -> tuple[str, ...]:
     return ("~/.nastech/bin",) if _POSIX else ("%USERPROFILE%/.nastech/bin",)
 
 
+def machine_marker_files() -> tuple[str, ...]:
+    """Where Nastech records that this OS user has used it. No Nastech data-dir setting moves these.
+    The first entry is the one written; the rest are read too (Windows: MSIX builds that ran with
+    filesystem virtualisation wrote under the package's LocalCache)."""
+    if _WIN:
+        return ("%LOCALAPPDATA%/Nastech Research/.machine",
+                "%LOCALAPPDATA%/Packages/NastechResearch*_*/LocalCache/Local/Nastech Research/.machine")
+    if sys.platform == "darwin":
+        return ("~/Library/Application Support/Nastech Research/.machine",)
+    return ("$XDG_STATE_HOME/nastech-research/.machine", "~/.local/state/nastech-research/.machine")
+
+
+def nastech_home_globs() -> tuple[str, ...]:
+    """Every place a Nastech data root can sit by default: suffixed channel roots, the legacy Windows
+    root, and the per-package roots of MSIX builds that ran with filesystem virtualisation."""
+    if _WIN:
+        return ("%LOCALAPPDATA%/nastech*", "%USERPROFILE%/.nastech",
+                "%LOCALAPPDATA%/Packages/NastechResearch*_*/LocalCache/Local/nastech*")
+    return ("~/.nastech*",)
+
+
+def gateway_service_definition_globs() -> tuple[str, ...]:
+    """This OS user's gateway service definitions, each naming the NASTECH_HOME it serves."""
+    if _WIN:
+        return ("%APPDATA%/Microsoft/Windows/Start Menu/Programs/Startup/Nastech_Gateway*",)
+    if sys.platform == "darwin":
+        return ("~/Library/LaunchAgents/ai.nastech.gateway*.plist",)
+    return ("$XDG_CONFIG_HOME/systemd/user/nastech-gateway*.service", "~/.config/systemd/user/nastech-gateway*.service")
+
+
+def system_gateway_service_definition_globs() -> tuple[str, ...]:
+    """Machine-wide gateway services. Each runs as the account its ``User=`` names (root when none)."""
+    return ("/etc/systemd/system/nastech-gateway*.service",) if _POSIX and sys.platform != "darwin" else ()
+
+
+def mac_privacy_protected_dirs() -> tuple[str, ...]:
+    """Folders macOS guards with a permission prompt (TCC); opening anything inside raises it."""
+    if sys.platform != "darwin":
+        return ()
+    return ("~/Documents", "~/Desktop", "~/Downloads", "~/Library/Mobile Documents")  # windows-footgun: ok — macOS only
+
+
 def windows_user_program_dirs() -> tuple[str, ...]:
     if not _WIN:
         return ()

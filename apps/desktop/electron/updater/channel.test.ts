@@ -189,6 +189,7 @@ test.each(['NODE_OPTIONS', 'PATH', 'NASTECH_PYTHON'])(
 test('channel manifest drops retired bundle keys but rejects unknown names', async (): Promise<void> => {
   const f = await fixture()
   f.manifest.request.bundleEnv.NASTECH_SKIP_INTRO = '1'
+  f.manifest.request.bundleEnv.NASTECH_GUEST_ONBOARDING = '1'
   expect(decodeChannelManifest(JSON.stringify(f.manifest)).request.bundleEnv).toEqual({})
 
   f.manifest.request.bundleEnv.NASTECH_UNKNOWN = '1'

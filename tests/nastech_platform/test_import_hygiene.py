@@ -15,6 +15,7 @@ import nastech_platform.host.facts
 import nastech_platform.host.gpu_adapters
 import nastech_platform.host.runtime
 import nastech_platform.host.products
+import nastech_platform.host.summary
 import nastech_platform.declaration
 import nastech_platform.resolver
 import nastech_platform.resolver.app

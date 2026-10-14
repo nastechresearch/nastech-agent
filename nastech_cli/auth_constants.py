@@ -59,6 +59,9 @@ DEFAULT_NASTECH_INFERENCE_URL = "https://inference-api.nastechresearch.github.io
 # the host allowlist, because the paid host cross-refuses an anonymous JWT with a 400.
 DEFAULT_NASTECH_WELCOME_URL = "https://welcome-api.nastechresearch.github.io/v1"
 DEFAULT_NASTECH_CLIENT_ID = "nastech-cli"
+# On every guest minted since the welcome trial: True when the desktop's first install claimed it
+# (``nastech_cli.welcome_trial``), False for a connector mint. Absent = minted before the trial existed.
+WELCOME_CLAIM_FLAG = "welcome_claim"
 NASTECH_INFERENCE_INVOKE_SCOPE = "inference:invoke"
 NASTECH_BILLING_MANAGE_SCOPE = "billing:manage"
 DEFAULT_NASTECH_SCOPE = NASTECH_INFERENCE_INVOKE_SCOPE

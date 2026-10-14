@@ -6,99 +6,110 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 498 commits affecting 2932 files.
-- **Source revision:** `6e7b83a2f1c0`.
-- **Previous source revision:** `835c3dd038d9`.
+- **Changes incorporated:** 301 commits affecting 2944 files.
+- **Source revision:** `6e84ce66fb57`.
+- **Previous source revision:** `6e7b83a2f1c0`.
 
 ## Technical coverage
 
-- **.github/:** 5 changed files.
-- **agent/:** 40 changed files.
-- **apps/:** 219 changed files.
-- **contributors/:** 38 changed files.
-- **evals/:** 4 changed files.
-- **gateway/:** 1 changed files.
-- **locales/:** 22 changed files.
-- **model_tools.py/:** 4 changed files.
-- **nastech_cli/:** 94 changed files.
-- **plugin-catalog/:** 255 changed files.
-- **plugins/:** 79 changed files.
-- **pm/:** 8 changed files.
-- **pyproject.toml/:** 2 changed files.
-- **scripts/:** 25 changed files.
-- **tests/:** 206 changed files.
-- **tools/:** 104 changed files.
-- **toolsets.py/:** 1 changed files.
-- **tui_gateway/:** 23 changed files.
-- **uv.lock/:** 2 changed files.
-- **web/:** 4 changed files.
-- **website/:** 38 changed files.
+- **.github/:** 55 changed files.
+- **.npmrc/:** 1 changed files.
+- **Dockerfile/:** 1 changed files.
+- **agent/:** 102 changed files.
+- **apps/:** 735 changed files.
+- **contributors/:** 106 changed files.
+- **evals/:** 2 changed files.
+- **gateway/:** 7 changed files.
+- **locales/:** 43 changed files.
+- **model_tools.py/:** 1 changed files.
+- **nastech_cli/:** 116 changed files.
+- **nastech_constants.py/:** 1 changed files.
+- **nastech_platform/:** 14 changed files.
+- **nastech_state.py/:** 1 changed files.
+- **nastech_state_compression.py/:** 2 changed files.
+- **nastech_state_sessions.py/:** 3 changed files.
+- **nastech_state_tool_retries.py/:** 1 changed files.
+- **optional-skills/:** 5 changed files.
+- **package-lock.json/:** 2 changed files.
+- **package.json/:** 1 changed files.
+- **plugins/:** 1 changed files.
+- **pm/:** 10 changed files.
+- **pyproject.toml/:** 1 changed files.
+- **run_agent.py/:** 5 changed files.
+- **scripts/:** 13 changed files.
+- **tests/:** 272 changed files.
+- **tests-js/:** 4 changed files.
+- **tools/:** 41 changed files.
+- **toolsets.py/:** 5 changed files.
+- **tui_gateway/:** 96 changed files.
+- **ui-tui/:** 1 changed files.
+- **uv.lock/:** 1 changed files.
+- **web/:** 1 changed files.
+- **website/:** 22 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(plugin-catalog): add auto-pin plugin
-- feat(catalog): add wicked-memory tools plugin
-- feat(catalog): add TTS Buddy native speech provider
-- feat(plugin-catalog): bump approval-ledger to 1.2.0
-- feat(plugin-catalog): bump error-ledger to 1.3.0
-- feat(plugin-catalog): add channel3 shopping plugin
-- feat(plugin-catalog): pin heartbeat2 to v0.1.1 (catalog review conditions)
-- feat(plugin-catalog): add heartbeat2 plugin
-- feat(plugin-catalog): re-pin Index 0.48.5 to 1214c61
-- feat(plugin-catalog): pin Index to 0.48.5 (7f4c3ed)
-- feat(plugin-catalog): pin Index to 0.48.4 (87e714d)
-- feat(plugin-catalog): add nastech-mobile platform adapter entry
-- 56 additional new capabilities updates are included in this verified snapshot.
+- feat(release): dispatch Stable Release from the default branch
+- feat(metrics): count connector file-input refusals by error class
+- feat(connectors): connector tools send and save local files
+- feat(gateway): connector downloads are a trusted media delivery root
+- feat(connectors): client calls to stage file inputs and fetch file outputs
+- feat(gemini): Gemini 4 Argon support with long decode
+- feat(onboarding): the first desktop boot records that onboarding is due and the trial reserved
+- feat(free-tier): the free model is a desktop first-install trial, claimed once per machine
+- feat(onboarding): one machine-level answer to "has Nastech been used here"
+- feat: release the agentic setup profiles once, at serve boot
+- feat(desktop): picking Elite opens its terminal and file tree
+- feat(desktop): the first-run intro types in the app's language
+- 40 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(desktop): a catalog link that launches Desktop opens the install dialog
-- fix(desktop): the catalog lookup falls back only for a backend without the method
-- fix(desktop): a malformed catalog lookup reply reads as unavailable; the gateway validates names with the CLI's own rule
-- fix(desktop): catalog deep links ask the backend for the entry
-- fix(update): --version, the dashboard and a remote backend name a stable rollback too (#137714)
-- fix(desktop): the rollback dialog names its button and claims no changes (#137714)
-- fix(desktop): a stable release older than the checkout is offered as a rollback (#137714)
-- fix(desktop): preserve stable update channel context
-- fix(update): a stable release older than the checkout reads as a rollback (#137714)
-- fix(install): a rerun keeps an install on the update channel it chose (#137714)
-- fix(plugin-catalog): only plain UTF-8 data may ship compressed
-- fix(plugin-catalog): rule 17 gate reads a single gzipped file instead of failing it
-- 138 additional reliability and fixes updates are included in this verified snapshot.
+- fix(install-e2e): the Windows packaged-app feed serves byte ranges
+- fix(pm): re-merge the uv cache seed on volumes marked by a seedless image
+- fix(release): publish replaces the stable head instead of create-only
+- fix(release): keep a stable run on main from using the controller commit or cancelling pushes
+- fix(pm): stage a version for version-less buildable plugin members too
+- fix(pm): don't stamp project.version on members declaring it dynamic
+- fix(pm): give generated virtual workspace members a project.version
+- fix(pm): retry sync without bytecode compile when that step fails
+- fix(deps): bump httpx2/httpcore2 2.7.0 -> 2.12.0 for the audit advisories
+- fix(doctor): stop mislabeling the root npm audit row as agent-browser
+- fix(doctor): say recreating the same Docker image does not fix npm findings
+- fix(doctor): describe full workspace npm audit scope
+- 152 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Performance
 
-- perf(prompt): fixed prefix back under the post-diet size (-2.1k tokens per request)
+- perf(onboarding): the due answer is worked out at serve boot and served from a cache
+- perf(onboarding): one provider walk per due answer, one AWS chain walk, no IMDS on the desktop backend
 
 ### Documentation
 
-- docs(plugin-catalog): inline disclosure line in the nastech-mobile description
-- docs(tools): the refresh docstring and publish guard say when schema bytes count
-- docs(plugins): catalog rule 9 notes validate warns on private core imports
-- docs(plugins): place lifecycle Routing after the example; list the routed delegation keys
-- docs(shared-metrics): connector naming, error classes and the three new rows
-- docs(pm): 3-day release age checked at lock time; plugins trust core's lock
-- docs(auth): spell out the unknown sk-ant-* default in _is_oauth_token
-- docs: pin released provider with API-key onboarding
-- docs: use AceDataCloudModelProviderNastech repository name
+- docs: Local Models is on by default on macOS, Windows and Linux
+- docs(free-tier): the trial is once per OS user, not once per machine
+- docs(desktop): drop the start_chat clause from the onboarding chat comment
+- docs: remove the initiate-setup and first-task skills and the setup docs
+- docs(onboarding): document onboarding.run; salvaged reads say first-run onboarding
+- docs(platform): record the N1X markers measured on hardware
 
 ### Improvements
 
-- fmt(js): `npm run fix` on merge (#137796)
-- catalog: add agent-ledger v0.4.4 (e9eba11)
-- chore(catalog): reviewed disclosure for holographic
-- plugin-catalog: bump holographic to 0.13.0
-- plugin-catalog: bump holographic to 0.12.0
-- plugin-catalog: bump holographic to 0.11.0
-- plugin-catalog: bump holographic to 0.10.0
-- plugin-catalog: bump holographic to 0.9.0
-- plugin-catalog: bump holographic to 0.8.0
-- plugin-catalog: bump holographic to 0.7.0
-- plugin-catalog: bump holographic to 0.6.2
-- refactor: keep the rollback wiring inside the code-health caps (#137714)
-- 258 additional improvements updates are included in this verified snapshot.
+- test(relay): the OpenAI-stream e2e no longer self-deadlocks when the stream is buffered
+- Merge pull request #138028 , fixes for bundles
+- Merge pull request #138159 from Nastechresearch/ci/stable-release-dispatch-from-main
+- Merge pull request #138163 from Nastechresearch/fix/docker-seed-uv-cache
+- Merge pull request #138179 from Nastechresearch/fix/stable-head-cas
+- chore(contributors): map ieqzya@gmail.com to Ieqzya
+- test(pm): one streamed-sync test covers the bytecode-compile retry
+- chore(contributors): map Darthvader88@gmail.com to guthixboss1
+- test(deps): fail the build if an httpx2 pin or lock entry drops below 2.12.0
+- test(doctor): point the root-row label test at the staged-npm seam
+- ci(release): pass the commit under test through every stable lane
+- Merge pull request #138107 from Nastechresearch/fix/docker-release-version-tag
+- 65 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

@@ -440,7 +440,7 @@ async def _start_nastech_device_code(profile: Optional[str]) -> dict[str, Any]:
         os.getenv("NASTECH_PORTAL_BASE_URL") or os.getenv("NASTECH_PORTAL_BASE_URL") or pconfig.portal_base_url
     ).rstrip("/")
     with _profile_scope(_oauth_profile_name(profile)):
-        guest = anon_auth.current_nastech_state() if anon_auth.guest_enabled() else None
+        guest = anon_auth.current_nastech_state() if anon_auth.guest_allowed() else None
 
     if not anon_auth.is_guest_state(guest):
         device_data = await _httpx_call(lambda client: _request_device_code(
