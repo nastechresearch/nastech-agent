@@ -1544,9 +1544,9 @@ def _logged_in_oauth_active_provider(*, skip_free_tier: bool = False) -> Optiona
     try:
         _maybe = _load_auth_store().get("active_provider")
         if _maybe == "nastech":
-            from nastech_cli.anon_auth import guest_enabled, has_guest
-            if has_guest() and (skip_free_tier or not guest_enabled()):
-                return None  # the free tier is off (or being discounted), so a guest is not a login
+            from nastech_cli.anon_auth import free_inference_active, has_guest
+            if has_guest() and (skip_free_tier or not free_inference_active()):
+                return None  # this guest carries no inference here (or is being discounted): not a login
         if _maybe and _maybe in PROVIDER_REGISTRY and get_auth_status(_maybe).get("logged_in"):
             return _maybe
     except Exception as e:
@@ -1637,7 +1637,7 @@ def resolve_provider(
     "auto" priority (explicit intent beats a stale OAuth login): 1. CLI api_key/base_url ->
     "openrouter"; 2. config.yaml ``model.provider``; 3. OPENROUTER_API_KEY (or an sk-or- key in
     OPENAI_API_KEY) -> "openrouter"; 4. OpenRouter pool; 5. provider env keys; 6. auth.json ``active_provider``;
-    7. Nastech free tier when it is on and its identity exists (never created here);
+    7. Nastech free tier when a claimed guest exists on the desktop's local backend (never created here);
     8. AWS Bedrock chain; 9. AuthError(no_provider_configured).
 
     ``skip_free_tier`` hides rungs 6-for-a-free-tier-identity and 7: the boot bootstrap asks
@@ -1690,16 +1690,16 @@ def resolve_provider(
                 _oauth_active)
         return _oauth_active
 
-    # Nastech free tier, when it is on and its identity already exists. This rung sits ABOVE the Bedrock
+    # Nastech free tier, when this guest claimed the welcome trial and this is the desktop's local
+    # backend (``anon_auth.free_inference_active``). This rung sits ABOVE the Bedrock
     # chain on purpose: every rung above this line is explicit user intent (CLI creds, config, env
     # keys, a sign-in); the boto chain below is implicit host state, and a leftover ~/.aws profile
     # used to win the first turn of a fresh install (NS-829). The rung never CREATES the identity:
-    # that is the boot bootstrap's job (free_tier_bootstrap), so provider resolution stays free of
-    # network and a fresh install without the bootstrap resolves exactly as upstream does.
+    # only the desktop's trial claim does (welcome_trial), so provider resolution stays free of network.
     if not skip_free_tier:
         try:
-            from nastech_cli.anon_auth import guest_enabled, has_guest
-            if guest_enabled() and has_guest():
+            from nastech_cli.anon_auth import free_inference_active
+            if free_inference_active():
                 return "nastech"
         except Exception as exc:
             logger.debug("free tier check during provider resolution skipped: %s", exc)
@@ -1707,15 +1707,15 @@ def resolve_provider(
     # below explicit keys and below the free tier.
     try:
         from agent.bedrock_adapter import has_aws_credentials
-        if has_aws_credentials():
+        from nastech_cli.anon_auth import on_local_desktop_backend  # a laptop: no EC2 metadata lookup
+        if has_aws_credentials(instance_metadata=not on_local_desktop_backend()):
             return "bedrock"
     except ImportError:
         pass  # boto3 not installed
     from nastech_constants import display_nastech_home
     raise AuthError(
-        "Nastech is not connected to any AI provider yet. Run `nastech model` to pick one (the free "
-        "Nastech tier needs no API key), type `/login` in chat, or add a key with "
-        f"`nastech auth add <provider>`. (Advanced: put an API key such as OPENROUTER_API_KEY in "
+        "Nastech is not connected to any AI provider yet. Run `nastech model` to pick one, type `/login` in chat, "
+        f"or add a key with `nastech auth add <provider>`. (Advanced: put an API key such as OPENROUTER_API_KEY in "
         f"{display_nastech_home()}/.env.)",
         code="no_provider_configured")
 

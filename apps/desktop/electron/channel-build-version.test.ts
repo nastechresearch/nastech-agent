@@ -36,7 +36,7 @@ function request(sequence: number = 65536, token: string = 'ab12cd34ef56ab78'): 
       windowsExecutableName: 'nastech-no-registry-needed',
       msixAppIdWithOrg: `NastechResearch.NastechChannel${token}`
     },
-    bundleEnv: { NASTECH_GUEST_ONBOARDING: '1' },
+    bundleEnv: { NASTECH_PREVIEW_FULL_CONNECTORS: '1' },
     publicBase: 'https://builds.example.test'
   }
 }

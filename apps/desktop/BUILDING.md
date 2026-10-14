@@ -203,7 +203,7 @@ defaults into the desktop app, for example:
 
 ```sh
 python scripts/release.py --build-commit REV --remote fork --publish \
-  --bundle-env NASTECH_GUEST_ONBOARDING=1 \
+  --bundle-env NASTECH_PREVIEW_FULL_CONNECTORS=1 \
   --bundle-env NASTECH_DATA_DIR_SUFFIX=magic-test \
   --bundle-unset NASTECH_HOME
 ```
@@ -226,8 +226,7 @@ For local commit builds, `NASTECH_BUNDLE_ENV_JSON` accepts a JSON object whose
 string values are defaults and whose `null` values are explicit clears. For example,
 `{"NASTECH_HOME":null,"NASTECH_DATA_DIR_SUFFIX":"magic-test"}`. Only
 `NASTECH_HOME`, `NASTECH_DATA_DIR_SUFFIX`, `NASTECH_DESKTOP_USER_DATA_DIR`,
-`NASTECH_SHARED_AUTH_DIR`, `NASTECH_GUEST_ONBOARDING`, and
-`NASTECH_PREVIEW_FULL_CONNECTORS` are accepted. Process-control variables such as `NODE_OPTIONS` and `PATH`
+`NASTECH_SHARED_AUTH_DIR`, and `NASTECH_PREVIEW_FULL_CONNECTORS` are accepted. Process-control variables such as `NODE_OPTIONS` and `PATH`
 are rejected. These settings are not applied to the build runner itself.
 Commit archive keys still use the SHA, so use a fresh commit for different
 defaults: an existing artifact is never overwritten with different bytes.
@@ -398,11 +397,3 @@ live in the [existing install/update family](../../tests/install/BUNDLED_UPDATES
 A helper test or unpacked-app smoke is not proof of native install, update,
 or automatic relaunch. Historical receipts and current unresolved gates are
 separate in [PM audit status](../../docs/pm-audit-status.md).
-
-## Rehearsing the guided onboarding
-
-From `apps/desktop`, use a fresh temporary directory for each rehearsal and run
-`env -u NODE_ENV NASTECH_GUEST_ONBOARDING=1 NASTECH_HOME=<tmp>/.nastech NASTECH_DESKTOP_USER_DATA_DIR=<tmp>/electron-user-data npm run dev`
-(replace `<tmp>` with that directory). To use the portal stand-in, add
-`NASTECH_PORTAL_BASE_URL=http://127.0.0.1:8765 NASTECH_ANON_API_SECRET=test-secret NASTECH_SHARED_AUTH_DIR=<tmp>/.nastech/shared`
-before `npm run dev`. Stop Electron and its dev server after the run.

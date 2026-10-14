@@ -26,7 +26,7 @@ def channel_request(commit: str, sequence: int = 65536) -> dict:
             "cliName": "nastech-unregistered-preview", "windowsExecutableName": "nastech-unregistered-preview",
             "msixAppIdWithOrg": f"NastechResearch.NastechChannel{token}",
         },
-        "bundleEnv": {"NASTECH_GUEST_ONBOARDING": "1", "NASTECH_HOME": None},
+        "bundleEnv": {"NASTECH_PREVIEW_FULL_CONNECTORS": "1", "NASTECH_HOME": None},
         "publicBase": "https://builds.example.test",
     }
 

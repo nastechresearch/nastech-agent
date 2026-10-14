@@ -284,6 +284,11 @@ def _model_flow_nastech(config, current_model="", args=None):
     from nastech_cli.config import load_config
     from nastech_cli.nastech_subscription import prompt_enable_tool_gateway
     state = get_provider_auth_state("nastech")
+    from nastech_cli import anon_auth
+    if anon_auth.guest_without_free_tier(state):
+        # A guest that carries no inference here: signing in promotes it and keeps its connectors.
+        print(anon_auth.UPGRADE_HINT)
+        return
     if not state or not state.get("access_token"):
         _say("Not logged into Nastech Portal. Starting login...", "")
 
@@ -301,21 +306,6 @@ def _model_flow_nastech(config, current_model="", args=None):
     # instead of the hundreds returned by the live /models endpoint.
     from nastech_cli.models import check_nastech_free_tier, get_curated_nastech_model_ids
     from nastech_cli.models_pricing import get_pricing_for_provider
-    from nastech_cli.model_switch_providers import _free_tier_nastech_row
-    tier_row = _free_tier_nastech_row({"name": "Nastech Portal", "models": []})
-    if tier_row is None:
-        print("The Nastech free tier is off for this install; sign in with `nastech auth upgrade` to use Nastech models.")
-        return
-    if tier_row["models"]:
-        # Free-tier identity: the welcome host serves the single pinned model; no Portal catalog,
-        # pricing, or account lookups apply.
-        creds = _nastech_verified_credentials()
-        if creds is None:
-            return
-        selected = tier_row["models"][0]
-        _nastech_persist_selection(selected, creds)
-        print(f"Default model set to: {selected} (via {tier_row['name']})")
-        return
     model_ids = get_curated_nastech_model_ids()
     if not model_ids:
         print("No curated models available for Nastech Portal.")

@@ -43,7 +43,7 @@ test('explicit clears beat inherited homes and prevent Windows registry fallback
 
 test('applyBundleEnvironment replays the banner semantics for defaults, runtime overrides and clears', async () => {
   const root = mkdtempSync(join(tmpdir(), 'nastech-bundle-pure-'))
-  const defaults = { NASTECH_HOME: null, NASTECH_DATA_DIR_SUFFIX: 'baked', NASTECH_GUEST_ONBOARDING: '1' }
+  const defaults = { NASTECH_HOME: null, NASTECH_DATA_DIR_SUFFIX: 'baked', NASTECH_PREVIEW_FULL_CONNECTORS: '1' }
   const keys = Object.keys(defaults)
   const base = { NASTECH_HOME: 'runtime', NASTECH_DATA_DIR_SUFFIX: 'explicit' }
   try {
@@ -56,12 +56,12 @@ test('applyBundleEnvironment replays the banner semantics for defaults, runtime 
     const outfile = join(root, 'bundle.mjs')
     await build({ entryPoints: [entry], bundle: true, platform: 'node', format: 'esm', outfile, banner: { js: environmentDefaultsBanner(JSON.stringify(defaults)) } })
     const env = { ...process.env, ...base }
-    delete env.NASTECH_GUEST_ONBOARDING
+    delete env.NASTECH_PREVIEW_FULL_CONNECTORS
     const viaBanner = JSON.parse(execFileSync(process.execPath, [outfile], { env, encoding: 'utf8' }))
     const viaFunction = Object.fromEntries(keys.map(key => [key, applyBundleEnvironment(base, defaults)[key]]))
     expect(viaFunction).toEqual(viaBanner)
     expect(viaFunction).toEqual({
-      NASTECH_HOME: '', NASTECH_DATA_DIR_SUFFIX: 'explicit', NASTECH_GUEST_ONBOARDING: '1',
+      NASTECH_HOME: '', NASTECH_DATA_DIR_SUFFIX: 'explicit', NASTECH_PREVIEW_FULL_CONNECTORS: '1',
     })
   } finally {
     rmSync(root, { recursive: true, force: true })
@@ -70,7 +70,7 @@ test('applyBundleEnvironment replays the banner semantics for defaults, runtime 
 
 test('baked defaults precede imported module initialization and reach children without overriding explicit env', async () => {
   const root = mkdtempSync(join(tmpdir(), 'nastech-bundle-env-'))
-  const defaults = { NASTECH_GUEST_ONBOARDING: '1', NASTECH_DATA_DIR_SUFFIX: 'magic-test', NASTECH_SHARED_AUTH_DIR: 'a=b "q"\n$(no)', NASTECH_DESKTOP_USER_DATA_DIR: '' }
+  const defaults = { NASTECH_PREVIEW_FULL_CONNECTORS: '1', NASTECH_DATA_DIR_SUFFIX: 'magic-test', NASTECH_SHARED_AUTH_DIR: 'a=b "q"\n$(no)', NASTECH_DESKTOP_USER_DATA_DIR: '' }
   const env = { ...process.env }
   for (const key of Object.keys(defaults)) {
     delete env[key]
@@ -83,9 +83,10 @@ test('baked defaults precede imported module initialization and reach children w
     await build({ entryPoints: [entry], bundle: true, platform: 'node', format: 'esm', outfile, banner: { js: environmentDefaultsBanner(JSON.stringify(defaults)) } })
     const run = extra => JSON.parse(execFileSync(process.execPath, [outfile], { env: { ...env, ...extra }, encoding: 'utf8' }))
     expect(run({})).toEqual({ values: defaults, child: defaults.NASTECH_DATA_DIR_SUFFIX })
-    expect(run({ NASTECH_DATA_DIR_SUFFIX: '-explicit', NASTECH_GUEST_ONBOARDING: '' })).toEqual({ values: { ...defaults, NASTECH_DATA_DIR_SUFFIX: '-explicit', NASTECH_GUEST_ONBOARDING: '' }, child: '-explicit' })
+    expect(run({ NASTECH_DATA_DIR_SUFFIX: '-explicit', NASTECH_PREVIEW_FULL_CONNECTORS: '' })).toEqual({ values: { ...defaults, NASTECH_DATA_DIR_SUFFIX: '-explicit', NASTECH_PREVIEW_FULL_CONNECTORS: '' }, child: '-explicit' })
     for (const bad of ['[]', 'null', '{"BAD-NAME":"x"}', '{"NASTECH_HOME":1}', '{"NASTECH_HOME":"\\u0000"}',
-      '{"NODE_OPTIONS":"--require=evil"}', '{"PATH":null}', '{"NASTECH_PYTHON":"/untrusted/python"}', '{"NASTECH_SKIP_INTRO":"1"}']) {
+      '{"NODE_OPTIONS":"--require=evil"}', '{"PATH":null}', '{"NASTECH_PYTHON":"/untrusted/python"}', '{"NASTECH_SKIP_INTRO":"1"}',
+      '{"NASTECH_GUEST_ONBOARDING":"1"}']) {
       expect(() => environmentDefaultsBanner(bad)).toThrow()
     }
   } finally {

@@ -1,6 +1,6 @@
 """Model pickers under a Nastech free-tier identity.
 
-A guest identity carrying inference shows one row, "Nastech · free tier", with the single model
+A guest carrying the welcome trial shows one row, "Nastech · free tier", with the single model
 ``nastech/welcome``; the same guest with ``nastech.guest: false`` shows no Nastech row at all. The rule lives
 in one helper (``_free_tier_nastech_row``) and this file exercises it through the real row builders
 against a temp ``NASTECH_HOME`` with the network catalog fetch stubbed.
@@ -13,7 +13,9 @@ from pathlib import Path
 
 import pytest
 
+from nastech_cli.anon_auth import WELCOME_CLAIM_FLAG
 from nastech_cli.auth import _save_auth_store
+from tests.nastech_cli.anon_portal import as_local_desktop_backend
 
 GUEST_STATE = {
     "auth_method": "anonymous",
@@ -22,14 +24,16 @@ GUEST_STATE = {
     "access_token": "aaa.bbb.ccc",
     "expires_at": "2030-01-01T00:00:00+00:00",
     "inference_base_url": "https://welcome-api.nastechresearch.github.io/v1",
+    WELCOME_CLAIM_FLAG: True,
 }
 
 
 @pytest.fixture
 def guest_home(monkeypatch, tmp_path):
-    """Seed a guest identity as the only Nastech state and keep every row builder offline."""
+    """Seed a guest that claimed the welcome trial, read on the desktop's local backend, as the only
+    Nastech state, and keep every row builder offline."""
     monkeypatch.setenv("NASTECH_SHARED_AUTH_DIR", str(tmp_path / "shared-store"))
-    monkeypatch.setenv("NASTECH_GUEST_ONBOARDING", "1")
+    as_local_desktop_backend(monkeypatch)
     for var in ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "NASTECH_API_KEY", "LM_API_KEY", "LM_BASE_URL"):
         monkeypatch.delenv(var, raising=False)
     _save_auth_store({"active_provider": "nastech", "providers": {"nastech": dict(GUEST_STATE)}})
@@ -84,7 +88,7 @@ def test_guest_identity_shows_free_tier_row_with_only_welcome_model(guest_home, 
 def test_guest_identity_with_guest_off_hides_the_nastech_row(guest_home, monkeypatch):
     _write_config(monkeypatch, guest_home, "nastech:\n  guest: false\n")
     from nastech_cli import anon_auth
-    assert anon_auth.has_guest() and not anon_auth.guest_enabled()
+    assert anon_auth.has_guest() and not anon_auth.free_inference_active()
 
     from nastech_cli.model_switch_providers import list_picker_providers
     assert _nastech_rows(list_picker_providers("nastech", "", None, None, 50, "nastech/welcome")) == []

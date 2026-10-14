@@ -88,6 +88,7 @@ import { recycleOwnedBackend } from './backend-recycle'
 import { isPidAliveWindows, waitForBackendRelease } from './backend-release-gate'
 import { createInstalledRuntimeGate } from './backend-resolution'
 import { createBackendServeSupportResolver } from './backend-serve-support'
+import { desktopBackendSpawnEnv } from './backend-spawn-env'
 import {
   isHostKeyChangedBootFailure,
   isRetryableRemoteBootFailure,
@@ -286,7 +287,6 @@ import { resolveGatewayVersion } from './gateway-version'
 import { probeGatewayWebSocket, spawnedBackendProbeOptions } from './gateway-ws-probe'
 import { windowsGitCandidates } from './git-binary-candidates'
 import { registerGitIpc } from './git-ipc'
-import { desktopBackendSpawnEnv, guestOnboardingEnabled } from './guest-onboarding'
 import {
   assertExistingPathForOpen,
   ATTACHMENT_UPLOAD_DEFAULT_MAX_BYTES,
@@ -1423,8 +1423,6 @@ const BOOT_FAKE_ERROR = process.env.NASTECH_DESKTOP_BOOT_FAKE_ERROR || ''
 // nobody to answer a modal, so the active-work confirmation would hang the
 // caller instead of letting the process exit. Force quits set this.
 const SKIP_QUIT_CONFIRM = process.env.NASTECH_DESKTOP_SKIP_QUIT_CONFIRM === '1'
-// One launch decision must reach both the renderer and every backend spawn.
-const GUEST_ONBOARDING: boolean = guestOnboardingEnabled()
 
 const BOOT_FAKE_STEP_MS = (() => {
   const raw = Number.parseInt(String(process.env.NASTECH_DESKTOP_BOOT_FAKE_STEP_MS || ''), 10)
@@ -10233,7 +10231,6 @@ async function bootstrapSshConnectionInner(profile, sshConfig, reuseToken, sourc
       probeReuseProof: sshProbeReuseProof,
       adoptServedToken: adoptServedDashboardToken,
       rememberLog: sshRememberLog,
-      guestOnboarding: GUEST_ONBOARDING,
       signal: lease.signal
     })
   } catch (error: any) {
@@ -12234,27 +12231,24 @@ async function runPoolBackendStart(
     backend.args,
     hiddenWindowsChildOptions({
       cwd: nastechCwd,
-      env: desktopBackendSpawnEnv(
-        {
-          // Never another profile's dotenv credentials from the Desktop env (#68367), and never
-          // the launch profile's TERMINAL_CWD: a pooled backend serves THIS --profile, whose
-          // placeholder/unset terminal.cwd sessions must resolve their own workspace, not the
-          // app-global one (#87584). The child re-resolves from its profile config like a
-          // standalone `nastech -p X serve`.
-          ...pooledProfileBackendEnv({ nastechHome: NASTECH_HOME, profile, backendEnv: backend.env }),
-          NASTECH_DASHBOARD_SESSION_TOKEN: token,
-          // Marks this dashboard backend as desktop-spawned so it runs the cron
-          // scheduler tick loop (the gateway isn't running under the app).
-          NASTECH_DESKTOP: '1',
-          // Exact parent identity lets the backend self-exit after an unclean
-          // Desktop death without mistaking a reused PID for its owner. If the
-          // optional marker probe fails, retain legacy PID-only tracking.
-          ...parentIdentityEnv,
-          NASTECH_WEB_DIST: webDist,
-          ...(readyFile ? { NASTECH_DESKTOP_READY_FILE: readyFile } : {})
-        },
-        GUEST_ONBOARDING
-      ),
+      env: desktopBackendSpawnEnv({
+        // Never another profile's dotenv credentials from the Desktop env (#68367), and never
+        // the launch profile's TERMINAL_CWD: a pooled backend serves THIS --profile, whose
+        // placeholder/unset terminal.cwd sessions must resolve their own workspace, not the
+        // app-global one (#87584). The child re-resolves from its profile config like a
+        // standalone `nastech -p X serve`.
+        ...pooledProfileBackendEnv({ nastechHome: NASTECH_HOME, profile, backendEnv: backend.env }),
+        NASTECH_DASHBOARD_SESSION_TOKEN: token,
+        // Marks this dashboard backend as desktop-spawned so it runs the cron
+        // scheduler tick loop (the gateway isn't running under the app).
+        NASTECH_DESKTOP: '1',
+        // Exact parent identity lets the backend self-exit after an unclean
+        // Desktop death without mistaking a reused PID for its owner. If the
+        // optional marker probe fails, retain legacy PID-only tracking.
+        ...parentIdentityEnv,
+        NASTECH_WEB_DIST: webDist,
+        ...(readyFile ? { NASTECH_DESKTOP_READY_FILE: readyFile } : {})
+      }),
       shell: backend.shell,
       stdio: ['ignore', 'pipe', 'pipe']
     })
@@ -13148,34 +13142,31 @@ async function runNastechStart({ supervisorRecovery = false }: { supervisorRecov
       backend.args,
       hiddenWindowsChildOptions({
         cwd: nastechCwd,
-        env: desktopBackendSpawnEnv(
-          {
-            // Never another profile's dotenv credentials from the Desktop env (#68367).
-            ...profileBackendParentEnv({ nastechHome: NASTECH_HOME, profile: activeProfile }),
-            // Explicitly pin NASTECH_HOME for the child so Python's get_nastech_home()
-            // resolves to the SAME location our resolveNastechHome() picked. Without
-            // this pin, Python falls back to ~/.nastech on every platform — fine on
-            // mac/linux (where our default matches), but on Windows our default is
-            // %LOCALAPPDATA%\nastech, which differs from C:\Users\<u>\.nastech.
-            // Mismatch would split config / sessions / .env / logs across two
-            // directories. install.ps1 sets NASTECH_HOME via setx; the desktop
-            // can't reliably do that, so we set it inline for every spawn.
-            NASTECH_HOME,
-            ...backend.env,
-            TERMINAL_CWD: nastechCwd,
-            NASTECH_DASHBOARD_SESSION_TOKEN: token,
-            // Marks this dashboard backend as desktop-spawned so it runs the cron
-            // scheduler tick loop (the gateway isn't running under the app).
-            NASTECH_DESKTOP: '1',
-            // Exact parent identity lets the backend self-exit after an unclean
-            // Desktop death without mistaking a reused PID for its owner. If the
-            // optional marker probe fails, retain legacy PID-only tracking.
-            ...parentIdentityEnv,
-            NASTECH_WEB_DIST: webDist,
-            ...(readyFile ? { NASTECH_DESKTOP_READY_FILE: readyFile } : {})
-          },
-          GUEST_ONBOARDING
-        ),
+        env: desktopBackendSpawnEnv({
+          // Never another profile's dotenv credentials from the Desktop env (#68367).
+          ...profileBackendParentEnv({ nastechHome: NASTECH_HOME, profile: activeProfile }),
+          // Explicitly pin NASTECH_HOME for the child so Python's get_nastech_home()
+          // resolves to the SAME location our resolveNastechHome() picked. Without
+          // this pin, Python falls back to ~/.nastech on every platform — fine on
+          // mac/linux (where our default matches), but on Windows our default is
+          // %LOCALAPPDATA%\nastech, which differs from C:\Users\<u>\.nastech.
+          // Mismatch would split config / sessions / .env / logs across two
+          // directories. install.ps1 sets NASTECH_HOME via setx; the desktop
+          // can't reliably do that, so we set it inline for every spawn.
+          NASTECH_HOME,
+          ...backend.env,
+          TERMINAL_CWD: nastechCwd,
+          NASTECH_DASHBOARD_SESSION_TOKEN: token,
+          // Marks this dashboard backend as desktop-spawned so it runs the cron
+          // scheduler tick loop (the gateway isn't running under the app).
+          NASTECH_DESKTOP: '1',
+          // Exact parent identity lets the backend self-exit after an unclean
+          // Desktop death without mistaking a reused PID for its owner. If the
+          // optional marker probe fails, retain legacy PID-only tracking.
+          ...parentIdentityEnv,
+          NASTECH_WEB_DIST: webDist,
+          ...(readyFile ? { NASTECH_DESKTOP_READY_FILE: readyFile } : {})
+        }),
         shell: backend.shell,
         stdio: ['ignore', 'pipe', 'pipe']
       })
@@ -14015,7 +14006,7 @@ const wakeIndicatorController = createWakeIndicatorWindowController({
   wireWindow: window => wireCommonWindowHandlers(window, zoomWiringForWindowKind('wakeIndicator'))
 })
 
-registerWindowSizing({ enabled: GUEST_ONBOARDING, mainWindow: (): BrowserWindow | null => mainWindow })
+registerWindowSizing({ mainWindow: (): BrowserWindow | null => mainWindow })
 registerMachineProfile()
 
 // The pet overlay: a single transparent, frameless, always-on-top window that
@@ -18204,7 +18195,9 @@ ipcMain.on('nastech:feature-flags', (event: IpcMainEvent): void => {
       argv: process.argv,
       canary: resolveUpdaterChannelFromStamp() === 'canary'
     }),
-    guestOnboarding: GUEST_ONBOARDING
+    // Dev-only: `--fresh-install` makes onboarding treat this launch as a fresh
+    // install. Packaged builds never honour it.
+    assumeFreshInstall: !app.isPackaged && process.argv.includes('--fresh-install')
   }
 })
 

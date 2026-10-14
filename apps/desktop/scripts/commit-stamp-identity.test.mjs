@@ -56,7 +56,7 @@ test('desktop stamp uses the admitted checkout rather than the dispatch SHA', ()
     assert.deepEqual(JSON.parse(fs.readFileSync(path.join(build, 'agent-payload/app/install-stamp.json'), 'utf8')), stamp)
     // A commit bundle records its baked defaults/clears as data so the smoke
     // driver can replay them without running the app.
-    const bundleEnv = { NASTECH_HOME: null, NASTECH_DATA_DIR_SUFFIX: '-suffix', NASTECH_GUEST_ONBOARDING: '1' }
+    const bundleEnv = { NASTECH_HOME: null, NASTECH_DATA_DIR_SUFFIX: '-suffix', NASTECH_PREVIEW_FULL_CONNECTORS: '1' }
     assert.equal(run({ NASTECH_BUNDLE_ENV_JSON: JSON.stringify(bundleEnv) }).status, 0)
     assert.deepEqual(JSON.parse(fs.readFileSync(out, 'utf8')).bundleEnv, bundleEnv)
     const before = fs.readFileSync(out)

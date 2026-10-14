@@ -1141,7 +1141,7 @@ function buildSpawnCommand(nastechPath, profile, opts: any = {}) {
 
   const dashCmd =
     `ulimit -n ${REMOTE_NOFILE_SOFT_LIMIT} 2>/dev/null || true; ` +
-    `exec env NASTECH_DESKTOP=1${opts.guestOnboarding === true ? ' NASTECH_GUEST_ONBOARDING=1' : ''} ${nastech} ${profileArgs}${subCmd}`
+    `exec env NASTECH_DESKTOP=1 ${nastech} ${profileArgs}${subCmd}`
 
   const detachedShell: string = `eval "exec $1>&-"; ${dashCmd} </dev/null >> ${logPath} 2>&1 & echo $!`
   // The inner shell backgrounds Nastech and reports its PID; backgrounding the
@@ -1283,15 +1283,7 @@ async function scrapeReadyPort(ssh, logPath, { timeoutMs = resolveReadyTimeoutMs
 
 async function spawnRemoteDashboard(
   ssh,
-  {
-    nastechPath,
-    profile,
-    token,
-    ownershipId,
-    nastechHome = '~/.nastech',
-    guestOnboarding = false,
-    assertInstallClear = async () => {}
-  }
+  { nastechPath, profile, token, ownershipId, nastechHome = '~/.nastech', assertInstallClear = async () => {} }
 ) {
   if (!(await remoteSupportsSshOwnership(ssh, nastechPath))) {
     const err: any = new Error(
@@ -1361,7 +1353,6 @@ async function spawnRemoteDashboard(
         tokenFilePath,
         logPath,
         nastechHome,
-        guestOnboarding,
         ownershipId,
         reservationNonce: spawnNonce,
         lockMetadata: {
@@ -1511,7 +1502,6 @@ async function connect(deps) {
     adoptServedToken,
     rememberLog = () => {},
     readyTimeoutMs = resolveReadyTimeoutMs(),
-    guestOnboarding = false,
     signal
   } = deps
 
@@ -1672,7 +1662,6 @@ async function connect(deps) {
     token: spawnToken,
     ownershipId,
     nastechHome,
-    guestOnboarding,
     assertInstallClear: () => assertRemoteInstallUpdateClear(ssh, nastechHome, nastechPath)
   })
 
