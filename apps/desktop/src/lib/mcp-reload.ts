@@ -1,7 +1,7 @@
 import type { ReloadMcpResult } from '@nastech/shared'
 
-import type { NastechGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
+import type { NastechGateway } from '@/nastech'
 import { $gateway } from '@/store/gateway'
 import { notify } from '@/store/notifications'
 

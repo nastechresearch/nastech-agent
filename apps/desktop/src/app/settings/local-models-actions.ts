@@ -1,5 +1,7 @@
 import { type QueryClient, useQueryClient } from '@tanstack/react-query'
 
+import { useI18n } from '@/i18n'
+import type { Translations } from '@/i18n/types'
 import {
   activateLocalModel,
   deleteLocalModel,
@@ -8,8 +10,6 @@ import {
   quickstartLocalModels,
   setLocalServer
 } from '@/nastech'
-import { useI18n } from '@/i18n'
-import type { Translations } from '@/i18n/types'
 import {
   isCurrentLocalModelsOwner,
   localModelsNotificationTitle,

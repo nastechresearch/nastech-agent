@@ -47,9 +47,9 @@ import {
 import { onGatewayEvent } from '@/contrib/events'
 import { registry } from '@/contrib/registry'
 import type { WorkspaceMode } from '@/contrib/types'
-import { deleteProfile, getLogs, getStatus, nastechApi, type NastechGateway } from '@/nastech'
 import { traceIdentityChange } from '@/lib/identity-trace'
 import { completeMcpDesktopOAuth } from '@/lib/mcp-dashboard-oauth'
+import { deleteProfile, getLogs, getStatus, nastechApi, type NastechGateway } from '@/nastech'
 import {
   $gateway,
   activeGatewayConnectionId,

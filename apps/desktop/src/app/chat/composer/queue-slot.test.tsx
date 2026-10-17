@@ -1,15 +1,19 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 
-import type { NastechGateway } from '@/nastech'
 import { I18nProvider } from '@/i18n/context'
 import { en } from '@/i18n/en'
+import type { NastechGateway } from '@/nastech'
 import { $queuedPromptsBySession, getQueuedPrompts } from '@/store/composer-queue'
 import { reconcilePendingSubmissions } from '@/store/pending-submissions'
 
 import { renderComposerQueueSlot } from './queue-slot'
 
-afterEach(() => { cleanup(); $queuedPromptsBySession.set({}); localStorage.clear() })
+afterEach(() => {
+  cleanup()
+  $queuedPromptsBySession.set({})
+  localStorage.clear()
+})
 
 it('Delete on a server-queued card cancels its admission at the authority', async () => {
   reconcilePendingSubmissions('stored', [{ admission_id: 'adm-1', status: 'queued', user: 'later please' }])
@@ -38,5 +42,7 @@ it('Delete on a server-queued card cancels its admission at the authority', asyn
   fireEvent.click(await screen.findByRole('button', { name: /queued/i }))
   fireEvent.click(screen.getByRole('button', { name: en.composer.queueDelete }))
 
-  await vi.waitFor(() => expect(request).toHaveBeenCalledWith('prompt.cancel', { session_id: 'runtime-1', admission_id: 'adm-1' }))
+  await vi.waitFor(() =>
+    expect(request).toHaveBeenCalledWith('prompt.cancel', { session_id: 'runtime-1', admission_id: 'adm-1' })
+  )
 })

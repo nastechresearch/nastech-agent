@@ -3,9 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import type * as React from 'react'
 import { useMemo } from 'react'
 
-import type { NastechGateway } from '@/nastech'
 import { quickModelOptions } from '@/lib/chat-runtime'
 import { currentModelCapabilities, modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
+import type { NastechGateway } from '@/nastech'
 
 import type { ChatBarState } from './composer/types'
 

@@ -1,8 +1,8 @@
-import { listMcpServers } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { completeMcpDesktopOAuth, McpOAuthCancelled } from '@/lib/mcp-dashboard-oauth'
 import { McpReloadDeferred, reloadMcpFor } from '@/lib/mcp-reload'
 import { prettyName } from '@/lib/text'
+import { listMcpServers } from '@/nastech'
 import { type ComposerSuggestion, offerSuggestions } from '@/store/composer-suggestions'
 import { notifyError } from '@/store/notifications'
 
