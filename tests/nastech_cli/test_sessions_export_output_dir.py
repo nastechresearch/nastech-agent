@@ -22,7 +22,11 @@ class _FakeDB:
 
 
 def _export(monkeypatch, *argv):
-    monkeypatch.setattr(nastech_state, "SessionDB", lambda *args, **kwargs: _FakeDB())
+    # Read-only observation commands short-circuit when state.db is absent; the fake DB
+    # stands in for the file that would otherwise be opened read-only.
+    from nastech_constants import get_nastech_home
+    (get_nastech_home() / "state.db").touch()
+    monkeypatch.setattr(nastech_state, "SessionDB", lambda **_kw: _FakeDB())
     monkeypatch.setattr(sys, "argv", ["nastech", "sessions", "export", "--session-id", "sess", *argv])
     main_mod.main()
 

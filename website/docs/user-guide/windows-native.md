@@ -28,12 +28,13 @@ No admin rights required. The installer goes to `%LOCALAPPDATA%\nastech\` and ad
 **Installer options** use a scriptblock:
 
 ```powershell
-& ([scriptblock]::Create((irm https://nastechresearch.github.io/nastech-agent/install.ps1))) -NonInteractive -Branch main
+& ([scriptblock]::Create((irm https://nastechresearch.github.io/nastech-agent/install.ps1))) -NonInteractive -Channel main
 ```
 
 | Parameter | Purpose |
 |---|---|
-| `-Branch NAME` | Select the source branch; default `main`. |
+| `-Channel stable\|main` | `stable` (default): the latest published release. `main`: every commit, saved like `nastech update --set-channel main`. `$env:NASTECH_INSTALL_CHANNEL` sets it for a plain `irm \| iex`. |
+| `-Branch NAME` | Select the source branch; default `main`. Another branch is installed at its tip. |
 | `-Commit SHA` | Select a commit after the branch checkout. |
 | `-NastechHome PATH` | Select the data directory. |
 | `-InstallDir PATH` | Select the source checkout directory. |

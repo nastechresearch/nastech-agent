@@ -1,6 +1,6 @@
 # Nastech Achievements
 
-> **Bundled with Nastech Agent.** Originally authored by [@PCinkusz](https://github.com/PCinkusz) at https://github.com/PCinkusz/nastech-achievements — vendored into `plugins/nastech-achievements/` so it ships with the dashboard out-of-the-box and stays in lockstep with Nastech feature changes. Upstream repo remains the staging ground for new badges and UI iteration.
+> **Bundled with Nastech Agent.** Originally authored by [@PCinkusz](https://github.com/PCinkusz) at https://github.com/PCinkusz/hermes-achievements — vendored into `plugins/nastech-achievements/` so it ships with the dashboard out-of-the-box and stays in lockstep with Nastech feature changes. Upstream repo remains the staging ground for new badges and UI iteration.
 >
 > When Nastech is installed via the install script or cloned from source, this plugin auto-registers as a dashboard tab on first `nastech dashboard` launch. No separate install step. See [Built-in Plugins → nastech-achievements](../../website/docs/user-guide/features/built-in-plugins.md) in the main docs.
 
@@ -61,13 +61,13 @@ Version `0.2.x` expands the catalog to 60+ achievements, including model/provide
 Clone into your Nastech plugins directory:
 
 ```bash
-git clone https://github.com/PCinkusz/nastech-achievements ~/.nastech/plugins/nastech-achievements
+git clone https://github.com/PCinkusz/hermes-achievements ~/.nastech/plugins/nastech-achievements
 ```
 
 For local development, keep the repo elsewhere and symlink it:
 
 ```bash
-git clone https://github.com/PCinkusz/nastech-achievements ~/nastech-achievements
+git clone https://github.com/PCinkusz/hermes-achievements ~/nastech-achievements
 ln -s ~/nastech-achievements ~/.nastech/plugins/nastech-achievements
 ```
 

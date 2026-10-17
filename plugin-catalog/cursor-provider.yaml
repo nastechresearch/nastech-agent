@@ -1,5 +1,5 @@
 name: cursor-provider
-repo: https://github.com/anpicasso/nastech-cursor-provider
+repo: https://github.com/anpicasso/hermes-cursor-provider
 sha: 833122c23a8e1d1570446a358cdb8e120d7ce42c
 subdir: provider
 description: "Cursor model provider using the official proprietary Cursor SDK. Disclosure — uses Cursor's proprietary cursor-sdk (PyPI, bundled binary bridge on loopback) with the user's CURSOR_API_KEY; sends the full conversation, tool schemas/results and images (HTTPS URLs or base64) to Cursor; keeps private per-session SDK workspaces under NASTECH_HOME/cache/cursor-sdk; Cursor built-in tools and MCP are requested off and Nastech keeps tool execution and approvals."
@@ -7,7 +7,7 @@ maintainer: anpicasso
 tier: community
 category: models
 requires_nastech: ">=0.21.4"
-docs_url: https://github.com/anpicasso/nastech-cursor-provider#readme
+docs_url: https://github.com/anpicasso/hermes-cursor-provider#readme
 version: "0.3.6"
 platforms: []
 capabilities:

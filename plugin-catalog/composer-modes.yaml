@@ -1,5 +1,5 @@
 name: composer-modes
-repo: https://github.com/LisandroNahuelH/nastech-composer-modes
+repo: https://github.com/LisandroNahuelH/hermes-composer-modes
 sha: de372aa34ecfe6adb424f86c04ca2de924984cb0
 description: Cursor-style composer modes (ask / agent / plan / debug) for the Nastech desktop —
   the mode's operating note reaches the model inside the turn's model-facing bytes, never the
@@ -8,7 +8,7 @@ maintainer: LisandroNahuelH
 tier: community
 category: desktop
 requires_nastech: ">=0.21.3"
-docs_url: https://github.com/LisandroNahuelH/nastech-composer-modes#readme
+docs_url: https://github.com/LisandroNahuelH/hermes-composer-modes#readme
 platforms: []
 capabilities:
   provides_tools: []

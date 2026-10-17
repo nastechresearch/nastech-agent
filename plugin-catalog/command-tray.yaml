@@ -1,5 +1,5 @@
 name: command-tray
-repo: https://github.com/aydnOktay/nastech-command-tray
+repo: https://github.com/aydnOktay/hermes-command-tray
 sha: f28afd1e21dd9ac18756a4ec8d48e8a0f6889ce2
 description: >-
   Session command tray — shell commands the Nastech agent ran via the terminal tool (success and
@@ -12,7 +12,7 @@ maintainer: aydnOktay
 tier: community
 category: desktop
 requires_nastech: ">=0.21"
-docs_url: https://github.com/aydnOktay/nastech-command-tray
+docs_url: https://github.com/aydnOktay/hermes-command-tray
 version: "0.1.0"
 platforms: []
 capabilities:

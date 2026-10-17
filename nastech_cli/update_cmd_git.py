@@ -530,11 +530,15 @@ def _classify_fetch_failure(stderr: str) -> str:
 
 
 def _print_fetch_failure(stderr: str) -> None:
-    """Print the classified diagnosis plus the first raw stderr line."""
+    """Print the classified diagnosis plus bounded raw stderr for diagnosis."""
     stderr = (stderr or "").strip()
     print(_classify_fetch_failure(stderr))
     if stderr:
-        print(f"  {stderr.splitlines()[0]}")
+        lines = stderr.splitlines()
+        for line in lines[:15]:
+            print(f"  {line}")
+        if len(lines) > 15:
+            print(f"  ... ({len(lines) - 15} more lines omitted)")
 
 
 def _probe_fork_bomb(argv: list) -> Optional[bool]:
@@ -585,11 +589,24 @@ def _locate_real_git() -> Optional[Path]:
     re-exec git-core, while the real binary at ``mingw64\\libexec\\git-core\\git.exe`` (≈4.4MB) works when
     invoked directly (#87876).
     """
-    candidates = [
-        Path(base) / "Git" / arch / "libexec" / "git-core" / "git.exe"
-        for base in (r"C:\Program Files", r"C:\Program Files (x86)")
-        for arch in ("clangarm64", "mingw64", "mingw32")
-    ] + _portable_git_candidates()
+    # Every layout Git for Windows has shipped: enumerate them all and
+    # let the fork-bomb probe -- not the path -- decide which one is real,
+    # so an unknown future layout still resolves instead of silently
+    # degrading to the ZIP path. The flat bin/cmd entries are the ~46KB
+    # trampoline shims; the probe rejects them.
+    candidates = _portable_git_candidates()
+    for base in (r"C:\Program Files", r"C:\Program Files (x86)"):
+        git_root = Path(base) / "Git"
+        if not git_root.is_dir():
+            continue
+        for pattern in (
+            "bin/git.exe",
+            "cmd/git.exe",
+            "*/bin/git.exe",
+            "*/libexec/git-core/git.exe",
+        ):
+            with suppress(OSError):
+                candidates.extend(sorted(git_root.glob(pattern)))
     return next((c for c in candidates if c.exists() and _probe_fork_bomb([str(c)]) is False), None)
 
 

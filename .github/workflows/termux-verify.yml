@@ -42,7 +42,7 @@ concurrency:
 jobs:
   contracts:
     name: Termux packaging contracts on Linux
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
@@ -72,7 +72,7 @@ jobs:
 
   tui:
     name: Prebuilt TUI checks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
@@ -101,7 +101,7 @@ jobs:
   r2-provisioned:
     name: Detect R2 credentials
     if: github.event_name != 'pull_request' && github.event_name != 'pull_request_target'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     environment: release-signing
     timeout-minutes: 5
     outputs:

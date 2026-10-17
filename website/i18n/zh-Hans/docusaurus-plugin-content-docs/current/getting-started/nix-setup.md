@@ -618,7 +618,7 @@ NixOS 模块支持声明式插件安装——无需命令式的 `nastech plugins
 
 ### 目录插件（`extraPlugins`）
 
-对于只包含 `plugin.yaml` + `__init__.py` 的源码树插件（例如 [nastech-lcm](https://github.com/stephenschoettler/nastech-lcm)）：
+对于只包含 `plugin.yaml` + `__init__.py` 的源码树插件（例如 [nastech-lcm](https://github.com/stephenschoettler/hermes-lcm)）：
 
 ```nix
 services.nastech-agent.extraPlugins = [
@@ -635,7 +635,7 @@ services.nastech-agent.extraPlugins = [
 
 ### 入口点插件（`extraPythonPackages`）
 
-对于通过 `[project.entry-points."nastech_agent.plugins"]` 注册的 pip 打包插件（例如 [rtk-nastech](https://github.com/ogallotti/rtk-nastech)）：
+对于通过 `[project.entry-points."nastech_agent.plugins"]` 注册的 pip 打包插件（例如 [rtk-nastech](https://github.com/ogallotti/rtk-hermes)）：
 
 ```nix
 services.nastech-agent.extraPythonPackages = [

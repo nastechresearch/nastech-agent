@@ -1,6 +1,6 @@
 name: memory-shield
 title: Memory Shield
-repo: https://github.com/churnast/nastech-memory-shield
+repo: https://github.com/churnast/hermes-memory-shield
 sha: 347ab18408da52937f7e808a6e88a52b74184225
 description: >-
   Keeps your agent from rewriting or wiping what it remembers about you: by default the agent may add facts
@@ -30,7 +30,7 @@ maintainer: churnast
 tier: community
 category: general
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/churnast/nastech-memory-shield#readme
+docs_url: https://github.com/churnast/hermes-memory-shield#readme
 version: "1.1.2"
 image: https://raw.githubusercontent.com/churnast/nastech-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/card.png
 screenshots:

@@ -3,14 +3,14 @@
 # The plugin payload is identical to v0.3.1; the pin adds the README screenshots and release tooling.
 # Update sha and version together for later releases; a bump is a new catalog PR.
 name: nastech-adaptive-effort
-repo: https://github.com/atostivint/nastech-adaptive-effort
+repo: https://github.com/atostivint/hermes-adaptive-effort
 sha: 0998a083d85ea52fbef38427b44a54d27332358a
 description: "Choose a separate scorer to set the reasoning effort of each Nastech request. Disclosure — off by default; when a mode is enabled (or on an explicit `/hae probe`), sends the latest user message (or the parent-written subagent goal), truncated to 4000 characters, plus any configured guidance to the scorer you select (TypeSafe Jev at api.typesafe.ai by default, or OpenAI Decisions, OpenRouter, Cloudflare Workers AI, or a custom URL) using that service's key; in Nastech Desktop it also sets the focused chat's session reasoning selector through the gateway `config.set` API after each applied change, and it keeps a prompt-free effort-change history (64 changes × 64 conversations) in its plugin data directory."
 maintainer: atostivint
 tier: community
 category: models
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/atostivint/nastech-adaptive-effort/blob/0998a083d85ea52fbef38427b44a54d27332358a/docs/README.md
+docs_url: https://github.com/atostivint/hermes-adaptive-effort/blob/0998a083d85ea52fbef38427b44a54d27332358a/docs/README.md
 version: "0.3.1"
 readme: true
 screenshots:

@@ -1,6 +1,6 @@
 name: teamorouter
 title: TeamoRouter
-repo: https://github.com/2867297362mjb-sketch/nastech-provider-teamorouter
+repo: https://github.com/2867297362mjb-sketch/hermes-provider-teamorouter
 sha: 9260c9a0e7c433b7cbb51bd07128de7f2627c829
 subdir: teamorouter
 description: >-
@@ -22,7 +22,7 @@ maintainer: TeamoRouter
 tier: community
 category: models
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/2867297362mjb-sketch/nastech-provider-teamorouter#readme
+docs_url: https://github.com/2867297362mjb-sketch/hermes-provider-teamorouter#readme
 version: "0.1.0"
 platforms: []
 capabilities:

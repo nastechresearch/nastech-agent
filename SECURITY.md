@@ -7,7 +7,7 @@ scope for vulnerability reports.
 ## 1. Reporting a Vulnerability
 
 Report privately via [GitHub Security Advisories](https://github.com/NastechResearch/nastech-agent/security/advisories/new)
-or **security@nastechresearch.github.io**. Do not open public issues for
+only; this fork publishes no mailbox because a `.github.io` domain has no MX record. Do not open public issues for
 security vulnerabilities. **Nastech Agent does not operate a bug
 bounty program.**
 
@@ -329,7 +329,6 @@ that:
 
 - **Coordinated disclosure window:** 90 days from report, or until a
   fix is released, whichever comes first.
-- **Channel:** the GHSA thread or email correspondence with
-  security@nastechresearch.github.io.
+- **Channel:** the GHSA thread (this fork publishes no mailbox because a `.github.io` domain has no MX record).
 - **Credit:** reporters are credited in release notes unless
   anonymity is requested.

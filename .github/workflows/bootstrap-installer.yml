@@ -26,7 +26,7 @@ concurrency:
 jobs:
   posix:
     name: install.sh protocol + small fresh-install E2E
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     # NOTE: `runner.temp` is only available in step-level env, not job-level
     # env — a job-env `${{ runner.temp }}` makes GitHub reject the workflow
@@ -140,7 +140,6 @@ jobs:
       - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           ref: ${{ inputs.commit }}
-
       # Windows PowerShell 5.1 is what ships with Windows and what `irm | iex`
       # lands in for most users — the protocol surface must parse there.
       - name: Protocol version + stage manifest (Windows PowerShell 5.1)

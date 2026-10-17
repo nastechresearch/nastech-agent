@@ -26,7 +26,7 @@ describe('requestPluginCatalogInstallFromDeepLink', () => {
       ok: true,
       entry: {
         name: 'aihubmix',
-        repo: 'https://github.com/AIhubmix/nastech-provider-aihubmix',
+        repo: 'https://github.com/AIhubmix/hermes-provider-aihubmix',
         sha: 'b'.repeat(40),
         subdir: 'aihubmix'
       }
@@ -38,7 +38,7 @@ describe('requestPluginCatalogInstallFromDeepLink', () => {
     expect($pluginInstallRequest.get()).toEqual({
       catalogName: 'aihubmix',
       profile: null,
-      repo: 'https://github.com/AIhubmix/nastech-provider-aihubmix#aihubmix',
+      repo: 'https://github.com/AIhubmix/hermes-provider-aihubmix#aihubmix',
       sha: 'b'.repeat(40)
     })
     expect($notifications.get()).toEqual([])

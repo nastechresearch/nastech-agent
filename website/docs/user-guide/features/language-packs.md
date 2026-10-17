@@ -39,7 +39,7 @@ $ nastech config set display.language pl
 ## Using a pack
 
 ```bash
-nastech plugins install https://github.com/teknium1/nastech-lang-pl   # or a catalog name
+nastech plugins install https://github.com/teknium1/hermes-lang-pl   # or a catalog name
 nastech config set display.language pl
 ```
 

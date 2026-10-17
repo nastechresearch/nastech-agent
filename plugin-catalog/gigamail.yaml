@@ -1,5 +1,5 @@
 name: gigamail
-repo: https://github.com/adecubed/nastech-plugin-gigamail
+repo: https://github.com/adecubed/hermes-plugin-gigamail
 sha: a056fe1a5ac09595a97952ab6062dba7504b57af
 description: >-
   Email and calendar through an existing local GigaMail MCP server, with a
@@ -16,7 +16,7 @@ description: >-
 maintainer: adecubed
 tier: community
 category: tools
-docs_url: https://github.com/adecubed/nastech-plugin-gigamail#readme
+docs_url: https://github.com/adecubed/hermes-plugin-gigamail#readme
 version: "0.1.0"
 readme: true
 platforms: [windows]

@@ -1,5 +1,5 @@
 name: lightningai-rate-limit
-repo: https://github.com/dinosauria123/nastech-lightningai-rate-limit
+repo: https://github.com/dinosauria123/hermes-lightningai-rate-limit
 sha: dc7911a946f0b209a81cf680c168382177bb13bf
 description: >-
   Per-process throttle for Lightning AI (https://lightning.ai/api/v1) keeping LLM requests

@@ -1,11 +1,11 @@
 name: agent-analytics
-repo: https://github.com/Agent-Analytics/agent-analytics-nastech-plugin
+repo: https://github.com/Agent-Analytics/agent-analytics-hermes-plugin
 sha: 63f11d3669330e40dad977b7d32f9b69e69a9fb8
 description: Dashboard-only read plugin for Agent Analytics inside Nastech.
 maintainer: Agent-Analytics
 tier: community
 category: desktop
-docs_url: https://github.com/Agent-Analytics/agent-analytics-nastech-plugin#readme
+docs_url: https://github.com/Agent-Analytics/agent-analytics-hermes-plugin#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

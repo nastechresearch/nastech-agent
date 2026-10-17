@@ -1,5 +1,5 @@
 name: metamask-wallet
-repo: https://github.com/akugone/nastech-metamask-wallet
+repo: https://github.com/akugone/hermes-metamask-wallet
 sha: b56d6bbf575391d172280016abf778d31c5ca8bd
 subdir: ""
 description: MetaMask Agent Wallet for Nastech — chat-only setup, reads, and approval-gated transfers/swaps/signatures, a gated Guard Mode policy editor, and a background 2FA watcher. Keys stay in MetaMask.
@@ -7,7 +7,7 @@ maintainer: akugone
 tier: community
 category: tools
 requires_nastech: ">=0.21"
-docs_url: https://github.com/akugone/nastech-metamask-wallet
+docs_url: https://github.com/akugone/hermes-metamask-wallet
 platforms: [macos, linux]
 capabilities:
   provides_tools:

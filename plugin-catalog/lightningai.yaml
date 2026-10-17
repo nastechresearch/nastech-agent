@@ -1,5 +1,5 @@
 name: lightningai
-repo: https://github.com/dinosauria123/nastech-lightningai-provider
+repo: https://github.com/dinosauria123/hermes-lightningai-provider
 sha: e4350ca278f8994322fc3b79a55a52e83388b7da
 description: >-
   Lightning AI as a Nastech model provider (--provider lightning, lightning-ai, lightningai):

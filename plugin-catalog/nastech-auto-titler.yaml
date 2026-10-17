@@ -1,5 +1,5 @@
 name: nastech-auto-titler
-repo: https://github.com/Vocllum/nastech-auto-titler
+repo: https://github.com/Vocllum/hermes-auto-titler
 sha: 42259f5cf346eba307e1cc8cac835203d986bcb6
 version: "0.3.0"
 image: https://raw.githubusercontent.com/Vocllum/nastech-auto-titler/42259f5cf346eba307e1cc8cac835203d986bcb6/docs/catalog-card.png
@@ -7,7 +7,7 @@ description: "Topic-aware session title tracking for Nastech Agent. Nastech gene
 maintainer: Vocllum
 tier: community
 category: automation
-docs_url: https://github.com/Vocllum/nastech-auto-titler
+docs_url: https://github.com/Vocllum/hermes-auto-titler
 platforms: []
 capabilities:
   provides_tools: []

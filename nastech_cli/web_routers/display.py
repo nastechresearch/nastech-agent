@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -123,7 +124,6 @@ async def _bridge(ws: WebSocket, info: dict) -> None:
     from nastech_constants import nastech_home_key
     from tools.bot_desktop import lease as _lease
     from tools.bot_desktop.rfb_filter import RfbClientFilter
-    from pathlib import Path
 
     profile_home = str(info["nastech_home"])
     profile_key = nastech_home_key(profile_home)

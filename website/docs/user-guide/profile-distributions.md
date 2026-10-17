@@ -497,11 +497,11 @@ git init && git add . && git status   # confirm no secrets staged
 git commit -m "v1.0"
 git tag v1.0.0
 # Publish to a public GitHub repo
-git remote add origin https://github.com/you/nastech-polymarket-trader.git
+git remote add origin https://github.com/you/hermes-polymarket-trader.git
 git push -u origin main --tags
 
 # Anyone
-nastech profile install github.com/you/nastech-polymarket-trader --alias
+nastech profile install github.com/you/hermes-polymarket-trader --alias
 ```
 
 Tweet the install command. People who try it send you issues and PRs. If someone wants to customize, they fork — same git workflow everyone already knows.

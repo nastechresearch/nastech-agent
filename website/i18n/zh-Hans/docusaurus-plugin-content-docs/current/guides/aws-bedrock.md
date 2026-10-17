@@ -170,4 +170,4 @@ Nastech 按以下顺序检查凭证：
 
 如需在 EC2 上通过 CloudFormation 进行全自动部署：
 
-**[sample-nastech-agent-on-aws-with-bedrock](https://github.com/JiaDe-Wu/sample-nastech-agent-on-aws-with-bedrock)** — 自动创建 VPC、IAM 角色、EC2 实例并配置 Bedrock。一键即可在任意区域完成部署。
+**[sample-nastech-agent-on-aws-with-bedrock](https://github.com/JiaDe-Wu/sample-hermes-agent-on-aws-with-bedrock)** — 自动创建 VPC、IAM 角色、EC2 实例并配置 Bedrock。一键即可在任意区域完成部署。

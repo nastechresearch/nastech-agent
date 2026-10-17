@@ -1,12 +1,13 @@
 name: nastech-nastech-prices
-repo: https://github.com/Adolanium/nastech-nastech-prices
-sha: 15b28a46edea42d1501b16659c6595b69ba17054
+repo: https://github.com/Adolanium/hermes-nous-prices
+sha: e2e8639300f4e2bd18f14b39710d2c3436805235
 version: "0.1.2"
+image: https://raw.githubusercontent.com/Adolanium/nastech-nastech-prices/e2e8639300f4e2bd18f14b39710d2c3436805235/assets/catalog-banner.png
 description: Browse Nastech Portal model prices and account balances in Nastech Desktop.
 maintainer: Adolanium
 tier: community
 category: desktop
-docs_url: https://github.com/Adolanium/nastech-nastech-prices#readme
+docs_url: https://github.com/Adolanium/hermes-nous-prices#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

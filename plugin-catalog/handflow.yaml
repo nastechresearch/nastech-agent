@@ -1,5 +1,5 @@
 name: handflow
-repo: https://github.com/DECRUX9812/nastech-handflow
+repo: https://github.com/DECRUX9812/hermes-handflow
 sha: 6526ef75ffeb133d66472bc1899c87f34dcf9556
 subdir: ""
 description: Manus-style planning flow — the agent plans in steps and marks them as it works, with a live desktop pane.
@@ -7,7 +7,7 @@ maintainer: DECRUX9812
 tier: community
 category: automation
 requires_nastech: ">=0.19"
-docs_url: https://github.com/DECRUX9812/nastech-handflow#readme
+docs_url: https://github.com/DECRUX9812/hermes-handflow#readme
 platforms: []
 capabilities:
   provides_tools: [handflow]

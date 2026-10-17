@@ -1,5 +1,5 @@
 name: rtk-rewrite
-repo: https://github.com/kerrz2020/nastech-rtk-rewrite
+repo: https://github.com/kerrz2020/hermes-rtk-rewrite
 sha: 4c5f8a5abdfd7980cba5ef02df86b8efe52c00d6
 description: >-
   Community (non-official) plugin that rewrites Nastech terminal commands through

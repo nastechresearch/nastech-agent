@@ -677,7 +677,7 @@ macOS has no equivalent option. A `launchd` agent with `RunAtLoad` starts at log
 
 ### Running the Desktop / Dashboard Backend
 
-`gateway.enable` runs the messaging gateway for Telegram, Discord, Slack and the other platforms. Nastech Desktop and the web dashboard connect to a *different* process, which is `nastech serve` or `nastech dashboard`. `backend.mode` runs that process with the gateway:
+`gateway.enable` runs the messaging gateway for Telegram, Discord, Slack and the other platforms. A Nastech Desktop **remote** connection and the web dashboard connect to a *different* process, which is `nastech serve` or `nastech dashboard`. (A Desktop running on the same host attaches to the gateway itself via `nastech gateway ensure`.) `backend.mode` runs that process with the gateway:
 
 ```nix
 {
@@ -779,7 +779,7 @@ The NixOS module supports declarative plugin installation — no imperative `nas
 
 ### Directory Plugins (`extraPlugins`)
 
-For plugins that are just a source tree with `plugin.yaml` + `__init__.py` (e.g., [nastech-lcm](https://github.com/stephenschoettler/nastech-lcm)):
+For plugins that are just a source tree with `plugin.yaml` + `__init__.py` (e.g., [nastech-lcm](https://github.com/stephenschoettler/hermes-lcm)):
 
 ```nix
 services.nastech-agent.extraPlugins = [
@@ -796,7 +796,7 @@ Plugins are symlinked into `$NASTECH_HOME/plugins/` at activation time. Nastech 
 
 ### Entry-Point Plugins (`extraPythonPackages`)
 
-For pip-packaged plugins that register via `[project.entry-points."nastech_agent.plugins"]` (e.g., [rtk-nastech](https://github.com/ogallotti/rtk-nastech)):
+For pip-packaged plugins that register via `[project.entry-points."nastech_agent.plugins"]` (e.g., [rtk-nastech](https://github.com/ogallotti/rtk-hermes)):
 
 ```nix
 services.nastech-agent.extraPythonPackages = [
@@ -1035,7 +1035,7 @@ nix build .#checks.x86_64-linux.config-roundtrip    # merge script preserves use
 
 ### Backend (`nastech serve` / `nastech dashboard`)
 
-This option runs the process that Nastech Desktop and the web dashboard connect to, with the gateway. You cannot use it with `container.enable`.
+This option runs the process that a remote Nastech Desktop connection and the web dashboard connect to, with the gateway. You cannot use it with `container.enable`.
 
 | Option | Type | Default | Description |
 |---|---|---|---|

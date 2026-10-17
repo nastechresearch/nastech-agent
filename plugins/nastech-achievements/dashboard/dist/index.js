@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   // nastech-achievements dashboard plugin
-  // Originally authored by @PCinkusz — https://github.com/PCinkusz/nastech-achievements (MIT).
+  // Originally authored by @PCinkusz — https://github.com/PCinkusz/hermes-achievements (MIT).
   // Bundled into nastech-agent. Upstream repo remains the staging ground for new
   // badges and UI iteration; the in-progress scan banner below is a small addition
   // layered on top of the original dist bundle.

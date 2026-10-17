@@ -1,5 +1,5 @@
 name: little-canary
-repo: https://github.com/nastech-labs-ai/little-canary
+repo: https://github.com/hermes-labs-ai/little-canary
 sha: 61855a940a66fb8319742756c3ff72c720a89160
 subdir: integrations/nastech-agent
 version: "0.4.0"
@@ -8,7 +8,7 @@ maintainer: roli-lpci (Nastech Labs; independent of Nastech Research)
 tier: community
 category: general
 requires_nastech: ">=0.21.3"
-docs_url: https://github.com/nastech-labs-ai/little-canary/blob/61855a940a66fb8319742756c3ff72c720a89160/integrations/nastech-agent/README.md
+docs_url: https://github.com/hermes-labs-ai/little-canary/blob/61855a940a66fb8319742756c3ff72c720a89160/integrations/nastech-agent/README.md
 capabilities:
   provides_tools: []
   provides_hooks:

@@ -70,6 +70,33 @@ class TestGetDefaultNastechRoot:
 
         assert get_default_nastech_root() == local_appdata / "nastech"
 
+    @pytest.mark.platforms("windows")
+    def test_root_for_another_environment_ignores_this_process(self, tmp_path, monkeypatch):
+        """nastech_root_for_environment applies the root rules to the mapping it gets."""
+        monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "sandbox-local"))
+        monkeypatch.setenv("NASTECH_HOME", str(tmp_path / "sandbox-home"))
+        local = tmp_path / "local"
+        user = tmp_path / "user"
+        custom = tmp_path / "data"
+        cases = [
+            ({"LOCALAPPDATA": str(local)}, local / "nastech"),
+            ({"LOCALAPPDATA": str(local), "NASTECH_HOME": str(local / "nastech" / "profiles" / "work")},
+             local / "nastech"),
+            ({"LOCALAPPDATA": str(local), "NASTECH_HOME": str(custom / "profiles" / "work")}, custom),
+            ({"LOCALAPPDATA": str(local), "NASTECH_DATA_DIR_SUFFIX": "-magic"}, local / "nastech-magic"),
+            ({"localappdata": str(local), "NASTECH_HOME": "%LocalAppData%\\data"}, local / "data"),
+            ({"LOCALAPPDATA": str(local), "NASTECH_HOME": "$LOCALAPPDATA\\data"}, local / "data"),
+            ({"LOCALAPPDATA": str(local), "NASTECH_HOME": "${LOCALAPPDATA}\\data"}, local / "data"),
+            ({"LOCALAPPDATA": str(local), "USERPROFILE": str(user), "NASTECH_HOME": "~\\data"}, user / "data"),
+            ({"USERPROFILE": str(user)}, user / "AppData" / "Local" / "nastech"),
+            ({"LOCALAPPDATA": str(local), "NASTECH_HOME": "relative\\data"}, None),
+            ({"LOCALAPPDATA": str(local), "NASTECH_HOME": "%UNDEFINED%\\data"}, None),
+            ({"LOCALAPPDATA": str(local), "NASTECH_HOME": "~\\data"}, None),
+            ({}, None),
+        ]
+        for environ, root in cases:
+            assert nastech_constants.nastech_root_for_environment(environ) == root, environ
+
 
 
 

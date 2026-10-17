@@ -1,5 +1,5 @@
 name: telegram-notify
-repo: https://github.com/madpower2000/nastech-telegram-notify
+repo: https://github.com/madpower2000/hermes-telegram-notify
 sha: d7cab7dfb154425118129b0086032e873a832576
 description: >-
   Remote Telegram lifecycle notifications for the main Nastech agent: turn
@@ -17,7 +17,7 @@ maintainer: madpower2000
 tier: community
 category: automation
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/madpower2000/nastech-telegram-notify
+docs_url: https://github.com/madpower2000/hermes-telegram-notify
 version: "1.1.3"
 platforms: []
 capabilities:

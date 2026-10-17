@@ -1,5 +1,5 @@
 name: source-tray
-repo: https://github.com/aydnOktay/nastech-source-tray
+repo: https://github.com/aydnOktay/hermes-source-tray
 sha: e64f7d2ad56f922410071e2096a40ceab421a392
 description: Session source tray — URLs the Nastech agent opened via web_search,
   web_extract, or browser_navigate. Desktop pane and /sources. No search backend
@@ -8,7 +8,7 @@ maintainer: aydnOktay
 tier: community
 category: web
 requires_nastech: ">=0.21"
-docs_url: https://github.com/aydnOktay/nastech-source-tray
+docs_url: https://github.com/aydnOktay/hermes-source-tray
 version: "0.1.1"
 platforms: []
 capabilities:

@@ -1,5 +1,5 @@
 name: tamahermes
-repo: https://github.com/ahrazzle/TamaNastech
+repo: https://github.com/ahrazzle/TamaHermes
 subdir: plugins/tamahermes
 sha: d25f76fdf5d8032910ffbe1dca3ba00bf442061f
 description: >-
@@ -13,7 +13,7 @@ maintainer: ahrazzle
 tier: community
 category: general
 requires_nastech: ">=0.21"
-docs_url: https://github.com/ahrazzle/TamaNastech
+docs_url: https://github.com/ahrazzle/TamaHermes
 version: "1.2.3"
 readme: true
 platforms:

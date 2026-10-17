@@ -1,5 +1,5 @@
 name: desensitize
-repo: https://github.com/yubingz/nastech-desensitize
+repo: https://github.com/yubingz/hermes-desensitize
 sha: 4f6697c1e45bb224e40b556372f33794f9326c0f
 subdir: src/nastech_desensitize
 description: "Chinese-context desensitization for Nastech chats. Replaces PII and business-sensitive
@@ -24,7 +24,7 @@ maintainer: yubingz
 tier: community
 category: tools
 requires_nastech: ">=0.19"
-docs_url: https://github.com/yubingz/nastech-desensitize#readme
+docs_url: https://github.com/yubingz/hermes-desensitize#readme
 version: "1.4.1"
 readme: true
 platforms: []

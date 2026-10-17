@@ -1,5 +1,5 @@
 name: nastech-tenuo
-repo: https://github.com/tenuo-ai/nastech-tenuo
+repo: https://github.com/tenuo-ai/hermes-tenuo
 sha: 8bce830c5df9dcd06d16688a954146d8edc0c562
 description: >-
   Security guardrails for Nastech tool calls: per-call authorization, so a
@@ -15,7 +15,7 @@ maintainer: tenuo-ai
 tier: community
 category: tools
 requires_nastech: ">=0.20"
-docs_url: https://github.com/tenuo-ai/nastech-tenuo
+docs_url: https://github.com/tenuo-ai/hermes-tenuo
 version: "0.1.3"
 capabilities:
   provides_tools: []

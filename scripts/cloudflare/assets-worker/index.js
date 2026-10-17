@@ -53,6 +53,36 @@ function html(body, status = 200) {
   });
 }
 
+// apt (and every conformant HTTP client) percent-encodes RFC 3986 sub-delimiters
+// such as "~" in the request path, so a fetch for an object whose stored key
+// contains "~" -- the Termux lane's
+// `nastech-agent_0.21.5~canary.<stamp>-1_aarch64.deb`, for one -- arrives here as
+// "%7e".  A verbatim key lookup misses on that and answers 404 even though
+// publication wrote the object seconds earlier.  Decode exactly ONE level, and
+// only after proving the decoded key cannot escape this Worker's key space:
+// decoding must never add a path separator ("%2f"/"%2F"), smuggle a backslash
+// ("%5c"), or yield a "." / ".." segment ("%2e%2e").  A request that fails the
+// guard is malformed or hostile, not a known object, so it returns null and the
+// caller answers 400.
+function decodeChannelKey(path) {
+  const raw = path.replace(/^\/+/, "");
+  let key;
+  try {
+    key = decodeURIComponent(raw);
+  } catch {
+    return null; // truncated or invalid escape ("%", "%e", "%zz")
+  }
+  if (
+    key.includes("\\") || // %5c smuggled a separator
+    key.includes("%") || // second-encoded probe (%252e) -- no key carries "%"
+    key.split("/").length !== raw.split("/").length || // %2f forged a segment
+    key.split("/").some((segment) => segment === "." || segment === "..")
+  ) {
+    return null;
+  }
+  return key;
+}
+
 const LANDING = `<!doctype html>
 <html lang="en">
 <head>
@@ -116,10 +146,39 @@ export default {
       return json({ ok: true, service: "nastech-agent", time: new Date().toISOString() });
     }
 
-    // Everything under /releases/ is served from the KV store (publication
-    // target). Unknown objects answer a protocol-correct 404, never a redirect.
+    // Everything under /releases/ is served from the object stores (publication
+    // target): release artifacts (the Termux apt pool, tag bundles) live in the
+    // R2 bucket, channel records live in KV.  Unknown objects answer a
+    // protocol-correct 404, never a redirect.
     if (path.startsWith("/releases/")) {
-      const key = path.replace(/^\/+/, "");
+      // Decode one level before the lookup: apt sends "~" as "%7e" and a
+      // verbatim key would miss.  decodeChannelKey refuses any escape that
+      // could leave the key space, so a rejected path is a client error -- and
+      // the single validated key feeds both stores, so the guard cannot be
+      // bypassed by switching stores.
+      const key = decodeChannelKey(path);
+      if (key === null) {
+        return json({ error: "BadRequest", path }, 400);
+      }
+
+      // Artifacts live in R2; R2 wins when a key exists in both stores.  The
+      // binding is checked so a config that forgets it -- which is exactly how
+      // artifact serving broke once -- falls back to KV instead of throwing a
+      // 500 on every artifact read.
+      if (env.R2) {
+        const object = await env.R2.get(key);
+        if (object !== null) {
+          return new Response(object.body, {
+            headers: {
+              "content-type":
+                object.httpMetadata?.contentType || "application/octet-stream",
+              "cache-control": "no-cache",
+              "access-control-allow-origin": "*",
+            },
+          });
+        }
+      }
+
       const value = await env.NASTECH_ASSETS.get(key, "text");
       if (value !== null) {
         const isArchive = key.endsWith("/") || key.startsWith("releases/tag/");

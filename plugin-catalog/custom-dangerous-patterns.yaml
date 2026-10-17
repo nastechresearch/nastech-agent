@@ -1,5 +1,5 @@
 name: custom-dangerous-patterns
-repo: https://github.com/scross01/nastech-custom-dangerous-patterns-plugin
+repo: https://github.com/scross01/hermes-custom-dangerous-patterns-plugin
 sha: 256ff08d0be04baf1916f5e7d841b1c2718aa1e4
 description: >-
   Add custom dangerous command patterns to Nastech's built-in approval

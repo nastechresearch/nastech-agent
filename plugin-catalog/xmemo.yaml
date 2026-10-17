@@ -1,5 +1,5 @@
 name: xmemo
-repo: https://github.com/yonro/nastech-xmemo-plugin
+repo: https://github.com/yonro/hermes-xmemo-plugin
 sha: 637fc30dfe746901cd8ba3e22aed2057cf7ca6b3
 subdir: src/nastech_xmemo/xmemo
 description: >-
@@ -11,7 +11,7 @@ maintainer: yonro
 tier: community
 category: memory
 requires_nastech: '>=0.19'
-docs_url: https://github.com/yonro/nastech-xmemo-plugin#readme
+docs_url: https://github.com/yonro/hermes-xmemo-plugin#readme
 version: '1.1.2'
 platforms: []
 capabilities:

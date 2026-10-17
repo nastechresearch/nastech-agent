@@ -1,5 +1,5 @@
 name: cortexlayer
-repo: https://github.com/Cortex-Layer/cortexlayer-nastech-plugin
+repo: https://github.com/Cortex-Layer/cortexlayer-hermes-plugin
 sha: 099e4b3e77f73086bbf94fb32e052c864295e2ee
 subdir: plugins/memory/cortexlayer
 description: >

@@ -1,5 +1,5 @@
 name: mnemostack
-repo: https://github.com/udjin-labs/nastech-mnemostack
+repo: https://github.com/udjin-labs/hermes-mnemostack
 sha: 08bdc8c4bc78501eaa4297978082ff380bff4658
 subdir: src/nastech_mnemostack/plugin
 description: Persistent agent memory over a mnemostack service or a local Qdrant — hybrid
@@ -14,7 +14,7 @@ maintainer: udjin-labs
 tier: community
 category: memory
 requires_nastech: '>=0.19'
-docs_url: https://github.com/udjin-labs/nastech-mnemostack/blob/08bdc8c4bc78501eaa4297978082ff380bff4658/README.md
+docs_url: https://github.com/udjin-labs/hermes-mnemostack/blob/08bdc8c4bc78501eaa4297978082ff380bff4658/README.md
 version: '1.0.3'
 capabilities:
   provides_tools:

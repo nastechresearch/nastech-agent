@@ -1,5 +1,5 @@
 name: vk-platform
-repo: https://github.com/web3blind/nastech-vk-platform
+repo: https://github.com/web3blind/hermes-vk-platform
 sha: f922a0fc65bd9ccb0312fd8f394c9d38a503ad8c
 version: "0.2.3"
 requires_nastech: ">=0.21.3"
@@ -7,7 +7,7 @@ description: VK Messenger gateway with community Long Poll, media attachments, a
 maintainer: web3blind
 tier: community
 category: platform
-docs_url: https://github.com/web3blind/nastech-vk-platform/blob/f922a0fc65bd9ccb0312fd8f394c9d38a503ad8c/README.md
+docs_url: https://github.com/web3blind/hermes-vk-platform/blob/f922a0fc65bd9ccb0312fd8f394c9d38a503ad8c/README.md
 capabilities:
   provides_tools: []
   provides_hooks: []

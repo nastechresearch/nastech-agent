@@ -1,5 +1,5 @@
 name: lumberroom
-repo: https://github.com/lumberroom/lumberroom-nastech
+repo: https://github.com/lumberroom/lumberroom-hermes
 sha: 87c697f31e0015c64900c2cc40f88beb3ead4a11
 version: "1.0.2"
 description: lumberroom memory provider. One durable store shared with every agent you use, recalled on
@@ -15,7 +15,7 @@ maintainer: lumberroom
 tier: community
 category: memory
 requires_nastech: ">=0.21.3"
-docs_url: https://github.com/lumberroom/lumberroom-nastech#readme
+docs_url: https://github.com/lumberroom/lumberroom-hermes#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

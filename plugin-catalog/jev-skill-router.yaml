@@ -1,5 +1,5 @@
 name: jev-skill-router
-repo: https://github.com/DoGMaTiiC/nastech-jev
+repo: https://github.com/DoGMaTiiC/hermes-jev
 sha: 5dddbeaac5be08281e6c3b372eeaba3639971f0a
 subdir: plugins/jev-skill-router
 description: Names the one skill from your live roster that fits the turn, before the model call —
@@ -16,7 +16,7 @@ maintainer: DoGMaTiiC
 tier: community
 category: automation
 requires_nastech: ">=0.21"
-docs_url: https://github.com/DoGMaTiiC/nastech-jev/blob/main/plugins/jev-skill-router/README.md
+docs_url: https://github.com/DoGMaTiiC/hermes-jev/blob/main/plugins/jev-skill-router/README.md
 version: "0.1.0"
 platforms: []
 capabilities:

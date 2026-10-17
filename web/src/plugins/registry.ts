@@ -37,7 +37,7 @@ import { Label } from "@nastech-research/ui/ui/components/label";
 import { Separator } from "@nastech-research/ui/ui/components/separator";
 import { Tabs, TabsList, TabsTrigger } from "@nastech-research/ui/ui/components/tabs";
 import { useI18n } from "@/i18n";
-import { registerSlot, PluginSlot } from "./slots";
+import { clearPluginSlots, registerSlot, PluginSlot } from "./slots";
 
 // ---------------------------------------------------------------------------
 // Plugin registry — plugins call register() to add their component.
@@ -60,8 +60,37 @@ export function notifyPluginRegistry() {
   _notify();
 }
 
+let _profile = "";
+
+/**
+ * Select the management profile whose plugin bundles the dashboard shows
+ * (PLG-3). Selecting another one forgets every component, load error and slot
+ * the previous profile's bundles registered; subscribers hear of it on the
+ * next microtask, never during the render that switched.
+ */
+export function selectPluginProfile(profile: string): void {
+  if (profile === _profile) return;
+  _profile = profile;
+  _registered.clear();
+  _loadErrors.clear();
+  clearPluginSlots();
+  queueMicrotask(_notify);
+}
+
+export function getPluginProfile(): string {
+  return _profile;
+}
+
+/** Whether the bundle now running was loaded for a profile no longer selected. */
+function _fromOtherProfile(): boolean {
+  const script = typeof document === "undefined" ? null : document.currentScript;
+  const owner = script?.getAttribute("data-nastech-profile");
+  return owner != null && owner !== _profile;
+}
+
 /** Register a plugin component. Called by plugin JS bundles. */
 function registerPlugin(name: string, component: React.ComponentType) {
+  if (_fromOtherProfile()) return;
   _loadErrors.delete(name);
   _registered.set(name, component);
   _notify();
@@ -112,7 +141,9 @@ export const SDK_CONTRACT_VERSION = "1.1.0";
 export function exposePluginSDK() {
   window.__NASTECH_PLUGINS__ = {
     register: registerPlugin,
-    registerSlot,
+    registerSlot: (plugin, slot, component) => {
+      if (!_fromOtherProfile()) registerSlot(plugin, slot, component);
+    },
   };
 
   window.__NASTECH_PLUGIN_SDK__ = {

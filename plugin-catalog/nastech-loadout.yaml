@@ -1,5 +1,5 @@
 name: nastech-loadout
-repo: https://github.com/qwertyuiop97/nastech-loadout
+repo: https://github.com/qwertyuiop97/hermes-loadout
 sha: e31ad580756a6481d38fac0b18ddc3fd0239d124
 description: >-
   Desktop pane to manage skills and MCP connections across agent apps: save
@@ -9,7 +9,7 @@ description: >-
 maintainer: qwertyuiop97
 tier: community
 category: desktop
-docs_url: https://github.com/qwertyuiop97/nastech-loadout#readme
+docs_url: https://github.com/qwertyuiop97/hermes-loadout#readme
 platforms: []
 capabilities:
   provides_tools: []

@@ -1,5 +1,5 @@
 name: rfc-ref
-repo: https://github.com/EloquentBrush0x/nastech-context-refs
+repo: https://github.com/EloquentBrush0x/hermes-context-refs
 sha: 7d10da5365b5f6d9cfac8c9f5ce8fdc8273f6624
 subdir: rfc-ref
 description: >-
@@ -13,7 +13,7 @@ maintainer: EloquentBrush0x
 tier: community
 category: web
 requires_nastech: ">=0.21"
-docs_url: https://github.com/EloquentBrush0x/nastech-context-refs/tree/main/rfc-ref
+docs_url: https://github.com/EloquentBrush0x/hermes-context-refs/tree/main/rfc-ref
 version: "1.0.0"
 image: https://raw.githubusercontent.com/EloquentBrush0x/nastech-context-refs/7d10da5365b5f6d9cfac8c9f5ce8fdc8273f6624/docs/rfc-ref-card.png
 platforms: []

@@ -1,5 +1,5 @@
 name: lowrouter
-repo: https://github.com/carboniferio/nastech-lowrouter-provider
+repo: https://github.com/carboniferio/hermes-lowrouter-provider
 sha: 5531e83c0c13224c5501ccab09f11724b193d7fd
 subdir: lowrouter
 description: >-
@@ -18,7 +18,7 @@ maintainer: carboniferio
 tier: community
 category: models
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/carboniferio/nastech-lowrouter-provider#readme
+docs_url: https://github.com/carboniferio/hermes-lowrouter-provider#readme
 version: "0.1.0"
 platforms: []
 capabilities:

@@ -31,7 +31,7 @@ set -euo pipefail
 
 OFFICIAL_HTTPS="https://github.com/NastechResearch/nastech-agent.git"
 OFFICIAL_SSH="git@github.com:NastechResearch/nastech-agent.git"
-DEFAULT_SOURCE="https://github.com/ethernet8023/nastech-agent.git"
+DEFAULT_SOURCE="https://github.com/ethernet8023/hermes-agent.git"
 
 SUBCMD=""
 BACKUP_ROOT="${HOME}/nastech-update-rehearsal"
