@@ -814,7 +814,10 @@ async function watchDiskPluginFile(desktop: NonNullable<Window['nastechDesktop']
 /** Watch a linked dev package's SOURCE `plugin.js`. Without it the developer
  *  edits their checkout while the app keeps running the copy in
  *  `desktop-plugins/` — the copy is only refreshed on Rescan or restart. */
-async function watchDiskPluginSource(desktop: NonNullable<Window['nastechDesktop']>, record: DiskPlugin): Promise<void> {
+async function watchDiskPluginSource(
+  desktop: NonNullable<Window['nastechDesktop']>,
+  record: DiskPlugin
+): Promise<void> {
   if (!record.sourceFile || record.sourceWatchId) {
     return
   }

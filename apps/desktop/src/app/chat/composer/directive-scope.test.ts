@@ -126,7 +126,9 @@ describe('directive scope is a browse mode, not text to maintain', () => {
 
     paste(editor, 'https://github.com/NastechResearch/nastech-agent/pull/74533')
 
-    expect(composerPlainText(editor)).toBe('refer to @url:`https://github.com/NastechResearch/nastech-agent/pull/74533`')
+    expect(composerPlainText(editor)).toBe(
+      'refer to @url:`https://github.com/NastechResearch/nastech-agent/pull/74533`'
+    )
     expect(editor.textContent).not.toContain('@url:@url:')
   })
 

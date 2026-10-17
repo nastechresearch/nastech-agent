@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
-import type { NastechGateway, ProfileScope } from '@/nastech'
 import { useI18n } from '@/i18n'
+import type { NastechGateway, ProfileScope } from '@/nastech'
 import { $freeTierStatus } from '@/store/free-tier'
 import { notifyError } from '@/store/notifications'
 

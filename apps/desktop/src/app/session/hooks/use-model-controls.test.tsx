@@ -2,8 +2,8 @@ import { QueryClient } from '@tanstack/react-query'
 import { act, cleanup, render, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getGlobalModelInfo } from '@/nastech'
 import { modelOptionsQueryKey } from '@/lib/model-options'
+import { getGlobalModelInfo } from '@/nastech'
 import { $activeGatewayProfile } from '@/store/profile'
 import {
   $activeSessionId,
@@ -316,7 +316,9 @@ describe('useModelControls', () => {
     setCurrentModel('old')
     setCurrentProvider('xai')
     const refusal = Object.assign(new Error('model_resolution_failed'), { data: { reason: 'model_resolution_failed' } })
-    const requestGateway = vi.fn(async () => { throw refusal })
+    const requestGateway = vi.fn(async () => {
+      throw refusal
+    })
     let controls!: Controls
 
     render(<Harness onReady={value => (controls = value)} requestGateway={requestGateway} />)
