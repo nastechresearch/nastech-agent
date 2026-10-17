@@ -1,5 +1,5 @@
 name: nastech-session-warmer
-repo: https://github.com/mojomast/nastech-session-warmer
+repo: https://github.com/mojomast/hermes-session-warmer
 sha: eba7be111c44e4ac6b702cdcb341c8d71da1c57e
 version: "0.1.0"
 description: >-
@@ -10,7 +10,7 @@ description: >-
 maintainer: mojomast
 tier: community
 category: models
-docs_url: https://github.com/mojomast/nastech-session-warmer#readme
+docs_url: https://github.com/mojomast/hermes-session-warmer#readme
 readme: true
 platforms: []
 capabilities:

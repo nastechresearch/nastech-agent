@@ -1,5 +1,5 @@
 name: tam
-repo: https://github.com/vbcherepanov/nastech-tam-memory
+repo: https://github.com/vbcherepanov/hermes-tam-memory
 sha: 9a6e51839fb0619c6e41804ac201272e857ea825
 subdir: nastech_tam_memory
 version: "0.1.1"
@@ -8,7 +8,7 @@ maintainer: vbcherepanov
 tier: community
 category: memory
 requires_nastech: ">=0.21.4"
-docs_url: https://github.com/vbcherepanov/nastech-tam-memory#readme
+docs_url: https://github.com/vbcherepanov/hermes-tam-memory#readme
 readme: true
 platforms: [linux, macos]
 capabilities:

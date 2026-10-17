@@ -1,7 +1,7 @@
 """Tests for the bundled Meta Model API (Muse Spark) provider plugin.
 
 Adapted from the plugin's original suite at
-https://github.com/albertodepaola/nastech-meta-provider — the plugin is now
+https://github.com/albertodepaola/hermes-meta-provider — the plugin is now
 bundled, so profiles resolve through normal registry discovery.
 """
 

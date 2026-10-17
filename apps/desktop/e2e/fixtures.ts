@@ -111,7 +111,9 @@ export interface Sandbox {
 }
 
 export function createSandbox(prefix: string): Sandbox {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), `nastech-e2e-${prefix}-${Math.random()}`))
+  // Canonical path: the backend resolves NASTECH_HOME, so a symlinked tmpdir (macOS /var, a
+  // symlinked scratch dir) would otherwise make every NASTECH_HOME match against the sandbox miss.
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), `nastech-e2e-${prefix}-${Math.random()}`)))
   const nastechHome = path.join(root, 'nastech-home')
   const userDataDir = path.join(root, 'electron-user-data')
 
@@ -216,6 +218,8 @@ export function buildAppEnv(sandbox: Sandbox, extra: Record<string, string> = {}
     // mid-flight — otherwise the quit confirmation waits on a click that no
     // one is there to make, and the worker dies on a teardown timeout.
     NASTECH_DESKTOP_SKIP_QUIT_CONFIRM: '1',
+    // Never repoint the user's OS nastech:// handler (HKCU on Windows) at a test checkout.
+    NASTECH_DESKTOP_SKIP_PROTOCOL_REGISTRATION: '1',
     // Clear dev-server override — we want the built dist/, not a vite server.
     // The dev-server check in main.ts looks for this env var; if it's set,
     // it loads from the vite URL instead of the local file.

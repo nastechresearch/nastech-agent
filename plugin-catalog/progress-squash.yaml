@@ -1,5 +1,5 @@
 name: progress-squash
-repo: https://github.com/pierrenode/nastech-progress-squash
+repo: https://github.com/pierrenode/hermes-progress-squash
 sha: 044e6f1128037a58a76d5f6ff71df1607b4c1c63
 subdir: progress-squash
 description: >-
@@ -13,7 +13,7 @@ maintainer: pierrenode
 tier: community
 category: tools
 requires_nastech: ">=0.21"
-docs_url: https://github.com/pierrenode/nastech-progress-squash
+docs_url: https://github.com/pierrenode/hermes-progress-squash
 version: "1.0.0"
 image: https://raw.githubusercontent.com/pierrenode/nastech-progress-squash/044e6f1128037a58a76d5f6ff71df1607b4c1c63/docs/card.png
 platforms: []

@@ -1,5 +1,5 @@
 name: thomas
-repo: https://github.com/keppy/nastech-plugin-thomas
+repo: https://github.com/keppy/hermes-plugin-thomas
 sha: b087cf158905e62b16c02e7bb1aa38691186ea6b
 description: >-
   Fine-tune a small calibrated encoder classifier on Modal and rate it with gonogo. Every GPU launch
@@ -16,7 +16,7 @@ category: tools
 requires_nastech: ">=0.21"
 platforms: [linux, macos]
 version: "0.1.2"
-docs_url: https://github.com/keppy/nastech-plugin-thomas#readme
+docs_url: https://github.com/keppy/hermes-plugin-thomas#readme
 capabilities:
   provides_tools:
     - thomas_check_data

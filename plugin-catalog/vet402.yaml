@@ -1,5 +1,5 @@
 name: vet402
-repo: https://github.com/kzmttkc/vet402-nastech
+repo: https://github.com/kzmttkc/vet402-hermes
 sha: 72ed6e608cdd6cbc894b9d03c239883375967f95
 version: "0.1.0"
 subdir: vet402
@@ -8,7 +8,7 @@ maintainer: kzmttkc
 tier: community
 category: tools
 requires_nastech: ">=0.19.0"
-docs_url: https://github.com/kzmttkc/vet402-nastech/blob/main/vet402/README.md
+docs_url: https://github.com/kzmttkc/vet402-hermes/blob/main/vet402/README.md
 capabilities:
   provides_tools:
   - vet402_check

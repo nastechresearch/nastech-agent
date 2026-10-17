@@ -229,7 +229,7 @@ def test_one_installs_completed_restart_never_erases_another_installs_debt(tmp_p
     from pathlib import Path
 
     source = Path(__file__).resolve().parents[2]
-    files = ("nastech_constants.py", "nastech_cli/__init__.py", "nastech_cli/update_host_obligation.py",
+    files = ("nastech_constants.py", "nastech_dir_acl.py", "nastech_cli/__init__.py", "nastech_cli/update_host_obligation.py",
              "nastech_cli/update_restart_recovery.py", "nastech_cli/update_lock.py")
     roots = {}
     for name in ("install-a", "install-b"):

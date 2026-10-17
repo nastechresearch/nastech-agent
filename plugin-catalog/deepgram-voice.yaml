@@ -1,11 +1,11 @@
 name: deepgram-voice
-repo: https://github.com/jaysonsantos/nastech-deepgram-voice-plugin
+repo: https://github.com/jaysonsantos/hermes-deepgram-voice-plugin
 sha: 2d31b885ec873ed6693edd7ad1a80f7023439ac0
 description: Deepgram Aura text-to-speech and Nova speech-to-text providers for Nastech Agent.
 maintainer: jaysonsantos
 tier: community
 category: voice
-docs_url: https://github.com/jaysonsantos/nastech-deepgram-voice-plugin#readme
+docs_url: https://github.com/jaysonsantos/hermes-deepgram-voice-plugin#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

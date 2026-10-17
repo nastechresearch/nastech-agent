@@ -32,7 +32,57 @@ from plugins.dashboard_auth._shared import (
 logger = logging.getLogger(__name__)
 _TAG = "dashboard-auth-nastech"
 
-_DEFAULT_PORTAL_URL = "https://portal.nastechresearch.github.io"
+# Post-brand reconciliation: FAIL-CLOSED API defaults.  Nastech
+# operates no portal/inference/welcome API, and a GitHub Pages subdomain can
+# never complete TLS (the certificate carries only `*.github.io`, one label),
+# so the literal this replaces is an origin nobody can reach.  The default is
+# therefore read from the environment; when the variable is absent the value
+# names an RFC 2606 `.invalid` origin instead, which no resolver can answer, so
+# the dead origin is never used and a request fails at DNS with the variable to
+# set visible in the host name.
+#
+# That value must stay safe to STRINGIFY, format and strip: real consumers
+# build their authorize/token/JWKS URLs from these constants while they
+# register, and a default whose ``str()`` raised disabled the whole
+# dashboard-auth provider rather than failing one request
+# (nastech-agent#157, 2026-10-17).
+import os as _nastech_endpoint_env
+
+
+def _nastech_endpoint_default(env: str, constant: str, dead_default: str):
+    """Operator-configured endpoint, else an unconfigured, unresolvable origin.
+
+    ``constant`` is carried so a generated call site records which branded
+    default it replaced.
+    """
+    configured = _nastech_endpoint_env.environ.get(env, "").strip().rstrip("/")
+    if configured:
+        return configured
+    path = dead_default.split("://", 1)[-1].partition("/")[2]
+    label = env.lower().replace("_", "-") or "endpoint"
+    return _NastechUnconfiguredEndpoint(
+        f"https://{label}.invalid" + (f"/{path}" if path else "")
+    )
+
+
+class _NastechUnconfiguredEndpoint(str):
+    """Unconfigured endpoint: a real string, at a host that can never resolve.
+
+    Falsy, so ``value or fallback`` keeps working; never raising, because
+    logging and URL construction stringify the default while a provider is
+    registering; and unresolvable, so nothing is ever sent to a host that
+    cannot answer instead of the branded dead origin.
+    """
+
+    def __bool__(self):
+        return False
+
+
+_DEFAULT_PORTAL_URL = _nastech_endpoint_default(
+    env='PORTAL_URL',
+    constant='_DEFAULT_PORTAL_URL',
+    dead_default='https://portal.nastechresearch.github.io',
+)
 _SCOPE = "agent_dashboard:access"  # contract C3
 _EXPECTED_CONTRACT_VERSION = 1  # contract C11
 

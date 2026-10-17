@@ -1,11 +1,12 @@
 name: nastech-ssh
-repo: https://github.com/Adolanium/nastech-ssh
-sha: ea815bd671737a01948a4d77bad1d6b3a935b2bb
+repo: https://github.com/Adolanium/hermes-ssh
+sha: f3f916149ad3130f2285dad94ade5ebe43091fad
 description: Manage SSH connections and remote workspaces in Nastech Desktop.
 maintainer: Adolanium
 tier: community
 category: desktop
-docs_url: https://github.com/Adolanium/nastech-ssh#readme
+docs_url: https://github.com/Adolanium/hermes-ssh#readme
+image: https://raw.githubusercontent.com/Adolanium/nastech-ssh/f3f916149ad3130f2285dad94ade5ebe43091fad/assets/catalog-banner.png
 capabilities:
   provides_tools: []
   provides_hooks: []

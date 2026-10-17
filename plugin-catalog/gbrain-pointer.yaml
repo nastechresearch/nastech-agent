@@ -1,5 +1,5 @@
 name: gbrain-pointer
-repo: https://github.com/praggybuilds/nastech-gbrain-pointer
+repo: https://github.com/praggybuilds/hermes-gbrain-pointer
 sha: 56212b086ed8dc134011440fc05cfc867586b9a4
 version: "0.1.0"
 title: GBrain Pointer
@@ -8,7 +8,7 @@ maintainer: praggybuilds
 tier: community
 category: memory
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/praggybuilds/nastech-gbrain-pointer#readme
+docs_url: https://github.com/praggybuilds/hermes-gbrain-pointer#readme
 platforms: []
 capabilities:
   provides_tools: []

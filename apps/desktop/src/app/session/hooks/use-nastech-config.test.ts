@@ -27,6 +27,7 @@ import { useNastechConfig } from './use-nastech-config'
 
 vi.mock('@/nastech', () => ({
   getNastechConfig: vi.fn(),
+  setApiRequestProfile: vi.fn(),
   getNastechConfigDefaults: vi.fn().mockResolvedValue({})
 }))
 

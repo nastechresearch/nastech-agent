@@ -127,7 +127,7 @@ def test_corrupt_breadcrumb_returns_none(nastech_home, monkeypatch, no_terminal_
 def _make_session(home: Path, session_id: str):
     from nastech_state import SessionDB
 
-    db = SessionDB()
+    db = SessionDB(db_path=home / "state.db")
     db.create_session(session_id, "cli")
     db.close()
 

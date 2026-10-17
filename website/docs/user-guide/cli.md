@@ -40,14 +40,15 @@ nastech chat --provider openrouter  # Force OpenRouter
 # With specific toolsets
 nastech chat --toolsets "web,terminal,skills"
 
-# Start with one or more skills preloaded
-nastech -s nastech-agent-dev,github-auth
-nastech chat -s github-pr-workflow -q "open a draft PR"
+# Start with one or more skills preloaded (rendered once into the session's prompt)
+nastech chat -s nastech-agent-dev,github-auth
 
 # Resume previous sessions
-nastech --continue             # Resume the most recent CLI session (-c)
 nastech --resume <session_id>  # Resume a specific session by ID (-r)
-nastech --resume latest        # Resume the most recent session (same as -c)
+nastech --resume "my thread"   # Resume by title (latest "#N" continuation in the lineage)
+nastech -c "my thread" --create-if-missing  # Resume that titled session, creating it if absent
+nastech --continue             # Resume the most recent session (bare -c)
+nastech --resume latest        # Same as bare -c
 nastech --resume latest --in ./dir  # Resume ./dir's latest session, staying in ./dir
 
 # Verbose mode (debug output)
@@ -61,6 +62,10 @@ nastech -w -z "Fix issue #123"     # Single query in worktree
 ### Worktree cleanup
 
 `nastech -w` sessions create disposable worktrees under `<repo>/.worktrees/`.
+With `nastech --tui -w`, closing the terminal detaches from the gateway-owned
+session. Its worktree is retained even when clean: the turn may still be running
+there, and resuming the session uses the same working directory. Review and prune
+it after the session's work is finished.
 A conservative pruner runs automatically at startup (it only removes clean,
 fully-merged scratch trees past an age threshold), but preserved trees and
 merged local branches still accumulate on busy machines. Reclaim them
@@ -141,6 +146,15 @@ for the exact supported subset and trust boundary.
 
 ## Interface Layout
 
+:::info The classic CLI is a gateway client
+`nastech chat` (and the bare `nastech` prompt when `display.interface` is `cli`) no longer runs the agent inside your terminal process. It discovers or starts the profile's gateway (`nastech gateway ensure`), creates or resumes the session there, and attaches over the gateway's local WebSocket — the same session a Desktop window, the TUI, or a Telegram topic can open at the same time. Closing the terminal detaches (`Detached; accepted work continues at the gateway.`); it does not cancel the turn. Your working directory, `--model`, `--provider`, `--reasoning`, `--toolsets`, `--max-turns`, `--skills`, `--checkpoints`, `--yolo`, `--accept-hooks`, `--pass-session-id`, `--ignore-rules`, `--base-url`/`--api-key`, and `--safe-mode`/`--ignore-user-config` are frozen into the session at creation; `--resume` may repeat the same values but cannot change them. `--resume <id-or-title>` and `-c <title>` name the session; the gateway resolves the title (exact id first, then the latest `"<title> #N"` continuation, followed to its live tip) among the sessions you may read, and reports `No session found matching '…'` (exit 1) otherwise. Bare `-c` and `--resume latest` resume this workspace's most recent CLI session through the gateway. `-c <title> --create-if-missing` creates a session with that title when none exists and resumes it when one does, so programmatic callers (Bot Mode's `Bot Chat` turns) get a deterministic thread. Options that only make sense for an in-process agent — `--image`, `--worktree`/`-w`, `--no-restore-cwd`, `--run-budget`, `--verbose`/`-v`, `--compact`, and `--create-if-missing` without `-c <name>` — are refused up front (`Unsupported gateway CLI options: …`, exit 2); the refusal lists, per flag, where that capability lives now (the TUI flag, the `config.yaml` key, or the `nastech` subcommand), and nothing falls back to a local agent. A `--safe-mode` / `--ignore-user-config` launch reads no profile default model, so it must name one; the refusal prints a complete example such as `nastech chat --safe-mode --provider openrouter --model anthropic/claude-sonnet-4 -q "hello"`. In this mode the slash surface is `/stop`, `/approve <id> <choice>`, `/answer <id> <text>`, `/discard <admission_id>`, `/branch [title]`, `/model <model> [--provider name]`, `/compress [here [N] | <focus>] [--preview]`, `/yolo [on|off]`, `/help` and `/quit`; other slash commands print `Unsupported gateway CLI command; use /help.` Use the TUI (`nastech --tui`) for the full slash registry.
+:::
+
+If a running turn loses its owner while your finite CLI query is queued, the CLI
+exits with code `3`. Your accepted input stays queued. Resume the printed session
+interactively, inspect the unknown turn, and use `/discard <admission_id>` to
+acknowledge it before continuing. Do not resend the queued input.
+
 <img className="docs-terminal-figure" src="/docs/img/docs/cli-layout.svg" alt="Stylized preview of the Nastech CLI layout showing the banner, conversation area, and fixed input prompt." />
 <p className="docs-figure-caption">The Nastech CLI banner, conversation stream, and fixed input prompt rendered as a stable docs figure instead of fragile text art.</p>
 
@@ -204,7 +218,7 @@ On macOS, `F6`/`F7` mean the physical function keys, not the media/system contro
 | `Ctrl+C` | Clear a typed draft first (even while the agent works); with an empty prompt, interrupt the agent (double-press within 2s to force exit) |
 | `Ctrl+T` / `F6` | Open the full-screen live work monitor (subagents and background processes) without losing the composer draft. The live dock appears automatically above the status bar; arrows select a worker or process, `Enter` shows its recent log, `s` steers a worker, and `x` requests stop with confirmation. See [Monitoring subagents](./features/delegation.md#monitoring-running-subagents-agents). |
 | `Ctrl+R` / `F7` | Toggle the live work dock between its multi-row preview and a single summary line without moving composer focus. `Ctrl+R` is the reliable fallback when macOS reserves the function-key row. Besides subagents and background processes, the dock shows a standing `/goal` (active, parked or paused, with turns used) on its top row and the prompts waiting in `/queue` on its bottom rows. |
-| `Ctrl+D` | Exit |
+| `Ctrl+D` | Exit (on an empty prompt; with text it deletes under the cursor). While the gateway runs a turn, it exits and leaves the turn running: the gateway finishes it, ends the session afterwards, and `nastech --resume` shows the reply. A turn that asks a question (approval or clarify) meanwhile waits for its timeout or for you to resume. Use `Ctrl+C` to stop the turn instead. |
 | `Ctrl+Z` | Suspend Nastech to background (Unix only). Run `fg` in the shell to resume. |
 | `Tab` | Accept auto-suggestion (ghost text) or autocomplete slash commands |
 | `!<command>` | **Shell mode** — run a shell command yourself without spending a model turn (e.g. `!git status`, `!pytest -x`). See below. |
@@ -402,7 +416,7 @@ The `display.busy_input_mode` config key controls what happens when you press En
 | Mode | Behavior |
 |------|----------|
 | `"interrupt"` (default) | Your message redirects the active turn. Model generation restarts with displayed reasoning and completed work preserved. A running foreground terminal command is moved to the background (not killed — you get a completion notification) so your message is read immediately; other running tools finish first |
-| `"queue"` | Your message is silently queued and sent as the next turn after the agent finishes |
+| `"queue"` | Your message is queued as the next turn after the agent finishes. The queue lives on the gateway (crash-durable, visible to every attached client). Classic `nastech chat` always behaves this way: every line typed during a turn queues at the gateway, whatever this key says; `interrupt` and `steer` are TUI and Desktop behaviours |
 | `"steer"` | Your message is injected into the current run via `/steer`, arriving at the agent after the next tool call — no interrupt, no new turn |
 
 ```yaml
@@ -493,6 +507,7 @@ Resume options:
 nastech --continue                          # Resume the most recent CLI session
 nastech -c                                  # Short form
 nastech -c "my project"                     # Resume a named session (latest in lineage)
+nastech -c "my project" --create-if-missing # Same, creating the titled session if none exists
 nastech --resume 20260225_143052_a1b2c3     # Resume a specific session by ID
 nastech --resume "refactoring auth"         # Resume by title
 nastech --resume latest                     # Resume the most recent session (same as -c)

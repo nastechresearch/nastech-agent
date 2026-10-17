@@ -1,5 +1,5 @@
 name: orcaslicer
-repo: https://github.com/mazzanfar/nastech-orcaslicer
+repo: https://github.com/mazzanfar/hermes-orcaslicer
 sha: 08bcbeffff712702896fba0d101d8fa669d129d2
 version: "0.5.0"
 title: OrcaSlicer for Nastech
@@ -16,7 +16,7 @@ description: >-
 maintainer: mazzanfar
 tier: community
 category: tools
-docs_url: https://github.com/mazzanfar/nastech-orcaslicer#readme
+docs_url: https://github.com/mazzanfar/hermes-orcaslicer#readme
 platforms: [linux, macos, windows]
 capabilities:
   provides_tools:

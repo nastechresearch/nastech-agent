@@ -25,6 +25,7 @@ ACCEPT = [
     "python -m nastech_cli.main gateway run --replace",
     "python -m nastech_cli/main.py gateway run",
     "python gateway/run.py",
+    "python -m gateway.run",   # module spelling of the dedicated entrypoint
     "nastech-gateway.exe",
     "nastech gateway",          # bare `nastech gateway` defaults to run
     "nastech gateway run",

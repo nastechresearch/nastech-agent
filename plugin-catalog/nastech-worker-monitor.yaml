@@ -21,7 +21,7 @@
 # backend, and arguments stay hashed inside it for stall and loop detection. No
 # writes anywhere.
 name: nastech-worker-monitor
-repo: https://github.com/djmango/nastech-worker-monitor
+repo: https://github.com/djmango/hermes-worker-monitor
 sha: "6edb2d6e55133f57a3a7768ca4897c84e8adc00b"   # tag v0.2.0-fork
 version: "0.2.0"
 description: "Kanban board groups and worker health in the Nastech Desktop footer: blocked cards first and red, live running state as a coloured dot, hover for the breakdown, one click to open the board. Worker-only fork of nastech-monitor. No credentials are read and there is no network egress; it opens kanban.db and each profile's state.db read-only and returns counts only. Zero model tokens."
@@ -30,7 +30,7 @@ tier: community
 category: desktop
 requires_nastech: ">=0.21"
 platforms: [linux, macos]
-docs_url: https://github.com/djmango/nastech-worker-monitor
+docs_url: https://github.com/djmango/hermes-worker-monitor
 screenshots: []
 capabilities:
   provides_tools: []

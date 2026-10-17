@@ -288,7 +288,7 @@ def test_failed_upstream_sync_after_origin_pull_keeps_the_tail_owed(world):
     flag = sb.checkout / ".git" / "e2e-upstream-ff-failed"
     # origin reads as a fork (the sandbox shim otherwise reports the official URL). Kill the updater at
     # its next branch check once the upstream merge has failed (and been settled).
-    _hostile_git(world, 'case " $* " in *" remote get-url origin "*) echo https://github.com/e2e-fork/nastech-agent.git; '
+    _hostile_git(world, 'case " $* " in *" remote get-url origin "*) echo https://github.com/e2e-fork/hermes-agent.git; '
                         'exit 0;; esac\n'
                         # The sync fast-forwards to the upstream commit it resolved (one SHA, m2).
                         f'case " $* " in *" merge --ff-only "*"{up} "*) "$REAL" "$@"; rc=$?; '

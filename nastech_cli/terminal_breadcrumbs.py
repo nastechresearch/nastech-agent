@@ -126,8 +126,9 @@ def resolve_breadcrumb_session() -> Optional[str]:
         return None
     try:
         from nastech_state import SessionDB
+        from nastech_constants import get_nastech_home
 
-        db = SessionDB(read_only=True)  # existence + lineage lookup only; no writer connection
+        db = SessionDB(db_path=get_nastech_home() / "state.db", read_only=True)
     except Exception:
         return None
     try:

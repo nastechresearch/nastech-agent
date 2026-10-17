@@ -38,6 +38,48 @@ print(root)
     assert Path(result.stdout.strip()) == store
 
 
+
+def _constants_stage(tmp_path, *, with_acl: bool) -> Path:
+    repo = Path(__file__).resolve().parents[2]
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    names = ["nastech_constants.py", "nastech_dir_acl.py"] if with_acl else ["nastech_constants.py"]
+    for name in names:
+        shutil.copy2(repo / name, stage / name)
+    return stage
+
+
+def _mkdir_in_stage(stage: Path, home: Path) -> subprocess.CompletedProcess:
+    script = "import nastech_constants, sys; print(nastech_constants.mkdir_under_nastech_home(sys.argv[1]))"
+    return subprocess.run([sys.executable, "-S", "-c", script, str(home / "logs")], cwd=stage,
+                          env=dict(os.environ, NASTECH_HOME=str(home), PYTHONPATH=str(stage)),
+                          capture_output=True, text=True, timeout=15, check=False)
+
+
+def test_home_mkdir_carries_the_acl_module_in_the_closure(tmp_path):
+    """nastech_dir_acl is stdlib-only and ships beside nastech_constants: the two together create a
+    home dir, and nastech_constants still imports alone (the import is lazy)."""
+    home = tmp_path / "home"
+    home.mkdir()
+    result = _mkdir_in_stage(_constants_stage(tmp_path, with_acl=True), home)
+    assert result.returncode == 0, result.stderr
+    assert (home / "logs").is_dir()
+
+
+def test_home_mkdir_never_silently_skips_the_elevated_grant(tmp_path):
+    """Review #140490: an ImportError fallback to plain mkdir made whether an elevated run grants
+    the user access depend on which files happened to be present. A missing module is loud."""
+    home = tmp_path / "home"
+    home.mkdir()
+    stage = _constants_stage(tmp_path, with_acl=False)
+    alone = subprocess.run([sys.executable, "-S", "-c", "import nastech_constants"], cwd=stage,
+                           env=dict(os.environ, PYTHONPATH=str(stage)), capture_output=True, text=True,
+                           timeout=15, check=False)
+    assert alone.returncode == 0, alone.stderr
+    result = _mkdir_in_stage(stage, home)
+    assert result.returncode != 0 and "nastech_dir_acl" in result.stderr, result.stdout + result.stderr
+
+
 def test_managed_python_signing_import_needs_no_pm_or_application(tmp_path):
     repo = Path(__file__).resolve().parents[2]
     script = """

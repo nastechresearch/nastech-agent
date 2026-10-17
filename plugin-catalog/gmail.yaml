@@ -1,5 +1,5 @@
 name: gmail
-repo: https://github.com/guberm/nastech-gmail-desktop-plugin
+repo: https://github.com/guberm/hermes-gmail-desktop-plugin
 sha: c8cd0c2d140561a1dffb7432c6d02b63b2374888
 subdir: plugins/gmail
 title: Gmail
@@ -7,7 +7,7 @@ description: "Nastech Desktop Gmail mailbox UI for search, reading, and thread i
 maintainer: guberm
 tier: community
 category: desktop
-docs_url: https://github.com/guberm/nastech-gmail-desktop-plugin#readme
+docs_url: https://github.com/guberm/hermes-gmail-desktop-plugin#readme
 version: "1.0.20"
 readme: false
 platforms: []

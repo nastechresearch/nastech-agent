@@ -1,5 +1,5 @@
 name: redaction-pack
-repo: https://github.com/pierrenode/nastech-redaction-pack
+repo: https://github.com/pierrenode/hermes-redaction-pack
 sha: febd8bfe9971a3242d0ca18e8e7ca71d685d503b
 subdir: redaction-pack
 description: >-
@@ -15,7 +15,7 @@ maintainer: pierrenode
 tier: community
 category: tools
 requires_nastech: ">=0.21"
-docs_url: https://github.com/pierrenode/nastech-redaction-pack
+docs_url: https://github.com/pierrenode/hermes-redaction-pack
 version: "1.4.0"
 image: https://raw.githubusercontent.com/pierrenode/nastech-redaction-pack/febd8bfe9971a3242d0ca18e8e7ca71d685d503b/docs/card.png
 platforms: []

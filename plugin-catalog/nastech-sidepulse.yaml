@@ -1,5 +1,5 @@
 name: nastech-sidepulse
-repo: https://github.com/d31tcjg/nastech-sidepulse
+repo: https://github.com/d31tcjg/hermes-sidepulse
 sha: 864785d72bfcdec6605622a0dcf211ea35a11917
 subdir: python
 description: SidePulse lifecycle status backend; Desktop focus tracking requires the separate companion in the linked setup guide. Disclosure — forwards event names, a hashed agent id, the raw session_id and tool names to a local AF_UNIX socket and a 0600 jsonl log; no network egress.
@@ -7,7 +7,7 @@ maintainer: d31tcjg
 tier: community
 category: desktop
 requires_nastech: ">=0.21.3"
-docs_url: https://github.com/d31tcjg/nastech-sidepulse/blob/v0.2.0-beta.1/README.md
+docs_url: https://github.com/d31tcjg/hermes-sidepulse/blob/v0.2.0-beta.1/README.md
 version: "0.2.0-beta.1"
 platforms:
   - macos

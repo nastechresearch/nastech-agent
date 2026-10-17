@@ -1,5 +1,5 @@
 name: nerve
-repo: https://github.com/keeltrace/nastech-nerve
+repo: https://github.com/keeltrace/hermes-nerve
 sha: 3de7d94982b7a2cb87c829e4b2366ced927d8fed
 description: >-
   Nerve is a supervisory nervous system for Nastech Agent with provider-neutral Jev, Laya, and
@@ -16,7 +16,7 @@ maintainer: keeltrace
 tier: community
 category: automation
 requires_nastech: '>=0.21'
-docs_url: https://github.com/keeltrace/nastech-nerve#readme
+docs_url: https://github.com/keeltrace/hermes-nerve#readme
 version: 0.3.1
 capabilities:
   provides_tools:

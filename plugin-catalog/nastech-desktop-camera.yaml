@@ -1,5 +1,5 @@
 name: nastech-desktop-camera
-repo: https://github.com/BrokeSkill/Nastech-Camera
+repo: https://github.com/BrokeSkill/Hermes-Camera
 sha: ce9e8b914cb73ca88e797d89124f6add516bf823
 description: A camera button for the Nastech Desktop composer. Open the preview, take a photo, and the frame lands in the composer as an image attachment, ready to send.
 maintainer: BrokeSkill

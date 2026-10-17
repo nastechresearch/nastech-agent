@@ -1,5 +1,5 @@
 name: nastech-gemini-live
-repo: https://github.com/skappafrost/nastech-gemini-live
+repo: https://github.com/skappafrost/hermes-gemini-live
 sha: cf549e7f8af858568936ccb434c7e1104eb200e9
 description: >-
   Realtime duplex voice with the Gemini Live API, built around handing real work to Nastech.
@@ -28,7 +28,7 @@ maintainer: skappafrost
 tier: community
 version: "0.1.0"
 category: voice
-docs_url: https://github.com/skappafrost/nastech-gemini-live#readme
+docs_url: https://github.com/skappafrost/hermes-gemini-live#readme
 requires_nastech: ">=0.21.5"
 platforms: []
 capabilities:

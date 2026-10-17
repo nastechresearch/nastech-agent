@@ -1,5 +1,5 @@
 name: operations
-repo: https://github.com/c-pompa/operations-nastech-desktop-plugin
+repo: https://github.com/c-pompa/operations-hermes-desktop-plugin
 sha: 61b5e241c7893df32c64426eb6d84e6bb4334620
 subdir: plugins/operations
 title: Operations
@@ -7,7 +7,7 @@ description: "A Nastech Desktop page for running a fleet - topology, model traff
 maintainer: c-pompa
 tier: community
 category: desktop
-docs_url: https://github.com/c-pompa/operations-nastech-desktop-plugin#readme
+docs_url: https://github.com/c-pompa/operations-hermes-desktop-plugin#readme
 version: "0.1.0"
 requires_nastech: ">=0.21.5"
 image: https://raw.githubusercontent.com/c-pompa/operations-nastech-desktop-plugin/61b5e241c7893df32c64426eb6d84e6bb4334620/screenshots/card.png

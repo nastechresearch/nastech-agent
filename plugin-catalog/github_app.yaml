@@ -1,5 +1,5 @@
 name: github_app
-repo: https://github.com/himanusia/nastech-github-app-plugin
+repo: https://github.com/himanusia/hermes-github-app-plugin
 sha: 2adfd020f93a5d71a563e94c88738fb8e64335f8
 subdir: github_app
 version: "0.1.0"

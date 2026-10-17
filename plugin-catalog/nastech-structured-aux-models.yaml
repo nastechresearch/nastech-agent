@@ -1,5 +1,5 @@
 name: nastech-structured-aux-models
-repo: https://github.com/trajectoire-ai/nastech-structured-aux-models
+repo: https://github.com/trajectoire-ai/hermes-structured-aux-models
 sha: e5c49b081ad04adca2ee3edc601b09ede6cee4c5
 description: Routes selected Nastech auxiliary tasks (approval, MCP sampling, compression) through bounded
   Jev decision calls on OpenRouter instead of free-form chat prompts, failing open to the operator's own
@@ -11,7 +11,7 @@ maintainer: trajectoire-ai
 tier: community
 category: models
 requires_nastech: '>=0.21'
-docs_url: https://github.com/trajectoire-ai/nastech-structured-aux-models#readme
+docs_url: https://github.com/trajectoire-ai/hermes-structured-aux-models#readme
 version: 0.1.0
 platforms: []
 capabilities:

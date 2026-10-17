@@ -124,10 +124,9 @@ def _run_first_time_quick_setup(config: dict, nastech_home, is_existing: bool):
         setup_gateway(config)
         save_config(config)
     else:
-        # Messaging skipped — still install/start the gateway service so cron jobs run and
-        # platforms come alive as soon as tokens are added later (e.g. via `nastech import`).
-        from nastech_cli.gateway import ensure_gateway_service
-        ensure_gateway_service(context="setup")
+        # Messaging is optional; service persistence still requires explicit consent.
+        from nastech_cli.gateway_setup_service import ensure_gateway_service
+        ensure_gateway_service(context="setup", interactive=True, config=config)
     print()
     print_success("Setup complete! You're ready to go.")
     _info(None, "  Configure all settings:    nastech setup")

@@ -1,5 +1,5 @@
 name: salesforce-chatter
-repo: https://github.com/zenplace-system/nastech-plugin-salesforce-chatter
+repo: https://github.com/zenplace-system/hermes-plugin-salesforce-chatter
 sha: 16ff469ffb1484e37053315e799846d3c4d7c9d8
 subdir: salesforce_chatter
 title: Salesforce Chatter
@@ -7,7 +7,7 @@ description: "Talk to Nastech from Salesforce Chatter: @mention the bot user in 
 maintainer: zenplace-system
 tier: community
 category: platform
-docs_url: https://github.com/zenplace-system/nastech-plugin-salesforce-chatter#readme
+docs_url: https://github.com/zenplace-system/hermes-plugin-salesforce-chatter#readme
 version: "0.2.1"
 requires_nastech: ">=0.21.3"
 platforms: []

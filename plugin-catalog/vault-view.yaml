@@ -1,5 +1,5 @@
 name: vault-view
-repo: https://github.com/ergocogn/nastech-desktop-plugin-vault-view
+repo: https://github.com/ergocogn/hermes-desktop-plugin-vault-view
 sha: 7cc1d6f67205ece2b57c17500a198e3841215ac2
 version: "0.5.0"
 title: Vault View
@@ -7,7 +7,7 @@ description: "Local Markdown vault workspace for Nastech Desktop: visual editing
 maintainer: ergocogn
 tier: community
 category: desktop
-docs_url: https://github.com/ergocogn/nastech-desktop-plugin-vault-view#readme
+docs_url: https://github.com/ergocogn/hermes-desktop-plugin-vault-view#readme
 readme: true
 image: https://raw.githubusercontent.com/ergocogn/nastech-desktop-plugin-vault-view/7cc1d6f67205ece2b57c17500a198e3841215ac2/assets/banner.png
 screenshots:

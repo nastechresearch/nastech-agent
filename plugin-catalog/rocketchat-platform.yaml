@@ -1,5 +1,5 @@
 name: rocketchat-platform
-repo: https://github.com/HalfbitStudio/nastech-plugin-rocketchat
+repo: https://github.com/HalfbitStudio/hermes-plugin-rocketchat
 sha: 989a04cd5f09e57bdd88997940cd18e4d58415b2
 description: Rocket.Chat gateway adapter for Nastech Agent. Connects to a self-hosted Rocket.Chat instance
   via the REST API v1 for outbound traffic and the Realtime (DDP) WebSocket for inbound messages. Uses
@@ -7,7 +7,7 @@ description: Rocket.Chat gateway adapter for Nastech Agent. Connects to a self-h
 maintainer: HalfbitStudio
 tier: community
 category: platform
-docs_url: https://github.com/HalfbitStudio/nastech-plugin-rocketchat#readme
+docs_url: https://github.com/HalfbitStudio/hermes-plugin-rocketchat#readme
 capabilities:
   provides_tools:
   - rocketchat_create_channel

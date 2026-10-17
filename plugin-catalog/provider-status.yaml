@@ -1,5 +1,5 @@
 name: provider-status
-repo: https://github.com/apoapostolov/nastech-agent-awesome-plugins
+repo: https://github.com/apoapostolov/hermes-agent-awesome-plugins
 sha: 953732a9fb52b6fd89e73fc96d910aab63163e07
 subdir: public/provider-status
 description: >-
@@ -13,7 +13,7 @@ description: >-
 maintainer: apoapostolov
 tier: community
 category: desktop
-docs_url: https://github.com/apoapostolov/nastech-agent-awesome-plugins/tree/main/public/provider-status
+docs_url: https://github.com/apoapostolov/hermes-agent-awesome-plugins/tree/main/public/provider-status
 version: "1.5.12"
 image: https://raw.githubusercontent.com/apoapostolov/nastech-agent-awesome-plugins/953732a9fb52b6fd89e73fc96d910aab63163e07/public/provider-status/docs/hero.png
 platforms: []

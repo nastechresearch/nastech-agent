@@ -395,11 +395,11 @@ cd ~/.nastech/profiles/polymarket-trader
 git init && git add . && git commit -m "v1.0"
 git tag v1.0.0
 # 发布到公开 GitHub 仓库
-git remote add origin https://github.com/you/nastech-polymarket-trader.git
+git remote add origin https://github.com/you/hermes-polymarket-trader.git
 git push -u origin main --tags
 
 # 任何人
-nastech profile install github.com/you/nastech-polymarket-trader --alias
+nastech profile install github.com/you/hermes-polymarket-trader --alias
 ```
 
 发推分享安装命令。尝试的人会给你提 issue 和 PR。想要自定义的人可以 fork——与大家已熟悉的 git 工作流完全相同。

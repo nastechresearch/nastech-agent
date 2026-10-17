@@ -42,13 +42,12 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   getConnectionFor: payload => ipcRenderer.invoke('nastech:connection:for', payload),
   getProfileRoutes: profiles => ipcRenderer.invoke('nastech:plugin-profile-routes', profiles),
   revalidateConnection: () => ipcRenderer.invoke('nastech:connection:revalidate'),
-  touchBackend: (profile, options) => ipcRenderer.invoke('nastech:backend:touch', profile, options),
-  getPoolLimits: () => ipcRenderer.invoke('nastech:pool-limits:get'),
-  setPoolLimits: limits => ipcRenderer.invoke('nastech:pool-limits:set', limits),
   getGatewayWsUrl: profile => ipcRenderer.invoke('nastech:gateway:ws-url', profile),
   // Registry-scoped fresh WS URL: { connectionId, profile } → result shape of
   // getGatewayWsUrl, minted against that connection's backend.
   getGatewayWsUrlFor: payload => ipcRenderer.invoke('nastech:gateway:ws-url-for', payload),
+  // { connectionId, profile, pluginId, path } → one-use local plugin socket URL, null, or { refused: 'permission' }.
+  getPluginWsUrl: payload => ipcRenderer.invoke('nastech:plugin:ws-url', payload),
   // Union agent roster across every registered connection.
   getAgentRoster: () => ipcRenderer.invoke('nastech:agents:roster'),
   openSessionWindow: (sessionId, opts) => ipcRenderer.invoke('nastech:window:openSession', sessionId, opts),
@@ -386,6 +385,13 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   setNativeTheme: mode => ipcRenderer.send('nastech:native-theme', mode),
   setTranslucency: payload => ipcRenderer.send('nastech:translucency', payload),
   setKeepAwake: mode => ipcRenderer.send('nastech:keep-awake', mode),
+  // Once per computer, after a timed sleep interrupted a turn with keep-awake off.
+  onKeepAwakeOffer: callback => {
+    const listener = () => callback()
+    ipcRenderer.on('nastech:keep-awake-offer', listener)
+
+    return () => ipcRenderer.removeListener('nastech:keep-awake-offer', listener)
+  },
   minimizeToTray: {
     get: () => ipcRenderer.invoke('nastech:minimize-to-tray:get'),
     set: on => ipcRenderer.invoke('nastech:minimize-to-tray:set', on),
@@ -431,6 +437,12 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     getDefaultProjectDir: () => ipcRenderer.invoke('nastech:setting:defaultProjectDir:get'),
     setDefaultProjectDir: dir => ipcRenderer.invoke('nastech:setting:defaultProjectDir:set', dir),
     pickDefaultProjectDir: () => ipcRenderer.invoke('nastech:setting:defaultProjectDir:pick')
+  },
+  preparedSubmissions: {
+    read: () => ipcRenderer.invoke('nastech:prepared-submissions:read'),
+    update: (key, entry) => ipcRenderer.invoke('nastech:prepared-submissions:update', key, entry),
+    compareAndSet: (key, expected, entry) =>
+      ipcRenderer.invoke('nastech:prepared-submissions:compare-and-set', key, expected, entry)
   },
   zoom: {
     // Current zoom of this window, as { level, percent }.
@@ -589,15 +601,6 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     ipcRenderer.on('nastech:backend-exit', listener)
 
     return () => ipcRenderer.removeListener('nastech:backend-exit', listener)
-  },
-  // Cooperative pool retirement (main → renderer): the pooled backend under
-  // `poolKey` is being stopped for a foreground open. Park that scope; do not
-  // redial into the slot it vacated.
-  onPoolBackendRetiring: callback => {
-    const listener = (_event, payload) => callback(payload)
-    ipcRenderer.on('nastech:pool:retiring', listener)
-
-    return () => ipcRenderer.removeListener('nastech:pool:retiring', listener)
   },
   // Soft gateway-mode apply finished tearing down the primary backend. Renderer
   // should wipe session lists + re-dial without a window reload.

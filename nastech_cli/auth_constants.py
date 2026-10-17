@@ -52,12 +52,70 @@ AUTH_STORE_VERSION = 1
 AUTH_LOCK_TIMEOUT_SECONDS = 15.0
 
 # Nastech Portal defaults
-DEFAULT_NASTECH_PORTAL_URL = "https://portal.nastechresearch.github.io"
-DEFAULT_NASTECH_INFERENCE_URL = "https://inference-api.nastechresearch.github.io/v1"
+# Post-brand reconciliation: FAIL-CLOSED API defaults.  Nastech
+# operates no portal/inference/welcome API, and a GitHub Pages subdomain can
+# never complete TLS (the certificate carries only `*.github.io`, one label),
+# so the literal this replaces is an origin nobody can reach.  The default is
+# therefore read from the environment; when the variable is absent the value
+# names an RFC 2606 `.invalid` origin instead, which no resolver can answer, so
+# the dead origin is never used and a request fails at DNS with the variable to
+# set visible in the host name.
+#
+# That value must stay safe to STRINGIFY, format and strip: real consumers
+# build their authorize/token/JWKS URLs from these constants while they
+# register, and a default whose ``str()`` raised disabled the whole
+# dashboard-auth provider rather than failing one request
+# (nastech-agent#157, 2026-10-17).
+import os as _nastech_endpoint_env
+
+
+def _nastech_endpoint_default(env: str, constant: str, dead_default: str):
+    """Operator-configured endpoint, else an unconfigured, unresolvable origin.
+
+    ``constant`` is carried so a generated call site records which branded
+    default it replaced.
+    """
+    configured = _nastech_endpoint_env.environ.get(env, "").strip().rstrip("/")
+    if configured:
+        return configured
+    path = dead_default.split("://", 1)[-1].partition("/")[2]
+    label = env.lower().replace("_", "-") or "endpoint"
+    return _NastechUnconfiguredEndpoint(
+        f"https://{label}.invalid" + (f"/{path}" if path else "")
+    )
+
+
+class _NastechUnconfiguredEndpoint(str):
+    """Unconfigured endpoint: a real string, at a host that can never resolve.
+
+    Falsy, so ``value or fallback`` keeps working; never raising, because
+    logging and URL construction stringify the default while a provider is
+    registering; and unresolvable, so nothing is ever sent to a host that
+    cannot answer instead of the branded dead origin.
+    """
+
+    def __bool__(self):
+        return False
+
+
+DEFAULT_NASTECH_PORTAL_URL = _nastech_endpoint_default(
+    env='NASTECH_PORTAL_URL',
+    constant='DEFAULT_NASTECH_PORTAL_URL',
+    dead_default='https://portal.nastechresearch.github.io',
+)
+DEFAULT_NASTECH_INFERENCE_URL = _nastech_endpoint_default(
+    env='NASTECH_INFERENCE_URL',
+    constant='DEFAULT_NASTECH_INFERENCE_URL',
+    dead_default='https://inference-api.nastechresearch.github.io/v1',
+)
 # The free tier's (anonymous account) inference host. NAS hands it to the client on every token
 # exchange (``inference_base_url``); this literal is the fallback when that field is absent or fails
 # the host allowlist, because the paid host cross-refuses an anonymous JWT with a 400.
-DEFAULT_NASTECH_WELCOME_URL = "https://welcome-api.nastechresearch.github.io/v1"
+DEFAULT_NASTECH_WELCOME_URL = _nastech_endpoint_default(
+    env='NASTECH_WELCOME_URL',
+    constant='DEFAULT_NASTECH_WELCOME_URL',
+    dead_default='https://welcome-api.nastechresearch.github.io/v1',
+)
 DEFAULT_NASTECH_CLIENT_ID = "nastech-cli"
 # On every guest minted since the welcome trial: True when the desktop's first install claimed it
 # (``nastech_cli.welcome_trial``), False for a connector mint. Absent = minted before the trial existed.

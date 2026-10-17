@@ -15,8 +15,7 @@ from tui_gateway.user_messages import agent_init_failed_message
 
 @pytest.mark.parametrize("exc_text", [
     "Timed out waiting for auth store lock (/home/u/.nastech/profiles/coder/auth.lock); "
-    "another nastech process (pid 4242) probably still holds it "
-    "(e.g. a dashboard or a slow credential refresh)",
+    "another nastech process (pid 4242) probably still holds it",
     "Timed out waiting for auth store lock (/home/u/.nastech/profiles/coder/auth.lock)",
     "Timed out waiting for shared Nastech auth lock (/home/u/.nastech/shared/nastech.lock)",
 ], ids=["auth-store-with-holder", "auth-store-no-holder", "shared-nastech-store"])

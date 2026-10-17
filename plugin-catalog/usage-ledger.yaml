@@ -1,12 +1,12 @@
 name: usage-ledger
-repo: https://github.com/3DPrintPioneers/nastech-usage-ledger
+repo: https://github.com/3DPrintPioneers/hermes-usage-ledger
 sha: 3fa6a32187c943ff2f43959b3a7d258cf9fe067e
 description: Local-only content-free usage tally and native Desktop statusline (Windows and macOS beta).
 maintainer: 3DPrintPioneers
 tier: community
 category: desktop
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/3DPrintPioneers/nastech-usage-ledger/blob/3fa6a32187c943ff2f43959b3a7d258cf9fe067e/README.md
+docs_url: https://github.com/3DPrintPioneers/hermes-usage-ledger/blob/3fa6a32187c943ff2f43959b3a7d258cf9fe067e/README.md
 version: "0.4.4"
 readme: true
 platforms: [windows, macos]

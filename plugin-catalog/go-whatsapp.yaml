@@ -1,5 +1,5 @@
 name: go-whatsapp
-repo: https://github.com/anpicasso/nastech-go-whatsapp
+repo: https://github.com/anpicasso/hermes-go-whatsapp
 sha: a48546353fe79456bc193402905b17b3e1cd1be6
 version: "0.4.1"
 requires_nastech: ">=0.21.5"
@@ -15,7 +15,7 @@ description: >-
 maintainer: anpicasso
 tier: community
 category: tools
-docs_url: https://github.com/anpicasso/nastech-go-whatsapp/blob/a48546353fe79456bc193402905b17b3e1cd1be6/README.md
+docs_url: https://github.com/anpicasso/hermes-go-whatsapp/blob/a48546353fe79456bc193402905b17b3e1cd1be6/README.md
 platforms:
   - linux
   - macos

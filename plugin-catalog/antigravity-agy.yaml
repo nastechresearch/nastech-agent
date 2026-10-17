@@ -1,5 +1,5 @@
 name: antigravity-agy
-repo: https://github.com/Realtyxxx/nastech-plugin-antigravity-agy
+repo: https://github.com/Realtyxxx/hermes-plugin-antigravity-agy
 sha: f85003d3ce0de3844e2d5c23174d630ff3586e5d
 description: >-
   Run Nastech on a Google Antigravity subscription through the official agy CLI, with agy as the
@@ -16,7 +16,7 @@ maintainer: Realtyxxx
 tier: community
 category: models
 requires_nastech: ">=0.21.4"
-docs_url: https://github.com/Realtyxxx/nastech-plugin-antigravity-agy#readme
+docs_url: https://github.com/Realtyxxx/hermes-plugin-antigravity-agy#readme
 version: "0.1.0"
 readme: true
 platforms:

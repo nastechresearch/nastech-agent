@@ -79,6 +79,17 @@ _ACP_FLAGS = (
 
 def cmd_acp(args):
     """Launch Nastech Agent as an ACP server."""
+    import os
+    # The gateway-backed ACP server forwards launch flags from their documented env equivalents
+    # (main() already exported --yolo / --safe-mode / --ignore-user-config).
+    for attr, name in (("accept_hooks", "NASTECH_ACCEPT_HOOKS"), ("ignore_rules", "NASTECH_IGNORE_RULES")):
+        if getattr(args, attr, False):
+            os.environ[name] = "1"
+    # -m / --provider: the route a --safe-mode / --ignore-user-config session freezes (it reads no
+    # profile default), carried like the TUI launcher's.
+    for attr, name in (("model", "NASTECH_MODEL"), ("provider", "NASTECH_INFERENCE_PROVIDER")):
+        if getattr(args, attr, None):
+            os.environ[name] = getattr(args, attr)
     try:
         from acp_adapter.entry import main as acp_main
         acp_main([flag for attr, flag in _ACP_FLAGS if getattr(args, attr, False)])
@@ -109,17 +120,22 @@ def cmd_tools(args):
 def cmd_insights(args):
     db = None
     try:
-        from nastech_state import SessionDB, _default_db_path
+        from nastech_state import SessionDB
         from agent.insights import InsightsEngine
-        if not _default_db_path().exists():
-            print("No session data yet.")
+        from nastech_cli.config import get_nastech_home
+        path = get_nastech_home() / "state.db"
+        if not path.exists():
+            from agent.i18n import t
+            print(f"  {t('cli.insights.no_session_data')}")
             return
-        db = SessionDB(read_only=True)
+        db = SessionDB(db_path=path, read_only=True)
         engine = InsightsEngine(db)
         report = engine.generate(days=args.days, source=args.source)
         print(engine.format_terminal(report))
     except Exception as e:
-        print(f"Error generating insights: {e}")
+        # Interactive /insights delegates here, so keep main's localized error line.
+        from agent.i18n import t
+        print(t("gateway.insights.error", error=str(e)))
     finally:
         if db is not None:
             try:

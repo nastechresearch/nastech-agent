@@ -35,9 +35,9 @@ async def _noop_coro(*args, **kwargs):
 
 
 def _make_server():
-    server = NastechACPAgent.__new__(NastechACPAgent)
-    server.session_manager = SimpleNamespace(save_session=lambda sid: None)
-    server._conn = None
+    # A bare ``NastechACPAgent()`` is the gateway viewer (``__new__`` dispatch); the in-process
+    # turn tail under test lives on the session-manager-backed agent.
+    server = NastechACPAgent(session_manager=SimpleNamespace(save_session=lambda sid: None))
     drained = []
 
     async def fake_prompt(*, prompt, session_id, **kwargs):
