@@ -56,6 +56,10 @@ _PUBLIC = frozenset({
     "nastech_cli.gateway_setup_wizard:offer_home_channel", "nastech_cli.gateway_setup_wizard:save_env_values",
     "nastech_cli.gateway_setup_wizard:prompt_csv", "nastech_cli.setup:prompt", "nastech_cli.setup:prompt_choice",
     "nastech_cli.setup:prompt_yes_no", "nastech_cli.cli_output",
+    # plugins/index.md § Read the skill catalog
+    "tools.skills_tool:find_all_skills", "tools.skills_tool:sort_skills", "tools.skills_tool:skill_search_dirs",
+    "tools.skills_tool:locate_skill", "tools.skills_tool:skill_lookup_path_error",
+    "tools.skills_sync:dir_hash", "tools.skill_usage:read_skill_name",
 })
 
 _SHOWN = 10

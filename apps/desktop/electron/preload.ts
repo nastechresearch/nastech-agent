@@ -351,6 +351,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   readPluginSource: (filePath: string) => ipcRenderer.invoke('nastech:readPluginSource', filePath),
   selectPaths: options => ipcRenderer.invoke('nastech:selectPaths', options),
   selectSavePath: options => ipcRenderer.invoke('nastech:selectSavePath', options),
+  saveTextFileAs: request => ipcRenderer.invoke('nastech:saveTextFileAs', request),
   writeClipboard: text => ipcRenderer.invoke('nastech:writeClipboard', text),
   readClipboard: () => ipcRenderer.invoke('nastech:readClipboard'),
   saveGatewayFile: payload => ipcRenderer.invoke('nastech:saveGatewayFile', payload),
