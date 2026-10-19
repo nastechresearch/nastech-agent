@@ -68,6 +68,31 @@ _version_info._cached_version_info = _version_info.VersionInfo(
 _PRE_SANDBOX_KANBAN_OVERRIDE = os.environ.get("NASTECH_KANBAN_HOME", "").strip()
 _PRE_SANDBOX_NASTECH_HOME = os.environ.get("NASTECH_HOME", "")
 
+# Post-brand reconciliation made the Nastech endpoint defaults fail closed:
+# each is read from its env var at import time, falling back to an
+# unresolvable `.invalid` origin when unconfigured (a GitHub Pages subdomain
+# can never complete TLS). The suite is written against operator-configured
+# endpoints, so pin them before any module under test is imported — a
+# module-level constant then captures the configured value exactly as an
+# operator's environment would. Tests that exercise the unconfigured path
+# override or delenv+reload around these.
+_NASTECH_TEST_ENDPOINTS = {
+    "NASTECH_PORTAL_URL": "https://portal.nastechresearch.github.io",
+    "NASTECH_INFERENCE_URL": "https://inference-api.nastechresearch.github.io/v1",
+    "NASTECH_WELCOME_URL": "https://welcome-api.nastechresearch.github.io/v1",
+    "NASTECH_DEFAULT_BASE_URL": "https://inference-api.nastechresearch.github.io/v1",
+    "ENDPOINT": "https://telemetry.nastechresearch.github.io/v1/telemetry",
+    "PORTAL_BASE_URL": "https://portal.nastechresearch.github.io",
+    "PORTAL_URL": "https://portal.nastechresearch.github.io",
+    "NAS_BASE_URL": "https://portal.nastechresearch.github.io",
+    "PORTAL": "https://portal.nastechresearch.github.io",
+    "NASTECH_INFERENCE_BASE": "https://inference-api.nastechresearch.github.io",
+    "TELEGRAM_ONBOARDING_DEFAULT_URL": "https://setup.nastechresearch.github.io/nastech-agent",
+    "API_URL": "https://setup.nastechresearch.github.io/nastech-agent",
+}
+for _env_key, _env_value in _NASTECH_TEST_ENDPOINTS.items():
+    os.environ.setdefault(_env_key, _env_value)
+
 # Capture before any test fixture can override Path.home()/LOCALAPPDATA.
 from nastech_constants import _get_platform_default_nastech_home
 

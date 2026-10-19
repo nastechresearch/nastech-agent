@@ -20,6 +20,11 @@ def homes(tmp_path, monkeypatch):
     bee.mkdir(parents=True)
     monkeypatch.setenv('NASTECH_HOME', str(launch))
     monkeypatch.setattr(server, '_nastech_home', launch)
+    # The account connector path first mints a hosted guest (same stub as the sibling
+    # connector RPC tests). This fork runs no portal, so that mint always fails and
+    # `connectors.list` answers before ever reaching the profile-scoped client.
+    monkeypatch.setattr('tools.connectors.ensure_guest_identity', lambda: None)
+    monkeypatch.setattr('tools.connectors.managed.ensure_guest_identity', lambda: None)
     return server, launch, bee
 
 
