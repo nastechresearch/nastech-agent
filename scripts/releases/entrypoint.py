@@ -517,7 +517,9 @@ def next_steps(result: dict, *, bold: bool = False) -> str:
     if left_out:
         effects = "; ".join(lane_set.LEFT_OUT[name] for name in left_out)
         lines.append(f"Not built: {', '.join(left_out)}. {effects[0].upper()}{effects[1:]}.")
-    if lane_set.has_bundles(lanes) and not lane_set.advances_desktop(lanes):
+    # The note warns about a partial DESKTOP release: a termux-only build (this fork's default,
+    # which signs no desktop package) ships no desktop packages at all, so nothing is partial.
+    if lanes & {*lane_set.DESKTOP, *lane_set.WINDOWS} and not lane_set.advances_desktop(lanes):
         lines.append("This is a partial desktop release: its packages are verified, but the desktop "
                      "update channel and feeds stay on the previous release (they move only when "
                      "windows and macos-arm64 are both built).")

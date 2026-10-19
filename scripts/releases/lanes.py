@@ -48,10 +48,13 @@ NAMES = tuple(lane.name for lane in LANES)
 # The Apple and Azure/Store signing accounts are unconfigured, so those
 # lanes stay out of the default set; --with re-enables one once its
 # credentials exist.  Termux needs no signing, so it is on.
+# smoke and upgrade gate on built desktop packages: with every desktop lane
+# off they would run nothing, and stable.require_smokes_match_claim rejects a
+# claim whose test policy names smokes a release cannot produce.
 DEFAULT = frozenset(
     lane.name for lane in LANES
     if lane.default
-    and lane.name not in {"macos-arm64", "macos-intel", "windows", "windows-store"}
+    and lane.name not in {"macos-arm64", "macos-intel", "windows", "windows-store", "smoke", "upgrade"}
 ) | {"termux"}
 
 DESKTOP = ("windows", "macos-arm64", "macos-intel")
