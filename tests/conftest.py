@@ -68,13 +68,14 @@ _version_info._cached_version_info = _version_info.VersionInfo(
 _PRE_SANDBOX_KANBAN_OVERRIDE = os.environ.get("NASTECH_KANBAN_HOME", "").strip()
 _PRE_SANDBOX_NASTECH_HOME = os.environ.get("NASTECH_HOME", "")
 
-# Post-brand reconciliation made the Nastech endpoint defaults fail closed:
-# each is read from its env var at import time, falling back to an
-# unresolvable `.invalid` origin when unconfigured (a GitHub Pages subdomain
-# can never complete TLS). The suite is written against operator-configured
-# endpoints, so pin them before any module under test is imported — a
-# module-level constant then captures the configured value exactly as an
-# operator's environment would. Tests that exercise the unconfigured path
+# Post-brand reconciliation made the Nastech endpoint defaults fail closed: each
+# is read from its env var at import time, falling back to an unresolvable
+# `.invalid` origin when unconfigured (a GitHub Pages subdomain can never complete
+# TLS). The suite asserts the branded URL each site names as its ``dead_default``,
+# so declare those configured here, before any module under test is imported — a
+# module-level constant then captures exactly what an operator's environment would
+# give it. Nothing here is ever contacted: these origins serve nothing, and every
+# request a test makes is mocked. Tests that exercise the unconfigured path
 # override or delenv+reload around these.
 _NASTECH_TEST_ENDPOINTS = {
     "NASTECH_PORTAL_URL": "https://portal.nastechresearch.github.io",
