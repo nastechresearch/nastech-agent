@@ -1101,6 +1101,9 @@ def _remove_relocated_basetemp(config) -> None:
         shutil.rmtree(safe, ignore_errors=True)
 
 
+_NASTECH_HOME_PREFIX = b"NASTECH_HOME="
+
+
 def _processes_with_nastech_home_under(roots) -> list[int]:
     """PIDs (never this process) whose environment names a ``NASTECH_HOME`` inside one of *roots*.
 
@@ -1119,7 +1122,8 @@ def _processes_with_nastech_home_under(roots) -> list[int]:
                 environ = handle.read().split(b"\0")
         except OSError:
             continue
-        home = next((item[12:] for item in environ if item.startswith(b"NASTECH_HOME=")), None)
+        home = next((item[len(_NASTECH_HOME_PREFIX):] for item in environ
+                     if item.startswith(_NASTECH_HOME_PREFIX)), None)
         if not home:
             continue
         try:
