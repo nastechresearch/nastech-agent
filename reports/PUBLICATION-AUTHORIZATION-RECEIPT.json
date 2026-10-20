@@ -4,12 +4,12 @@
     "create-or-update-pull-request"
   ],
   "evidence": {
-    "candidate_artifact_sha256": "14c2bafe59a84dbd5383cc472e877a2690039063e0c69943222fd3b6df86ffc7",
-    "gate_receipt_sha256": "8475bdb5af44c07beafd76f1d892287dd4406a1a164f53c8e1fc63bbcfdad039"
+    "candidate_artifact_sha256": "65f746ddf9940dda9edd4eba01153dd0232c2e1a417999acc07455043189220e",
+    "gate_receipt_sha256": "fe3422477002a966bd3a11f3697e517747988c1acbd295bc596203191dbf0718"
   },
-  "generated_at": "2026-10-19T23:24:26.979073+00:00",
+  "generated_at": "2026-10-20T02:13:31.367223+00:00",
   "integrity": {
-    "payload_sha256": "a979f5d74d9ae92f65d870aca072fff83f9b635fb2ffaefa01e0b83e01f0a95f"
+    "payload_sha256": "555a143751d350ab9f2cb92f109ccaf3ae157616a7287ca69cb95e2944fa0ec8"
   },
   "prohibited_actions": [
     "merge",
