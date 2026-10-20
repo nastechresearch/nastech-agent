@@ -1074,6 +1074,14 @@ jobs:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         run: |
+          # Build-only dispatches carry no Apple credentials. electron-builder
+          # treats a present-but-empty CSC_LINK as a certificate path, resolves
+          # '' to this project directory, and dies with "<dir> not a file"
+          # before packaging; keep the signing vars out of its environment.
+          if [ -z "$CSC_LINK" ]; then
+            echo "::notice::no signing certificate configured; building unsigned"
+            unset CSC_LINK CSC_KEY_PASSWORD
+          fi
           # Sign + notarize of a bundled-payload app runs long (Apple scans
           # every Mach-O) — raise the fd limit and let DEBUG show progress.
           ulimit -n 16384 2>/dev/null || true
