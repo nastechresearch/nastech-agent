@@ -26,11 +26,11 @@ narrower routes (`nastech_cli/gateway_chat_commands.py`).
 setting to this local session (its next turn and `config.get`), saving config.yaml only where the
 handler does; `client-local (cli_only)` commands are terminal/UI features of a client.
 
-103 registry commands: 29 control, 18 read, 56 refused.
+104 registry commands: 29 control, 18 read, 57 refused.
 
 | Command | Gateway (`slash.exec`) | Classic CLI | Ink | Desktop | ACP | Notes |
 |---|---|---|---|---|---|---|
-| `/agents` (/tasks) | refused | NastechCLI._handle_agents_command | delegation.pause | slash.exec: refused | slash.exec: refused | gateway-wide: lists every chat's running agents and the process's async jobs |
+| `/agents` (/tasks) | refused | NastechCLI._handle_agents_command | delegation.pause | action: agents | slash.exec: refused | gateway-wide: lists every chat's running agents and the process's async jobs |
 | `/approvals` | control | NastechCLI._handle_approvals_command | slash.exec | slash.exec | slash.exec | per-session setting (gateway handler) |
 | `/approve` | control | messaging-only: unknown command | slash.exec | slash.exec | slash.exec | messaging-only |
 | `/autoprune` | control | NastechCLI._handle_autoprune_command | slash.exec | slash.exec | slash.exec |  |
@@ -46,7 +46,7 @@ handler does; `client-local (cli_only)` commands are terminal/UI features of a c
 | `/codex-runtime` (/codex_runtime) | control | NastechCLI._handle_codex_runtime | slash.exec | slash.exec | slash.exec | per-session setting (gateway handler) |
 | `/commands` | read | messaging-only: unknown command | slash.exec | action: help | slash.exec | messaging-only |
 | `/compress` (/compact) | refused | NastechCLI._manual_compress | canonical route | action: compress | session.mutate compress |  |
-| `/config` | refused | NastechCLI.show_config | slash.exec: refused | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
+| `/config` | refused | NastechCLI.show_config | canonical route | action: config | slash.exec: refused | client-local (cli_only) |
 | `/context` (/ctx) | read | NastechCLI._show_context_breakdown | slash.exec | slash.exec | slash.exec | TUI session: main's live /context with the category table |
 | `/copy` | refused | NastechCLI._handle_copy_command | local | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
 | `/cron` | refused | NastechCLI._handle_cron_command | slash.exec | unavailable: terminal | slash.exec: refused | TUI session: bare `/cron` and `/cron list [--all]` read the profile's jobs; client-local (cli_only) |
@@ -54,8 +54,9 @@ handler does; `client-local (cli_only)` commands are terminal/UI features of a c
 | `/debug` | control | NastechCLI._handle_debug_command | slash.exec | slash.exec | slash.exec | uploads logs to a public paste |
 | `/deny` | control | messaging-only: unknown command | slash.exec | slash.exec | slash.exec | messaging-only |
 | `/diff` | read | NastechCLI._handle_diff_command | slash.exec | slash.exec | slash.exec |  |
+| `/discard` | refused | messaging-only: unknown command | slash.exec: refused | slash.exec: refused | prompt.resolve_unknown | messaging-only |
 | `/egress` | control | NastechCLI._cmd_egress | slash.exec | slash.exec | slash.exec |  |
-| `/export` | refused | NastechCLI._handle_export_command | slash.exec: refused | slash.exec: refused | slash.exec: refused | client-local (cli_only) |
+| `/export` | refused | NastechCLI._handle_export_command | slash.exec: refused | action: export | slash.exec: refused | client-local (cli_only) |
 | `/fast` | control | NastechCLI._handle_fast_command | config.get, config.set | unavailable: advanced | slash.exec | per-session setting (gateway handler) |
 | `/focus` | refused | NastechCLI._handle_focus_command | local (preference not saved) | slash.exec: refused | slash.exec: refused | client-local (cli_only) |
 | `/footer` | control | NastechCLI._handle_footer_command | slash.exec | unavailable: terminal | slash.exec | per-session setting (gateway handler) |
@@ -64,9 +65,9 @@ handler does; `client-local (cli_only)` commands are terminal/UI features of a c
 | `/hatch` (/generate-pet) | refused | NastechCLI._handle_hatch_command | slash.exec: refused | action: hatch | slash.exec: refused | client-local (cli_only) |
 | `/heartbeat` (/hb) | control | NastechCLI._handle_heartbeat_command | slash.exec | slash.exec | slash.exec |  |
 | `/help` | read | NastechCLI._cmd_help | local | action: help | local |  |
-| `/history` | refused | NastechCLI.show_history | local | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
+| `/history` | refused | NastechCLI.show_history | local | action: history | slash.exec: refused | client-local (cli_only) |
 | `/image` | refused | NastechCLI._handle_image_command | local | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
-| `/import` | refused | NastechCLI._handle_import_command | slash.exec: refused | slash.exec: refused | slash.exec: refused | client-local (cli_only) |
+| `/import` | refused | NastechCLI._handle_import_command | slash.exec: refused | action: import | slash.exec: refused | client-local (cli_only) |
 | `/indicator` | refused | NastechCLI._handle_indicator_command | config.get, config.set | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
 | `/init` | control | NastechCLI._handle_init_command | slash.exec | slash.exec | slash.exec |  |
 | `/insights` | read | NastechCLI._show_insights | slash.exec | unavailable: advanced | slash.exec |  |
@@ -79,7 +80,7 @@ handler does; `client-local (cli_only)` commands are terminal/UI features of a c
 | `/moa` | control | NastechCLI._cmd_moa | slash.exec | slash.exec | slash.exec |  |
 | `/model` | refused | NastechCLI._handle_model_switch | canonical route | picker: model | session.mutate model |  |
 | `/new` (/reset) | refused | NastechCLI._cmd_new | local | action: new | session.mutate reset |  |
-| `/palette` | refused | NastechCLI._open_command_palette | slash.exec: refused | slash.exec: refused | slash.exec: refused | client-local (cli_only) |
+| `/palette` | refused | NastechCLI._open_command_palette | slash.exec: refused | action: palette | slash.exec: refused | client-local (cli_only) |
 | `/paste` | refused | NastechCLI._handle_paste_command | local | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
 | `/pause` | refused | messaging-only: unknown command | slash.exec: refused | slash.exec: refused | slash.exec: refused | messaging-only |
 | `/personality` | control | NastechCLI._handle_personality_command | canonical route | slash.exec | slash.exec | per-session setting (gateway handler) |
@@ -96,14 +97,14 @@ handler does; `client-local (cli_only)` commands are terminal/UI features of a c
 | `/redraw` | refused | NastechCLI._cmd_redraw | local | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
 | `/refine` | control | NastechCLI._handle_refine_command | slash.exec | slash.exec | slash.exec |  |
 | `/reload` | refused | NastechCLI._cmd_reload | canonical route | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
-| `/reload-mcp` (/reload_mcp) | refused | NastechCLI._confirm_and_reload_mcp | refused: not available yet | unavailable: advanced | slash.exec: refused |  |
+| `/reload-mcp` (/reload_mcp) | refused | NastechCLI._confirm_and_reload_mcp | canonical route | unavailable: advanced | slash.exec: refused |  |
 | `/reload-skills` (/reload_skills) | refused | NastechCLI._cmd_reload_skills | commands.catalog, skills.reload | unavailable: advanced | slash.exec: refused |  |
 | `/restart` | refused | messaging-only: unknown command | slash.exec: refused | unavailable: terminal | slash.exec: refused | messaging-only |
 | `/resume` | refused | NastechCLI._handle_resume_command | local | picker: session | slash.exec: refused | switches the messaging chat's session; local clients resume by id |
 | `/retry` | refused | NastechCLI._cmd_retry | canonical route | action: retry | session.mutate rewind + resubmit |  |
 | `/review` | control | NastechCLI._handle_review_command | slash.exec | slash.exec | slash.exec |  |
-| `/rollback` | refused | NastechCLI._handle_rollback_command | rollback.diff, rollback.list, rollback.restore | slash.exec: refused | slash.exec: refused | restores filesystem checkpoints |
-| `/save` | refused | NastechCLI.save_conversation | session.save | rpc session.save | slash.exec: refused | writes an export file on the gateway host |
+| `/rollback` | refused | NastechCLI._handle_rollback_command | rollback.diff, rollback.list, rollback.restore | action: rollback | slash.exec: refused | restores filesystem checkpoints |
+| `/save` | refused | NastechCLI.save_conversation | canonical route | action: save | slash.exec: refused | the gateway handler writes its file on the gateway host; Desktop saves `session.export` text through its own dialog |
 | `/sessions` | refused | NastechCLI._handle_sessions_command | local | picker: session | slash.exec: refused | messaging origin-scoped listing (`/sessions all` needs a messaging admin) |
 | `/sethome` (/set-home) | refused | messaging-only: unknown command | slash.exec: refused | unavailable: terminal | slash.exec: refused | messaging-only |
 | `/skills` | read (bare/`pending`/`diff`; `approve`/`reject`/`approval` control; hub refused) | NastechCLI._cmd_skills | slash.exec; sidecar: skills.manage | slash.exec | slash.exec | client-local (cli_only) |
@@ -117,7 +118,7 @@ handler does; `client-local (cli_only)` commands are terminal/UI features of a c
 | `/subgoal` | control | NastechCLI._handle_subgoal_command | slash.exec | slash.exec | slash.exec |  |
 | `/subscription` (/upgrade) | refused | NastechCLI._show_subscription | sidecar: subscription.state | slash.exec: refused | slash.exec: refused | client-local (cli_only) |
 | `/suggestions` (/suggest) | read (bare only) | NastechCLI._handle_suggestions_command | slash.exec | slash.exec | slash.exec |  |
-| `/timestamps` (/ts) | refused | NastechCLI._handle_timestamps_command | slash.exec: refused | slash.exec: refused | slash.exec: refused | client-local (cli_only) |
+| `/timestamps` (/ts) | refused | NastechCLI._handle_timestamps_command | config.set | action: timestamps | slash.exec: refused | client-local (cli_only) |
 | `/title` | control | NastechCLI._cmd_title | canonical route | action: title | session.mutate rename (bare: slash.exec) |  |
 | `/tools` | refused | NastechCLI._handle_tools_command | refused: not available yet | slash.exec: refused | session.info | client-local (cli_only) |
 | `/toolsets` | read | NastechCLI.show_toolsets | slash.exec | unavailable: terminal | slash.exec | client-local (cli_only) |
@@ -128,8 +129,8 @@ handler does; `client-local (cli_only)` commands are terminal/UI features of a c
 | `/usage` | read (bare only (`reset` refused)) | NastechCLI._handle_usage_command | canonical route | slash.exec | slash.exec |  |
 | `/verbose` | control | NastechCLI._toggle_verbose | config.set | unavailable: terminal | slash.exec | per-session setting (gateway handler) |
 | `/version` (/v) | read | NastechCLI._cmd_version | slash.exec | slash.exec | slash.exec |  |
-| `/voice` | control | NastechCLI._handle_voice_command | canonical route | unavailable: composer-voice | slash.exec | per-session setting (gateway handler) |
+| `/voice` | control | NastechCLI._handle_voice_command | config.get, slash.exec; sidecar: voice.toggle; `tts` refused | unavailable: composer-voice | slash.exec | per-session setting (gateway handler) |
 | `/wake` | refused | NastechCLI._handle_wake_command | local | action: wake | slash.exec: refused | client-local (cli_only) |
 | `/whoami` | read | NastechCLI._handle_whoami_command | slash.exec | slash.exec | slash.exec |  |
-| `/worktree` | refused | NastechCLI._handle_worktree_command | slash.exec: refused | slash.exec: refused | slash.exec: refused | client-local (cli_only) |
+| `/worktree` | refused | NastechCLI._handle_worktree_command | slash.exec: refused | unavailable: terminal | slash.exec: refused | client-local (cli_only) |
 | `/yolo` | control | NastechCLI._toggle_yolo | config.set | action: yolo | slash.exec | per-session setting (gateway handler) |
