@@ -87,20 +87,22 @@ jobs:
           #
           # ``workers`` caps per-file parallelism below ``os.cpu_count()``. These are the free
           # public-repo runners (this fork does not use upstream's larger labels — see #50), and
-          # a file that spawns its own timed child starves when every core already has a file:
-          # ``test_browse_schema_drift.py``'s 3s browse budget is interrupted mid-DDL under three
-          # workers and the child answers the generic schema 503 instead of the budget one.
-          # One worker below the core count leaves each file's children a core of their own.
+          # a file that spawns its own timed child starves when every core already has a file.
+          # ``test_browse_schema_drift.py`` is the measured case: its slowed DDL child holds
+          # gateway.lock for its 3s budget PLUS a slowed rollback, and gateway boot only waits
+          # budget+2s — with 2 workers the child overran that wait on both attempts (run 39357736243,
+          # "waiting up to 5s" then OwnershipConflict), so the macOS rows run one file at a time and
+          # each file's children get a core of their own.
           - name: macOS-only tests (1/2)
             runner: macos-latest
             marker: macos
             slice: 1/2
-            workers: 2
+            workers: 1
           - name: macOS-only tests (2/2)
             runner: macos-latest
             marker: macos
             slice: 2/2
-            workers: 2
+            workers: 1
           - name: Windows-only tests
             runner: windows-latest
             marker: windows
