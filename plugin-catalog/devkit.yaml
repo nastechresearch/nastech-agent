@@ -1,5 +1,5 @@
 name: devkit
-repo: https://github.com/Zek-Takai/hermes-devkit
+repo: https://github.com/Zek-Takai/nastech-devkit
 sha: dbfa6b26ac64c65ec3e58a937890a912de3d628d
 subdir: plugin
 title: Scratchpad (devkit)

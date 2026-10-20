@@ -1,5 +1,5 @@
 name: jot
-repo: https://github.com/Totoro-qaq/hermes-jot
+repo: https://github.com/Totoro-qaq/nastech-jot
 sha: 'b65b550108c8e742cc5737055213da947dc54e0f'
 description: Notes, checklists and documents beside Nastech that your agent can read and update safely, with revision checks and undo for AI edits.
 maintainer: Totoro-qaq

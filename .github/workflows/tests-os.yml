@@ -95,16 +95,6 @@ jobs:
           - name: Windows-only tests
             runner: windows-latest
             marker: windows
-          - name: Windows-only tests (arm64, 1/2)
-            runner: windows-latest
-            marker: windows
-            timeout: 60
-            slice: 1/2
-          - name: Windows-only tests (arm64, 2/2)
-            runner: windows-latest
-            marker: windows
-            timeout: 60
-            slice: 2/2
     steps:
       - name: Checkout code
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
@@ -199,7 +189,7 @@ jobs:
         env:
           # These files spawn nested PowerShell trees. CPU-count parallelism
           # starves cold child startup before the fixture's idle deadline.
-          NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && '4' || '' }}
+          NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && '4' || '2' }}
           NASTECH_TEST_SLICE: ${{ matrix.slice || '' }}
           # e2e-windows already runs NASTECH_TEST_FILE_TIMEOUT=900 on the
           # same 4-core image; the Windows-only row needs the same headroom

@@ -1,5 +1,5 @@
 name: remarkable
-repo: https://github.com/cygnostik/hermes-plugin-remarkable
+repo: https://github.com/cygnostik/nastech-plugin-remarkable
 sha: 5f841248b068d49f8a04208bf3471e00acd933f3
 description: >-
   Unofficial reMarkable cloud transfers, library management, backups, typed text, and bounded native notebook rendering.
@@ -11,7 +11,7 @@ tier: community
 category: tools
 requires_nastech: ">=0.21.3"
 version: "0.2.0"
-docs_url: https://github.com/cygnostik/hermes-plugin-remarkable#readme
+docs_url: https://github.com/cygnostik/nastech-plugin-remarkable#readme
 image: https://raw.githubusercontent.com/cygnostik/nastech-plugin-remarkable/5f841248b068d49f8a04208bf3471e00acd933f3/docs/media/remarkable-nastech-catalog.png
 platforms: [windows, linux, macos]
 capabilities:

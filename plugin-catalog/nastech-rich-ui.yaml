@@ -4,7 +4,7 @@
 # Owner-gated: `sha` is filled at tag-push time (publish.sh replaces it with the
 # v0.1.0 tag's 40-hex commit SHA); the loader rejects anything but a full SHA.
 name: nastech-rich-ui
-repo: https://github.com/jacobhausler/hermes-rich-ui
+repo: https://github.com/jacobhausler/nastech-rich-ui
 sha: "693fe296579ae69cfc78b90624a7b6bfc2564755"
 subdir: ""
 description: "Rich, evidence-backed answer cards — tables, charts, metrics, timelines, sources — rendered inline in the desktop transcript Disclosure — Image and ImageGallery cards load agent-supplied https image URLs (up to 8 per gallery) from any host when the card renders in Desktop"

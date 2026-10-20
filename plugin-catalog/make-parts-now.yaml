@@ -1,13 +1,13 @@
 name: make-parts-now
 title: Make Parts Now
-repo: https://github.com/makepartsnow/makepartsnow-hermes
+repo: https://github.com/makepartsnow/makepartsnow-nastech
 sha: 5ccbbbc7b3ba276bba6ad62d8f38b977960d9420
 description: "Quote and order custom 3D printed and CNC machined parts from your CAD files through the hosted Make Parts Now MCP server (Streamable HTTP, no sign-in to quote), with the quote-parts workflow skill bundled: upload an STL, STEP, 3MF or OBJ file, get the price and ship date for each production speed (SLS nylon, FDM plastic, CNC aluminum and brass), change the quantity, material or speed, and get a checkout link. Portable Agent Plugins v1 package (mcp.json + skills/), configuration only. Disclosure — hosted-only connector with no local code; every tool call goes to makepartsnow.com. To quote a local file the agent uploads that one CAD file with curl through the terminal tool (Nastech approvals apply) to a one-time upload link, or gives the user an upload page. Nothing is charged in chat: checkout links open Stripe Checkout on makepartsnow.com where the user pays. US shipping only."
 maintainer: Make Parts Now
 tier: community
 category: tools
 version: "1.0.1"
-docs_url: https://github.com/makepartsnow/makepartsnow-hermes
+docs_url: https://github.com/makepartsnow/makepartsnow-nastech
 image: https://raw.githubusercontent.com/makepartsnow/makepartsnow-nastech/5ccbbbc7b3ba276bba6ad62d8f38b977960d9420/assets/banner.png
 platforms: []
 capabilities:

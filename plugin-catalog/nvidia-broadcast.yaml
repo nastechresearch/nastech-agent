@@ -10,7 +10,7 @@ description: "NVIDIA Broadcast control through its local MCP gateway: camera, mi
   leaves loopback."
 title: NVIDIA Broadcast
 maintainer: NastechResearch
-tier: official
+tier: verified
 category: tools
 requires_nastech: ">=0.21.4"
 docs_url: https://github.com/NastechResearch/nastech-nvidia/tree/main/nvidia-broadcast

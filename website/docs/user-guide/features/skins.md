@@ -241,7 +241,7 @@ The field is capped at 32 KiB and applies to GUI surfaces only — the CLI and T
 
 ## Nastech Mod — Visual Skin Editor
 
-[Nastech Mod](https://github.com/cocktailpeanut/hermes-mod) is a community-built web UI for creating and managing skins visually. Instead of writing YAML by hand, you get a point-and-click editor with live preview.
+[Nastech Mod](https://github.com/cocktailpeanut/nastech-mod) is a community-built web UI for creating and managing skins visually. Instead of writing YAML by hand, you get a point-and-click editor with live preview.
 
 ![Nastech Mod skin editor](https://raw.githubusercontent.com/cocktailpeanut/nastech-mod/master/nastech.png)
 
@@ -270,7 +270,7 @@ npx -y nastech-mod
 **Option 3 — Manual:**
 
 ```bash
-git clone https://github.com/cocktailpeanut/hermes-mod.git
+git clone https://github.com/cocktailpeanut/nastech-mod.git
 cd nastech-mod/app
 npm install
 npm start

@@ -1,5 +1,5 @@
 name: account-pool
-repo: https://github.com/roqianjas/hermes-account-pool
+repo: https://github.com/roqianjas/nastech-account-pool
 sha: 7a4fc9fd976ed68de9e6f70ba326ef2053741e69
 subdir: plugins/account-pool
 version: "4.0.2"
@@ -9,7 +9,7 @@ maintainer: roqianjas
 tier: community
 category: tools
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/roqianjas/hermes-account-pool/blob/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/README.md
+docs_url: https://github.com/roqianjas/nastech-account-pool/blob/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/README.md
 platforms: [linux, windows]
 screenshots:
   - https://raw.githubusercontent.com/roqianjas/nastech-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/accounts.png

@@ -1,5 +1,5 @@
 name: discord-tps
-repo: https://github.com/tuancookiez-hub/hermes-discord-tokenpersec
+repo: https://github.com/tuancookiez-hub/nastech-discord-tokenpersec
 sha: 056fcd331d9be03c287f293854b715b17b637203
 subdir: discord-tps
 version: "1.0.3"
@@ -8,7 +8,7 @@ description: "Show live tokens-per-second and the active model on your Discord b
 maintainer: tuancookiez-hub
 tier: community
 category: platform
-docs_url: https://github.com/tuancookiez-hub/hermes-discord-tokenpersec/blob/056fcd331d9be03c287f293854b715b17b637203/discord-tps/README.md
+docs_url: https://github.com/tuancookiez-hub/nastech-discord-tokenpersec/blob/056fcd331d9be03c287f293854b715b17b637203/discord-tps/README.md
 readme: true
 image: https://raw.githubusercontent.com/tuancookiez-hub/nastech-discord-tokenpersec/056fcd331d9be03c287f293854b715b17b637203/assets/banner.png
 screenshots:

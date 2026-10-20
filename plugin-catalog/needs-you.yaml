@@ -1,5 +1,5 @@
 name: needs-you
-repo: https://github.com/aydnOktay/hermes-needs-you
+repo: https://github.com/aydnOktay/nastech-needs-you
 sha: f903b8eb8f166b609e2ee3c535209fb4602b60d3
 description: Nastech is waiting — full Desktop page for pending approvals.
   Queue, chip, OS notify. Redacted previews only. No API keys.
@@ -7,7 +7,7 @@ maintainer: aydnOktay
 tier: community
 category: desktop
 requires_nastech: ">=0.21"
-docs_url: https://github.com/aydnOktay/hermes-needs-you
+docs_url: https://github.com/aydnOktay/nastech-needs-you
 version: "0.1.0"
 image: https://raw.githubusercontent.com/aydnOktay/nastech-needs-you/f903b8eb8f166b609e2ee3c535209fb4602b60d3/logo.png
 platforms: []

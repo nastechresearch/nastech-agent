@@ -42,9 +42,9 @@ def service_suffix(home: Path) -> str:
     profile name; any other root (Docker, a temp harness) yields a path hash so a
     custom root can never resolve to the production ``nastech-gateway`` unit.
     """
-    from nastech_constants import _get_platform_default_nastech_home
+    from nastech_constants import account_default_nastech_home
     from nastech_cli.gateway import _profile_name_from_home
-    default = _get_platform_default_nastech_home().resolve()
+    default = account_default_nastech_home().resolve()
     home = home.resolve()
     if home == default:
         return ""

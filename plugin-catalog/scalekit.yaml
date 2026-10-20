@@ -1,6 +1,6 @@
 name: scalekit
 title: Scalekit
-repo: https://github.com/scalekit-inc/hermes-tools
+repo: https://github.com/scalekit-inc/nastech-tools
 sha: 35bfcedf59442377a930c4c3ed1c818ca425c11a
 description: >-
   Call any Scalekit connector from Nastech: 500+ connectors and 20,000+ tools.
@@ -13,7 +13,7 @@ maintainer: scalekit-inc
 tier: community
 category: tools
 requires_nastech: ">=0.20.0"
-docs_url: https://github.com/scalekit-inc/hermes-tools#readme
+docs_url: https://github.com/scalekit-inc/nastech-tools#readme
 version: "0.1.0"
 image: https://raw.githubusercontent.com/scalekit-inc/nastech-tools/35bfcedf59442377a930c4c3ed1c818ca425c11a/screenshots/catalog-card.png
 screenshots:

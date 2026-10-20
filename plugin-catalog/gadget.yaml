@@ -1,5 +1,5 @@
 name: gadget
-repo: https://github.com/Adolanium/hermes-gadget-sdk
+repo: https://github.com/Adolanium/nastech-gadget-sdk
 sha: 4a22503cd5888d00b3fe4aedde167793e1c3961a
 subdir: plugin
 title: Nastech Gadget

@@ -68,6 +68,34 @@ _version_info._cached_version_info = _version_info.VersionInfo(
 _PRE_SANDBOX_KANBAN_OVERRIDE = os.environ.get("NASTECH_KANBAN_HOME", "").strip()
 _PRE_SANDBOX_NASTECH_HOME = os.environ.get("NASTECH_HOME", "")
 
+# Post-brand reconciliation made the Nastech endpoint defaults fail closed: each
+# is read from its env var at import time, falling back to an unresolvable
+# `.invalid` origin when unconfigured (a GitHub Pages subdomain can never complete
+# TLS). The suite asserts the branded URL each site names as its ``dead_default``,
+# so declare those configured here, before any module under test is imported -- a
+# module-level constant then captures exactly what an operator's environment would
+# give it. Nothing here is ever contacted: these origins serve nothing, and every
+# request a test makes is mocked. Tests that exercise the unconfigured path
+# override or delenv+reload around these.
+# Generated from the `_nastech_endpoint_default` call sites in this tree by
+# _reconcile_test_endpoint_defaults; do not hand-edit, it cannot stay in step.
+_NASTECH_TEST_ENDPOINTS = {
+    'API_URL': 'https://setup.nastechresearch.github.io/nastech-agent',
+    'ENDPOINT': 'https://telemetry.nastechresearch.github.io/v1/telemetry',
+    'NASTECH_DEFAULT_BASE_URL': 'https://inference-api.nastechresearch.github.io/v1',
+    'NASTECH_INFERENCE_BASE': 'https://inference-api.nastechresearch.github.io',
+    'NASTECH_INFERENCE_URL': 'https://inference-api.nastechresearch.github.io/v1',
+    'NASTECH_PORTAL_URL': 'https://portal.nastechresearch.github.io',
+    'NASTECH_WELCOME_URL': 'https://welcome-api.nastechresearch.github.io/v1',
+    'NAS_BASE_URL': 'https://portal.nastechresearch.github.io',
+    'PORTAL': 'https://portal.nastechresearch.github.io',
+    'PORTAL_BASE_URL': 'https://portal.nastechresearch.github.io',
+    'PORTAL_URL': 'https://portal.nastechresearch.github.io',
+    'TELEGRAM_ONBOARDING_DEFAULT_URL': 'https://setup.nastechresearch.github.io/nastech-agent',
+}
+for _env_key, _env_value in _NASTECH_TEST_ENDPOINTS.items():
+    os.environ.setdefault(_env_key, _env_value)
+
 # Capture before any test fixture can override Path.home()/LOCALAPPDATA.
 from nastech_constants import _get_platform_default_nastech_home
 
@@ -1076,6 +1104,9 @@ def _remove_relocated_basetemp(config) -> None:
         shutil.rmtree(safe, ignore_errors=True)
 
 
+_NASTECH_HOME_PREFIX = b"NASTECH_HOME="
+
+
 def _processes_with_nastech_home_under(roots) -> list[int]:
     """PIDs (never this process) whose environment names a ``NASTECH_HOME`` inside one of *roots*.
 
@@ -1094,7 +1125,8 @@ def _processes_with_nastech_home_under(roots) -> list[int]:
                 environ = handle.read().split(b"\0")
         except OSError:
             continue
-        home = next((item[12:] for item in environ if item.startswith(b"NASTECH_HOME=")), None)
+        home = next((item[len(_NASTECH_HOME_PREFIX):] for item in environ
+                     if item.startswith(_NASTECH_HOME_PREFIX)), None)
         if not home:
             continue
         try:

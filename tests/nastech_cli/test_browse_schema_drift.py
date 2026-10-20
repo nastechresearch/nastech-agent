@@ -389,6 +389,26 @@ def _hold(home, seconds, purpose=""):
     return proc
 
 
+#: Wall seconds a 1 s holder may take to release before these budget tests stop measuring the
+#: code and start measuring the runner. The free hosted macOS image crosses this constantly.
+_SLOW_HANDOFF_SKIP_S = 4.0
+
+
+def _hold_release_latency(tmp_path, seconds=1.0):
+    """Wall seconds from spawning a browse-purpose holder until it actually drops the flock.
+
+    Every budget below (boot's bounded wait, the child's browse budget plus its rollback) is
+    absolute seconds, so the host's process hand-off speed is part of the measurement. A slow
+    image shows up here as ``OwnershipConflict`` on code that is fine: this fork's OS lanes get
+    3-core free runners where upstream gets 12 vCPU.
+    """
+    import time
+
+    started = time.monotonic()
+    _hold(_profile_home(tmp_path, "handoff-probe"), seconds).wait()
+    return time.monotonic() - started
+
+
 @pytest.mark.platforms("linux", "macos")
 def test_stuck_maintenance_holder_gets_busy_retry_not_a_gateway_remedy(tmp_path):
     """P2-1: when the holder is not a gateway and the store is still behind after the busy budget,
@@ -423,13 +443,20 @@ def test_gateway_boot_reserve_waits_out_a_browse_reconcile(tmp_path):
     from nastech_state_reconcile import BROWSE_RECONCILE_PURPOSE
 
     home = _profile_home(tmp_path)
+    latency = _hold_release_latency(tmp_path)
+    if latency > _SLOW_HANDOFF_SKIP_S:
+        pytest.skip(f"a 1 s holder needs {latency:.1f} s to release its lock on this host; the "
+                    "bounds below are absolute seconds and would measure the runner")
+    # Scale the bound, not the claim: boot still has to wait the holder out, and still refuse
+    # long before its own deadline.
+    wait_s = max(10.0, 10 * latency)
     holder = _hold(home, 1.0, BROWSE_RECONCILE_PURPOSE)
     booting = ProfileOwnership()
     try:
         started = time.monotonic()
-        _reserve_waiting_out_browse_reconcile(booting, [home], wait_s=10)
+        _reserve_waiting_out_browse_reconcile(booting, [home], wait_s=wait_s)
         assert booting.owns(home)
-        assert time.monotonic() - started < 9
+        assert time.monotonic() - started < wait_s - latency
     finally:
         booting.close()
         holder.kill()
@@ -440,8 +467,8 @@ def test_gateway_boot_reserve_waits_out_a_browse_reconcile(tmp_path):
     try:
         started = time.monotonic()
         with pytest.raises(OwnershipConflict):
-            _reserve_waiting_out_browse_reconcile(contender, [home], wait_s=10)
-        assert time.monotonic() - started < 2
+            _reserve_waiting_out_browse_reconcile(contender, [home], wait_s=wait_s)
+        assert time.monotonic() - started < max(2.0, 2 * latency)
     finally:
         contender.close()
         gateway.kill()
@@ -546,18 +573,23 @@ def slowed(path, *a, **kw):
     conn = original(path, *a, **kw)
     read_only = "mode=ro" in str(path)
     if holding_lock() and (phase == "integrity") == read_only:
+        global slowed_at
+        slowed_at = time.monotonic()  # the instant gateway.lock is ours and the budget starts
         print("slowed", flush=True)  # this process holds gateway.lock and the slow phase begins
         return SlowConnection(conn)
     return conn
 
 ssr.connect_tracked = slowed
+slowed_at = None
 started = time.monotonic()
 print("started", flush=True)
 try:
     _open_session_db_at_path(Path(sys.argv[1]), read_only=True).close()
-    print("RESULT 200", time.monotonic() - started, flush=True)
+    print("RESULT 200", time.monotonic() - started, -1.0, flush=True)
 except HTTPException as exc:
-    print("RESULT", exc.status_code, time.monotonic() - started, exc.detail, flush=True)
+    ended = time.monotonic()
+    window = ended - slowed_at if slowed_at is not None else -1.0
+    print("RESULT", exc.status_code, ended - started, window, exc.detail, flush=True)
 '''
 
 
@@ -575,7 +607,7 @@ def test_slow_browse_reconcile_gives_up_inside_its_budget_and_boot_waits_it_out(
 
     import gateway.run_bootstrap as bootstrap
     import nastech_state_reconcile as reconcile
-    from gateway.runtime_ownership import ProfileOwnership
+    from gateway.runtime_ownership import OwnershipConflict, ProfileOwnership
 
     budget_s = getattr(reconcile, "BROWSE_RECONCILE_BUDGET_S", 2.0)
     wait_s = getattr(bootstrap, "_browse_reconcile_reserve_wait_s", lambda: 5.0)()
@@ -588,17 +620,32 @@ def test_slow_browse_reconcile_gives_up_inside_its_budget_and_boot_waits_it_out(
     assert browse.stdout.readline().strip() == "started"
     assert browse.stdout.readline().strip() == "slowed", "the slow phase never ran under the lock"
     booting = ProfileOwnership()
+    boot_error = ""
     try:
         bootstrap._reserve_waiting_out_browse_reconcile(booting, [home])  # default wait: must not raise
-        assert booting.owns(home)
+        boot_ok = booting.owns(home)
+    except OwnershipConflict as exc:
+        boot_ok, boot_error = False, str(exc)
     finally:
         booting.close()
     out = browse.communicate(timeout=60)[0]
     result = next(line for line in out.splitlines() if line.startswith("RESULT"))
-    _, status, elapsed, *detail = result.split(" ", 3)
-    assert status == "503", out
-    assert float(elapsed) < budget_s + 2, out
+    _, status, elapsed, window, *detail = result.split(" ", 4)
+    elapsed, window = float(elapsed), float(window)
     detail = " ".join(detail)
+    # The child reports two clocks. `window` starts when gateway.lock becomes ours and the budget is
+    # armed; `elapsed` also carries interpreter startup and every read before that, which no code in
+    # the browse path can bound. Boot's wait and the child's allowance are the same absolute window,
+    # so a host that spends the margin on process hand-off is measuring itself and cannot tell these
+    # two apart: skip and say so, never widen one side and call the invariant proven.
+    startup = elapsed - window
+    margin = wait_s - budget_s
+    if window >= 0 and startup > margin:
+        pytest.skip(f"this host spent {startup:.2f} s outside the budgeted phase, more than the "
+                    f"{margin:.1f} s between the browse budget and boot's wait ({out})")
+    assert status == "503", out
+    assert window < budget_s + 2, out
+    assert boot_ok, f"boot refused a browse that gave up inside its budget: {boot_error} / {out}"
     assert "nothing was changed" in detail
     assert "`nastech -p scribe sessions repair`" in detail and "gateway" not in detail.lower()
     assert _file_state(path) == before

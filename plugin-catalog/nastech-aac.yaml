@@ -1,6 +1,6 @@
 name: nastech-aac
 title: Nastech AAC
-repo: https://github.com/TREE-Ind/hermes-aac
+repo: https://github.com/TREE-Ind/nastech-aac
 sha: 45d855ff2d8f448e1f98b62870aa72c3a02ea013
 subdir: ""
 description: "Communication boards, explicit speech, switch scanning and reviewed AI proposals for Nastech Desktop. Disclosure — Desktop-only page; Speak sends your message text through the Nastech gateway to the TTS provider configured in Nastech (cloud providers receive it) and the audio plays on the gateway host, which may be remote; the AI helpers open a separate Nastech chat session per request and send your topic or message as a normal agent turn on your model provider; saved phrases and approved boards are kept in plaintext in the plugin's Desktop storage."

@@ -1,13 +1,13 @@
 name: unraid
 title: Unraid
-repo: https://github.com/Anunnaki-Astronaut/hermes-unraid
+repo: https://github.com/Anunnaki-Astronaut/nastech-unraid
 sha: 48deec3dfd9bbc0b00731412635fa2dc06263d03
 description: "Read-only Unraid monitoring for Nastech Desktop: server metadata, array capacity, Docker containers, virtual machines, and grouped alerts. Disclosure — sends fixed GraphQL queries to the user-configured Unraid host and stores a VIEWER key through Nastech secret scope; no telemetry, background process, shell, SSH, MCP, or mutations."
 maintainer: Anunnaki-Astronaut
 tier: community
 category: desktop
 requires_nastech: ">=0.22.2"
-docs_url: https://github.com/Anunnaki-Astronaut/hermes-unraid#readme
+docs_url: https://github.com/Anunnaki-Astronaut/nastech-unraid#readme
 version: "0.2.0"
 image: https://raw.githubusercontent.com/Anunnaki-Astronaut/nastech-unraid/48deec3dfd9bbc0b00731412635fa2dc06263d03/docs/screenshots/catalog-banner.png
 screenshots:
