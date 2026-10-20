@@ -84,27 +84,39 @@ jobs:
         include:
           # Two slices: on the old free standard runner (3 cores, 3 workers) one lane ran
           # ~7.5 min and became the slowest required job once the Linux suite split.
+          #
+          # ``workers`` caps per-file parallelism below ``os.cpu_count()``. These are the free
+          # public-repo runners (this fork does not use upstream's larger labels — see #50), and
+          # a file that spawns its own timed child starves when every core already has a file:
+          # ``test_browse_schema_drift.py``'s 3s browse budget is interrupted mid-DDL under three
+          # workers and the child answers the generic schema 503 instead of the budget one.
+          # One worker below the core count leaves each file's children a core of their own.
           - name: macOS-only tests (1/2)
             runner: macos-latest
             marker: macos
             slice: 1/2
+            workers: 2
           - name: macOS-only tests (2/2)
             runner: macos-latest
             marker: macos
             slice: 2/2
+            workers: 2
           - name: Windows-only tests
             runner: windows-latest
             marker: windows
+            workers: 4
           - name: Windows-only tests (arm64, 1/2)
             runner: windows-latest
             marker: windows
             timeout: 60
             slice: 1/2
+            workers: 4
           - name: Windows-only tests (arm64, 2/2)
             runner: windows-latest
             marker: windows
             timeout: 60
             slice: 2/2
+            workers: 4
     steps:
       - name: Checkout code
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
@@ -199,7 +211,7 @@ jobs:
         env:
           # These files spawn nested PowerShell trees. CPU-count parallelism
           # starves cold child startup before the fixture's idle deadline.
-          NASTECH_TEST_WORKERS: ${{ matrix.marker == 'windows' && '4' || '' }}
+          NASTECH_TEST_WORKERS: ${{ matrix.workers }}
           NASTECH_TEST_SLICE: ${{ matrix.slice || '' }}
           # e2e-windows already runs NASTECH_TEST_FILE_TIMEOUT=900 on the
           # same 4-core image; the Windows-only row needs the same headroom
