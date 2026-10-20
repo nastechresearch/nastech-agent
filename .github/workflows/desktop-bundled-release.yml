@@ -1081,6 +1081,7 @@ jobs:
           if [ -z "$CSC_LINK" ]; then
             echo "::notice::no signing certificate configured; building unsigned"
             unset CSC_LINK CSC_KEY_PASSWORD
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
           # Sign + notarize of a bundled-payload app runs long (Apple scans
           # every Mach-O) — raise the fd limit and let DEBUG show progress.
