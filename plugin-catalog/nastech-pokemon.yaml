@@ -1,5 +1,5 @@
 name: nastech-pokemon
-repo: https://github.com/sxuff/hermes-pokemon
+repo: https://github.com/sxuff/nastech-pokemon
 sha: a3d9f57f345a744825b59432c343d07d4f508a24
 version: "0.7.0"
 title: Nastech Pokémon
@@ -8,7 +8,7 @@ maintainer: sxuff
 tier: community
 category: desktop
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/sxuff/hermes-pokemon#readme
+docs_url: https://github.com/sxuff/nastech-pokemon#readme
 screenshots:
   - https://raw.githubusercontent.com/sxuff/nastech-pokemon/a3d9f57f345a744825b59432c343d07d4f508a24/docs/images/habitat.png
   - https://raw.githubusercontent.com/sxuff/nastech-pokemon/a3d9f57f345a744825b59432c343d07d4f508a24/docs/images/starters.png

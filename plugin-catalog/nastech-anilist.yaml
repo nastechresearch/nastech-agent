@@ -35,14 +35,14 @@
 #           declare one, and the README's own table already shows all three
 #           captures (markdown images resolve against the pinned commit).
 name: nastech-anilist
-repo: https://github.com/BatataBF/hermes-anilist
+repo: https://github.com/BatataBF/nastech-anilist
 sha: "0081dfd7b45a469eef1ec35d3d0797318694c640"
 description: "AniList tracker for Nastech Desktop — airing countdowns, a season browser, a local or account-backed watchlist, episode alerts and a daily digest, plus agent tools that read your own list and answer about a single show. Disclosure — stores your pasted AniList token in the active profile .env (sent only to graphql.anilist.co); alerts and the daily digest are Nastech cron jobs it creates on the host you pick, and the digest job asks that host's agent to query the public AniList API itself."
 maintainer: BatataBF
 tier: community
 category: desktop
 requires_nastech: ">=0.21"
-docs_url: https://github.com/BatataBF/hermes-anilist#readme
+docs_url: https://github.com/BatataBF/nastech-anilist#readme
 version: "0.9.0"
 platforms: []
 image: https://raw.githubusercontent.com/BatataBF/nastech-anilist/0081dfd7b45a469eef1ec35d3d0797318694c640/docs/screenshots/popover-upcoming.png

@@ -1,6 +1,6 @@
 # nastech_cli/ + cli.py — CLI, slash commands, config, skins, updater, profiles
 
-Applies on top of the root `AGENTS.md`. Long-form: `website/docs/developer-guide/cli-internals.md`.
+Applies on top of the root `AGENTS.md`. Long-form: `cli-internals.md`.
 
 ## CLI architecture
 
@@ -37,7 +37,7 @@ Rules: all interactive menu-pickers use curses (`nastech_cli/curses_ui.py`; exam
 `nastech_cli/tools_config.py`). Never emit `\033[K` (ANSI erase-to-EOL) in spinner/display code —
 it leaks as literal `?[K` under prompt_toolkit's `patch_stdout`; space-pad instead:
 `f"\r{line}{' ' * pad}"`. Wrapper CLIs extend via the protected hooks in `cli_tui_mixin.py`
-(`website/docs/developer-guide/extending-the-cli.md`), not by overriding `run()`.
+(`extending-the-cli.md`), not by overriding `run()`.
 
 ## Slash command registry (`nastech_cli/commands.py`)
 
@@ -128,7 +128,7 @@ and YAML template: `website/docs/user-guide/features/skins.md`.
 
 Transactional, `plan → snapshot → apply → restart-per-kind → verify → report`; every stage guards a
 real field failure (fleet campaign #91277), and a PR that weakens a stage answers for that class.
-The stage-by-stage contract: `website/docs/developer-guide/cli-internals.md` § Update pipeline.
+The stage-by-stage contract: `cli-internals.md` § Update pipeline.
 
 - Snapshots cover EVERY profile with one identical file set (never partial or tiered); they are
   file-loss recovery, `--backup` owns rollback.

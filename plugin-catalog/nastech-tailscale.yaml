@@ -1,5 +1,5 @@
 name: nastech-tailscale
-repo: https://github.com/Adolanium/hermes-tailscale
+repo: https://github.com/Adolanium/nastech-tailscale
 sha: 778a49b0bc499e7c8457d1f83159d4054fcfdc8e
 version: "0.0.7"
 image: https://raw.githubusercontent.com/Adolanium/nastech-tailscale/778a49b0bc499e7c8457d1f83159d4054fcfdc8e/assets/catalog-banner.png
@@ -7,7 +7,7 @@ description: Browse Tailscale devices and connect to remote Nastech instances in
 maintainer: Adolanium
 tier: community
 category: desktop
-docs_url: https://github.com/Adolanium/hermes-tailscale#readme
+docs_url: https://github.com/Adolanium/nastech-tailscale#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

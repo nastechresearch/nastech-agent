@@ -102,3 +102,36 @@ def restart_externally_supervised_gateway(supervised_pid: int) -> None:
         "  then rerun once it is healthy: nastech gateway restart",
     )
     sys.exit(1)
+
+
+def refuse_restart_of_service_managed_gateway(pid: int | None) -> None:
+    """Refuse the manual restart fallback when systemd owns the gateway under ANY unit name.
+
+    Canonical-unit checks miss pre-convention installs (``nastech.service``), so the fallback's
+    stop + in-process ``run_gateway`` SIGKILLed a live service-managed gateway and spawned an
+    unsupervised orphan in the caller's cgroup while the unit flapped against the stolen lock
+    (#126474). Reuses the dashboard's MainPID-verified lookup: a bare ``.service`` cgroup alone
+    (the caller itself started under some unit) never proves ownership.
+    """
+    if not pid or pid <= 1:
+        return
+    from nastech_cli import main_dashboard as _dash
+
+    owner = _dash._systemd_owner_for_pid(pid)
+    if owner is None:
+        return
+    unit, scope = owner
+    cmds = _dash._systemd_restart_commands(unit, scope)
+    from nastech_cli.gateway import _print_lines
+    _print_lines(
+        "",
+        f"✗ Gateway (PID {pid}) is managed by systemd unit {unit}.",
+        "  `nastech gateway restart` cannot restart it from here: the fallback would",
+        "  kill a live gateway and spawn an unsupervised replacement in this shell's",
+        "  cgroup while the unit keeps failing against the stolen lock.",
+        "  Restart it through its unit instead:",
+        *(f"    {c}" for c in cmds),
+        "  (Pre-convention `nastech.service` installs: `nastech gateway migrate-legacy`",
+        "  removes the legacy unit so the canonical one can own the gateway.)",
+    )
+    sys.exit(1)

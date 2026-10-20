@@ -1,5 +1,5 @@
 name: nastech-ledgerline
-repo: https://github.com/Adolanium/hermes-ledgerline
+repo: https://github.com/Adolanium/nastech-ledgerline
 sha: fa28160845d530ecbd5b9559c0f960a8c589dfb2
 version: "0.1.8"
 image: https://raw.githubusercontent.com/Adolanium/nastech-ledgerline/fa28160845d530ecbd5b9559c0f960a8c589dfb2/assets/catalog-banner.png
@@ -7,7 +7,7 @@ description: Inspect session costs and usage in Nastech Desktop.
 maintainer: Adolanium
 tier: community
 category: desktop
-docs_url: https://github.com/Adolanium/hermes-ledgerline#readme
+docs_url: https://github.com/Adolanium/nastech-ledgerline#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

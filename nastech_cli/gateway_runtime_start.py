@@ -26,6 +26,9 @@ DAEMON_STRIPPED_ENV = (
     "NASTECH_INTERACTIVE", "NASTECH_GATEWAY_SESSION", "NASTECH_SINGLE_QUERY_SESSION",
     "NASTECH_EPHEMERAL_SYSTEM_PROMPT", "NASTECH_PREFILL_MESSAGES_FILE", "NASTECH_INFERENCE_PROVIDER",
     "NASTECH_ENABLE_PROJECT_PLUGINS", "NASTECH_TUI_CLIENT_ENV",
+    # A terminal's shell under a systemd service (gnome-terminal-server, a user unit) carries these; the
+    # unmanaged daemon would then identify as "systemd" and maintenance would refuse it as supervised.
+    "INVOCATION_ID", "JOURNAL_STREAM",
 )
 
 

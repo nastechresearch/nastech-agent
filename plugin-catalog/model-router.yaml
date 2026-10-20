@@ -1,13 +1,13 @@
 name: model-router
 title: "Model Router"
-repo: https://github.com/metamindedu/hermes-model-router
+repo: https://github.com/metamindedu/nastech-model-router
 sha: 01e2a2cd1e5eedf4f3d90dee936cc8ada06ca3fa
 description: "Profile model settings, opt-in Heavy/Light task routing, fallback controls, runtime limits and Fast inheritance. Reads Nastech profile configuration; explicit saves update selected profiles via the native CLI. Routed jobs launch background Nastech children using the user's configured providers/MCP and store private prompts/results locally. No separate credential store, telemetry, self-updater or approval bypass. Disclosure — once you enable routing for a profile, the model-callable `coding_route` tool starts detached background Nastech agents. They get file, terminal and code-execution tools in any existing folder the model names, run under that profile's credentials and approval policy (single-query mode: dangerous commands are refused unless `approvals.single_query_mode: approve`), and their per-job time limit can be set to none. Prompts and results are stored in `plugin-data/model-router/jobs/`. Saving settings writes model, delegation, auxiliary, fallback and `skills.disabled` keys into the config.yaml of the profiles listed in the preview (backups are taken first) and copies a skill into those profiles' `skills/` folders. From install, native subagents inherit the parent session's Fast (priority/ultrafast) tier on first-party OpenAI/Codex routes, which can raise costs."
 maintainer: metamindedu
 tier: community
 category: models
 version: "0.4.4"
-docs_url: https://github.com/metamindedu/hermes-model-router#readme
+docs_url: https://github.com/metamindedu/nastech-model-router#readme
 readme: true
 platforms:
   - windows

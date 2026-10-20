@@ -1,12 +1,12 @@
 name: nastech-session-diff
-repo: https://github.com/Adolanium/hermes-session-diff
+repo: https://github.com/Adolanium/nastech-session-diff
 sha: 9ed3bf2f6e7d859495589940430782c542bbc4f9
 description: Persistent session file diffs, run comparisons, and individual edit history in Nastech Desktop.
 maintainer: Adolanium
 tier: community
 category: desktop
 requires_nastech: ">=0.21.3"
-docs_url: https://github.com/Adolanium/hermes-session-diff#readme
+docs_url: https://github.com/Adolanium/nastech-session-diff#readme
 image: https://raw.githubusercontent.com/Adolanium/nastech-session-diff/9ed3bf2f6e7d859495589940430782c542bbc4f9/assets/catalog-banner.png
 capabilities:
   provides_tools: []

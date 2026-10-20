@@ -1,5 +1,5 @@
 name: qdrant
-repo: https://github.com/kuehnberger/hermes-qdrant-memory
+repo: https://github.com/kuehnberger/nastech-qdrant-memory
 sha: 5241e51274c657251776659bfb651aae4ba4bf1d
 version: "0.1.8"
 image: https://raw.githubusercontent.com/kuehnberger/nastech-qdrant-memory/5241e51274c657251776659bfb651aae4ba4bf1d/docs/banner.jpg
@@ -8,7 +8,7 @@ maintainer: kuehnberger
 tier: community
 category: memory
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/kuehnberger/hermes-qdrant-memory#readme
+docs_url: https://github.com/kuehnberger/nastech-qdrant-memory#readme
 known_issues:
 - "Windows on ARM is unsupported: grpcio, pulled in by qdrant-client, has no win_arm64 wheel. Linux and macOS on x86_64/arm64 and Windows x86_64 are supported."
 - "Local embedded Qdrant mode is not supported — the provider is REST-only and requires a reachable server."

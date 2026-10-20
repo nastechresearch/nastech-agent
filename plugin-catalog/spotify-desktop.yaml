@@ -1,5 +1,5 @@
 name: spotify-desktop
-repo: https://github.com/cruzlxyz/hermes-spotify-desktop
+repo: https://github.com/cruzlxyz/nastech-spotify-desktop
 sha: 9b564d53c219f9962404dee5f84d3bbb47683897
 description: 'Spotify Connect remote for Nastech Desktop — status-bar mini player (now playing,
   transport, volume, devices, search, playlists, queue) reusing the Nastech Spotify login
@@ -10,7 +10,7 @@ maintainer: cruzlxyz
 tier: community
 version: "0.1.2"
 category: desktop
-docs_url: https://github.com/cruzlxyz/hermes-spotify-desktop
+docs_url: https://github.com/cruzlxyz/nastech-spotify-desktop
 platforms: []
 capabilities:
   provides_tools: []

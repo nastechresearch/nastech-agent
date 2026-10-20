@@ -9,13 +9,15 @@ import pytest
 
 # Every launch-scoped value a client process may hold when it auto-starts the shared daemon
 # (SWEEP_daemon-launch-env.md): consent, Kanban worker pins, the launching turn's session identity,
-# human-presence and one-shot markers, a bot-to-bot turn author.
+# human-presence and one-shot markers, a bot-to-bot turn author, a terminal's systemd markers.
 LEAKS = {'NASTECH_ACCEPT_HOOKS': '1', 'NASTECH_KANBAN_TASK': 't_1', 'NASTECH_KANBAN_BOARD': 'other',
          'NASTECH_KANBAN_DB': '/x/kanban.db', 'NASTECH_SESSION_SOURCE': 'kanban', 'TERMINAL_CWD': '/x',
          'NASTECH_TENANT': 'acme', 'NASTECH_SESSION_SOURCE_EXPLICIT': '1', 'NASTECH_TURN_AUTHOR': '{"handle":"x"}',
          'NASTECH_INTERACTIVE': '1', 'NASTECH_GATEWAY_SESSION': '1', 'NASTECH_SINGLE_QUERY_SESSION': '1',
          'NASTECH_SESSION_ID': 'launching-turn', 'NASTECH_SESSION_KEY': 'agent:main:tui:x',
-         'NASTECH_SESSION_PLATFORM': 'tui', 'NASTECH_SESSION_CHAT_ID': 'c1', 'NASTECH_CRON_SESSION': '1'}
+         'NASTECH_SESSION_PLATFORM': 'tui', 'NASTECH_SESSION_CHAT_ID': 'c1', 'NASTECH_CRON_SESSION': '1',
+         # A terminal running under a systemd service: not the daemon's own supervisor.
+         'INVOCATION_ID': 'terminal-scope', 'JOURNAL_STREAM': '8:1'}
 
 
 @pytest.mark.platforms("linux")

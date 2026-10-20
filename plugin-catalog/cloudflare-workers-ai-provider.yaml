@@ -1,5 +1,5 @@
 name: cloudflare-workers-ai-provider
-repo: https://github.com/AhmetArif0/hermes-cloudflare-workers-ai-provider
+repo: https://github.com/AhmetArif0/nastech-cloudflare-workers-ai-provider
 sha: f6821d058d504ee6324b0d3217564b93124c09f9
 subdir: cloudflare-workers-ai-provider
 description: >-
@@ -17,7 +17,7 @@ maintainer: AhmetArif0
 tier: community
 category: models
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/AhmetArif0/hermes-cloudflare-workers-ai-provider
+docs_url: https://github.com/AhmetArif0/nastech-cloudflare-workers-ai-provider
 version: "1.0.0"
 image: https://raw.githubusercontent.com/AhmetArif0/nastech-cloudflare-workers-ai-provider/f6821d058d504ee6324b0d3217564b93124c09f9/docs/card.png
 platforms: []

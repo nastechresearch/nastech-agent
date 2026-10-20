@@ -4,7 +4,7 @@
 # Exact-SHA pin (40-hex). No self-updating code: the desktop half ships as a
 # static `desktop/plugin.js` and never fetches, downloads, or replaces itself.
 name: nastech-monitor
-repo: https://github.com/mr-3mm3/hermes-monitor
+repo: https://github.com/mr-3mm3/nastech-monitor
 sha: "ec6a3ada338ca3e06fbfc246bc672c3c776b0988"   # v0.3.5 (main)
 version: "0.3.5"
 description: "Kanban worker health in the Desktop status bar — live activity per running card with stall and loop detection (same tool + same arguments repeated), plus a compact per-provider quota readout (the related ai-usage-tracker plugin covers quota windows as a standalone feature). Zero model tokens. Disclosure — opens NASTECH_HOME/kanban.db and each profile's state.db read-only for worker activity; for quota chips it reads every Nastech profile's credential pool (each profile's auth.json, with that profile's .env as secret scope) into read-only snapshots plus DEEPSEEK_API_KEY from the environment or .env files, and calls Nastech' own account-usage fetchers for each configured provider (Anthropic, Codex, OpenRouter, DeepSeek at https://api.deepseek.com/user/balance, and any provider plugin exposing fetch_account_usage), sending each entry's own token only to its own provider. The plugin never refreshes or persists a credential; on a Codex HTTP 401, Nastech core may refresh the active profile's matching Codex token via OpenAI's token endpoint and rewrite that profile's auth.json. No other network egress."
@@ -13,7 +13,7 @@ tier: community
 category: desktop
 requires_nastech: ">=0.21"
 platforms: [linux, macos]
-docs_url: https://github.com/mr-3mm3/hermes-monitor
+docs_url: https://github.com/mr-3mm3/nastech-monitor
 screenshots:
   - https://raw.githubusercontent.com/mr-3mm3/nastech-monitor/ec6a3ada338ca3e06fbfc246bc672c3c776b0988/docs/footer.png
 capabilities:

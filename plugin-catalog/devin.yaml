@@ -1,5 +1,5 @@
 name: devin
-repo: https://github.com/Adolanium/hermes-devin
+repo: https://github.com/Adolanium/nastech-devin
 sha: 45ae46b935503d9271492001564690f153a0fdb9
 subdir: ""
 title: Nastech Devin
@@ -7,7 +7,7 @@ description: "Delegate coding tasks to the Devin CLI, on your computer or in Dev
 maintainer: Adolanium
 tier: community
 category: tools
-docs_url: https://github.com/Adolanium/hermes-devin#readme
+docs_url: https://github.com/Adolanium/nastech-devin#readme
 image: https://raw.githubusercontent.com/Adolanium/nastech-devin/45ae46b935503d9271492001564690f153a0fdb9/assets/catalog-banner.png
 version: "0.1.1"
 screenshots:

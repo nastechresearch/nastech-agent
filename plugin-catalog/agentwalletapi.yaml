@@ -1,5 +1,5 @@
 name: agentwalletapi
-repo: https://github.com/openclawcash/agentwalletapi-hermes
+repo: https://github.com/openclawcash/agentwalletapi-nastech
 sha: 426987c4df3e638270a0c41e5da4cb09fa82f439
 version: "1.28.1"
 image: https://raw.githubusercontent.com/openclawcash/agentwalletapi-nastech/426987c4df3e638270a0c41e5da4cb09fa82f439/assets/catalog-banner.png

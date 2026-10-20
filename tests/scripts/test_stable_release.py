@@ -22,6 +22,18 @@ from scripts.releases.stable import (
 )
 from scripts.releases.versioning import tag_record
 
+# The lane set a release must claim to build and smoke every desktop package —
+# the default once the fork's signing credentials are configured.
+SIGNED = frozenset(lane_set.NAMES)
+# Same, without Termux or macOS Intel: a claim over a desktop-only candidate
+# manifest (arm64 Mac + signed Windows rows).
+DESKTOP_SIGNED = frozenset({"windows", "windows-store", "macos-arm64",
+                            "smoke", "upgrade", "docker", "ci", "nix", "docker-tests",
+                            "pm-bundle", "windows-live", "install-e2e", "bootstrap-version"})
+# Claims cut before lanes existed are read as the pre-lanes default: every lane
+# except the two that were then opt-in (scripts/releases/lanes.py legacy path).
+LEGACY_DEFAULT = frozenset(set(lane_set.NAMES) - {"macos-intel", "termux"})
+
 BASE = "https://releases.example"
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -443,7 +455,7 @@ def test_claim_object_movement_and_lightweight_tags_fail_closed(tmp_path, monkey
         "claim_tag": "rc.1-v1.2.3", "claim_object": claim_object,
         "tag": "v1.2.3", "version": "1.2.3", "attempt": 1, "commit": commit,
         # A claim cut before lanes existed reads as the lane set that gated the same jobs.
-        "autopublish": False, "lanes": lane_set.DEFAULT,
+        "autopublish": False, "lanes": LEGACY_DEFAULT,
         "claim_epoch": 1_790_000_000,
     }
     # The metadata binds the attempt its ref names.
@@ -510,7 +522,7 @@ def test_a_claim_cut_before_lanes_existed_reads_as_the_lane_set_that_gated_the_s
            "claimEpoch": 1_790_000_000}
     raw = json.dumps(old, sort_keys=True, separators=(",", ":"))
     parsed = _claim_metadata(raw, version="0.21.7", attempt=11, commit=commit)
-    assert parsed == {**old, "lanes": lane_set.DEFAULT}
+    assert parsed == {**old, "lanes": LEGACY_DEFAULT}
     assert old == json.loads(raw)  # the caller's record is not mutated
     both = {**old, "includeMacosIntel": True, "includeTermux": True}
     assert validate_claim(both, version="0.21.7", attempt=11, commit=commit)["lanes"] == frozenset(lane_set.NAMES)
@@ -535,19 +547,25 @@ def test_a_claim_cut_before_lanes_existed_reads_as_the_lane_set_that_gated_the_s
             validate_claim(wrong, version="0.21.7", attempt=11, commit=commit)
 
 
-def test_a_default_claim_builds_no_macos_intel_or_termux_and_lanes_restore_them(
+def test_a_default_claim_builds_no_desktop_packages_and_lanes_restore_them(
         tmp_path, r2_server, https_origin, monkeypatch):
+    """NasTech DEFAULT ships the signable lanes only: every desktop build and its test
+    arms are skipped, and --with restores a lane once its signing credentials exist."""
     from scripts.releases import stable
 
     off = {"candidates-darwin-x64", "transitions-darwin-x64", "macos-packaged-x64",
-           "candidates-termux", "termux-checks"}
+           "candidates-darwin-arm64", "transitions-darwin-arm64", "macos-packaged-arm64",
+           "candidates-win32-arm64", "candidates-win32-x64", "candidates-win32-bundle",
+           "transitions-win32", "windows-packaged"}
     required = ["admit", *lane_set.JOB_LANES]
     default = stable.gate_expectations(required, lane_set.DEFAULT)
     assert {name for name, result in default.items() if result == "skipped"} == off
     assert set(stable.gate_expectations(required, lane_set.NAMES).values()) == {"success"}
     intel = stable.gate_expectations(required, lane_set.select(with_=["macos-intel"]))
+    # Termux is on in this fork's default; restoring macos-intel builds its candidate,
+    # but the upgrade-gated transition arms wait for the `upgrade` lane too.
     assert {name for name, result in intel.items() if result == "skipped"} == \
-        {"candidates-termux", "termux-checks"}
+        off - {"candidates-darwin-x64"}
     # A lane that is off removes its jobs even when its test lane is on.
     assert stable.gate_expectations(["candidates-termux", "termux-checks"],
                                     lane_set.select(without=["termux"])) == \
@@ -562,8 +580,8 @@ def test_a_default_claim_builds_no_macos_intel_or_termux_and_lanes_restore_them(
     _stage_windows_handoff(built, "x64")
     _stage_windows_handoff(built, "arm64")
     _stage_universal_bundle(built)
-    monkeypatch.setattr(stable, "stable_context", _fake_stable_context(lanes=lane_set.DEFAULT))
-    calls = _calls(lane_set.DEFAULT)
+    monkeypatch.setattr(stable, "stable_context", _fake_stable_context(lanes=DESKTOP_SIGNED))
+    calls = _calls(DESKTOP_SIGNED)
     env = {**_receipt_env(tmp_path, https_origin.base), "RELEASE_NEEDS": json.dumps(calls)}
     stable.main(["candidate-manifest"], env)
     stored, _ = r2_server.store[f"releases/tag/{ATTEMPT}/release-candidates.json"]
@@ -573,7 +591,7 @@ def test_a_default_claim_builds_no_macos_intel_or_termux_and_lanes_restore_them(
     assert manifest["smoke_results"]["smoke-darwin-x64"] == {"result": "skipped"}
     stable.validate_candidates(manifest, "v1.2.3", RECEIPT_COMMIT, https_origin.base,
                                RELEASE_EPOCH, archive=ATTEMPT)
-    stable.require_targets_match_claim(manifest, lane_set.DEFAULT)
+    stable.require_targets_match_claim(manifest, DESKTOP_SIGNED)
     with pytest.raises(ValueError, match="differ from the claim"):
         stable.require_targets_match_claim(manifest, lane_set.select(with_=["macos-intel"]))
     # A smoke that claims to have passed for a target nobody built is refused.
@@ -679,7 +697,7 @@ def test_a_store_plus_macos_claim_records_only_the_macos_smoke(
         (built / f"Store-Product-1.2.3-win-{arch}.msix").write_bytes(f"store msix: {arch}".encode())
         handoff.stage(ATTEMPT, RECEIPT_COMMIT, f"win32-{arch}", built, [f"Store-Product-1.2.3-win-{arch}.msix"])
     _stage_universal_bundle(built, signed=False)
-    lanes = lane_set.select(without=["windows"])
+    lanes = frozenset({"macos-arm64", "windows-store", "smoke"})
     assert lane_set.runs_smokes(lanes) and "windows-store" in lanes
     monkeypatch.setattr(stable, "stable_context", _fake_stable_context(lanes=lanes))
     calls = _calls(lanes)
@@ -714,7 +732,7 @@ def test_the_manifest_refuses_a_windows_bundle_the_claims_lanes_did_not_build(
     assert f"releases/tag/{ATTEMPT}/release-candidates.json" not in r2_server.store
 
 
-def _claim_fixture(tmp_path, *, tag, version, lanes=lane_set.DEFAULT):
+def _claim_fixture(tmp_path, *, tag, version, lanes=SIGNED):
     """A real checkout + bare remote carrying one annotated attempt claim."""
     from scripts.releases.versioning import parse_attempt_ref
 
@@ -748,7 +766,7 @@ def _claim_fixture(tmp_path, *, tag, version, lanes=lane_set.DEFAULT):
 def test_complete_writes_no_final_tag_and_leaves_the_draft_on_the_attempt_ref(tmp_path, monkeypatch):
     from scripts.releases import stable
 
-    commit, tag_object = _claim_fixture(tmp_path, tag="rc.1-v1.2.3", version="1.2.3")
+    commit, tag_object = _claim_fixture(tmp_path, tag="rc.1-v1.2.3", version="1.2.3", lanes=DESKTOP_SIGNED)
     candidate = candidates("v1.2.3", commit, "c" * 64, archive="rc.1-v1.2.3")
     # The claim did not opt into macOS Intel, so the accepted manifest has no x64 Mac row.
     candidate["packages"] = [row for row in candidate["packages"]
@@ -800,7 +818,7 @@ def test_strip_refuses_an_unbalanced_fence(body):
         strip_draft_warning(body)
 
 
-def _publish_record(commit, tag_object, *, epoch, release_id=42, lanes=lane_set.DEFAULT):
+def _publish_record(commit, tag_object, *, epoch, release_id=42, lanes=SIGNED):
     return {"claim_tag": "rc.2-v1.2.3", "claim_object": tag_object, "tag": "v1.2.3",
             "commit": commit, "version": "1.2.3", "attempt": 2, "release_id": release_id,
             "autopublish": False, "lanes": frozenset(lanes), "claim_epoch": epoch}
@@ -1396,7 +1414,7 @@ def test_a_claim_without_the_smoke_lane_records_skipped_smokes_never_passed(
                                RELEASE_EPOCH, archive=ATTEMPT)
     stable.require_smokes_match_claim(manifest, lane_set.select(without=["smoke"]))
     with pytest.raises(ValueError, match="test policy"):
-        stable.require_smokes_match_claim(manifest, lane_set.DEFAULT)
+        stable.require_smokes_match_claim(manifest, SIGNED)
 
 
 def test_the_final_tag_push_authenticates_with_gh_token_without_persisted_credentials():

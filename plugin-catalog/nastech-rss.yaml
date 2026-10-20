@@ -1,5 +1,5 @@
 name: nastech-rss
-repo: https://github.com/Adolanium/hermes-rss
+repo: https://github.com/Adolanium/nastech-rss
 sha: 79215b2e4fd768a0eef2b1417c983155bc26a09b
 version: "0.0.3"
 image: https://raw.githubusercontent.com/Adolanium/nastech-rss/79215b2e4fd768a0eef2b1417c983155bc26a09b/assets/catalog-banner.png
@@ -7,7 +7,7 @@ description: "Read RSS and Atom feeds and discuss articles in Nastech Desktop. D
 maintainer: Adolanium
 tier: community
 category: desktop
-docs_url: https://github.com/Adolanium/hermes-rss#readme
+docs_url: https://github.com/Adolanium/nastech-rss#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

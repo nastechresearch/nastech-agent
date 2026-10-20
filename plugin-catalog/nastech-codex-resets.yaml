@@ -1,5 +1,5 @@
 name: nastech-codex-resets
-repo: https://github.com/sxuff/hermes-codex-resets
+repo: https://github.com/sxuff/nastech-codex-resets
 sha: 008f4fe2549bedd5a09ef0ce9615594ea388ffed
 version: "0.1.0"
 title: Codex Resets
@@ -8,7 +8,7 @@ maintainer: sxuff
 tier: community
 category: desktop
 requires_nastech: ">=0.21"
-docs_url: https://github.com/sxuff/hermes-codex-resets#readme
+docs_url: https://github.com/sxuff/nastech-codex-resets#readme
 image: https://raw.githubusercontent.com/sxuff/nastech-codex-resets/008f4fe2549bedd5a09ef0ce9615594ea388ffed/artifacts/banner.png
 screenshots:
   - https://raw.githubusercontent.com/sxuff/nastech-codex-resets/008f4fe2549bedd5a09ef0ce9615594ea388ffed/artifacts/card.png

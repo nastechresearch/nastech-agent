@@ -1,5 +1,5 @@
 name: clinepass
-repo: https://github.com/Adolanium/hermes-clinepass
+repo: https://github.com/Adolanium/nastech-clinepass
 sha: 3853e895482d3171ff3a8144344b74cfa3a7dd67
 version: "1.2.3"
 image: https://raw.githubusercontent.com/Adolanium/nastech-clinepass/3853e895482d3171ff3a8144344b74cfa3a7dd67/assets/catalog-banner.png
@@ -8,7 +8,7 @@ description: ClinePass model provider with live model discovery and a curated fa
 maintainer: Adolanium
 tier: community
 category: models
-docs_url: https://github.com/Adolanium/hermes-clinepass#readme
+docs_url: https://github.com/Adolanium/nastech-clinepass#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

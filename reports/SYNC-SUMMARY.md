@@ -6,114 +6,148 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 256 commits affecting 3236 files.
-- **Source revision:** `b3c28838095b`.
-- **Previous source revision:** `18c525b669b6`.
+- **Changes incorporated:** 1075 commits affecting 3305 files.
+- **Source revision:** `edeefe514f49`.
+- **Previous source revision:** `b3c28838095b`.
 
 ## Technical coverage
 
-- **.github/:** 1 changed files.
-- **agent/:** 42 changed files.
-- **apps/:** 60 changed files.
-- **cli-config.yaml.example/:** 2 changed files.
-- **cli.py/:** 4 changed files.
-- **contributors/:** 10 changed files.
+- **.github/:** 2 changed files.
+- **README.md/:** 1 changed files.
+- **acp_adapter/:** 29 changed files.
+- **agent/:** 81 changed files.
+- **apps/:** 850 changed files.
+- **cli.py/:** 3 changed files.
+- **contributors/:** 23 changed files.
 - **cron/:** 1 changed files.
-- **gateway/:** 153 changed files.
-- **locales/:** 87 changed files.
-- **nastech_cli/:** 65 changed files.
-- **nastech_logging.py/:** 1 changed files.
-- **nastech_state_gateway.py/:** 4 changed files.
-- **nastech_state_local_lineage.py/:** 4 changed files.
-- **nastech_state_local_migration.py/:** 1 changed files.
-- **nastech_state_messages.py/:** 1 changed files.
-- **nastech_state_mutation_retirement.py/:** 17 changed files.
-- **nastech_state_mutations.py/:** 1 changed files.
+- **evals/:** 1 changed files.
+- **gateway/:** 453 changed files.
+- **locales/:** 344 changed files.
+- **model_tools.py/:** 2 changed files.
+- **nastech_cli/:** 496 changed files.
+- **nastech_constants.py/:** 1 changed files.
+- **nastech_constants_scratch.py/:** 3 changed files.
+- **nastech_constants_scratch_stuck.py/:** 2 changed files.
+- **nastech_logging.py/:** 3 changed files.
+- **nastech_state.py/:** 1 changed files.
+- **nastech_state_api_content.py/:** 1 changed files.
+- **nastech_state_common.py/:** 7 changed files.
+- **nastech_state_compression.py/:** 11 changed files.
+- **nastech_state_errors.py/:** 1 changed files.
+- **nastech_state_local.py/:** 2 changed files.
+- **nastech_state_maintenance.py/:** 4 changed files.
+- **nastech_state_messages.py/:** 8 changed files.
+- **nastech_state_mutation_branch.py/:** 1 changed files.
+- **nastech_state_mutation_chat_pick.py/:** 1 changed files.
+- **nastech_state_mutation_guards.py/:** 1 changed files.
+- **nastech_state_mutation_prepared.py/:** 3 changed files.
+- **nastech_state_mutations.py/:** 8 changed files.
 - **nastech_state_portability.py/:** 1 changed files.
-- **nastech_state_runtime.py/:** 4 changed files.
-- **nastech_state_sessions.py/:** 1 changed files.
-- **nastech_state_terminal.py/:** 4 changed files.
-- **plugin-catalog/:** 54 changed files.
-- **plugins/:** 38 changed files.
-- **scripts/:** 2 changed files.
-- **tests/:** 197 changed files.
-- **tests-js/:** 1 changed files.
-- **tools/:** 12 changed files.
-- **tui_gateway/:** 10 changed files.
-- **ui-tui/:** 4 changed files.
-- **website/:** 19 changed files.
+- **nastech_state_profile_repair.py/:** 2 changed files.
+- **nastech_state_prune_rewrite.py/:** 1 changed files.
+- **nastech_state_runtime.py/:** 12 changed files.
+- **nastech_state_runtime_workers.py/:** 2 changed files.
+- **nastech_state_schema.py/:** 1 changed files.
+- **nastech_state_sessions.py/:** 13 changed files.
+- **nastech_state_todo.py/:** 1 changed files.
+- **nastech_state_usage.py/:** 5 changed files.
+- **nastech_state_worker_compression.py/:** 2 changed files.
+- **nastech_state_worker_lifecycle.py/:** 2 changed files.
+- **plugin-catalog/:** 110 changed files.
+- **plugins/:** 37 changed files.
+- **pm/:** 1 changed files.
+- **pyproject.toml/:** 2 changed files.
+- **run_agent.py/:** 12 changed files.
+- **scripts/:** 6 changed files.
+- **tests/:** 817 changed files.
+- **tools/:** 80 changed files.
+- **tui_gateway/:** 109 changed files.
+- **ui-tui/:** 77 changed files.
+- **uv.lock/:** 2 changed files.
+- **web/:** 7 changed files.
+- **website/:** 127 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(plugin-catalog): add scalekit (#140032)
-- feat(plugin-catalog): add offpeak-bekci — Ollama Cloud off-peak window + approval-gated work queue
-- feat(catalog): add Tsubasa model-provider plugin
-- feat(plugin-catalog): add the edit-ledger catalog card
-- feat(plugin-catalog): add edit-ledger
-- feat(plugin-catalog): add the interim-ledger catalog card
-- feat(plugin-catalog): add interim-ledger
-- feat(plugin-catalog): add gadget (Nastech Gadget hardware platform)
-- feat(plugin-catalog): add nastech-whatsapp-voice plugin
-- feat(plugin-catalog): add nastech-lang-it-full — Italian Desktop language pack
-- feat: archive stale dirty worktrees before removing them, sweep every repo, ask on dirty exit
-- feat(plugins): document and allowlist the platform-plugin public surface
-- 5 additional new capabilities updates are included in this verified snapshot.
+- feat(plugin-catalog): add nastech-memory-pane plugin
+- feat(gateway): ask y/N before a lifecycle verb interrupts live sessions
+- feat(mcp): forward MCP notifications/progress as live tool.progress events
+- feat(gateway): session.resume carries the session's todo snapshot
+- feat(desktop): git-installed plugins get an Update button and a security-scan override dialog
+- feat(catalog): featured hero becomes a slider when there are several picks
+- feat(desktop): several picked categories show as one shelf each
+- feat(desktop): tier filter keeps plugins grouped; every chip on reads as All
+- feat(desktop): filter and badge plugins by tier (Official, Verified, Community)
+- feat(plugins): portable plugins get the Settings > Plugins form, live
+- feat(cli): glyph transcript, status line under the composer, two-line header
+- feat(plugins): a re-pin that moves an OAuth entry's authorize host asks first
+- 37 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(plugin-catalog): re-pin nastech-whatsapp-voice to e472a47
-- fix(gateway): answer a storage error in a moved chain's pre-bind with a 503
-- fix(gateway): fence a route whose retirement value is not valid JSON
-- fix(gateway): strip a retired route from sessions.json when it is retired
-- fix(gateway): keep an earlier release's unscoped retirement marker unscoped when retiring again
-- fix(gateway): refuse a moved chain before a streamed response starts
-- fix(gateway): keep a secondary's delete fence past the retry horizon
-- fix(gateway): let a pruned secondary's shared routing fence age out by itself
-- fix(gateway): keep a retired route out of the sessions.json mirror
-- fix(gateway): refuse a chain successor whose walk lost a fence before its bind
-- fix(gateway): key session retirement by profile in the shared routing index
-- fix(state): let a swept caller-named API session id age out
-- 119 additional reliability and fixes updates are included in this verified snapshot.
+- fix(catalog): update nastech-resetwatch to 0.2.24
+- fix(plugin-catalog): update jp-estat to 2cf442a
+- fix(plugin-catalog): update jp-kokkai to 7047db9
+- fix(website): the featured plugin card shows the summary, not the disclosure
+- fix(website): plugin disclosures go at the bottom of the page
+- fix(cli): a long one-sentence reasoning is not repeated as a shortened title
+- fix(cli): one-sentence reasoning is not repeated as its own summary title
+- fix(bedrock): reasoning GPTs replay only the reasoning they stamped on Converse
+- fix(bedrock): strip prior reasoning for the gpt-6 family on Converse
+- fix(bedrock): never replay another model's sealed reasoning on Converse
+- fix(bedrock): recover redacted reasoning in Converse calls
+- fix(mcp): rekeyed launch-profile connections keep their owner and tools
+- 625 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Performance
 
-- perf(gateway): check a local receipt's entry once when nothing was adopted
-- perf(memory): resolve the bound profile key and the tool-call signature once per manager
-- perf(gateway): scan API tombstones only for a client Idempotency-Key
+- perf(agent): a closed agent's message bodies leave the token-estimate memo
+- perf(tui_gateway): free a torn-down session's event replay ring
+- perf(mem_trim): run gc.collect() on every platform (macOS serve phys_footprint 5m 380.6 -> 368.9 MB)
+- perf(state): the ancestor stamp's unset probe reads only the walked rows
+- perf(state): the ancestor stamp's fast path follows only compression edges
+- perf(state): skip the ancestor stamp walk when no ancestor is unset
+- perf(state): stamp compression ancestors at write time, drop list-time walk
+- perf(cli): filter the gateway subagent tail once per fetch, not per frame
+- perf(cli): release a retired agent off the command path
+- perf(state): a display read hashes only rows a removed copy could match
+- perf(cli): keep a turn's streamed-delta buffers linear
+- perf(gateway): parse a policy's follow flag once, not on every read
+- 1 additional performance updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(plugin-catalog): expose Ace media service names in search
-- docs(catalog): disclose Tsubasa region and tool limits
-- docs(catalog): add Antenna banner image
-- docs(weixin): the connector docstring names both no-bundle cases
-- docs(auth): say when the credential context falls back to the platform store
-- docs: keep the catalog rules block identical to plugin-catalog/README.md
-- docs(gateway): name the usage_frame view's two exceptions to the embedded ticker
-- docs(api-server): say how an Idempotency-Key conflict arrives per mode
-- docs(api-server): list the Idempotency-Key conflict fields per endpoint
-- docs(api-server): what an Idempotency-Key covers after a session delete
-- docs(state): note that load_result decodes the parsed row in place
-- docs(gateway): a legacy custom_providers entry is named by its display name
-- 1 additional documentation updates are included in this verified snapshot.
+- docs(agent): _trim_process_memory's docstring matches the every-platform gc
+- docs(tui_gateway): the teardown finally comment states its one real reason
+- docs(mem_trim): module docstring says gc.collect() runs on every platform
+- docs(state): an unknown created_source is repaired by the creator upsert
+- docs(plugin-catalog): onboarding is curated for official or verified entries
+- docs(cli): /queue's shared gateway queue, move refusal, lost-answer note
+- docs(tui): say why not_found stays a pre-commit refusal
+- docs(plugins): give only the Google client as an example of a plugin OAuth client
+- docs(gateway): name the real root-DM transfer hook in run_turn_prepare
+- docs(gateway): the parity note for /save names Desktop's client-side write
+- docs(gateway): regenerate the command parity table for the Desktop actions
+- docs(slash): document /discard and regenerate the Desktop slash registry
+- 4 additional documentation updates are included in this verified snapshot.
 
 ### Improvements
 
-- chore: map contributor email for saif-at-scalekit
-- chore(catalog): raise scalekit requires_nastech to >=0.20.0 (agent.secret_scope)
-- chore(catalog): drop local-copy comments from offpeak-bekci entry
-- chore: map contributor email for onkanat
-- chore(catalog): review disclosure for offpeak-bekci
-- plugin-catalog: offpeak-bekci English-first text + dil setting; re-pin to 0.1.4 (7b9a1c4)
-- katalog: offpeak-bekci 0.1.2 pini (a3427af) — ozet/sayaç düzeltmesi
-- plugin-catalog: offpeak-bekci pin ve surum 0.1.1'e tazelendi
-- plugin-catalog: pin the chip screenshot to the entry's commit
-- chore: map contributor email for cenab
-- chore(catalog): review disclosure for tsubasa
-- plugin-catalog: nastech-teammates 1.0.0
-- 80 additional improvements updates are included in this verified snapshot.
+- plugin-catalog: update nastech-seo to 0.1.1
+- chore(catalog): review disclosure for jp-estat
+- plugin-catalog: bump loreconvo to 0.10.18
+- plugin-catalog: cua-spaces banner
+- test(desktop): boot-lifecycle teardown interrupts the live turn it leaves running
+- Merge pull request #139467 from IAvecilla/perf/ruamel-yaml-c-parser-py314
+- test(e2e): the tmux resize scrollback test follows the glyph CLI layout
+- Merge pull request #138820 from Nastechresearch/austin/feat/capabilities-catalog
+- test(auth): the Codex opt-out self-heal test never calls the real token endpoint
+- plugin-catalog: add cua-spaces (Cua's terminal backend), verified tier
+- test(bedrock): pin exact same-model GPT reasoning replay across user turns
+- chore(bedrock): fold the two Converse resend arms under the facade's line cap
+- 348 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

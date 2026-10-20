@@ -1,5 +1,5 @@
 name: wallpaper-theme
-repo: https://github.com/strnadchristopher/hermes-wallpaper-theme
+repo: https://github.com/strnadchristopher/nastech-wallpaper-theme
 sha: 40ebeaac235be5751f44491540b7b41d35d41da1
 description: >-
   A Nastech Desktop theme that follows your wallpaper. Reads Pywal's ~/.cache/wal/colors.json by
@@ -16,7 +16,7 @@ maintainer: strnadchristopher
 tier: community
 category: desktop
 version: "1.1.0"
-docs_url: https://github.com/strnadchristopher/hermes-wallpaper-theme/blob/40ebeaac235be5751f44491540b7b41d35d41da1/README.md
+docs_url: https://github.com/strnadchristopher/nastech-wallpaper-theme/blob/40ebeaac235be5751f44491540b7b41d35d41da1/README.md
 platforms: [linux, macos, windows]
 title: Wallpaper Theme
 screenshots:
