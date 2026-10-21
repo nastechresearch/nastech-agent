@@ -766,8 +766,11 @@ telemetry:
 - Like `enabled`, `send` is profile-owned and is not overridden by
   managed-scope configuration.
 
-Both keys are asked once per profile, with the same three answers everywhere
-(Send to Nastech / Local only / No thanks):
+Both keys are asked once per profile, with the same two answers everywhere
+(Share with Nastech / No thanks). Each answer sets both keys: "Share with Nastech"
+writes `enabled: true, send: true`, "No thanks" writes both false. The keys stay
+separate so the sender keeps its own gate. Collecting without sending is no
+longer offered; a hand-edited config can still set it.
 
 | Surface | Where the offer appears |
 | --- | --- |
@@ -788,9 +791,13 @@ was starting could save "No thanks" before the question appeared. A "No thanks"
 recorded without `offer_version` is therefore offered once more on every surface,
 with a note saying why. Any response settles it for good, including Esc or the
 banner's ✕, which keep "No thanks". Answers that opted in are never re-asked.
-To change the answer
+
+The offer used to have a third answer that collected without sending ("Local
+only" / "Keep on this computer"). Profiles that chose it keep it and are not
+asked again; nothing is sent. Desktop's switch reads off for them and the
+`nastech tools` row reads "collecting locally". To change the answer
 later, use `nastech setup telemetry`, `nastech tools`, or Desktop's Settings ›
-Safety › Privacy & network.
+Safety › Privacy & network; each offers the same single on/off choice.
 
 **A package is only sent when its whole period falls inside a recorded
 consent window.** Consent is stored as explicit intervals in the shared-

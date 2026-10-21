@@ -302,7 +302,7 @@ TOOL_CATEGORIES = {
         # picks the gateway at run time (tools/image_generation_managed.py).
         "providers": [
             _row("Nastech Subscription", "subscription",
-                 "Managed image generation (FAL, Krea 2, Nastech Portal models) billed to your subscription", **_NASTECH,
+                 "Managed image generation (FAL, Krea 3 and Krea 2, Nastech Portal models) billed to your subscription", **_NASTECH,
                  managed_nastech_feature="image_gen", override_env_vars=["FAL_KEY"], imagegen_backend="nastech"),
         ],
     },
@@ -931,9 +931,10 @@ def _shared_metrics_state(config: dict) -> tuple[bool, bool]:
 
 
 def _shared_metrics_menu_label(config: dict) -> str:
-    """Menu row for shared metrics, showing both consent states."""
+    """Menu row for shared metrics. Collect-only is an answer the offer no longer has; a profile
+    that chose it earlier keeps it, and the row names it rather than reading "off" while it collects."""
     enabled, send = _shared_metrics_state(config)
-    state = "off" if not enabled else ("collecting + sending to Nastech" if send else "collecting locally")
+    state = "off" if not enabled else ("sending to Nastech" if send else "collecting locally")
     return f"Configure shared metrics  ({state})"
 
 

@@ -6,148 +6,100 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 1075 commits affecting 3305 files.
-- **Source revision:** `edeefe514f49`.
-- **Previous source revision:** `b3c28838095b`.
+- **Changes incorporated:** 271 commits affecting 3315 files.
+- **Source revision:** `369cc6b07f26`.
+- **Previous source revision:** `edeefe514f49`.
 
 ## Technical coverage
 
-- **.github/:** 2 changed files.
-- **README.md/:** 1 changed files.
-- **acp_adapter/:** 29 changed files.
-- **agent/:** 81 changed files.
-- **apps/:** 850 changed files.
-- **cli.py/:** 3 changed files.
+- **.github/:** 29 changed files.
+- **agent/:** 5 changed files.
+- **apps/:** 33 changed files.
 - **contributors/:** 23 changed files.
-- **cron/:** 1 changed files.
-- **evals/:** 1 changed files.
-- **gateway/:** 453 changed files.
-- **locales/:** 344 changed files.
-- **model_tools.py/:** 2 changed files.
-- **nastech_cli/:** 496 changed files.
-- **nastech_constants.py/:** 1 changed files.
-- **nastech_constants_scratch.py/:** 3 changed files.
-- **nastech_constants_scratch_stuck.py/:** 2 changed files.
-- **nastech_logging.py/:** 3 changed files.
-- **nastech_state.py/:** 1 changed files.
-- **nastech_state_api_content.py/:** 1 changed files.
-- **nastech_state_common.py/:** 7 changed files.
-- **nastech_state_compression.py/:** 11 changed files.
-- **nastech_state_errors.py/:** 1 changed files.
-- **nastech_state_local.py/:** 2 changed files.
-- **nastech_state_maintenance.py/:** 4 changed files.
-- **nastech_state_messages.py/:** 8 changed files.
-- **nastech_state_mutation_branch.py/:** 1 changed files.
-- **nastech_state_mutation_chat_pick.py/:** 1 changed files.
-- **nastech_state_mutation_guards.py/:** 1 changed files.
-- **nastech_state_mutation_prepared.py/:** 3 changed files.
-- **nastech_state_mutations.py/:** 8 changed files.
-- **nastech_state_portability.py/:** 1 changed files.
-- **nastech_state_profile_repair.py/:** 2 changed files.
-- **nastech_state_prune_rewrite.py/:** 1 changed files.
-- **nastech_state_runtime.py/:** 12 changed files.
-- **nastech_state_runtime_workers.py/:** 2 changed files.
-- **nastech_state_schema.py/:** 1 changed files.
-- **nastech_state_sessions.py/:** 13 changed files.
-- **nastech_state_todo.py/:** 1 changed files.
-- **nastech_state_usage.py/:** 5 changed files.
-- **nastech_state_worker_compression.py/:** 2 changed files.
-- **nastech_state_worker_lifecycle.py/:** 2 changed files.
-- **plugin-catalog/:** 110 changed files.
-- **plugins/:** 37 changed files.
+- **gateway/:** 3 changed files.
+- **locales/:** 1 changed files.
+- **nastech_cli/:** 26 changed files.
+- **nastech_platform/:** 1 changed files.
+- **nastech_state_messages.py/:** 3 changed files.
+- **optional-mcps/:** 1 changed files.
+- **plugin-catalog/:** 181 changed files.
+- **plugins/:** 5 changed files.
 - **pm/:** 1 changed files.
-- **pyproject.toml/:** 2 changed files.
-- **run_agent.py/:** 12 changed files.
-- **scripts/:** 6 changed files.
-- **tests/:** 817 changed files.
-- **tools/:** 80 changed files.
-- **tui_gateway/:** 109 changed files.
-- **ui-tui/:** 77 changed files.
-- **uv.lock/:** 2 changed files.
-- **web/:** 7 changed files.
-- **website/:** 127 changed files.
+- **scripts/:** 16 changed files.
+- **tests/:** 53 changed files.
+- **tests-js/:** 3 changed files.
+- **tools/:** 23 changed files.
+- **tui_gateway/:** 2 changed files.
+- **web/:** 3 changed files.
+- **website/:** 23 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(plugin-catalog): add nastech-memory-pane plugin
-- feat(gateway): ask y/N before a lifecycle verb interrupts live sessions
-- feat(mcp): forward MCP notifications/progress as live tool.progress events
-- feat(gateway): session.resume carries the session's todo snapshot
-- feat(desktop): git-installed plugins get an Update button and a security-scan override dialog
-- feat(catalog): featured hero becomes a slider when there are several picks
-- feat(desktop): several picked categories show as one shelf each
-- feat(desktop): tier filter keeps plugins grouped; every chip on reads as All
-- feat(desktop): filter and badge plugins by tier (Official, Verified, Community)
-- feat(plugins): portable plugins get the Settings > Plugins form, live
-- feat(cli): glyph transcript, status line under the composer, two-line header
-- feat(plugins): a re-pin that moves an OAuth entry's authorize host asks first
-- 37 additional new capabilities updates are included in this verified snapshot.
+- feat(mcp-catalog): add RentAHuman hosted MCP
+- feat(shared-metrics): offer two consent answers, drop collect-only
+- feat(ci): pin docker buildx version to v0.31.8
+- feat(catalog): pin mcp-plugin-creator to 0.2.1 (review fixes)
+- feat(catalog): add mcp-plugin-creator
+- feat(plugin-catalog): bump xmemo to 1.2.1 (499a383)
+- feat(plugin-catalog): add aave-mcp
+- feat(plugin-catalog): add llmslim plugin
+- feat(plugin-catalog): add day-panel plugin
+- feat(plugin-catalog): add draft-cards plugin
+- feat(plugin-catalog): add hermetic
+- feat(plugin-catalog): add sunshine-moonlight entry
+- 39 additional new capabilities updates are included in this verified snapshot.
 
 ### Reliability and fixes
 
-- fix(catalog): update nastech-resetwatch to 0.2.24
-- fix(plugin-catalog): update jp-estat to 2cf442a
-- fix(plugin-catalog): update jp-kokkai to 7047db9
-- fix(website): the featured plugin card shows the summary, not the disclosure
-- fix(website): plugin disclosures go at the bottom of the page
-- fix(cli): a long one-sentence reasoning is not repeated as a shortened title
-- fix(cli): one-sentence reasoning is not repeated as its own summary title
-- fix(bedrock): reasoning GPTs replay only the reasoning they stamped on Converse
-- fix(bedrock): strip prior reasoning for the gpt-6 family on Converse
-- fix(bedrock): never replay another model's sealed reasoning on Converse
-- fix(bedrock): recover redacted reasoning in Converse calls
-- fix(mcp): rekeyed launch-profile connections keep their owner and tools
-- 625 additional reliability and fixes updates are included in this verified snapshot.
+- fix(gateway): make the ownership-refusal stamp durable before the hard exit
+- fix(gateway): let the startup_failed stamp clear the way instead of parking the unit
+- fix(gateway): park a unit on unprovable --replace ownership instead of restart-looping
+- fix(gateway): a detached root gateway no longer boots the sticky active profile
+- fix(gateway): --detach keeps --force, covers --all, and older runtimes still restart
+- fix(desktop): a stale-gateway restart no longer turns the app's restart call into the gateway
+- fix: judge a skill_manage rollback failure by its error text only
+- fix: a skill_manage batch whose rollback failed stays a visible failure
+- fix: a refused skill_manage write reads neutral, not as a red failure
+- fix(install-e2e): desktop smoke accepts the canonical gateway Desktop attaches to
+- fix(terminal): no poll() fallback for a macOS PTY
+- fix(terminal): never report a selector setup failure as EOF
+- 26 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Performance
 
-- perf(agent): a closed agent's message bodies leave the token-estimate memo
-- perf(tui_gateway): free a torn-down session's event replay ring
-- perf(mem_trim): run gc.collect() on every platform (macOS serve phys_footprint 5m 380.6 -> 368.9 MB)
-- perf(state): the ancestor stamp's unset probe reads only the walked rows
-- perf(state): the ancestor stamp's fast path follows only compression edges
-- perf(state): skip the ancestor stamp walk when no ancestor is unset
-- perf(state): stamp compression ancestors at write time, drop list-time walk
-- perf(cli): filter the gateway subagent tail once per fetch, not per frame
-- perf(cli): release a retired agent off the command path
-- perf(state): a display read hashes only rows a removed copy could match
-- perf(cli): keep a turn's streamed-delta buffers linear
-- perf(gateway): parse a policy's follow flag once, not on every read
-- 1 additional performance updates are included in this verified snapshot.
+- perf(desktop): reuse Developer ID signatures for loose macOS payload binaries
+- perf(release): stage candidates from metadata; verify package bytes at publish
+- perf(release): blobless history for release checkouts
+- perf(release): give Windows bundle assembly caches that actually restore
+- perf(release): submit the Store package beside verify-published
+- perf(ci): stop transporting node_modules in the desktop dependency snapshot
 
 ### Documentation
 
-- docs(agent): _trim_process_memory's docstring matches the every-platform gc
-- docs(tui_gateway): the teardown finally comment states its one real reason
-- docs(mem_trim): module docstring says gc.collect() runs on every platform
-- docs(state): an unknown created_source is repaired by the creator upsert
-- docs(plugin-catalog): onboarding is curated for official or verified entries
-- docs(cli): /queue's shared gateway queue, move refusal, lost-answer note
-- docs(tui): say why not_found stays a pre-commit refusal
-- docs(plugins): give only the Google client as an example of a plugin OAuth client
-- docs(gateway): name the real root-DM transfer hook in run_turn_prepare
-- docs(gateway): the parity note for /save names Desktop's client-side write
-- docs(gateway): regenerate the command parity table for the Desktop actions
-- docs(slash): document /discard and regenerate the Desktop slash registry
-- 4 additional documentation updates are included in this verified snapshot.
+- docs(user-stories): add fourteen more community stories
+- docs(quickstart): link User Stories from Next Steps
+- docs(user-stories): add eleven community stories, swap one author's tile for a stronger post
+- docs(zh-Hans): move skills that left the bundled set out of the zh-Hans bundled catalog
+- docs: fix two dead anchors and list three orphaned guides in the sidebar
+- docs(release): stable-store comment says who releases the held submission
 
 ### Improvements
 
-- plugin-catalog: update nastech-seo to 0.1.1
-- chore(catalog): review disclosure for jp-estat
-- plugin-catalog: bump loreconvo to 0.10.18
-- plugin-catalog: cua-spaces banner
-- test(desktop): boot-lifecycle teardown interrupts the live turn it leaves running
-- Merge pull request #139467 from IAvecilla/perf/ruamel-yaml-c-parser-py314
-- test(e2e): the tmux resize scrollback test follows the glyph CLI layout
-- Merge pull request #138820 from Nastechresearch/austin/feat/capabilities-catalog
-- test(auth): the Codex opt-out self-heal test never calls the real token endpoint
-- plugin-catalog: add cua-spaces (Cua's terminal backend), verified tier
-- test(bedrock): pin exact same-model GPT reasoning replay across user turns
-- chore(bedrock): fold the two Converse resend arms under the facade's line cap
-- 348 additional improvements updates are included in this verified snapshot.
+- test: Termux assembly test skips when the Docker daemon hangs instead of failing main
+- ci: install/update leg runner defaults to ubuntu-latest again
+- ci: run install/update E2E on GitHub-hosted runners again
+- Merge pull request #142350 from Nastechresearch/feat/shared-metrics-two-choice-consent
+- ci: run registry-side imagetools jobs on current buildx
+- Merge pull request #142306 from Nastechresearch/fix/desktop-smoke-canonical-gateway
+- ci: re-enable smoke windows and macos on non-gh runners
+- chore: map contributor email for aholten
+- Update base_output.py
+- chore: map contributor email for yunze7373
+- chore: map contributor email for mbgulden
+- chore(catalog): review disclosure for kanban-stream
+- 158 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 

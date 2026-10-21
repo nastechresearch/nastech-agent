@@ -115,11 +115,10 @@ export const en: Translations = {
     dismiss: "Dismiss",
     sharedMetricsTitle: "Help improve Nastech?",
     sharedMetricsBody:
-      "Shared metrics are bounded counters, never prompts, files, paths or error text. Collection stays on this machine; sending to Nastech is a separate choice.",
+      "Shared metrics are bounded counters, never prompts, files, paths or error text. Sharing sends them to Nastech once a day.",
     sharedMetricsReaskBody:
       "Asking once more: an earlier version could save \"No thanks\" before you saw this question.",
-    sharedMetricsShare: "Send to Nastech",
-    sharedMetricsLocal: "Local only",
+    sharedMetricsShare: "Share with Nastech",
     sharedMetricsOff: "No thanks",
     sharedMetricsDetails: "Details",
     sharedMetricsSaveFailed: "Couldn't save your choice",
