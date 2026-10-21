@@ -8,12 +8,11 @@ export const SHARED_METRICS_DOCS_URL = 'https://nastechresearch.github.io/nastec
 
 export type SharedMetricsConsent = SharedMetricsConsentResult
 
-/** The first-run answers, as the two config opt-ins `nastech setup` writes. */
-export type SharedMetricsChoice = 'local' | 'off' | 'share'
+/** The first-run answers, as the two config opt-ins `nastech setup` writes: each sets both. */
+export type SharedMetricsChoice = 'off' | 'share'
 
 export const SHARED_METRICS_CHOICES: Record<SharedMetricsChoice, { enabled: boolean; send: boolean }> = {
   share: { enabled: true, send: true },
-  local: { enabled: true, send: false },
   off: { enabled: false, send: false }
 }
 

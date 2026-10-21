@@ -6,19 +6,80 @@ import subprocess
 from pathlib import Path
 
 
+def _git(repo: Path, *args: str) -> str:
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=120)
+
+
 def pick_tags(repo: Path, count: int, exclude: str = "") -> list[str]:
     if not 1 <= count <= 10:
         raise ValueError("Tag count must be between one and ten")
-    raw = subprocess.check_output(["git", "-C", str(repo), "for-each-ref", "--sort=creatordate",
-                                   "--format=%(refname:short)", "refs/tags/v*"], text=True, encoding="utf-8")
-    tags = [tag for tag in raw.splitlines() if re.fullmatch(r"v\d+\.\d+\.\d+(?:\.\d+)?", tag) and tag != exclude]
+    # Enumerate origin's tags without fetching any ref: ls-remote lists refs
+    # only. The wire protocol cannot match tighter than a glob, so the
+    # version-scheme filter stays here.
+    raw = _git(repo, "ls-remote", "--refs", "--tags", "origin", "v*")
+    tags = [line.split("\t")[1].removeprefix("refs/tags/") for line in raw.splitlines()]
+    tags = [tag for tag in tags if re.fullmatch(r"v\d+\.\d+\.\d+(?:\.\d+)?", tag) and tag != exclude]
+    # NasTech: an update leg has to start from an install this fork can drive.
+    # A fork inherits the source project's release tags, and those name commits
+    # whose trees were never branded: that installer writes a checkout this
+    # fork's updater never looks in, so the leg clones a repository the fork
+    # does not own and then dies in the driver's first git command.  The tag's
+    # own tree decides, and only a tree that ships the installer says anything,
+    # so a tag with no scripts/install.sh stays a candidate.  Tree lookups only,
+    # so the blobless checkout this job uses is enough.  A tag the checkout does
+    # not carry is fetched into a ref outside refs/tags and dropped again, not
+    # materialized as a tag: a pick brings down only the refs it selected, which
+    # is the contract upstream's own picker test checks, and the probe looks at
+    # every candidate rather than only the picks.
+    def _fork_baseline(tag: str) -> bool:
+        def probe(*args: str) -> str:
+            listed = subprocess.run(["git", "-C", str(repo), "ls-tree", *args],
+                                    capture_output=True, text=True, timeout=120,
+                                    check=False)
+            if listed.returncode:
+                raise ValueError(f"cannot read the tree of release tag {tag}: "
+                                 f"{listed.stderr.strip()}")
+            return listed.stdout
+
+        probe_ref = f"refs/nastech-baseline-probe/{tag}"
+        present = not subprocess.run(["git", "-C", str(repo), "rev-parse", "-q", "--verify",
+                                      f"refs/tags/{tag}"], capture_output=True, timeout=120,
+                                     check=False).returncode
+        treeish = tag if present else probe_ref
+        if not present:
+            fetched = subprocess.run(["git", "-C", str(repo), "fetch", "--quiet", "--no-tags",
+                                      "origin", f"+refs/tags/{tag}:{probe_ref}"],
+                                     capture_output=True, text=True, timeout=120,
+                                     check=False)
+            if fetched.returncode:
+                raise ValueError(f"cannot fetch release tag {tag}: {fetched.stderr.strip()}")
+        updatable = (not probe(treeish, "--", "scripts/install.sh").strip()
+                     or bool(probe("-d", treeish, "--", "nastech_cli").strip()))
+        if not present:
+            subprocess.run(["git", "-C", str(repo), "update-ref", "-d", probe_ref],
+                           capture_output=True, timeout=120, check=False)
+        return updatable
+
+    tags = [tag for tag in tags if _fork_baseline(tag)]
+
     if not tags:
         raise ValueError("No released baseline tags remain")
-    if len(tags) <= count:
-        return tags
+    # Creation dates live inside the tag objects, which ls-remote cannot read:
+    # date sort keys resolve against the local object store and fail loudly
+    # when an object is absent. Fetch exactly the filtered release tags --
+    # never the canary and backup refs a full --tags fetch would pull -- so a
+    # checkout with no tags at all still gets the same chronological order.
+    _git(repo, "fetch", "--quiet", "--no-tags", "origin", *(f"+refs/tags/{tag}:refs/tags/{tag}" for tag in tags))
+    # Order the just-fetched refs by creation date locally: no second remote
+    # query to fail or to diverge from what the fetch stored above.
+    raw = _git(repo, "for-each-ref", "--sort=creatordate", "--format=%(refname:short)",
+               *(f"refs/tags/{tag}" for tag in tags))
+    ordered = raw.splitlines()
+    if len(ordered) <= count:
+        return ordered
     if count == 1:
-        return [tags[-1]]
-    return [tags[(slot * (len(tags) - 1) * 2 + count - 1) // ((count - 1) * 2)] for slot in range(count)]
+        return [ordered[-1]]
+    return [ordered[(slot * (len(ordered) - 1) * 2 + count - 1) // ((count - 1) * 2)] for slot in range(count)]
 
 
 def main():

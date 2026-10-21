@@ -12,7 +12,7 @@ name: OS-specific tests
 # is where those markers actually execute:
 #
 #   macos    → ``-m platforms``    on macos-latest
-#   windows  → ``-m platforms``    on windows-latest and windows-latest
+#   windows  → ``-m platforms``    on windows-latest and windows-11-arm
 #
 # (tests/conftest.py's ``pytest_collection_modifyitems`` hook skips
 # foreign-OS ``platforms(...)`` markers on each host, so one shared ``-m
@@ -95,6 +95,16 @@ jobs:
           - name: Windows-only tests
             runner: windows-latest
             marker: windows
+          - name: Windows-only tests (arm64, 1/2)
+            runner: windows-11-arm
+            marker: windows
+            timeout: 60
+            slice: 1/2
+          - name: Windows-only tests (arm64, 2/2)
+            runner: windows-11-arm
+            marker: windows
+            timeout: 60
+            slice: 2/2
     steps:
       - name: Checkout code
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
