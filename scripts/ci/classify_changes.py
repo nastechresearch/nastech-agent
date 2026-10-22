@@ -425,6 +425,8 @@ _E2E_LANES: dict[str, tuple[str, ...]] = {
         "nastech_cli/old_updater",
         # The downgrade refusal (nastech_cli/update_downgrade_guard.py) reads state.db through it.
         "nastech_state_holders.py",
+        # The search-index notice (nastech_cli/update_cmd_maint.py) reads the stored FTS layout through it.
+        "nastech_state_fts.py",
         "nastech_cli/_old_updater",
         "nastech_cli/post_update",
         "nastech_cli/config_migrations",

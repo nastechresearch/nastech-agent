@@ -5,24 +5,16 @@ from __future__ import annotations
 import argparse
 from typing import Callable
 
-from nastech_cli.subcommands._shared import add_accept_hooks_flag
-
 
 def build_mcp_parser(subparsers, *, cmd_mcp: Callable) -> None:
     """Attach the ``mcp`` subcommand to ``subparsers``."""
     mcp_parser = subparsers.add_parser(
-        "mcp", help="Manage MCP servers and run Nastech as an MCP server",
-        description="Manage MCP server connections and run Nastech as an MCP server.\n\n"
+        "mcp", help="Manage MCP server connections",
+        description="Manage MCP server connections.\n\n"
             "MCP servers provide additional tools via the Model Context Protocol.\n"
-            "Use 'nastech mcp add' to connect to a new server, or\n"
-            "'nastech mcp serve' to expose Nastech conversations over MCP.")
+            "Use 'nastech mcp add' to connect to a new server. Running Nastech itself as an\n"
+            "MCP server is the mcp-serve plugin: `nastech plugins install mcp-serve`.")
     mcp_sub = mcp_parser.add_subparsers(dest="mcp_action")
-
-    mcp_serve_p = mcp_sub.add_parser(
-        "serve", help="Run Nastech as an MCP server (expose conversations to other agents)")
-    mcp_serve_p.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging on stderr")
-    add_accept_hooks_flag(mcp_serve_p)
 
     mcp_add_p = mcp_sub.add_parser("add", help="Add an MCP server (discovery-first install)")
     mcp_add_p.add_argument("name", help="Server name (used as config key)")
@@ -75,5 +67,4 @@ def build_mcp_parser(subparsers, *, cmd_mcp: Callable) -> None:
         "install", help="Install a catalog MCP by name (e.g. `nastech mcp install deepwiki`)")
     mcp_install_p.add_argument("identifier", help="Catalog entry name (or `official/<name>`)")
 
-    add_accept_hooks_flag(mcp_parser)
     mcp_parser.set_defaults(func=cmd_mcp)

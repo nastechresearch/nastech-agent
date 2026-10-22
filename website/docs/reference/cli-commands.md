@@ -93,7 +93,7 @@ The install also ships `nastech-agent`, a minimal runner that sends one query an
 | `nastech journey` (aliases `learning`, `memory-graph`) | Timeline of learned skills + memories over time. |
 | `nastech memory` | Configure external memory provider. Plugin-specific subcommands (e.g. `nastech honcho`) register automatically when their provider is active. |
 | `nastech acp` | Run Nastech as an ACP server for editor integration. |
-| `nastech mcp` | Manage MCP server configurations and run Nastech as an MCP server. |
+| `nastech mcp` | Manage MCP server configurations. Running Nastech as an MCP server is the [mcp-serve plugin](../user-guide/features/mcp.md#running-nastech-as-an-mcp-server). |
 | `nastech connectors` | List, connect, rename and disconnect hosted connector accounts. |
 | `nastech plugins` | Manage Nastech Agent plugins (install, enable, disable, remove). |
 | `nastech portal` | Nastech Portal status, subscription link, and Tool Gateway routing. See [Tool Gateway](../user-guide/features/tool-gateway.md). |
@@ -1614,14 +1614,13 @@ See [ACP Editor Integration](../user-guide/features/acp.md) and [ACP Internals](
 nastech mcp <subcommand>
 ```
 
-Manage MCP (Model Context Protocol) server configurations and run Nastech as an MCP server.
+Manage MCP (Model Context Protocol) server configurations. Running Nastech itself as an MCP server moved to the `mcp-serve` plugin (`nastech plugins install mcp-serve`, then `nastech mcp-serve`); `nastech mcp serve` prints that new spelling.
 
 | Subcommand | Description |
 |------------|-------------|
 | *(none)* or `picker` | Interactive catalog picker — browse Nastech-approved MCPs and install/enable/disable. |
 | `catalog` | List Nastech-approved MCPs (plain text, scriptable). |
 | `install <name>` | Install a catalog entry (e.g. `nastech mcp install deepwiki`). |
-| `serve [-v\|--verbose]` | Run Nastech as an MCP server — expose conversations to other agents. |
 | `add <name> [--url URL] [--command CMD] [--auth oauth\|header] [--args ...]` | Add a custom MCP server with automatic tool discovery. `--args` passes the remaining argv to the stdio command, so put it last. |
 | `remove <name>` (alias: `rm`) | Remove an MCP server from config. |
 | `list` (alias: `ls`) | List configured MCP servers. |

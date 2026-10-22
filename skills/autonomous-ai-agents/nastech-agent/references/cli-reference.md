@@ -68,7 +68,7 @@ nastech bundles              Skill bundles (one /<name> alias loads several skil
 nastech mcp add NAME (--url or --command) | remove | list | test NAME
 nastech mcp catalog | install NAME     Curated catalog install
 nastech mcp configure NAME             Toggle tool selection
-nastech mcp serve                      Run Nastech as an MCP server
+nastech mcp-serve                      Run Nastech as an MCP server (mcp-serve plugin)
 ```
 Details (transport, tool discovery, catalog): `references/native-mcp.md`.
 

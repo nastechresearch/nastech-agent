@@ -1124,7 +1124,6 @@ _MCP_USAGE = (
     "nastech mcp                                    Open the catalog picker (default)",
     "nastech mcp catalog                            List Nastech-approved MCPs",
     "nastech mcp install <name>                     Install a catalog MCP",
-    "nastech mcp serve                              Run as MCP server",
     "nastech mcp add <name> --url <endpoint>        Add a custom MCP server",
     "nastech mcp add <name> --command <cmd>         Add a stdio server",
     "nastech mcp add <name> --preset <preset>       Add from a known preset",
@@ -1140,10 +1139,6 @@ _MCP_USAGE = (
 def mcp_command(args):
     """Main dispatcher for ``nastech mcp`` subcommands."""
     action = getattr(args, "mcp_action", None)
-    if action == "serve":
-        from mcp_serve import run_mcp_server
-        run_mcp_server(verbose=getattr(args, "verbose", False))
-        return
     if action in ("picker", "catalog", "install"):
         # Catalog subcommands live in mcp_picker / mcp_catalog; import lazily to keep this module cheap.
         from nastech_cli import mcp_picker
