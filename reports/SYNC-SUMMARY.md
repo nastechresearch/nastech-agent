@@ -6,106 +6,95 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 271 commits affecting 3315 files.
-- **Source revision:** `369cc6b07f26`.
-- **Previous source revision:** `edeefe514f49`.
+- **Changes incorporated:** 107 commits affecting 3317 files.
+- **Source revision:** `ebc9960b9d42`.
+- **Previous source revision:** `369cc6b07f26`.
 
 ## Technical coverage
 
-- **.github/:** 29 changed files.
-- **agent/:** 5 changed files.
-- **apps/:** 33 changed files.
-- **contributors/:** 23 changed files.
-- **gateway/:** 3 changed files.
-- **locales/:** 1 changed files.
-- **nastech_cli/:** 26 changed files.
-- **nastech_platform/:** 1 changed files.
-- **nastech_state_messages.py/:** 3 changed files.
-- **optional-mcps/:** 1 changed files.
-- **plugin-catalog/:** 181 changed files.
-- **plugins/:** 5 changed files.
-- **pm/:** 1 changed files.
-- **scripts/:** 16 changed files.
-- **tests/:** 53 changed files.
-- **tests-js/:** 3 changed files.
-- **tools/:** 23 changed files.
-- **tui_gateway/:** 2 changed files.
-- **web/:** 3 changed files.
-- **website/:** 23 changed files.
+- **.github/:** 9 changed files.
+- **.npmrc/:** 2 changed files.
+- **agent/:** 16 changed files.
+- **apps/:** 58 changed files.
+- **cron/:** 1 changed files.
+- **gateway/:** 5 changed files.
+- **locales/:** 19 changed files.
+- **mcp_serve.py/:** 1 changed files.
+- **nastech_cli/:** 27 changed files.
+- **nastech_state_dbfile.py/:** 3 changed files.
+- **nastech_state_fts.py/:** 4 changed files.
+- **nastech_state_messages.py/:** 1 changed files.
+- **nastech_state_repair.py/:** 1 changed files.
+- **nastech_state_runtime.py/:** 1 changed files.
+- **nastech_state_schema.py/:** 4 changed files.
+- **nastech_state_search.py/:** 3 changed files.
+- **package-lock.json/:** 14 changed files.
+- **package.json/:** 4 changed files.
+- **plugin-catalog/:** 12 changed files.
+- **plugins/:** 2 changed files.
+- **pm/:** 5 changed files.
+- **pyproject.toml/:** 3 changed files.
+- **scripts/:** 3 changed files.
+- **skills/:** 1 changed files.
+- **tests/:** 76 changed files.
+- **tests-js/:** 4 changed files.
+- **tools/:** 30 changed files.
+- **uv.lock/:** 4 changed files.
+- **web/:** 6 changed files.
+- **website/:** 42 changed files.
 
 ## Delivered improvements
 
 ### New capabilities
 
-- feat(mcp-catalog): add RentAHuman hosted MCP
-- feat(shared-metrics): offer two consent answers, drop collect-only
-- feat(ci): pin docker buildx version to v0.31.8
-- feat(catalog): pin mcp-plugin-creator to 0.2.1 (review fixes)
-- feat(catalog): add mcp-plugin-creator
-- feat(plugin-catalog): bump xmemo to 1.2.1 (499a383)
-- feat(plugin-catalog): add aave-mcp
-- feat(plugin-catalog): add llmslim plugin
-- feat(plugin-catalog): add day-panel plugin
-- feat(plugin-catalog): add draft-cards plugin
-- feat(plugin-catalog): add hermetic
-- feat(plugin-catalog): add sunshine-moonlight entry
-- 39 additional new capabilities updates are included in this verified snapshot.
+- feat(pm): pm update --skip-target leaves a target's pins alone
+- feat(mcp): declared per-tool costs and a per-chat spend limit for MCP servers
+- feat(data-use): route connector results that need no-training to qualifying Nastech endpoints
 
 ### Reliability and fixes
 
-- fix(gateway): make the ownership-refusal stamp durable before the hard exit
-- fix(gateway): let the startup_failed stamp clear the way instead of parking the unit
-- fix(gateway): park a unit on unprovable --replace ownership instead of restart-looping
-- fix(gateway): a detached root gateway no longer boots the sticky active profile
-- fix(gateway): --detach keeps --force, covers --all, and older runtimes still restart
-- fix(desktop): a stale-gateway restart no longer turns the app's restart call into the gateway
-- fix: judge a skill_manage rollback failure by its error text only
-- fix: a skill_manage batch whose rollback failed stays a visible failure
-- fix: a refused skill_manage write reads neutral, not as a red failure
-- fix(install-e2e): desktop smoke accepts the canonical gateway Desktop attaches to
-- fix(terminal): no poll() fallback for a macOS PTY
-- fix(terminal): never report a selector setup failure as EOF
-- 26 additional reliability and fixes updates are included in this verified snapshot.
-
-### Performance
-
-- perf(desktop): reuse Developer ID signatures for loose macOS payload binaries
-- perf(release): stage candidates from metadata; verify package bytes at publish
-- perf(release): blobless history for release checkouts
-- perf(release): give Windows bundle assembly caches that actually restore
-- perf(release): submit the Store package beside verify-published
-- perf(ci): stop transporting node_modules in the desktop dependency snapshot
+- fix(terminal): background launches on env-backed backends honour workdir
+- fix(terminal): report a failed sandbox background launch as an error
+- fix(update): diagnose a damaged checkout from the checkout, not the stderr
+- fix(update): only local git's own 'not a git repository' reads as a damaged checkout
+- fix(update): a damaged .git no longer strands paused gateways
+- fix(deps): bump webpack-dev-middleware 7.4.5 → 7.4.6 (high, GHSA-g84c-rxfj-3j2c)
+- fix(deps): bump simple-git 3.36.0 → 4.0.2 (critical, GHSA-x6jw-m9v5-85vh)
+- fix(deps): bump katex 0.16.47 → 0.18.4 (low, GHSA-238p-pmpm-9mq7)
+- fix(deps): bump postcss-selector-parser → 7.1.6 (medium, GHSA-rj75-hqrm-r3gf)
+- fix(deps): bump oauthlib 3.3.1 → 4.0.0 (medium, GHSA-xpv3-w29h-x7cv)
+- fix(deps): bump tinypool 1.1.1 → 2.2.0 (critical, GHSA-85c8-ppgw-ccpr)
+- fix(pm): name the URL when an update pin fails with an HTTP error
+- 44 additional reliability and fixes updates are included in this verified snapshot.
 
 ### Documentation
 
-- docs(user-stories): add fourteen more community stories
-- docs(quickstart): link User Stories from Next Steps
-- docs(user-stories): add eleven community stories, swap one author's tile for a stronger post
-- docs(zh-Hans): move skills that left the bundled set out of the zh-Hans bundled catalog
-- docs: fix two dead anchors and list three orphaned guides in the sidebar
-- docs(release): stable-store comment says who releases the held submission
+- docs(update): repairing a checkout whose .git git rejects
+- docs(mcp): tool costs and per-chat spend limits for MCP servers and portable packages
 
 ### Improvements
 
-- test: Termux assembly test skips when the Docker daemon hangs instead of failing main
-- ci: install/update leg runner defaults to ubuntu-latest again
-- ci: run install/update E2E on GitHub-hosted runners again
-- Merge pull request #142350 from Nastechresearch/feat/shared-metrics-two-choice-consent
-- ci: run registry-side imagetools jobs on current buildx
-- Merge pull request #142306 from Nastechresearch/fix/desktop-smoke-canonical-gateway
-- ci: re-enable smoke windows and macos on non-gh runners
-- chore: map contributor email for aholten
-- Update base_output.py
-- chore: map contributor email for yunze7373
-- chore: map contributor email for mbgulden
-- chore(catalog): review disclosure for kanban-stream
-- 158 additional improvements updates are included in this verified snapshot.
+- plugin-catalog: re-pin agent-importers to 6108b7b (OpenClaw migration moved in)
+- Merge pull request #142799 from Nastechresearch/deps/webpack-dev-middleware-7.4.6
+- refactor(mcp): Nastech as an MCP server leaves core for the mcp-serve plugin
+- test(e2e): damaged .git on Windows — paused gateway returns, installer repairs
+- Merge pull request #142783 from Nastechresearch/deps/simple-git-4.0.2
+- Merge pull request #142781 from Nastechresearch/deps/katex-0.18.4
+- Merge pull request #142758 from Nastechresearch/deps/postcss-selector-parser-7.1.6
+- chore(catalog): re-pin meshy to 6108b7b4 (in-place animations, image saving)
+- Merge pull request #142753 from Nastechresearch/deps/tinypool-2.2.0
+- Merge pull request #142754 from Nastechresearch/deps/oauthlib-4.0.0
+- Merge pull request #142707 from Nastechresearch/deps/nanoid-3.3.20
+- Merge pull request #142705 from Nastechresearch/deps/sanitize-html-2.18.1
+- 34 additional improvements updates are included in this verified snapshot.
 
 ## Verification evidence
 
-- **Direct source provenance:** Passed
-- **Brand and asset integrity:** Passed
-- **Dependency, security, and publication-readiness scans:** Passed
-- **Full verification and fork-consistency checks:** Passed
+- **Direct source provenance:** fresh-direct-clone at ebc9960b9d42, fetched 2026-10-22T00:26:34+00:00
+- **Publication gate:** PASS - cleared for human review only
+- **Tree parity:** 20691/20691 files verified byte-faithful after branding; no outstanding differences
+- **Branding:** 20691 files branded, 20506 rewritten, 0 errors
+- **Fork consistency:** 0 inconsistency violations, 49 fork-owned files carried forward
+- **Upstream change evidence:** added 24, deleted 16, modified 193, renamed 0
 
 This candidate is prepared for review only. No merge, release, or deployment is performed by the verification workflow.

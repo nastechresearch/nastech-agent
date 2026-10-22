@@ -121,6 +121,7 @@ def aux_probe_mode():
 
 from agent.credential_pool import load_pool
 from agent.custom_entry_pool import entry_scoped_pool, pool_for_aux_provider
+from agent.message_metadata import data_use_requirement
 from agent.model_metadata import MINIMUM_CONTEXT_LENGTH, get_model_context_length
 from nastech_cli.config import get_nastech_home
 from nastech_cli.config_providers import _canonical_api_mode
@@ -6685,7 +6686,7 @@ def _routes_to_custom_endpoint(provider_norm: str) -> bool:
 
 
 def _project_provider_profile(
-    provider: str, provider_norm: str, model: str, effective_base: str, reasoning_config: Optional[dict],
+    provider: str, provider_norm: str, model: str, effective_base: str, reasoning_config: Optional[dict], data_use: frozenset[str],
 ) -> _ProfileProjection:
     """Provider profile's extra_body / kwargs projection; partial on failure."""
     body: dict[str, Any] = {}
@@ -6706,7 +6707,7 @@ def _project_provider_profile(
             profile = get_provider_profile("custom")
         if profile is not None:
             messages_wire = profile.api_mode == "anthropic_messages"
-            body = profile.build_extra_body(model=model, base_url=effective_base, reasoning_config=reasoning_config) or {}
+            body = profile.build_extra_body(model=model, base_url=effective_base, reasoning_config=reasoning_config, data_use=data_use) or {}
             reasoning_extra, top_level = profile.build_api_kwargs_extras(
                 reasoning_config=reasoning_config, supports_reasoning=reasoning_config is not None,
                 model=model, base_url=effective_base,
@@ -6820,9 +6821,8 @@ def _build_call_kwargs(
             extra_body.pop("reasoning")
             if reasoning_config is None:
                 reasoning_config = task_reasoning
-    reasoning_config = clamp_reasoning_config(
-        known_reasoning_floor(reasoning_config, provider_norm, effective_base, model, task))
-    projection = _project_provider_profile(provider, provider_norm, model, effective_base, reasoning_config)
+    reasoning_config = clamp_reasoning_config(known_reasoning_floor(reasoning_config, provider_norm, effective_base, model, task))
+    projection = _project_provider_profile(provider, provider_norm, model, effective_base, reasoning_config, data_use_requirement(messages))
     kwargs.update(projection.top_level)
     merged_extra = _merge_aux_extra_body(extra_body, projection, reasoning_config, provider_norm)
     if "response_format" in merged_extra:

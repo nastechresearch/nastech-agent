@@ -3604,7 +3604,7 @@ tips:
   t069: "Cuireann nastech skills tap add myorg/skills-repo foinse scileanna GitHub shaincheaptha leis."
   t070: "Easpórtálann nastech skills snapshot export setup.json do chumraíocht scileanna le haghaidh cúltaca nó roinnte."
   t071: "Cuireann nastech mcp add github --command npx freastalaithe MCP leis ón líne ordaithe."
-  t072: "Ritheann nastech mcp serve Nastech féin mar fhreastalaí MCP do ghníomhairí eile."
+  t072: "Ritheann nastech mcp-serve Nastech féin mar fhreastalaí MCP do ghníomhairí eile."
   t073: "Ligeann nastech auth add duit eochracha API iolracha a chur leis le haghaidh rothlú linn dintiúr."
   t074: "Cumasaíonn nastech completion bash >> ~/.bashrc comhlánú táib do gach ordú agus próifíl."
   t075: "Leanann nastech logs -f agent.log i bhfíor-am. Scagann --level WARNING --since 1h an t-aschur."

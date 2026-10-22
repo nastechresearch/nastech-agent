@@ -3621,7 +3621,7 @@ tips:
   t069: "A nastech skills tap add myorg/skills-repo egyedi GitHub skill-forrást ad hozzá."
   t070: "A nastech skills snapshot export setup.json exportálja a skill-konfigurációdat biztonsági mentéshez vagy megosztáshoz."
   t071: "A nastech mcp add github --command npx parancssorból ad hozzá MCP-szervereket."
-  t072: "A nastech mcp serve magát a Hermest futtatja MCP-szerverként más ügynökök számára."
+  t072: "A nastech mcp-serve magát a Hermest futtatja MCP-szerverként más ügynökök számára."
   t073: "A nastech auth add több API-kulcsot is felvehet a hitelesítőadat-készlet rotálásához."
   t074: "A nastech completion bash >> ~/.bashrc bekapcsolja a Tab-kiegészítést minden parancshoz és profilhoz."
   t075: "A nastech logs -f valós időben követi az agent.log fájlt. A --level WARNING --since 1h szűri a kimenetet."

@@ -3718,7 +3718,7 @@ tips:
   t069: "nastech skills tap add myorg/skills-repo adds a custom GitHub skill source."
   t070: "nastech skills snapshot export setup.json exports your skill configuration for backup or sharing."
   t071: "nastech mcp add github --command npx adds MCP servers from the command line."
-  t072: "nastech mcp serve runs Nastech itself as an MCP server for other agents."
+  t072: "nastech mcp-serve runs Nastech itself as an MCP server for other agents."
   t073: "nastech auth add lets you add multiple API keys for credential pool rotation."
   t074: "nastech completion bash >> ~/.bashrc enables tab completion for all commands and profiles."
   t075: "nastech logs -f follows agent.log in real time. --level WARNING --since 1h filters output."

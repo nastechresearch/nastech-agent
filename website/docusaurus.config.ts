@@ -109,7 +109,7 @@ const config: Config = {
     algolia: {
       appId: '2JLBVEYZN5',
       apiKey: '9629ec26628d1a126535fd5ef408990d',
-      indexName: 'nastech docs',
+      indexName: 'hermes docs',
       contextualSearch: true,
     },
     colorMode: {
