@@ -9,24 +9,20 @@ from unittest.mock import patch
 
 
 def test_prompt_model_selection_uses_curses_radiolist():
+    from inspect import signature
+
+    from nastech_cli import curses_ui
     from nastech_cli.auth import _prompt_model_selection
     from nastech_cli.curses_ui import radio_item_plain
 
     seen = {}
+    # Reject an unsupported call against the live signature, never a copy of it:
+    # a mirrored parameter list goes red on every upstream addition (`headings`,
+    # added upstream in 15307dece7) while production stays correct.
+    bind = signature(curses_ui.curses_radiolist).bind
 
-    def _fake(
-        title,
-        items,
-        *,
-        selected=0,
-        cancel_returns=None,
-        description=None,
-        searchable=False,
-        search_labels=None,
-    ):
-        seen["title"] = title
-        seen["items"] = items
-        seen["search_labels"] = search_labels
+    def _fake(*args, **kwargs):
+        seen.update(bind(*args, **kwargs).arguments)
         return 1  # pick second model
 
     with patch("nastech_cli.curses_ui.curses_radiolist", side_effect=_fake), \
@@ -40,7 +36,7 @@ def test_prompt_model_selection_uses_curses_radiolist():
     plain = [radio_item_plain(item) for item in seen["items"]]
     assert plain[:2] == ["model-a", "model-b"]
     assert "Skip (keep current)" in plain
-    assert seen["search_labels"] is not None
+    assert seen.get("search_labels") is not None
     assert len(seen["search_labels"]) == len(seen["items"])
 
 
