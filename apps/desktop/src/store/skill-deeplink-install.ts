@@ -1,5 +1,5 @@
-import { getApiRequestConnection, getApiRequestProfile, type ProfileScope } from '@/nastech'
 import { translateNow } from '@/i18n'
+import { getApiRequestConnection, getApiRequestProfile, type ProfileScope } from '@/nastech'
 
 import { confirm } from './confirm'
 import { $connectionsRegistry } from './connection-registry-state'

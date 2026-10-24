@@ -3,8 +3,8 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 
 import { capabilityScoped } from '@/api/client'
 import { Loader } from '@/components/ui/loader'
-import { getOfficialSkills, type ProfileScope, profileScopeKey } from '@/nastech'
 import { useI18n } from '@/i18n'
+import { getOfficialSkills, type ProfileScope, profileScopeKey } from '@/nastech'
 import { HUB_SOURCES_KEY, installHubSkill, notifyHubActionFailed, OFFICIAL_SKILLS_KEY } from '@/store/hub-actions'
 import { notify } from '@/store/notifications'
 import type { SkillHubSourcesResponse, SkillInfo } from '@/types/nastech'
@@ -47,7 +47,10 @@ function ScopedSkillCatalog({
   const { t } = useI18n()
   const h = t.skills.hub
   // "Try …" nudges from the user's own skills: search reads categories, not just names.
-  const searchHints = useMemo(() => (skills.length ? skillSearchTerms(skills).map(term => t.common.tryHint(term)) : undefined), [skills, t])
+  const searchHints = useMemo(
+    () => (skills.length ? skillSearchTerms(skills).map(term => t.common.tryHint(term)) : undefined),
+    [skills, t]
+  )
   const mounted = useRef(true)
   const pending = useRef(new Set<string>())
   const [installing, setInstalling] = useState<ReadonlySet<string>>(new Set())

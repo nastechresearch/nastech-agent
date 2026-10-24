@@ -1,5 +1,5 @@
-import type { ModelOptionProvider } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import type { ModelOptionProvider } from '@nastech/shared'
 import { useQuery } from '@tanstack/react-query'
 import { type ReactNode, useMemo } from 'react'
 
@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { getGlobalModelOptions, type ProfileScope, profileScopeKey } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { findCatalogProvider } from '@/lib/model-options'
 import { cn } from '@/lib/utils'
+import { getGlobalModelOptions, type ProfileScope, profileScopeKey } from '@/nastech'
 import { $customModels, withCustomModels } from '@/store/custom-models'
 
 import { CONTROL_TEXT } from './constants'

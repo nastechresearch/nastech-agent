@@ -2,7 +2,6 @@ import { mergeUsage } from '@nastech/shared'
 
 import { resolveSessionRpcOwner } from '@/app/contrib/wiring-routing'
 import { textWithoutReferenceLines } from '@/components/assistant-ui/reference-kinds'
-import { getSession } from '@/nastech'
 import { sameAttachmentTurn, spliceOlderPreservedRows } from '@/lib/chat-messages'
 import {
   assistantTextPart,
@@ -17,6 +16,7 @@ import { embeddedImageUrls, textWithoutEmbeddedImages } from '@/lib/embedded-ima
 import { parseErrorSurface } from '@/lib/error-surface'
 import { isMessagingSource, normalizeSessionSource } from '@/lib/session-source'
 import { isLiveTailReplyId } from '@/lib/spoken-reply'
+import { getSession } from '@/nastech'
 import { requestDesktopOnboardingForCredentialWarning } from '@/store/onboarding'
 import { pendingSnapshotFence, reconcilePendingSubmissions } from '@/store/pending-submissions'
 import { $activeGatewayProfile, $profiles, normalizeProfileKey } from '@/store/profile'
@@ -2432,8 +2432,11 @@ function publishRuntimeToComposer(state: SessionRuntimeStatePatch): void {
 /** Session-independent side effects of one runtime info snapshot. */
 function reportRuntimeInfoAppState(info: SessionRuntimeInfo, owner: SessionOwnerScope): void {
   if (info.stored_session_id) {
-    reconcilePendingSubmissions(info.stored_session_id, info.pending_submissions,
-      pendingSnapshotFence(info.replay_epoch, info.last_sequence))
+    reconcilePendingSubmissions(
+      info.stored_session_id,
+      info.pending_submissions,
+      pendingSnapshotFence(info.replay_epoch, info.last_sequence)
+    )
   }
 
   // App/profile-level reporting is session-independent — a tile's runtime
