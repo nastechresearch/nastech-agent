@@ -1,7 +1,7 @@
 'use client'
 
-import type { CatalogPluginPresence, PluginsManageResult } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import type { CatalogPluginPresence, PluginsManageResult } from '@nastech/shared'
 import { useQuery } from '@tanstack/react-query'
 import { Puzzle } from 'lucide-react'
 import { useEffect } from 'react'

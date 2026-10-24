@@ -1,12 +1,27 @@
 import { type ChildProcess, execFileSync, spawn } from 'node:child_process'
 
 import type { GatewayEndpoint } from './local-gateway'
-import { configurePythonGatewayTicketClient, createLocalGatewayDials, createStaleGatewayRestarter, ensureLocalGateway, gatewayOwnerProfile, localGatewayDial, nativeGatewayHttpHeaders, redialLocalGateway, runGatewayEnsure, runGatewayOwnerRestart } from './local-gateway'
+import {
+  configurePythonGatewayTicketClient,
+  createLocalGatewayDials,
+  createStaleGatewayRestarter,
+  ensureLocalGateway,
+  gatewayOwnerProfile,
+  localGatewayDial,
+  nativeGatewayHttpHeaders,
+  redialLocalGateway,
+  runGatewayEnsure,
+  runGatewayOwnerRestart
+} from './local-gateway'
 import { closeGatewayTicketBridges, createGatewayTicketResolver } from './local-gateway-python'
 import { createPluginWsUrlHandler } from './plugin-ws-url'
 const localGatewayDials = createLocalGatewayDials()
-configurePythonGatewayTicketClient(createGatewayTicketResolver(
-  async () => ensureRuntime(await resolveNastechBackend([]), () => undefined), resolveNastechCwd))
+configurePythonGatewayTicketClient(
+  createGatewayTicketResolver(
+    async () => ensureRuntime(await resolveNastechBackend([]), () => undefined),
+    resolveNastechCwd
+  )
+)
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import http from 'node:http'
@@ -65,22 +80,13 @@ import {
 import { runAppInstallerChecker } from './appinstaller-checker'
 import { installApplicationMenuAfterFirstWindow } from './application-menu-startup'
 import { stopBackendChild as stopBackendChildImpl, waitForBackendExit } from './backend-child'
-import {
-  execText,
-  isPidOnlyStartMarker,
-  processStartMarker,
-  REAP_PROBE_TIMEOUT_MS
-} from './backend-claim'
+import { execText, isPidOnlyStartMarker, processStartMarker, REAP_PROBE_TIMEOUT_MS } from './backend-claim'
 import { createBackendConnectionState } from './backend-connection-state'
 import { assertDescriptorStillOwned, forgetFailedDescriptor } from './backend-descriptor-cache'
 import { BackendDialClaims } from './backend-dial-claim'
 import { buildDesktopBackendEnv, profileBackendParentEnv } from './backend-env'
 import { isReauthRequiredError, waitForNastechReady } from './backend-health'
-import {
-  backendCommandMatches,
-  createBackendOwnership,
-  createBackendShutdownCoordinator
-} from './backend-ownership'
+import { backendCommandMatches, createBackendOwnership, createBackendShutdownCoordinator } from './backend-ownership'
 import { canImportNastechCli, PROBE_TIMEOUT_MS, shouldTrustNastechOverride, verifyNastechCli } from './backend-probes'
 import { recycleOwnedBackend } from './backend-recycle'
 import { isPidAliveWindows, waitForBackendRelease } from './backend-release-gate'
@@ -307,7 +313,7 @@ import {
   writeSecretFileAtomic
 } from './hardening'
 import { assertNotPassiveSpawn } from './host-backend-singleton'
-import { NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN, isNastechHubClipboardWrite } from './hub-iframe-policy'
+import { isNastechHubClipboardWrite, NASTECH_HUB_FALLBACK_ORIGIN, NASTECH_HUB_ORIGIN } from './hub-iframe-policy'
 import { requestHudClose } from './hud-close'
 import { cursorPointInWindow } from './hud-cursor'
 import { startHudGameOverlayWatch } from './hud-game-overlay'
@@ -3878,7 +3884,9 @@ function killNastechOwnedVenvDaemons(updateRoot) {
   let holders = []
 
   try {
-    holders = scanWindowsProcesses().filter(p => isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir))
+    holders = scanWindowsProcesses().filter(p =>
+      isNastechOwnedVenvDaemon(p?.ExecutablePath, p?.CommandLine, scriptsDir)
+    )
   } catch {
     // Best-effort: the uninstall lock probe remains the backstop.
     return
@@ -4991,7 +4999,8 @@ async function resolveNastechBackend(backendArgs: string[]): Promise<ResolvedNas
             env: {},
             kind: 'command',
             shell: shellForProbe,
-            local: 'installed', root: await launcherInstallRoot(nastechCommand) // ticket minting needs it (#138774)
+            local: 'installed',
+            root: await launcherInstallRoot(nastechCommand) // ticket minting needs it (#138774)
           }
         }
 
@@ -5269,7 +5278,13 @@ function fetchJson(url, token, options: any = {}) {
     async (requestState: any) => {
       // Mint inside each retry: a grant authorizes exactly one HTTP request.
       const nativeHeaders = options.gatewayDescriptor
-        ? await nativeGatewayHttpHeaders(options.gatewayDescriptor, url, NASTECH_HOME, options.method || 'GET', options.upload ? undefined : options.body)
+        ? await nativeGatewayHttpHeaders(
+            options.gatewayDescriptor,
+            url,
+            NASTECH_HOME,
+            options.method || 'GET',
+            options.upload ? undefined : options.body
+          )
         : null
 
       return new Promise((resolve, reject) => {
@@ -7678,8 +7693,13 @@ async function freshGatewayWsUrl(profile, webContentsId) {
   const connection = await ensureBackend(profile)
 
   if (connection.gatewayEndpoint) {
-    return localGatewayDial({ ensure: () => ensureBackend(profile), forget: () => forgetLocalGatewayDescriptor(profile), launchHome: NASTECH_HOME,
-      prepare: (baseUrl, ticket) => localGatewayDials.prepare(baseUrl, ticket, webContentsId), profile: String(profile ?? '') })
+    return localGatewayDial({
+      ensure: () => ensureBackend(profile),
+      forget: () => forgetLocalGatewayDescriptor(profile),
+      launchHome: NASTECH_HOME,
+      prepare: (baseUrl, ticket) => localGatewayDials.prepare(baseUrl, ticket, webContentsId),
+      profile: String(profile ?? '')
+    })
   }
 
   if (connection.authMode === 'oauth') {
@@ -10593,14 +10613,13 @@ async function forgetRegistryLocalGatewayDescriptor(connectionId, profile) {
   }
 
   if (backendPool.delete(localRoute.poolKey)) {
-    rememberLog(`[gateway] forgot stale canonical endpoint for connection "${String(connectionId || '').trim() || 'primary'}" profile "${profileKey}"; re-ensuring`)
+    rememberLog(
+      `[gateway] forgot stale canonical endpoint for connection "${String(connectionId || '').trim() || 'primary'}" profile "${profileKey}"; re-ensuring`
+    )
   }
 }
 
-async function ensureBackend(
-  profile,
-  opts: { passive?: boolean; request?: { method?: string; path?: string } } = {}
-) {
+async function ensureBackend(profile, opts: { passive?: boolean; request?: { method?: string; path?: string } } = {}) {
   const key = profile && String(profile).trim() ? String(profile).trim() : primaryProfileKey()
   const passive = Boolean(opts.passive)
 
@@ -11529,41 +11548,47 @@ async function dialPoolBackend(profile, entry, opts: { forceLocal?: boolean; poo
     directoryExists(path.join(NASTECH_HOME, 'profiles', key))
   )
 
-  const connection = await ensureLocalGateway(async () => {
-    const backend = await ensureRuntime(
-      await resolveNastechBackend(['--profile', profile, 'gateway', 'ensure', '--json']),
-      () => assertPoolEntryStillOwned(poolKey, entry)
-    )
+  const connection = await ensureLocalGateway(
+    async () => {
+      const backend = await ensureRuntime(
+        await resolveNastechBackend(['--profile', profile, 'gateway', 'ensure', '--json']),
+        () => assertPoolEntryStillOwned(poolKey, entry)
+      )
 
-    profileDeletionGate.assertCanStart(profile)
-    assertPoolEntryStillOwned(poolKey, entry)
+      profileDeletionGate.assertCanStart(profile)
+      assertPoolEntryStillOwned(poolKey, entry)
 
-    // Never another profile's dotenv credentials from the Desktop env (#68367).
-    return runGatewayEnsure(
-      { ...backend, env: desktopBackendSpawnEnv(backend.env || {}) },
-      resolveNastechCwd(),
-      NASTECH_HOME,
-      profileBackendParentEnv({ nastechHome: NASTECH_HOME, profile })
-    )
-  }, async () => {
-    // Same update mutual exclusion as the primary's waitForLocalStart (#73822);
-    // a held update shows the window's blocked screen for this profile too.
-    await waitForPoolUpdateClearance({
-      profile,
-      poolKey,
-      gateDeps: updateGateDeps,
-      signal: localBackendLifecycle.signal,
-      isCancelled: (): boolean => backendPool.get(poolKey) !== entry,
-      log: rememberLog,
-      showHold: showUpdateHold,
-      clearHold: clearUpdateHold,
-      pollMs: UPDATE_WAIT_POLL_MS,
-      timeoutMs: UPDATE_WAIT_TIMEOUT_MS
-    })
-    // Update waits yield: retirement or profile deletion may win in that gap.
-    assertPoolEntryStillOwned(poolKey, entry)
-    assertLocalProfileCanStart(profile, profileDeletionGate, key => directoryExists(path.join(NASTECH_HOME, 'profiles', key)))
-  }, restartStaleLocalGateway)
+      // Never another profile's dotenv credentials from the Desktop env (#68367).
+      return runGatewayEnsure(
+        { ...backend, env: desktopBackendSpawnEnv(backend.env || {}) },
+        resolveNastechCwd(),
+        NASTECH_HOME,
+        profileBackendParentEnv({ nastechHome: NASTECH_HOME, profile })
+      )
+    },
+    async () => {
+      // Same update mutual exclusion as the primary's waitForLocalStart (#73822);
+      // a held update shows the window's blocked screen for this profile too.
+      await waitForPoolUpdateClearance({
+        profile,
+        poolKey,
+        gateDeps: updateGateDeps,
+        signal: localBackendLifecycle.signal,
+        isCancelled: (): boolean => backendPool.get(poolKey) !== entry,
+        log: rememberLog,
+        showHold: showUpdateHold,
+        clearHold: clearUpdateHold,
+        pollMs: UPDATE_WAIT_POLL_MS,
+        timeoutMs: UPDATE_WAIT_TIMEOUT_MS
+      })
+      // Update waits yield: retirement or profile deletion may win in that gap.
+      assertPoolEntryStillOwned(poolKey, entry)
+      assertLocalProfileCanStart(profile, profileDeletionGate, key =>
+        directoryExists(path.join(NASTECH_HOME, 'profiles', key))
+      )
+    },
+    restartStaleLocalGateway
+  )
 
   assertPoolEntryStillOwned(poolKey, entry)
 
@@ -11592,7 +11617,9 @@ async function restartLocalGatewayOwner(ownerProfile: string): Promise<void> {
   }, ownerProfile)
 
   const reason = `${result.stdout}\n${result.stderr}`.trim().split(/\r?\n/).filter(Boolean).pop()
-  rememberLog(`[gateway] nastech --profile ${ownerProfile} gateway restart exited ${result.code}${reason ? `: ${reason}` : ''}`)
+  rememberLog(
+    `[gateway] nastech --profile ${ownerProfile} gateway restart exited ${result.code}${reason ? `: ${reason}` : ''}`
+  )
 }
 
 // A ready gateway whose boot commit differs from this Nastech (it outlived `nastech update`) is
@@ -11602,9 +11629,12 @@ const restartStaleLocalGateway = createStaleGatewayRestarter(restartLocalGateway
 // Models-page "Restart Nastech": restart the local gateway behind `profile`'s cached descriptor.
 // A remote/SSH descriptor has no gatewayEndpoint, so nothing local is touched for it.
 async function restartAttachedLocalGateway(profile: string): Promise<void> {
-  const pending = profile === primaryProfileKey()
-    ? backendConnectionState.getPromise()
-    : localProfilePoolKeys(profile).map(key => backendPool.get(key)?.connectionPromise).find(Boolean)
+  const pending =
+    profile === primaryProfileKey()
+      ? backendConnectionState.getPromise()
+      : localProfilePoolKeys(profile)
+          .map(key => backendPool.get(key)?.connectionPromise)
+          .find(Boolean)
 
   const connection = await pending?.catch(() => null)
   const endpoint = connection?.gatewayEndpoint
@@ -12006,18 +12036,29 @@ async function startNastech(requestedProfile?: string) {
     // Local WSL backend — paths are bridgeable.
     setWslBridgeProfileState(primaryProfile, true)
 
-    const connection = await ensureLocalGateway(() => runGatewayEnsure(
-      { ...setup.backend, env: desktopBackendSpawnEnv(setup.backend.env || {}) },
-      resolveNastechCwd(),
-      NASTECH_HOME,
-      profileBackendParentEnv({ nastechHome: NASTECH_HOME, profile: primaryProfile })
-    ), undefined, restartStaleLocalGateway)
+    const connection = await ensureLocalGateway(
+      () =>
+        runGatewayEnsure(
+          { ...setup.backend, env: desktopBackendSpawnEnv(setup.backend.env || {}) },
+          resolveNastechCwd(),
+          NASTECH_HOME,
+          profileBackendParentEnv({ nastechHome: NASTECH_HOME, profile: primaryProfile })
+        ),
+      undefined,
+      restartStaleLocalGateway
+    )
 
     backendConnectionState.assertCurrentAttempt(connectionAttempt)
 
     backendStartFailure = null
     rememberLog('[backend] Nastech gateway is ready')
-    updateBootProgress({ phase: 'backend.ready', message: 'Nastech gateway is ready', progress: 94, running: true, error: null })
+    updateBootProgress({
+      phase: 'backend.ready',
+      message: 'Nastech gateway is ready',
+      progress: 94,
+      running: true,
+      error: null
+    })
     bootstrapRepairAttempt = 0
 
     // The primary descriptor names its own profile: a profile-less descriptor
@@ -14169,7 +14210,10 @@ ipcMain.handle('nastech:connection:for', async (event, payload) => {
   const registry = readDesktopConnectionsRegistry()
   const id = registryDialConnectionId(connectionId, registry.primary)
 
-  return connectDesktopProfileRoute({ connectionId: id, profile: String(profile ?? '').trim() || 'default' }, event.sender)
+  return connectDesktopProfileRoute(
+    { connectionId: id, profile: String(profile ?? '').trim() || 'default' },
+    event.sender
+  )
 })
 
 const windowConnectionRoutes = new WindowConnectionRouteRegistry()
@@ -15159,17 +15203,27 @@ ipcMain.handle('nastech:gateway:ws-url-for', async (_event, payload) => {
     const connection = await ensureRegistryBackend(payload?.connectionId, payload?.profile)
 
     if (connection.gatewayEndpoint) {
-      return localGatewayDial({ ensure: () => ensureRegistryBackend(payload?.connectionId, payload?.profile), launchHome: NASTECH_HOME,
-        forget: () => forgetRegistryLocalGatewayDescriptor(payload?.connectionId, payload?.profile), profile: String(payload?.profile ?? ''),
-        prepare: (baseUrl, ticket) => localGatewayDials.prepare(baseUrl, ticket, _event.sender.id) })
+      return localGatewayDial({
+        ensure: () => ensureRegistryBackend(payload?.connectionId, payload?.profile),
+        launchHome: NASTECH_HOME,
+        forget: () => forgetRegistryLocalGatewayDescriptor(payload?.connectionId, payload?.profile),
+        profile: String(payload?.profile ?? ''),
+        prepare: (baseUrl, ticket) => localGatewayDials.prepare(baseUrl, ticket, _event.sender.id)
+      })
     }
 
     return registryGatewayWsUrlHandler(payload)
   })
 })
 
-const pluginWsUrl = createPluginWsUrlHandler({ ensureBackend, ensureRegistryBackend, forgetLocalGatewayDescriptor,
-  forgetRegistryLocalGatewayDescriptor, launchHome: NASTECH_HOME, prepare: localGatewayDials.preparePlugin })
+const pluginWsUrl = createPluginWsUrlHandler({
+  ensureBackend,
+  ensureRegistryBackend,
+  forgetLocalGatewayDescriptor,
+  forgetRegistryLocalGatewayDescriptor,
+  launchHome: NASTECH_HOME,
+  prepare: localGatewayDials.preparePlugin
+})
 
 ipcMain.handle('nastech:plugin:ws-url', (event, payload) => pluginWsUrl(payload ?? {}, event.sender.id))
 
@@ -15333,7 +15387,12 @@ async function fetchJsonForBackend(
         .filter(name => typeof name === 'string' && name)
 
       const readProfile = (_profile, scoped) =>
-        fetchJsonForBackend(descriptor, scoped, { method: opts.method, body: opts.body, timeoutMs: opts.timeoutMs, profileScoped: true })
+        fetchJsonForBackend(descriptor, scoped, {
+          method: opts.method,
+          body: opts.body,
+          timeoutMs: opts.timeoutMs,
+          profileScoped: true
+        })
 
       return sessions
         ? fetchAllProfilesSessionsPerProfile(path, profiles, readProfile)
@@ -16004,7 +16063,14 @@ async function mergeRemoteProfileSessions(searchParams, remoteProfiles, registry
     const getRegistryJson = (descriptor, path) => getJsonForBackend(descriptor, path, { timeoutMs: 10_000 })
     // RT-42: count each backend (install_id) once; remote-override profiles are another backend.
     const identity = { primaryBackendId: await primaryBackendInstallId(), unknownPrimaryProfiles: remoteProfiles }
-    total += await mergeRegistrySessionRows(registrySources, remoteParams, getRegistryJson, merged, profileTotals, identity)
+    total += await mergeRegistrySessionRows(
+      registrySources,
+      remoteParams,
+      getRegistryJson,
+      merged,
+      profileTotals,
+      identity
+    )
   }
 
   const recency = s => s?.[order] ?? s?.started_at ?? 0
@@ -16012,7 +16078,9 @@ async function mergeRemoteProfileSessions(searchParams, remoteProfiles, registry
 
   const archivedOnly = searchParams.get('archived') === 'only'
 
-  return composeUnifiedSessionResponse(base, merged, offset, limit, total, profileTotals, remoteErrors, { archivedOnly })
+  return composeUnifiedSessionResponse(base, merged, offset, limit, total, profileTotals, remoteErrors, {
+    archivedOnly
+  })
 }
 
 // Every CONNECTED registry gateway as a session source: resolved descriptors
@@ -16211,12 +16279,13 @@ async function handleNastechApiRequest(request) {
     // Main's shared transport for every descriptor: configured headers, a native
     // gateway grant per attempt, and the OAuth bearer→cookie fallback that
     // survives refresh failures and login races (requestWithOauthFallback).
-    const send = current => fetchJsonForBackend(current, apiRoute.requestPath, {
-      method: request?.method,
-      body: request?.body,
-      upload: request?.upload,
-      timeoutMs
-    })
+    const send = current =>
+      fetchJsonForBackend(current, apiRoute.requestPath, {
+        method: request?.method,
+        body: request?.body,
+        upload: request?.upload,
+        timeoutMs
+      })
 
     response = connection.gatewayEndpoint
       ? await redialLocalGateway({
@@ -17252,7 +17321,9 @@ const checkRendererSkew = createBundleSkewChecker(
   (args, options) => execGit(resolveGitBinary(), args, options),
   // Only a LIVE marker defers the warning: Desktop never deletes a dead one,
   // so a leftover file would otherwise suppress it indefinitely.
-  { isUpdating: async () => updateInFlight || isQuittingForHandoff || Boolean(await readLiveUpdateMarker(NASTECH_HOME)) }
+  {
+    isUpdating: async () => updateInFlight || isQuittingForHandoff || Boolean(await readLiveUpdateMarker(NASTECH_HOME))
+  }
 )
 
 async function detectRendererSkew() {
@@ -17785,8 +17856,14 @@ ipcMain.handle('nastech:deep-link-ready', () => {
 
 function registerDeepLinkProtocol() {
   registerDeepLinkProtocolWith({
-    app, protocol: NASTECH_PROTOCOL, env: process.env, defaultApp: Boolean(process.defaultApp),
-    argv: process.argv, execPath: process.execPath, resolve: entry => path.resolve(entry), log: rememberLog
+    app,
+    protocol: NASTECH_PROTOCOL,
+    env: process.env,
+    defaultApp: Boolean(process.defaultApp),
+    argv: process.argv,
+    execPath: process.execPath,
+    resolve: entry => path.resolve(entry),
+    log: rememberLog
   })
 }
 

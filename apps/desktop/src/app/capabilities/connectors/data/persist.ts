@@ -1,6 +1,6 @@
-import { type ProfileScope, profileScopeKey } from '@/nastech'
 import { queryClient } from '@/lib/query-client'
 import { readJson, writeJson } from '@/lib/storage'
+import { type ProfileScope, profileScopeKey } from '@/nastech'
 import { $freeTierStatus } from '@/store/free-tier'
 
 import { MCP_CATALOG_KEY } from '../../mcp/mcp-status'
