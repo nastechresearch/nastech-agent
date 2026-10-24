@@ -39,10 +39,13 @@ class UpdatePlan:
 
 def plan_update_all(results: list[Any]) -> UpdatePlan:
     """Split ``run_checks`` rows into the plugins ``update`` can move and the ones it cannot (with why)."""
+    from nastech_cli.plugins_updates import held_for_newer_nastech
     plan = UpdatePlan()
     for row in results:
         if row.needs_fixing:
             plan.skipped.append((row, f"needs fixing: {row.needs_fixing}"))
+        elif row.update_available is True and (held := held_for_newer_nastech(row)):
+            plan.skipped.append((row, f"update available after updating Nastech ({held})"))
         elif row.update_available is True and row.klass in _UPDATE_KIND:
             plan.movable.append(row)
         elif row.update_available is True:

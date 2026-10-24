@@ -1,12 +1,14 @@
 // IPC surface for local filesystem operations the renderer's project/file
 // surfaces use: directory reads, reveal/open in the OS file manager, plugin
-// roots + git installs, rename/write/trash. Extracted from main.ts; path
-// hardening, NASTECH_HOME resolution, and the git binary stay injected.
+// roots + git installs, rename/write/trash, and the plugin SDK's folder-scoped
+// file door. Extracted from main.ts; path hardening, NASTECH_HOME resolution,
+// and the git binary stay injected.
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 
+import { platformDefaultNastechHome } from './data-paths'
 import { installDesktopPluginFromGit, probePluginRepo } from './desktop-plugin-install'
 import { removeDesktopPlugin } from './desktop-plugin-remove'
 import {
@@ -18,6 +20,7 @@ import {
 import { DESKTOP_PROFILE_NAME_RE } from './desktop-profile'
 import { readDirForIpc } from './fs-read-dir'
 import { gitRootForIpc } from './git-root'
+import { registerPluginFilesIpc } from './plugin-files-ipc'
 
 export interface FsIpcDeps {
   nastechHome: string
@@ -37,6 +40,27 @@ export function registerFsIpc({
   resolveGitBinary
 }: FsIpcDeps) {
   ipcMain.handle('nastech:fs:readDir', async (_event, dirPath) => readDirForIpc(dirPath))
+
+  // `ctx.files`: a plugin's own data folder plus folders the user grants it.
+  // The legacy `~/.nastech` stays protected beside the resolved and default homes.
+  registerPluginFilesIpc({
+    ipcMain,
+    dialog,
+    windowFor: event => BrowserWindow.fromWebContents(event.sender),
+    // App windows only: preview guests and webviews never hear about grants.
+    broadcastChange: change => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        window.webContents.send('nastech:pluginFiles:changed', change)
+      }
+    },
+    userDataDir: () => app.getPath('userData'),
+    nastechHomes: () => [
+      nastechHome,
+      platformDefaultNastechHome(app.getPath('home')),
+      path.join(app.getPath('home'), '.nastech')
+    ],
+    trashItem: target => shell.trashItem(target)
+  })
 
   ipcMain.handle('nastech:fs:gitRoot', async (_event, startPath) => gitRootForIpc(startPath))
 

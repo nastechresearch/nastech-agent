@@ -144,6 +144,7 @@ Nastech 有两种入口：用 `nastech` 启动终端 UI，或运行网关从 Tel
 **安装后任意时间：**
 
 ```bash
+nastech plugins install agent-importers  # 一次即可：支持 OpenClaw、Claude Code、Codex 和 Cursor
 nastech claw migrate              # 交互式迁移（完整预设）
 nastech claw migrate --dry-run    # 预览将要迁移的内容
 nastech claw migrate --preset user-data   # 仅迁移用户数据，不含密钥

@@ -333,6 +333,7 @@ _UPDATE_DEPENDENCIES = (
     "nastech_cli/desktop_build_lock.py",
     "nastech_cli/memory_provider_migration.py",
     "nastech_cli/left_core_migration.py",  # source_build migrates plugins that left core
+    "nastech_cli/config_version_stamp.py",  # post_update converts legacy AGENT_BROWSER_* before stamping
     "nastech_cli/web_build_limits.py",  # source_build caps the dashboard Node build
     "nastech_cli/desktop_console.py",
     "nastech_cli/bundled_app.py",

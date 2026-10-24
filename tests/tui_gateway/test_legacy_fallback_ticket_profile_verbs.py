@@ -42,6 +42,7 @@ def test_secondary_ticket_runs_connectors_and_billing_in_its_own_profile(homes, 
     import nastech_cli.nastech_billing
     import tools.connectors
     import tools.connectors.managed
+    import tools.managed_tool_gateway
     from nastech_constants import get_nastech_home
     server, launch, bee = homes
     seen = []
@@ -50,8 +51,9 @@ def test_secondary_ticket_runs_connectors_and_billing_in_its_own_profile(homes, 
         seen.append((label, Path(str(get_nastech_home())).resolve()))
 
     monkeypatch.setattr(tools.connectors, 'connectors_available', lambda *a, **k: True)
+    monkeypatch.setattr(tools.managed_tool_gateway, 'read_nastech_access_token', lambda: 'token')
     monkeypatch.setattr(tools.connectors.managed, 'managed_client',
-                        lambda: types.SimpleNamespace(list_connectors=lambda: rec('list') or []))
+                        lambda **_: types.SimpleNamespace(list_connectors=lambda: rec('list') or []))
     monkeypatch.setattr(nastech_cli.nastech_billing, 'post_charge', lambda **k: rec('charge') or {'chargeId': 'c'})
     for method, params in (('connectors.list', {'owner': {'type': 'account'}}), ('billing.charge', {'amount_usd': 5})):
         _call(server, bee, method, params)

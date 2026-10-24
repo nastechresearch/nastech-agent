@@ -550,9 +550,8 @@ def recommended_nastech_default_model() -> dict[str, Any]:
     is selectable (callers degrade). Shared by ``GET /api/model/recommended-default`` and the
     sign-in completion in ``nastech_cli.anon_auth`` so both land on the same model.
     """
-    from nastech_cli import models_pricing as mp
+    from nastech_cli import model_picker_usage, models_pricing as mp
     from nastech_cli.auth import get_provider_auth_state
-
     model_ids = get_curated_nastech_model_ids()
     pricing = mp.get_pricing_for_provider("nastech") or {}
     free_tier = check_nastech_free_tier(force_fresh=True)
@@ -569,7 +568,8 @@ def recommended_nastech_default_model() -> dict[str, Any]:
         model_ids, _unavailable = partition_nastech_models_by_tier(model_ids, pricing, free_tier=True)
         # Never default onto a subscription-billed row: spending that plan is the user's call.
         model_ids = [mid for mid in model_ids if not _is_subscription_billed(pricing.get(mid))] or model_ids
-    return {"provider": "nastech", "model": pick_silent_default_model(model_ids, provider="nastech"),
+    model = "" if free_tier else model_picker_usage.window_plan_default(model_ids, pricing)
+    return {"provider": "nastech", "model": model or pick_silent_default_model(model_ids, provider="nastech"),
             "free_tier": bool(free_tier)}
 
 

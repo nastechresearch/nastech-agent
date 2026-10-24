@@ -133,10 +133,10 @@ nastech send                 One-off message through a gateway platform
 nastech pairing / plugins / insights / journey / computer-use
 nastech acp                  ACP server (IDE integration)
 nastech completion bash|zsh|fish
-nastech update / uninstall / claw migrate
+nastech update / uninstall
 ```
 
-Plugin- and provider-supplied subcommands (e.g. `nastech photon setup`) only appear once their plugin is installed/active.
+Plugin- and provider-supplied subcommands (e.g. `nastech photon setup`) only appear once their plugin is installed/active. Importing from OpenClaw, Claude Code, Codex CLI or Cursor (`nastech import-agent <agent>`, plus the older `nastech claw migrate|cleanup`) comes from the `agent-importers` plugin; a fresh `nastech setup` that finds one of those agents offers to install it.
 
 ### Where to Find Things
 

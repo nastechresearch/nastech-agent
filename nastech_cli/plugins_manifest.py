@@ -480,7 +480,7 @@ def version_satisfies(spec: str, current: str) -> bool:
     return True
 
 
-def requires_nastech_error(manifest: PluginManifest) -> Optional[str]:
+def requires_nastech_error(manifest: PluginManifest | Mapping[str, Any]) -> Optional[str]:
     """Load-blocking reason when the manifest's ``requires_nastech`` rejects the running version."""
     spec = manifest.get("requires_nastech", "") if isinstance(manifest, Mapping) else manifest.requires_nastech
     if not spec:

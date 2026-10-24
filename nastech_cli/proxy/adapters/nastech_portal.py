@@ -128,7 +128,7 @@ class NastechPortalAdapter(UpstreamAdapter):
                 providers = store.setdefault("providers", {})
                 providers["nastech"] = state
                 _save_auth_store(store)
-            _write_shared_nastech_state(state)
+            _write_shared_nastech_state(state, renewal=True)
         except Exception as exc:
             logger.warning("proxy: failed to persist Nastech quarantine state: %s", exc)
 
