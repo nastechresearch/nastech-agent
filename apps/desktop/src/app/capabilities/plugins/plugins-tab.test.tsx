@@ -297,6 +297,31 @@ describe('PluginsTab', () => {
     })
   })
 
+  it('badges "Install here" with the catalog tier of the package it came from', async () => {
+    seedCatalog([{ ...weatherEntry, name: 'nastech-media-studio', tier: 'official' }])
+    $pluginRecords.set({
+      media: {
+        id: 'media',
+        name: 'Media Studio',
+        kind: 'disk',
+        status: 'loaded',
+        packageName: 'nastech-media-studio',
+        packageOrigin: {
+          catalogName: 'nastech-media-studio',
+          repo: 'https://github.com/NastechResearch/nastech-media-studio.git',
+          sha: 'abc'
+        }
+      }
+    })
+
+    renderPlugins({ profile: 'workbot', scopeLabel: 'workbot' })
+    screen.getByRole('button', { name: 'Install here' }).click()
+
+    await waitFor(() => {
+      expect($pluginInstallRequest.get()).toMatchObject({ catalogName: 'nastech-media-studio', tier: 'official' })
+    })
+  })
+
   it('disables "Install here" when the package has no known origin (hand-copied folder)', () => {
     $pluginRecords.set({
       media: { id: 'media', name: 'Media Studio', kind: 'disk', status: 'loaded', packageName: 'nastech-media-studio' }
@@ -326,7 +351,7 @@ describe('PluginsTab', () => {
 
     await selectCatalogEntry(weatherEntry.name)
     expect($pluginInstallRequest.get()).toBeNull()
-    fireEvent.click(screen.getByRole('switch', { name: `Add ${weatherEntry.name}` }))
+    fireEvent.click(screen.getByRole('button', { name: `Install ${weatherEntry.name}` }))
 
     expect($pluginInstallRequest.get()).toMatchObject({
       catalogName: weatherEntry.name,
@@ -471,7 +496,7 @@ describe('PluginsTab', () => {
     renderPlugins({ profile: null })
 
     await selectCatalogEntry(entry.name)
-    fireEvent.click(screen.getByRole('switch', { name: `Add ${entry.name}` }))
+    fireEvent.click(screen.getByRole('button', { name: `Install ${entry.name}` }))
 
     expect($pluginInstallRequest.get()).toMatchObject({
       catalogName: entry.name,

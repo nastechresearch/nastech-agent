@@ -187,6 +187,7 @@ nastech setup --portal
 <div dir="ltr">
 
 ```bash
+nastech plugins install agent-importers  # ایک بار: OpenClaw، Claude Code، Codex اور Cursor
 nastech claw migrate              # انٹرایکٹو مائیگریشن (مکمل پری سیٹ)
 nastech claw migrate --dry-run    # جائزہ لیں کہ کیا کیا مائیگریٹ ہوگا
 nastech claw migrate --preset user-data   # حساس معلومات (secrets) کے بغیر مائیگریٹ کریں

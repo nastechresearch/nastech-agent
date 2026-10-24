@@ -333,6 +333,57 @@ def test_member_spend_cap_exceeded_without_amounts(monkeypatch):
 
 
 
+# ── cached snapshot is bound to the login that fetched it ───────────────────
+
+
+def test_cached_snapshot_is_only_served_to_the_login_that_fetched_it(monkeypatch):
+    """A profile/login switch must never read another account's cached snapshot, even ``any_age``."""
+    from nastech_cli.nastech_account import cached_nastech_portal_account_info
+
+    payload = _account_payload(allowed=True, subscription=None, subscription_credits=0, purchased_credits=5)
+    auth_state = {"state": _state("token-a")}
+    monkeypatch.setattr("nastech_cli.auth.get_provider_auth_state", lambda provider: auth_state["state"])
+    monkeypatch.setattr("nastech_cli.auth.resolve_nastech_access_token", lambda: auth_state["state"]["access_token"])
+    monkeypatch.setattr("nastech_cli.nastech_account._fetch_nastech_account_info", lambda *a, **kw: payload)
+
+    info = get_nastech_portal_account_info(force_fresh=True)
+    assert cached_nastech_portal_account_info() is info
+    assert cached_nastech_portal_account_info(any_age=True) is info
+
+    auth_state["state"] = _state("token-b")  # another login
+    assert cached_nastech_portal_account_info() is None
+    assert cached_nastech_portal_account_info(any_age=True) is None
+
+    auth_state["state"] = {}  # logged out
+    assert cached_nastech_portal_account_info(any_age=True) is None
+
+
+def test_cached_snapshot_survives_a_token_refresh_but_not_an_account_or_org_switch(monkeypatch):
+    """A refresh (new token, same user + org) between the fetch and a picker's read must not hide the
+    snapshot: ``nastech model`` refreshes runtime credentials right after its account fetch."""
+    from nastech_cli.nastech_account import cached_nastech_portal_account_info
+
+    def token(sub: str, org: str, n: int) -> str:
+        return _jwt({"sub": sub, "org_id": org, "exp": int(time.time()) + 900, "jti": f"t{n}"})
+
+    payload = _account_payload(allowed=True, subscription=None, subscription_credits=0, purchased_credits=5)
+    auth_state = {"state": _state(token("user_a", "org_a", 1))}
+    monkeypatch.setattr("nastech_cli.auth.get_provider_auth_state", lambda provider: auth_state["state"])
+    monkeypatch.setattr("nastech_cli.auth.resolve_nastech_access_token", lambda: auth_state["state"]["access_token"])
+    monkeypatch.setattr("nastech_cli.nastech_account._fetch_nastech_account_info", lambda *a, **kw: payload)
+
+    info = get_nastech_portal_account_info(force_fresh=True)
+
+    auth_state["state"] = _state(token("user_a", "org_a", 2))  # refreshed token, same account
+    assert cached_nastech_portal_account_info() is info
+
+    auth_state["state"] = _state(token("user_a", "org_b", 3))  # same user, other org
+    assert cached_nastech_portal_account_info(any_age=True) is None
+
+    auth_state["state"] = _state(token("user_b", "org_a", 4))  # other user
+    assert cached_nastech_portal_account_info(any_age=True) is None
+
+
 # ── org slug/name parsing + top-up URL builder ──────────────────────────────
 
 

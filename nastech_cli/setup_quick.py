@@ -85,14 +85,41 @@ def _run_portal_one_shot(config: dict) -> None:
     _record_setup_completed(config)
 
 
-def _run_first_time_quick_setup(config: dict, nastech_home, is_existing: bool):
-    """Streamlined first-time setup via Nastech Portal: OAuth, model, terminal & messaging;
-    everything else gets defaults."""
-    from nastech_cli.setup import (
-        _apply_default_agent_settings, _info, print_header, print_info, _print_setup_summary, print_success,
-        print_warning, prompt_choice, save_config, setup_gateway, setup_terminal_backend
-    )
-    # Step 1: Nastech Portal — OAuth login + model selection (provider set to "nastech" by the save).
+def _imported_model_label(config: dict) -> str:
+    """``"<provider> · <model>"`` when *config* (just written by an agent import) names a model
+    Nastech has credentials for, else ``""``."""
+    from nastech_cli.auth import AuthError, resolve_provider
+    from nastech_cli.models import provider_label
+    from nastech_cli.setup_migration import _model_section_has_credentials
+    model = config.get("model")
+    name = model.get("default") if isinstance(model, dict) else model
+    if not (isinstance(name, str) and name.strip()) or not _model_section_has_credentials(config):
+        return ""
+    try:
+        provider = resolve_provider()
+    except AuthError:
+        return ""
+    return f"{provider_label(provider)} · {name.strip()}"
+
+
+def _keep_imported_model(config: dict, imported_from: str) -> bool:
+    """After an import that brought a model, ask whether to keep it (the default) or switch to
+    Nastech Portal; True keeps it."""
+    from nastech_cli.setup import _info, print_header, prompt_choice
+    label = _imported_model_label(config) if imported_from else ""
+    if not label:
+        return False
+    print_header("Model & Provider", gap=True)
+    _info(f"Settings were imported from {imported_from}.")
+    return prompt_choice(f"Keep your imported model ({label}) or switch to Nastech Portal?", [
+        f"Keep {label}",
+        "Switch to Nastech Portal — free OAuth login, 300+ models plus the Tool Gateway",
+    ], 0, description=f"  Settings were imported from {imported_from}.") == 0
+
+
+def _quick_setup_nastech_portal(config: dict) -> None:
+    """Quick Setup's Nastech Portal step: OAuth login + model selection (provider set to "nastech" by the save)."""
+    from nastech_cli.setup import _info, print_header, print_info, print_warning
     print_header("Nastech Portal", gap=True)
     _info("One subscription, 300+ models, plus the Tool Gateway:",
           "  web search, image generation, TTS, browser automation.",
@@ -109,6 +136,19 @@ def _run_first_time_quick_setup(config: dict, nastech_home, is_existing: bool):
                    cancel_lines=(None, "Nastech Portal setup cancelled."), print_error=_on_error)
     # The wizard's later save_config(config) must not clobber the login/model save.
     _reload_config_into(config)
+
+
+def _run_first_time_quick_setup(config: dict, nastech_home, is_existing: bool, imported_from: str = ""):
+    """Streamlined first-time setup via Nastech Portal: OAuth, model, terminal & messaging;
+    everything else gets defaults. A model brought by an agent import (*imported_from* names the
+    agents) is offered first and kept by default, which skips the Nastech Portal step."""
+    from nastech_cli.setup import (
+        _apply_default_agent_settings, _info, print_info, _print_setup_summary, print_success,
+        prompt_choice, save_config, setup_gateway, setup_terminal_backend
+    )
+    # Step 1: the imported model, or Nastech Portal.
+    if not _keep_imported_model(config, imported_from):
+        _quick_setup_nastech_portal(config)
 
     # Step 2: Terminal Backend; Step 3: defaults for everything else.
     setup_terminal_backend(config)

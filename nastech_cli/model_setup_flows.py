@@ -285,11 +285,8 @@ def _model_flow_nastech(config, current_model="", args=None):
     from nastech_cli.nastech_subscription import prompt_enable_tool_gateway
     state = get_provider_auth_state("nastech")
     from nastech_cli import anon_auth
-    if anon_auth.guest_without_free_tier(state):
-        # A guest that carries no inference here: signing in promotes it and keeps its connectors.
-        print(anon_auth.UPGRADE_HINT)
-        return
-    if not state or not state.get("access_token"):
+    # A free tier with no inference here signs in like no account; its apps move to the account after.
+    if not state or not state.get("access_token") or anon_auth.guest_without_free_tier(state):
         _say("Not logged into Nastech Portal. Starting login...", "")
 
         def _login_then_offer_gateway(login_args, pconfig):
@@ -341,17 +338,27 @@ def _model_flow_nastech(config, current_model="", args=None):
     _policy_notice = nastech_policy_notice(removed=_policy_narrowed)
     if _policy_notice:
         print(_policy_notice)
+    from nastech_cli.model_picker_usage import featured_first, nastech_picker_usage
+    _usage = nastech_picker_usage(warm=True)
+    # Window plans: every model is usable; the plan's featured picks lead the list.
+    if _usage is not None:
+        model_ids = featured_first(model_ids, _usage.featured_model_ids)
     print(f'Showing {len(model_ids)} curated models — use "Enter custom model name" for others.')
 
     selected = _prompt_model_selection(
         model_ids, current_model=current_model, pricing=pricing, unavailable_models=unavailable_models,
         portal_url=_nastech_portal_url, unavailable_message=unavailable_message, confirm_provider="nastech",
-        confirm_base_url=creds.get("base_url", ""), confirm_api_key=creds.get("api_key", ""))
+        confirm_base_url=creds.get("base_url", ""), confirm_api_key=creds.get("api_key", ""),
+        usage=_usage)
     if not selected:
         print("No change.")
         return
     config = _nastech_persist_selection(selected, creds)
     print(f"Default model set to: {selected} (via Nastech Portal)")
+    if _usage is not None:
+        from nastech_cli.model_picker_usage import large_model_notice
+        if _notice := large_model_notice(selected, "nastech"):
+            print(f"⚠ {_notice}")
     # Offer Tool Gateway enablement for paid subscribers
     prompt_enable_tool_gateway(config)
 

@@ -102,8 +102,8 @@ The install also ships `nastech-agent`, a minimal runner that sends one query an
 | `nastech pets` | Browse, install, and select [petdex](../user-guide/features/pets.md) animated pets shown across the CLI, TUI, and desktop app. Subcommands: `list`, `install`, `select`, `show`, `off`, `scale`, `remove`, `doctor`. |
 | `nastech sessions` | Browse, export, prune, rename, and delete sessions. |
 | `nastech insights` | Show token/cost/activity analytics. |
-| `nastech claw` | OpenClaw migration helpers. |
-| `nastech import-agent` | Import a Claude Code (`~/.claude`) or Codex CLI (`~/.codex`) setup. |
+| `nastech claw` | OpenClaw migration (`migrate`, `cleanup`), from the [`agent-importers`](../user-guide/import-from-other-agents.md) plugin; `nastech claw migrate` is the same as `nastech import-agent openclaw`. |
+| `nastech import-agent` | Import an OpenClaw, Claude Code, Codex CLI or Cursor setup (from the [`agent-importers`](../user-guide/import-from-other-agents.md) plugin). |
 | `nastech dashboard` | Launch the web dashboard for managing config, API keys, and sessions. |
 | `nastech serve` | Start the Nastech backend server (headless; powers the desktop app and remote backends). |
 | `nastech desktop` (alias `gui`) | Build and launch the native Electron desktop app. |
@@ -404,6 +404,8 @@ nastech setup [model|tts|terminal|gateway|tools|agent] [--non-interactive] [--re
 
 **Returning user (already configured):** drops straight into the full reconfigure wizard — every prompt shows your current value as its default, press Enter to keep or type a new value. No menu.
 
+**Coming from another agent:** when the first run finds an OpenClaw, Claude Code, Codex CLI or Cursor setup (`~/.openclaw`, `~/.claude`, `~/.codex`, `~/.cursor`), it first asks **"Import your setup from …?"** (default yes). With more than one found, you then pick which from a checklist. Setup installs the [`agent-importers`](../user-guide/import-from-other-agents.md) plugin from the catalog, unless you already have it, and runs its import for each pick, which shows a preview and asks before changing anything (OpenClaw's allowlisted API keys and bot tokens are included, as the old built-in step did). Quick Setup after an import that brought a model and its key asks **"Keep your imported model (…) or switch to Nastech Portal?"** (default keep, which skips the Nastech Portal login). Nothing found, a no, `--non-interactive` or a setup started by the dashboard: no question and nothing installed. On an already configured install, run `nastech import-agent` instead.
+
 Jump into one section instead of the full wizard:
 
 | Section | Description |
@@ -612,7 +614,7 @@ Common flags for migration subcommands:
 | `--apply` | Rewrite `config.yaml` in-place (default: dry-run, no writes). |
 | `--no-backup` | Skip the timestamped backup of `config.yaml` when applying. |
 
-> Not to be confused with `nastech claw migrate` (one-shot import of OpenClaw configuration into Nastech) — `nastech migrate` is the top-level config-rewrite command.
+> Not to be confused with `nastech import-agent openclaw` (one-shot import of OpenClaw configuration into Nastech) — `nastech migrate` is the top-level config-rewrite command.
 
 
 ## `nastech codex-runtime`
@@ -1431,7 +1433,7 @@ nastech skills search react --source skills-sh
 nastech skills search https://mintlify.com/docs --source well-known
 nastech skills inspect official/security/1password
 nastech skills inspect skills-sh/vercel-labs/json-render/json-render-react
-nastech skills install official/migration/openclaw-migration
+nastech skills install official/mcp/fastmcp
 nastech skills install skills-sh/anthropics/skills/pdf --force
 nastech skills install https://sharethis.chat/SKILL.md                     # Direct URL (+ referenced support files)
 nastech skills install https://example.com/SKILL.md --name my-skill        # Override name when frontmatter has none
@@ -1804,10 +1806,22 @@ nastech insights [--days N] [--source platform]
 | `--days <n>` | Analyze the last `n` days (default: 30). |
 | `--source <platform>` | Filter by source such as `cli`, `telegram`, or `discord`. |
 
-## `nastech claw`
+## `nastech import-agent`
 
 ```bash
-nastech claw migrate [options]
+nastech plugins install agent-importers   # once; the command comes from this official plugin
+nastech import-agent [openclaw|claude-code|codex|cursor] [options]
+```
+
+Import an **OpenClaw** (`~/.openclaw`), **Claude Code** (`~/.claude`), **OpenAI Codex CLI** (`~/.codex`) or **Cursor** (`~/.cursor`) setup into Nastech: instructions and rules become memory entries, `Bash(...)` permission rules become `command_allowlist`/`approvals.deny`, MCP servers land in `mcp_servers`, and skills are copied. Always previews first. API keys and credentials are never imported, except OpenClaw's allowlisted keys when you pass `--migrate-secrets`. `--sync` re-imports registered Claude Code, Codex and Cursor sources that changed. On a fresh install, `nastech setup` offers to install the plugin and run the import for you when it finds one of these agents.
+
+The command moved out of core into the official `agent-importers` plugin, together with `nastech claw` (OpenClaw migration), whose spelling the plugin keeps. Without the plugin, `nastech import-agent` and `nastech claw` print the install line. See the **[import guide](../user-guide/import-from-other-agents.md)** for options and mapping tables.
+
+### OpenClaw: `nastech import-agent openclaw`
+
+```bash
+nastech import-agent openclaw [options]    # same as the older spelling: nastech claw migrate [options]
+nastech claw cleanup [--source <path>] [--dry-run] [--yes]
 ```
 
 Migrate your OpenClaw setup to Nastech. Reads from `~/.openclaw` (or a custom path) and writes to `~/.nastech`. Automatically detects legacy directory names (`~/.clawdbot`, `~/.moltbot`) and config filenames (`clawdbot.json`, `moltbot.json`).
@@ -1824,7 +1838,9 @@ Migrate your OpenClaw setup to Nastech. Reads from `~/.openclaw` (or a custom pa
 | `--skill-conflict <mode>` | Handle skill name collisions: `skip` (default), `overwrite`, or `rename`. |
 | `--yes` | Skip the confirmation prompt. |
 
-### What gets migrated
+`nastech claw cleanup` renames leftover OpenClaw directories to `*.pre-migration` once you have migrated (OpenClaw stops working after this; rename them back to undo).
+
+#### What gets migrated
 
 The migration covers 30+ categories across persona, memory, skills, model providers, messaging platforms, agent behavior, session policies, MCP servers, TTS, and more. Items are either **directly imported** into Nastech equivalents or **archived** for manual review.
 
@@ -1836,43 +1852,24 @@ The migration covers 30+ categories across persona, memory, skills, model provid
 
 For the complete config key mapping, SecretRef handling details, and post-migration checklist, see the **[full migration guide](../guides/migrate-from-openclaw.md)**.
 
-### Examples
+#### Examples
 
 ```bash
 # Preview what would be migrated
-nastech claw migrate --dry-run
+nastech import-agent openclaw --dry-run
 
 # Full migration (all compatible settings, no secrets)
-nastech claw migrate --preset full
+nastech import-agent openclaw --preset full
 
 # Full migration including API keys
-nastech claw migrate --preset full --migrate-secrets
+nastech import-agent openclaw --preset full --migrate-secrets
 
 # Migrate user data only (no secrets), overwrite conflicts
-nastech claw migrate --preset user-data --overwrite
+nastech import-agent openclaw --preset user-data --overwrite
 
 # Migrate from a custom OpenClaw path
-nastech claw migrate --source /home/user/old-openclaw
+nastech import-agent openclaw --source /home/user/old-openclaw
 ```
-
-## `nastech import-agent`
-
-```bash
-nastech import-agent [claude-code|codex] [options]
-```
-
-Import a **Claude Code** (`~/.claude`) or **OpenAI Codex CLI** (`~/.codex`) setup into Nastech. Maps `CLAUDE.md`/`AGENTS.md` instructions to memory entries, `Bash(...)` permission allow/deny rules to `command_allowlist`/`approvals.deny`, MCP servers to `mcp_servers` in `config.yaml`, and skill directories into `~/.nastech/skills/`. Always previews before applying; API keys and credentials are never imported.
-
-| Option | Description |
-| --- | --- |
-| `agent` | `claude-code` or `codex` (default: auto-detect). |
-| `--source <path>` | Custom source directory (default: `~/.claude` or `~/.codex`). |
-| `--dry-run` | Preview only — write nothing. |
-| `--overwrite` | Replace conflicting MCP servers / skills (default: skip). |
-| `--yes`, `-y` | Skip confirmation prompts. |
-| `--sync` | Re-import every previously imported source whose files changed since the last import. Prompt-free; combine with `--dry-run` to preview. |
-
-Every successful import registers its source in `~/.nastech/import-sync.json`; `nastech import-agent --sync` then re-imports any registered source whose files changed (a cron-friendly way to keep an imported Claude Code / Codex setup current). See the **[import guide](../user-guide/import-from-other-agents.md)** for the full mapping tables.
 
 ## `nastech serve`
 

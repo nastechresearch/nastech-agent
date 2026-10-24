@@ -316,7 +316,6 @@ class TestIsFreeTierModel:
         assert is_free_tier_model("some/zero-priced", "https://inference-api.nastechresearch.github.io/") is True
         assert is_free_tier_model("some/zero-priced", "https://inference-api.nastechresearch.github.io/v1/") is True
 
-
     def test_nastech_welcome_host_is_free_without_pricing(self, monkeypatch):
         """Anything the welcome host serves is the free tier, with no pricing lookup: the portal seeds
         paid_access=False for a free-tier identity ($0 by design), and that must never raise

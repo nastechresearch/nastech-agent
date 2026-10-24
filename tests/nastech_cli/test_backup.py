@@ -2041,12 +2041,12 @@ class TestRunPreUpdateBackup:
 
 
 # ---------------------------------------------------------------------------
-# Pre-migration backup (nastech claw migrate safety net)
+# Pre-migration backup (safety net for agent imports, e.g. nastech import-agent openclaw)
 # ---------------------------------------------------------------------------
 
 class TestPreMigrationBackup:
     """Tests for create_pre_migration_backup — the auto-backup
-    ``nastech claw migrate`` runs before mutating ~/.nastech/."""
+    ``nastech import-agent openclaw`` runs before mutating ~/.nastech/."""
 
     @pytest.fixture
     def nastech_home(self, tmp_path):

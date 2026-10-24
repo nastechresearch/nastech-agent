@@ -360,6 +360,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   contextMenuCopyImage: () => ipcRenderer.invoke('nastech:context-menu:copy-image'),
   contextMenuSpellcheck: action => ipcRenderer.invoke('nastech:context-menu:spellcheck', action),
   contextMenuGuestAddWord: payload => ipcRenderer.invoke('nastech:context-menu:guest-add-word', payload),
+  spellcheckDictionary: (op, word) => ipcRenderer.invoke('nastech:spellcheck:dictionary', { op, word }),
   onContextMenuSpellcheck: callback => {
     const listener = (_event, payload) => callback(payload)
     ipcRenderer.on('nastech:context-menu-spellcheck', listener)
@@ -477,6 +478,18 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   renamePath: (targetPath, newName) => ipcRenderer.invoke('nastech:fs:rename', targetPath, newName),
   writeTextFile: (filePath, content) => ipcRenderer.invoke('nastech:fs:writeText', filePath, content),
   trashPath: targetPath => ipcRenderer.invoke('nastech:fs:trash', targetPath),
+  pluginFiles: {
+    request: (pluginId, labels) => ipcRenderer.invoke('nastech:pluginFiles:request', pluginId, labels),
+    grants: pluginId => ipcRenderer.invoke('nastech:pluginFiles:grants', pluginId),
+    revoke: (pluginId, folderId) => ipcRenderer.invoke('nastech:pluginFiles:revoke', pluginId, folderId),
+    op: (pluginId, request) => ipcRenderer.invoke('nastech:pluginFiles:op', pluginId, request),
+    onChanged: callback => {
+      const listener = (_event, change) => callback(change)
+      ipcRenderer.on('nastech:pluginFiles:changed', listener)
+
+      return () => ipcRenderer.removeListener('nastech:pluginFiles:changed', listener)
+    }
+  },
   git: {
     worktreeList: repoPath => ipcRenderer.invoke('nastech:git:worktreeList', repoPath),
     worktreeAdd: (repoPath, options) => ipcRenderer.invoke('nastech:git:worktreeAdd', repoPath, options),

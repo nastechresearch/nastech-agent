@@ -47,6 +47,17 @@ describe('custom models', () => {
     expect(merged[1]).toBe(providers[1])
     expect(withCustomModels(providers, [])).toBe(providers)
   })
+
+  it('merges custom models into a usage-window Nastech row too (window plans allow any model)', () => {
+    const nastech: ModelOptionProvider = {
+      ...provider('nastech', ['example/model-b']),
+      plan_usage: { kind: 'usage_window', gauges: [] }
+    }
+
+    const merged = withCustomModels([nastech], [{ model: 'acme/model-x', provider: 'nastech' }])
+
+    expect(merged[0]?.models).toEqual(['example/model-b', 'acme/model-x'])
+  })
 })
 
 describe('resetModelVisibilityKeepingCustoms', () => {

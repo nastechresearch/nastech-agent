@@ -6,10 +6,10 @@ drop that row instead of handing its welcome-host token to the runtime.
 """
 
 from nastech_cli import anon_auth
-from tests.nastech_cli.anon_portal import claimed_trial, install_portal
+from tests.nastech_cli.anon_portal import claimed_trial, install_portal, off_local_desktop
 
 
-def test_guest_pool_row_is_dropped_outside_the_desktop_backend(monkeypatch, tmp_path):
+def test_a_claimed_guest_pool_row_serves_every_surface(monkeypatch, tmp_path):
     from agent.credential_pool import load_pool
     from nastech_cli.auth_nastech import resolve_nastech_runtime_credentials
 
@@ -18,7 +18,6 @@ def test_guest_pool_row_is_dropped_outside_the_desktop_backend(monkeypatch, tmp_
     resolve_nastech_runtime_credentials()  # the claimed guest now carries an inference token
     assert any(e.source == "device_code" for e in load_pool("nastech").entries())
 
-    monkeypatch.delenv("NASTECH_DESKTOP")
+    off_local_desktop(monkeypatch)  # cron, the CLI, a side agent: not the Desktop
 
-    assert not any(e.source == "device_code" for e in load_pool("nastech").entries())
-    assert anon_auth.has_guest()
+    assert any(e.source == "device_code" for e in load_pool("nastech").entries())

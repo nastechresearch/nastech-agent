@@ -120,9 +120,9 @@ nastech acp --check
 
 ### Browser tools (optional)
 
-Browser tools (`browser_navigate`, `browser_click`, etc.) depend on the
-`agent-browser` npm package and Chromium, which aren't part of the Python
-wheel. Install them with:
+Browser tools (`browser_exec` and the CDP tools `browser_cdp`,
+`browser_dialog`, `browser_vault`) need a local Chromium, which isn't part of
+the Python wheel. Install it with:
 
 ```bash
 nastech acp --setup-browser           # interactive (prompts before ~400 MB download)
@@ -133,9 +133,8 @@ This is the standalone command. The terminal-auth flow (`nastech acp --setup`) a
 
 What it does:
 
-- Installs Node.js 26 into `~/.nastech/node/` if missing
-- `npm install -g agent-browser @askjo/camofox-browser` into that prefix (no sudo needed — `npm`'s `--prefix` points at the user-writable Nastech-managed Node)
-- Installs Playwright Chromium, or uses a detected system Chrome/Chromium when available
+- Installs Nastech' pinned Chromium (the `chromium` package) through the package manager; no Node.js or npm involved
+- Nastech launches that Chromium itself when `browser_exec` first needs a browser
 
 The bootstrap is idempotent — re-running it is fast and skips work that's already done.
 

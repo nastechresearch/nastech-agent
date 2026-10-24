@@ -476,6 +476,16 @@ def _nastech_picker_model_ids(curated: dict, force_fresh_nastech_tier: bool) -> 
         from nastech_cli.models_pricing import nastech_policy_allowed_ids, restrict_to_nastech_policy
         model_ids = restrict_to_nastech_policy(model_ids, nastech_policy_allowed_ids(), rescue_empty=True)
     except Exception:
+        logger.debug("Nastech model policy filter failed", exc_info=True)
+    try:
+        # Window plans: the plan's featured picks lead the list. Plan shape only (it rarely changes), so
+        # the last snapshot at any age answers — a long-running gateway's 60s cache has usually lapsed
+        # by the time someone opens /model.
+        from nastech_cli.model_picker_usage import featured_first, nastech_picker_usage
+        usage = nastech_picker_usage(any_age=True)
+        if usage is not None:
+            model_ids = featured_first(model_ids, usage.featured_model_ids)
+    except Exception:
         pass
     return model_ids
 
@@ -1398,4 +1408,35 @@ def list_picker_providers(
     from nastech_cli.models_validate import drop_unofferable_model_ids
 
     drop_unofferable_model_ids(filtered)
+    _attach_window_model_notes(filtered)
     return filtered
+
+
+def _attach_window_model_notes(providers: list[dict]) -> None:
+    """Nastech on a usage-window plan, for the messaging pickers (same words as the CLI/TUI/desktop pickers):
+    ``model_labels`` {id: "Large" | "Free"} (plan shape, any-age snapshot; other levels carry no tag), and
+    from a fresh snapshot only (a stale percent would mislabel it) ``plan_line`` (the limit line: "Weekly
+    limit reached · resets in 21h · paid models now use your credits (pay as you go)").
+    Every field is omitted when empty and for any account not on a window plan. Never raises."""
+    try:
+        nastech = next((p for p in providers if str(p.get("slug", "")).lower() == "nastech"), None)
+        if nastech is None:
+            return
+        from nastech_cli.model_picker_usage import nastech_picker_usage, usage_level_label, usage_levels
+        fresh = nastech_picker_usage()
+        usage = fresh or nastech_picker_usage(any_age=True)
+        if usage is None:
+            return
+        from agent.plan_limits import cached_pricing
+        pricing = cached_pricing()  # this profile's catalog only (cache-only, no credential refresh)
+        models = [str(m) for m in nastech.get("models", [])]
+        labels = {m: label for m, lv in usage_levels(models, pricing).items() if (label := usage_level_label(lv))}
+        if labels:
+            nastech["model_labels"] = labels
+        if fresh is None:
+            return
+        line = usage.limit_line()
+        if line:
+            nastech["plan_line"] = line
+    except Exception:
+        logger.debug("window model notes failed", exc_info=True)
