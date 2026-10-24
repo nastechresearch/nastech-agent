@@ -130,7 +130,7 @@ def test_shared_nastech_store_writes_0o600_with_0o700_parent(tmp_path, monkeypat
             "obtained_at": "2026-01-01T00:00:00Z",
             "expires_at": "2026-01-01T01:00:00Z",
         }
-        auth_mod._write_shared_nastech_state(state)
+        auth_mod._write_shared_nastech_state(state, renewal=False)
         path = auth_mod._nastech_shared_store_path()
     finally:
         os.umask(old_umask)

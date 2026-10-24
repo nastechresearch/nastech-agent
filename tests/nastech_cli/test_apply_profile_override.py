@@ -396,3 +396,22 @@ class TestS6ContainerGatewayRun:
                 tmp_path, monkeypatch, nastech_home=str(root), active_profile="coder", argv=argv,
             )
             assert result == str(root / "profiles" / "coder"), argv
+
+
+def test_module_entry_keeps_an_explicit_default_profile_over_the_sticky_one(tmp_path):
+    """`python -m nastech_cli.main --profile default` (how Nastech spawns its own CLI) stays on the root
+    home while active_profile names another profile: a second import of the module must not re-read
+    the stripped argv and fall to the sticky profile."""
+    import subprocess
+    root = tmp_path / ".nastech"
+    (root / "profiles" / "work").mkdir(parents=True)
+    (root / "profiles" / "work" / "config.yaml").write_text("{}\n", encoding="utf-8")
+    (root / "active_profile").write_text("work\n", encoding="utf-8")
+    env = {k: v for k, v in os.environ.items() if not k.startswith("NASTECH_")}
+    env.update(HOME=str(tmp_path), USERPROFILE=str(tmp_path), NASTECH_HOME=str(root),
+               PYTHONPATH=str(Path(__file__).resolve().parents[2]))
+
+    out = subprocess.run([sys.executable, "-m", "nastech_cli.main", "--profile", "default", "config", "path"],
+                         env=env, capture_output=True, text=True, timeout=120, check=True).stdout
+
+    assert Path(out.strip().splitlines()[-1]).resolve() == (root / "config.yaml").resolve()

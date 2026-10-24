@@ -158,6 +158,7 @@ Si vienes de OpenClaw, Nastech puede importar automáticamente tu configuración
 **En cualquier momento después de instalar:**
 
 ```bash
+nastech plugins install agent-importers  # una vez: OpenClaw, Claude Code, Codex y Cursor
 nastech claw migrate              # Migración interactiva (preset completo)
 nastech claw migrate --dry-run    # Vista previa de qué se migraría
 nastech claw migrate --preset user-data   # Migrar sin secretos

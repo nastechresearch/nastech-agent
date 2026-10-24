@@ -98,6 +98,8 @@ That logs you in, sets Nastech as your provider, and turns on the Tool Gateway i
 :::
 
 :::info Setup modes
+Coming from OpenClaw, Claude Code, Codex CLI or Cursor? When a fresh `nastech setup` finds one of them on your computer it first offers to import your setup (it installs the `agent-importers` plugin for that; see [Import from Other Agents](../user-guide/import-from-other-agents.md)).
+
 On a fresh install, `nastech setup` offers three modes:
 
 - **Quick Setup (Nastech Portal)** — OAuth login, no API keys to manage; sets up a model plus the Tool Gateway tools, billed to your [Nastech Portal subscription](../integrations/nastech-portal.md). The recommended fast path.

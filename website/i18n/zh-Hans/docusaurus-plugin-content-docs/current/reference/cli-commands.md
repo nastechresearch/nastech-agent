@@ -820,7 +820,7 @@ nastech skills search react --source skills-sh
 nastech skills search https://mintlify.com/docs --source well-known
 nastech skills inspect official/security/1password
 nastech skills inspect skills-sh/vercel-labs/json-render/json-render-react
-nastech skills install official/migration/openclaw-migration
+nastech skills install official/mcp/fastmcp
 nastech skills install skills-sh/anthropics/skills/pdf --force
 nastech skills install https://sharethis.chat/SKILL.md                     # 直接 URL（含引用的支持文件）
 nastech skills install https://example.com/SKILL.md --name my-skill        # frontmatter 无名称时覆盖名称

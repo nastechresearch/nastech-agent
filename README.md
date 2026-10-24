@@ -26,7 +26,7 @@ Use any model you want — [Nastech Portal](https://portal.nastechresearch.githu
 <tr><td><b>A closed learning loop</b></td><td>Agent-curated memory with periodic nudges. Autonomous skill creation after complex tasks. Skills self-improve during use. FTS5 session search with LLM summarization for cross-session recall. <a href="https://github.com/plastic-labs/honcho">Honcho</a> dialectic user modeling. Compatible with the <a href="https://agentskills.io">agentskills.io</a> open standard.</td></tr>
 <tr><td><b>Scheduled automations</b></td><td>Built-in cron scheduler with delivery to any platform. Daily reports, nightly backups, weekly audits — all in natural language, running unattended.</td></tr>
 <tr><td><b>Delegates and parallelizes</b></td><td>Spawn isolated subagents for parallel workstreams. In Desktop, choose their provider, model, and limits under Settings → Model → Subagents, then Apply the complete route. Write Python scripts that call tools via RPC, collapsing multi-step pipelines into zero-context-cost turns.</td></tr>
-<tr><td><b>Runs anywhere, not just your laptop</b></td><td>Seven terminal backends — local, Docker, SSH, Singularity, Modal, Daytona, and Vercel Sandbox. Daytona and Modal offer serverless persistence — your agent's environment hibernates when idle and wakes on demand, costing nearly nothing between sessions. Run it on a $5 VPS or a GPU cluster.</td></tr>
+<tr><td><b>Runs anywhere, not just your laptop</b></td><td>Six built-in terminal backends — local, Docker, SSH, Modal, Daytona, and Vercel Sandbox — plus plugin backends such as Singularity/Apptainer. Daytona and Modal offer serverless persistence — your agent's environment hibernates when idle and wakes on demand, costing nearly nothing between sessions. Run it on a $5 VPS or a GPU cluster.</td></tr>
 <tr><td><b>Research-ready</b></td><td>Batch trajectory generation, trajectory compression for training the next generation of tool-calling models.</td></tr>
 </table>
 
@@ -114,7 +114,6 @@ nastech config set   # Set individual config values
 nastech config get   # Print individual config values
 nastech gateway      # Start the messaging gateway (Telegram, Discord, etc.)
 nastech setup        # Run the full setup wizard (configures everything at once)
-nastech claw migrate # Migrate from OpenClaw (if coming from OpenClaw)
 nastech update       # Update to the latest version
 nastech doctor       # Diagnose any issues
 ```
@@ -186,33 +185,34 @@ All documentation lives at **[nastechresearch.github.io/nastech-agent/docs](http
 
 ---
 
-## Migrating from OpenClaw
+## Migrating from OpenClaw or another agent
 
-If you're coming from OpenClaw, Nastech can automatically import your settings, memories, skills, and API keys.
+If you're coming from OpenClaw, Claude Code, Codex CLI or Cursor, Nastech can import your settings, memories and skills (and, for OpenClaw, API keys when you ask for them).
 
-**During first-time setup:** The setup wizard (`nastech setup`) automatically detects `~/.openclaw` and offers to migrate before configuration begins.
+**During setup:** `nastech setup` asks whether to import from another agent, pre-selects the ones it finds (`~/.openclaw`, `~/.claude`, `~/.codex`, `~/.cursor`), installs the official `agent-importers` plugin and runs the import with a preview first.
 
 **Anytime after install:**
 
 ```bash
-nastech claw migrate              # Interactive migration (full preset)
-nastech claw migrate --dry-run    # Preview what would be migrated
-nastech claw migrate --preset user-data   # Migrate without secrets
-nastech claw migrate --overwrite  # Overwrite existing conflicts
+nastech plugins install agent-importers          # once per profile
+nastech import-agent openclaw                    # interactive migration (full preset)
+nastech import-agent openclaw --dry-run          # preview what would be migrated
+nastech import-agent openclaw --migrate-secrets  # also bring allowlisted API keys
+nastech import-agent claude-code                 # or codex / cursor
 ```
 
-What gets imported:
+What gets imported from OpenClaw:
 
 - **SOUL.md** — persona file
 - **Memories** — MEMORY.md and USER.md entries
 - **Skills** — user-created skills → `~/.nastech/skills/openclaw-imports/`
 - **Command allowlist** — approval patterns
 - **Messaging settings** — platform configs, allowed users, working directory
-- **API keys** — allowlisted secrets (Telegram, OpenRouter, OpenAI, Anthropic, ElevenLabs)
+- **API keys** — allowlisted secrets (Telegram, OpenRouter, OpenAI, Anthropic, ElevenLabs), only with `--migrate-secrets`
 - **TTS assets** — workspace audio files
 - **Workspace instructions** — AGENTS.md (with `--workspace-target`)
 
-See `nastech claw migrate --help` for all options, or use the `openclaw-migration` skill for an interactive agent-guided migration with dry-run previews.
+`nastech claw migrate` still works as the older spelling. See the [OpenClaw migration guide](https://nastechresearch.github.io/nastech-agent/docs/guides/migrate-from-openclaw) and [Import from Other Agents](https://nastechresearch.github.io/nastech-agent/docs/user-guide/import-from-other-agents).
 
 ---
 

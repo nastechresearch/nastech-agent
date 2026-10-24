@@ -327,6 +327,10 @@ export class NastechGateway extends JsonRpcGatewayClient {
     })
   }
 
+  protected override isDesktopLocal(): boolean {
+    return this.canonical
+  }
+
   override async connect(wsUrl: string): Promise<void> {
     this.connectionGeneration++
     this.canonical = new URL(wsUrl).searchParams.has('native_dial')

@@ -95,7 +95,8 @@ def openclaw_residue_hint_cli() -> str:
     """Banner shown the first time Nastech finds ``~/.openclaw/``: migrate first, cleanup (which breaks OpenClaw) after."""
     return (
         "A legacy OpenClaw directory was detected at ~/.openclaw/.\n"
-        "To port your config, memory, and skills over to Nastech, run `nastech claw migrate`.\n"
+        "To port your config, memory, and skills over to Nastech, run `nastech import-agent openclaw` "
+        "(from the agent-importers plugin: `nastech plugins install agent-importers`).\n"
         "If you've already migrated and want to archive the old directory, run `nastech claw cleanup` "
         "(renames it to ~/.openclaw.pre-migration — OpenClaw will stop working after this).\n"
         "This tip only shows once."

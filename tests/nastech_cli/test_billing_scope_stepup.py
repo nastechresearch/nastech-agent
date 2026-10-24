@@ -98,6 +98,20 @@ def test_step_up_requests_billing_scope_and_reuses_prior_urls(monkeypatch, _stub
     assert captured["client_id"] == "nastech-cli"
 
 
+def test_step_up_drops_the_billing_token_cache(monkeypatch, _stub_persist):
+    """The refused action is replayed right after the grant; a still-cached pre-grant token would 403 again
+    (desktop showed "Remote Spending needs approval" straight after approving)."""
+    from nastech_cli import nastech_billing
+    monkeypatch.setattr(auth, "get_provider_auth_state", lambda p: {"scope": "inference:invoke"})
+    fake_login = lambda **kw: {"scope": "inference:invoke billing:manage", "access_token": "new"}
+    monkeypatch.setattr(auth, "_nastech_device_code_login", fake_login)
+    monkeypatch.setattr(auth_nastech, "_nastech_device_code_login", fake_login)
+    nastech_billing._token_cache["home"] = (0.0, "old-unscoped", "https://portal")
+
+    assert step_up_nastech_billing_scope() is True
+    assert nastech_billing._token_cache == {}
+
+
 # ---------------------------------------------------------------------------
 # on_verification callback plumbing (TUI surfaces the device-flow URL via this)
 # ---------------------------------------------------------------------------

@@ -25,8 +25,7 @@ def build_acp_parser(subparsers, *, cmd_acp: Callable) -> None:
         help="Run interactive Nastech provider/model setup for ACP terminal auth")
     acp_parser.add_argument(
         "--setup-browser", action="store_true",
-        help="Install agent-browser + Playwright Chromium into ~/.nastech/node/ "
-             "for browser tool support (idempotent).")
+        help="Install PM's pinned Chromium for browser_exec (idempotent).")
     acp_parser.add_argument(
         "--yes", "-y", action="store_true", dest="assume_yes",
         help="Accept all prompts (used by --setup-browser to skip the "
