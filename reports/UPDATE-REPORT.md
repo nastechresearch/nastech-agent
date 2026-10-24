@@ -31,21 +31,21 @@
 
 ## Stage timing
 
-- total measured: 812.24 s
+- total measured: 817.23 s
 - profile: `100ways.stage-profile.v1`
 
 | stage | status | duration | share |
 |-------|--------|----------|-------|
-| brand | ok | 258.02 s | 31.8% |
-| compare | ok | 235.04 s | 28.9% |
-| verify | ok | 234.85 s | 28.9% |
-| pull | ok | 52.32 s | 6.4% |
-| forkcheck | ok | 15.50 s | 1.9% |
-| reconcile | ok | 11.15 s | 1.4% |
-| summary | ok | 2.69 s | 0.3% |
-| preserve | ok | 1.51 s | 0.2% |
+| brand | ok | 257.68 s | 31.5% |
+| compare | ok | 236.00 s | 28.9% |
+| verify | ok | 235.75 s | 28.8% |
+| pull | ok | 52.53 s | 6.4% |
+| forkcheck | ok | 15.48 s | 1.9% |
+| reconcile | ok | 12.07 s | 1.5% |
+| summary | ok | 5.06 s | 0.6% |
+| preserve | ok | 1.49 s | 0.2% |
 | scan | ok | 0.64 s | 0.1% |
-| source-evidence | ok | 0.47 s | 0.1% |
+| source-evidence | ok | 0.48 s | 0.1% |
 | census | ok | 0.04 s | 0.0% |
 | plan | ok | 0.00 s | 0.0% |
 | report | pending | 0.00 s | 0.0% |
@@ -56,7 +56,7 @@
 | gate | ok | 0.00 s | 0.0% |
 | release | ok | 0.00 s | 0.0% |
 
-Slowest: brand 258.0s, compare 235.0s, verify 234.8s.
+Slowest: brand 257.7s, compare 236.0s, verify 235.8s.
 
 ## Brand
 

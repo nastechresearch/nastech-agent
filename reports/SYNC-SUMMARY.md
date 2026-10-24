@@ -135,7 +135,7 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Verification evidence
 
-- **Direct source provenance:** fresh-direct-clone at 5894e750c3db, fetched 2026-10-24T01:07:46+00:00
+- **Direct source provenance:** fresh-direct-clone at 5894e750c3db, fetched 2026-10-24T02:10:51+00:00
 - **Publication gate:** PASS - cleared for human review only
 - **Tree parity:** 20902/20902 files verified byte-faithful after branding; no outstanding differences
 - **Branding:** 20902 files branded, 20717 rewritten, 0 errors
