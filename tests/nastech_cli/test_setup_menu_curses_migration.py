@@ -23,10 +23,12 @@ def test_prompt_model_selection_uses_curses_radiolist():
         description=None,
         searchable=False,
         search_labels=None,
+        headings=None,
     ):
         seen["title"] = title
         seen["items"] = items
         seen["search_labels"] = search_labels
+        seen["headings"] = headings
         return 1  # pick second model
 
     with patch("nastech_cli.curses_ui.curses_radiolist", side_effect=_fake), \
@@ -42,6 +44,11 @@ def test_prompt_model_selection_uses_curses_radiolist():
     assert "Skip (keep current)" in plain
     assert seen["search_labels"] is not None
     assert len(seen["search_labels"]) == len(seen["items"])
+    # ``headings`` maps an item index to the dim section title drawn above it, and the
+    # widget indexes ``items`` with it: a key outside the list would raise inside
+    # curses_radiolist instead of the picker. Whether the picker groups at all is the
+    # catalog's business, so only the relationship is pinned here.
+    assert all(0 <= index < len(seen["items"]) for index in (seen["headings"] or {}))
 
 
 def test_prompt_model_selection_esc_cancels():
