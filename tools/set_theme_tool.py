@@ -58,7 +58,7 @@ def set_theme_tool(accent: Optional[str] = None, mode: Optional[str] = None, lay
 SET_THEME_SCHEMA = {
     "name": "set_theme",
     "description": (
-        "Change how the Nastech desktop app looks: accent colour, light/dark mode, layout. Pass the values "
+        "Change how the Nastech desktop looks: accent colour, light/dark mode, layout. Pass the values "
         "to apply them now; the result says what was applied. Pass picker instead to show the user an "
         "accent or layout picker card in the chat and wait for their pick. To reveal ONE pane, use "
         "focus_pane instead."

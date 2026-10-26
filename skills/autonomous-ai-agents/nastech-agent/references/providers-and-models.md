@@ -14,8 +14,6 @@ Full docs: https://nastechresearch.github.io/nastech-agent/docs/integrations/pro
 | openai-codex | OAuth | `nastech auth add openai-codex` |
 | qwen-oauth | OAuth | `nastech auth add qwen-oauth` |
 | minimax-oauth | OAuth | `nastech auth add minimax-oauth` |
-| copilot | Token | `COPILOT_GITHUB_TOKEN` / `GH_TOKEN` (Copilot device flow — `gh auth login` tokens do NOT work) |
-| copilot-acp | External CLI | Copilot CLI on PATH or `COPILOT_CLI_PATH` |
 | gemini | API key | `GOOGLE_API_KEY` or `GEMINI_API_KEY` |
 | xai | API key | `XAI_API_KEY` (SuperGrok OAuth also supported) |
 | deepseek | API key | `DEEPSEEK_API_KEY` |
@@ -28,6 +26,8 @@ Full docs: https://nastechresearch.github.io/nastech-agent/docs/integrations/pro
 | fireworks / novita / nvidia / deepinfra / gmi / arcee / stepfun / upstage / kilocode / ai-gateway / opencode-zen / opencode-go / ollama-cloud | API key | `<NAME>_API_KEY` |
 | bedrock / vertex / azure-foundry | Cloud SDK / key | AWS SDK creds / Vertex ADC / `AZURE_FOUNDRY_API_KEY` |
 | custom | Config | `model.base_url` + `model.api_key` in config.yaml |
+
+GitHub Copilot (`copilot`, `copilot-acp`) is a labs plugin, not core: `nastech plugins install github-copilot`, then `nastech auth add copilot` (https://github.com/NastechResearch/nastech-labs-plugins/tree/main/github-copilot).
 
 Multiple credentials per provider pool and rotate automatically (`nastech auth`).
 Fallback chain when the primary fails: `nastech fallback add|remove|list`.

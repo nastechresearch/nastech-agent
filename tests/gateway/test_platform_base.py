@@ -662,6 +662,23 @@ class TestMediaDeliveryDefaultMode:
 
         assert BasePlatformAdapter.validate_media_delivery_path(str(secret)) is None
 
+    @pytest.mark.parametrize("rel", ["webapp/session-token", "webapp/native-sign-in-tokens.json"])
+    def test_denylist_blocks_the_webapps_sign_in_files(self, tmp_path, monkeypatch, rel):
+        """The Webapp's browser credential and its listener's grants to native apps under
+        ``~/.nastech/webapp/`` never deliver as native media, as the agent's file tools never read them."""
+        self._patch_roots(monkeypatch)
+
+        fake_home = tmp_path / "home"
+        nastech_dir = fake_home / ".nastech"
+        (nastech_dir / "webapp").mkdir(parents=True)
+        secret = nastech_dir / rel
+        secret.write_text("t" * 43 + "\n")
+        monkeypatch.setenv("HOME", str(fake_home))
+        monkeypatch.setattr("gateway.platforms.base._NASTECH_HOME", nastech_dir)
+        monkeypatch.setattr("gateway.platforms.base._NASTECH_ROOT", nastech_dir)
+
+        assert BasePlatformAdapter.validate_media_delivery_path(str(secret)) is None
+
 
     def test_denylist_blocks_google_token_default_mode(self, tmp_path, monkeypatch):
         """Integration credentials at the NASTECH_HOME root (google_token.json)

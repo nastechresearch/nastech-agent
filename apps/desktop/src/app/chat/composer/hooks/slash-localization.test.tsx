@@ -102,7 +102,7 @@ describe('desktop slash description localization', () => {
 
     function Probe() {
       api.setLocale = useI18n().setLocale
-      api.search = useSlashCompletions({ gateway: { request } as unknown as NastechGateway }).adapter.search
+      api.search = useSlashCompletions({ gateway: { request } as unknown as NastechGateway }).adapter?.search
 
       return null
     }

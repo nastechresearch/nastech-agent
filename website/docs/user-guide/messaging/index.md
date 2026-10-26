@@ -682,6 +682,8 @@ The plist sets `RunAtLoad`, so loading it starts the gateway. `nastech gateway i
 
 :::info Local Network access (LAN devices fail with "No route to host")
 macOS Local Network Privacy attributes a socket to the executable launchd spawned for the job. A bare venv Python has no application identity, so a launchd-run gateway could not reach LAN hosts (Home Assistant, local model servers) — every connect failed with `errno 65 No route to host` while the same URL worked from Terminal, and no prompt was ever shown to grant it. The generated plist therefore runs the gateway through `/usr/bin/osascript`; a JXA `system()` call starts the gateway without an interactive event-polling loop, and macOS treats its children as osascript's own — an Apple platform binary, exempt from the check. `ps` shows `osascript → stderr_timestamp → gateway run`; stop/restart/KeepAlive behave exactly as before. A plist installed by an older Nastech is refreshed by `nastech gateway install` (or on the next `nastech gateway start`).
+
+Without an installed service, the gateway Nastech starts for you (Nastech Desktop, a chat or TUI client, or the restart after `nastech update`) runs the same way, as a one-off launchd job labelled `com.nastechresearch.nastech.runtime.<id>`. A plain child process would lose LAN access as soon as the app that started it quits: macOS then holds the gateway itself responsible, and denies it. The one-off job is never installed in `~/Library/LaunchAgents`, never starts at login and is never restarted by launchd. Because osascript is the responsible app, macOS file-access prompts for that gateway (Documents, Downloads, …) name **osascript**, not Nastech.
 :::
 
 :::tip Picking up new credentials after `nastech auth add` / `nastech auth reset`

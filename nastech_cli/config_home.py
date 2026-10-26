@@ -81,7 +81,7 @@ def initialize_home(home: Path, subdirs: tuple[str, ...], ensured: set[str]) -> 
 
 
 def config_load_issue(exc: Exception):
-    from nastech_cli.config import ConfigIssue
+    from nastech_cli.config_issues import ConfigIssue
 
     if isinstance(exc, (HomeInitializationError, OSError)):
         return ConfigIssue(

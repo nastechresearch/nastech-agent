@@ -43,7 +43,7 @@ from urllib.parse import urlparse
 import httpx
 
 from agent.web_search_provider import WebSearchProvider
-from nastech_cli.version_info import get_version_info
+from nastech_cli.version_info import nastech_user_agent
 
 logger = logging.getLogger(__name__)
 
@@ -53,12 +53,13 @@ _KEY_URL = "https://www.perplexity.ai/account/api"
 # Identify Nastech to Perplexity: the same static harness identity Nastech sends Kimi and
 # OpenCode, plus Perplexity's integration header. No per-user identifier and no separate
 # request; the call already carries the user's own API key.
-_HEADERS = {
-    "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
-    "X-Title": "Nastech Agent",
-    "User-Agent": f"NastechAgent/{get_version_info().base_version}",
-    "X-Pplx-Integration": "nastech-agent",
-}
+def _headers() -> dict[str, str]:
+    return {
+        "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
+        "X-Title": "Nastech Agent",
+        "User-Agent": nastech_user_agent("NastechAgent"),
+        "X-Pplx-Integration": "nastech-agent",
+    }
 
 
 # Search API hard cap for search_type=web.
@@ -92,10 +93,10 @@ def _perplexity_request(endpoint: str, payload: dict[str, Any], gateway=None) ->
     from agent.web_search_provider import get_provider_env
 
     api_key = get_provider_env("PERPLEXITY_API_KEY")
-    headers = _HEADERS
+    headers = _headers()
     if gateway is not None:
         # Nastech-owned key behind the gateway: identify the harness only, not a per-user integration.
-        base_url, api_key, headers = gateway.gateway_origin.rstrip("/"), gateway.nastech_user_token, {"User-Agent": _HEADERS["User-Agent"]}
+        base_url, api_key, headers = gateway.gateway_origin.rstrip("/"), gateway.nastech_user_token, {"User-Agent": headers["User-Agent"]}
     elif api_key:
         base_url = (get_provider_env("PERPLEXITY_BASE_URL") or _DEFAULT_BASE_URL).rstrip("/")
     else:

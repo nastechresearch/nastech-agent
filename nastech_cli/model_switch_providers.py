@@ -272,11 +272,11 @@ def _iter_builtin_candidates(models_dev_data: dict, excluded: set, seen: set):
     silently switch a user onto an endpoint they may have no key for), aliases of another canonical
     profile ("kimi" -> "kimi-coding"), non-api_key auth types (section 2 handles them) and
     unroutable providers. PROVIDER_REGISTRY env var names win over models.dev's."""
-    from agent.models_dev import PROVIDER_TO_MODELS_DEV
+    from agent.models_dev import models_dev_provider_map
     from nastech_cli.auth import PROVIDER_REGISTRY, is_runtime_provider_routable
     from nastech_cli.models import _AGGREGATOR_PROVIDERS
     from nastech_cli.providers import ALIASES
-    for nastech_id, mdev_id in PROVIDER_TO_MODELS_DEV.items():
+    for nastech_id, mdev_id in models_dev_provider_map().items():
         alias_target = ALIASES.get(nastech_id)
         if alias_target and alias_target != nastech_id and alias_target in _AGGREGATOR_PROVIDERS:
             continue
@@ -659,9 +659,9 @@ def _collect_authed_provider_slugs(
     Env vars are read through the per-profile secret scope. AWS SDK providers are skipped
     (heavier detection)."""
     from nastech_cli.model_switch import _scoped_key_env
-    from agent.models_dev import PROVIDER_TO_MODELS_DEV
+    from agent.models_dev import models_dev_provider_map
     from nastech_cli.auth import PROVIDER_REGISTRY
-    from nastech_cli.providers import NASTECH_OVERLAYS
+    from nastech_cli.providers import nastech_overlays
     from nastech_cli.models import CANONICAL_PROVIDERS
     excluded_set = {str(p).strip().lower() for p in excluded if p}
     slugs: list[str] = []
@@ -675,8 +675,8 @@ def _collect_authed_provider_slugs(
         if _any_env(env_vars, _scoped_key_env) or _raw_pool_usable(nastech_id):
             _emit(nastech_id, nastech_id)
 
-    mdev_to_nastech = {v: k for k, v in PROVIDER_TO_MODELS_DEV.items()}
-    for pid, overlay in NASTECH_OVERLAYS.items():
+    mdev_to_nastech = {v: k for k, v in models_dev_provider_map().items()}
+    for pid, overlay in nastech_overlays().items():
         nastech_slug = mdev_to_nastech.get(pid, pid)
         if _skip(seen, excluded_set, pid, nastech_slug) or overlay.auth_type == "aws_sdk":
             continue
@@ -871,8 +871,8 @@ def _overlay_has_creds(b: _PickerBuild, pid: str, nastech_slug: str, overlay) ->
     else:
         from nastech_cli.model_switch import _scoped_key_env
         has_creds = _overlay_has_env_creds(pid, nastech_slug, overlay, _scoped_key_env)
-    # External-process providers (copilot-acp) hold no key/token/pool entry by design — the
-    # spawned ACP subprocess brings its own auth. "Configured" means the executable resolves.
+    # External-process providers (ACP CLIs) hold no key/token/pool entry by design — the
+    # spawned subprocess brings its own auth. "Configured" means the executable resolves.
     # "Configured" means the executable resolves, which is exactly what get_auth_status() reports for them;
     # without this branch the has_creds filter below unconditionally hides the provider from every picker
     # (#63662).
@@ -909,21 +909,20 @@ def _overlay_has_creds(b: _PickerBuild, pid: str, nastech_slug: str, overlay) ->
 
 
 def _lap_overlay_rows(b: _PickerBuild, data: dict, user_providers: dict) -> None:
-    """Section 2: Nastech-only providers (nastech, openai-codex, copilot, opencode-go, ...)."""
-    from agent.models_dev import PROVIDER_TO_MODELS_DEV
+    """Section 2: Nastech-only providers (nastech, openai-codex, opencode-go, plugin overlays, ...)."""
+    from agent.models_dev import models_dev_provider_map
     from nastech_cli.model_switch import _declared_model_ids
-    from nastech_cli.providers import NASTECH_OVERLAYS
+    from nastech_cli.providers import nastech_overlays
 
-    # NASTECH_OVERLAYS keys may be models.dev IDs ("github-copilot") while config.yaml uses
-    # Nastech IDs ("copilot").
-    mdev_to_nastech = {v: k for k, v in PROVIDER_TO_MODELS_DEV.items()}
-    for pid, overlay in NASTECH_OVERLAYS.items():
+    # Overlay keys may be models.dev IDs while config.yaml uses Nastech IDs.
+    mdev_to_nastech = {v: k for k, v in models_dev_provider_map().items()}
+    for pid, overlay in nastech_overlays().items():
         nastech_slug = mdev_to_nastech.get(pid, pid)
         if _skip(b.seen_slugs, b.excluded, pid, nastech_slug):
             continue
         if not _overlay_has_creds(b, pid, nastech_slug, overlay):
             continue
-        if nastech_slug in {"openai-codex", "copilot", "copilot-acp"}:
+        if nastech_slug == "openai-codex":
             # Live OAuth-backed discovery so Pro-only Codex slugs not in the static catalog
             # appear; falls back to curated when unreachable (or not yet cached on the read path).
             model_ids = _live_or_curated_ids(nastech_slug, b.curated, merge_models_dev=False,
@@ -973,7 +972,7 @@ def _lap_canonical_rows(b: _PickerBuild) -> None:
             _is_aws_sdk(cp_config) and _has_aws_sdk_creds_for_listing(cp.slug, b.current_provider))
         if not has_creds and cp_config is not None and cp_config.auth_type == "external_process":
             # Subprocess-backed providers own their auth; the binary resolving is the credential
-            # evidence for listing (same gate as the copilot-acp overlay row and nastech auth status).
+            # evidence for listing (same gate as the section-2 overlay rows and nastech auth status).
             try:
                 from nastech_cli.auth import get_external_process_provider_status
                 has_creds = bool(get_external_process_provider_status(cp.slug).get("configured"))
@@ -1192,12 +1191,12 @@ def _build_curated_lists(current_provider: str, current_base_url: str, current_m
     from nastech_cli.models import OPENROUTER_MODELS, _PROVIDER_MODELS, get_curated_nastech_model_ids
     curated: dict[str, list[str]] = dict(_PROVIDER_MODELS)
     curated["openrouter"] = [mid for mid, _ in OPENROUTER_MODELS]
-    # Plugin profiles without a static row: their fallback_models are the curated floor, so the
-    # non-blocking GUI read (cold catalog cache) lists them instead of an empty provider row.
+    # Plugin profiles without a built-in row: this home's static_models, else fallback_models, are the
+    # curated floor, so the non-blocking GUI read (cold catalog cache) never lists an empty provider row.
     from providers import list_providers
     for _pp in list_providers():
-        if _pp.fallback_models and not curated.get(_pp.name):
-            curated[_pp.name] = list(_pp.fallback_models)
+        if not curated.get(_pp.name) and (rows := list(_pp.static_models or _pp.fallback_models)):
+            curated[_pp.name] = rows
     # Remote manifest so new Portal models surface without a release; in-repo snapshot fallback.
     curated["nastech"] = get_curated_nastech_model_ids()
     if "ollama-cloud" not in curated:
@@ -1274,7 +1273,7 @@ def list_authenticated_providers(
     user_providers = stringify_provider_map(user_providers)
     data = fetch_models_dev()
 
-    # A single excluded entry like ``copilot`` hides the provider under every key it surfaces
+    # A single excluded entry like ``kimi-coding`` hides the provider under every key it surfaces
     # as (nastech_id / mdev_id / canonical slug).
     b = _PickerBuild(
         current_provider=current_provider, current_base_url=current_base_url, current_model=current_model,

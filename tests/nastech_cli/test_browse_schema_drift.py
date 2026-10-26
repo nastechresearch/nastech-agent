@@ -544,6 +544,15 @@ from nastech_cli.web_server_sessions import _open_session_db_at_path
 phase = sys.argv[2]
 original = ssr.connect_tracked
 
+# The budgeted phase is slowed on purpose: every sqlite callback sleeps _STEP_S to stand in for a
+# cold multi-GB disk. That injected delay is the work the bound must keep charging; how much the
+# host's scheduler overslept it is a property of the machine, not of the code under test, so the
+# child counts both and reports them. _STEP_S is the fixture's own value, named once so the
+# accounting below cannot drift from the delay it measures.
+_STEP_S = 0.01
+callbacks = 0
+late = 0.0
+
 class SlowConnection:
     """A real sqlite connection whose VM runs slowly (stand-in for a cold multi-GB disk). The
     slowdown is installed here, whether or not the code under test sets its own progress handler,
@@ -555,7 +564,11 @@ class SlowConnection:
         return getattr(self._conn, name)
     def set_progress_handler(self, handler, n):
         def slow():
-            time.sleep(0.01)
+            global callbacks, late
+            began = time.monotonic()
+            time.sleep(_STEP_S)
+            callbacks += 1
+            late += max(0.0, time.monotonic() - began - _STEP_S)
             return handler() if handler is not None else 0
         return self._conn.set_progress_handler(slow, 5)
     def close(self):
@@ -573,23 +586,29 @@ def slowed(path, *a, **kw):
     conn = original(path, *a, **kw)
     read_only = "mode=ro" in str(path)
     if holding_lock() and (phase == "integrity") == read_only:
-        global slowed_at
-        slowed_at = time.monotonic()  # the instant gateway.lock is ours and the budget starts
+        global slowed_at, late_at
+        # The instant gateway.lock is ours the budget starts. `late` is process-wide and keeps
+        # accruing across every slowed phase, so snapshot it here too: the bound below may only
+        # credit the lateness that accrues after this stamp, never lateness an earlier phase paid.
+        slowed_at, late_at = time.monotonic(), late
         print("slowed", flush=True)  # this process holds gateway.lock and the slow phase begins
         return SlowConnection(conn)
     return conn
 
 ssr.connect_tracked = slowed
 slowed_at = None
+late_at = None
 started = time.monotonic()
 print("started", flush=True)
 try:
     _open_session_db_at_path(Path(sys.argv[1]), read_only=True).close()
-    print("RESULT 200", time.monotonic() - started, -1.0, flush=True)
+    print("RESULT 200", time.monotonic() - started, -1.0, callbacks, late,
+          late_at if late_at is not None else -1.0, flush=True)
 except HTTPException as exc:
     ended = time.monotonic()
     window = ended - slowed_at if slowed_at is not None else -1.0
-    print("RESULT", exc.status_code, ended - started, window, exc.detail, flush=True)
+    print("RESULT", exc.status_code, ended - started, window, callbacks, late,
+          late_at if late_at is not None else -1.0, exc.detail, flush=True)
 '''
 
 
@@ -630,8 +649,9 @@ def test_slow_browse_reconcile_gives_up_inside_its_budget_and_boot_waits_it_out(
         booting.close()
     out = browse.communicate(timeout=60)[0]
     result = next(line for line in out.splitlines() if line.startswith("RESULT"))
-    _, status, elapsed, window, *detail = result.split(" ", 4)
-    elapsed, window = float(elapsed), float(window)
+    _, status, elapsed, window, callbacks, late, late_at, *detail = result.split(" ", 7)
+    elapsed, window, late = float(elapsed), float(window), float(late)
+    late_at, callbacks = float(late_at), int(callbacks)
     detail = " ".join(detail)
     # The child reports two clocks. `window` starts when gateway.lock becomes ours and the budget is
     # armed; `elapsed` also carries interpreter startup and every read before that, which no code in
@@ -644,7 +664,20 @@ def test_slow_browse_reconcile_gives_up_inside_its_budget_and_boot_waits_it_out(
         pytest.skip(f"this host spent {startup:.2f} s outside the budgeted phase, more than the "
                     f"{margin:.1f} s between the browse budget and boot's wait ({out})")
     assert status == "503", out
-    assert window < budget_s + 2, out
+    # The bound charges what the product's budgeted phase did, not that phase's raw wall
+    # clock. `late` is the seconds this runner overslept the delay the fixture injects, counted
+    # at the injection itself -- but it is process-wide and the child can stamp more than once,
+    # so `late_at` is its value at the stamp and only `late - late_at`, the lateness that
+    # demonstrably accrued inside THIS window, may be credited: every millisecond of the
+    # simulated slow disk stays charged while the host's scheduler is not, and lateness an
+    # earlier phase paid cannot excuse a window it is not part of. Credited only while the
+    # child's account is coherent (the phase ran callbacks and its within-window lateness fits
+    # inside the window it claims); otherwise the child's whole wall time is charged, exactly
+    # as upstream bounds it: an unproven subtraction is not evidence, and a report that
+    # measured no window at all must still pay its full elapsed rather than nothing.
+    late_in = late - late_at
+    charge = window - late_in if callbacks > 0 and 0.0 <= late_in <= window else elapsed
+    assert charge < budget_s + 2, out
     assert boot_ok, f"boot refused a browse that gave up inside its budget: {boot_error} / {out}"
     assert "nothing was changed" in detail
     assert "`nastech -p scribe sessions repair`" in detail and "gateway" not in detail.lower()

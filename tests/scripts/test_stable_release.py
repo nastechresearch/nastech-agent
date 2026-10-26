@@ -550,16 +550,15 @@ def test_a_claim_cut_before_lanes_existed_reads_as_the_lane_set_that_gated_the_s
             validate_claim(wrong, version="0.21.7", attempt=11, commit=commit)
 
 
-def test_a_default_claim_builds_no_desktop_packages_and_lanes_restore_them(
+def test_a_default_claim_ships_unsigned_desktops_and_lanes_restore_them(
         tmp_path, r2_server, https_origin, monkeypatch):
-    """NasTech DEFAULT ships the signable lanes only: every desktop build and its test
-    arms are skipped, and --with restores a lane once its signing credentials exist."""
+    """NasTech DEFAULT builds every desktop package, unsigned: what still leaves is the
+    Intel Mac candidate and the upgrade arms, which need a signed channel to upgrade."""
     from scripts.releases import stable
 
-    off = {"candidates-darwin-x64", "transitions-darwin-x64", "macos-packaged-x64",
-           "candidates-darwin-arm64", "transitions-darwin-arm64", "macos-packaged-arm64",
-           "candidates-win32-arm64", "candidates-win32-x64", "candidates-win32-bundle",
-           "transitions-win32", "windows-packaged"}
+    off = {"candidates-darwin-x64",
+           "transitions-darwin-arm64", "transitions-darwin-x64", "transitions-win32",
+           "macos-packaged-arm64", "macos-packaged-x64", "windows-packaged"}
     required = ["admit", *lane_set.JOB_LANES]
     default = stable.gate_expectations(required, lane_set.DEFAULT)
     assert {name for name, result in default.items() if result == "skipped"} == off

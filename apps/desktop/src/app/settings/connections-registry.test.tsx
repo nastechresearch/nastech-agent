@@ -84,7 +84,7 @@ describe('ConnectionsRegistrySection', () => {
     const applyConnectionConfig = vi.fn()
     const select = vi.fn()
     Object.assign(window.nastechDesktop, { applyConnectionConfig })
-    Object.assign(window.nastechDesktop.connections, { select })
+    Object.assign(window.nastechDesktop.connections!, { select })
     render(<ConnectionsRegistrySection />)
     fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
     const values = screen.getAllByPlaceholderText('Saved — leave blank to keep')

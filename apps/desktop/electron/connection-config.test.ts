@@ -1282,6 +1282,18 @@ test('cookiesHaveSession handles non-arrays', () => {
   assert.equal(cookiesHaveSession([]), false)
 })
 
+test('a gateway Webapp signs in with cookies named for its gateway, and they count as a session', () => {
+  // Cookies are not scoped to a port, so the gateway's Webapp names its login cookies
+  // nastech_session_at_<gateway> and nastech_session_rt_<gateway>; the dashboard keeps the bare names.
+  const gateway = '0123456789abcdef'
+  assert.equal(cookiesHaveSession([{ name: `nastech_session_at_${gateway}`, value: 'x' }]), true)
+  assert.equal(cookiesHaveSession([{ name: `__Host-nastech_session_at_${gateway}`, value: 'x' }]), true)
+  assert.equal(cookiesHaveSession([{ name: `nastech_session_rt_${gateway}`, value: 'x' }]), false)
+  assert.equal(cookiesHaveLiveSession([{ name: `__Secure-nastech_session_rt_${gateway}`, value: 'x' }]), true)
+  assert.equal(cookiesHaveSession([{ name: 'nastech_session_at_other', value: 'x' }]), false)
+  assert.equal(cookiesHaveLiveSession([{ name: `nastech_webapp_signin_${gateway}`, value: 'x' }]), false)
+})
+
 // --- cookiesHaveLiveSession (AT or RT — the connectivity check) ---
 
 test('cookiesHaveLiveSession is true for a live access-token cookie', () => {

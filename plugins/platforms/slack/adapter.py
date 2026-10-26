@@ -67,9 +67,7 @@ except ImportError:  # pragma: no cover - plugin loaded outside package context
 logger = logging.getLogger(__name__)
 
 # User-Agent prefix (``NastechAgent/<version>``) for platform-partner attribution of API calls.
-from nastech_cli.version_info import get_version_info
-
-_NASTECH_SLACK_USER_AGENT_PREFIX = f"NastechAgent/{get_version_info().base_version}"
+from nastech_cli.version_info import nastech_user_agent
 
 _SLACK_ERROR_BODY_LIMIT_BYTES = 8 * 1024
 _BOOL_WORDS = frozenset({"1", "0", "true", "false", "yes", "no", "on", "off"})
@@ -1755,7 +1753,7 @@ class SlackAdapter(BasePlatformAdapter):
 
     @staticmethod
     def _new_web_client(token: str, proxy_url: Optional[str]) -> Any:
-        client = AsyncWebClient(token=token, user_agent_prefix=_NASTECH_SLACK_USER_AGENT_PREFIX)
+        client = AsyncWebClient(token=token, user_agent_prefix=nastech_user_agent("NastechAgent"))
         _apply_slack_proxy(client, proxy_url)
         return client
 

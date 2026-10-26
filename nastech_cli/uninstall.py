@@ -616,7 +616,7 @@ def _uninstall_profile(profile) -> None:
     log_info(f"Uninstalling profile '{name}'...")
 
     # 1. Gateway service, via `python -m nastech_cli.main` (the `nastech` wrapper may be half-gone).
-    nastech_invocation = [sys.executable, "-m", "nastech_cli.main", "--profile", name]
+    nastech_invocation = [sys.executable, "-P", "-m", "nastech_cli.main", "--profile", name]
     for subcmd in ("stop", "uninstall"):
         try:
             subprocess.run(

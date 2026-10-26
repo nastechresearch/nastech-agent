@@ -44,17 +44,27 @@ LANES = (
     Lane("upgrade", True, "signed-package upgrade acceptance (OLD to NEW) of each built desktop package"),
 )
 NAMES = tuple(lane.name for lane in LANES)
-# NasTech: a release ships only the lanes this fork can sign.
-# The Apple and Azure/Store signing accounts are unconfigured, so those
-# lanes stay out of the default set; --with re-enables one once its
-# credentials exist.  Termux needs no signing, so it is on.
-# smoke and upgrade gate on built desktop packages: with every desktop lane
-# off they would run nothing, and stable.require_smokes_match_claim rejects a
-# claim whose test policy names smokes a release cannot produce.
+# NasTech: every lane this fork can ship is on, signing or not.
+# The fork publishes its desktop packages unsigned: the Apple and Azure signing
+# accounts are unconfigured, and a release must not wait on them.  The macOS and
+# Windows lanes are therefore ON, and stable-release.yml calls every desktop leg
+# with `skip-signed: true` (see _reconcile_unsigned_desktop_callers), which still
+# verifies any build that claims to be signed.  Every Linux lane stays on, and
+# Termux is on although upstream leaves it opt-in: its APT channel is part of what
+# this fork ships.
+# windows-store stays out: submitting to Partner Center needs the MS_STORE_*
+# credentials this fork has never had, so turning the lane on would only turn a red
+# on; --with windows-store re-enables it once they are provisioned.
+# smoke and upgrade stay out too, for the same reason one level down: the bundled
+# builder gates its Windows MSIX smoke jobs on `inputs.skip-signed != true`, so with
+# every desktop leg declared unsigned a claim that names `smoke` asks for smokes its
+# own build refuses to run, and the upgrade arms install the previously published
+# signed package this fork's channel has never carried.  Both lanes come back with
+# the signing credentials: --with smoke --with upgrade.
 DEFAULT = frozenset(
     lane.name for lane in LANES
     if lane.default
-    and lane.name not in {"macos-arm64", "macos-intel", "windows", "windows-store", "smoke", "upgrade"}
+    and lane.name not in {"windows-store", "smoke", "upgrade"}
 ) | {"termux"}
 
 DESKTOP = ("windows", "macos-arm64", "macos-intel")

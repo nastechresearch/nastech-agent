@@ -379,7 +379,13 @@ async function assertRemoteInstallUpdateClear(ssh, nastechHome, nastechPath = ''
   throw error
 }
 
-async function listRemoteNastechProfiles(ssh) {
+async function listRemoteNastechProfiles(ssh, platform: any = null) {
+  if (platform?.os === 'Windows') {
+    const { listWindowsRemoteProfiles } = await import('./windows-remote-inventory')
+
+    return listWindowsRemoteProfiles(ssh, platform)
+  }
+
   const home = assertSafeRemoteHome(await probeRemoteNastechHome(ssh))
   const dir = expandRemotePath(`${home}/profiles`)
   let listing = ''
@@ -396,7 +402,13 @@ async function listRemoteNastechProfiles(ssh) {
   return parseRemoteProfileListing(listing)
 }
 
-async function readRemoteInstallId(ssh) {
+async function readRemoteInstallId(ssh, platform: any = null) {
+  if (platform?.os === 'Windows') {
+    const { readWindowsRemoteInstallId } = await import('./windows-remote-inventory')
+
+    return readWindowsRemoteInstallId(ssh, platform)
+  }
+
   // The stable backend identity the roster collapses on (`nastech_cli/install_identity.py`:
   // `<install root>/install_id`, opaque hex). Read from the INSTALL root, so an ssh connection
   // pinned to `<root>/profiles/<name>` reports the same id as one pointed at the root — they are
