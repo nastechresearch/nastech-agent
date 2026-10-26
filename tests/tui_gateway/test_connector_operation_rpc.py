@@ -60,6 +60,8 @@ SID = "op-rpc-session"
 @pytest.fixture
 def owned(monkeypatch):
     live.reset_for_tests()
+    # A connect from the panel creates the guest identity first; in an empty test home that is a
+    # real mint on the live Portal (up to 5s), which outlived the 2s reply wait on a slow Portal.
     monkeypatch.setattr("tools.connectors.ensure_guest_identity", lambda: None)
     monkeypatch.setattr("tools.connectors.managed.ensure_guest_identity", lambda: None)
     with ExitStack() as stack:

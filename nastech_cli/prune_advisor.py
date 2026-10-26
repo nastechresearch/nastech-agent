@@ -346,14 +346,14 @@ def decide(enable: bool, home: Optional[Path] = None) -> bool:
     """Persist the user's answer as an explicit ``sessions.auto_prune``; ends the prompt for good.
     False when the save failed or did not take effect (an administrator-managed value wins)."""
     import nastech_yaml as yaml
+    from nastech_cli.config_backend import write_config_key
     from nastech_constants import mkdir_under_nastech_home
-    from utils import atomic_roundtrip_yaml_update
     if managed():
         return False
     path = _home(home) / "config.yaml"
     try:
         mkdir_under_nastech_home(path.parent)
-        atomic_roundtrip_yaml_update(path, "sessions.auto_prune", bool(enable))
+        write_config_key(path, "sessions.auto_prune", bool(enable))
     except (OSError, ValueError, yaml.YAMLError) as exc:
         logger.warning("Could not save sessions.auto_prune: %s", exc)
         return False

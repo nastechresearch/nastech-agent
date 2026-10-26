@@ -19,7 +19,7 @@ class _RecordingProfile:
         return ["relay-only-model"]
 
 
-@pytest.mark.parametrize("provider", ["openai-codex", "copilot", "nastech", "opencode-zen", "openrouter"])
+@pytest.mark.parametrize("provider", ["openai-codex", "nastech", "opencode-zen", "openrouter"])
 def test_canonical_url_preserves_native_catalog_but_other_paths_stay_relays(monkeypatch, provider):
     from nastech_cli.config import atomic_config_write
     from nastech_constants import get_nastech_home

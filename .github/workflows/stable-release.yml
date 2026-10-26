@@ -171,6 +171,7 @@ jobs:
       release-phase: candidate
       jobs: darwin-arm64
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
+      skip-signed: true
 
   candidates-darwin-x64:
     name: Build signed release candidates (darwin-x64)
@@ -194,6 +195,7 @@ jobs:
       release-phase: candidate
       jobs: darwin-x64
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
+      skip-signed: true
 
   candidates-win32-arm64:
     name: Build signed release candidates (win32-arm64)
@@ -215,7 +217,7 @@ jobs:
       release-phase: candidate
       jobs: win32-arm64
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
-      skip-signed: ${{ !fromJSON(needs.admit.outputs.lanes).windows }}
+      skip-signed: true
       skip-store: ${{ !fromJSON(needs.admit.outputs.lanes)['windows-store'] }}
       windows-smokes-with-bundle: true
 
@@ -239,7 +241,7 @@ jobs:
       release-phase: candidate
       jobs: win32-x64
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
-      skip-signed: ${{ !fromJSON(needs.admit.outputs.lanes).windows }}
+      skip-signed: true
       skip-store: ${{ !fromJSON(needs.admit.outputs.lanes)['windows-store'] }}
       windows-smokes-with-bundle: true
 
@@ -265,7 +267,7 @@ jobs:
       release-phase: candidate
       jobs: win32-bundle
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
-      skip-signed: ${{ !fromJSON(needs.admit.outputs.lanes).windows }}
+      skip-signed: true
       skip-store: ${{ !fromJSON(needs.admit.outputs.lanes)['windows-store'] }}
       windows-smokes-with-bundle: true
 

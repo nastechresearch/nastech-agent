@@ -3,9 +3,9 @@
 
 from typing import Any
 
-from nastech_cli.version_info import get_version_info
+from nastech_cli.version_info import nastech_user_agent
 from providers import register_provider
-from providers.base import ProviderProfile
+from providers.base import LazyHeaders, ProviderProfile
 
 
 class FireworksProfile(ProviderProfile):
@@ -33,11 +33,11 @@ fireworks = FireworksProfile(
     base_url="https://api.fireworks.ai/inference/v1", auth_type="api_key",
     # Attribution headers (canonical Nastech set); via default_headers so they
     # survive switch_model and credential rotation.
-    default_headers={
+    default_headers=LazyHeaders({
         "HTTP-Referer": "https://nastechresearch.github.io/nastech-agent",
         "X-Title": "Nastech Agent",
-        "User-Agent": f"NastechAgent/{get_version_info().base_version}",
-    },
+        "User-Agent": lambda: nastech_user_agent("NastechAgent"),
+    }),
     default_aux_model="accounts/fireworks/models/glm-5p2",
     # Picker safety net when the live catalog fetch fails.
     fallback_models=(

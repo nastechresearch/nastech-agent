@@ -119,7 +119,7 @@ def _ensure_plugin(nastech_home: Path) -> bool:
 
 
 def _snapshot(nastech_home: Path) -> tuple[Optional[bytes], ...]:
-    return tuple(p.read_bytes() if p.is_file() else None
+    return tuple(p.read_bytes() if p.is_file() else None  # config-reader: ok — child-run change snapshot
                  for p in (nastech_home / "config.yaml", nastech_home / ".env"))
 
 
@@ -136,7 +136,7 @@ def _run_import(source: ImportSource, nastech_home: Path) -> bool:
     selector = [] if nastech_home.resolve().parent.name == "profiles" else ["--profile", "default"]
     # --from-setup: the plugin's import speaks as a step of this setup (no "run nastech setup" pointers,
     # OpenClaw's skipped items folded into one line).
-    argv = [sys.executable, "-m", "nastech_cli.main", *selector, "import-agent", source.name, *source.extra_args,
+    argv = [sys.executable, "-P", "-m", "nastech_cli.main", *selector, "import-agent", source.name, *source.extra_args,
             "--from-setup"]
     env = served_profile_child_env(target_home=nastech_home)
     if os.environ.get("PYTHONPATH"):  # this same interpreter running Nastech: keep the source tree

@@ -807,7 +807,7 @@ def _bare_collection_enabled() -> Optional[bool]:
     from nastech_constants import get_nastech_home
 
     try:
-        (get_nastech_home() / "config.yaml").stat()
+        (get_nastech_home() / "config.yaml").stat()  # config-reader: ok — bare interpreter has no config stack; presence probe only
     except FileNotFoundError:
         return False
     except OSError:

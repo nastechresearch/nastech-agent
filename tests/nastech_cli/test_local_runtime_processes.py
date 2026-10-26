@@ -174,7 +174,17 @@ def test_failed_setup_never_runs_child_and_releases_handles(tmp_path, monkeypatc
 
     def assign(job, proc):
         children.append(proc)
-        assert psutil.Process(proc.pid).status() == psutil.STATUS_STOPPED
+        # CreateProcessW answers before every thread of a CREATE_SUSPENDED
+        # launch reaches the system thread table, and psutil's Windows
+        # status() reads exactly that table (cext.proc_is_suspended). The
+        # child still cannot run here -- spawn_server resumes it only after
+        # this assign() returns -- so poll for the observation instead of
+        # demanding it land on the first read. A child that really is running
+        # never settles, and the marker check below catches that too.
+        assert _wait(
+            lambda: psutil.Process(proc.pid).status() == psutil.STATUS_STOPPED,
+            timeout=2.0,
+        ), "child never observed suspended"
         assert not marker.exists()
         # Query the actual kernel object, not implementation source/constants.
         limits = processes._ExtendedLimits()

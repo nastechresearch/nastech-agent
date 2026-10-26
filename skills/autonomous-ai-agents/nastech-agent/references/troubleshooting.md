@@ -14,7 +14,7 @@
 1. `nastech doctor` — check config and dependencies
 2. `nastech auth` — re-authenticate OAuth providers (or `nastech auth add <provider>`)
 3. Check `.env` has the right API key
-4. **Copilot 403**: `gh auth login` tokens do NOT work for Copilot API. You must use the Copilot-specific OAuth device code flow via `nastech model` → GitHub Copilot.
+4. **GitHub Copilot** (`copilot` / `copilot-acp`) lives in the `github-copilot` labs plugin (`nastech plugins install github-copilot`); sign in with `nastech auth add copilot` — `gh` CLI logins are not read.
 
 ### Changes not taking effect
 - **Tools/skills:** `/reset` starts a new session with updated toolset

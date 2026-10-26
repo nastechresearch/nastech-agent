@@ -262,6 +262,7 @@ _UPDATE_PIPELINE = (
     "nastech_cli/_launchers.py",
     "nastech_cli/release_channels.py",
     "nastech_cli/gitlock.py",  # git self-heal + partial-clone fetch
+    "nastech_cli/git_commit_graph.py",  # every update starts the install checkout's graph refresh
     "nastech_cli/process_identity.py",  # marker owner liveness
     "nastech_cli/runtime_state.py",
     "nastech_cli/relaunch.py",
@@ -345,6 +346,7 @@ _UPDATE_DEPENDENCIES = (
     "nastech_cli/backup.py",  # pre-update backup
     "nastech_cli/backup_cron_prompts.py",  # restore_cron_prompt_fields_if_degraded (update_cmd_config)
     "nastech_cli/backup_restore.py",
+    "nastech_cli/config_backend.py",  # update_channel writes the channel key through the seam
     "nastech_cli/relay_plugin_migrate.py",
     "nastech_cli/macos_tcc_anchor.py",
     "nastech_cli/model_catalog.py",
@@ -374,6 +376,9 @@ _UPDATE_DEPENDENCIES = (
     # The compilers source_build / the Desktop build run (freshness, node-deps,
     # tui, web, desktop and their shared frontend-common).
     "scripts/build/",
+    "apps/desktop/scripts/build-webapp.mjs",  # source_build's Webapp renderer build
+    "nastech_cli/webapp.py",  # source_build rebuilds the Webapp bundle a home serves
+    "gateway/webapp_listener.py",  # source_build reads which homes serve the Webapp
 )
 # General-purpose modules an entry point imports but that half the product
 # imports too (>= HUB_MIN_IMPORTERS product modules, checked by the test). The

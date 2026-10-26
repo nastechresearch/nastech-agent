@@ -153,8 +153,13 @@ def test_lane_inputs_reach_the_workflows_they_configure():
     # Which Windows packages the shared builds make follows the two Windows lanes, and the Store
     # submission follows the Store lane.
     store_off = "${{ !fromJSON(needs.admit.outputs.lanes)['windows-store'] }}"
+    # NasTech ships every desktop package unsigned, so no candidate leg asks the shared
+    # builder to sign one: the input is the literal ``true``.  A fork that has signing
+    # credentials puts the lane-gated expression back on its own legs.
+    for name in ("candidates-darwin-arm64", "candidates-darwin-x64", "candidates-win32-arm64",
+                 "candidates-win32-x64", "candidates-win32-bundle"):
+        assert jobs[name]["with"]["skip-signed"] == "true", name
     for name in ("candidates-win32-arm64", "candidates-win32-x64", "candidates-win32-bundle"):
-        assert jobs[name]["with"]["skip-signed"] == "${{ !fromJSON(needs.admit.outputs.lanes).windows }}", name
         assert jobs[name]["with"]["skip-store"] == store_off, name
         # The MSIX smokes run in the bundle call, so the bundle never waits for them.
         assert jobs[name]["with"]["windows-smokes-with-bundle"] == "true", name

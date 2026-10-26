@@ -62,32 +62,6 @@ def _fake_invoke_jwt(ttl_seconds=3600):
     return f"{header}.{payload}.sig"
 
 
-def test_runtime_selected_copilot_exchanges_ambient_pool_token(tmp_path, monkeypatch):
-    """Copilot picked at runtime without a config write (`/model copilot/<m> --session`,
-    `--provider copilot`) must still hand the EXCHANGED token and the enterprise base_url to the
-    client: the seeder leaves an ambient gh-CLI credential raw while copilot is not configured
-    (#114740), and a raw token 400s on enterprise-only models."""
-    nastech_home = tmp_path / "nastech"
-    nastech_home.mkdir()
-    monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
-    (nastech_home / "auth.json").write_text(json.dumps({"version": 1, "credential_pool": {}}))
-    (nastech_home / "config.yaml").write_text("model:\n  provider: deepseek\n  default: deepseek-chat\n")
-    from nastech_cli import config as _cfg
-    _cfg._LOAD_CONFIG_CACHE.clear()
-    _cfg._RAW_CONFIG_CACHE.clear()
-    monkeypatch.setattr("nastech_cli.copilot_auth.resolve_copilot_token", lambda: ("ghu_raw_gh_token", "gh auth token"))
-    monkeypatch.setattr("nastech_cli.copilot_auth.get_copilot_api_token",
-                        lambda tok: ("tid=exchanged;exp=1", "https://api.enterprise.ghe.example"))
-    monkeypatch.setattr(rp._models, "copilot_model_api_mode", lambda *a, **k: "chat_completions")
-    monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "copilot")
-
-    resolved = rp.resolve_runtime_provider(requested="copilot", target_model="gpt-4.1")
-
-    assert resolved["provider"] == "copilot"
-    assert resolved["api_key"] == "tid=exchanged;exp=1"
-    assert resolved["base_url"].startswith("https://api.enterprise.ghe.example")
-
-
 def test_resolve_runtime_provider_uses_credential_pool(monkeypatch):
     class _Entry:
         access_token = "pool-token"

@@ -407,7 +407,8 @@ def _build_nastech_tools_mcp_entry() -> dict:
     env["NASTECH_REDACT_SECRETS"] = env.get("NASTECH_REDACT_SECRETS", "true")
     return {
         "command": sys.executable,
-        "args": ["-m", "agent.transports.nastech_tools_mcp_server"],
+        # -P: codex starts this in the user's workspace, which must not shadow Nastech' own packages.
+        "args": ["-P", "-m", "agent.transports.nastech_tools_mcp_server"],
         "env": env,
         # Generous timeouts — image_generate or delegate_task can take a while.
         "startup_timeout_sec": 30.0,

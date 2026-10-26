@@ -146,9 +146,10 @@ def _seed_reasoning_caps(url: str, items: Any) -> Optional[Caps]:
 def _fetch_reasoning_caps_catalog(url: str, timeout: float) -> Optional[Caps]:
     """Fetch one OpenRouter-shaped ``/v1/models`` catalog → per-model caps; None when unreachable or
     empty so callers remember the failure. Sends a User-Agent: the Portal 403s anonymous reads."""
+    from nastech_cli.version_info import nastech_user_agent
     m = _origin()
     try:
-        req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": m._NASTECH_USER_AGENT})
+        req = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": nastech_user_agent()})
         with m._urlopen_model_catalog_request(req, timeout=timeout) as resp:
             payload = json.loads(resp.read().decode())
     except Exception:

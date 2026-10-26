@@ -54,7 +54,7 @@ handler does; `client-local (cli_only)` commands are terminal/UI features of a c
 | `/debug` | control | NastechCLI._handle_debug_command | slash.exec | slash.exec | slash.exec | uploads logs to a public paste |
 | `/deny` | control | messaging-only: unknown command | slash.exec | slash.exec | slash.exec | messaging-only |
 | `/diff` | read | NastechCLI._handle_diff_command | slash.exec | slash.exec | slash.exec |  |
-| `/discard` | refused | messaging-only: unknown command | slash.exec: refused | slash.exec: refused | prompt.resolve_unknown | messaging-only |
+| `/discard` | refused | NastechCLI._handle_discard_command | slash.exec: refused | slash.exec: refused | prompt.resolve_unknown |  |
 | `/egress` | control | NastechCLI._cmd_egress | slash.exec | slash.exec | slash.exec |  |
 | `/export` | refused | NastechCLI._handle_export_command | slash.exec: refused | action: export | slash.exec: refused | client-local (cli_only) |
 | `/fast` | control | NastechCLI._handle_fast_command | config.get, config.set | unavailable: advanced | slash.exec | per-session setting (gateway handler) |

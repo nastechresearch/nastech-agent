@@ -46,7 +46,7 @@ function harness(gateway: NastechGateway, options: { profile?: string } = {}) {
 
   function Probe() {
     const { adapter } = useSlashCompletions({ gateway, ...options })
-    api.search = adapter.search
+    api.search = adapter?.search
 
     return null
   }

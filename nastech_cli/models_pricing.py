@@ -225,7 +225,8 @@ def fetch_models_with_pricing(
     another's read. *include_sale_original* (Nastech Portal only) copies the gateway's pre-discount
     ``pricing.original`` rates through as a nested ``original`` dict for sale chrome."""
     from nastech_cli.chat_catalog import catalog_item_is_generation
-    from nastech_cli.models import _NASTECH_USER_AGENT, _openrouter_model_supports_tools
+    from nastech_cli.models import _openrouter_model_supports_tools
+    from nastech_cli.version_info import nastech_user_agent
     url_root = (base_url or "").rstrip("/")
     cache_key = url_root + _pricing_auth_fingerprint(api_key)
     if not force_refresh:
@@ -234,7 +235,7 @@ def fetch_models_with_pricing(
             return cached
 
     url = url_root + "/v1/models"
-    headers = {"Accept": "application/json", "User-Agent": _NASTECH_USER_AGENT}
+    headers = {"Accept": "application/json", "User-Agent": nastech_user_agent()}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     payload = _get_json(url, headers, timeout)
@@ -501,7 +502,7 @@ def _fetch_kilocode_pricing(timeout: float = 8.0, *, force_refresh: bool = False
     The gateway's ``-1`` rate sentinel means "varies" (auto-router models); no price is shown
     rather than a fabricated one, so such rows are skipped.
     """
-    from nastech_cli.models import _NASTECH_USER_AGENT
+    from nastech_cli.version_info import nastech_user_agent
 
     cache_key = _kilo_pricing_scope()
     if not cache_key:
@@ -511,7 +512,7 @@ def _fetch_kilocode_pricing(timeout: float = 8.0, *, force_refresh: bool = False
         if cached is not None:
             return cached
 
-    headers = {"Accept": "application/json", "User-Agent": _NASTECH_USER_AGENT}
+    headers = {"Accept": "application/json", "User-Agent": nastech_user_agent()}
     api_key = os.getenv("KILOCODE_API_KEY", "").strip()
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
@@ -617,18 +618,22 @@ def resolve_pricing_provider(provider: str, *, base_url: str = "") -> str:
         return ""
     try:
         from agent.model_metadata import _URL_TO_PROVIDER, _infer_provider_from_url
-        from utils import base_url_host_matches
+        from providers import get_provider_profile
+        from utils import base_url_host_matches, base_url_hostname
 
         inferred = _infer_provider_from_url(base_url)
+        profile = get_provider_profile(inferred) if inferred else None
     except Exception:
         return ""
     # ``_infer_provider_from_url`` is deliberately broad for user-facing hints. Pricing is a
     # trust boundary: require an exact official hostname (or one of its explicit subdomains),
-    # never a mere substring such as ``openrouter.ai.attacker.invalid``.
-    if not inferred or not any(
+    # never a mere substring such as ``openrouter.ai.attacker.invalid``. A profile's claimed
+    # hosts count only when named exactly.
+    claimed = (*profile.hostnames, *profile.metadata_hostnames) if profile is not None else ()
+    if not inferred or not (base_url_hostname(base_url) in claimed or any(
         provider == inferred and not host.startswith(".") and base_url_host_matches(base_url, host)
         for host, provider in _URL_TO_PROVIDER.items()
-    ):
+    )):
         return ""
     return normalize_provider(inferred)
 
@@ -723,7 +728,7 @@ def _fireworks_pricing_from_models_dev(*, force_refresh: bool = False) -> dict[s
 def _fetch_novita_pricing(timeout: float = 8.0, *, force_refresh: bool = False) -> dict[str, dict[str, str]]:
     """NovitaAI /v1/models pricing (per-million prices in units of 0.0001 USD → per-token strings),
     cached on the resolved base URL so menu renders don't re-hit the network."""
-    from nastech_cli.models import _NASTECH_USER_AGENT
+    from nastech_cli.version_info import nastech_user_agent
     api_key = os.getenv("NOVITA_API_KEY", "").strip()
     if not api_key:
         return {}
@@ -734,7 +739,7 @@ def _fetch_novita_pricing(timeout: float = 8.0, *, force_refresh: bool = False) 
         if cached is not None:
             return cached
 
-    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json", "User-Agent": _NASTECH_USER_AGENT}
+    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json", "User-Agent": nastech_user_agent()}
     payload = _get_json(cache_key + "/models", headers, timeout)
     if payload is None:
         return _cache_catalog(cache_key, {})

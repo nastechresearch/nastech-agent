@@ -36,7 +36,7 @@ class CompactingModel(BaseHTTPRequestHandler):
         text = next((m.get('content', '') for m in reversed(messages) if m['role'] == 'user'), '')
         if messages:
             self.server.requests.append({'model': body.get('model'), 'text': str(text), 'wire': wire})
-        if body.get('model') == 'original' and len(wire) > 50000:
+        if body.get('model') == 'original' and len(wire) > 90000:
             payload = json.dumps({'error': {'message': "This model's maximum context length is 64000 tokens. "
                                                        'However, your messages resulted in 70000 tokens.',
                                             'type': 'invalid_request_error', 'code': 'context_length_exceeded'}}).encode()
@@ -87,7 +87,7 @@ def test_followers_survive_compression_and_restart_in_order_exactly_once(tmp_pat
         'model': {'provider': 'custom', 'default': 'original', 'base_url': url, 'context_length': 64000},
         'auxiliary': {'title_generation': {'enabled': False},
                       'compression': {'provider': 'custom', 'model': 'summary', 'base_url': url}},
-        'compression': {'protect_first_n': 1, 'protect_last_n': 2, 'threshold_tokens': 12000,
+        'compression': {'protect_first_n': 1, 'protect_last_n': 2, 'threshold_tokens': 24000,
                         'threshold': 0.5, 'in_place': False},
         'platform_toolsets': {'cli': []}}))
     (home / 'models_dev_cache.json').write_text(json.dumps({'custom': {'id': 'custom', 'models': {

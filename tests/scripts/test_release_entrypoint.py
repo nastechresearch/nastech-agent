@@ -181,9 +181,9 @@ def test_release_output_names_the_ci_run_and_the_publish_step():
     assert "Draft release: " + result["url"] in text
     # The publish command sits on its own line so it can be copied whole.
     assert "\n    python scripts/release.py publish --version 0.21.5 --remote origin" in text
-    # The default set names what it leaves out: this fork signs no desktop package by default,
-    # and the desktop-gated test lanes (smoke, upgrade) are off with them.
-    assert "Not built: windows, windows-store, macos-arm64, macos-intel." in text
+    # The default set names what it leaves out: this fork builds no Store bundle and no Intel
+    # macOS package, and it tests no desktop package it cannot sign.
+    assert "Not built: windows-store, macos-intel." in text
     assert "Not tested: smoke, upgrade" in text
 
     automatic = next_steps({**result, "autopublish": True})

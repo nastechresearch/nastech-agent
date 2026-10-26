@@ -45,7 +45,7 @@ import {
 } from '@nastech/shared/translucency'
 import { atom, computed } from 'nanostores'
 
-import { isMacPlatform, isWindowsPlatform } from '@/lib/platform'
+import { isBrowserHostedDesktop, isMacPlatform, isWindowsPlatform } from '@/lib/platform'
 import { readJson, writeJson } from '@/lib/storage'
 
 export {
@@ -68,10 +68,12 @@ export type { Appearance }
  * Mac or Windows — which is why this file pins `navigator.platform` before
  * import.
  */
+/** Browser-hosted Desktop has no native window material or opacity surface. */
 export const GLASS_SUPPORTED =
-  typeof window !== 'undefined' && typeof window.nastechDesktop?.glassSupported === 'boolean'
+  !isBrowserHostedDesktop() &&
+  (typeof window !== 'undefined' && typeof window.nastechDesktop?.glassSupported === 'boolean'
     ? window.nastechDesktop.glassSupported
-    : isMacPlatform() || isWindowsPlatform()
+    : isMacPlatform() || isWindowsPlatform())
 
 /**
  * Whether the setting is worth showing at all. Linux has neither half —
@@ -79,9 +81,10 @@ export const GLASS_SUPPORTED =
  * Settings hides the row rather than offering a lever that does nothing.
  */
 export const TRANSLUCENCY_SUPPORTED =
-  typeof window !== 'undefined' && typeof window.nastechDesktop?.translucencySupported === 'boolean'
+  !isBrowserHostedDesktop() &&
+  (typeof window !== 'undefined' && typeof window.nastechDesktop?.translucencySupported === 'boolean'
     ? window.nastechDesktop.translucencySupported
-    : isMacPlatform() || isWindowsPlatform()
+    : isMacPlatform() || isWindowsPlatform())
 
 /** Windows collapses the frost ladder — see `glassMaterialsFor`. */
 export const GLASS_IS_WINDOWS = GLASS_SUPPORTED && !isMacPlatform()

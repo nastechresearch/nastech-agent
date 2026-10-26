@@ -51,8 +51,6 @@ fallback_model:
 | OpenRouter | `openrouter` | `OPENROUTER_API_KEY` |
 | Nastech Portal | `nastech` | `nastech setup --portal`（全新安装）或 `nastech auth add nastech`（OAuth） |
 | OpenAI Codex | `openai-codex` | `nastech model` → **ChatGPT or Codex Subscription**（ChatGPT OAuth） |
-| GitHub Copilot | `copilot` | `COPILOT_GITHUB_TOKEN`、`GH_TOKEN` 或 `GITHUB_TOKEN` |
-| GitHub Copilot ACP | `copilot-acp` | 外部进程（编辑器集成） |
 | Anthropic | `anthropic` | `ANTHROPIC_API_KEY` 或 Claude Code 凭据 |
 | z.ai / GLM | `zai` | `GLM_API_KEY` |
 | Kimi / Moonshot | `kimi-coding` | `KIMI_API_KEY` |

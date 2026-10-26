@@ -111,7 +111,7 @@ on:
         type: boolean
         default: false
       skip-signed:
-        description: 'Stable candidates only: build no signed Windows package (the claim has no windows lane). Needs no Azure signing.'
+        description: 'Stable candidates only: build no signed package at all -- no Azure signing for Windows, no Apple signing or notarization for macOS. Needs neither account.'
         type: boolean
         default: false
       skip-store:
@@ -963,7 +963,7 @@ jobs:
       # Commit artifacts are downloadable too. Require signing for them,
       # candidates, and published tags before building any payload.
       - name: Require signing credentials when publishing
-        if: inputs.upload_release == true || inputs.release-phase == 'candidate' || inputs.build_commit != '' || inputs.channel != ''
+        if: inputs.skip-signed != true && (inputs.upload_release == true || inputs.release-phase == 'candidate' || inputs.build_commit != '' || inputs.channel != '')
         shell: bash
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
@@ -989,7 +989,7 @@ jobs:
         # notarytool takes a FILE PATH for --key; raw .p8 content in argv
         # dies with `Invalid option: ***`. The build step must NOT re-declare
         # APPLE_API_KEY in its env: step env shadows GITHUB_ENV.
-        if: inputs.upload_release == true || inputs.release-phase == 'candidate' || inputs.build_commit != '' || inputs.channel != ''
+        if: inputs.skip-signed != true && (inputs.upload_release == true || inputs.release-phase == 'candidate' || inputs.build_commit != '' || inputs.channel != '')
         shell: bash
         env:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
@@ -1074,7 +1074,7 @@ jobs:
         # The backstop against a silent unsigned publish: assess the packed
         # app against the real Gatekeeper policy (requires a Developer ID
         # signature AND a stapled notarization ticket to pass offline).
-        if: inputs.upload_release == true || inputs.release-phase == 'candidate' || inputs.build_commit != '' || inputs.channel != ''
+        if: inputs.skip-signed != true && (inputs.upload_release == true || inputs.release-phase == 'candidate' || inputs.build_commit != '' || inputs.channel != '')
         shell: bash
         run: |
           shopt -s nullglob

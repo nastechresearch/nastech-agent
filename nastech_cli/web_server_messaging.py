@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Optional
 from nastech_cli.config import OPTIONAL_ENV_VARS, write_platform_config_field
 from nastech_cli.setup_hidden_env import is_setup_hidden_env as _is_setup_hidden_env
-from nastech_cli.version_info import get_version_info
+from nastech_cli.version_info import nastech_user_agent
 
 # Same logger the code used before extraction (record parity).
 _log = logging.getLogger("nastech_cli.web_server")
@@ -278,7 +278,6 @@ _TELEGRAM_ONBOARDING_DEFAULT_URL = _nastech_endpoint_default(
     constant='_TELEGRAM_ONBOARDING_DEFAULT_URL',
     dead_default='https://setup.nastechresearch.github.io/nastech-agent',
 )
-_TELEGRAM_ONBOARDING_USER_AGENT = f"NastechDashboard/{get_version_info().base_version}"
 
 
 @dataclass
@@ -318,7 +317,7 @@ def _telegram_onboarding_request_sync(
     method: str, path: str, *, body: dict[str, Any] | None = None, bearer_token: str | None = None
 ) -> dict[str, Any]:
     import httpx
-    headers = {"Accept": "application/json", "User-Agent": _TELEGRAM_ONBOARDING_USER_AGENT}
+    headers = {"Accept": "application/json", "User-Agent": nastech_user_agent("NastechDashboard")}
     request_kwargs: dict[str, Any] = {}
     if body is not None:
         headers["Content-Type"] = "application/json"

@@ -3,14 +3,15 @@ import pytest
 
 from scripts.releases import lanes as lane_set
 
-# NasTech contract: this fork ships only the lanes it can sign. The Apple and
-# Azure/Store signing accounts are unconfigured, and smoke/upgrade gate on built
-# desktop packages, so those lanes stay out of DEFAULT until --with names them.
-UNSIGNED_LANES = {"macos-arm64", "macos-intel", "windows", "windows-store", "smoke", "upgrade"}
+# NasTech contract: the fork publishes its desktop packages unsigned, so every lane it can
+# build is in the default set.  What stays out: macos-intel (upstream opts out; its runner
+# adds over an hour), windows-store (Partner Center needs the MS_STORE_* credentials this
+# fork has never had), and smoke and upgrade (they gate on a signed desktop channel).
+OUT_OF_DEFAULT = {"macos-intel", "windows-store", "smoke", "upgrade"}
 
 
-def test_the_default_ships_the_lanes_this_fork_can_sign():
-    assert lane_set.DEFAULT == (set(lane_set.NAMES) - UNSIGNED_LANES) | {"termux"}
+def test_the_default_ships_every_lane_this_fork_publishes():
+    assert lane_set.DEFAULT == (set(lane_set.NAMES) - OUT_OF_DEFAULT) | {"termux"}
     assert lane_set.select() == lane_set.DEFAULT
 
 
@@ -83,10 +84,8 @@ def test_flags_round_trip_and_refuse_anything_loose():
     flags = lane_set.flags(["windows", "docker"])
     assert flags["bundles"] is True and flags["macos-arm64"] is False
     assert flags["desktop-channel"] is False
-    assert lane_set.flags(lane_set.DEFAULT)["desktop-channel"] is False
-    # The channel needs both signed desktop lanes; --with restores them.
-    signed = lane_set.DEFAULT | {"windows", "macos-arm64"}
-    assert lane_set.flags(signed)["desktop-channel"] is True
+    # Both desktop lanes are on, so the protected channel they drive is on too.
+    assert lane_set.flags(lane_set.DEFAULT)["desktop-channel"] is True
     assert lane_set.from_flags(flags) == {"windows", "docker"}
     assert lane_set.flags(["docker"])["bundles"] is False
     for bad in (None, {}, {**flags, "extra": True}, {**flags, "ci": "true"},
@@ -120,8 +119,7 @@ def test_smokes_run_only_for_a_built_desktop_package():
 
 
 def test_the_desktop_channel_moves_only_for_the_full_desktop_set():
-    assert not lane_set.advances_desktop(lane_set.DEFAULT)
-    assert lane_set.advances_desktop(lane_set.DEFAULT | {"windows", "macos-arm64"})
+    assert lane_set.advances_desktop(lane_set.DEFAULT)
     assert not lane_set.advances_desktop(["windows", "docker"])
     assert not lane_set.advances_desktop(["macos-arm64"])
     # A release that moves no channel is finished once public.

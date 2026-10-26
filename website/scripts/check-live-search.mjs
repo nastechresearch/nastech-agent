@@ -156,6 +156,14 @@ async function checkBrowser() {
       if (r.url().includes('algolia')) algoliaErrors.push(`${r.failure()?.errorText} ${r.url().split('?')[0]}`);
     });
     await page.goto(`${DOCS_URL}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    // The server render carries this button, but on a cold Pages CDN
+    // DocSearch mounts its handler seconds later, and a click before
+    // that is dropped: .DocSearch-Input is then never created and the
+    // fill below times out.  The <kbd> hints inside
+    // .DocSearch-Button-Keys exist only in the mounted render, so
+    // waiting for one is the readiness a visitor already has.  A site
+    // that never hydrates still fails here, red.
+    await page.locator('.DocSearch-Button-Keys kbd').first().waitFor({ timeout: REQUEST_TIMEOUT_MS });
     await page.locator('.DocSearch-Button').first().click({ timeout: 20_000 });
     await page.locator('.DocSearch-Input').fill(QUERIES[0], { timeout: 10_000 });
     try {
