@@ -9,7 +9,7 @@ tier: community
 category: memory
 requires_nastech: ">=0.21.4"
 docs_url: https://hindsight.vectorize.io/sdks/integrations/nastech
-image: https://raw.githubusercontent.com/vectorize-io/hindsight/d952b6e655fccab4581ee0722b51c5f103873d12/hindsight-integrations/nastech/docs/banner.png
+image: https://raw.githubusercontent.com/vectorize-io/hindsight/d952b6e655fccab4581ee0722b51c5f103873d12/hindsight-integrations/hermes/docs/banner.png
 capabilities:
   provides_tools: []
   provides_hooks: []

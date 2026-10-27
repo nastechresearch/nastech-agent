@@ -1,5 +1,5 @@
 name: wallpaper-theme
-repo: https://github.com/strnadchristopher/nastech-wallpaper-theme
+repo: https://github.com/strnadchristopher/hermes-wallpaper-theme
 sha: 40ebeaac235be5751f44491540b7b41d35d41da1
 description: >-
   A Nastech Desktop theme that follows your wallpaper. Reads Pywal's ~/.cache/wal/colors.json by
@@ -16,14 +16,14 @@ maintainer: strnadchristopher
 tier: community
 category: desktop
 version: "1.1.0"
-docs_url: https://github.com/strnadchristopher/nastech-wallpaper-theme/blob/40ebeaac235be5751f44491540b7b41d35d41da1/README.md
+docs_url: https://github.com/strnadchristopher/hermes-wallpaper-theme/blob/40ebeaac235be5751f44491540b7b41d35d41da1/README.md
 platforms: [linux, macos, windows]
 title: Wallpaper Theme
 screenshots:
-  - https://raw.githubusercontent.com/strnadchristopher/nastech-wallpaper-theme/40ebeaac235be5751f44491540b7b41d35d41da1/docs/screenshots/pywal-dark.png
-  - https://raw.githubusercontent.com/strnadchristopher/nastech-wallpaper-theme/40ebeaac235be5751f44491540b7b41d35d41da1/docs/screenshots/flat-palette-light.png
-  - https://raw.githubusercontent.com/strnadchristopher/nastech-wallpaper-theme/40ebeaac235be5751f44491540b7b41d35d41da1/docs/screenshots/settings.png
-  - https://raw.githubusercontent.com/strnadchristopher/nastech-wallpaper-theme/40ebeaac235be5751f44491540b7b41d35d41da1/docs/screenshots/glass.png
+  - https://raw.githubusercontent.com/strnadchristopher/hermes-wallpaper-theme/40ebeaac235be5751f44491540b7b41d35d41da1/docs/screenshots/pywal-dark.png
+  - https://raw.githubusercontent.com/strnadchristopher/hermes-wallpaper-theme/40ebeaac235be5751f44491540b7b41d35d41da1/docs/screenshots/flat-palette-light.png
+  - https://raw.githubusercontent.com/strnadchristopher/hermes-wallpaper-theme/40ebeaac235be5751f44491540b7b41d35d41da1/docs/screenshots/settings.png
+  - https://raw.githubusercontent.com/strnadchristopher/hermes-wallpaper-theme/40ebeaac235be5751f44491540b7b41d35d41da1/docs/screenshots/glass.png
 capabilities:
   provides_tools: []
   provides_hooks: []

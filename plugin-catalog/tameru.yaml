@@ -1,6 +1,6 @@
 name: tameru
 title: Tameru
-repo: https://github.com/0xWhiteMage/nastech-tameru-plugin
+repo: https://github.com/0xWhiteMage/hermes-tameru-plugin
 sha: 5a19df4af88b848adc29d7170182e226c0700dec
 subdir: nastech_tameru_plugin
 version: "1.5.0"
@@ -8,8 +8,8 @@ description: "Big tool outputs, kept small, nothing lost: old tool results shrin
 maintainer: 0xWhiteMage
 tier: community
 category: general
-docs_url: https://github.com/0xWhiteMage/nastech-tameru-plugin
-image: https://raw.githubusercontent.com/0xWhiteMage/nastech-tameru-plugin/5a19df4af88b848adc29d7170182e226c0700dec/docs/assets/hero.png
+docs_url: https://github.com/0xWhiteMage/hermes-tameru-plugin
+image: https://raw.githubusercontent.com/0xWhiteMage/hermes-tameru-plugin/5a19df4af88b848adc29d7170182e226c0700dec/docs/assets/hero.png
 platforms: [linux]
 known_issues:
   - Full archive recovery requires plugins.isolation to be in_process; host mode limits recovery.

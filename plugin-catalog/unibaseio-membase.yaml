@@ -9,7 +9,7 @@ tier: community
 category: memory
 requires_nastech: ">=0.22.2"
 version: "0.1.0"
-docs_url: https://github.com/unibaseio/membase/tree/main/integrations/nastech#readme
+docs_url: https://github.com/unibaseio/membase/tree/main/integrations/hermes#readme
 readme: true
 capabilities:
   provides_tools: []

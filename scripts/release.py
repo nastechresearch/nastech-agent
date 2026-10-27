@@ -78,7 +78,9 @@ def dispatch_desktop_build(tag: str, gh_repo: str | None) -> bool:
     workflow = "desktop-bundled-release.yml" if canary else "stable-release.yml"
     cmd = ["gh", "workflow", "run", workflow, "--ref", "main", "-f", f"tag={tag}"]
     if canary:
-        cmd += ["-f", "upload_release=true"]
+        # NasTech ships unsigned: declare it here too, or the dispatched build stops
+        # at the Apple/Azure credential gates before it builds anything.
+        cmd += ["-f", "upload_release=true", "-f", "skip-signed=true"]
     if gh_repo:
         cmd += ["--repo", gh_repo]
 

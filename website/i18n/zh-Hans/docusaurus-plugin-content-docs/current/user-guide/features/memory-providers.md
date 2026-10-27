@@ -43,7 +43,7 @@ memory:
 ### Honcho
 
 :::info 插件目录
-Honcho 由 [Plastic Labs](https://github.com/plastic-labs/honcho/tree/main/nastech-plugin-honcho) 维护，从[插件目录](./plugins.md)安装，不再随 Nastech 内置。它就是之前内置的同一个提供者：工具、配置文件和 `nastech honcho` 命令都没有变化。
+Honcho 由 [Plastic Labs](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho) 维护，从[插件目录](./plugins.md)安装，不再随 Nastech 内置。它就是之前内置的同一个提供者：工具、配置文件和 `nastech honcho` 命令都没有变化。
 :::
 
 AI 原生的跨会话用户建模，具备辩证推理、会话范围上下文注入、语义搜索和持久化结论。基础上下文现在包含会话摘要以及用户表示和 peer card，使 Agent 能感知已讨论的内容。
@@ -72,7 +72,7 @@ nastech memory setup        # 选择 "honcho" — 运行 Honcho 专属的安装�
 
 旧版 `nastech honcho setup` 命令仍然有效（现在会重定向到 `nastech memory setup`），但只有在 Honcho 被选为激活记忆提供者后才会注册。
 
-**配置：** `$NASTECH_HOME/honcho.json`（profile 本地）或 `~/.honcho/config.json`（全局）。解析顺序：`$NASTECH_HOME/honcho.json` > `~/.nastech/honcho.json` > `~/.honcho/config.json`。参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/nastech-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
+**配置：** `$NASTECH_HOME/honcho.json`（profile 本地）或 `~/.honcho/config.json`（全局）。解析顺序：`$NASTECH_HOME/honcho.json` > `~/.nastech/honcho.json` > `~/.honcho/config.json`。参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
 
 <details>
 <summary>完整配置参考</summary>
@@ -259,7 +259,7 @@ nastech honcho sync
 
 </details>
 
-参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/nastech-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
+参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
 
 #### 从内置 Honcho 升级
 

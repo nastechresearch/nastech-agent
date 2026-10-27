@@ -9,7 +9,7 @@ maintainer: Steven Leggett
 tier: community
 category: memory
 requires_nastech: ">=0.19"
-docs_url: https://github.com/roboticforce/sugar/tree/main/nastech-plugin
+docs_url: https://github.com/roboticforce/sugar/tree/main/hermes-plugin
 capabilities:
   provides_tools: []
   provides_hooks: []

@@ -9,7 +9,7 @@ tier: community
 category: tools
 version: "0.1.0"
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/ShawnPana/phone-harness/tree/main/integrations/nastech#readme
+docs_url: https://github.com/ShawnPana/phone-harness/tree/main/integrations/hermes#readme
 capabilities:
   provides_tools:
   - phone_exec

@@ -6,7 +6,7 @@ description: "TinyFish: the web, built into Nastech. Free Search and Fetch power
 maintainer: tinyfish-io
 title: TinyFish
 version: "0.2.3"
-image: https://raw.githubusercontent.com/tinyfish-io/tinyfish-web-agent-integrations/770a3765fa6249b1f6a6153ddaaf65b76bf8fdd4/nastech/assets/banner.png
+image: https://raw.githubusercontent.com/tinyfish-io/tinyfish-web-agent-integrations/770a3765fa6249b1f6a6153ddaaf65b76bf8fdd4/hermes/assets/banner.png
 tier: verified
 category: web
 requires_nastech: ">=0.19"

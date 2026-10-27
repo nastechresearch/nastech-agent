@@ -8,7 +8,7 @@ tier: community
 category: models
 requires_nastech: ">=0.21.4"
 version: "1.8.2.9"
-docs_url: https://github.com/Kame696/kame-api-rotation-for-hermes/tree/v1.8.2.9/nastech-kame-provider#readme
+docs_url: https://github.com/Kame696/kame-api-rotation-for-hermes/tree/v1.8.2.9/hermes-kame-provider#readme
 readme: true
 capabilities:
   provides_tools: []

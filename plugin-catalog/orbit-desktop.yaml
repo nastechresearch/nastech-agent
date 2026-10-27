@@ -35,7 +35,7 @@ maintainer: mojomast
 tier: community
 category: desktop
 version: "0.2.7"
-docs_url: https://github.com/mojomast/orbitdesktop/blob/98b9a5ee13cb1841e819d7a9c873d7de427ba347/nastech-plugin/README.md
+docs_url: https://github.com/mojomast/orbitdesktop/blob/98b9a5ee13cb1841e819d7a9c873d7de427ba347/hermes-plugin/README.md
 platforms: [linux]
 capabilities:
   provides_tools: [orbit_workspace]

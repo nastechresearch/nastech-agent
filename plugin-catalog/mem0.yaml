@@ -12,7 +12,7 @@ description: Mem0 memory provider — server-side LLM fact extraction with seman
 maintainer: mem0ai
 tier: community
 category: memory
-docs_url: https://github.com/mem0ai/mem0/tree/main/integrations/nastech-plugin-mem0#readme
+docs_url: https://github.com/mem0ai/mem0/tree/main/integrations/hermes-plugin-mem0#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

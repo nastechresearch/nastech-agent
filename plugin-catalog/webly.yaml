@@ -9,7 +9,7 @@ tier: community
 category: tools
 requires_nastech: ">=0.21.6"
 version: "0.14.5"
-docs_url: https://github.com/Webly-AI/webly-plugin/tree/main/nastech#readme
+docs_url: https://github.com/Webly-AI/webly-plugin/tree/main/hermes#readme
 platforms: []
 capabilities:
   provides_tools: []

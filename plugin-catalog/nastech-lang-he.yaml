@@ -1,5 +1,5 @@
 name: nastech-lang-he
-repo: https://github.com/Adolanium/nastech-lang-he
+repo: https://github.com/Adolanium/hermes-lang-he
 sha: 9e470ec786f5abf7c97d1939dd8898782a36d430
 description: >-
   Hebrew (עברית) language pack for Nastech — core CLI, gateway and tips (3,396 of
@@ -15,9 +15,9 @@ maintainer: Adolanium
 tier: community
 category: general
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/Adolanium/nastech-lang-he#readme
+docs_url: https://github.com/Adolanium/hermes-lang-he#readme
 version: "0.1.0"
-image: https://raw.githubusercontent.com/Adolanium/nastech-lang-he/9e470ec786f5abf7c97d1939dd8898782a36d430/assets/catalog-banner.png
+image: https://raw.githubusercontent.com/Adolanium/hermes-lang-he/9e470ec786f5abf7c97d1939dd8898782a36d430/assets/catalog-banner.png
 platforms: []
 capabilities:
   provides_tools: []

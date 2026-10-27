@@ -1,6 +1,6 @@
 name: nastech-monitoring-dashboard
 title: Monitoring Dashboard
-repo: https://github.com/austinpickett/nastech-monitoring-dashboard
+repo: https://github.com/austinpickett/hermes-monitoring-dashboard
 subdir: plugin
 sha: 96d6881d7242e0fd9240a3040ad3266ed6c2492e
 version: "1.0.1"
@@ -8,8 +8,8 @@ description: "Prompt-customizable desktop dashboard with live host metrics, sess
 maintainer: austinpickett
 tier: community
 category: desktop
-docs_url: https://github.com/austinpickett/nastech-monitoring-dashboard/blob/96d6881d7242e0fd9240a3040ad3266ed6c2492e/plugin/README.md
-image: https://raw.githubusercontent.com/austinpickett/nastech-monitoring-dashboard/96d6881d7242e0fd9240a3040ad3266ed6c2492e/assets/nastech-cyanotype.jpg
+docs_url: https://github.com/austinpickett/hermes-monitoring-dashboard/blob/96d6881d7242e0fd9240a3040ad3266ed6c2492e/plugin/README.md
+image: https://raw.githubusercontent.com/austinpickett/hermes-monitoring-dashboard/96d6881d7242e0fd9240a3040ad3266ed6c2492e/assets/hermes-cyanotype.jpg
 readme: true
 platforms: []
 capabilities:

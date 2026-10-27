@@ -6,7 +6,7 @@ description: 'Email for your agents through a self-hosted Agent Mail Gateway: th
 maintainer: dominikamann
 tier: community
 category: tools
-docs_url: https://github.com/dominikamann/agent-mail-gateway/blob/main/docs/nastech.md
+docs_url: https://github.com/dominikamann/agent-mail-gateway/blob/main/docs/hermes.md
 version: "0.3.3"
 platforms: []
 capabilities:

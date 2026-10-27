@@ -1,5 +1,5 @@
 name: youtube-dock
-repo: https://github.com/metamindedu/nastech-youtube-dock
+repo: https://github.com/metamindedu/hermes-youtube-dock
 sha: 31d2635ed1ef49250dc89a5707281a5fa66dd76e
 title: YouTube Dock
 description: >-
@@ -16,9 +16,9 @@ tier: community
 category: desktop
 requires_nastech: ">=0.22.2"
 version: "1.1.0"
-docs_url: https://github.com/metamindedu/nastech-youtube-dock
+docs_url: https://github.com/metamindedu/hermes-youtube-dock
 screenshots:
-  - https://raw.githubusercontent.com/metamindedu/nastech-youtube-dock/31d2635ed1ef49250dc89a5707281a5fa66dd76e/docs/menu.png
+  - https://raw.githubusercontent.com/metamindedu/hermes-youtube-dock/31d2635ed1ef49250dc89a5707281a5fa66dd76e/docs/menu.png
 readme: true
 platforms: []
 known_issues:

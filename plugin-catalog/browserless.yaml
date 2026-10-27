@@ -11,10 +11,10 @@ description: "Run Nastech' built-in browser tools on Browserless cloud browsers:
 maintainer: browserless
 tier: community
 category: web
-docs_url: https://github.com/browserless/browserless-mcp/tree/600a5d689fa3f5bdcb5676ffc063b56d18e9bd7c/nastech
+docs_url: https://github.com/browserless/browserless-mcp/tree/600a5d689fa3f5bdcb5676ffc063b56d18e9bd7c/hermes
 requires_nastech: ">=0.21.6"
 version: "0.1.2"
-image: https://raw.githubusercontent.com/browserless/browserless-mcp/600a5d689fa3f5bdcb5676ffc063b56d18e9bd7c/nastech/assets/banner.jpg
+image: https://raw.githubusercontent.com/browserless/browserless-mcp/600a5d689fa3f5bdcb5676ffc063b56d18e9bd7c/hermes/assets/banner.jpg
 readme: true
 known_issues:
   - "If the Browserless session can't start (e.g. wrong token or plan concurrency limit), Nastech falls back to a local browser; set BROWSERLESS_MUX_LOG to see the reason."

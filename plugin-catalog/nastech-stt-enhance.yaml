@@ -7,7 +7,7 @@ maintainer: dmmeteo
 tier: community
 category: voice
 requires_nastech: ">=0.15.0"
-docs_url: https://github.com/dmmeteo/hermes-stt-enhance/tree/7be60e334a2d7cba870a76b5758e83655323d8b0/nastech-stt-enhance#readme
+docs_url: https://github.com/dmmeteo/hermes-stt-enhance/tree/7be60e334a2d7cba870a76b5758e83655323d8b0/hermes-stt-enhance#readme
 version: "0.5.1"
 platforms: []
 capabilities:

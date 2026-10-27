@@ -6,7 +6,7 @@ description: "Unbrowse: websites as APIs. Read any page as clean markdown, run t
 maintainer: unbrowse-ai
 tier: community
 category: web
-docs_url: https://github.com/unbrowse-ai/unbrowse/tree/main/plugins/nastech
+docs_url: https://github.com/unbrowse-ai/unbrowse/tree/main/plugins/hermes
 version: "12.1.0"
 capabilities:
   provides_tools:

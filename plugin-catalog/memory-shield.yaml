@@ -1,6 +1,6 @@
 name: memory-shield
 title: Memory Shield
-repo: https://github.com/churnast/nastech-memory-shield
+repo: https://github.com/churnast/hermes-memory-shield
 sha: 347ab18408da52937f7e808a6e88a52b74184225
 description: >-
   Keeps your agent from rewriting or wiping what it remembers about you: by default the agent may add facts
@@ -30,13 +30,13 @@ maintainer: churnast
 tier: community
 category: general
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/churnast/nastech-memory-shield#readme
+docs_url: https://github.com/churnast/hermes-memory-shield#readme
 version: "1.1.2"
-image: https://raw.githubusercontent.com/churnast/nastech-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/card.png
+image: https://raw.githubusercontent.com/churnast/hermes-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/card.png
 screenshots:
-  - https://raw.githubusercontent.com/churnast/nastech-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/screenshots/01-group-stranger.png
-  - https://raw.githubusercontent.com/churnast/nastech-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/screenshots/02-forget-everything.png
-  - https://raw.githubusercontent.com/churnast/nastech-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/screenshots/04-undo.png
+  - https://raw.githubusercontent.com/churnast/hermes-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/screenshots/01-group-stranger.png
+  - https://raw.githubusercontent.com/churnast/hermes-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/screenshots/02-forget-everything.png
+  - https://raw.githubusercontent.com/churnast/hermes-memory-shield/347ab18408da52937f7e808a6e88a52b74184225/docs/screenshots/04-undo.png
 platforms: [linux, macos]
 known_issues:
   - "Needs plugins.isolation: in_process (the default). Under plugins.isolation: host the plugin cannot see the current chat, sender or Nastech' review marker, so it judges every call like a direct chat and the group chat and background review protection does not apply."

@@ -214,9 +214,9 @@ tool_prefix: "▏"
 
 ## Nastech Mod — 可视化皮肤编辑器
 
-[Nastech Mod](https://github.com/cocktailpeanut/nastech-mod) 是一个社区构建的 Web UI，用于可视化创建和管理皮肤。无需手写 YAML，提供带实时预览的点击式编辑器。
+[Nastech Mod](https://github.com/cocktailpeanut/hermes-mod) 是一个社区构建的 Web UI，用于可视化创建和管理皮肤。无需手写 YAML，提供带实时预览的点击式编辑器。
 
-![Nastech Mod skin editor](https://raw.githubusercontent.com/cocktailpeanut/nastech-mod/master/nastech.png)
+![Nastech Mod skin editor](https://raw.githubusercontent.com/cocktailpeanut/hermes-mod/master/nous.png)
 
 **功能说明：**
 
@@ -243,7 +243,7 @@ npx -y nastech-mod
 **方式三 — 手动安装：**
 
 ```bash
-git clone https://github.com/cocktailpeanut/nastech-mod.git
+git clone https://github.com/cocktailpeanut/hermes-mod.git
 cd nastech-mod/app
 npm install
 npm start

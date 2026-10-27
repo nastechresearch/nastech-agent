@@ -1,5 +1,5 @@
 name: stt-vocab
-repo: https://github.com/pierrenode/nastech-stt-vocab
+repo: https://github.com/pierrenode/hermes-stt-vocab
 sha: 54e83f9289315af6d47c7c6fdeb5714a08b35262
 subdir: stt-vocab
 description: >-
@@ -17,9 +17,9 @@ maintainer: pierrenode
 tier: community
 category: voice
 requires_nastech: ">=0.21"
-docs_url: https://github.com/pierrenode/nastech-stt-vocab
+docs_url: https://github.com/pierrenode/hermes-stt-vocab
 version: "1.1.0"
-image: https://raw.githubusercontent.com/pierrenode/nastech-stt-vocab/6145d065d50f196d51b3ab80fe4a76fb2827c115/docs/card.png
+image: https://raw.githubusercontent.com/pierrenode/hermes-stt-vocab/6145d065d50f196d51b3ab80fe4a76fb2827c115/docs/card.png
 platforms: []
 capabilities:
   provides_tools: []

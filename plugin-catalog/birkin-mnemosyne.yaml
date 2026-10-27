@@ -12,7 +12,7 @@ description: >-
 maintainer: ashmoonori-afk
 tier: community
 category: memory
-docs_url: https://github.com/ashmoonori-afk/birkin-mnemosyne/tree/f91aeac0dcb3ff06bf5d82337a69b3f694880bd5/integrations/nastech
+docs_url: https://github.com/ashmoonori-afk/birkin-mnemosyne/tree/f91aeac0dcb3ff06bf5d82337a69b3f694880bd5/integrations/hermes
 capabilities:
   provides_tools: []
   provides_hooks: []

@@ -10,7 +10,7 @@ maintainer: agentscope-ai
 tier: community
 category: memory
 requires_nastech: '>=0.21'
-docs_url: https://github.com/agentscope-ai/ReMe/tree/main/integrations/nastech_agent
+docs_url: https://github.com/agentscope-ai/ReMe/tree/main/integrations/hermes_agent
 capabilities:
   provides_tools: []
   provides_hooks: []

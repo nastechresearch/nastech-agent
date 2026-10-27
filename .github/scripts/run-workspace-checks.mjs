@@ -42,7 +42,22 @@ function discoverUnits() {
       units.push({ pkg: pkg.location, script: 'check' })
     }
   }
-  return units
+  // A CI leg subtracts units it has spread over other legs, so one long
+  // unit can run on several runners without every leg re-running the rest.
+  // Discovery stays automatic: a new package or check script needs no
+  // change here.  A skip that matches no unit is an error, because a leg
+  // that quietly checks nothing reports green.
+  const skip = (process.env.JS_CHECK_SKIP || '').split(',').filter(Boolean)
+  if (!skip.length) return units
+  const labels = new Set(units.map((u) => `${u.pkg}::${u.script}`))
+  const unmatched = skip.filter((label) => !labels.has(label))
+  if (unmatched.length) {
+    console.error(
+      `::error::JS_CHECK_SKIP names ${unmatched.join(', ')} but no unit matches`,
+    )
+    process.exit(1)
+  }
+  return units.filter((u) => !skip.includes(`${u.pkg}::${u.script}`))
 }
 
 /** @param {{pkg: string, script: string}} unit */

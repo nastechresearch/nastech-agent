@@ -117,8 +117,15 @@ it('detaches the prior canonical subscription only after the replacement attache
   resetUiState()
   const pending: Array<{ method: string; params: any; resolve: (value: any) => void }> = []
 
-  const request = vi.fn((method: string, params: any) =>
-    new Promise(resolve => pending.push({ method, params, resolve })))
+  const request = vi.fn((method: string, params: any) => {
+    // The gate asks setup.status before the attach; the ledger tracks session RPCs,
+    // so the setup reply answers at once instead of taking a resume's queue slot.
+    if (method === 'setup.status') {
+      return Promise.resolve({ provider_configured: true })
+    }
+
+    return new Promise(resolve => pending.push({ method, params, resolve }))
+  })
 
   let lifecycle!: ReturnType<typeof useSessionLifecycle>
 

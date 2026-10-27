@@ -10,7 +10,7 @@ description: "Verify Jet Browser startup, native input, DOM agreement, and PNG c
 maintainer: IRONICBo
 tier: community
 category: tools
-docs_url: https://github.com/masakaai/jet-browser/tree/1b0b10feb70e52bde844ba4e1cb7c35600af4b35/integrations/nastech
+docs_url: https://github.com/masakaai/jet-browser/tree/1b0b10feb70e52bde844ba4e1cb7c35600af4b35/integrations/hermes
 platforms: [linux]
 known_issues:
   - "Requires Docker with linux/amd64 container support; the first run may pull the pinned image from GHCR."

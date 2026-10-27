@@ -7,7 +7,7 @@ description: "Knowledge-graph memory for Nastech, shared with Cognee's Claude Co
 maintainer: topoteretes
 tier: community
 category: memory
-docs_url: https://github.com/topoteretes/cognee-integrations/tree/main/integrations/nastech-agent#readme
+docs_url: https://github.com/topoteretes/cognee-integrations/tree/main/integrations/hermes-agent#readme
 readme: true
 capabilities:
   provides_tools:

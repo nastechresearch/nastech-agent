@@ -17,7 +17,7 @@ maintainer: midhatn
 tier: community
 category: models
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/midhatn/adaptive-inference/blob/d6f4e201ba28602189872746922e527c58ed0cbd/plugins/nastech/README.md
+docs_url: https://github.com/midhatn/adaptive-inference/blob/d6f4e201ba28602189872746922e527c58ed0cbd/plugins/hermes/README.md
 version: "0.1.0"
 capabilities:
   provides_tools: []

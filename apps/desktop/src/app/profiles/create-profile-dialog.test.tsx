@@ -2,6 +2,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 
+import { browserDefaultProjectDirKey } from '@/lib/browser-settings'
+import { browserStartupProfileKey } from '@/lib/browser-startup-profile'
+
 import { CreateProfileDialog } from './create-profile-dialog'
 
 const api = vi.hoisted(() => ({ createProfile: vi.fn(async () => ({})), updateProfileSoul: vi.fn(async () => ({})) }))
@@ -34,3 +37,30 @@ it.each([true, false])(
     }
   }
 )
+
+it('does not let a new browser profile inherit the prefs a deleted one left under its name', async () => {
+  const win = window as Window & { __NASTECH_BASE_PATH__?: string }
+  const folderKey = browserDefaultProjectDirKey('/nastech', 'work')
+  const startupKey = browserStartupProfileKey('/nastech')
+  window.document.documentElement.dataset.nastechDesktopHost = 'browser'
+  win.__NASTECH_BASE_PATH__ = '/nastech'
+  localStorage.setItem(folderKey, '/srv/deleted-work')
+  localStorage.setItem(startupKey, JSON.stringify({ connectionId: null, profile: 'work' }))
+  localStorage.setItem(browserDefaultProjectDirKey('/nastech', 'alpha'), '/srv/alpha')
+
+  try {
+    const created = vi.fn()
+    render(<CreateProfileDialog onClose={vi.fn()} onCreated={created} open />)
+    fireEvent.change(screen.getByPlaceholderText('my-profile'), { target: { value: 'work' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create profile' }))
+    await waitFor(() => expect(created).toHaveBeenCalledWith('work'))
+
+    expect(localStorage.getItem(folderKey)).toBeNull()
+    expect(localStorage.getItem(startupKey)).toBeNull()
+    expect(localStorage.getItem(browserDefaultProjectDirKey('/nastech', 'alpha'))).toBe('/srv/alpha')
+  } finally {
+    localStorage.clear()
+    delete window.document.documentElement.dataset.nastechDesktopHost
+    delete win.__NASTECH_BASE_PATH__
+  }
+})

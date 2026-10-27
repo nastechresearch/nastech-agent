@@ -196,6 +196,11 @@ on:
         required: false
         type: boolean
         default: false
+      skip-signed:
+        description: 'Unsigned build: skip Azure and Apple signing; artifacts still stage and upload'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -1924,7 +1929,10 @@ jobs:
         id: pm
         uses: ./.github/actions/setup-pm
         with:
-          toolchain: python
+          # scripts/termux/build.py builds the TUI with a bare `node`, and every
+          # workspace pins engines >=26 while this image ships 22: install the
+          # locked Node beside Python or node-deps.mjs refuses the run.
+          toolchain: all
           archive-inputs: true
           cache-python: false
 

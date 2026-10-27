@@ -166,7 +166,26 @@ class AuthorityConnection:
                     connection = AuthorityConnection(sibling, self.transport, identity, operator=self._operator)
                     self._siblings[sibling.profile_id] = connection
                 return connection
+        if registry is not None and registry.starting(profile) is not None:
+            # Hot-serve is still building it: retryable, not the final verdict for an unserved profile.
+            # A shared socket holds such a frame until the start ends (``awaits_profile_start``); this
+            # answers one whose wait ran out.
+            raise RuntimeStoreError('runtime_draining', field='profile', detail='the profile is still starting')
         raise RuntimeStoreError('profile_mismatch')
+
+    def awaits_profile_start(self, request, held=()):
+        """Whether a shared socket holds *request* off its serial lane: ``(key, started)`` when a
+        host-scoped frame names a profile hot-serve is still building (``started`` is set once the
+        build ends), ``(key, None)`` when it names one of *held*, the starts whose earlier frames the
+        socket still holds, so it queues behind them. None for every other frame."""
+        params = request.get('params') if isinstance(request, dict) else None
+        profile = params.get('profile') if isinstance(params, dict) else None
+        registry = getattr(getattr(self.authority, 'runner', None), 'session_authorities', None)
+        if not (self.host_scoped and isinstance(profile, str) and profile and registry is not None):
+            return None
+        from nastech_cli.profiles import profile_matches_home
+        key = next((key for key in held if profile_matches_home(profile, Path(key))), None)
+        return (key, None) if key is not None else registry.starting(profile)
 
     def handlers(self):
         """Method → handler for every verb ``dispatch`` serves outside the group controls; each

@@ -1,5 +1,5 @@
 name: devkit
-repo: https://github.com/Zek-Takai/nastech-devkit
+repo: https://github.com/Zek-Takai/hermes-devkit
 sha: dbfa6b26ac64c65ec3e58a937890a912de3d628d
 subdir: plugin
 title: Scratchpad (devkit)
@@ -9,9 +9,9 @@ maintainer: Zek-Takai
 tier: community
 category: tools
 requires_nastech: ">=0.22.0"
-image: https://raw.githubusercontent.com/Zek-Takai/nastech-devkit/dbfa6b26ac64c65ec3e58a937890a912de3d628d/docs/scratchpad-banner.png
+image: https://raw.githubusercontent.com/Zek-Takai/hermes-devkit/dbfa6b26ac64c65ec3e58a937890a912de3d628d/docs/scratchpad-banner.png
 screenshots:
-  - https://raw.githubusercontent.com/Zek-Takai/nastech-devkit/dbfa6b26ac64c65ec3e58a937890a912de3d628d/docs/scratchpad-desktop.png
+  - https://raw.githubusercontent.com/Zek-Takai/hermes-devkit/dbfa6b26ac64c65ec3e58a937890a912de3d628d/docs/scratchpad-desktop.png
 known_issues:
   - "scratchpad action=open needs the Desktop window bridge on the session gateway (NastechResearch/nastech-agent#138917); on v0.22.1 open reports 'The preview pane is only available in the Nastech desktop app'. Every other action works."
   - "The agent may not always pick the scratchpad on its own (the model chooses its tools). If it writes a loose file or pastes code instead, ask it to use the scratchpad."

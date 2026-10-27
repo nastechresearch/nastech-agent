@@ -8,7 +8,7 @@ maintainer: dmmeteo
 tier: community
 category: tools
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/dmmeteo/hermes-artifacts/blob/57b61fca2872d15060d8a9b30b9e51242e9cb357/docs/nastech.md
+docs_url: https://github.com/dmmeteo/hermes-artifacts/blob/57b61fca2872d15060d8a9b30b9e51242e9cb357/docs/hermes.md
 version: "0.1.0"
 readme: false
 platforms: []

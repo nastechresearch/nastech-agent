@@ -9,7 +9,7 @@ maintainer: synnada-ai
 tier: community
 category: tools
 requires_nastech: ">=0.22.4"
-docs_url: https://github.com/synnada-ai/agentvault-plugins/blob/6e0e3ded804cefb19b362736e5818c99cc061d48/plugins/nastech/README.md
+docs_url: https://github.com/synnada-ai/agentvault-plugins/blob/6e0e3ded804cefb19b362736e5818c99cc061d48/plugins/hermes/README.md
 readme: true
 platforms: [macos]
 known_issues:

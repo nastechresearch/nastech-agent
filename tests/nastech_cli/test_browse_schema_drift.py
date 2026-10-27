@@ -663,6 +663,9 @@ def test_slow_browse_reconcile_gives_up_inside_its_budget_and_boot_waits_it_out(
     if window >= 0 and startup > margin:
         pytest.skip(f"this host spent {startup:.2f} s outside the budgeted phase, more than the "
                     f"{margin:.1f} s between the browse budget and boot's wait ({out})")
+    if window >= 0 and late - late_at > margin:
+        pytest.skip(f"this host overslept the fixture's injected delay by {late - late_at:.2f} s, "
+                    f"more than the {margin:.1f} s between the browse budget and boot's wait ({out})")
     assert status == "503", out
     # The bound charges what the product's budgeted phase did, not that phase's raw wall
     # clock. `late` is the seconds this runner overslept the delay the fixture injects, counted

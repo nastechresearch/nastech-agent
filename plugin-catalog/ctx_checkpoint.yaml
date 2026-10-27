@@ -9,7 +9,7 @@ maintainer: GottZ
 tier: community
 category: memory
 requires_nastech: ">=0.20.4"
-docs_url: https://github.com/GottZ/ctx/blob/root/integrations/nastech/README.md
+docs_url: https://github.com/GottZ/ctx/blob/root/integrations/hermes/README.md
 capabilities:
   provides_tools: []
   provides_hooks: []

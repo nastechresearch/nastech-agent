@@ -7,7 +7,7 @@ maintainer: masakaai
 tier: community
 category: automation
 requires_nastech: ">=0.22.0"
-docs_url: https://github.com/masakaai/rea-captcha/tree/bac84a628e989d330b807974789cde0ec689be18/integrations/nastech
+docs_url: https://github.com/masakaai/rea-captcha/tree/bac84a628e989d330b807974789cde0ec689be18/integrations/hermes
 version: "0.3.1"
 platforms: []
 capabilities:

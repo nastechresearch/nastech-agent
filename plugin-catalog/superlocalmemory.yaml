@@ -7,7 +7,7 @@ maintainer: Qualixar
 tier: community
 category: tools
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/qualixar/superlocalmemory/blob/main/docs/nastech.md
+docs_url: https://github.com/qualixar/superlocalmemory/blob/main/docs/hermes.md
 version: "4.2.6"
 title: SuperLocalMemory
 known_issues:

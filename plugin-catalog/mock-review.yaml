@@ -1,6 +1,6 @@
 name: mock-review
 title: Mock Review
-repo: https://github.com/arspesk/nastech-mock-review
+repo: https://github.com/arspesk/hermes-mock-review
 sha: "fb3d07bae45ab7a30f57fdc8cbc0e36df016e996"
 version: "1.0.1"
 description: >-
@@ -26,10 +26,10 @@ maintainer: "arspesk"
 tier: community
 category: tools
 requires_nastech: ">=0.22.0"
-docs_url: https://github.com/arspesk/nastech-mock-review#readme
-image: https://raw.githubusercontent.com/arspesk/nastech-mock-review/57b1f581d03cb266b89bb4b6239573504a6405a6/docs/img/catalog-banner.jpg
+docs_url: https://github.com/arspesk/hermes-mock-review#readme
+image: https://raw.githubusercontent.com/arspesk/hermes-mock-review/57b1f581d03cb266b89bb4b6239573504a6405a6/docs/img/catalog-banner.jpg
 screenshots:
-  - https://raw.githubusercontent.com/arspesk/nastech-mock-review/fb3d07bae45ab7a30f57fdc8cbc0e36df016e996/docs/img/review-board.png
+  - https://raw.githubusercontent.com/arspesk/hermes-mock-review/fb3d07bae45ab7a30f57fdc8cbc0e36df016e996/docs/img/review-board.png
 platforms: []
 known_issues:
   - "here.now hosting needs the official here-now skill in the active profile (`nastech skills install official/productivity/here-now`) and a HERENOW_API_KEY; local and tailnet hosting need neither."

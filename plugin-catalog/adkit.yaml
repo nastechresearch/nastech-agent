@@ -9,7 +9,7 @@ maintainer: AdKit
 tier: community
 category: tools
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/adkit/ads-mcp/tree/main/nastech#readme
+docs_url: https://github.com/adkit/ads-mcp/tree/main/hermes#readme
 image: https://raw.githubusercontent.com/adkit/ads-mcp/97f9a776fd317329f544d10ce22792eb4b115c62/assets/logo.png
 readme: true
 platforms: []

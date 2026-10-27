@@ -18,8 +18,8 @@ tier: community
 category: tools
 requires_nastech: ">=0.22.4"
 version: "0.2.0"
-docs_url: https://github.com/matebenyovszky/agentplaybooks/tree/f31e9c3af6520cebda1c0712447b4b487ffc12a7/packages/nastech-portable/agentplaybooks-tools
-image: https://raw.githubusercontent.com/matebenyovszky/agentplaybooks/f31e9c3af6520cebda1c0712447b4b487ffc12a7/public/plugin-catalog/nastech-tools.png
+docs_url: https://github.com/matebenyovszky/agentplaybooks/tree/f31e9c3af6520cebda1c0712447b4b487ffc12a7/packages/hermes-portable/agentplaybooks-tools
+image: https://raw.githubusercontent.com/matebenyovszky/agentplaybooks/f31e9c3af6520cebda1c0712447b4b487ffc12a7/public/plugin-catalog/hermes-tools.png
 readme: true
 platforms: [linux, macos, windows]
 capabilities:

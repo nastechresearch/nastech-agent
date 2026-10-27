@@ -7,7 +7,7 @@ maintainer: liamsmith86
 tier: community
 category: web
 requires_nastech: '>=0.21.5'
-docs_url: https://github.com/liamsmith86/talaria-webui/tree/14dbcd48e381558643770d54f644714f89204dc3/src/talaria/nastech_plugin
+docs_url: https://github.com/liamsmith86/talaria-webui/tree/14dbcd48e381558643770d54f644714f89204dc3/src/talaria/hermes_plugin
 version: "1.5.1"
 image: https://raw.githubusercontent.com/liamsmith86/talaria-webui/14dbcd48e381558643770d54f644714f89204dc3/.github/assets/social-preview.jpg
 screenshots:
