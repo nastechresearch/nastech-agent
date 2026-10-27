@@ -12,7 +12,7 @@ maintainer: MaxFreedomPollard
 tier: community
 category: memory
 requires_nastech: '>=0.20.1'
-docs_url: https://github.com/MaxFreedomPollard/Compartment/blob/b144fc34723911eace9f240ac1044b9280b74bf2/integrations/nastech/README.md
+docs_url: https://github.com/MaxFreedomPollard/Compartment/blob/b144fc34723911eace9f240ac1044b9280b74bf2/integrations/hermes/README.md
 version: 4.10.0
 image: https://raw.githubusercontent.com/MaxFreedomPollard/Compartment/b144fc34723911eace9f240ac1044b9280b74bf2/docs/images/social-preview.png
 platforms: []

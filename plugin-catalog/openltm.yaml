@@ -11,9 +11,9 @@ description: "Long-term memory for Nastech agents, stored in a local SQLite data
 maintainer: RohiRIK
 tier: community
 category: memory
-docs_url: https://github.com/RohiRIK/OpenLtm/blob/main/docs/10-nastech-plugin.md
+docs_url: https://github.com/RohiRIK/OpenLtm/blob/main/docs/10-hermes-plugin.md
 version: "2.19.0"
-image: https://raw.githubusercontent.com/RohiRIK/OpenLtm/687934564e68878ff9646a57aa72f6d3fc4f5fc8/nastech/plugin-catalog/banner.png
+image: https://raw.githubusercontent.com/RohiRIK/OpenLtm/687934564e68878ff9646a57aa72f6d3fc4f5fc8/hermes/plugin-catalog/banner.png
 readme: true
 platforms: []
 capabilities:

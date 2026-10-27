@@ -136,6 +136,51 @@ describe('runExportProfileFlow', () => {
   })
 })
 
+describe('importProfileBundle', () => {
+  const folderKey = (profile: string) => `nastech:browser:default-project-dir:${JSON.stringify(['/nastech', profile])}`
+  const startupKey = 'nastech:webapp:default-profile:/nastech'
+
+  function seedLeftovers() {
+    window.localStorage.setItem(folderKey('imported'), '/srv/deleted-imported')
+    window.localStorage.setItem(folderKey('other'), '/srv/other')
+    window.localStorage.setItem(startupKey, JSON.stringify({ connectionId: null, profile: 'imported' }))
+  }
+
+  afterEach(() => {
+    document.documentElement.removeAttribute('data-nastech-desktop-host')
+    Reflect.deleteProperty(window, '__NASTECH_BASE_PATH__')
+  })
+
+  // An import never lands on a live profile's name, so prefs stored under it were left by a deleted one.
+  it('drops what a deleted profile of the same name left, only once the import succeeded', async () => {
+    const { importProfileBundle } = await import('./profile-share')
+    const { importProfileArchive } = await import('@/nastech')
+    document.documentElement.dataset.nastechDesktopHost = 'browser'
+    Object.assign(window, { __NASTECH_BASE_PATH__: '/nastech' })
+    seedLeftovers()
+    vi.mocked(importProfileArchive).mockRejectedValueOnce(new Error('bad archive'))
+
+    await expect(importProfileBundle('/tmp/in.tar.gz')).rejects.toThrow('bad archive')
+    expect(window.localStorage.getItem(folderKey('imported'))).toBe('/srv/deleted-imported')
+    expect(window.localStorage.getItem(startupKey)).not.toBeNull()
+
+    await expect(importProfileBundle('/tmp/in.tar.gz')).resolves.toBe('imported')
+    expect(window.localStorage.getItem(folderKey('imported'))).toBeNull()
+    expect(window.localStorage.getItem(startupKey)).toBeNull()
+    expect(window.localStorage.getItem(folderKey('other'))).toBe('/srv/other')
+  })
+
+  it('keeps browser prefs in native Desktop', async () => {
+    const { importProfileBundle } = await import('./profile-share')
+    Object.assign(window, { __NASTECH_BASE_PATH__: '/nastech' })
+    seedLeftovers()
+
+    await expect(importProfileBundle('/tmp/in.tar.gz')).resolves.toBe('imported')
+    expect(window.localStorage.getItem(folderKey('imported'))).toBe('/srv/deleted-imported')
+    expect(window.localStorage.getItem(startupKey)).not.toBeNull()
+  })
+})
+
 describe('exportProfileBundle', () => {
   it('stages desktop.json into the archive through extra_files', async () => {
     skinPref.assign('glam', 'mono')

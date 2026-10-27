@@ -1,5 +1,5 @@
 name: gadget
-repo: https://github.com/Adolanium/nastech-gadget-sdk
+repo: https://github.com/Adolanium/hermes-gadget-sdk
 sha: 0b957aae2f7f11904a9daab031f1378a45de21dc
 subdir: plugin
 title: Nastech Gadget
@@ -10,12 +10,12 @@ category: platform
 requires_nastech: ">=0.21.6"
 docs_url: https://adolanium.github.io/nastech-gadget-sdk/docs/connect-nastech.html
 version: "0.3.0"
-image: https://raw.githubusercontent.com/Adolanium/nastech-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/banner.webp
+image: https://raw.githubusercontent.com/Adolanium/hermes-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/banner.webp
 screenshots:
-  - https://raw.githubusercontent.com/Adolanium/nastech-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/sim-window.png
-  - https://raw.githubusercontent.com/Adolanium/nastech-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/screen-listening.png
-  - https://raw.githubusercontent.com/Adolanium/nastech-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/screen-reply.png
-  - https://raw.githubusercontent.com/Adolanium/nastech-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/screen-prompt.png
+  - https://raw.githubusercontent.com/Adolanium/hermes-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/sim-window.png
+  - https://raw.githubusercontent.com/Adolanium/hermes-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/screen-listening.png
+  - https://raw.githubusercontent.com/Adolanium/hermes-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/screen-reply.png
+  - https://raw.githubusercontent.com/Adolanium/hermes-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/screen-prompt.png
 capabilities:
   provides_tools:
     - gadget_devices

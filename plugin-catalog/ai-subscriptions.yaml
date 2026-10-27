@@ -5,7 +5,7 @@
 # files under `desktop/plugin.js` and never fetches, downloads, or replaces itself.
 # This is the `catalog/` edition: it reads no credentials and makes no network calls.
 name: ai-subscriptions
-repo: https://github.com/rahuloruganti/nastech-ai-subscriptions
+repo: https://github.com/rahuloruganti/hermes-ai-subscriptions
 sha: "b59e286ea1d5eaae3ebdddc056f6b5307cbfd6bf"
 subdir: catalog
 version: "0.3.5"
@@ -14,12 +14,12 @@ description: "Your AI subscriptions and token usage in Nastech Desktop. A page w
 maintainer: rahuloruganti
 tier: community
 category: desktop
-docs_url: https://github.com/rahuloruganti/nastech-ai-subscriptions#readme
+docs_url: https://github.com/rahuloruganti/hermes-ai-subscriptions#readme
 requires_nastech: ">=0.22.2"
 screenshots:
-  - https://raw.githubusercontent.com/rahuloruganti/nastech-ai-subscriptions/b59e286ea1d5eaae3ebdddc056f6b5307cbfd6bf/assets/plans-and-picker.png
-  - https://raw.githubusercontent.com/rahuloruganti/nastech-ai-subscriptions/b59e286ea1d5eaae3ebdddc056f6b5307cbfd6bf/assets/usage.png
-  - https://raw.githubusercontent.com/rahuloruganti/nastech-ai-subscriptions/b59e286ea1d5eaae3ebdddc056f6b5307cbfd6bf/assets/day-breakdown.png
+  - https://raw.githubusercontent.com/rahuloruganti/hermes-ai-subscriptions/b59e286ea1d5eaae3ebdddc056f6b5307cbfd6bf/assets/plans-and-picker.png
+  - https://raw.githubusercontent.com/rahuloruganti/hermes-ai-subscriptions/b59e286ea1d5eaae3ebdddc056f6b5307cbfd6bf/assets/usage.png
+  - https://raw.githubusercontent.com/rahuloruganti/hermes-ai-subscriptions/b59e286ea1d5eaae3ebdddc056f6b5307cbfd6bf/assets/day-breakdown.png
 capabilities:
   provides_tools: []
   provides_hooks: []

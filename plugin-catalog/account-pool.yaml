@@ -1,5 +1,5 @@
 name: account-pool
-repo: https://github.com/roqianjas/nastech-account-pool
+repo: https://github.com/roqianjas/hermes-account-pool
 sha: 7a4fc9fd976ed68de9e6f70ba326ef2053741e69
 subdir: plugins/account-pool
 version: "4.0.2"
@@ -9,15 +9,15 @@ maintainer: roqianjas
 tier: community
 category: tools
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/roqianjas/nastech-account-pool/blob/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/README.md
+docs_url: https://github.com/roqianjas/hermes-account-pool/blob/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/README.md
 platforms: [linux, windows]
 screenshots:
-  - https://raw.githubusercontent.com/roqianjas/nastech-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/accounts.png
-  - https://raw.githubusercontent.com/roqianjas/nastech-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/report.png
-  - https://raw.githubusercontent.com/roqianjas/nastech-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/sessions.png
-  - https://raw.githubusercontent.com/roqianjas/nastech-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/alerts.png
-  - https://raw.githubusercontent.com/roqianjas/nastech-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/add-account.png
-  - https://raw.githubusercontent.com/roqianjas/nastech-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/add-account-codex.png
+  - https://raw.githubusercontent.com/roqianjas/hermes-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/accounts.png
+  - https://raw.githubusercontent.com/roqianjas/hermes-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/report.png
+  - https://raw.githubusercontent.com/roqianjas/hermes-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/sessions.png
+  - https://raw.githubusercontent.com/roqianjas/hermes-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/alerts.png
+  - https://raw.githubusercontent.com/roqianjas/hermes-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/add-account.png
+  - https://raw.githubusercontent.com/roqianjas/hermes-account-pool/7a4fc9fd976ed68de9e6f70ba326ef2053741e69/docs/screenshots/add-account-codex.png
 known_issues:
   - "After installing, run `nastech account <provider> setup` (add --timer for the 5-minute balance timer): it lists the plugin in every profile for the Desktop page and links it into every profile for the session tracker. Coming from 3.x it also removes account-pool-tracker."
   - "Nastech can let a parked account back into rotation early (`nastech auth reset`, or a Codex quota it sees come back); the next balance run parks it again, and doctor names it until then. A park without --until is held for 30 days, and a balance run renews it once less than 15 days are left, so without the timer it ends after 30 days."

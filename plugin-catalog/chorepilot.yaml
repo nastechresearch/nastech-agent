@@ -8,7 +8,7 @@ description: "Your house and family chore board as Nastech tools, through ChoreP
 maintainer: WestWaters
 tier: community
 category: tools
-docs_url: https://github.com/WestWaters/ChorePilot/blob/main/docs/NASTECH.md
+docs_url: https://github.com/WestWaters/ChorePilot/blob/main/docs/HERMES.md
 requires_nastech: ">=0.21.5"
 readme: true
 platforms: []

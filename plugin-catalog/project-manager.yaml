@@ -1,5 +1,5 @@
 name: project-manager
-repo: https://github.com/AiSolve-me/nastech-project-manager
+repo: https://github.com/AiSolve-me/hermes-project-manager
 sha: 2de4269baafc7399b7d4f92ad71b1d39205caf7b
 version: "1.0.0"
 title: Project Manager
@@ -7,10 +7,10 @@ description: "Git workbench for the Nastech Dashboard and Desktop: discovers the
 maintainer: AiSolve-me
 tier: community
 category: desktop
-docs_url: https://github.com/AiSolve-me/nastech-project-manager#readme
-image: https://raw.githubusercontent.com/AiSolve-me/nastech-project-manager/2de4269baafc7399b7d4f92ad71b1d39205caf7b/docs/assets/catalog-card.png
+docs_url: https://github.com/AiSolve-me/hermes-project-manager#readme
+image: https://raw.githubusercontent.com/AiSolve-me/hermes-project-manager/2de4269baafc7399b7d4f92ad71b1d39205caf7b/docs/assets/catalog-card.png
 screenshots:
-  - https://raw.githubusercontent.com/AiSolve-me/nastech-project-manager/2de4269baafc7399b7d4f92ad71b1d39205caf7b/docs/assets/projects-dashboard.png
+  - https://raw.githubusercontent.com/AiSolve-me/hermes-project-manager/2de4269baafc7399b7d4f92ad71b1d39205caf7b/docs/assets/projects-dashboard.png
 platforms: []
 capabilities:
   provides_tools:

@@ -8,7 +8,7 @@ maintainer: memtomem
 tier: community
 category: general
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/memtomem/memtomem/tree/c93f45f02fdd13f8206dc673bcd5c520671c0a9a/packages/memtomem-nastech-plugin
+docs_url: https://github.com/memtomem/memtomem/tree/c93f45f02fdd13f8206dc673bcd5c520671c0a9a/packages/memtomem-hermes-plugin
 capabilities:
   provides_tools: []
   provides_hooks: []

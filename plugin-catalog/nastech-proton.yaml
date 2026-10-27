@@ -1,14 +1,14 @@
 name: nastech-proton
-repo: https://github.com/Maytrella007/nastech-proton
+repo: https://github.com/Maytrella007/hermes-proton
 sha: 3e0612848cf20116294f9ff58e74aadf34bc858e
 description: "Proton Mail, Calendar, Contacts and Drive for a Nastech Agent, through an MIT-licensed client built from Proton's own open-source Go libraries (go-srp, go-proton-api) — no Proton Bridge and no paid plan. Reads, searches and sends mail (attachments, scheduled send, labels, folders), manages calendar events and RSVPs, contacts (signed/encrypted vCards), and Drive (upload, download, move, rename, trash, public share links). Sign-in runs in a terminal via `nastech proton login` and the account password is never taken through chat; sending is refused until a recipient allowlist is set and every send is gated by Nastech's pre_tool_call approval. Disclosure — talks to Proton's private, undocumented web API over the network; stores a per-account session file (0600) holding OAuth-style tokens and the derived key passphrase (never the password) under the profile's plugin-data folder, and on first load copies any sessions from the standalone client's `~/.config/protonlite` into it; reads local files you approve for attachments and Drive uploads and writes downloaded attachments and Drive files under that plugin-data folder; shells out to gpg for calendar/Drive key provisioning; `proton_schedule_followup` creates one-shot Nastech cron jobs (read-only Proton toolset) that run unattended and deliver to your home channel; no self-update, no downloaded binaries, no telemetry."
 maintainer: Maytrella007
 tier: community
 category: tools
 requires_nastech: ">=0.22.0"
-docs_url: https://github.com/Maytrella007/nastech-proton#readme
+docs_url: https://github.com/Maytrella007/hermes-proton#readme
 version: "0.28.0"
-image: https://raw.githubusercontent.com/Maytrella007/nastech-proton/3e0612848cf20116294f9ff58e74aadf34bc858e/assets/banner.jpg
+image: https://raw.githubusercontent.com/Maytrella007/hermes-proton/3e0612848cf20116294f9ff58e74aadf34bc858e/assets/banner.jpg
 readme: true
 platforms:
   - linux

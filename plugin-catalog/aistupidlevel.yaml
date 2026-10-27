@@ -7,7 +7,7 @@ description: "AI Stupid Level Smart Router — OpenAI-compatible; routing modes 
 maintainer: StudioPlatforms
 tier: community
 category: models
-docs_url: https://github.com/StudioPlatforms/aistupidlevel-sdk/tree/main/integrations/nastech/aistupidlevel#readme
+docs_url: https://github.com/StudioPlatforms/aistupidlevel-sdk/tree/main/integrations/hermes/aistupidlevel#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

@@ -8,7 +8,7 @@ maintainer: rocosen
 tier: community
 category: web
 requires_nastech: ">=0.22.5"
-docs_url: https://github.com/rocosen/flashdata-mcp/blob/23e0d9849b2546767741fabfc454fb0089f1cb58/plugins/nastech/README.md
+docs_url: https://github.com/rocosen/flashdata-mcp/blob/23e0d9849b2546767741fabfc454fb0089f1cb58/plugins/hermes/README.md
 version: "0.1.0"
 readme: true
 platforms: []

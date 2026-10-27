@@ -8,9 +8,9 @@ maintainer: KumihoIO
 tier: community
 category: tools
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/KumihoIO/kumiho-plugins/tree/d4811200fa22225ae245d2778b938a793d6d5af6/nastech
+docs_url: https://github.com/KumihoIO/kumiho-plugins/tree/d4811200fa22225ae245d2778b938a793d6d5af6/hermes
 version: "0.1.0"
-image: https://raw.githubusercontent.com/KumihoIO/kumiho-plugins/d4811200fa22225ae245d2778b938a793d6d5af6/nastech/assets/kumiho-memory-banner.jpg
+image: https://raw.githubusercontent.com/KumihoIO/kumiho-plugins/d4811200fa22225ae245d2778b938a793d6d5af6/hermes/assets/kumiho-memory-banner.jpg
 platforms: []
 capabilities:
   provides_tools: []

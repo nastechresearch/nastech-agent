@@ -8,7 +8,7 @@ description: "Make Nastech a team member in an ActVox workspace: on a schedule i
 maintainer: ActVox
 tier: community
 category: automation
-docs_url: https://github.com/ActVox/actvox-plugins/tree/main/nastech
+docs_url: https://github.com/ActVox/actvox-plugins/tree/main/hermes
 requires_nastech: ">=0.22.5"
 readme: true
 platforms: []

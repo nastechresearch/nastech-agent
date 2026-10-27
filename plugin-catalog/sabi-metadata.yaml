@@ -6,7 +6,7 @@ maintainer: Atroci
 tier: community
 category: models
 subdir: packages/adapters/nastech/plugin
-docs_url: https://github.com/vizuh/sabi/blob/main/docs/adapters/nastech.md
+docs_url: https://github.com/vizuh/sabi/blob/main/docs/adapters/hermes.md
 version: "0.1.0"
 capabilities:
   provides_tools: []

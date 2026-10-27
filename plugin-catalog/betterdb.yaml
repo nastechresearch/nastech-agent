@@ -8,7 +8,7 @@ maintainer: betterdb-inc
 tier: community
 category: memory
 requires_nastech: ">=0.21.4"
-docs_url: https://github.com/BetterDB-inc/monitor/tree/master/packages/nastech-memory-py#readme
+docs_url: https://github.com/BetterDB-inc/monitor/tree/master/packages/hermes-memory-py#readme
 readme: true
 platforms: [linux, macos, windows]
 capabilities:

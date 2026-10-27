@@ -1,6 +1,6 @@
 name: nastech-minimizer
 title: Minimizer
-repo: https://github.com/nosliwhtes/nastech-minimizer
+repo: https://github.com/nosliwhtes/hermes-minimizer
 sha: d209ed0824e2787cd6454bd4b060dbf0381b7b79
 description: "YAGNI coding and code-review guidance for Nastech: reduce over-engineering, reuse existing behavior, and preserve requirements. One static prompt section; no tools or hooks."
 maintainer: nosliwhtes
@@ -8,10 +8,10 @@ tier: community
 category: general
 requires_nastech: ">=0.22.0"
 version: "0.1.1"
-docs_url: https://github.com/nosliwhtes/nastech-minimizer/blob/d209ed0824e2787cd6454bd4b060dbf0381b7b79/README.md
-image: https://raw.githubusercontent.com/nosliwhtes/nastech-minimizer/d209ed0824e2787cd6454bd4b060dbf0381b7b79/docs/assets/minimizer-demo.png
+docs_url: https://github.com/nosliwhtes/hermes-minimizer/blob/d209ed0824e2787cd6454bd4b060dbf0381b7b79/README.md
+image: https://raw.githubusercontent.com/nosliwhtes/hermes-minimizer/d209ed0824e2787cd6454bd4b060dbf0381b7b79/docs/assets/minimizer-demo.png
 screenshots:
-  - https://raw.githubusercontent.com/nosliwhtes/nastech-minimizer/d209ed0824e2787cd6454bd4b060dbf0381b7b79/docs/assets/minimizer-demo.png
+  - https://raw.githubusercontent.com/nosliwhtes/hermes-minimizer/d209ed0824e2787cd6454bd4b060dbf0381b7b79/docs/assets/minimizer-demo.png
 readme: true
 platforms: []
 known_issues:

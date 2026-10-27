@@ -7,7 +7,7 @@ description: "Memanto memory agent — typed long-term memory (remember/recall/a
 maintainer: moorcheh-ai
 tier: community
 category: memory
-docs_url: https://github.com/moorcheh-ai/memanto/tree/main/integrations/nastech-agents#readme
+docs_url: https://github.com/moorcheh-ai/memanto/tree/main/integrations/hermes-agents#readme
 readme: true
 capabilities:
   provides_tools:

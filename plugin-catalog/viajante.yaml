@@ -7,7 +7,7 @@ maintainer: felipebasurto
 tier: community
 category: tools
 requires_nastech: ">=0.21.4"
-docs_url: https://github.com/felipebasurto/viajante/tree/9a004462616bd6efa9d1e725e45c59f915234f18/integrations/nastech
+docs_url: https://github.com/felipebasurto/viajante/tree/9a004462616bd6efa9d1e725e45c59f915234f18/integrations/hermes
 version: "1.5.2"
 readme: true
 platforms: [linux, macos, windows]

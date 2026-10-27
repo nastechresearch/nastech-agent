@@ -11,7 +11,26 @@ on:
 
 jobs:
   check:
-    name: JS & TS checks
+    name: JS & TS checks (${{ matrix.leg }})
+    # The fork's runners are the free 4-core images, where this job's whole
+    # payload is one unit: apps/desktop check:test:ui measured 1,684.3 s of a
+    # 1,682.5 s job and was cancelled at the 30-minute cap below with every
+    # test already passing (PR #172, job 122163805252). That unit is split
+    # across legs with vitest's own --shard; the cap is not raised.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - leg: workspace
+            ui_shard: ''
+          - leg: ui-1
+            ui_shard: 1/4
+          - leg: ui-2
+            ui_shard: 2/4
+          - leg: ui-3
+            ui_shard: 3/4
+          - leg: ui-4
+            ui_shard: 4/4
     # One 32-core job replaces a 14-leg matrix. The matrix spread about 612s
     # of check payload over 4-core runners. It paid about 371s of repeated
     # setup to do it: 14 checkouts, 14 node installs, 14 node_modules
@@ -96,7 +115,16 @@ jobs:
       # not an empty run, because an empty run reports green after it checks
       # nothing.
       - name: Run all workspace checks
+        if: matrix.ui_shard == ''
+        env:
+          JS_CHECK_SKIP: apps/desktop::check:test:ui
         run: node .github/scripts/run-workspace-checks.mjs
+      - name: Run the desktop UI suite for this shard
+        if: matrix.ui_shard != ''
+        # The leaf script, not the ``check:test:ui`` wrapper: npm swallows
+        # an appended flag before a chained ``npm run`` instead of passing
+        # it to vitest.
+        run: npm run --prefix apps/desktop test:ui -- --shard=${{ matrix.ui_shard }}
       - name: Check the checkout is clean
         # Last step of every job (tests/ci/test_clean_worktree_check.py): a test or CI step that
         # leaves an untracked or modified file in the checkout is reported here. Runs only when

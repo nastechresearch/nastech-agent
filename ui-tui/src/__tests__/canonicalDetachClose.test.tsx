@@ -48,6 +48,12 @@ function fixture() {
       return Promise.resolve({ ...wire.params, detached })
     }
 
+    if (wire.method === 'setup.status') {
+      // The setup gate asks on the canonical transport too: a blank install must see
+      // Setup Required before any session is created with no model.
+      return Promise.resolve({ provider_configured: true })
+    }
+
     throw new Error(`unexpected viewer operation: ${wire.method}`)
   })
 

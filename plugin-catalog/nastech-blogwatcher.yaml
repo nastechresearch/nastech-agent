@@ -1,6 +1,6 @@
 name: nastech-blogwatcher
 title: Blogwatcher
-repo: https://github.com/irfansofyana/nastech-blogwatcher
+repo: https://github.com/irfansofyana/hermes-blogwatcher
 sha: 1b6f32afc1a509437a9bc57a078bea99b3d69dab
 description: >-
   A Blogwatcher inbox for Nastech Desktop and web, with themes, read controls
@@ -12,12 +12,12 @@ description: >-
 maintainer: irfansofyana
 tier: community
 category: desktop
-docs_url: https://github.com/irfansofyana/nastech-blogwatcher/blob/1b6f32afc1a509437a9bc57a078bea99b3d69dab/README.md
+docs_url: https://github.com/irfansofyana/hermes-blogwatcher/blob/1b6f32afc1a509437a9bc57a078bea99b3d69dab/README.md
 version: "0.2.0"
 screenshots:
-  - https://raw.githubusercontent.com/irfansofyana/nastech-blogwatcher/1b6f32afc1a509437a9bc57a078bea99b3d69dab/docs/screenshots/follow-nastech.png
-  - https://raw.githubusercontent.com/irfansofyana/nastech-blogwatcher/1b6f32afc1a509437a9bc57a078bea99b3d69dab/docs/screenshots/light.png
-  - https://raw.githubusercontent.com/irfansofyana/nastech-blogwatcher/1b6f32afc1a509437a9bc57a078bea99b3d69dab/docs/screenshots/dark.png
+  - https://raw.githubusercontent.com/irfansofyana/hermes-blogwatcher/1b6f32afc1a509437a9bc57a078bea99b3d69dab/docs/screenshots/follow-hermes.png
+  - https://raw.githubusercontent.com/irfansofyana/hermes-blogwatcher/1b6f32afc1a509437a9bc57a078bea99b3d69dab/docs/screenshots/light.png
+  - https://raw.githubusercontent.com/irfansofyana/hermes-blogwatcher/1b6f32afc1a509437a9bc57a078bea99b3d69dab/docs/screenshots/dark.png
 readme: true
 known_issues:
   - Requires the original Hyaxia/blogwatcher CLI on the Nastech backend host; the blogwatcher-cli fork is not supported.

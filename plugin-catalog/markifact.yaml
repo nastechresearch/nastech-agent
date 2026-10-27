@@ -14,7 +14,7 @@ maintainer: Markifact
 tier: community
 category: tools
 requires_nastech: ">=0.20"
-docs_url: https://github.com/markifact/markifact-mcp/tree/main/plugins/nastech/markifact#readme
+docs_url: https://github.com/markifact/markifact-mcp/tree/main/plugins/hermes/markifact#readme
 version: "1.0.5"
 image: https://raw.githubusercontent.com/markifact/markifact-mcp/9a873931b6138970888d2a9102a8037dbbd174a5/assets/icon.png
 platforms: []

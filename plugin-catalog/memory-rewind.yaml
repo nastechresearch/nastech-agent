@@ -1,5 +1,5 @@
 name: memory-rewind
-repo: https://github.com/AhmetArif0/nastech-memory-rewind
+repo: https://github.com/AhmetArif0/hermes-memory-rewind
 sha: 354927184de03cdc4a9e9e48ddb2865c36368b1f
 subdir: memory-rewind
 description: >-
@@ -15,9 +15,9 @@ maintainer: AhmetArif0
 tier: community
 category: general
 requires_nastech: ">=0.21.5"
-docs_url: https://github.com/AhmetArif0/nastech-memory-rewind
+docs_url: https://github.com/AhmetArif0/hermes-memory-rewind
 version: "1.3.2"
-image: https://raw.githubusercontent.com/AhmetArif0/nastech-memory-rewind/e5b139b1059a47df34002e76a7bfd84bc60d9f35/docs/card.png
+image: https://raw.githubusercontent.com/AhmetArif0/hermes-memory-rewind/e5b139b1059a47df34002e76a7bfd84bc60d9f35/docs/card.png
 platforms: []
 capabilities:
   provides_tools: []

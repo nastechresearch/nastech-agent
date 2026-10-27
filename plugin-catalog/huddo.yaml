@@ -7,7 +7,7 @@ maintainer: puffo-ai
 tier: community
 category: tools
 version: "0.9.11"
-docs_url: https://github.com/puffo-ai/huddo-mcp/tree/main/integrations/nastech#readme
+docs_url: https://github.com/puffo-ai/huddo-mcp/tree/main/integrations/hermes#readme
 platforms: []
 capabilities:
   provides_tools: []

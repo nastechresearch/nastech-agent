@@ -9,7 +9,7 @@ description: "Long-term memory for Nastech. Capture conversations, recall useful
 maintainer: volcengine
 tier: community
 category: memory
-docs_url: https://github.com/volcengine/OpenViking/tree/e855796c83f9eb575d9b0f3082926660730f6a63/examples/nastech-plugin#readme
+docs_url: https://github.com/volcengine/OpenViking/tree/e855796c83f9eb575d9b0f3082926660730f6a63/examples/hermes-plugin#readme
 capabilities:
   provides_tools: []
   provides_hooks: []

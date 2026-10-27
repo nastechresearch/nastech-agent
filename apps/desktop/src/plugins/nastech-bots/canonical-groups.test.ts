@@ -6,7 +6,7 @@ const host = vi.hoisted(() => ({
   state: { connectionId: { get: vi.fn() }, profile: { get: vi.fn() } }
 }))
 
-vi.mock('@nastech/plugin-sdk', () => ({ host }))
+vi.mock('@nastech/plugin-sdk', async () => ({ host, randomUuid: (await import('@nastech/shared')).randomUuid }))
 
 import { actCanonicalGroup, canonicalGroupRequest, captureCanonicalGroupRoute, createCanonicalGroup, discoverCanonicalGroups } from './canonical-groups'
 

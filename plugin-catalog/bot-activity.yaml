@@ -18,7 +18,7 @@
 # profiles where the user disabled the plugin are never re-enabled.
 name: bot-activity
 title: Bot Activity
-repo: https://github.com/risyadul/nastech-bot-activity
+repo: https://github.com/risyadul/hermes-bot-activity
 sha: da1c9d10eb228cd6f0a93e255ee92c8c3a6717f2
 version: "0.1.0"
 description: "Live per-Bot activity timeline for Nastech Desktop: turns, tool calls (arguments, result, duration), approvals and Group Chat streams, grouped by Bot or by Group Chat, with one-click tracking for new Bots. Disclosure — local only, no network or telemetry; records every Bot profile's turns, assistant replies, tool arguments and results, approval commands and Group Chat streams (redacted with agent.redact, capped per field, 3-day / 20k-row retention) into one SQLite file shared by all profiles under plugin-data/bot-activity; reads each Bot profile's state.db, profile.yaml and config.yaml read-only; Track now / Update runs `nastech -p <bot> plugins install <same source> --ref <same sha> --enable --yes-deps` (or copies the plugin and runs `plugins enable`) in the Bot profiles you track, never re-enabling one you disabled."
@@ -26,10 +26,10 @@ maintainer: risyadul
 tier: community
 category: desktop
 requires_nastech: ">=0.21.6"
-docs_url: https://github.com/risyadul/nastech-bot-activity
+docs_url: https://github.com/risyadul/hermes-bot-activity
 screenshots:
-  - https://raw.githubusercontent.com/risyadul/nastech-bot-activity/da1c9d10eb228cd6f0a93e255ee92c8c3a6717f2/docs/screenshots/by-bot.png
-  - https://raw.githubusercontent.com/risyadul/nastech-bot-activity/da1c9d10eb228cd6f0a93e255ee92c8c3a6717f2/docs/screenshots/by-group-chat.png
+  - https://raw.githubusercontent.com/risyadul/hermes-bot-activity/da1c9d10eb228cd6f0a93e255ee92c8c3a6717f2/docs/screenshots/by-bot.png
+  - https://raw.githubusercontent.com/risyadul/hermes-bot-activity/da1c9d10eb228cd6f0a93e255ee92c8c3a6717f2/docs/screenshots/by-group-chat.png
 readme: true
 platforms: []
 known_issues:

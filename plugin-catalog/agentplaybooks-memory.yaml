@@ -8,8 +8,8 @@ tier: community
 category: memory
 requires_nastech: ">=0.22.4"
 version: "0.3.0"
-docs_url: https://github.com/matebenyovszky/agentplaybooks/tree/f31e9c3af6520cebda1c0712447b4b487ffc12a7/packages/nastech-memory/agentplaybooks
-image: https://raw.githubusercontent.com/matebenyovszky/agentplaybooks/f31e9c3af6520cebda1c0712447b4b487ffc12a7/public/plugin-catalog/nastech-memory.png
+docs_url: https://github.com/matebenyovszky/agentplaybooks/tree/f31e9c3af6520cebda1c0712447b4b487ffc12a7/packages/hermes-memory/agentplaybooks
+image: https://raw.githubusercontent.com/matebenyovszky/agentplaybooks/f31e9c3af6520cebda1c0712447b4b487ffc12a7/public/plugin-catalog/hermes-memory.png
 readme: true
 platforms: [linux, macos, windows]
 capabilities:

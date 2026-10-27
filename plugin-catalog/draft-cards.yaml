@@ -1,5 +1,5 @@
 name: draft-cards
-repo: https://github.com/arsiktech/nastech-draft-cards
+repo: https://github.com/arsiktech/hermes-draft-cards
 sha: 6e6ca659ece59b0ce1c28b3b188393491ee5a415
 version: "0.1.0"
 title: Draft Cards
@@ -8,14 +8,14 @@ maintainer: arsiktech
 tier: community
 category: desktop
 requires_nastech: ">=0.22.2"
-docs_url: https://github.com/arsiktech/nastech-draft-cards/blob/6e6ca659ece59b0ce1c28b3b188393491ee5a415/README.md
+docs_url: https://github.com/arsiktech/hermes-draft-cards/blob/6e6ca659ece59b0ce1c28b3b188393491ee5a415/README.md
 platforms: []
 screenshots:
-  - https://raw.githubusercontent.com/arsiktech/nastech-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/revised-dark.png
-  - https://raw.githubusercontent.com/arsiktech/nastech-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/draft-light.png
-  - https://raw.githubusercontent.com/arsiktech/nastech-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/edited-dark.png
-  - https://raw.githubusercontent.com/arsiktech/nastech-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/removed-dark.png
-  - https://raw.githubusercontent.com/arsiktech/nastech-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/sent-light.png
+  - https://raw.githubusercontent.com/arsiktech/hermes-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/revised-dark.png
+  - https://raw.githubusercontent.com/arsiktech/hermes-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/draft-light.png
+  - https://raw.githubusercontent.com/arsiktech/hermes-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/edited-dark.png
+  - https://raw.githubusercontent.com/arsiktech/hermes-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/removed-dark.png
+  - https://raw.githubusercontent.com/arsiktech/hermes-draft-cards/6e6ca659ece59b0ce1c28b3b188393491ee5a415/docs/sent-light.png
 known_issues:
   - "After installing, switch on the Draft Cards desktop half in Capabilities → Plugins, then start a new chat so the agent sees the draft_card tools."
 capabilities:
