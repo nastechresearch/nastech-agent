@@ -1,7 +1,7 @@
 name: desensitize
 repo: https://github.com/yubingz/hermes-desensitize
 sha: 4f6697c1e45bb224e40b556372f33794f9326c0f
-subdir: src/nastech_desensitize
+subdir: src/hermes_desensitize
 description: "Chinese-context desensitization for Nastech chats. Replaces PII and business-sensitive
   entities — person names, company names, addresses, file paths, and magnitude figures — with
   reversible placeholders before a message reaches the model, then restores them in the reply.

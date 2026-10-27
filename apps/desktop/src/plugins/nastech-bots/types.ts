@@ -104,6 +104,10 @@ export interface RosterRow {
   /** An offline twin of a selected bot, kept visible so the row doesn't vanish. */
   ghost?: boolean
   handle?: string
+  /** A default row whose source also has a real (pre-reservation) `nastech`
+   *  profile: that profile keeps @nastech and this row answers to @default.
+   *  Set by `claimDefaultHandles`. */
+  nastechHandleTaken?: boolean
   has_avatar?: boolean
   /** The connection's backend identity (/api/status `install_id`) when the
    *  roster source has seen it — stable across Desktops, unlike `connectionId`
@@ -146,6 +150,7 @@ export type GroupMember = Pick<
   | 'display_name'
   | 'ghost'
   | 'handle'
+  | 'nastechHandleTaken'
   | 'installId'
   | 'name'
   | 'previous_names'

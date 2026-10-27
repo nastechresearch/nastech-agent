@@ -8,7 +8,7 @@ maintainer: Adolanium
 tier: community
 category: platform
 requires_nastech: ">=0.21.6"
-docs_url: https://adolanium.github.io/nastech-gadget-sdk/docs/connect-nastech.html
+docs_url: https://adolanium.github.io/hermes-gadget-sdk/docs/connect-hermes.html
 version: "0.3.0"
 image: https://raw.githubusercontent.com/Adolanium/hermes-gadget-sdk/0b957aae2f7f11904a9daab031f1378a45de21dc/docs/images/banner.webp
 screenshots:

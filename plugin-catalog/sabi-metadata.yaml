@@ -5,7 +5,7 @@ description: Fail-closed attribution middleware for Sabi's local adaptive routin
 maintainer: Atroci
 tier: community
 category: models
-subdir: packages/adapters/nastech/plugin
+subdir: packages/adapters/hermes/plugin
 docs_url: https://github.com/vizuh/sabi/blob/main/docs/adapters/hermes.md
 version: "0.1.0"
 capabilities:

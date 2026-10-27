@@ -424,6 +424,15 @@ export function durableGroupChatMembers(bots: RosterRow[]): GroupMember[] {
     return {
       name: bot.name,
       handle: botHandle(bot.name, bot) || bot.handle || bot.name,
+      // The stored handle alone cannot say why a default is not @nastech, and
+      // botHandle re-derives 'nastech' for it: keep the claim, or a room whose
+      // live row is gone tells two bots they are both @nastech. A live row
+      // (groupChatMemberBots prefers it) recomputes this from the roster.
+      ...(bot.nastechHandleTaken
+        ? {
+            nastechHandleTaken: true
+          }
+        : {}),
       ...(title
         ? {
             title

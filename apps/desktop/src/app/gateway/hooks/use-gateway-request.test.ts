@@ -50,6 +50,11 @@ vi.mock('@/nastech', async importOriginal => {
   return { ...actual, NastechGateway: FakeNastechGateway }
 })
 
+// A secondary's reopen does `await import('@/store/session-states')` (store/gateway.ts). Load that
+// graph at collection so the first reconnect test is not charged its cold transform, which times it
+// out on a loaded runner.
+import '@/store/session-states'
+
 import type * as NastechModule from '@/nastech'
 import type { NastechGateway } from '@/nastech'
 import {

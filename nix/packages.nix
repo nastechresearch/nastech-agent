@@ -98,6 +98,7 @@
 
         tui = full.nastechTui;
         web = full.nastechWeb;
+        webapp = full.nastechWebapp;
         desktop = full.nastechDesktop;
 
         update-npm-lockfile = full.nastechNpmLib.updateNpmLockfile;

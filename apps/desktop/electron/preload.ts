@@ -23,6 +23,10 @@ const launchFlags: { localModels?: boolean; assumeFreshInstall?: boolean } | und
 // the built-in palette over the skin configured on this machine.
 const localSkin = ipcRenderer.sendSync('nastech:skin:local')
 
+// This machine's UI preferences store (#145213), read before the first paint so
+// a preference set in another window or in this machine's Webapp paints at once.
+const uiPreferencesSnapshot = ipcRenderer.sendSync('nastech:ui-preferences:snapshot')
+
 import { unwrapExpectedNotFound } from './api-expected-404'
 
 contextBridge.exposeInMainWorld('nastechDesktop', {
@@ -35,6 +39,17 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   // onboarding treats this launch as a fresh install. Always false when packaged.
   assumeFreshInstall: launchFlags?.assumeFreshInstall === true,
   localSkin: localSkin && typeof localSkin === 'object' ? localSkin : null,
+  uiPreferences: {
+    snapshot: uiPreferencesSnapshot && typeof uiPreferencesSnapshot === 'object' ? uiPreferencesSnapshot : null,
+    read: () => ipcRenderer.invoke('nastech:ui-preferences:read'),
+    write: payload => ipcRenderer.invoke('nastech:ui-preferences:write', payload),
+    onChanged: callback => {
+      const listener = (_event, snapshot) => callback(snapshot)
+      ipcRenderer.on('nastech:ui-preferences:changed', listener)
+
+      return () => ipcRenderer.removeListener('nastech:ui-preferences:changed', listener)
+    }
+  },
   getConnection: (profile, opts) => ipcRenderer.invoke('nastech:connection', profile, opts),
   // Loopback origin that hosts YouTube's player for the file:// renderer.
   getEmbedHostOrigin: () => ipcRenderer.invoke('nastech:embed-host:origin'),
@@ -668,7 +683,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
 
     return () => ipcRenderer.removeListener('nastech:bootstrap:event', listener)
   },
-  getVersion: () => ipcRenderer.invoke('nastech:version'),
+  getVersion: (scope?: { connectionId?: string; profile?: string }) => ipcRenderer.invoke('nastech:version', scope),
   relaunchApp: () => ipcRenderer.invoke('nastech:app:relaunch'),
   getMachineProfile: () => ipcRenderer.invoke('nastech:machine:profile'),
   getRemoteDisplayReason: () => ipcRenderer.invoke('nastech:get-remote-display-reason'),

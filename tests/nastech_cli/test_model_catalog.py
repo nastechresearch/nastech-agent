@@ -432,12 +432,10 @@ class TestRefreshCadence:
         with patch.object(model_catalog, "_load_catalog_config", return_value={
             "enabled": True, "url": "http://master", "ttl_hours": 1.0, "providers": {},
         }), patch.object(model_catalog, "get_catalog", return_value=_valid_manifest()) as gc, \
-             patch("nastech_cli.models.fetch_openrouter_models") as orm, \
-             patch("nastech_cli.models.fetch_nastech_recommended_models") as nastech:
+             patch("nastech_cli.models.fetch_openrouter_models") as orm:
             assert model_catalog.refresh_catalogs() is True
         gc.assert_called_once_with(force_refresh=True)
         orm.assert_called_once_with(force_refresh=True)
-        nastech.assert_called_once_with(force_refresh=True)
 
 
 class TestIntegrationWithModelsModule:

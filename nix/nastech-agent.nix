@@ -128,6 +128,11 @@ let
     inherit nastechNpmLib generatedIcons;
   };
 
+  # The store is read-only, so the Webapp is built here and never by `nastech webapp`.
+  nastechWebapp = callPackage ./webapp.nix {
+    inherit nastechNpmLib;
+  };
+
   bundledSkills = lib.cleanSourceWith {
     src = ../skills;
     filter = path: _type: !(lib.hasInfix "/index-cache/" path) && !(lib.hasInfix "/__pycache__/" path);
@@ -225,6 +230,7 @@ let
       frontends = {
         tui = "${nastechTui}/lib/nastech-tui";
         web = toString nastechWeb;
+        webapp = toString nastechWebapp;
       };
       ref = if dirty then null else rev;
       stamp = toString installStampFile;
@@ -387,6 +393,7 @@ stdenv.mkDerivation (finalAttrs: {
       inherit
         nastechTui
         nastechWeb
+        nastechWebapp
         nastechNpmLib
         nastechVenv
         agentBuilderSrc

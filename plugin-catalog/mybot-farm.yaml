@@ -1,13 +1,13 @@
 name: mybot-farm
 repo: https://github.com/okita-io/mybot-farm
 sha: f875c97bf2f2c9bf601a22ea6971d28ec64ba763
-subdir: packages/nastech-mybot-farm
+subdir: packages/hermes-mybot-farm
 description: Search mybot.farm, plant/reinstall Nastech packs (Desktop Recruit + CLI), and post GAF listings. Disclosure — plants third-party Nastech profiles (config, SOUL, skills, memories) from mybot.farm sellers with no hash pinning; force/clean delete profiles.
 maintainer: badkangaroo
 tier: community
 category: tools
 requires_nastech: ">=0.21"
-docs_url: https://mybot.farm/install/nastech
+docs_url: https://mybot.farm/install/hermes
 version: "0.3.0"
 platforms: []
 capabilities:

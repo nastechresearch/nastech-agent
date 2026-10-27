@@ -1,7 +1,7 @@
 name: memoria
 repo: https://github.com/matrixorigin/memoria
 sha: 3a5c5065b2820d56dd3d8ac8bb259a9424b1476e
-subdir: plugins/nastech
+subdir: plugins/hermes
 description: >-
   Memoria Cloud memory provider with scoped recall, explicit memory tools and opt-in background capture.
   Disclosure — sends recall queries and explicit memory operations to api.thememoria.ai by default

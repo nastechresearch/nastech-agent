@@ -290,18 +290,23 @@ def refresh_interval_seconds() -> float:
 
 
 def refresh_catalogs() -> bool:
-    """Force-refresh every remote catalog the picker reads (manifest, OpenRouter live list, Nastech Portal
-    recommendations), writing each disk cache so the next ``/model`` open in ANY process sees them.
-    Blocking; run it off the event loop."""
+    """Force-refresh every remote catalog the picker reads (manifest, OpenRouter live list, and the
+    Nastech Portal recommendations for a Nastech account, the only reader), writing each disk cache so the
+    next ``/model`` open in ANY process sees them. Blocking; run it off the event loop."""
     if not _load_catalog_config()["enabled"]:
         return False
     clear_fetch_backoff()  # provider overrides are re-asked too, not only the forced manifest
     catalog = get_catalog(force_refresh=True)
     try:
-        from nastech_cli.models import fetch_nastech_recommended_models, fetch_openrouter_models
+        from agent.secret_scope import get_secret
+        from nastech_cli.anon_auth import current_nastech_state, is_guest_state
+        from nastech_cli.auth import read_credential_pool
+        from nastech_cli.models import _resolve_nastech_portal_url, fetch_nastech_recommended_models, fetch_openrouter_models
 
         fetch_openrouter_models(force_refresh=True)
-        fetch_nastech_recommended_models(force_refresh=True)
+        logins = [current_nastech_state(), *read_credential_pool("nastech")]
+        if any(e and not is_guest_state(e) for e in logins) or get_secret("NASTECH_API_KEY"):
+            fetch_nastech_recommended_models(_resolve_nastech_portal_url(), force_refresh=True)
     except Exception:
         logger.debug("provider catalog refresh failed", exc_info=True)
     return bool(catalog)

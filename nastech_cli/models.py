@@ -27,6 +27,7 @@ from typing import Any, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import TypeGuard
 
+from agent.proxy_bypass import is_loopback_host
 from nastech_cli.route_identity import normalize_route_base_url
 from nastech_cli.urllib_security import open_credentialed_url
 from nastech_cli.version_info import nastech_user_agent
@@ -345,7 +346,8 @@ def check_nastech_free_tier(*, force_fresh: bool = False, cached_only: bool = Fa
 # [{modelName}], {paid,free}Recommended{Compaction,Vision}Model: {modelName} | null
 # ---------------------------------------------------------------------------
 
-NASTECH_RECOMMENDED_MODELS_PATH = "/api/nastech/recommended-models"
+NASTECH_RECOMMENDED_MODELS_MIRROR = "https://web-assets.nastechresearch.github.io/dynamic"
+_NASTECH_MIRROR_TIMEOUT: float = 2.0  # seconds: a hanging mirror delays the Portal fallback by at most this
 _NASTECH_RECOMMENDED_CACHE_TTL: int = 600  # seconds (10 minutes)
 # (result_dict, monotonic timestamp), scoped to the profile and portal.
 _nastech_recommended_cache: dict[tuple[str, str], tuple[dict[str, Any], float]] = {}
@@ -387,12 +389,9 @@ def _write_nastech_recommended_disk(base: str, data: dict[str, Any]) -> None:
 def fetch_nastech_recommended_models(
     portal_base_url: str = "", timeout: float = 5.0, *, force_refresh: bool = False
 ) -> dict[str, Any]:
-    """Fetch the Portal's public ``/api/nastech/recommended-models`` payload (no auth).
-
-    Reuse successful results for ``_NASTECH_RECOMMENDED_CACHE_TTL`` seconds, including across
-    process restarts. ``force_refresh`` bypasses both caches. Stale disk data remains a fallback
-    on live failure; reading it never renews its freshness.
-    """
+    """Fetch the Portal's public recommended models (no auth): its R2 mirror, else the Portal itself.
+    Results are reused for ``_NASTECH_RECOMMENDED_CACHE_TTL`` s across restarts unless ``force_refresh``;
+    stale disk data is the fallback on failure, and reading it never renews its freshness."""
     base = (portal_base_url or "https://portal.nastechresearch.github.io").rstrip("/")
     now = time.monotonic()
     cache_key = (_pricing_profile_key(), base)
@@ -404,19 +403,20 @@ def fetch_nastech_recommended_models(
         data, age = disk
         _nastech_recommended_cache[cache_key] = (data, now - age)
         return data
-    try:
-        data = _get_json(
-            f"{base}{NASTECH_RECOMMENDED_MODELS_PATH}", timeout=timeout,
-            headers={"Accept": "application/json", "Accept-Encoding": "gzip"}
-        )
-        if not isinstance(data, dict):
-            data = {}
-    except Exception:
-        data = {}
-    if data:
-        _write_nastech_recommended_disk(base, data)
+    parts = urllib.parse.urlsplit(base)
+    mirror = [] if is_loopback_host(parts.hostname) else [
+        (f"{NASTECH_RECOMMENDED_MODELS_MIRROR}/{parts.netloc}", min(timeout, _NASTECH_MIRROR_TIMEOUT))]
+    for origin, origin_timeout in [*mirror, (base, timeout)]:  # the Portal itself when its mirror is missing (404) or failing
+        try:
+            data = _get_json(f"{origin}/api/nastech/recommended-models", timeout=origin_timeout,
+                             headers={"Accept": "application/json", "Accept-Encoding": "gzip"})
+        except Exception:
+            continue
+        if isinstance(data, dict) and data:
+            _write_nastech_recommended_disk(base, data)
+            break
     else:
-        data = disk[0] if disk is not None else data
+        data = disk[0] if disk is not None else {}
     _nastech_recommended_cache[cache_key] = (data, now)
     return data
 
@@ -1930,8 +1930,9 @@ def _credential_fingerprint(provider: str) -> str:
         ]
 
     def _mtime_part(label: str, path) -> None:
+        from utils import file_cache_version  # hashed every time: keys a disk cache later processes read
         try:
-            parts.append(f"{label}@{os.stat(path).st_mtime_ns}")
+            parts.append(f"{label}@{file_cache_version(path, always_digest=True)}")
         except FileNotFoundError:
             parts.append(f"{label}@missing")
         except Exception:
@@ -1939,7 +1940,6 @@ def _credential_fingerprint(provider: str) -> str:
 
     if provider == "openai-codex":
         from nastech_cli.codex_models import codex_catalog_credential_identity
-
         parts.append(f"codex_identity={codex_catalog_credential_identity()}")
     else:
         try:

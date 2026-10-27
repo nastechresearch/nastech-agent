@@ -78,7 +78,7 @@ def _warn_config_parse_failure(
         from nastech_cli.config_backend import config_version
         sig = config_version(config_path)
         key = (str(config_path), *sig)
-        _CONFIG_PARSE_FAILURES[str(config_path)] = (*sig, str(exc))
+        _CONFIG_PARSE_FAILURES[str(config_path)] = (*_failure_version(config_path), str(exc))
     except OSError:
         key = (str(config_path), 0, 0, 0, 0)
     if key in _CONFIG_PARSE_WARNED:
@@ -98,14 +98,25 @@ def _warn_config_parse_failure(
         pass
 
 
+def _failure_version(path: Path) -> tuple:
+    """What a parse-failure record is matched on: ``file_cache_version`` hashed even once settled,
+    because the record is compared long after it was taken and a same-tick same-size fix must clear
+    it. An unreadable file (the OSError failures) gets its stat signature and the error's name."""
+    from utils import file_cache_version
+    try:
+        return file_cache_version(path, always_digest=True)
+    except OSError:
+        from nastech_cli.config_backend import config_version
+        return (*config_version(path), None)
+
+
 def get_active_config_parse_failure() -> Optional[str]:
     """Return the recorded parse error while the ACTIVE config.yaml is still byte-identical
-    (mtime_ns + size + ino + ctime_ns) to the file that failed to parse; else None."""
+    (``file_cache_version`` with its content digest) to the file that failed to parse; else None."""
     from nastech_cli.config import get_config_path
     try:
-        from nastech_cli.config_backend import config_version
         record = _CONFIG_PARSE_FAILURES[str(path := get_config_path())]
-        sig = config_version(path)
+        sig = _failure_version(path)
         return record[len(sig)] if sig == record[:len(sig)] else None
     except Exception:
         return None

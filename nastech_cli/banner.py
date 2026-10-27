@@ -752,6 +752,7 @@ def build_welcome_banner(
         border_style=_skin_color("banner_border", "#CD7F32"), padding=(0, 2))
     console.print()
     if shutil.get_terminal_size().columns >= 95:
-        _logo = NASTECH_AGENT_LOGO  # audited NasTech identity; ignore opaque skin art\n        console.print(_logo)
+        _logo = NASTECH_AGENT_LOGO  # audited NasTech identity; ignore opaque skin art
+        console.print(_logo)
         console.print()
     console.print(outer_panel)

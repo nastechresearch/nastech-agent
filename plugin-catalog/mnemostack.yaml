@@ -1,7 +1,7 @@
 name: mnemostack
 repo: https://github.com/udjin-labs/hermes-mnemostack
 sha: 08bdc8c4bc78501eaa4297978082ff380bff4658
-subdir: src/nastech_mnemostack/plugin
+subdir: src/hermes_mnemostack/plugin
 description: Persistent agent memory over a mnemostack service or a local Qdrant — hybrid
   recall (vector + lexical + graph), verbatim capture with self-echo suppression, and
   soft retraction. Multi-tenant when pointed at a shared authenticated service; the

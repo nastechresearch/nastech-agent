@@ -1,7 +1,7 @@
 name: markifact
 repo: https://github.com/markifact/markifact-mcp
 sha: 9a873931b6138970888d2a9102a8037dbbd174a5
-subdir: plugins/nastech/markifact
+subdir: plugins/hermes/markifact
 description: >-
   Run Google Ads, Meta Ads, TikTok Ads, LinkedIn Ads, GA4, Shopify, HubSpot and 50+ more platforms
   through Markifact's hosted MCP server. Portable Agent Plugins v1 package with ten skills (operating

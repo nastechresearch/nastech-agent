@@ -1,7 +1,7 @@
 name: nastech-town
 repo: https://github.com/sxuff/hermes-town
 sha: f3b89401fafde0cd3ebaaccf01ea9e658bc66ff9
-subdir: integrations/nastech-town-plugin
+subdir: integrations/hermes-town-plugin
 description: >-
   Local pixel-art town where every Nastech session is a resident and every tool call walks to a
   building. Passive lifecycle bridge to a loopback-only server; prompts, arguments, and output never

@@ -1,7 +1,7 @@
 name: nastech-kame-provider
 repo: https://github.com/Kame696/kame-api-rotation-for-hermes
 sha: d89dce1d80b511b874217ea73d445c3c4c32260c
-subdir: nastech-kame-provider
+subdir: hermes-kame-provider
 description: "Companion to nastech-kame-api-rotation (install both). A model-provider plugin that re-registers Nastech' bundled API-key profiles unchanged except for create_client and create_messages_client, which return the rotation plugin's key-rotating client; otherwise None and Nastech builds its own. Same endpoints as Nastech, no third-party service, no core override."
 maintainer: Kame696
 tier: community

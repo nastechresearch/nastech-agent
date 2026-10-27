@@ -1,7 +1,7 @@
 name: adaptive-inference-routing
 repo: https://github.com/midhatn/adaptive-inference
 sha: "d6f4e201ba28602189872746922e527c58ed0cbd"
-subdir: plugins/nastech
+subdir: plugins/hermes
 title: Adaptive Inference Routing
 description: >-
   Opt-in background scheduling for host-known delegated sessions, supported cron

@@ -1890,7 +1890,7 @@ export { cn } from '@/lib/utils'
 /** The live gateway instance type — for typing the `gateway` prop `ConnectorsTab`
  *  takes; obtain the instance from `host.getGateway()`. */
 export type { NastechGateway } from '@/nastech'
-export { gatewayActivationEpoch } from '@/store/gateway'
+export { gatewayActivationEpoch, useGatewayActivationEpoch } from '@/store/gateway'
 /** THE unread store behind `SessionStatusDot`'s emerald dot. A plugin that
  *  learns out-of-band that a session produced something the user hasn't seen
  *  (a roster poll's activity watermark, say) writes HERE rather than keeping

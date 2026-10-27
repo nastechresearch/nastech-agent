@@ -5,7 +5,7 @@ description: "Observability + budget guardrails for Nastech Agent — tokens, co
 maintainer: nujovich
 tier: community
 category: general
-docs_url: https://nujovich.github.io/nastech-telemetry/
+docs_url: https://nujovich.github.io/hermes-telemetry/
 capabilities:
   provides_tools: []
   provides_hooks:

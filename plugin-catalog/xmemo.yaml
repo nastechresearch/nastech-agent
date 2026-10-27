@@ -1,7 +1,7 @@
 name: xmemo
 repo: https://github.com/yonro/hermes-xmemo-plugin
 sha: 499a383778647e897d30db3e92e8c8ad4397c799
-subdir: src/nastech_xmemo/xmemo
+subdir: src/hermes_xmemo/xmemo
 description: >-
   Native XMemo memory provider for Nastech Agent — durable, identity-aware cross-session memory with semantic search.
   Disclosure — cloud memory provider: sends each user prompt (for recall and the search tools), model-written

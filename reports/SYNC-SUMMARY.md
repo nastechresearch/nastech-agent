@@ -6,33 +6,45 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Update scope
 
-- **Changes incorporated:** 0 commits affecting 3461 files.
-- **Source revision:** `11a75355a4c5`.
-- **Previous source revision:** `9976f4857b72`.
+- **Changes incorporated:** 0 commits affecting 3498 files.
+- **Source revision:** `508d6ec24ed2`.
+- **Previous source revision:** `11a75355a4c5`.
 
 ## Technical coverage
 
-- **.dockerignore/:** 2 changed files.
 - **Dockerfile/:** 1 changed files.
-- **agent/:** 4 changed files.
-- **apps/:** 249 changed files.
-- **contributors/:** 4 changed files.
-- **cron/:** 2 changed files.
-- **gateway/:** 15 changed files.
-- **locales/:** 1 changed files.
-- **nastech_cli/:** 27 changed files.
-- **optional-skills/:** 69 changed files.
-- **plugin-catalog/:** 12 changed files.
-- **plugins/:** 12 changed files.
-- **pyproject.toml/:** 1 changed files.
-- **scripts/:** 5 changed files.
-- **tests/:** 56 changed files.
-- **tests-js/:** 3 changed files.
-- **tools/:** 7 changed files.
-- **tui_gateway/:** 5 changed files.
-- **utils.py/:** 1 changed files.
-- **uv.lock/:** 1 changed files.
-- **website/:** 13 changed files.
+- **agent/:** 24 changed files.
+- **apps/:** 561 changed files.
+- **contributors/:** 8 changed files.
+- **gateway/:** 82 changed files.
+- **locales/:** 2 changed files.
+- **nastech_cli/:** 113 changed files.
+- **nastech_state_compaction_display.py/:** 3 changed files.
+- **nastech_state_coverage.py/:** 6 changed files.
+- **nastech_state_gateway.py/:** 1 changed files.
+- **nastech_state_local.py/:** 1 changed files.
+- **nastech_state_messages.py/:** 6 changed files.
+- **nastech_state_runtime.py/:** 1 changed files.
+- **nastech_state_session_list.py/:** 1 changed files.
+- **nastech_state_sessions.py/:** 3 changed files.
+- **nastech_state_terminal.py/:** 1 changed files.
+- **nastech_state_timeline.py/:** 1 changed files.
+- **nastech_state_todo.py/:** 1 changed files.
+- **nastech_state_usage.py/:** 1 changed files.
+- **nastech_state_worker_compression.py/:** 1 changed files.
+- **nix/:** 5 changed files.
+- **plugins/:** 7 changed files.
+- **pm/:** 6 changed files.
+- **providers/:** 3 changed files.
+- **scripts/:** 29 changed files.
+- **tests/:** 202 changed files.
+- **tests-js/:** 2 changed files.
+- **tools/:** 18 changed files.
+- **tui_gateway/:** 12 changed files.
+- **ui-tui/:** 3 changed files.
+- **utils.py/:** 4 changed files.
+- **web/:** 12 changed files.
+- **website/:** 17 changed files.
 
 ## Delivered improvements
 
@@ -40,11 +52,11 @@ This verified NasTech-Agent update incorporates the newest confirmed improvement
 
 ## Verification evidence
 
-- **Direct source provenance:** fresh-direct-clone at 11a75355a4c5, fetched 2026-10-27T13:28:28+00:00
+- **Direct source provenance:** fresh-direct-clone at 508d6ec24ed2, fetched 2026-10-27T23:23:54+00:00
 - **Publication gate:** PASS - cleared for human review only
-- **Tree parity:** 21423/21423 files verified byte-faithful after branding; no outstanding differences
-- **Branding:** 21423 files branded, 21238 rewritten, 0 errors
+- **Tree parity:** 21601/21601 files verified byte-faithful after branding; no outstanding differences
+- **Branding:** 21601 files branded, 21416 rewritten, 0 errors
 - **Fork consistency:** 0 inconsistency violations, 50 fork-owned files carried forward
-- **Upstream change evidence:** added 43, deleted 0, modified 215, renamed 0
+- **Upstream change evidence:** added 178, deleted 0, modified 328, renamed 0
 
 This candidate is prepared for review only. No merge, release, or deployment is performed by the verification workflow.

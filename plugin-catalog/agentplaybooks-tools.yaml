@@ -1,7 +1,7 @@
 name: agentplaybooks-tools
 repo: https://github.com/matebenyovszky/agentplaybooks
 sha: f31e9c3af6520cebda1c0712447b4b487ffc12a7
-subdir: packages/nastech-portable/agentplaybooks-tools
+subdir: packages/hermes-portable/agentplaybooks-tools
 description: >-
   Connect AgentPlaybooks skills and hosted MCP/OpenAPI tools to Nastech, with guided setup,
   profile selection, permission diagnostics and an authenticated MCP check. Requires Node.js 20+

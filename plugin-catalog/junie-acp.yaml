@@ -1,7 +1,7 @@
 name: junie-acp
 repo: https://github.com/JetBrains/junie
 sha: 296ea839b354956fbd22544687a88b944c18dc22
-subdir: nastech-plugin
+subdir: hermes-plugin
 description: JetBrains Junie coding agent as a Nastech model provider over ACP.
 maintainer: JetBrains
 tier: community

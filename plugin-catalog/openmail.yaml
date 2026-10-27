@@ -6,7 +6,7 @@ description: Gives a Nastech agent its own email address. Inbound mail wakes the
 maintainer: openmailsh
 tier: community
 category: platform
-docs_url: https://docs.openmail.sh/integrations/nastech
+docs_url: https://docs.openmail.sh/integrations/hermes
 image: https://raw.githubusercontent.com/openmailsh/.github/f9d07f18a90a75e8b29f96cbc8d17154ce254828/profile/assets/banner.png
 platforms: []
 capabilities:

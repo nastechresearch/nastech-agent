@@ -20,7 +20,7 @@ for name, source in inputs["resources"].items():
     resource = repo / name
     assert resource.is_symlink(), resource
     assert resource.samefile(source), (resource, source)
-for name, key in (("tui", "NASTECH_TUI_DIR"), ("web", "NASTECH_WEB_DIST")):
+for name, key in (("tui", "NASTECH_TUI_DIR"), ("web", "NASTECH_WEB_DIST"), ("webapp", "NASTECH_WEBAPP_DIST")):
     resource = Path(command_map["env"][key])
     assert resource.is_symlink(), resource
     assert resource.samefile(inputs["frontends"][name])

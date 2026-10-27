@@ -1421,7 +1421,7 @@ def _attach_window_model_notes(providers: list[dict]) -> None:
         nastech = next((p for p in providers if str(p.get("slug", "")).lower() == "nastech"), None)
         if nastech is None:
             return
-        from nastech_cli.model_picker_usage import nastech_picker_usage, usage_level_label, usage_levels
+        from nastech_cli.model_picker_usage import nastech_picker_usage, usage_level_label, usage_tag_levels
         fresh = nastech_picker_usage()
         usage = fresh or nastech_picker_usage(any_age=True)
         if usage is None:
@@ -1429,7 +1429,8 @@ def _attach_window_model_notes(providers: list[dict]) -> None:
         from agent.plan_limits import cached_pricing
         pricing = cached_pricing()  # this profile's catalog only (cache-only, no credential refresh)
         models = [str(m) for m in nastech.get("models", [])]
-        labels = {m: label for m, lv in usage_levels(models, pricing).items() if (label := usage_level_label(lv))}
+        # Subscription-billed rows carry no tag (usage_tag_levels).
+        labels = {m: label for m, lv in usage_tag_levels(models, pricing).items() if (label := usage_level_label(lv))}
         if labels:
             nastech["model_labels"] = labels
         if fresh is None:

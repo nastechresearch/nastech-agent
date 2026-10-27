@@ -81,7 +81,7 @@ The legacy `nastech honcho setup` command still works (it now redirects to `nast
 
 **Headless / remote machines:** for cloud auth on a box without a browser (SSH, remote VM), pick **device** at the wizard's auth-method prompt. The CLI prints a short code and a verification link; open the link in a browser on any other machine, approve, and setup completes — no API key copy-paste. The wizard defaults to this option automatically when it detects no usable local browser.
 
-**Config:** `$NASTECH_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$NASTECH_HOME/honcho.json` > `~/.nastech/honcho.json` > `~/.honcho/config.json`. See the [plugin README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/nastech).
+**Config:** `$NASTECH_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$NASTECH_HOME/honcho.json` > `~/.nastech/honcho.json` > `~/.honcho/config.json`. See the [plugin README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/hermes).
 
 <details>
 <summary>Full config reference</summary>
@@ -283,7 +283,7 @@ Off-gateway these keys do nothing. `nastech memory setup` only prompts for them 
 
 </details>
 
-See the [plugin README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/nastech).
+See the [plugin README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/hermes).
 
 #### Upgrading from the bundled Honcho
 
@@ -485,7 +485,7 @@ Mem0 used to ship inside the Nastech tree (and as the `nastech-agent[mem0]` pip 
 ### Hindsight
 
 :::info Plugin catalog
-Hindsight is maintained by [vectorize-io](https://github.com/vectorize-io/hindsight) and installed from the [plugin catalog](./plugins.md) rather than bundled with Nastech. Setup details live in the upstream docs: [hindsight.vectorize.io/sdks/integrations/nastech](https://hindsight.vectorize.io/sdks/integrations/nastech).
+Hindsight is maintained by [vectorize-io](https://github.com/vectorize-io/hindsight) and installed from the [plugin catalog](./plugins.md) rather than bundled with Nastech. Setup details live in the upstream docs: [hindsight.vectorize.io/sdks/integrations/nastech](https://hindsight.vectorize.io/sdks/integrations/hermes).
 :::
 
 Long-term memory with knowledge graph, entity resolution, and multi-strategy retrieval. The `hindsight_reflect` tool provides cross-memory synthesis that no other provider offers. Automatically retains full conversation turns (including tool calls) with session-level document tracking.
@@ -530,7 +530,7 @@ The plugin lands in `~/.nastech/plugins/hindsight/` (per profile home). A memory
 | `retain_assistant_prefix` | `Assistant` | Label used before assistant turns in auto-retained transcripts |
 | `recall_tags` | — | Tags to filter on recall |
 
-See the [upstream Nastech integration docs](https://hindsight.vectorize.io/sdks/integrations/nastech) for the full configuration reference.
+See the [upstream Nastech integration docs](https://hindsight.vectorize.io/sdks/integrations/hermes) for the full configuration reference.
 
 #### Migrating from bundled Hindsight
 

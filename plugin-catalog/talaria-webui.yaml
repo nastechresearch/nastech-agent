@@ -1,7 +1,7 @@
 name: talaria-webui
 repo: https://github.com/liamsmith86/talaria-webui
 sha: 14dbcd48e381558643770d54f644714f89204dc3
-subdir: src/talaria/nastech_plugin
+subdir: src/talaria/hermes_plugin
 description: "Extends Nastech Agent API capabilities to deliver a richer chat interface with Talaria WebUI. Disclosure — adds API_SERVER_KEY-authenticated /talaria/v1 routes to the Nastech API server (cross-session history search, rewind/branch/compress of API sessions, runs with the profile's instructions and prefill); stores response metadata (no message bodies) in $NASTECH_HOME/talaria/observations.db; relies on private api_server/AIAgent internals behind feature detection."
 maintainer: liamsmith86
 tier: community

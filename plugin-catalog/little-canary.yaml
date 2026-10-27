@@ -1,7 +1,7 @@
 name: little-canary
 repo: https://github.com/hermes-labs-ai/little-canary
 sha: 61855a940a66fb8319742756c3ff72c720a89160
-subdir: integrations/nastech-agent
+subdir: integrations/hermes-agent
 version: "0.4.0"
 description: Screens user turns and blocks downstream tools on a BLOCK verdict; the original prompt still reaches the model.
 maintainer: roli-lpci (Nastech Labs; independent of Nastech Research)

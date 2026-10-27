@@ -44,7 +44,7 @@ function schema(): MemoryProviderConfig {
   return {
     name: 'honcho',
     label: 'Honcho',
-    docs_url: 'https://docs.honcho.dev/v3/guides/integrations/nastech',
+    docs_url: 'https://docs.honcho.dev/v3/guides/integrations/hermes',
     fields: [
       field({ key: 'workspace', kind: 'text', label: 'Workspace', value: 'myws', inline: true, group: 'Connection' }),
       field({ key: 'saveMessages', kind: 'bool', label: 'Save messages', value: 'true', group: 'Message writing' }),

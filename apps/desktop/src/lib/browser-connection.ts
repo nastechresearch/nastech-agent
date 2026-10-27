@@ -179,7 +179,8 @@ export function createBrowserConnectionBridge({ api, bootstrap }: BrowserConnect
           connectionId: LOCAL_CONNECTION_ID,
           connectionKind: 'local' as const,
           connectionLabel,
-          handle: profile === 'default' ? 'nastech' : profile,
+          // A real 'nastech' profile keeps @nastech; the default answers to @default then.
+          handle: profile === 'default' && !profiles.includes('nastech') ? 'nastech' : profile,
           profile,
           targetProfile: profile,
           // Installed here, so listed, but served elsewhere or nowhere.

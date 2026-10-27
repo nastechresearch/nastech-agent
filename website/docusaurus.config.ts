@@ -197,11 +197,11 @@ const config: Config = {
           items: [
             { label: 'Desktop Download', href: 'https://nastechresearch.github.io/nastech-agent/' },
             { label: 'GitHub', href: 'https://github.com/NastechResearch/nastech-agent' },
-            { label: 'Nastech Research', href: 'https://nastechresearch.github.io' },
+            { label: 'Nastech Research', href: 'https://nastechresearch.github.io/nastech-agent' },
           ],
         },
       ],
-      copyright: `Built by <a href="https://nastechresearch.github.io">Nastech Research</a> · MIT License · ${new Date().getFullYear()}`,
+      copyright: `Built by <a href="https://nastechresearch.github.io/nastech-agent">Nastech Research</a> · MIT License · ${new Date().getFullYear()}`,
     },
     prism: {
       theme: prismThemes.github,

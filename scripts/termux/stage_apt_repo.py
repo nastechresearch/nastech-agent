@@ -269,7 +269,7 @@ def stage(
                 "Package": fields["Package"],
                 "Version": fields["Version"],
                 "Architecture": arch,
-                "Maintainer": fields.get("Maintainer", "Nastech Agent <noreply@nastechresearch.github.io>"),
+                "Maintainer": fields.get("Maintainer", "Nastech Agent <noreply@nastechresearch.com>"),
                 "Installed-Size": fields.get("Installed-Size", "0"),
                 "Description": fields.get("Description", "Nastech Agent"),
                 "Filename": filename,
