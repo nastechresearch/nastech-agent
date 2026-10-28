@@ -3,8 +3,9 @@
  * the backend.
  *
  * Pins (`nastech.desktop.pinnedSessions`), composer drafts
- * (`nastech:composer-drafts:v3`) and queued prompts
- * (`nastech.desktop.composerQueue.v1`) are keyed by session id and re-asserted
+ * (`nastech:composer-drafts:v4`, mirrored to v3), queued prompts
+ * (`nastech.desktop.composerQueue.v1`) and interrupted sends
+ * (`nastech:composer-outbox:v1:*`) are keyed by session id and re-asserted
  * or probed at boot. When a session is removed from state.db (retention purge,
  * manual delete, another surface pruning it), those keys go stale: nothing
  * ever drops them, so every boot re-requests the dead ids and the gateway
@@ -21,7 +22,8 @@
 
 import { getSession } from '@/nastech'
 import { mapPool } from '@/lib/pool'
-import { clearSessionDraft, stashedDraftScopes } from '@/store/composer'
+import { clearSessionDraft, isFreshDraftScope, stashedDraftScopes } from '@/store/composer'
+import { dropInterruptedSends, interruptedSendScopes } from '@/store/composer-outbox'
 import { $queuedPromptsBySession, clearQueuedPrompts } from '@/store/composer-queue'
 import { $pinnedSessionIds, unpinSession } from '@/store/layout'
 import { $activeGatewayProfile, $profiles, normalizeProfileKey } from '@/store/profile'
@@ -152,6 +154,13 @@ function collectCandidates(): string[] {
     }
   }
 
+  // Fresh-chat keys are never session references (they expire with the outbox entry instead).
+  for (const scope of interruptedSendScopes()) {
+    if (!covered.has(scope) && !isFreshDraftScope(scope)) {
+      candidates.add(scope)
+    }
+  }
+
   return [...candidates].filter(id => {
     const expiresAt = alive.get(id)
 
@@ -186,6 +195,8 @@ function dropDeadId(id: string): void {
   if ($queuedPromptsBySession.get()[id]?.length) {
     clearQueuedPrompts(id)
   }
+
+  dropInterruptedSends(id)
 }
 
 async function sweepOnce(requireLoaded = true): Promise<void> {

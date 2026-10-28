@@ -197,7 +197,7 @@ def _send_imap_id(imap: imaplib.IMAP4) -> None:
         except Exception:
             version = "0"
         imap.xatom("ID", f'("name" "nastech-agent" "version" "{version}" '
-                         '"vendor" "NastechResearch" "support-email" "noreply@nastechresearch.github.io")')
+                         '"vendor" "NastechResearch" "support-email" "noreply@nastechresearch.com")')
     except Exception as e:
         logger.debug("[Email] IMAP ID command not accepted: %s", e)
 

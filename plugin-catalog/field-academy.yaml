@@ -7,7 +7,7 @@ maintainer: Dgardenhire
 tier: community
 category: desktop
 requires_nastech: ">=0.22.0"
-docs_url: https://linchpin.studio/school-of-nastech/manual/
+docs_url: https://linchpin.studio/school-of-hermes/manual/
 version: "0.8.5"
 image: "https://raw.githubusercontent.com/Dgardenhire/hermes-field-academy/9d4b342535fdcb9948b0b2334b78fcbd1fd14675/docs/card.png"
 screenshots:

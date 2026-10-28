@@ -12,7 +12,7 @@
 #   commit of Frihet-io/nastech-frihet. Update via a new PR whenever we
 #   ship a meaningful change (rule 4 of the catalog admission policy).
 name: frihet
-repo: https://github.com/Frihet-io/nastech-frihet
+repo: https://github.com/Frihet-io/hermes-frihet
 # Pinned SHA — Frihet-io/nastech-frihet @ v0.2.1 (tagged)
 # (fix(classifier): treat anomaly_list as read; make manifest tests real).
 #
@@ -75,7 +75,7 @@ description: "Official Nastech Agent integration for Frihet — discoverability,
 maintainer: Frihet-io
 tier: community
 category: tools
-docs_url: https://github.com/Frihet-io/nastech-frihet#readme
+docs_url: https://github.com/Frihet-io/hermes-frihet#readme
 requires_nastech: ">=0.21.5"
 version: "0.2.1"
 # Capabilities mirror plugin.yaml exactly.

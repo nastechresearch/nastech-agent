@@ -352,7 +352,7 @@ def _explain_refused_launch(target: Path, response: dict) -> int:
 
 def cmd_webapp(args) -> int:
     from gateway.webapp_listener import webapp_settings
-    from nastech_cli.webapp import WebappBuildError
+    from nastech_cli.webapp import WebappBuildError, packaged_webapp_dist
     from nastech_constants import get_nastech_home
 
     home = get_nastech_home()
@@ -371,8 +371,10 @@ def cmd_webapp(args) -> int:
         _build(args)
     except WebappBuildError as exc:
         print(f"✗ {exc}")
-        print("  Build it explicitly:")
-        print("    nastech webapp --build-only")
+        # A packaged bundle (NASTECH_WEBAPP_DIST) is never built here, so no build can fix it.
+        if packaged_webapp_dist() is None:
+            print("  Build it explicitly:")
+            print("    nastech webapp --build-only")
         return 1
     if args.build_only:
         print("Webapp bundle ready.")

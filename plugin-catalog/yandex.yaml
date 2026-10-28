@@ -1,7 +1,7 @@
 name: yandex
 repo: https://github.com/akinfold/hermes-yandex-search-api
 sha: a143ba11735622105d1b762e61c0211e887d4800
-subdir: nastech_yandex_search
+subdir: hermes_yandex_search
 title: "Yandex Search API"
 description: "Yandex Search API as a backend for the built-in web_search (provider name yandex), plus a yandex_generative_search tool for grounded answers with cited sources. Disclosure — sends web_search queries and yandex_generative_search questions to searchapi.api.cloud.yandex.net, or to the base URL in YANDEX_SEARCH_API_URL if you set one, with your YANDEX_API_KEY and YANDEX_FOLDER_ID read through Nastech; the Search API is a paid Yandex Cloud service billed to the folder that owns the key; no other endpoint, no telemetry, no file or shell access, no background process. Independent community plugin, not affiliated with Yandex."
 maintainer: akinfold

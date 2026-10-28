@@ -434,7 +434,7 @@ test('isNastechCloudAgentUrl detects cloud agent hosts', () => {
   // Negative cases
   assert.equal(isNastechCloudAgentUrl('http://127.0.0.1:9000'), false)
   assert.equal(isNastechCloudAgentUrl('https://gateway.example.com'), false)
-  assert.equal(isNastechCloudAgentUrl('https://nastechresearch.github.io'), false)
+  assert.equal(isNastechCloudAgentUrl('https://nastechresearch.github.io/nastech-agent'), false)
   assert.equal(isNastechCloudAgentUrl('not-a-url'), false)
 })
 

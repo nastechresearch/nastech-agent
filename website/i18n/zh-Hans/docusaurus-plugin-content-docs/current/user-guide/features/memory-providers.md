@@ -72,7 +72,7 @@ nastech memory setup        # 选择 "honcho" — 运行 Honcho 专属的安装�
 
 旧版 `nastech honcho setup` 命令仍然有效（现在会重定向到 `nastech memory setup`），但只有在 Honcho 被选为激活记忆提供者后才会注册。
 
-**配置：** `$NASTECH_HOME/honcho.json`（profile 本地）或 `~/.honcho/config.json`（全局）。解析顺序：`$NASTECH_HOME/honcho.json` > `~/.nastech/honcho.json` > `~/.honcho/config.json`。参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
+**配置：** `$NASTECH_HOME/honcho.json`（profile 本地）或 `~/.honcho/config.json`（全局）。解析顺序：`$NASTECH_HOME/honcho.json` > `~/.nastech/honcho.json` > `~/.honcho/config.json`。参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/hermes)。
 
 <details>
 <summary>完整配置参考</summary>
@@ -259,7 +259,7 @@ nastech honcho sync
 
 </details>
 
-参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/nastech)。
+参见[插件 README](https://github.com/plastic-labs/honcho/tree/main/hermes-plugin-honcho)和 [Honcho 集成指南](https://docs.honcho.dev/v3/guides/integrations/hermes)。
 
 #### 从内置 Honcho 升级
 

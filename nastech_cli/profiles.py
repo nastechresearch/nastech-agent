@@ -24,7 +24,7 @@ from nastech_constants import (
     LOCAL_RUNTIME_ROOT_DIRS, PROFILE_ID_RE, clear_named_profile_deleted, mark_named_profile_deleted,
     named_profile_has_identity, named_profile_is_deleted, named_profile_is_live,
 )
-from nastech_cli.config_backend import config_exists, config_version, config_version_or_none
+from nastech_cli.config_backend import config_cache_version, config_cache_version_or_none, config_exists
 from nastech_cli.profiles_cache import _PROFILE_FILE_CACHE, _cached_profile_read
 
 logger = logging.getLogger(__name__)
@@ -738,7 +738,7 @@ def _read_config_model(profile_dir: Path) -> tuple:
         return None, None
 
     # The user layer changes through the config backend, not necessarily on local disk.
-    return _cached_profile_read(config_path, "config-model", _read, config_version_or_none)
+    return _cached_profile_read(config_path, "config-model", _read, config_cache_version_or_none)
 
 
 def _seed_model_config(profile_dir: Path) -> None:
@@ -1039,7 +1039,7 @@ def profile_is_standalone(home: Path) -> bool:
     cfg_path = home / "config.yaml"
     key = str(home)
     try:
-        signature = config_version(cfg_path)
+        signature = config_cache_version(cfg_path)
     except FileNotFoundError:
         signature = None
     except OSError as exc:

@@ -270,9 +270,9 @@ def _direct_alias_source_identity() -> Optional[tuple]:
         path = get_config_path()
     except Exception:
         return None
-    from nastech_cli.config_backend import config_version
+    from nastech_cli.config_backend import config_cache_version
     try:
-        version = config_version(path)
+        version = config_cache_version(path)
     except OSError:
         # A missing config is still a definite identity for this profile.
         return (str(path), None)

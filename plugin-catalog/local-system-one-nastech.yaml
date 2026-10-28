@@ -2,7 +2,7 @@ name: local-system-one-nastech
 title: Local System One
 repo: https://github.com/NMTZ-z/system-one-benchmark-lab
 sha: 1095495019b2dff2b4231ed70ec23a3ea716e2f6
-subdir: integrations/nastech/local-system-one-nastech
+subdir: integrations/hermes/local-system-one-hermes
 description: >-
   Local System One / Laya Typed Decisions control plane for Nastech Agent. Sends bounded turn data to
   a configurable sidecar for reversible OFF/Shadow/Canary routing decisions, with explicit Canary

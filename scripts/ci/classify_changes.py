@@ -332,6 +332,8 @@ _UPDATE_DEPENDENCIES = (
     "pm/plugins_state.py",
     "pm/install.py",  # also sealed()/lazy_installs_allowed(): every update's default-tool install
     "nastech_cli/desktop_build_lock.py",
+    "nastech_cli/desktop_build_reuse.py",  # source_build keeps the packaged app when no input changed
+    "nastech_cli/desktop_release_holders.py",  # main_desktop names/closes a holder of release/ on a failed swap
     "nastech_cli/memory_provider_migration.py",
     "nastech_cli/left_core_migration.py",  # source_build migrates plugins that left core
     "nastech_cli/config_version_stamp.py",  # post_update converts legacy AGENT_BROWSER_* before stamping
@@ -347,6 +349,8 @@ _UPDATE_DEPENDENCIES = (
     "nastech_cli/backup_cron_prompts.py",  # restore_cron_prompt_fields_if_degraded (update_cmd_config)
     "nastech_cli/backup_restore.py",
     "nastech_cli/config_backend.py",  # update_channel writes the channel key through the seam
+    "nastech_cli/env_loader.py",  # update_proxy_env keeps proxy keys a .env load wrote
+    "agent/proxy_bypass.py",  # update_proxy_env reads NO_PROXY entries with it
     "nastech_cli/relay_plugin_migrate.py",
     "nastech_cli/macos_tcc_anchor.py",
     "nastech_cli/model_catalog.py",

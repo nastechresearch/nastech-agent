@@ -2,7 +2,7 @@ name: remesher
 title: Remesher
 repo: https://github.com/remesher/remesher
 sha: 5f48a067722e10f0c08d368698fc03b05855bb89
-subdir: integrations/nastech
+subdir: integrations/hermes
 version: "0.2.1"
 description: >-
   Bounded image-to-GLB jobs using an isolated Remesher CLI, with existing

@@ -130,12 +130,12 @@ def reset_for_tests() -> None:
 
 def _config_stamp() -> tuple:
     from nastech_cli.config import get_nastech_home
+    from utils import file_cache_version
     home = get_nastech_home()
     stamp = []
     for name in _INVENTORY_FILES:
         try:
-            st = (home / name).stat()
-            stamp.append((st.st_mtime_ns, st.st_size))
+            stamp.append(file_cache_version(home / name, always_digest=True))
         except OSError:
             stamp.append(None)
     return tuple(stamp)

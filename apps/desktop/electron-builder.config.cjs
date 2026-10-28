@@ -280,7 +280,7 @@ module.exports = {
   },
   linux: {
     category: 'Development',
-    maintainer: 'Nastech Research <support@nastechresearch.github.io>',
+    maintainer: 'Nastech Research <support@nastechresearch.com>',
     synopsis: light
       ? 'Remote-only desktop client for Nastech Agent.'
       : 'Native desktop shell for Nastech Agent.',

@@ -38,7 +38,7 @@ from agent.voice_turn_route import session_runtime_view
 from agent.compaction_display import project_compaction_message_for_display
 from agent.skill_commands import describe_skill_invocation
 from agent.conversation_loop import INTERRUPT_WAITING_FOR_MODEL_PREFIX
-from tui_gateway import git_probe
+from tui_gateway import git_probe, stream_segments
 from tui_gateway.checkpoints import (_load_checkpoints_enabled, _resolve_checkpoint_hash,
                                      resolve_checkpoints_enabled as _resolve_checkpoints_enabled)
 from tui_gateway._env import env_float, env_int
@@ -725,7 +725,7 @@ def _emit(event: str, sid: str, payload: dict | None = None) -> bool:
     from agent.notification_presentation import event_presentation_muted
     if event_presentation_muted(event, sid):
         return False
-    return write_json(_event_frame(event, sid, payload))
+    return write_json(_event_frame(event, sid, stream_segments.stamp_session_frame(_sessions.get(sid), event, payload)))
 
 
 from tui_gateway import server_requests as _server_requests
@@ -998,13 +998,13 @@ def _load_cfg_raw() -> dict:
     expansion applied here would be persisted on the next save). Behavioral reads use :func:`_load_cfg`.
     Cache keyed on the resolved path so profiles don't clobber."""
     global _cfg_cache, _cfg_sig, _cfg_path
-    from nastech_cli.config_backend import config_exists, config_version
+    from nastech_cli.config_backend import config_cache_version, config_exists
     from nastech_cli.config import read_user_config_raw
     from nastech_cli.config_read_errors import FailedConfigRead
     try:
         p = _active_config_path()
         try:
-            sig = config_version(p)
+            sig = config_cache_version(p)
         except FileNotFoundError:  # absent; any other stat error is a failed read, never "no config"
             sig = None
         with _cfg_lock:
@@ -1032,13 +1032,13 @@ def _load_cfg() -> dict:
 def _save_cfg(cfg: dict):
     global _cfg_cache, _cfg_sig, _cfg_path
     from nastech_cli.config import atomic_config_replace
-    from nastech_cli.config_backend import config_version
+    from nastech_cli.config_backend import config_cache_version
     path = _active_config_path()
     atomic_config_replace(path, cfg)
     with _cfg_lock:
         _cfg_cache, _cfg_path = copy.deepcopy(cfg), path
         try:
-            _cfg_sig = config_version(path)
+            _cfg_sig = config_cache_version(path)
         except Exception:
             _cfg_sig = None
 

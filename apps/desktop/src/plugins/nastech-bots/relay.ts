@@ -334,12 +334,17 @@ async function relayAgentsOn(
     )
 
     const profiles = Array.isArray(res?.profiles) ? res.profiles : []
+    // This connection's default is @nastech only while it has no real 'nastech' profile.
+    const nastechTaken = profiles.some(profile => profile?.name === 'nastech')
     const label = labels.get(connection.id) || connection.id
 
     const rows = profiles
       .map(profile => ({
         profile: String(profile?.name || ''),
-        handle: botHandle(profile?.name, profile),
+        handle: botHandle(
+          profile?.name,
+          nastechTaken && profile?.name === 'default' ? { ...profile, nastechHandleTaken: true } : profile
+        ),
         connection_id: connection.id,
         connection_label: label,
         title: String(profile?.ui_meta?.['nastech-bots']?.title || profile?.display_name || ''),

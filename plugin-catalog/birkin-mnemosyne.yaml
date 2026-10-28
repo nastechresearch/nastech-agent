@@ -1,7 +1,7 @@
 name: birkin-mnemosyne
 repo: https://github.com/ashmoonori-afk/birkin-mnemosyne
 sha: f91aeac0dcb3ff06bf5d82337a69b3f694880bd5
-subdir: integrations/nastech
+subdir: integrations/hermes
 version: "0.2.3"
 description: >-
   Local Markdown memory provider with multilingual lexical recall and profile-local

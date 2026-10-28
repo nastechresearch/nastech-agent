@@ -1,7 +1,7 @@
 name: orbit-desktop
 repo: https://github.com/mojomast/orbitdesktop
 sha: 98b9a5ee13cb1841e819d7a9c873d7de427ba347
-subdir: nastech-plugin
+subdir: hermes-plugin
 description: >-
   Your workspace, shaped by your agent: a bundled browser desktop powered by Nastech. Describe the
   workflow you need; the agent can rearrange windows and panes, customize appearance, build versioned

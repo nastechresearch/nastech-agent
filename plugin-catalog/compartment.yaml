@@ -1,7 +1,7 @@
 name: compartment
 repo: https://github.com/MaxFreedomPollard/Compartment
 sha: b144fc34723911eace9f240ac1044b9280b74bf2
-subdir: integrations/nastech/compartment
+subdir: integrations/hermes/compartment
 description: Encrypted, fully offline memory provider. AEAD-encrypted local vault (vectors included),
   bundled embedding model, exact hybrid search, no API key and no network at runtime. One vault shared
   with Claude, Cursor and any other MCP client on the machine. Disclosure — installs the full compartment

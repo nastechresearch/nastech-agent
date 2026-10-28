@@ -54,7 +54,11 @@ class ConfigBackend(Protocol):
         ...
 
     def version(self, home: Path) -> tuple[Any, ...]:
-        """Cheap cache signature; changes whenever the user layer does."""
+        """Cheap change signature; changes whenever the user layer does."""
+        ...
+
+    def cache_version(self, home: Path, version: tuple[Any, ...]) -> tuple[Any, ...]:
+        """``version`` (just taken) plus whatever a cache needs to tell apart writes it cannot see."""
         ...
 
     def exists(self, home: Path) -> bool: ...
@@ -111,6 +115,12 @@ class FileBackend:
 
     def version(self, home: Path) -> tuple[int, int, int, int]:
         return self.version_path(self.config_path(home))
+
+    def cache_version(self, home: Path, version: tuple[Any, ...]) -> tuple[Any, ...]:
+        # utils.file_cache_version's rule. ``version`` is config_version's opaque token, so the
+        # racy test takes the file's own signature.
+        from utils import racy_content_digest
+        return (*version, racy_content_digest(self.config_path(home), self.version(home)))
 
     def exists(self, home: Path) -> bool:
         return self.config_path(home).exists()
@@ -171,6 +181,22 @@ def config_version(config_path: PathLike) -> tuple[Any, ...]:
     """Cache signature of a config file; raises ``FileNotFoundError`` / ``OSError`` like ``stat``."""
     backend, home = _route(config_path)
     return backend.version(home)
+
+
+def config_cache_version(config_path: PathLike) -> tuple[Any, ...]:
+    """Signature for a cache of a config file's parse: :func:`config_version` can stay equal across a
+    same-tick same-size rewrite, which would pin the older parse for the process lifetime."""
+    version = config_version(config_path)  # the one stat; its errors (and test seams) stay config_version's
+    backend, home = _route(config_path)
+    return backend.cache_version(home, version)
+
+
+def config_cache_version_or_none(config_path: PathLike) -> Optional[tuple[Any, ...]]:
+    """:func:`config_cache_version`, or None when the config is absent or cannot be read."""
+    try:
+        return config_cache_version(config_path)
+    except OSError:
+        return None
 
 
 def config_version_or_none(config_path: PathLike) -> Optional[tuple[Any, ...]]:

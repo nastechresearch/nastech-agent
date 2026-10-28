@@ -44,10 +44,10 @@ from nastech_constants import (
     apply_secure_dir_policy, get_managed_system)
 # Re-export from nastech_constants — canonical definition lives there.
 from nastech_constants import get_nastech_home, get_process_nastech_home
-from utils import atomic_replace, fast_safe_load, file_signature, mkstemp_beside
+from utils import atomic_replace, fast_safe_load, file_cache_version, file_signature, mkstemp_beside
 from nastech_cli.config_issues import ConfigIssue, _issue
 from nastech_cli.config_backend import (
-    config_exists, config_version, probe_config_readable, read_config_doc,
+    config_cache_version, config_exists, config_version, probe_config_readable, read_config_doc,
     write_config_document)
 from nastech_cli.config_read_errors import (
     _CONFIG_PARSE_FAILURES, _FIX_PERMS, _FIX_YAML, FailedConfigRead, _backups_dir_display,
@@ -178,9 +178,9 @@ _LAST_EXPANDED_CONFIG_BY_PATH: dict[str, Any] = {}
 # _normalize_* + _expand_env_vars (~13 ms/call). save_config() + migrate_config() write via
 # the config writer seam, which produces a fresh inode, so stat() sees a new signature and the next load
 # repopulates automatically — no explicit invalidation hook. See #58514.
-_LOAD_CONFIG_CACHE: dict[str, tuple[int, ...]] = {}
-# path -> (mtime_ns, size, ino, ctime_ns, raw yaml dict) for read_raw_config() (no defaults merged in).
-_RAW_CONFIG_CACHE: dict[str, tuple[int, ...]] = {}
+_LOAD_CONFIG_CACHE: dict[str, tuple[Any, ...]] = {}
+# path -> (mtime_ns, size, ino, ctime_ns, racy digest, raw yaml dict) for read_raw_config() (no defaults merged in).
+_RAW_CONFIG_CACHE: dict[str, tuple[Any, ...]] = {}
 
 # Env var names written to .env that aren't in OPTIONAL_ENV_VARS (managed by setup/provider
 # flows directly). Also the set reload_env() may remove from os.environ.
@@ -1835,7 +1835,7 @@ def _read_raw_config_impl(*, want_deepcopy: bool) -> dict[str, Any]:
     # every cached read for the duration). A lost race just falls through to the locked re-check.
     try:
         config_path = get_config_path()
-        cache_key = config_version(config_path)
+        cache_key = config_cache_version(config_path)
         hit = _raw_config_cache_hit(str(config_path), cache_key)
         if hit is not None:
             return copy.deepcopy(hit) if want_deepcopy else hit
@@ -1845,7 +1845,7 @@ def _read_raw_config_impl(*, want_deepcopy: bool) -> dict[str, Any]:
     with _CONFIG_LOCK:
         config_path = get_config_path()
         try:
-            cache_key = config_version(config_path)
+            cache_key = config_cache_version(config_path)
         except FileNotFoundError:
             return {}
         except OSError as e:
@@ -2139,23 +2139,22 @@ def apply_terminal_config_to_env(
     return target
 
 
-def _load_config_cache_sig(config_path: Path) -> tuple[Optional[tuple[int, int, int, int]], Optional[tuple[int, ...]]]:
-    """Return ``(user_sig, cache_sig)`` for ``_LOAD_CONFIG_CACHE``.
-    The managed config file's signature is folded in ((0, 0, 0, 0) = none) so editing it invalidates
+def _load_config_cache_sig(config_path: Path) -> tuple[Optional[tuple[Any, ...]], Optional[tuple[Any, ...]]]:
+    """Return ``(user_sig, cache_sig)`` for ``_LOAD_CONFIG_CACHE`` (racy-clean guarded, see ``config_cache_version``).
+    The managed config file's signature is folded in (zeros = none) so editing it invalidates
     the merged result. ``cache_sig`` is None only when neither file exists (nothing to cache on)."""
     try:
-        user_sig: Optional[tuple[Any, ...]] = config_version(config_path)
+        user_sig: Optional[tuple[Any, ...]] = config_cache_version(config_path)
     except FileNotFoundError:
         user_sig = None
     managed_dir = managed_scope.get_managed_dir()
     try:
-        mst = (managed_dir / "config.yaml").stat() if managed_dir else None  # config-reader: ok — managed overlay, not a user layer
-        managed_sig = file_signature(mst) if mst else (0, 0, 0, 0)
+        managed_sig = file_cache_version(managed_dir / "config.yaml") if managed_dir else (0, 0, 0, 0, "")  # config-reader: ok — managed overlay
     except OSError:
-        managed_sig = (0, 0, 0, 0)
-    if user_sig is None and managed_sig == (0, 0, 0, 0):
+        managed_sig = (0, 0, 0, 0, "")
+    if user_sig is None and managed_sig == (0, 0, 0, 0, ""):
         return None, None
-    return user_sig, (*(user_sig or (0, 0, 0, 0)), *managed_sig)
+    return user_sig, (*(user_sig or (0, 0, 0, 0, "")), *managed_sig)
 
 
 def _last_known_good_fallback(config_path: Path, path_key: str, cache_sig, exc: Exception) -> Optional[dict[str, Any]]:

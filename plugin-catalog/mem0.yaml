@@ -1,7 +1,7 @@
 name: mem0
 repo: https://github.com/mem0ai/mem0
 sha: 43849c6e9d4d773b83a8144b6373aedc67241a5d
-subdir: integrations/nastech-plugin-mem0
+subdir: integrations/hermes-plugin-mem0
 version: "1.3.0"
 description: Mem0 memory provider — server-side LLM fact extraction with semantic search, automatic
   deduplication and opt-in reranking, in platform, self-hosted or local OSS mode. Maintained by Mem0;

@@ -7,7 +7,7 @@ maintainer: Dgardenhire
 tier: community
 category: desktop
 requires_nastech: ">=0.22.0"
-docs_url: https://botcabinet.com/nastech/manual/
+docs_url: https://botcabinet.com/hermes/manual/
 version: "0.3.11"
 image: "https://raw.githubusercontent.com/Dgardenhire/hermes-cabinet/d6a816c350f800e908075de437a108c44ff982e3/docs/card.png"
 screenshots:

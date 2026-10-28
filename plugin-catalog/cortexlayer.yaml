@@ -12,7 +12,7 @@ description: >
 maintainer: Cortex-Layer
 tier: community
 category: memory
-docs_url: https://docs.cortexlayer.net/docs/agents/nastech
+docs_url: https://docs.cortexlayer.net/docs/agents/hermes
 version: "0.1.1"
 capabilities:
   provides_tools: []

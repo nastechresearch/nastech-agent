@@ -7,7 +7,7 @@ maintainer: Dgardenhire
 tier: community
 category: desktop
 requires_nastech: ">=0.22.0"
-docs_url: https://linchpin.studio/nastech/ld-workbench/manual/
+docs_url: https://linchpin.studio/hermes/ld-workbench/manual/
 version: "0.1.0"
 image: "https://raw.githubusercontent.com/Dgardenhire/hermes-ld-workbench/e502204bcf5e975878d1a35bfdc2f939724cf2ca/docs/card.png"
 screenshots:

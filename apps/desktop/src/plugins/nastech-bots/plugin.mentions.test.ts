@@ -19,7 +19,7 @@
  * composes no CLI handoff and delivers nothing itself.
  */
 
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { RosterRow } from './types'
 
@@ -537,5 +537,48 @@ describe('the mention middleware', () => {
     const untouched = 'mail user@example.com and ping @nosuchbot'
 
     expect((await handler({ text: untouched })).text).toBe(untouched)
+  })
+})
+
+describe('the local default when a real nastech profile exists', () => {
+  const RAW = ['default', 'nastech', 'researcher'].map(name => ({
+    connectionId: 'local',
+    connectionKind: 'local',
+    connectionLabel: 'This device',
+    name
+  }))
+
+  afterEach(() => {
+    hostMock.request.mockImplementation(async () => ({}))
+  })
+
+  it.each([
+    ['a warm roster cache', 'warm'],
+    ['a cold cache primed from the raw backend rows', 'cold']
+  ])('hands the agent a target that reaches the profile the user tagged (%s)', async (_label, cache) => {
+    if (cache === 'cold') {
+      // What the backend's profiles.list and Electron's union roster report: raw names, bare handles.
+      hostMock.request.mockImplementation(async () => ({ profiles: RAW }))
+      hostMock.agents.mockResolvedValueOnce({
+        agents: RAW.map(({ name, ...row }) => ({ ...row, handle: name, profile: name, targetProfile: name })),
+        sources: [{ connectionId: 'local', kind: 'local' }]
+      })
+    }
+
+    const { claimDefaultHandles } = await import('./data')
+
+    const { handler } = await contributions({
+      focused: 'researcher',
+      profiles: cache === 'warm' ? (claimDefaultHandles(RAW as RosterRow[]) as never) : null
+    })
+
+    const toDefault = (await handler({ text: 'please ask @default to review' })).text
+    const toNastech = (await handler({ text: 'please ask @nastech to review' })).text
+
+    // message_agent maps 'nastech' to the real nastech profile, so the default must never be handed it.
+    expect(toDefault).toMatch(/@default = agent profile "default"/)
+    expect(toDefault).not.toMatch(/message_agent target: "nastech"/)
+    expect(toNastech).toMatch(/@nastech = agent profile "nastech"/)
+    expect(toNastech).not.toMatch(/agent profile "default"/)
   })
 })

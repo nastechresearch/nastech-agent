@@ -1,7 +1,7 @@
 name: loreconvo
 repo: https://github.com/labyrinth-analytics/loreconvo
 sha: 4ea667e92a92a2c3ecce28dd7d80e44c72e56d17
-subdir: integrations/nastech
+subdir: integrations/hermes
 description: "LoreConvo memory provider: cross-surface persistent session memory with search, recall and structured memory items. Disclosure — stores end-of-session transcripts (truncated, including tool output) and Nastech memory writes in ~/.loreconvo/sessions.db, a store shared across all Nastech profiles and other LoreConvo clients, and injects context from those sessions into each turn; a Pro license enables a one-time Hugging Face embedding-model download; installs the loreconvo package (BUSL-1.1) with lancedb, fastembed and onnxruntime into the Nastech environment."
 tier: community
 category: memory
