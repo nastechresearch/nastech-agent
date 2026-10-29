@@ -1,0 +1,107 @@
+name: Release
+
+# The only entrypoint an operator needs. Give it a version; the system mints
+# the annotated claim tag, builds every target unsigned, attaches the assets,
+# publishes the release and refreshes the Termux apt repository.
+#
+# Why this exists: `stable-release.yml` takes an *annotated claim tag* as its
+# input, so before this workflow cutting a release meant a human creating that
+# tag by hand. The tag is now created here, from the version, against main's
+# exact head -- and `stable.admit_claim` still validates it, so the sequencer's
+# custody rules are unchanged.
+#
+# The desktop lanes are unsigned by construction: every caller of
+# desktop-bundled-release passes \`skip-signed: true\`, so there is nothing to
+# toggle here until Apple/Azure signing is configured at those call sites.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to cut, without the leading v (for example 0.22.0)'
+        required: true
+        type: string
+      channel:
+        description: 'stable publishes the release as latest; canary publishes a prerelease'
+        required: true
+        type: choice
+        options: [stable, canary]
+        default: stable
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: stable-release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    name: Mint the claim tag from the version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.claim.outputs.tag }}
+      sha: ${{ steps.claim.outputs.sha }}
+    steps:
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate the version
+        env:
+          VERSION: ${{ inputs.version }}
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          set -euo pipefail
+          # vX.Y.Z with no suffix: a canary is cut by the canary lane, and a
+          # suffix here would let "stable" resolve to something that is not.
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::version must be X.Y.Z without a prefix or suffix, got '$VERSION'"
+            exit 1
+          fi
+          if [ "${CHANNEL}" = "canary" ]; then
+            echo "::error::the canary lane cuts its own timestamped versions; use channel=stable"
+            exit 1
+          fi
+
+      - name: Create the annotated claim tag on main's exact head
+        id: claim
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          TAG="v$VERSION"
+          SHA="$(git rev-parse --verify refs/remotes/origin/main^{commit})"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            # Re-dispatching an already claimed version is a no-op, not a
+            # re-cut: the claim must keep pointing where it always did.
+            EXISTING="$(git rev-parse "refs/tags/$TAG^{commit}")"
+            if [ "$EXISTING" != "$SHA" ]; then
+              echo "::error::$TAG already exists at $EXISTING, not at main's head $SHA"
+              exit 1
+            fi
+            echo "Tag $TAG already claims main's head; reusing it."
+          else
+            git tag -a "$TAG" "$SHA" -m "Nastech Agent $VERSION"
+            git push origin "refs/tags/$TAG"
+            echo "Created annotated claim tag $TAG at $SHA."
+          fi
+          {
+            echo "tag=$TAG"
+            echo "sha=$SHA"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build, attach and publish
+    needs: tag
+    permissions:
+      contents: write
+      actions: read
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/stable-release.yml
+    secrets: inherit
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
