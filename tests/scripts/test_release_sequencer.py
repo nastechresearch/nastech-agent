@@ -877,3 +877,39 @@ def test_main_prints_only_the_steps_on_stdout_and_annotates_a_failure(monkeypatc
     assert captured.out == ""
     assert ("::error title=Stable sequencer failed::ValueError: "
             "Stable protected head did not reach the planned version") in captured.err
+
+
+def test_a_claim_may_own_several_dispatch_runs_and_the_newest_decides():
+    """A retry is a new run, not a new attempt, so one failure must not brick it.
+
+    Measured 2026-10-28: `stable-release-publication` died at reconcile with
+    "Stable claim owns multiple workflow runs" once a claim had been dispatched
+    twice, and nothing has been published since.
+    """
+    from scripts.releases.sequencer import classify_runs
+
+    older = {"id": 1, "status": "completed", "conclusion": "failure",
+             "run_attempt": 1, "created_at": "2026-10-27T10:00:00Z"}
+    newest = {"id": 2, "status": "completed", "conclusion": "success",
+              "run_attempt": 1, "created_at": "2026-10-28T10:00:00Z"}
+    assert classify_runs([older, newest], has_draft=True) == ("green", None)
+
+    # the newest run's own attempt counter still drives the retry budget
+    failed_newest = dict(newest, conclusion="failure")
+    state, retry = classify_runs([older, failed_newest], has_draft=True)
+    assert state == "running"
+    assert retry == {"run_id": 2, "attempt": 1}
+
+
+def test_two_live_runs_for_one_claim_are_still_an_error():
+    """Two in-flight runs would build the same claim twice."""
+    import pytest
+
+    from scripts.releases.sequencer import classify_runs
+
+    live = {"id": 1, "status": "in_progress", "conclusion": None,
+            "run_attempt": 1, "created_at": "2026-10-27T10:00:00Z"}
+    newer = {"id": 2, "status": "queued", "conclusion": None,
+             "run_attempt": 1, "created_at": "2026-10-28T10:00:00Z"}
+    with pytest.raises(ValueError, match="two live workflow runs"):
+        classify_runs([live, newer], has_draft=True)

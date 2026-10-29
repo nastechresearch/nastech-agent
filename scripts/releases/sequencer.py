@@ -131,16 +131,29 @@ def classify_runs(runs: list[dict], *, claimed_at: datetime | None = None,
     Success with a draft on the attempt ref is green: the final tag moves to
     publish. A missing draft after success is an error, because the tool is
     the only thing that deletes drafts; abandonment is the marker ref.
+
+    A claim legitimately owns more than one dispatch run: a failed run is
+    retried by dispatching again, which creates a new run rather than a new
+    attempt on the old one.  The newest run is therefore authoritative and the
+    older completed runs are history.  Two *live* runs are still an error --
+    they would build the same claim twice -- but "more than one run" on its own
+    must not stop publication, or one failed dispatch bricks every later one
+    (measured 2026-10-28: `stable-release-publication` failed at reconcile with
+    "Stable claim owns multiple workflow runs", so nothing has ever published).
     """
     if not runs:
         if claimed_at is None:
             raise ValueError("A claim without a workflow needs its immutable claim time")
         now = now or datetime.now(UTC)
         return ("running", None) if now < claimed_at + CLAIM_GRACE else ("burned", None)
-    run_ids = {row.get("id") for row in runs}
-    if len(run_ids) != 1 or None in run_ids:
-        raise ValueError("Stable claim owns multiple workflow runs")
-    latest = max(runs, key=lambda row: row.get("run_attempt", 0))
+    if any(row.get("id") is None for row in runs):
+        raise ValueError("Stable workflow run id is missing")
+    ordered = sorted(
+        runs, key=lambda row: (str(row.get("created_at") or ""), row.get("id") or 0)
+    )
+    latest = ordered[-1]
+    if any(row.get("status") != "completed" for row in ordered[:-1]):
+        raise ValueError("Stable claim has two live workflow runs")
     attempt = latest.get("run_attempt")
     if not isinstance(attempt, int) or attempt < 1:
         raise ValueError("Stable workflow run attempt is invalid")
