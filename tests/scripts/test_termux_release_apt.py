@@ -119,3 +119,45 @@ def test_the_public_key_ships_with_the_repository(tmp_path):
     uploads = [Path(c[4]).name for c in calls if c[:3] == ["gh", "release", "upload"]]
     # key goes with the index, and the packages precede both
     assert uploads.index("key.asc") > uploads.index("nastech-agent_0.22.0_aarch64.deb")
+
+
+def test_a_pool_path_is_rewritten_to_the_flat_asset_name(tmp_path):
+    """A release asset cannot contain '/', so the index must not name one.
+
+    Debian pool layout is `pool/n/<pkg>.deb`; the release holds the bare file
+    name, so an unrewritten index 404s on exactly the path it advertises.
+    """
+    import gzip
+
+    repo = _repo(tmp_path)
+    (repo / "Packages").write_text(
+        "Package: nastech-agent\nVersion: 0.22.0\n"
+        "Filename: pool/n/nastech-agent_0.22.0_aarch64.deb\n",
+        encoding="utf-8",
+    )
+
+    assert release_apt.flatten_packages(repo) is True
+    flat = (repo / "Packages").read_text(encoding="utf-8")
+    assert "Filename: nastech-agent_0.22.0_aarch64.deb" in flat
+    assert "/pool/" not in flat
+    # the compressed index must agree with the plain one
+    assert "Filename: nastech-agent_0.22.0_aarch64.deb" in gzip.open(
+        repo / "Packages.gz", "rt", encoding="utf-8").read()
+    # a second pass is a no-op
+    assert release_apt.flatten_packages(repo) is False
+
+
+def test_the_repository_release_is_created_and_published():
+    """A draft release's assets 404 for everyone, so it must be published."""
+    calls = []
+
+    def run(argv, **kwargs):
+        calls.append(argv)
+        if argv[:3] == ["gh", "release", "view"]:
+            return Result(returncode=1, stderr="release not found")
+        return Result()
+
+    release_apt.ensure_published_release("termux-repo", "o/r", run=run)
+    assert calls[1][:3] == ["gh", "release", "create"]
+    assert calls[-1][:3] == ["gh", "release", "edit"]
+    assert "--draft=false" in calls[-1]
