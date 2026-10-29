@@ -93,15 +93,21 @@ jobs:
             echo "sha=$SHA"
           } >> "$GITHUB_OUTPUT"
 
-  build:
-    name: Build, attach and publish
+  dispatch:
+    name: Start the stable release for that tag
     needs: tag
-    permissions:
-      contents: write
-      actions: read
-      packages: write
-      id-token: write
-    uses: ./.github/workflows/stable-release.yml
-    secrets: inherit
-    with:
-      tag: ${{ needs.tag.outputs.tag }}
+    runs-on: ubuntu-latest
+    steps:
+      # stable-release.yml is dispatch-only -- it declares no workflow_call, so
+      # `uses:` was rejected by the API with "workflow is not reusable".  The
+      # entrypoint therefore asks GitHub to start it, which is also what a human
+      # would do, minus the tag they had to make first.
+      - name: Dispatch stable-release.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh workflow run stable-release.yml \
+            --repo "$GITHUB_REPOSITORY" --ref main -f "tag=$TAG"
+          echo "Dispatched Stable Release for $TAG"
