@@ -195,8 +195,23 @@ function classifyFile(filePath) {
   }
 }
 
+// Directories that can never hold a binary the target platform loads. The
+// scan is content-based on purpose, so an extension is never trusted -- but a
+// bytecode cache and package metadata are not code at all, and walking them is
+// what turned this step into an hour-plus on a cold runner: measured 2026-10-29,
+// `Audit bundle architecture` ran 113 minutes on a payload whose 21k-file tree
+// takes 14 seconds to audit locally.
+const DATA_ONLY_DIRS = new Set([
+  "__pycache__", "uv-cache", "node_modules/.cache", "dist-info", "egg-info",
+])
+
 function* walkFiles(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory() && (
+      DATA_ONLY_DIRS.has(entry.name) || entry.name.endsWith(".dist-info") || entry.name.endsWith(".egg-info")
+    )) {
+      continue
+    }
     const full = path.join(dir, entry.name)
     if (entry.isSymbolicLink()) continue // targets are scanned as files where they live
     if (entry.isDirectory()) {

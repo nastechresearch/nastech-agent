@@ -693,6 +693,10 @@ jobs:
           key: ${{ steps.payload-signatures.outputs.cache-primary-key }}
 
       - name: Audit bundle architecture
+        # A wedged runner must fail this step, not hold the release for the
+        # job's whole budget: measured 2026-10-29, the step sat 'running' for
+        # 113 minutes on a tree that audits in 14 seconds locally.
+        timeout-minutes: 25
         shell: bash
         run: |
           MATRIX_LABEL="${{ matrix.target.label }}"
@@ -1095,6 +1099,10 @@ jobs:
           python scripts/bundles/desktop.py --prepared "$RUNNER_TEMP/desktop-job/prepared.json" --variant bundled
 
       - name: Audit bundle architecture
+        # A wedged runner must fail this step, not hold the release for the
+        # job's whole budget: measured 2026-10-29, the step sat 'running' for
+        # 113 minutes on a tree that audits in 14 seconds locally.
+        timeout-minutes: 25
         shell: bash
         run: |
           MATRIX_LABEL="${{ matrix.target.label }}"
