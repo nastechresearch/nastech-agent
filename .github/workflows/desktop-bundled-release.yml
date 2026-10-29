@@ -693,11 +693,41 @@ jobs:
           key: ${{ steps.payload-signatures.outputs.cache-primary-key }}
 
       - name: Audit bundle architecture
+        # A wedged runner must fail this step, not hold the release for the
+        # job's whole budget: measured 2026-10-29, the step sat 'running' for
+        # 113 minutes on a tree that audits in 14 seconds locally.
+        timeout-minutes: 25
         shell: bash
         run: |
           MATRIX_LABEL="${{ matrix.target.label }}"
           node apps/desktop/scripts/audit-bundle-arch.mjs \
             --arch="${MATRIX_LABEL##*-}" --root=apps/desktop/release
+
+      - name: Record artifact sizes
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          root = pathlib.Path("apps/desktop/release")
+          suffixes = {".dmg", ".zip", ".exe", ".msix", ".appimage", ".deb", ".blockmap"}
+          rows = [
+              {"name": p.name, "bytes": p.stat().st_size}
+              for p in sorted(root.rglob("*"))
+              if p.is_file() and p.suffix.lower() in suffixes
+          ]
+          pathlib.Path("bundle-artifact-sizes.json").write_text(json.dumps(rows, indent=2))
+          for row in rows:
+              print(f"{row['bytes'] / 1048576:8.1f} MB  {row['name']}")
+          PY
+      - name: Upload artifact sizes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bundle-sizes-${{ matrix.target.label }}
+          path: bundle-artifact-sizes.json
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Record and stage channel windows packages
         if: needs.validate.outputs.channel-build != ''
@@ -1069,11 +1099,41 @@ jobs:
           python scripts/bundles/desktop.py --prepared "$RUNNER_TEMP/desktop-job/prepared.json" --variant bundled
 
       - name: Audit bundle architecture
+        # A wedged runner must fail this step, not hold the release for the
+        # job's whole budget: measured 2026-10-29, the step sat 'running' for
+        # 113 minutes on a tree that audits in 14 seconds locally.
+        timeout-minutes: 25
         shell: bash
         run: |
           MATRIX_LABEL="${{ matrix.target.label }}"
           node apps/desktop/scripts/audit-bundle-arch.mjs \
             --arch="${MATRIX_LABEL##*-}" --root=apps/desktop/release
+
+      - name: Record artifact sizes
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          root = pathlib.Path("apps/desktop/release")
+          suffixes = {".dmg", ".zip", ".exe", ".msix", ".appimage", ".deb", ".blockmap"}
+          rows = [
+              {"name": p.name, "bytes": p.stat().st_size}
+              for p in sorted(root.rglob("*"))
+              if p.is_file() and p.suffix.lower() in suffixes
+          ]
+          pathlib.Path("bundle-artifact-sizes.json").write_text(json.dumps(rows, indent=2))
+          for row in rows:
+              print(f"{row['bytes'] / 1048576:8.1f} MB  {row['name']}")
+          PY
+      - name: Upload artifact sizes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bundle-sizes-${{ matrix.target.label }}
+          path: bundle-artifact-sizes.json
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Verify the build is signed and notarized
         # The backstop against a silent unsigned publish: assess the packed
