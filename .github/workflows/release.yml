@@ -9,6 +9,10 @@ name: Release
 # tag by hand. The tag is now created here, from the version, against main's
 # exact head -- and `stable.admit_claim` still validates it, so the sequencer's
 # custody rules are unchanged.
+#
+# The desktop lanes are unsigned by construction: every caller of
+# desktop-bundled-release passes \`skip-signed: true\`, so there is nothing to
+# toggle here until Apple/Azure signing is configured at those call sites.
 
 on:
   workflow_dispatch:
@@ -23,11 +27,6 @@ on:
         type: choice
         options: [stable, canary]
         default: stable
-      skip-signed:
-        description: 'Build unsigned. You can only turn this off once Apple/Azure signing is configured.'
-        required: true
-        type: boolean
-        default: true
 
 permissions:
   contents: write
