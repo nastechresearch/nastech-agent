@@ -72,6 +72,10 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
+          # An annotated tag needs a committer; a runner has none, and the
+          # failure is `fatal: empty ident name ... not allowed`.
+          git config user.name "nastech-release-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           TAG="v$VERSION"
           SHA="$(git rev-parse --verify refs/remotes/origin/main^{commit})"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
