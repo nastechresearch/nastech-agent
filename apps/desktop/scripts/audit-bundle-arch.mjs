@@ -256,6 +256,11 @@ const EXEMPT_PATTERNS = [
   // pvporcupine ships one native lib per OS/arch in the same wheel.
   // Only the matching sibling is loaded.
   /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]pvporcupine[/\\]lib[/\\]/i,
+  // sounddevice ships 32- and 64-bit WINDOWS portaudio DLLs in every wheel's
+  // _sounddevice_data; a mac or linux payload can never load a PE, so they are
+  // inert bytes, not a wrong-arch payload (measured 2026-10-29: four of them
+  // failed every darwin and win32 bundle leg).
+  /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]_sounddevice_data[/\\]/i,
   // debugpy ships attach helpers for every OS/arch in one wheel.
   /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]debugpy[/\\]_vendored[/\\]pydevd[/\\]/i,
   // CfT publishes no native win-arm64 Chromium, so PM stages the win64
