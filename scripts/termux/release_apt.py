@@ -33,6 +33,12 @@ from .stage_apt_repo import deb_version_key
 
 REPO_TAG = "termux-repo"
 INDEX_FILES = ("Packages", "Packages.gz", "Release", "InRelease")
+
+# The repository's public signing key, published beside the index so a user can
+# install it in one command.  Without it a signed repository is unusable: apt
+# has nothing to verify `InRelease` against, and the only alternative is
+# `[trusted=yes]`, which throws the signature away.
+PUBLIC_KEY_NAME = "key.asc"
 KEEP_PACKAGES = 2  # current + previous
 
 
@@ -51,6 +57,11 @@ def staged_files(repo_dir: Path) -> tuple[list[Path], list[Path]]:
     """The packages and the index files a publish must carry."""
     packages = sorted(p for p in repo_dir.rglob("*.deb") if p.is_file())
     index = [repo_dir / name for name in INDEX_FILES if (repo_dir / name).is_file()]
+    key = repo_dir / PUBLIC_KEY_NAME
+    if key.is_file():
+        # Uploaded with the index, before the index itself: a client can fetch
+        # the key it needs the moment the repository it names is visible.
+        index.append(key)
     if not packages:
         raise AptReleaseError(f"no .deb staged under {repo_dir}")
     missing = [name for name in ("Packages", "Packages.gz") if not (repo_dir / name).is_file()]

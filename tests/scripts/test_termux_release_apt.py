@@ -88,3 +88,34 @@ def test_publish_uploads_packages_before_the_index_and_prunes_after(tmp_path):
     # keep the fresh 0.22.0 plus the newest published 0.21.9; 0.21.8 goes
     assert report["deleted_packages"] == ["nastech-agent_0.21.8_aarch64.deb"]
     assert all("--cleanup-tag" not in c for c in calls)
+
+
+def test_the_public_key_ships_with_the_repository(tmp_path):
+    """A signed repo whose public key is not published cannot be verified.
+
+    The key is served beside the index, so installing the repository is one
+    curl: apt then has something to check `InRelease` against instead of the
+    caller falling back to `[trusted=yes]`.
+    """
+    repo = _repo(tmp_path)
+    (repo / "InRelease").write_text("signed\n", encoding="utf-8")
+    (repo / "key.asc").write_text("-----BEGIN PGP PUBLIC KEY BLOCK-----\n",
+                                  encoding="utf-8")
+
+    packages, index = release_apt.staged_files(repo)
+    names = [p.name for p in index]
+    assert names == ["Packages", "Packages.gz", "Release", "InRelease", "key.asc"]
+
+    calls = []
+
+    def run(argv, **kwargs):
+        calls.append(argv)
+        if argv[:3] == ["gh", "release", "view"]:
+            return Result(stdout=json.dumps({"assets": []}))
+        return Result()
+
+    report = release_apt.publish(repo, "o/r", run=run)
+    assert report["uploaded_index"][-1] == "key.asc"
+    uploads = [Path(c[4]).name for c in calls if c[:3] == ["gh", "release", "upload"]]
+    # key goes with the index, and the packages precede both
+    assert uploads.index("key.asc") > uploads.index("nastech-agent_0.22.0_aarch64.deb")
