@@ -113,7 +113,7 @@ on:
       skip-signed:
         description: 'Stable candidates only: build no signed package at all -- no Azure signing for Windows, no Apple signing or notarization for macOS. Needs neither account.'
         type: boolean
-        default: false
+        default: true
       skip-store:
         description: 'Stable only: build no Microsoft Store bundle and submit none (the claim has no windows-store lane).'
         type: boolean
@@ -200,7 +200,7 @@ on:
         description: 'Unsigned build: skip Azure and Apple signing; artifacts still stage and upload'
         required: false
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: write
