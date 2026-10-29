@@ -365,6 +365,57 @@ def verify_canary_outputs(request: dict, manifest: dict, reader) -> None:
                                   expected_size=native["artifact"]["size"], expected_sha256=native["artifact"]["sha256"])
 
 
+
+# Assets the release carries: the installers, blockmaps and the updater feed.
+# The published release is the distribution point, so every file a user or the
+# updater needs must be attached before the draft is flipped.
+_ASSET_SUFFIXES = (".zip", ".dmg", ".msixbundle", ".exe", ".blockmap", ".yml")
+
+# Canary releases are kept to this many; older ones are deleted with their
+# assets at the start of each publish, so release storage stays flat instead of
+# growing by ~3 GiB per build (measured 2026-10-29: one darwin-arm64 leg alone
+# produces 3.01 GiB across dmg + zip + blockmaps).
+CANARY_KEEP = 3
+
+
+def release_assets(root: Path) -> list[str]:
+    """Every file under ``root`` that belongs on the release."""
+    return sorted(
+        str(path) for path in root.rglob("*")
+        if path.is_file() and path.name.endswith(_ASSET_SUFFIXES)
+    )
+
+
+def upload_assets(tag: str, repository: str, root: Path, run=stable.output) -> list[str]:
+    """Attach the staged artifacts to the release, in bounded batches."""
+    files = release_assets(root)
+    if not files:
+        raise ChannelError(f"no release assets were staged under {root}")
+    for start in range(0, len(files), 8):
+        run(["gh", "release", "upload", tag, "--repo", repository, "--clobber",
+             *files[start:start + 8]])
+    return files
+
+
+def prune_canaries(repository: str, keep: int = CANARY_KEEP,
+                   run=stable.output) -> list[str]:
+    """Delete canary prereleases beyond the newest ``keep``, with their assets.
+
+    Deleting the release removes its assets; the tag is left alone, because a
+    canary tag is an attempt reference the receipts point at.
+    """
+    rows = json.loads(run(["gh", "release", "list", "--repo", repository,
+                           "--limit", "100", "--json", "tagName,isPrerelease,createdAt"]))
+    canaries = [row for row in rows
+                if row.get("isPrerelease") and "+canary." in row.get("tagName", "")]
+    canaries.sort(key=lambda row: row.get("createdAt") or "", reverse=True)
+    deleted: list[str] = []
+    for row in canaries[keep:]:
+        run(["gh", "release", "delete", row["tagName"], "--repo", repository, "--yes"])
+        deleted.append(row["tagName"])
+    return deleted
+
+
 def publish_release(policy: str, env: dict, root: Path) -> dict:
     tag, commit = admit_transaction(policy, env)
     # Stable's tag is the attempt ref: native receipts, product identity and the
@@ -414,10 +465,16 @@ def publish_release(policy: str, env: dict, root: Path) -> dict:
         if (windows["version"] != expected_windows
                 or windows.get("executableVersion") != expected_windows):
             raise ChannelError("Canary Windows version differs from its release timestamp")
+        uploaded = upload_assets(tag, env["GITHUB_REPOSITORY"], root)
+        log(f"Attached {len(uploaded)} assets to {tag}: "
+            f"{', '.join(Path(name).name for name in uploaded)}")
         stable.output(["gh", "release", "edit", tag, "--repo", env["GITHUB_REPOSITORY"],
-                       "--draft=false"])
+                       "--draft=false", "--prerelease"])
         if admit_transaction(policy, env, require_published=True) != (tag, commit):
             raise ChannelError("Canary GitHub release publication did not preserve custody")
+        pruned = prune_canaries(env["GITHUB_REPOSITORY"])
+        if pruned:
+            log(f"Pruned {len(pruned)} old canary release(s): {', '.join(pruned)}")
 
     def release_gate(request: dict) -> bool:
         if admit_transaction(policy, env, require_published=True) != (tag, commit):
