@@ -382,12 +382,68 @@ def release_assets(root: Path) -> list[str]:
     """Every file under ``root`` that belongs on the release."""
     return sorted(
         str(path) for path in root.rglob("*")
-        if path.is_file() and path.name.endswith(_ASSET_SUFFIXES)
+        if path.is_file()
+        # the pointer installers resolve is an asset like any other, and its
+        # .json suffix is not in the installer list above
+        and (path.name.endswith(_ASSET_SUFFIXES) or path.name == LATEST_MANIFEST)
     )
+
+
+LATEST_MANIFEST = "latest.json"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def write_latest_manifest(tag: str, repository: str, root: Path) -> Path:
+    """Describe the published assets at a URL that never changes.
+
+    Installers need one stable address that follows whatever is currently the
+    latest stable release. GitHub already provides it:
+    ``<repo>/releases/latest/download/<asset>`` resolves to the newest
+    *published* release, so a ``latest.json`` uploaded as an asset is reachable
+    at ``<repo>/releases/latest/download/latest.json`` forever -- no bucket, no
+    Pages build, no API call (and therefore no 60-per-hour rate limit on the
+    install path).
+
+    Only stable releases write it: a canary is a prerelease and must never
+    become what ``latest`` resolves to.
+    """
+    installers = [
+        Path(name) for name in release_assets(root)
+        if not Path(name).name.endswith((".yml", ".blockmap", LATEST_MANIFEST))
+    ]
+    if not installers:
+        raise ChannelError(f"no installer was staged under {root}")
+    payload = {
+        "tag": tag,
+        "version": tag[1:] if tag.startswith("v") else tag,
+        "assets": [
+            {
+                "name": path.name,
+                "size": path.stat().st_size,
+                "sha256": _sha256(path),
+                "url": f"https://github.com/{repository}/releases/download/{tag}/{path.name}",
+            }
+            for path in sorted(installers)
+        ],
+    }
+    target = root / LATEST_MANIFEST
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return target
 
 
 def upload_assets(tag: str, repository: str, root: Path, run=stable.output) -> list[str]:
     """Attach the staged artifacts to the release, in bounded batches."""
+    if "+canary." not in tag:
+        # Stable: publish the pointer installers resolve, as one of the assets
+        # this file uploads, so `releases/latest/download/latest.json` is it.
+        write_latest_manifest(tag, repository, root)
     files = release_assets(root)
     if not files:
         raise ChannelError(f"no release assets were staged under {root}")

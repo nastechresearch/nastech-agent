@@ -41,13 +41,18 @@ def test_upload_assets_attaches_everything_and_refuses_an_empty_stage(tmp_path):
     (tmp_path / "a.zip").write_text("x", encoding="utf-8")
     calls = []
     channel_releases.upload_assets("v1.0.0", "o/r", tmp_path, run=calls.append)
+    # a stable tag also writes the pointer installers resolve, and both files go
+    # in one batched call
     assert len(calls) == 1
     assert calls[0][:5] == ["gh", "release", "upload", "v1.0.0", "--repo"]
-    assert calls[0][-1].endswith("a.zip")
+    uploaded = [arg.rsplit("/", 1)[-1] for arg in calls[0][7:]]
+    assert uploaded == ["a.zip", "latest.json"]
 
     empty = tmp_path / "empty"
     empty.mkdir()
-    with pytest.raises(channel_releases.ChannelError, match="no release assets"):
+    # an empty stage is refused before anything uploads; for a stable tag the
+    # manifest writer is what notices first, and its message names the reason
+    with pytest.raises(channel_releases.ChannelError, match="no installer"):
         channel_releases.upload_assets("v1.0.0", "o/r", empty, run=calls.append)
 
 
