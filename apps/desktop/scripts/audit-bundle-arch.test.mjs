@@ -155,8 +155,11 @@ test('tree and CLI audit real second-read PE bytes and fail closed on absent art
     fs.mkdirSync(cache, { recursive: true })
     fs.writeFileSync(path.join(cache, 'cached.exe'), pe)
     fs.writeFileSync(path.join(app, 'wrong-arch.dat'), pe)
+    // cached.exe lands in uv-cache, which the walk skips as data-only (the
+    // scan that ran 113 minutes on a cold runner). It is neither counted as a
+    // binary nor exempted: the cache is never read, so it is never a payload.
     assert.deepEqual(auditTree(app, 'arm64'), {
-      binaries: 5, exempted: 1, mismatches: [{ file: 'wrong-arch.dat', format: 'pe', arches: ['x64'] }]
+      binaries: 4, exempted: 0, mismatches: [{ file: 'wrong-arch.dat', format: 'pe', arches: ['x64'] }]
     })
     const failed = cli()
     assert.equal(failed.status, 1)

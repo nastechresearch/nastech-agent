@@ -14,7 +14,7 @@ it.each([
   const result = execFileSync(process.execPath, ['-e', "const c=require('./apps/desktop/electron-builder.config.cjs'); console.log(JSON.stringify({publish:c.mac.publish,notarize:c.mac.notarize,targets:c.mac.target}))"], {
     cwd: root,
     encoding: 'utf8',
-    env: { ...process.env, NASTECH_DESKTOP_VARIANT: variant, NASTECH_PAYLOAD_TAG: tag, CLOUDFLARE_R2_PUBLIC_URL: 'https://updates.example' }
+    env: { ...process.env, GITHUB_REPOSITORY: 'nastechresearch/nastech-agent', NASTECH_DESKTOP_VARIANT: variant, NASTECH_PAYLOAD_TAG: tag, CLOUDFLARE_R2_PUBLIC_URL: 'https://updates.example' }
   })
   const config = JSON.parse(result)
   const feed = feedContract.darwinFeed(channel, light)
@@ -23,7 +23,10 @@ it.each([
   expect(config.notarize).toBe(false)
 })
 
-it('bakes only a canonical https feed base into the updater config', () => {
+it('bakes only a canonical https feed base, and publishes to the repository', () => {
+  // The R2 base is still what mac.publish (the baked app-update.yml) resolves
+  // against, so the canonicalisation guard stays. It is no longer what the
+  // build publishes to: the repo's releases are the publish target.
   expect(feedContract.feedBaseUrl(undefined)).toBeUndefined()
   expect(feedContract.feedBaseUrl('https://updates.example/releases/')).toBe('https://updates.example/releases')
   for (const raw of ['http://updates.example', 'https://user:pw@updates.example', 'https://updates.example/?x=1',
@@ -32,8 +35,8 @@ it('bakes only a canonical https feed base into the updater config', () => {
   }
   const build = (url) => execFileSync(process.execPath, ['-e', "const c=require('./apps/desktop/electron-builder.config.cjs'); console.log(JSON.stringify(c.publish))"], {
     cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, NASTECH_DESKTOP_VARIANT: 'bundled', NASTECH_PAYLOAD_TAG: 'v0.28.0', CLOUDFLARE_R2_PUBLIC_URL: url }
+    env: { ...process.env, GITHUB_REPOSITORY: 'nastechresearch/nastech-agent', NASTECH_DESKTOP_VARIANT: 'bundled', NASTECH_PAYLOAD_TAG: 'v0.28.0', CLOUDFLARE_R2_PUBLIC_URL: url }
   })
-  expect(JSON.parse(build('https://updates.example/'))).toEqual([{ provider: 'generic', url: 'https://updates.example', channel: 'latest' }])
+  expect(JSON.parse(build('https://updates.example/'))).toEqual([{ provider: 'github', owner: 'nastechresearch', repo: 'nastech-agent', channel: 'latest' }])
   expect(() => build('http://updates.example')).toThrow(/canonical https/)
 })

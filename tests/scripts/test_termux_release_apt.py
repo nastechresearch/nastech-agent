@@ -79,11 +79,14 @@ def test_publish_uploads_packages_before_the_index_and_prunes_after(tmp_path):
 
     report = release_apt.publish(repo, "o/r", run=run)
     uploads = [c for c in calls if c[:3] == ["gh", "release", "upload"]]
+    deletes = [c for c in calls if c[:3] == ["gh", "release", "delete-asset"]]
 
     order = [Path(c[4]).name for c in uploads]
     assert order == ["nastech-agent_0.22.0_aarch64.deb",
                      "Packages", "Packages.gz", "Release"]
     assert all(c[4].endswith(".deb") for c in uploads[:1])
+    # the stale package is removed through the CLI, not only dropped from the index
+    assert [c[4] for c in deletes] == ["nastech-agent_0.21.8_aarch64.deb"]
     # keep the fresh 0.22.0 plus the newest published 0.21.9; 0.21.8 goes
     assert report["deleted_packages"] == ["nastech-agent_0.21.8_aarch64.deb"]
     assert all("--cleanup-tag" not in c for c in calls)

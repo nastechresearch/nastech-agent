@@ -86,20 +86,16 @@ module.exports = {
   // the release pipeline can keep the two apart.
   artifactName: `${store ? 'Store-' : ''}${artifactNamePascal}-\${version}-\${os}-\${arch}.\${ext}`,
   icon: 'assets/icon',
-  // The electron-updater feed. CI builds set CLOUDFLARE_R2_PUBLIC_URL (the R2
-  // public bucket / custom domain) and publish there — the feed yml, blockmaps
-  // and installers all live in the same flat R2 bucket, and electron-updater
-  // resolves the yml's relative artifact paths against it. Builds without the
-  // var (local, or a fork without the R2 vars) keep the github provider, which
-  // is exactly today's behavior. The store build has no feed at all (the Store
+  // The electron-updater feed. The fork publishes through the GitHub provider
+  // unconditionally (#175): electron-updater reads `latest.yml` / `canary.yml`
+  // from the release, which is its native path, instead of a bucket. The R2
+  // base stays the baked `mac.publish` feed base below, so a client that reads
+  // app-update.yml still resolves against the bucket. Builds without the var
+  // (local) behave the same way. The store build has no feed at all (the Store
   // owns its distribution and updates).
   publish: channelRequest ? null : !channel
     ? null
-    : [
-        publicUrl
-          ? { provider: 'generic', url: publicUrl, channel }
-          : { provider: 'github', owner, repo, channel }
-      ],
+    : [{ provider: 'github', owner, repo, channel }],
   extraMetadata: {
     name: appNamePascal,
     // Electron bootstrap reads package.productName before main.ts. Keep the
