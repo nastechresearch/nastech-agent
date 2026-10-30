@@ -76,6 +76,7 @@ jobs:
         id: claim
         env:
           VERSION: ${{ inputs.version }}
+          ATTEMPT: ${{ inputs.attempt }}
         run: |
           set -euo pipefail
           # An annotated tag needs a committer; a runner has none, and the
