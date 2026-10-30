@@ -95,7 +95,11 @@ module.exports = {
   // owns its distribution and updates).
   publish: channelRequest ? null : !channel
     ? null
-    : [{ provider: 'github', owner, repo, channel }],
+    : [
+        publicUrl
+          ? { provider: 'generic', url: publicUrl, channel }
+          : { provider: 'github', owner, repo, channel }
+      ],
   extraMetadata: {
     name: appNamePascal,
     // Electron bootstrap reads package.productName before main.ts. Keep the
