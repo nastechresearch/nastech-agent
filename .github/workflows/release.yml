@@ -21,6 +21,11 @@ on:
         description: 'Version to cut, without the leading v (for example 0.22.0)'
         required: true
         type: string
+      attempt:
+        description: 'Attempt number for the claim ref (rc.<N>-vX.Y.Z). Raise it only to retry a failed attempt.'
+        required: false
+        type: string
+        default: '1'
       channel:
         description: 'stable publishes the release as latest; canary publishes a prerelease'
         required: true
@@ -53,6 +58,7 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
           CHANNEL: ${{ inputs.channel }}
+          ATTEMPT: ${{ inputs.attempt }}
         run: |
           set -euo pipefail
           # vX.Y.Z with no suffix: a canary is cut by the canary lane, and a
@@ -76,7 +82,10 @@ jobs:
           # failure is `fatal: empty ident name ... not allowed`.
           git config user.name "nastech-release-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          TAG="v$VERSION"
+          # `stable.admit_claim` accepts an *attempt* ref, `rc.<N>-vX.Y.Z`, and
+          # derives the payload tag (`vX.Y.Z`) from it. Minting the payload tag
+          # here is what produced `ValueError: v0.22.0 is not a claim tag`.
+          TAG="rc.$ATTEMPT-v$VERSION"
           SHA="$(git rev-parse --verify refs/remotes/origin/main^{commit})"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             # Re-dispatching an already claimed version is a no-op, not a
@@ -88,7 +97,7 @@ jobs:
             fi
             echo "Tag $TAG already claims main's head; reusing it."
           else
-            git tag -a "$TAG" "$SHA" -m "Nastech Agent $VERSION"
+            git tag -a "$TAG" "$SHA" -m "Nastech Agent $VERSION attempt $ATTEMPT"
             git push origin "refs/tags/$TAG"
             echo "Created annotated claim tag $TAG at $SHA."
           fi
