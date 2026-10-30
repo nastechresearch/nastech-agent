@@ -69,7 +69,7 @@ def flatten_packages(repo_dir: Path) -> bool:
     packages = repo_dir / "Packages"
     if not packages.is_file():
         return False
-    text = packages.read_text(encoding="utf-8")
+    text = packages.read_text(encoding="utf-8-sig")
     flat = _POOL_FILENAME_RE.sub(r"Filename: \g<name>", text)
     if flat == text:
         return False

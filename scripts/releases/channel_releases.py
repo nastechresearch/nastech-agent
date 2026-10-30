@@ -422,7 +422,7 @@ def write_latest_manifest(tag: str, repository: str, root: Path) -> Path:
         raise ChannelError(f"no installer was staged under {root}")
     payload = {
         "tag": tag,
-        "version": tag[1:] if tag.startswith("v") else tag,
+        "version": tag.removeprefix("v"),
         "assets": [
             {
                 "name": path.name,

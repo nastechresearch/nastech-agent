@@ -38,7 +38,7 @@ def test_stage_uploads_the_leg_files_to_a_draft_release(tmp_path):
     assert report["files"] == ["bundle.zip", "metadata-darwin-arm64.json"]
     assert calls[1][:3] == ["gh", "release", "create"]
     assert "--draft" in calls[1]
-    upload = [c for c in calls if c[:3] == ["gh", "release", "upload"]][0]
+    upload = next(c for c in calls if c[:3] == ["gh", "release", "upload"])
     assert {Path(a).name for a in upload[7:]} == {"bundle.zip", "metadata-darwin-arm64.json"}
 
 
