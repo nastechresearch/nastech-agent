@@ -79,7 +79,6 @@ def test_publish_uploads_packages_before_the_index_and_prunes_after(tmp_path):
 
     report = release_apt.publish(repo, "o/r", run=run)
     uploads = [c for c in calls if c[:3] == ["gh", "release", "upload"]]
-    deletes = [c for c in calls if c[:3] == ["gh", "release", "delete-asset"]]
 
     order = [Path(c[4]).name for c in uploads]
     assert order == ["nastech-agent_0.22.0_aarch64.deb",
@@ -102,7 +101,7 @@ def test_the_public_key_ships_with_the_repository(tmp_path):
     (repo / "key.asc").write_text("-----BEGIN PGP PUBLIC KEY BLOCK-----\n",
                                   encoding="utf-8")
 
-    packages, index = release_apt.staged_files(repo)
+    _packages, index = release_apt.staged_files(repo)
     names = [p.name for p in index]
     assert names == ["Packages", "Packages.gz", "Release", "InRelease", "key.asc"]
 
@@ -137,7 +136,7 @@ def test_a_pool_path_is_rewritten_to_the_flat_asset_name(tmp_path):
     )
 
     assert release_apt.flatten_packages(repo) is True
-    flat = (repo / "Packages").read_text(encoding="utf-8")
+    flat = (repo / "Packages").read_text(encoding="utf-8-sig")
     assert "Filename: nastech-agent_0.22.0_aarch64.deb" in flat
     assert "/pool/" not in flat
     # the compressed index must agree with the plain one
