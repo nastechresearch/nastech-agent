@@ -1,127 +1,127 @@
 name: Release
 
-# The only entrypoint an operator needs. Give it a version; the system mints
-# the annotated claim tag, builds every target unsigned, attaches the assets,
-# publishes the release and refreshes the Termux apt repository.
+# The unattended front door for `scripts/release.py release`. It takes the bump
+# a human would type and runs the same command, so the claim is minted by the one
+# implementation that knows its shape.
 #
-# Why this exists: `stable-release.yml` takes an *annotated claim tag* as its
-# input, so before this workflow cutting a release meant a human creating that
-# tag by hand. The tag is now created here, from the version, against main's
-# exact head -- and `stable.admit_claim` still validates it, so the sequencer's
-# custody rules are unchanged.
+# Why this exists: cutting a stable release means an annotated attempt ref
+# `rc.<N>-vX.Y.Z` whose *message* is the JSON claim record that
+# `scripts/releases/stable.py::_claim_metadata` validates -- schema, version,
+# attempt, commit, autopublish, lanes, lanesRevision and a `claimEpoch` that must
+# equal the tag object's own tagger timestamp. Minting that by hand in a workflow
+# produced a tag whose message was prose, and `Admit the claim` died with
+# `Stable claim metadata is invalid`. `entrypoint.release()` writes the record and
+# pins the tagger date to the epoch it declares, which is the only way the two
+# can agree.
+#
+# The version is derived, never typed: `published_stable_identity()` reads the
+# published head (the seed, 0.21.5, until the first stable ships) and `--bump`
+# moves it. So `bump=minor` on the seed is v0.22.0.
 #
 # The desktop lanes are unsigned by construction: every caller of
-# desktop-bundled-release passes \`skip-signed: true\`, so there is nothing to
+# desktop-bundled-release passes `skip-signed: true`, so there is nothing to
 # toggle here until Apple/Azure signing is configured at those call sites.
 
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to cut, without the leading v (for example 0.22.0)'
-        required: true
-        type: string
-      attempt:
-        description: 'Attempt number for the claim ref (rc.<N>-vX.Y.Z). Raise it only to retry a failed attempt.'
-        required: false
-        type: string
-        default: '1'
-      channel:
-        description: 'stable publishes the release as latest; canary publishes a prerelease'
+      bump:
+        description: 'SemVer level the next version takes from the published head (seed 0.21.5: minor = 0.22.0)'
         required: true
         type: choice
-        options: [stable, canary]
-        default: stable
+        options: [patch, minor, major]
+        default: minor
+      commit:
+        description: 'Commit to claim. Empty is main as this workflow runs.'
+        required: false
+        type: string
+        default: ''
+      autopublish:
+        description: 'Record the claim as autopublish: publication follows a green gate without a second dispatch'
+        required: false
+        type: boolean
+        default: false
+      with-lanes:
+        description: 'Comma-separated lanes to add to the default set (see scripts/releases/lanes.py)'
+        required: false
+        type: string
+        default: ''
+      without-lanes:
+        description: 'Comma-separated lanes to drop from the default set'
+        required: false
+        type: string
+        default: ''
+      no-changelog:
+        description: 'Leave the commit list out of the draft body (the generated notes can outgrow GitHub release bodies)'
+        required: false
+        type: boolean
+        default: false
+      abandon-version:
+        description: 'Version whose outstanding attempts to clear (cancel runs, delete drafts, mark abandoned) before cutting. Empty refuses instead.'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
   actions: write
 
 concurrency:
-  group: stable-release
+  group: stable-release-cut
   cancel-in-progress: false
 
 jobs:
-  tag:
-    name: Mint the claim tag from the version
+  cut:
+    name: Claim the attempt and start the gate
     runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.claim.outputs.tag }}
-      sha: ${{ steps.claim.outputs.sha }}
     steps:
       - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           ref: main
           fetch-depth: 0
 
-      - name: Validate the version
-        env:
-          VERSION: ${{ inputs.version }}
-          CHANNEL: ${{ inputs.channel }}
-          ATTEMPT: ${{ inputs.attempt }}
-        run: |
-          set -euo pipefail
-          # vX.Y.Z with no suffix: a canary is cut by the canary lane, and a
-          # suffix here would let "stable" resolve to something that is not.
-          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::version must be X.Y.Z without a prefix or suffix, got '$VERSION'"
-            exit 1
-          fi
-          if [ "${CHANNEL}" = "canary" ]; then
-            echo "::error::the canary lane cuts its own timestamped versions; use channel=stable"
-            exit 1
-          fi
+      - uses: ./.github/actions/setup-pm
+        with:
+          cache-python: false
 
-      - name: Create the annotated claim tag on main's exact head
-        id: claim
-        env:
-          VERSION: ${{ inputs.version }}
-          ATTEMPT: ${{ inputs.attempt }}
+      - name: Release line identity
         run: |
           set -euo pipefail
-          # An annotated tag needs a committer; a runner has none, and the
-          # failure is `fatal: empty ident name ... not allowed`.
+          # An annotated tag needs a committer; a runner has none, and git fails
+          # with `fatal: empty ident name ... not allowed`. Fixed, so the claim's
+          # tagger never depends on who pressed the button.
           git config user.name "nastech-release-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # `stable.admit_claim` accepts an *attempt* ref, `rc.<N>-vX.Y.Z`, and
-          # derives the payload tag (`vX.Y.Z`) from it. Minting the payload tag
-          # here is what produced `ValueError: v0.22.0 is not a claim tag`.
-          TAG="rc.$ATTEMPT-v$VERSION"
-          SHA="$(git rev-parse --verify refs/remotes/origin/main^{commit})"
-          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            # Re-dispatching an already claimed version is a no-op, not a
-            # re-cut: the claim must keep pointing where it always did.
-            EXISTING="$(git rev-parse "refs/tags/$TAG^{commit}")"
-            if [ "$EXISTING" != "$SHA" ]; then
-              echo "::error::$TAG already exists at $EXISTING, not at main's head $SHA"
-              exit 1
-            fi
-            echo "Tag $TAG already claims main's head; reusing it."
-          else
-            git tag -a "$TAG" "$SHA" -m "Nastech Agent $VERSION attempt $ATTEMPT"
-            git push origin "refs/tags/$TAG"
-            echo "Created annotated claim tag $TAG at $SHA."
-          fi
-          {
-            echo "tag=$TAG"
-            echo "sha=$SHA"
-          } >> "$GITHUB_OUTPUT"
 
-  dispatch:
-    name: Start the stable release for that tag
-    needs: tag
-    runs-on: ubuntu-latest
-    steps:
-      # stable-release.yml is dispatch-only -- it declares no workflow_call, so
-      # `uses:` was rejected by the API with "workflow is not reusable".  The
-      # entrypoint therefore asks GitHub to start it, which is also what a human
-      # would do, minus the tag they had to make first.
-      - name: Dispatch stable-release.yml
+      - name: Clear the outstanding attempts
+        if: inputs.abandon-version != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ needs.tag.outputs.tag }}
+          ABANDON_VERSION: ${{ inputs.abandon-version }}
+        run: python scripts/release.py abandon --version "$ABANDON_VERSION"
+
+      - name: Cut the claim
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP: ${{ inputs.bump }}
+          COMMIT: ${{ inputs.commit }}
+          AUTO_PUBLISH: ${{ inputs.autopublish }}
+          NO_CHANGELOG: ${{ inputs['no-changelog'] }}
+          WITH_LANES: ${{ inputs.with-lanes }}
+          WITHOUT_LANES: ${{ inputs.without-lanes }}
         run: |
           set -euo pipefail
-          gh workflow run stable-release.yml \
-            --repo "$GITHUB_REPOSITORY" --ref main -f "tag=$TAG"
-          echo "Dispatched Stable Release for $TAG"
+          args=(--bump "$BUMP" --commit "${COMMIT:-refs/remotes/origin/main}")
+          if [ -n "$WITH_LANES" ]; then
+            args+=(--with "$WITH_LANES")
+          fi
+          if [ -n "$WITHOUT_LANES" ]; then
+            args+=(--without "$WITHOUT_LANES")
+          fi
+          if [ "$AUTO_PUBLISH" = 'true' ]; then
+            args+=(--autopublish)
+          fi
+          if [ "$NO_CHANGELOG" = 'true' ]; then
+            args+=(--no-changelog)
+          fi
+          python scripts/release.py release "${args[@]}"
