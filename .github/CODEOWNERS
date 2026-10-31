@@ -60,5 +60,3 @@ uv.lock                         @NastechResearch/nastech-agent-core
 # The trust model and the scope authority for security reports.
 /SECURITY.md                    @NastechResearch/nastech-agent-core
 
-# Each entry pins a third-party repo by sha; editing it changes what users install.
-/plugin-catalog/                @NastechResearch/nastech-agent-core
