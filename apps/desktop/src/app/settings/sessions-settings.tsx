@@ -5,14 +5,6 @@ import { restoreListedSession } from '@/app/session/hooks/use-session-actions/ut
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tip } from '@/components/ui/tooltip'
-import {
-  deleteSession,
-  getNastechConfigRecord,
-  peekConfigReadOrigin,
-  retainConfigReadOrigin,
-  saveNastechConfig,
-  setSessionArchived
-} from '@/nastech'
 import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
 import { selectDesktopPaths } from '@/lib/desktop-fs'
@@ -21,6 +13,14 @@ import { triggerHaptic } from '@/lib/haptics'
 import { Archive, ArchiveOff, FolderOpen, Loader2, Trash2 } from '@/lib/icons'
 import { purgeInFlightTurnJournals } from '@/lib/inflight-turn-journal'
 import { isBrowserHostedDesktop } from '@/lib/platform'
+import {
+  deleteSession,
+  getNastechConfigRecord,
+  peekConfigReadOrigin,
+  retainConfigReadOrigin,
+  saveNastechConfig,
+  setSessionArchived
+} from '@/nastech'
 import { confirm } from '@/store/confirm'
 import { notify, notifyError } from '@/store/notifications'
 import { $connection, applyConfiguredDefaultProjectDir, ensureDefaultWorkspaceCwd } from '@/store/session'

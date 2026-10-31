@@ -19,6 +19,8 @@ export function clearWebappSession(): void {
   delete (window as WebappWindow).__NASTECH_UI_SURFACE__
 
   for (const key of Object.keys(sessionStorage)) {
-    if (key.startsWith('nastech.webapp.session.v1:')) {sessionStorage.removeItem(key)}
+    if (key.startsWith('nastech.webapp.session.v1:')) {
+      sessionStorage.removeItem(key)
+    }
   }
 }

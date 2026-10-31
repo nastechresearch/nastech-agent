@@ -4,9 +4,9 @@ import { useMemo, useState } from 'react'
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { DesktopRosterAgent } from '@/global'
-import { getProfiles, type ProfileScope, profileScopeKey } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { cn } from '@/lib/utils'
+import { getProfiles, type ProfileScope, profileScopeKey } from '@/nastech'
 import { activeGatewayConnectionId } from '@/store/gateway'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'
 

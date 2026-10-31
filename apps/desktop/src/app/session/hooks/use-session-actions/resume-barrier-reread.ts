@@ -3,8 +3,8 @@ import {
   graftRefreshedTailOntoBackfill,
   olderPageReader
 } from '@/app/chat/transcript-backfill'
-import { getLatestSessionMessages, type ProfileScope } from '@/nastech'
 import { type ChatMessage, toChatMessages } from '@/lib/chat-messages'
+import { getLatestSessionMessages, type ProfileScope } from '@/nastech'
 import type { SessionMessage, SessionMessagesResponse, SessionResumeResult } from '@/types/nastech'
 
 import { reconcileDurableHistory } from './utils'

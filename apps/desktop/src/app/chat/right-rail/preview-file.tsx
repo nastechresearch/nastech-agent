@@ -1,5 +1,5 @@
-import { fileUrlToNativePath } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { fileUrlToNativePath } from '@nastech/shared'
 import type * as React from 'react'
 import type {
   ComponentProps,

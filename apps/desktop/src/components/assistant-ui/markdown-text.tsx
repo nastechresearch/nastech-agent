@@ -135,9 +135,7 @@ function useOpenMediaFile(path: string) {
   const open = () => {
     if (window.nastechDesktop && isRemoteGateway()) {
       setOpenFailed(false)
-      void downloadGatewayMediaFile(path, sessionId ? { sessionId } : undefined).catch(() =>
-        setOpenFailed(true)
-      )
+      void downloadGatewayMediaFile(path, sessionId ? { sessionId } : undefined).catch(() => setOpenFailed(true))
     } else {
       openExternalLink(mediaExternalUrl(path))
     }

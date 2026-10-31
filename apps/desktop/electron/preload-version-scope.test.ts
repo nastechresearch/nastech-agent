@@ -31,5 +31,8 @@ it('forwards the connection/profile scope to nastech:version', async (): Promise
 
   await exposed.getVersion({ connectionId: 'remote-box', profile: 'work' })
 
-  expect(host.invoke).toHaveBeenCalledExactlyOnceWith('nastech:version', { connectionId: 'remote-box', profile: 'work' })
+  expect(host.invoke).toHaveBeenCalledExactlyOnceWith('nastech:version', {
+    connectionId: 'remote-box',
+    profile: 'work'
+  })
 })
