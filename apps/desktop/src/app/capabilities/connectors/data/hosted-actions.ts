@@ -1,7 +1,7 @@
 import { useStore } from '@nanostores/react'
 
-import type { ProfileScope } from '@/nastech'
 import { useI18n } from '@/i18n'
+import type { ProfileScope } from '@/nastech'
 import { notifyError } from '@/store/notifications'
 
 import type { AccountRow, ConnectorCardModel } from '../types'

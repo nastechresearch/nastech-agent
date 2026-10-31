@@ -2,6 +2,12 @@ import type { ModelOptionProvider } from '@nastech/shared'
 import { atom } from 'nanostores'
 
 import { invalidateAllConnectors } from '@/app/capabilities/connectors/data/keys'
+import { translateNow } from '@/i18n'
+import { writeClipboardText } from '@/lib/clipboard'
+import { restOfLongPollGap } from '@/lib/long-poll'
+import { isProviderSetupErrorMessage } from '@/lib/provider-setup-errors'
+import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
+import { readKey, writeKey } from '@/lib/storage'
 import {
   cancelOAuthSession,
   getGlobalModelOptions,
@@ -15,12 +21,6 @@ import {
   submitOAuthCode,
   validateProviderCredential
 } from '@/nastech'
-import { translateNow } from '@/i18n'
-import { writeClipboardText } from '@/lib/clipboard'
-import { restOfLongPollGap } from '@/lib/long-poll'
-import { isProviderSetupErrorMessage } from '@/lib/provider-setup-errors'
-import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
-import { readKey, writeKey } from '@/lib/storage'
 import {
   $freeTierStatus,
   ackFreeTierNotice,

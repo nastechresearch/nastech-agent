@@ -397,7 +397,8 @@ export const arCommandCenter = {
     exported: 'تم تصدير الملف الشخصي',
     failedImport: 'فشل استيراد الملف الشخصي',
     failedExport: 'فشل تصدير الملف الشخصي',
-    exportNeedsHost: name => `لا يمكن للمتصفح حفظ أرشيف الملف الشخصي. على مضيف Nastech، شغّل: nastech profile export ${name}`,
+    exportNeedsHost: name =>
+      `لا يمكن للمتصفح حفظ أرشيف الملف الشخصي. على مضيف Nastech، شغّل: nastech profile export ${name}`,
     allProfiles: 'كل الملفات الشخصية',
     showAllProfiles: 'إظهار كل الملفات الشخصية',
     notServedHere: 'غير متاح هنا',

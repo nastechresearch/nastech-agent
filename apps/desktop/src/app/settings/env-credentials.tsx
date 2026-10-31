@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import { deleteEnvVar, getEnvVars, revealEnvVar, setEnvVar } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { type IconComponent } from '@/lib/icons'
 import { queryClient } from '@/lib/query-client'
+import { deleteEnvVar, getEnvVars, revealEnvVar, setEnvVar } from '@/nastech'
 import { confirm } from '@/store/confirm'
 import { notify, notifyError } from '@/store/notifications'
 import type { EnvVarInfo } from '@/types/nastech'
