@@ -693,6 +693,14 @@ jobs:
           key: ${{ steps.payload-signatures.outputs.cache-primary-key }}
 
       - name: Audit bundle architecture
+        # The same condition as the build this audits: a skip-signed Windows leg
+        # builds no bundle (see the guard in 'Build and package'), so there is no
+        # release directory to scan and the audit only crashes on a missing root.
+        if: inputs.skip-signed != true
+        # A wedged runner must fail this step, not hold the release for the
+        # job's whole budget: measured 2026-10-29, the step sat 'running' for
+        # 113 minutes on a tree that audits in 14 seconds locally.
+        timeout-minutes: 25
         shell: bash
         run: |
           MATRIX_LABEL="${{ matrix.target.label }}"
@@ -1204,10 +1212,14 @@ jobs:
           TARGET: ${{ matrix.target.label }}
           RELEASE_PHASE: ${{ inputs.release-phase }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.sha }}
+          SKIP_SIGNED: ${{ inputs.skip-signed }}
         # Per-arch feed inputs stay in the tag archive until both legs pass.
         run: |
           args=(--include '*.dmg' --include '*.zip' --include '*.blockmap' --include '*-mac.yml')
-          if [ "$RELEASE_PHASE" = candidate ] || { [ "$NASTECH_DESKTOP_VARIANT" = bundled ] && [[ "$NASTECH_PAYLOAD_TAG" == *+canary.* ]]; }; then
+          # The recorder reads the Developer ID signature an unsigned build cannot
+          # carry, so an unsigned leg writes no release row, exactly as the Windows
+          # leg refuses to describe bytes it did not Authenticode-sign.
+          if [ "$SKIP_SIGNED" != true ] && { [ "$RELEASE_PHASE" = candidate ] || { [ "$NASTECH_DESKTOP_VARIANT" = bundled ] && [[ "$NASTECH_PAYLOAD_TAG" == *+canary.* ]]; }; }; then
             python -m scripts.bundles.release_artifacts record --platform macos --arch "${TARGET##*-}" \
               --root apps/desktop/release --tag "$NASTECH_PAYLOAD_TAG" --commit "$RELEASE_COMMIT" \
               --out "apps/desktop/release/metadata-macos-${TARGET##*-}.json"
@@ -1880,9 +1892,14 @@ jobs:
   publish-darwin-updater:
     name: Publish the macOS updater feed
     needs: [validate, build-darwin-arm64, build-darwin-x64, smoke-darwin-arm64, smoke-darwin-x64]
+    # The feed is what every installed app auto-updates from, so it may point at
+    # signed bytes only. The Windows publisher gets this from its smoke gates,
+    # which an unsigned MSIX cannot install; a dmg runs unsigned, so the guard
+    # belongs on the publication itself.
     if: >-
       !cancelled() && inputs.build_commit == '' && inputs.channel == '' && inputs.upload_release == true
       && inputs.release-phase == ''
+      && inputs.skip-signed != true
       && needs.validate.outputs.darwin-arm64 == 'true' && needs.validate.outputs.darwin-x64 == 'true'
       && needs.validate.result == 'success' && needs.validate.outputs.sha != ''
       && needs.build-darwin-arm64.result == 'success' && needs.build-darwin-x64.result == 'success'
