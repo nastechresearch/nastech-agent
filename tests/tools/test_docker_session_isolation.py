@@ -69,8 +69,15 @@ def _disable_isolation(monkeypatch):
 
 
 class TestSessionIsolationKeying:
-    def test_persistent_true_keeps_shared_default(self, monkeypatch):
+    def test_persistent_true_keeps_shared_default(self, monkeypatch, tmp_path):
         _disable_isolation(monkeypatch)
+        # The default profile's home stays on the shared "default" key (a named-profile
+        # home would take the profile path, so run from a real default root).
+        import nastech_constants
+
+        root = nastech_constants._get_platform_default_nastech_home()  # conftest's per-test native root
+        root.mkdir(parents=True, exist_ok=True)
+        monkeypatch.setenv("NASTECH_HOME", str(root))
         assert terminal_tool._resolve_container_task_id("tui:sess-1") == "default"
 
     def test_persistent_false_keys_by_session(self, monkeypatch):

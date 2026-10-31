@@ -92,6 +92,23 @@ describe('onboarding Picker', () => {
     expect(window.localStorage.getItem('nastech-onboarding-skipped-v1')).toBe('1')
   })
 
+  it('keeps Nastech Portal on top of the key form when the provider list failed to load', () => {
+    // A failed/empty OAuth list drops the picker onto the key form with no way back.
+    setProviders([])
+    $desktopOnboarding.set({ ...$desktopOnboarding.get(), mode: 'apikey' })
+    render(<Picker ctx={ctx} />)
+
+    expect(screen.getByText('Nastech Portal')).toBeTruthy()
+    expect(screen.getByText('Recommended')).toBeTruthy()
+    expect(screen.getByText('Fireworks AI')).toBeTruthy()
+    cleanup()
+
+    // The custom-endpoint form is a deliberate destination: no Nastech row there.
+    $desktopOnboarding.set({ ...$desktopOnboarding.get(), localEndpoint: true })
+    render(<Picker ctx={ctx} />)
+    expect(screen.queryByText('Nastech Portal')).toBeNull()
+  })
+
   it('hides "choose later" in manual (add-provider) mode', () => {
     setProviders([makeOAuthProvider('nastech', 'Nastech Portal')])
     $desktopOnboarding.set({ ...$desktopOnboarding.get(), manual: true })

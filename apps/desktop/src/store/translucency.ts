@@ -45,7 +45,8 @@ import {
 } from '@nastech/shared/translucency'
 import { atom, computed } from 'nanostores'
 
-import { isBrowserHostedDesktop, isMacPlatform, isWindowsPlatform } from '@/lib/platform'
+import { hostHas } from '@/lib/host-capabilities'
+import { isMacPlatform, isWindowsPlatform } from '@/lib/platform'
 import { readJson, readKey, writeJson, writeKey } from '@/lib/storage'
 
 export {
@@ -70,7 +71,7 @@ export type { Appearance }
  */
 /** Browser-hosted Desktop has no native window material or opacity surface. */
 export const GLASS_SUPPORTED =
-  !isBrowserHostedDesktop() &&
+  hostHas('windowMaterial') &&
   (typeof window !== 'undefined' && typeof window.nastechDesktop?.glassSupported === 'boolean'
     ? window.nastechDesktop.glassSupported
     : isMacPlatform() || isWindowsPlatform())
@@ -81,7 +82,7 @@ export const GLASS_SUPPORTED =
  * (see `$translucency`): a hidden lever must not move the window.
  */
 export const TRANSLUCENCY_SUPPORTED =
-  !isBrowserHostedDesktop() &&
+  hostHas('windowMaterial') &&
   (typeof window !== 'undefined' && typeof window.nastechDesktop?.translucencySupported === 'boolean'
     ? window.nastechDesktop.translucencySupported
     : isMacPlatform() || isWindowsPlatform())

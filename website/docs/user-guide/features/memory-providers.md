@@ -485,7 +485,7 @@ Mem0 used to ship inside the Nastech tree (and as the `nastech-agent[mem0]` pip 
 ### Hindsight
 
 :::info Plugin catalog
-Hindsight is maintained by [vectorize-io](https://github.com/vectorize-io/hindsight) and installed from the [plugin catalog](./plugins.md) rather than bundled with Nastech. Setup details live in the upstream docs: [hindsight.vectorize.io/sdks/integrations/nastech](https://hindsight.vectorize.io/sdks/integrations/hermes).
+Hindsight is maintained by [vectorize-io](https://github.com/vectorize-io/hindsight) and installed from the [plugin catalog](./plugins.md) rather than bundled with Nastech. Setup details live in the upstream docs: [hindsight.vectorize.io/sdks/integrations/hermes](https://hindsight.vectorize.io/sdks/integrations/hermes).
 :::
 
 Long-term memory with knowledge graph, entity resolution, and multi-strategy retrieval. The `hindsight_reflect` tool provides cross-memory synthesis that no other provider offers. Automatically retains full conversation turns (including tool calls) with session-level document tracking.
@@ -661,7 +661,7 @@ nastech config set memory.provider byterover
 ### Supermemory
 
 :::info Plugin catalog
-Supermemory is maintained by Supermemory and installed from the [plugin catalog](./plugins.md) rather than bundled with Nastech. Source and full configuration reference: [supermemoryai/nastech-supermemory](https://github.com/supermemoryai/nastech-supermemory). Existing setups are migrated automatically — see [Migrating from bundled Supermemory](#migrating-from-bundled-supermemory).
+Supermemory is maintained by Supermemory and installed from the [plugin catalog](./plugins.md) rather than bundled with Nastech. Source and full configuration reference: [supermemoryai/hermes-supermemory](https://github.com/supermemoryai/hermes-supermemory). Existing setups are migrated automatically — see [Migrating from bundled Supermemory](#migrating-from-bundled-supermemory).
 :::
 
 Semantic long-term memory with profile recall, semantic search, explicit memory tools, and per-turn conversation capture (one document per session per 4-hour window).
@@ -669,7 +669,7 @@ Semantic long-term memory with profile recall, semantic search, explicit memory 
 | | |
 |---|---|
 | **Best for** | Semantic recall with user profiling and session-level graph building |
-| **Requires** | `nastech plugins install supermemory` (installs the Supermemory SDK with the plugin); [cloud API key](http://app.supermemory.ai/integrations?connect=nastech), or a [self-hosted server](https://supermemory.ai/docs/self-hosting/overview) |
+| **Requires** | `nastech plugins install supermemory` (installs the Supermemory SDK with the plugin); [cloud API key](http://app.supermemory.ai/integrations?connect=hermes), or a [self-hosted server](https://supermemory.ai/docs/self-hosting/overview) |
 | **Data storage** | Supermemory Cloud or self-hosted |
 | **Cost** | Supermemory pricing (cloud) / free (self-hosted) |
 

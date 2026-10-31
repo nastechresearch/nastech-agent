@@ -4,6 +4,11 @@ title: "Installation"
 description: "Install Nastech Agent with desktop bundles, source installers, Docker, Nix, or the Termux APT package"
 ---
 
+<head>
+  <title>Install Nastech Agent: Official Guide | Nastech Research</title>
+  <meta property="og:title" content="Install Nastech Agent: Official Guide | Nastech Research" />
+</head>
+
 # Installation
 
 Get Nastech Agent up and running in under two minutes!

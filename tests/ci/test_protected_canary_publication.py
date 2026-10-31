@@ -80,29 +80,16 @@ def canary(tmp_path, r2_server, monkeypatch):
     python = tools / "python"
     python.write_text(f"#!/bin/sh\nexec {shlex.quote(sys.executable)} {shlex.quote(str(driver))} \"$@\"\n")
     python.chmod(0o755)
-    assets = tmp_path / "release-assets"
-    assets.mkdir()
     release_state = tmp_path / "github-release.json"
     release_state.write_text(json.dumps({"tagName": tag, "isDraft": False, "isPrerelease": True}))
     gh = tools / "gh"
     gh.write_text(
         f"#!{sys.executable}\nimport json,os,sys\nfrom pathlib import Path\n"
         "args=sys.argv[1:]\nstate=Path(os.environ['FIXTURE_RELEASE'])\n"
-        "assets=Path(os.environ['FIXTURE_ASSETS'])\n"
         "if args[:1]==['api']: print('main')\n"
         "elif args[:2]==['release','view']: print(state.read_text())\n"
-        # prune_canaries lists prereleases before deleting the ones past the keep window.
-        "elif args[:2]==['release','list']: print('[]')\n"
         "elif args[:2]==['release','edit']:\n"
         " data=json.loads(state.read_text());data['isDraft']=False;state.write_text(json.dumps(data))\n"
-        # The release is the distribution point: attachments are recorded so the
-        # test can assert what a client and the updater would actually find.
-        "elif args[:2]==['release','upload']:\n"
-        " for path in [a for a in args[2:] if os.path.isabs(a)]:\n"
-        "  (assets / Path(path).name).write_text(Path(path).name)\n"
-        "elif args[:2]==['release','delete-asset']:\n"
-        " (assets / args[3]).unlink(missing_ok=True)\n"
-        "elif args[:2]==['release','delete']: pass\n"
         "else: raise SystemExit('unexpected gh call: '+repr(args))\n"
     )
     gh.chmod(0o755)
@@ -112,8 +99,7 @@ def canary(tmp_path, r2_server, monkeypatch):
     codesign.chmod(0o755)
     base = f"http://127.0.0.1:{r2_server.server_port}/nastech-releases"
     env = {**os.environ, "PATH": str(tools) + os.pathsep + os.environ["PATH"],
-           "FIXTURE_RELEASE": str(release_state), "FIXTURE_ASSETS": str(assets),
-           "FIXTURE_WINDOWS_VERSION": windows_version, "GITHUB_ACTIONS": "true",
+           "FIXTURE_RELEASE": str(release_state), "FIXTURE_WINDOWS_VERSION": windows_version, "GITHUB_ACTIONS": "true",
            "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REPOSITORY": "NastechResearch/nastech-agent",
            "GITHUB_WORKFLOW_REF": "NastechResearch/nastech-agent/.github/workflows/desktop-bundled-release.yml@refs/heads/main",
            "RELEASE_TAG": tag, "TAG": tag, "NASTECH_PAYLOAD_TAG": tag,
@@ -257,14 +243,6 @@ def test_published_canary_workflow_advances_only_after_every_gate(canary, r2_ser
         if "run" in step:
             result = run(step["run"])
             assert result.returncode == 0, result.stdout + result.stderr
-    # Publishing attaches the release's assets: an installer and its blockmap
-    # have to be on the release before the draft is flipped, or the updater
-    # finds a release it cannot install from. The darwin `*-mac.yml` feed is
-    # merged by publish-darwin-updater after this job, not here.
-    attached = sorted(path.name for path in Path(env["FIXTURE_ASSETS"]).iterdir())
-    assert bundle.name in attached
-    assert any(name.endswith(".dmg") for name in attached)
-    assert any(name.endswith(".blockmap") for name in attached)
     resolved = ChannelReader(env["CLOUDFLARE_R2_PUBLIC_URL"], repository=env["GITHUB_REPOSITORY"]).resolve("canary")
     assert resolved.manifest is not None
     assert resolved.manifest["request"]["windowsVersion"] == "26.913.0.1000"

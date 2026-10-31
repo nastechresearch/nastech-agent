@@ -520,13 +520,19 @@ def load_agent_plugin(plugin_root: Path, data_root: Path) -> AgentPluginPackage:
     )
 
 
-def manifest_config_schema(manifest: Any) -> Any:
-    """Raw ``extensions.com.nastechresearch.nastech.config_schema`` of a parsed ``plugin.json`` (Agent
-    Plugins v1 forbids unknown top-level fields), else ``None``. Unvalidated: the settings form
-    filters it, the loader and ``plugins validate`` report what is malformed."""
+def manifest_nastech_extension(manifest: Any) -> dict:
+    """``extensions.com.nastechresearch.nastech`` of a parsed ``plugin.json`` (Agent Plugins v1 forbids
+    unknown top-level fields, so Nastech-specific fields such as ``config_keys`` live here), else ``{}``."""
     extensions = manifest.get("extensions") if isinstance(manifest, dict) else None
     nastech = extensions.get(_NASTECH_EXTENSION) if isinstance(extensions, dict) else None
-    return nastech.get("config_schema") if isinstance(nastech, dict) else None
+    return nastech if isinstance(nastech, dict) else {}
+
+
+def manifest_config_schema(manifest: Any) -> Any:
+    """Raw ``extensions.com.nastechresearch.nastech.config_schema`` of a parsed ``plugin.json``, else
+    ``None``. Unvalidated: the settings form filters it, the loader and ``plugins validate`` report
+    what is malformed."""
+    return manifest_nastech_extension(manifest).get("config_schema")
 
 
 def read_agent_plugin_manifest(plugin_root: Path) -> tuple[dict, tuple[AgentPluginDiagnostic, ...]]:

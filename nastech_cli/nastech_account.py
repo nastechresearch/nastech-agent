@@ -717,7 +717,9 @@ def resolve_nastech_portal_base_url() -> str:
 
 
 def _portal_base_url(state: dict[str, Any]) -> Optional[str]:
-    value = state.get("portal_base_url")
+    from nastech_cli.auth_nastech import _nastech_portal_env_override
+
+    value = _nastech_portal_env_override() or state.get("portal_base_url")
     return value.strip().rstrip("/") if _nonblank(value) else None
 
 
