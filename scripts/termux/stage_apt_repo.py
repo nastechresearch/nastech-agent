@@ -23,6 +23,7 @@ import hashlib
 import io
 import lzma
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -199,6 +200,29 @@ def deb_version_key(version: str):
 
 
 # ---------------------------------------------------------------------------
+# Pool keys
+# ---------------------------------------------------------------------------
+
+# Characters apt leaves literal when it turns a Filename: into a request URI.
+# Measured against apt 2.8.3 with the pool objects at their canonical Debian
+# names: '~' -> %7e and '+' -> %2b, while alphanumerics, '-', '.' and '_' pass
+# through. The bucket origin serving the feed looks the escaped text up as a key
+# instead of decoding it, so an escaped request is a 404 on a stored object.
+POOL_KEY_SAFE = re.compile(r"pool/[A-Za-z0-9._/-]+\Z")
+
+
+def pool_object_name(deb_name: str) -> str:
+    """The key a .deb is stored under: its file name without '~'.
+
+    Only the Version: field has to be a Debian version -- apt reads the ranking
+    from there, never from the pool path -- so the one pre-release character the
+    version must keep can be dropped from the key. Respell it as '-', which sorts
+    and reads the same to a human and survives the round trip through apt.
+    """
+    return deb_name.replace("~", "-")
+
+
+# ---------------------------------------------------------------------------
 # Staging
 # ---------------------------------------------------------------------------
 
@@ -246,6 +270,7 @@ def stage(
     binary_dir.mkdir(parents=True, exist_ok=True)
 
     stanzas = []
+    keys: dict = {}
     for deb in debs:
         fields, raw = deb_control_fields_and_bytes(deb)
         key = (fields["Package"], fields["Version"])
@@ -256,12 +281,24 @@ def stage(
             )
         arch = fields["Architecture"]
         prefix = f"{pool_subdir}/" if pool_subdir else ""
-        target = out_dir / "pool" / pool_subdir / deb.name[0].lower() / deb.name
+        name = pool_object_name(deb.name)
+        filename = f"pool/{prefix}{name[0].lower()}/{name}"
+        if POOL_KEY_SAFE.fullmatch(filename) is None:
+            die(
+                f"refusing to publish {deb.name}: apt percent-escapes a character of "
+                f"{filename}, and the feed origin looks the escaped path up verbatim"
+            )
+        if filename in keys:
+            die(
+                f"refusing to publish {key[0]}_{key[1]}: {keys[filename]} and {deb.name} "
+                f"collide on one pool key {filename} (published apt assets are immutable)"
+            )
+        keys[filename] = deb.name
+        target = out_dir / "pool" / pool_subdir / name[0].lower() / name
         target.parent.mkdir(parents=True, exist_ok=True)
         # Unconditional write: the pool file must always equal the source so
         # the stanza hashes below can never describe a stale/different file.
         target.write_bytes(raw)
-        filename = f"pool/{prefix}{deb.name[0].lower()}/{deb.name}"
         size = len(raw)
         sha256 = hashlib.sha256(raw).hexdigest()
         stanzas.append(
