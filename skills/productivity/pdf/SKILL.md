@@ -9,7 +9,7 @@ metadata:
   nastech:
     tags: [pdf, documents, forms, ocr, text-extraction, reportlab, pypdf, pdfplumber, pymupdf, marker]
     category: productivity
-    related_skills: [docx, xlsx, powerpoint]
+    related_skills: [microsoft-office]
 ---
 
 # PDF Skill
@@ -31,9 +31,48 @@ Create PDFs from structured specs, build and fill AcroForm forms (with layout li
 
 ## Prerequisites
 
-- Python 3.10+ with `pypdf`, `reportlab`, `pdfplumber`:
-  `python -m pip install pypdf reportlab pdfplumber`
-- Optional, for page rasterization (`pdf_page_image.py`, overlay rendering): `python -m pip install pypdfium2`, or poppler's `pdftoppm` on PATH. Scripts fall back pypdfium2 → pdftoppm and report `{"rendered": false, "missing": [...]}` (exit 0) when neither exists.
+- Python 3.10+ with `pypdf`, `reportlab`, `pdfplumber`.
+- Pick the interpreter with `terminal`. Use `python` when it already imports
+  the libraries (the Nastech Docker image ships them). Otherwise, when `nastech`
+  is on PATH, let Nastech build its shared, pinned documents environment under
+  the Nastech home: it survives container restarts, never touches the Nastech
+  install itself, and is safe to run from several agents at once. When it is
+  not (the terminal runs in a Docker sandbox, which has no Nastech), the block
+  builds a venv in the sandbox home with the same pinned versions. Use this
+  exact block in every document skill so they all share one environment:
+
+  ```bash
+  python -c "import pypdf, reportlab, pdfplumber" 2>/dev/null && PY=python || if command -v nastech >/dev/null 2>&1; then
+    PY="$(nastech pm environment documents --extra documents --extra documents-pdf)"
+  else
+    PY="$HOME/.cache/nastech-docs-venv/bin/python"
+    "$PY" -c "import docx, openpyxl, pptx, reportlab, pypdf, pdfplumber, pypdfium2" 2>/dev/null || (
+      # Safe to run from several agents at once: each caller builds a private venv,
+      # a symlink publishes the first finished one atomically, the others delete theirs;
+      # a published build is replaced and deleted only while it still fails to import.
+      mkdir -p "$HOME/.cache" && cd "$HOME/.cache" && stage="$(mktemp -d nastech-docs-venv.XXXXXX)" || exit 1
+      old="$(readlink nastech-docs-venv)"  # the published build, if any (another agent may have just published it)
+      python3 -m venv "$stage" &&
+        "$stage/bin/python" -m pip install -q --disable-pip-version-check python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 reportlab==5.1.0 pypdf==6.21.2 pdfplumber==0.11.10 pypdfium2==5.14.0 &&
+        "$stage/bin/python" -c "import docx, openpyxl, pptx, reportlab, pypdf, pdfplumber, pypdfium2" &&
+        if [ -z "$old" ]; then python3 -c 'import os, sys; os.symlink(*sys.argv[1:])' "$stage" nastech-docs-venv
+        elif [ "$(readlink nastech-docs-venv)" = "$old" ] && ! "$old/bin/python" -c "import docx, openpyxl, pptx, reportlab, pypdf, pdfplumber, pypdfium2" 2>/dev/null; then
+          ln -s "$stage" "$stage.lnk" && python3 -c 'import os, sys; os.replace(*sys.argv[1:])' "$stage.lnk" nastech-docs-venv &&
+            case "$old" in nastech-docs-venv.??????) rm -rf "$old" ;; esac
+        fi 2>/dev/null
+      [ "$(readlink nastech-docs-venv)" = "$stage" ] || rm -rf "$stage" "$stage.lnk"
+    )
+  fi
+  export PY
+  "$PY" scripts/pdf_create.py --help
+  ```
+
+  Run every helper below with `"$PY"`. In PowerShell (Nastech runs on that
+  host, so it is on PATH):
+  `$env:PY = nastech pm environment documents --extra documents --extra documents-pdf`.
+  Never `pip install` into the interpreter that runs Nastech or into the
+  `nastech pm environment` one; Nastech owns both.
+- Page rasterization (`pdf_page_image.py`, overlay rendering) uses `pypdfium2`, which the documents environment already has (if your `python` lacks it, switch `PY` to that environment with the command above), or poppler's `pdftoppm` on PATH. Scripts fall back pypdfium2 → pdftoppm and report `{"rendered": false, "missing": [...]}` (exit 0) when neither exists.
 - Each helper script checks imports lazily and prints an install hint if a dependency is missing.
 
 ## How to Run

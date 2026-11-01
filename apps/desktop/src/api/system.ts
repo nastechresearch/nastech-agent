@@ -104,9 +104,9 @@ export function getMemoryProviderOAuthStatus(
 // Memory data + curator (parity with `nastech memory` / `nastech curator`).
 // ---------------------------------------------------------------------------
 
-export function getMemoryStatus(): Promise<MemoryStatusResponse> {
+export function getMemoryStatus(profile?: null | string): Promise<MemoryStatusResponse> {
   return nastechApi<MemoryStatusResponse>({
-    ...profileScoped(),
+    ...profileScoped(profile),
     path: '/api/memory'
   })
 }

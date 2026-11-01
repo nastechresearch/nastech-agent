@@ -150,8 +150,8 @@ class AuthorityConnection:
         if (not identity.get('user_id')
                 or identity.get('instance_id', authority.instance_id) != authority.instance_id):
             capabilities = frozenset()
-        from gateway.session_identity import authenticated_subject
-        self.actor = Principal(authenticated_subject(identity),
+        from gateway.owner_identity import principal_subject
+        self.actor = Principal(principal_subject(identity),
                                identity.get('profile_id', authority.profile_id),
                                capabilities, uuid.uuid4().hex)
         from gateway.session_local_migration import bind_native_transport
@@ -319,6 +319,7 @@ class AuthorityConnection:
         ref = SessionRef(self.actor.profile_id, params.get('session_id', ''))
         from tui_gateway.contracts.registry import (
             CANONICAL_METHODS, METHODS, canonical_param_problems, check_params_accepted, check_result,
+            unknown_method_message,
         )
         contract = CANONICAL_METHODS.get(method)
         if contract is not None and (problems := canonical_param_problems(contract, params)):
@@ -343,9 +344,9 @@ class AuthorityConnection:
             # ``_load_gateway_config`` / ``build_policy(get_nastech_home())`` never snapshot the
             # launch profile's config into a served secondary's session. Under a single profile
             # the scope is that profile's own home, so behaviour is unchanged.
-            from gateway.session_authorities import owner_scope
+            from gateway.session_authorities import async_owner_scope
             from gateway.session_connections import METHODS as CONNECTION_METHODS, session_owned
-            with owner_scope(self.authority):
+            async with async_owner_scope(self.authority):
                 if method in GROUP_METHODS or method == 'profiles.list':
                     result = await dispatch_group_control(self, method, params)
                 elif method not in handlers or (method in CONNECTION_METHODS and not session_owned(params)):
@@ -353,7 +354,7 @@ class AuthorityConnection:
                     # 4001 'invalid_params' would read as a bad argument on a method that exists.
                     # An account-owned connector call (the Connectors page) keeps its legacy handler.
                     return {'jsonrpc': '2.0', 'id': rid, 'error': {
-                        'code': -32601, 'message': f'unknown method: {method}',
+                        'code': -32601, 'message': unknown_method_message(method),
                         'data': {'reason': 'unknown_method'}}}
                 else:
                     result = await handlers[method](ref, params)

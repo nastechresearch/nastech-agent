@@ -195,23 +195,8 @@ function classifyFile(filePath) {
   }
 }
 
-// Directories that can never hold a binary the target platform loads. The
-// scan is content-based on purpose, so an extension is never trusted -- but a
-// bytecode cache and package metadata are not code at all, and walking them is
-// what turned this step into an hour-plus on a cold runner: measured 2026-10-29,
-// `Audit bundle architecture` ran 113 minutes on a payload whose 21k-file tree
-// takes 14 seconds to audit locally.
-const DATA_ONLY_DIRS = new Set([
-  "__pycache__", "uv-cache", "node_modules/.cache", "dist-info", "egg-info",
-])
-
 function* walkFiles(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isDirectory() && (
-      DATA_ONLY_DIRS.has(entry.name) || entry.name.endsWith(".dist-info") || entry.name.endsWith(".egg-info")
-    )) {
-      continue
-    }
     const full = path.join(dir, entry.name)
     if (entry.isSymbolicLink()) continue // targets are scanned as files where they live
     if (entry.isDirectory()) {
@@ -245,6 +230,10 @@ function* walkFiles(dir) {
  * MSYS2/.NET layout.
  */
 const EXEMPT_PATTERNS = [
+  // sounddevice ships 32- and 64-bit WINDOWS portaudio DLLs in every
+  // wheel's _sounddevice_data; a mac or linux payload can never load a
+  // PE, so they are inert bytes, not a wrong-arch payload.
+  /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]_sounddevice_data[/\\]/i,
   // pip / setuptools launcher STUB TEMPLATES. x86 PE templates pip copies
   // when it writes a console-script shim. Present on every platform.
   // Live under the payload python store entry AND the relocatable venv.
@@ -256,11 +245,6 @@ const EXEMPT_PATTERNS = [
   // pvporcupine ships one native lib per OS/arch in the same wheel.
   // Only the matching sibling is loaded.
   /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]pvporcupine[/\\]lib[/\\]/i,
-  // sounddevice ships 32- and 64-bit WINDOWS portaudio DLLs in every wheel's
-  // _sounddevice_data; a mac or linux payload can never load a PE, so they are
-  // inert bytes, not a wrong-arch payload (measured 2026-10-29: four of them
-  // failed every darwin and win32 bundle leg).
-  /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]_sounddevice_data[/\\]/i,
   // debugpy ships attach helpers for every OS/arch in one wheel.
   /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]debugpy[/\\]_vendored[/\\]pydevd[/\\]/i,
   // CfT publishes no native win-arm64 Chromium, so PM stages the win64
