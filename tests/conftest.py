@@ -92,6 +92,7 @@ _NASTECH_TEST_ENDPOINTS = {
     'PORTAL_BASE_URL': 'https://portal.nastechresearch.github.io',
     'PORTAL_URL': 'https://portal.nastechresearch.github.io',
     'TELEGRAM_ONBOARDING_DEFAULT_URL': 'https://setup.nastechresearch.github.io/nastech-agent',
+    'URL': 'https://config-config.nastechresearch.github.io',
 }
 for _env_key, _env_value in _NASTECH_TEST_ENDPOINTS.items():
     os.environ.setdefault(_env_key, _env_value)

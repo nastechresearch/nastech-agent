@@ -1,7 +1,7 @@
 # plugin-catalog/nastech-beads.yaml — catalog PR: 1 commit, 1 file.
-# sha = v0.1.2 tag commit 975263183... (jacobhausler/nastech-beads v0.1.2,
+# sha = v0.1.2 tag commit 975263183... (jacobhausler/hermes-beads v0.1.2,
 # released 2026-10-02; annotated tag object 3018a0424). Carries the bd_bin
-# exec-hijack fix (jacobhausler/nastech-beads#5) plus the honest-claims /
+# exec-hijack fix (jacobhausler/hermes-beads#5) plus the honest-claims /
 # ValueError-handling fixes from the catalog review.
 name: nastech-beads
 repo: https://github.com/jacobhausler/hermes-beads
