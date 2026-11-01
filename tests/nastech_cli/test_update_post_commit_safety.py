@@ -45,9 +45,12 @@ _CHILD = textwrap.dedent('''
         # The selected interpreter is the shim: its SQLite probe is the runtime-safety fact.
         sys.executable = os.environ["PROBE_SHIM"]
     import nastech_yaml as yaml
-    from nastech_cli.config import DEFAULT_CONFIG
+    from nastech_cli.config import DEFAULT_CONFIG, ensure_nastech_home
     home = Path(os.environ["NASTECH_HOME"])
     home.mkdir(parents=True, exist_ok=True)
+    # The process's first config read secures the home (0700) once. Do it now, as a real process
+    # has by the time it runs the update tail: config-ro's later chmod must stay in force.
+    ensure_nastech_home()
     (home / "config.yaml").write_text(yaml.safe_dump({
         "_config_version": DEFAULT_CONFIG["_config_version"] - 1,
         "telemetry": {"shared_metrics": {"enabled": False}},

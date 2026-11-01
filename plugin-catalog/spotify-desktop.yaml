@@ -18,4 +18,4 @@ capabilities:
   provides_middleware: []
   requires_env: []
 known_issues:
-  - "On Nastech releases where Spotify moved to the `spotify` plugin, the player needs spotify-desktop with cruzlxyz/nastech-spotify-desktop#2 plus `nastech plugins install spotify` (login: `nastech spotify login`); this pin predates that change."
+  - "On Nastech releases where Spotify moved to the `spotify` plugin, the player needs spotify-desktop with cruzlxyz/hermes-spotify-desktop#2 plus `nastech plugins install spotify` (login: `nastech spotify login`); this pin predates that change."

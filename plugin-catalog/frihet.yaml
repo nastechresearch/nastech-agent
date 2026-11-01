@@ -9,11 +9,11 @@
 #   Nastech Agent integration for Frihet" in the description, not in the
 #   catalog's tier label.
 # - The SHA must be a 40-character full commit hash of a tagged, audited
-#   commit of Frihet-io/nastech-frihet. Update via a new PR whenever we
+#   commit of Frihet-io/hermes-frihet. Update via a new PR whenever we
 #   ship a meaningful change (rule 4 of the catalog admission policy).
 name: frihet
 repo: https://github.com/Frihet-io/hermes-frihet
-# Pinned SHA — Frihet-io/nastech-frihet @ v0.2.1 (tagged)
+# Pinned SHA — Frihet-io/hermes-frihet @ v0.2.1 (tagged)
 # (fix(classifier): treat anomaly_list as read; make manifest tests real).
 #
 # This SHA supersedes ``f331208`` (the older doctor that read the OAuth

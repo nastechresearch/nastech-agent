@@ -531,7 +531,6 @@ def publish_release(policy: str, env: dict, root: Path) -> dict:
         pruned = prune_canaries(env["GITHUB_REPOSITORY"])
         if pruned:
             log(f"Pruned {len(pruned)} old canary release(s): {', '.join(pruned)}")
-
     def release_gate(request: dict) -> bool:
         if admit_transaction(policy, env, require_published=True) != (tag, commit):
             return False
