@@ -18,6 +18,15 @@ const execute: typeof execFile.__promisify__ = promisify(execFile)
 const repository: string = path.resolve(import.meta.dirname, '../../../..')
 const python: string = process.env.NASTECH_PYTHON || 'python3'
 
+// The origin the reader resolves against is `nastech_cli/source_releases._PUBLIC_BASE`. A GitHub
+// Pages project site carries the repository in its path, so the sandbox host, the path every record
+// is served under and the authority the manifest records are one value; as three literals they
+// drifted apart and the sandbox rejected its own reader.
+const pagesBase: string = 'https://nastechresearch.github.io/nastech-agent'
+const pagesOrigin: URL = new URL(pagesBase)
+const pagesHost: string = pagesOrigin.hostname
+const pagesPrefix: string = pagesOrigin.pathname
+
 function buildId(channel: 'stable' | 'canary'): string {
   return (channel === 'stable' ? 'a' : 'b').repeat(32)
 }
@@ -169,7 +178,7 @@ function buildManifest(
       windowsVersion: `0.0.${sequence}.0`,
       identity,
       bundleEnv: {},
-      publicBase: 'https://nastech-assets.nastechresearch.workers.dev'
+      publicBase: pagesBase
     },
     packages: [
       {
@@ -246,7 +255,7 @@ it('carries each install channel from Python publication checks into the source 
       const manifest: FixtureManifest = buildManifest(channel, sha, tags[channel], buildId(channel))
       const body: string = canonicalJson(manifest)
       responses.set(
-        `/releases/channels/${channel}.json`,
+        `${pagesPrefix}/releases/channels/${channel}.json`,
         JSON.stringify({
           ...channelRecord(channel, channel === 'stable' ? 1 : 2),
           head: {
@@ -257,7 +266,7 @@ it('carries each install channel from Python publication checks into the source 
           }
         })
       )
-      responses.set(`/${manifestKey(channel)}`, body)
+      responses.set(`${pagesPrefix}/${manifestKey(channel)}`, body)
       responses.set(`/repos/NastechResearch/nastech-agent/releases/tags/${tags[channel]}`, {
         tag_name: tags[channel],
         draft: false,
@@ -298,7 +307,7 @@ def install():
     passthrough = original_build().open
     def local(request, *args, **kwargs):
         parsed = urlsplit(request.full_url if isinstance(request, urllib.request.Request) else request)
-        assert parsed.hostname in ('nastech-assets.nastechresearch.workers.dev', 'api.github.com')
+        assert parsed.hostname in ('${pagesHost}', 'api.github.com')
         url = 'http://127.0.0.1:${address.port}' + parsed.path + ('?' + parsed.query if parsed.query else '')
         # ChannelReader compares response.geturl() against the ORIGINAL request url:
         # wrap so the redirect detector still sees the un-rewritten authority.
@@ -451,7 +460,7 @@ if not getattr(urllib.request, '_nastech_loopback', False):
 
     // The R2 record, not GitHub metadata, decides availability: retire the
     // canary object and the resolver must fail closed before any handoff.
-    responses.delete(`/releases/channels/canary.json`)
+    responses.delete(`${pagesPrefix}/releases/channels/canary.json`)
     vi.mocked(deps.stopBackendsForUpdate).mockClear()
     expect(await strategy.apply()).toMatchObject({ ok: false, error: 'release-unavailable' })
     expect(deps.stopBackendsForUpdate).not.toHaveBeenCalled()

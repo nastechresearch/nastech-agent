@@ -223,6 +223,13 @@ class TestStoreSelection:
 
 
 class TestReaderSeam:
-    def test_reader_seam_points_at_pages(self):
+    def test_reader_resolves_the_origin_the_publisher_writes(self, monkeypatch):
+        # A reader on any other origin asks for keys the publisher never wrote: the CLI
+        # base and the store's public origin move together or not at all.
+        monkeypatch.delenv("CLOUDFLARE_R2_PUBLIC_URL", raising=False)
+        monkeypatch.delenv("R2_DISPOSABLE_RUN", raising=False)
+        monkeypatch.delenv("RELEASE_PAGES_PUBLIC_BASE", raising=False)
+        monkeypatch.setenv("RELEASE_CHANNEL_STORE", "github")
         from nastech_cli import source_releases
-        assert source_releases._PUBLIC_BASE == "https://nastechresearch.github.io/nastech-agent"
+        from scripts.releases.r2_scope import channel_public_base
+        assert source_releases._PUBLIC_BASE == channel_public_base()
