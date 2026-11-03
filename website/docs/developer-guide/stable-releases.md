@@ -256,6 +256,16 @@ Immutable uploads accept an existing object only when its bytes match. If an
 archive object, final-tag digest, versioned Docker tag, or read-back differs, stop
 recovery rather than replacing the accepted candidate.
 
+The Termux feed devices install from is not in that archive. It is a flat signed
+repository published as assets of the channel's own fixed-tag release
+(`termux-repo` for stable, `termux-repo-canary` for canary), because a release
+asset name is one path component. Each publish re-signs the index, and the
+mandatory `Date:` makes those bytes new every time, so a fixed-name index can
+never be stored under a put-if-absent prefix: re-dispatching one tag writes a
+different `InRelease` under the same key, and the immutable upload answers 412.
+The candidate phase still hands its staged tree to the tag archive, because
+`advance_termux_apt` reads the signed index from there.
+
 The candidate manifest binds the admitted claim epoch. Admission recomputes the
 stable Windows quad from that epoch and rejects a merely well-formed but incorrect
 MSIX, executable VERSIONINFO, or App Installer version. Native admission also
