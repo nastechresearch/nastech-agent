@@ -283,6 +283,30 @@ def advance_stable(env: dict, release: dict, root: Path) -> dict:
     return publish_release("stable-release", scoped_env, root)
 
 
+def advance_termux_apt(release: dict, root: Path) -> list[str]:
+    """Publish one release's Termux APT indexes; the desktop channel head stays put.
+
+    A claim that built no desktop package still owns the APT channel, so this path takes the
+    same custody check as `advance_stable` and then writes indexes only: no allocation, no
+    assembly, no protected record.
+    """
+    from scripts.bundles.release_artifacts import materialize, promote_termux_apt
+
+    public_base = r2.public_base_url()
+    key = f"releases/tag/{release['claim_tag']}/release-candidates.json"
+    raw = read_archive_bytes(key)
+    digest = hashlib.sha256(raw).hexdigest()
+    log(f"Candidate manifest {key}: sha256 {digest} "
+        f"(receipt {release.get('candidate_manifest_sha256')})")
+    if digest != release.get("candidate_manifest_sha256"):
+        raise ChannelError("Termux APT candidate manifest differs from the final release receipt")
+    candidate = json.loads(raw)
+    materialize(candidate, root, public_base=public_base, metadata_only=True)
+    published = promote_termux_apt(candidate, root, public_base)
+    log(f"Termux APT indexes published: {', '.join(published)}")
+    return published
+
+
 def promote_stable_feeds(candidate: dict, root: Path, public_base: str) -> None:
     from scripts.bundles.release_artifacts import promote
 
