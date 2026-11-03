@@ -2227,7 +2227,7 @@ jobs:
           fi
           printf '%s\n' "$TERMUX_APT_GPG_KEY" > "$RUNNER_TEMP/termux-apt-gpg.asc"
 
-      - name: Stage the APT repo and publish to R2
+      - name: Stage the APT repo and publish the feed release
         if: inputs.build_commit == ''
         shell: bash
         env:
@@ -2252,24 +2252,36 @@ jobs:
           python3 scripts/termux/stage_apt_repo.py "${stage_args[@]}" \
             --gpg-key-file "$RUNNER_TEMP/termux-apt-gpg.asc"
 
+          # A release asset name is one path component, so the feed is published
+          # FLAT: dists/<suite>/ and pool/ cannot exist as assets (measured:
+          # `.../download/<tag>/dists/nastech-stable/InRelease` is 404). Flattening
+          # rewrites every path the signed Release describes, so the flat Release is
+          # rebuilt and RE-SIGNED with the same key -- an unsigned feed would need
+          # `[trusted=yes]` to install, which throws the signature away.
+          # Both apt proofs below mount this directory, so what CI verifies is the
+          # bytes a phone downloads, not the staged tree a phone never sees.
+          python3 -m scripts.termux.release_apt flatten \
+            --staged termux-build/apt --out termux-build/apt-flat \
+            --gpg-key-file "$RUNNER_TEMP/termux-apt-gpg.asc"
+
           debs=(termux-build/deb/*.deb)
           test "${#debs[@]}" -eq 1
           version=$(dpkg-deb --field "${debs[0]}" Version)
           digest=$(python3 -c 'from pm.lock import termux_docker_digest; print(termux_docker_digest())')
           docker run --rm --platform linux/arm64 --user 1000:1000 --network none \
-            -v "$PWD/termux-build/apt:/apt:ro" \
+            -v "$PWD/termux-build/apt-flat:/apt:ro" \
             -v "$PWD/scripts/termux/check_apt.sh:/tmp/check-apt.sh:ro" \
             -v "$PWD/scripts/termux/validate_installed.py:/tmp/validate_installed.py:ro" \
-            "termux/termux-docker@$digest" bash /tmp/check-apt.sh "nastech-$CHANNEL" "$version"
+            "termux/termux-docker@$digest" bash /tmp/check-apt.sh "nastech-$CHANNEL" "$version" file:/apt
           if [ -n "$PREVIOUS_TAG" ]; then
             previous=(termux-build/previous/deb/*.deb)
             test "${#previous[@]}" -eq 1
             docker run --rm --platform linux/arm64 --user 1000:1000 --network none \
-              -v "$PWD/termux-build/apt:/apt:ro" \
+              -v "$PWD/termux-build/apt-flat:/apt:ro" \
               -v "$PWD/${previous[0]}:/previous.deb:ro" \
               -v "$PWD/scripts/termux/check_apt.sh:/tmp/check-apt.sh:ro" \
               -v "$PWD/scripts/termux/validate_installed.py:/tmp/validate_installed.py:ro" \
-              "termux/termux-docker@$digest" bash /tmp/check-apt.sh "nastech-$CHANNEL" "$version"
+              "termux/termux-docker@$digest" bash /tmp/check-apt.sh "nastech-$CHANNEL" "$version" file:/apt
           fi
 
           args=(--include 'deb/*.deb' --include 'apt/**/*')
@@ -2282,42 +2294,47 @@ jobs:
           python -m scripts.releases.handoff stage --tag "${NASTECH_ARCHIVE_TAG:-$NASTECH_PAYLOAD_TAG}" --commit "$RELEASE_COMMIT" \
             --name termux --root termux-build "${args[@]}"
           if [ "$RELEASE_PHASE" = candidate ]; then exit 0; fi
-          # --key-is-full is MANDATORY on every feed-dir upload: without it
-          # scripts.releases.r2 re-prefixes the key into the tag archive
-          # (releases/tag/<tag>/) and the APT feed never lands at
-          # releases/termux/<channel>/.
-          shopt -s globstar nullglob
-          # cd into the staged repo for the glob, but resolve the r2 client
-          # absolutely first -- after the cd, scripts/ is no longer in the
-          # cwd and a bare `python -m scripts.releases.r2` would ENOENT.
-          export PYTHONPATH="$GITHUB_WORKSPACE"
-          cd termux-build/apt
-          files=(pool/**/*.deb "dists/nastech-$CHANNEL"/main/binary-aarch64/by-hash/*/* key.asc
-                 "dists/nastech-$CHANNEL/main/binary-aarch64/Packages"
-                 "dists/nastech-$CHANNEL/main/binary-aarch64/Packages.gz"
-                 "dists/nastech-$CHANNEL/Release"
-                 "dists/nastech-$CHANNEL/Release.gpg"
-                 "dists/nastech-$CHANNEL/InRelease")
-          # APT reads InRelease first. Publish it only after every referenced
-          # index and package has been uploaded and read back successfully.
-          for f in "${files[@]}"; do
-            test -f "$f"
-            python3 -m scripts.releases.r2 put \
-              --tag "$NASTECH_PAYLOAD_TAG" \
-              --key "releases/termux/$CHANNEL/$f" \
-              --file "$f" \
-              --key-is-full
+
+          # One fixed tag per channel, so a canary publish can never rewrite the
+          # stable index (or the other way round): `pkg` is apt, and apt needs a
+          # base URL that does not move. Packages upload before the index, the
+          # index's InRelease uploads last, and retention keeps current + previous.
+          report=$(python3 -m scripts.termux.release_apt publish \
+            --repo-dir termux-build/apt-flat --repository "$GITHUB_REPOSITORY" --channel "$CHANNEL")
+          echo "$report"
+          feed="https://github.com/$GITHUB_REPOSITORY/releases/download/$(
+            printf '%s' "$report" | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag"])')"
+
+          # Verify the public feed, and wait for it: a REPLACED asset keeps serving
+          # the previous bytes for a while (measured on this repository on 2026-11-01
+          # -- 33s and 125s for two replaces, the API serving the new bytes the whole
+          # time) while a name published for the first time is visible at once. Only
+          # the fixed-name index lags, and a lagging index still names packages that
+          # exist, so waiting is correctness here rather than a retry of a failure.
+          for f in key.asc Packages.gz InRelease; do
+            deadline=$((SECONDS + 600))
+            until curl --fail --silent --show-error --location "$feed/./$f" \
+                   -o "$RUNNER_TEMP/public-$f" &&
+                  cmp -s "termux-build/apt-flat/$f" "$RUNNER_TEMP/public-$f"; do
+              if [ "$SECONDS" -ge "$deadline" ]; then
+                echo "::error::$feed/./$f still serves different bytes after 600s"
+                exit 1
+              fi
+              sleep 15
+            done
           done
 
-          # Verify the public CDN path, not only the object-store origin.
-          public_repo="${CLOUDFLARE_R2_PUBLIC_URL%/}/releases/termux/$CHANNEL"
-          curl --fail --silent --show-error "$public_repo/key.asc" -o "$RUNNER_TEMP/termux-public-key.asc"
-          cmp key.asc "$RUNNER_TEMP/termux-public-key.asc"
+          # The advertised packages have to answer: an index naming a file the tag
+          # does not hold is the exact failure this migration exists to end.
+          while IFS= read -r name; do
+            curl --fail --silent --show-error --head --location "$feed/$name" -o /dev/null
+          done < <(gzip -dc "$RUNNER_TEMP/public-Packages.gz" | sed -n 's/^Filename: //p')
+
           docker run --rm --platform linux/arm64 --user 1000:1000 \
-            -v "$PWD:/apt:ro" \
+            -v "$PWD/termux-build/apt-flat:/apt:ro" \
             -v "$GITHUB_WORKSPACE/scripts/termux/check_apt.sh:/tmp/check-apt.sh:ro" \
             -v "$GITHUB_WORKSPACE/scripts/termux/validate_installed.py:/tmp/validate_installed.py:ro" \
-            "termux/termux-docker@$digest" bash /tmp/check-apt.sh "nastech-$CHANNEL" "$version" "$public_repo"
+            "termux/termux-docker@$digest" bash /tmp/check-apt.sh "nastech-$CHANNEL" "$version" "$feed"
 
   builds-pending:
     name: Mark the builds table as in progress
