@@ -157,6 +157,7 @@ import msvcrt, os, sys, time
 fd = os.open(sys.argv[1], os.O_RDWR | os.O_CREAT | os.O_BINARY, 0o644)
 os.lseek(fd, 1 << 20, os.SEEK_SET)
 msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)   # nastech_cli/update_lock.py::_try_lock's byte
+print('locked', flush=True)
 time.sleep(float(sys.argv[2]))
 """
 
@@ -168,8 +169,13 @@ def test_result_finished_at_is_stamped_after_the_r6_release_wait(tmp_path: Path)
     holders = []
 
     def hold_checkout(_home: Path, install: Path) -> None:
-        holders.append((subprocess.Popen([sys.executable, '-c', _TIMED_CHECKOUT_HOLDER,
-                                          str(install / '.nastech-update.lock'), '25']), time.time() + 25))
+        # The lock is only held once the child has taken it; a hand-off that starts first sees an
+        # unlocked file and skips the R6 wait, so read the handshake before releasing it.
+        proc = subprocess.Popen([sys.executable, '-c', _TIMED_CHECKOUT_HOLDER,
+                                 str(install / '.nastech-update.lock'), '25'],
+                                stdout=subprocess.PIPE, text=True, encoding='utf-8')
+        assert proc.stdout.readline().strip() == 'locked'
+        holders.append((proc, time.time() + 25))
     try:
         code, out, _, result, home = _handoff(tmp_path, '-NoGateway', prepare=hold_checkout)
     finally:
