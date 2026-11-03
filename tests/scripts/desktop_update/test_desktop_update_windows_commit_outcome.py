@@ -158,15 +158,15 @@ fd = os.open(sys.argv[1], os.O_RDWR | os.O_CREAT | os.O_BINARY, 0o644)
 os.lseek(fd, 1 << 20, os.SEEK_SET)
 msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)   # nastech_cli/update_lock.py::_try_lock's byte
 print('locked', flush=True)
-# Exit on the hand-off's own signal, not on a clock: its R6 wait only begins after
-# the update ran, and a cold runner's PowerShell can take longer to reach that point
-# than any fixed hold survives -- the lock then reads free and the wait is skipped.
-# The cap only bounds a release that never enters the wait at all.
+# Leave when the hand-off has entered its own wait, not when a clock says so: that wait
+# only begins after the marker's owner finishes its work, and a cold runner's PowerShell
+# can need longer to reach it than any fixed hold survives -- the lock then reads free
+# and the wait is skipped entirely. The cap only bounds a release that never waits.
 log, cap = sys.argv[2], time.time() + float(sys.argv[3])
 while time.time() < cap:
     try:
         with open(log, encoding='utf-8-sig') as handle:
-            if 'keeping the update marker' in handle.read():
+            if 'still holds the checkout' in handle.read():
                 break
     except OSError:
         pass
