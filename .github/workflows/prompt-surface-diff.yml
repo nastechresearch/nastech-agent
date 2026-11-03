@@ -50,7 +50,11 @@ jobs:
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           ref: ${{ inputs.commit }}
+          # Blobless: the job reads the merge base plus the surface snapshots, so it needs the
+          # commit graph and a handful of blobs, never every blob in the history. That blob
+          # fetch is what overran this job's budget on a standard runner.
           fetch-depth: 0 # need history for the merge base
+          filter: blob:none
           persist-credentials: false
 
       - name: Summarise the snapshot diff
