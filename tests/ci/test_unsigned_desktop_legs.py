@@ -17,6 +17,7 @@ leg that produced nothing at all still fails loudly instead of exiting clean.
 """
 from __future__ import annotations
 
+import fnmatch
 import os
 import re
 import shlex
@@ -79,6 +80,12 @@ def _render(value, *, inputs: dict, needs: dict, matrix: dict) -> str:
         return _stringify(_dotted(matrix, body.split(".")[1:]))
     if body.startswith(("secrets.", "vars.")):
         return "inert-credential"
+    # `vars.` and `secrets.` also appear inside larger expressions (the build step
+    # masks its signing vars behind `inputs.skip-signed`); resolve them the way the
+    # runner does -- an unset repository variable is the empty string, a secret is
+    # an opaque non-empty value -- so the rest of the expression still evaluates.
+    body = re.sub(r"\bvars\.([A-Za-z_]\w*)", "''", body)
+    body = re.sub(r"\bsecrets\.([A-Za-z_]\w*)", "'inert-credential'", body)
     return _stringify(evaluate(body, inputs, needs))
 
 
@@ -92,59 +99,82 @@ def _step(job: dict, needle: str) -> dict:
     return matches
 
 
-def _step_runs(step: dict, inputs: dict, needs: dict) -> bool:
+def _step_runs(step: dict, inputs: dict, needs: dict, env: dict[str, str] | None = None) -> bool:
     """Whether Actions would run *step*: a step with no ``if:`` always runs."""
-    return "if" not in step or bool(gate(step["if"], inputs, needs, job_if=False))
+    return "if" not in step or bool(gate(step["if"], inputs, needs, job_if=False, env=env))
 
 
-def _bundled_build_ran(step: dict, inputs: dict, needs: dict) -> bool:
-    """Whether the leg's build step produced a bundle for this dispatch.
+_VARIANTS = ("bundled", "store")
 
-    The PowerShell build hides its ``--variant bundled`` call behind a guard on
-    an environment variable the step maps to an input, so the bundle exists only
-    when the step runs *and* that guard is false.
+
+def _guard_holds(guard: str, env_map: dict[str, str]) -> bool:
+    """Evaluate one PowerShell build guard against the environment the step is given."""
+    text = re.sub(r"\$env:(\w+)", lambda m: repr(env_map.get(m.group(1), "")), guard)
+    operand = r"(\([^()]+\)|'[^']*'|\"[^\"]*\"|\S+)"
+    text = re.sub(rf"{operand} -notlike {operand}", r"(not _like(\1, \2))", text)
+    text = re.sub(rf"{operand} -ne {operand}", r"(\1 != \2)", text)
+    text = re.sub(rf"-not {operand}", r"(not \1)", text)
+    text = text.replace("-and", " and ").replace("-or", " or ")
+    scope = {"_like": lambda value, pattern: fnmatch.fnmatch(value, pattern.strip("\"'"))}
+    return bool(eval(text, {"__builtins__": {}}, scope))
+
+
+def _variants_built(step: dict, env_map: dict[str, str]) -> set[str]:
+    """Which package variants this leg's build step produces for this dispatch.
+
+    A ``--variant`` call behind a PowerShell ``if`` builds only while that guard holds;
+    an unguarded call (the macOS legs) always builds.
     """
-    if not _step_runs(step, inputs, needs):
-        return False
     run = step["run"]
-    guarded = re.findall(r"if \(\$env:(\w+) -ne 'true'\)\s*\{[^}]*--variant bundled", run)
-    if not guarded:
-        return True
-    (name,) = guarded
-    return not gate(step["env"][name], inputs, needs, job_if=False)
+    guards = [(match.start(), match.end(), match.group(1)) for match in re.finditer(r"if \((.+?)\)\s*\{", run)]
+    built: set[str] = set()
+    for index, (_start, end, condition) in enumerate(guards):
+        stop = guards[index + 1][0] if index + 1 < len(guards) else len(run)
+        for variant in _VARIANTS:
+            if f"--variant {variant}" in run[end:stop] and _guard_holds(condition, env_map):
+                built.add(variant)
+    if not guards:
+        built = {variant for variant in _VARIANTS if f"--variant {variant}" in run}
+    return built
 
 
 @pytest.mark.parametrize("dispatch", sorted(DOWNLOADABLE_DISPATCHES))
-def test_windows_audit_runs_exactly_when_the_bundle_was_built(dispatch):
-    """The architecture audit has no input on a leg that built no bundle."""
+def test_audit_runs_exactly_on_the_bytes_the_leg_built(dispatch):
+    """Every bundle gets its architecture audit; no audit runs on bytes that are not there.
+
+    The audit answers an unsigned question (which architecture is each Mach-O/PE in the
+    bundle), so it owes nothing to signing -- but a leg that built no bundle has no release
+    directory, and an audit of it only crashes on a missing root. Skipping it whenever a leg
+    is unsigned instead would retire the check on the Store bytes, which a skip-signed leg
+    still builds. Both directions are pinned per leg, per skip-signed and skip-store.
+    """
     jobs = load()["jobs"]
     failures = []
     for (target, mode), name in sorted(native_builds(jobs).items()):
         job = jobs[name]
         build, audit = _step(job, BUNDLE_BUILDER), _step(job, BUNDLE_AUDITOR)
-        for skip_signed in (True, False):
-            inputs = {**DOWNLOADABLE_DISPATCHES[dispatch], "skip-signed": skip_signed}
-            needs = admitted(needs_of(job))
-            built = _bundled_build_ran(build, inputs, needs)
-            audited = _step_runs(audit, inputs, needs)
-            if target.startswith("win32"):
-                # An audit of bytes that were never built crashes on a missing
-                # release directory; skipping it once the leg builds again would
-                # silently retire the check that catches mixed-architecture
-                # bundles. A skip-signed Windows leg builds no bundle at all: the
-                # Store variant is refused on canary, commit and channel tags.
-                if audited != built:
-                    failures.append(f"{name} audited={audited} built={built} skip-signed={skip_signed}")
-            elif not audited:
-                failures.append(f"{name} skipped its audit of a bundle it always builds")
+        for skip_signed, skip_store in [(x, y) for x in (True, False) for y in (True, False)]:
+            inputs = {**DOWNLOADABLE_DISPATCHES[dispatch], "skip-signed": skip_signed,
+                      "skip-store": skip_store}
+            needs = admitted(needs_of(job), channel=dispatch == "channel")
+            env_map = {**_env_of(job, inputs=inputs, needs=needs, matrix=_matrix_of(job)),
+                       **_env_of(build, inputs=inputs, needs=needs, matrix=_matrix_of(job))}
+            built, audited = bool(_variants_built(build, env_map)), _step_runs(audit, inputs, needs, env=env_map)
+            if built and not _step_runs(build, inputs, needs, env=env_map):
+                failures.append(f"{name} built a variant its build step would not run")
+            if audited != built:
+                failures.append(f"{name} audited={audited} built={sorted(_variants_built(build, env_map))} "
+                                f"skip-signed={skip_signed} skip-store={skip_store}")
     assert not failures, "\n".join(failures)
 
 
-def _staged_commands(tmp_path: Path, job: dict, step: dict, inputs: dict, *, packages: bool) -> list[str]:
+def _staged_commands(tmp_path: Path, job: dict, step: dict, inputs: dict, *, packages: bool,
+                     channel: bool = False) -> list[str]:
     """Run one native leg's tag staging step for real, logging every python call it makes."""
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir(exist_ok=True)
-    log = tmp_path / f"python-calls-{job['name']}-{packages}.log"
+    suffix = f"{job['name']}-{packages}-{'channel' if channel else 'tag'}"
+    log = tmp_path / f"python-calls-{suffix}.log"
     log.unlink(missing_ok=True)
     for name in ("python", "python3"):
         launcher = bin_dir / name
@@ -161,12 +191,15 @@ def _staged_commands(tmp_path: Path, job: dict, step: dict, inputs: dict, *, pac
     else:
         for file in release.iterdir():
             file.unlink()
-    needs = admitted(needs_of(job))
+    needs = admitted(needs_of(job), channel=channel)
     environment = _child_env(**{**_env_of(job, inputs=inputs, needs=needs, matrix=_matrix_of(job)),
                                 **_env_of(step, inputs=inputs, needs=needs, matrix=_matrix_of(job)),
                                 "PATH": str(bin_dir) + os.pathsep + os.environ["PATH"],
-                                "GITHUB_OUTPUT": str(tmp_path / "output.txt"), "RUNNER_TEMP": str(tmp_path)})
-    script = tmp_path / "step.sh"
+                                "GITHUB_OUTPUT": str(tmp_path / "output.txt"),
+                                "GITHUB_WORKSPACE": str(tmp_path),
+                                "RUNNER_TEMP": str(tmp_path)})
+    (tmp_path / "channel-request.json").write_text('{"version": "0.21.5"}', encoding="utf-8")
+    script = tmp_path / f"step-{suffix}.sh"
     script.write_text(step["run"], encoding="utf-8", newline="\n")
     result = subprocess.run([_BASH, "-e", "-o", "pipefail", str(script)], cwd=tmp_path, env=environment,
                             capture_output=True, text=True, encoding="utf-8", timeout=60, check=False)
@@ -202,6 +235,67 @@ def test_release_metadata_is_recorded_only_for_signed_bytes(tmp_path, target):
         else:
             assert len(recorded) == 1, f"a signed {target} leg must still record its row: {commands}"
             assert "metadata-*.json" in staged
+
+
+@pytest.mark.parametrize("skip_signed", [True, False])
+@pytest.mark.parametrize("target", ["darwin-arm64", "win32-x64"])
+def test_a_channel_leg_writes_a_signed_row_only_if_it_signed(tmp_path, target, skip_signed):
+    """The channel recorder is the same signed-only question on the sibling path.
+
+    A channel dispatch asks for a Developer ID team and an Authenticode-bound MSIX
+    identity exactly as the tag dispatch does, so an unsigned channel leg stages
+    its packages and writes no row, while a signed one still writes its own.
+    """
+    jobs = load()["jobs"]
+    job = jobs[native_builds(jobs)[(target, "release")]]
+    step = stage_step(job, channel=True)
+    inputs = {**DOWNLOADABLE_DISPATCHES["channel"], "skip-signed": skip_signed}
+    needs = admitted(needs_of(job), channel=True)
+    assert _step_runs(step, inputs, needs), "a channel leg must stage the bytes it built"
+    platform = "macos" if target.startswith("darwin") else "windows"
+    commands = _staged_commands(tmp_path, job, step, inputs, packages=True, channel=True)
+    recorded = [line for line in commands if f"record --platform {platform}" in line]
+    staged = [line for line in commands if "scripts.releases.handoff stage" in line][-1]
+    if skip_signed:
+        assert not recorded, f"an unsigned {target} channel leg wrote a signed row: {recorded}"
+        assert "metadata-*.json" not in staged, f"an unsigned {target} leg staged a row it never wrote"
+    else:
+        assert len(recorded) == 1, f"a signed {target} channel leg must still record its row: {commands}"
+        assert "metadata-*.json" in staged
+
+
+STABLE_RECEIPTS = ("darwin-arm64", "darwin-x64", "win32-bundle")
+
+
+def _receipt_gates(jobs: dict) -> dict[str, list[dict]]:
+    """receipt -> every node that decides it: its job, plus the step's own gate when the
+    receipt is one step of a bigger job (win32-bundle rides the bundle assembler)."""
+    gates: dict[str, list[dict]] = {}
+    for _name, job in jobs.items():
+        for step in job.get("steps", []):
+            for receipt in STABLE_RECEIPTS:
+                if f"stage-receipt --receipt {receipt}" in (step.get("run") or ""):
+                    assert receipt not in gates, f"{receipt} is staged by two nodes"
+                    gates[receipt] = [job, step]
+    assert set(gates) == set(STABLE_RECEIPTS), gates
+    return gates
+
+
+def test_no_stable_receipt_is_staged_without_its_signed_rows() -> None:
+    """A candidate receipt is assembled from the recorder's rows, and a handoff fetch
+    that matches nothing returns nothing: staging one for an unsigned leg would publish
+    a record of zero packages instead of failing. Every signed candidate still receipts.
+    """
+    jobs = load()["jobs"]
+    for skip_signed in (True, False):
+        inputs = {**DOWNLOADABLE_DISPATCHES["candidate"], "skip-signed": skip_signed}
+        for receipt, nodes in sorted(_receipt_gates(jobs).items()):
+            job = nodes[0]
+            staged = all(_step_runs(node, inputs, admitted(needs_of(job))) for node in nodes)
+            if skip_signed:
+                assert not staged, f"{receipt}: an unsigned candidate staged a receipt of no rows"
+            else:
+                assert staged, f"{receipt}: a signed candidate lost its receipt — a check was deleted"
 
 
 def _needs_results(jobs: dict, job: dict, inputs: dict, smoke_names: set[str]) -> dict:
