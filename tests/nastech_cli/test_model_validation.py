@@ -736,7 +736,11 @@ class TestValidateRequestedModelNastechPortalRecommendations:
             "suggested_base_url": None,
             "used_fallback": False,
         }
-        with patch("nastech_cli.models.fetch_api_models", return_value=["some/other-model"]), \
+        # The OpenRouter picker catalog is pinned too: left live, the verdict followed whatever
+        # openrouter.ai listed that day (and the in-tree fallback lists this model, so offline
+        # it was accepted).
+        with patch("nastech_cli.models.provider_model_ids", return_value=["some/other-model"]), \
+             patch("nastech_cli.models.fetch_api_models", return_value=["some/other-model"]), \
              patch("nastech_cli.models.probe_api_models", return_value=probe_payload), \
              patch("nastech_cli.models.fetch_nastech_recommended_models") as mock_portal, \
              patch("nastech_cli.models._model_in_provider_catalog", return_value=False):

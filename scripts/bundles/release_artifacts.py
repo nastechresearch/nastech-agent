@@ -7,6 +7,7 @@ import json
 import os
 import plistlib
 import re
+import stat
 import subprocess
 import tempfile
 import urllib.request
@@ -62,6 +63,16 @@ def desktop_application(manifest: ET.Element, channel_request: dict | None) -> E
     return application
 
 
+def require_owner_write(archive: zipfile.ZipFile) -> None:
+    """Squirrel.Mac's ShipIt clears quarantine on every file and directory of the
+    update before swapping it in, and aborts the whole install when one is
+    read-only (#138659). Symlinks and entries without a Unix mode are skipped."""
+    locked = [info.filename for info in archive.infolist()
+              if (mode := info.external_attr >> 16) and not stat.S_ISLNK(mode) and not mode & stat.S_IWUSR]
+    if locked:
+        raise ValueError(f"{len(locked)} update ZIP entries lack owner write; ShipIt cannot install it ({locked[:3]})")
+
+
 def record(platform: str, arch: str, root: Path, tag: str, commit: str, out: Path,
            *, channel_request: dict | None = None) -> None:
     """Read identities from the built packages, never from the workflow matrix."""
@@ -110,6 +121,7 @@ def record(platform: str, arch: str, root: Path, tag: str, commit: str, out: Pat
         if not team:
             raise ValueError("Signed app has no Developer ID team")
         with zipfile.ZipFile(package) as archive:
+            require_owner_write(archive)
             info = plistlib.loads(archive.read(single(n for n in archive.namelist() if re.fullmatch(r"[^/]+\.app/Contents/Info.plist", n))))
             stamp = json.loads(archive.read(single(n for n in archive.namelist() if re.fullmatch(r"[^/]+\.app/Contents/Resources/install-stamp.json", n))))
         stamp_matches(stamp, tag, commit, channel_request=channel_request)
@@ -344,21 +356,17 @@ def publish_canary_appinstaller(root: Path, *, tag: str, variant: str, bundle: P
     put(tag=tag, key=f"{directory}/{descriptor.name}", file=descriptor, key_is_full=True)
 
 
-def publish_pointer(manifest: dict, public_base: str, key: str, file: Path) -> None:
-    """Move one channel pointer and read back the public bytes before trusting it."""
-    from scripts.releases.r2 import put
+def promote(manifest: dict, root: Path, public_base: str) -> None:
+    from scripts.releases.r2 import put, finalize
 
-    put(tag=manifest["tag"], key=key, file=file, key_is_full=True)
-    digest = hashlib.sha256()
-    with urllib.request.urlopen(f"{public_base.rstrip('/')}/{key}", timeout=60) as response:
-        while chunk := response.read(1024 * 1024):
-            digest.update(chunk)
-    if digest.hexdigest() != sha256_file(file):
-        raise ValueError(f"Channel read-back differs: {key}")
-
-
-def select_apt_indexes(manifest: dict, root: Path) -> list[Path]:
-    """The signed metadata this release may move; content-addressed package bytes are immutable."""
+    # Feeds need the per-arch feed legs and APT indexes, not the packages: those are
+    # bound by the accepted candidate's sha256 receipts.
+    materialize(manifest, root, public_base=public_base, metadata_only=True)
+    windows = next(r for r in manifest["packages"] if r["platform"] == "windows")
+    uri = f"{public_base.rstrip('/')}/releases/win32/stable/stable.appinstaller"
+    appinstaller = root / "stable.appinstaller"
+    write_appinstaller(appinstaller, identity=windows["identity"], publisher=windows["publisher"],
+                       version=windows["version"], self_uri=uri, artifact_uri=windows["artifact"]["url"])
     apt = root / "apt"
     indexes = sorted(p for p in apt.rglob("*") if p.is_file() and not p.relative_to(apt).as_posix().startswith("pool/") and "/by-hash/" not in p.relative_to(apt).as_posix())
     indexes.sort(key=lambda p: p.name == "InRelease")
@@ -369,50 +377,24 @@ def select_apt_indexes(manifest: dict, root: Path) -> list[Path]:
         raise ValueError("Missing signed APT index")
     if not termux and indexes:
         raise ValueError("APT indexes staged for a release without a Termux candidate")
-    return indexes
-
-
-def publish_apt_indexes(manifest: dict, root: Path, indexes: list[Path], public_base: str) -> list[str]:
-    apt = root / "apt"
-    published = []
-    for file in indexes:
-        key = f"releases/termux/stable/{file.relative_to(apt).as_posix()}"
-        publish_pointer(manifest, public_base, key, file)
-        published.append(key)
-    return published
-
-
-def promote_termux_apt(manifest: dict, root: Path, public_base: str) -> list[str]:
-    """Publish a staged Termux repository's indexes, and nothing else."""
-    return publish_apt_indexes(manifest, root, select_apt_indexes(manifest, root), public_base)
-
-
-def promote_desktop_feeds(manifest: dict, root: Path, public_base: str) -> None:
-    """Move the Windows and macOS stable feeds onto a candidate that built both."""
-    from scripts.releases.r2 import finalize
-
-    windows = next(r for r in manifest["packages"] if r["platform"] == "windows")
-    uri = f"{public_base.rstrip('/')}/releases/win32/stable/stable.appinstaller"
-    appinstaller = root / "stable.appinstaller"
-    write_appinstaller(appinstaller, identity=windows["identity"], publisher=windows["publisher"],
-                       version=windows["version"], self_uri=uri, artifact_uri=windows["artifact"]["url"])
+    # Every package and index must exist before the first channel write.
     # The merged feed points at the attempt archive; the version stays plain.
     # macOS Intel is opt-in: without it the feed carries the arm64 leg alone.
     arches = tuple(arch for arch in ("arm64", "x64")
                    if any(row["platform"] == "macos" and row["arch"] == arch for row in manifest["packages"]))
     finalize(tag=manifest["tag"], dir=root, archive=manifest["archive"], arches=arches, verify_bytes=False)
-    publish_pointer(manifest, public_base, "releases/win32/stable/stable.appinstaller", appinstaller)
+    def publish_pointer(key, file):
+        put(tag=manifest["tag"], key=key, file=file, key_is_full=True)
+        digest = hashlib.sha256()
+        with urllib.request.urlopen(f"{public_base.rstrip('/')}/{key}", timeout=60) as response:
+            while chunk := response.read(1024 * 1024):
+                digest.update(chunk)
+        if digest.hexdigest() != sha256_file(file):
+            raise ValueError(f"Channel read-back differs: {key}")
 
-
-def promote(manifest: dict, root: Path, public_base: str) -> None:
-    # Feeds need the per-arch feed legs and APT indexes, not the packages: those are
-    # bound by the accepted candidate's sha256 receipts.
-    materialize(manifest, root, public_base=public_base, metadata_only=True)
-    # Every package and index must be complete before the first channel write, so a
-    # Termux release that staged no signed index cannot move the desktop feeds on its way out.
-    indexes = select_apt_indexes(manifest, root)
-    promote_desktop_feeds(manifest, root, public_base)
-    publish_apt_indexes(manifest, root, indexes, public_base)
+    publish_pointer("releases/win32/stable/stable.appinstaller", appinstaller)
+    for file in indexes:
+        publish_pointer(f"releases/termux/stable/{file.relative_to(apt).as_posix()}", file)
 
 
 def main(argv: list[str] | None = None) -> None:

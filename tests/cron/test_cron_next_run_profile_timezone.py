@@ -70,14 +70,11 @@ def test_foreign_process_tick_persists_owning_profile_offset(
         reset_nastech_home_override(token)
 
     next_run = datetime.fromisoformat(job["next_run_at"])
-    # The owning profile's offset at the FIRE instant, not the one it happens to
-    # be in while the test runs: a job created in EDT and fired in EST is correct
-    # at -05:00, and a now-based oracle demands the season the job is not in.
-    # Self-consistency is still the #97905 repro -- a foreign-process tick
-    # persisted 14:00+00:00, whose wall clock resolves to the owning zone's
-    # offset, never +00:00.
-    fire_wall = next_run.replace(tzinfo=None)
-    expected_offset = fire_wall.replace(tzinfo=ZoneInfo("America/New_York")).utcoffset()
+    # The offset New York uses AT next_run, not today: across a DST change
+    # (e.g. run on Oct 31 for a Nov 1 job) the two differ by an hour.
+    expected_offset = next_run.replace(
+        tzinfo=ZoneInfo("America/New_York")
+    ).utcoffset()
     assert next_run.utcoffset() == expected_offset, (
         f"next_run_at {job['next_run_at']} persisted with foreign offset "
         f"{next_run.utcoffset()} instead of the owning profile's "

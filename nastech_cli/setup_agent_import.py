@@ -23,8 +23,9 @@ PLUGIN = "agent-importers"
 class ImportSource(NamedTuple):
     name: str                 # ``nastech import-agent <name>``
     label: str
-    dirs: tuple[str, ...]     # dirs under ``~`` the plugin reads; the first one found wins
+    dirs: tuple[str, ...]     # paths under ``~`` (or absolute) that show the agent is here; first found wins
     extra_args: tuple[str, ...] = ()
+    exports: tuple[str, ...] = ()  # globs under ``~`` for export files the plugin reads
 
 
 # The plugin's importers, with the dirs its own auto-detection checks.
@@ -35,6 +36,15 @@ IMPORT_SOURCES: tuple[ImportSource, ...] = (
     ImportSource("claude-code", "Claude Code", (".claude",)),
     ImportSource("codex", "Codex CLI", (".codex",)),
     ImportSource("cursor", "Cursor", (".cursor",)),
+    # Grok Bot lives in its cloud account: the desktop app's dirs only show it is used here, and the
+    # plugin walks the user through having each Bot export itself (or reads an export already saved).
+    ImportSource("grok-bot", "Grok Bot", ("Library/Application Support/Grok Bot", "/Applications/Grok Bot.app",
+                                          "Applications/Grok Bot.app", ".config/Grok Bot",
+                                          "AppData/Roaming/Grok Bot", "AppData/Local/Programs/Grok Bot"),
+                 exports=("Downloads/grok-bot-export*",)),
+    # OpenBot (nightly-labs/openbot): Electron user data with openbot.db, per OS, or its agent workspaces.
+    ImportSource("openbot", "OpenBot", ("Library/Application Support/OpenBot", ".config/OpenBot",
+                                        "AppData/Roaming/OpenBot", "OpenBot/Agents")),
 )
 
 
@@ -43,12 +53,13 @@ def detect_import_sources() -> list[tuple[ImportSource, Path]]:
     found = []
     for source in IMPORT_SOURCES:
         home = next((p for p in (Path.home() / d for d in source.dirs) if p.is_dir()), None)
+        home = home or next((p for g in source.exports for p in sorted(Path.home().glob(g))), None)
         if home is not None:
             found.append((source, home))
     return found
 
 
-def offer_agent_import(nastech_home: Path) -> str:
+def offer_agent_import(nastech_home: Path, from_setup: bool = True) -> str:
     """When another agent's setup is on this computer, offer to import it: pick which (when several),
     install the plugin if it is missing and run its import for each pick. Returns the labels whose
     import changed this home's config.yaml or .env (``""`` when none did). Asks nothing, and so never
@@ -73,7 +84,7 @@ def offer_agent_import(nastech_home: Path) -> str:
     picked = _pick_sources(found)
     if not picked or not _ensure_plugin(nastech_home):
         return ""
-    return ", ".join(s.label for s in picked if _run_import(s, nastech_home))
+    return ", ".join(s.label for s in picked if _run_import(s, nastech_home, from_setup))
 
 
 def _pick_sources(found: list[tuple[ImportSource, Path]]) -> list[ImportSource]:
@@ -123,27 +134,77 @@ def _snapshot(nastech_home: Path) -> tuple[Optional[bytes], ...]:
                  for p in (nastech_home / "config.yaml", nastech_home / ".env"))
 
 
-def _run_import(source: ImportSource, nastech_home: Path) -> bool:
+def _run_import(source: ImportSource, nastech_home: Path, from_setup: bool = True) -> bool:
+    """The offer's import: :func:`_import_child` for *source*; True when the run changed config.yaml
+    or .env, which the setup sections after it read. Bare ``nastech migrate`` runs it as its own
+    command (``from_setup`` False: no setup-only flags such as OpenClaw's ``--migrate-secrets``)."""
+    before = _snapshot(nastech_home)
+    _import_child(source, nastech_home, from_setup=from_setup)
+    return _snapshot(nastech_home) != before
+
+
+def _import_child(source: ImportSource, nastech_home: Path, extra_args: tuple[str, ...] = (),
+                  from_setup: bool = True) -> int:
     """``nastech import-agent <source>`` in a child process, so the freshly installed plugin's command
-    is wired; it previews and asks before changing anything (and exits 0 on a no too). True when the
-    run changed config.yaml or .env, which the setup sections after it read."""
+    is wired; it previews and asks before changing anything (and exits 0 on a no too). Returns its
+    exit code. ``nastech migrate`` passes the user's flags as ``extra_args`` and runs it as a command
+    of its own (``from_setup`` False)."""
     from nastech_cli.setup import print_header, print_warning
     from tools.environments.local import served_profile_child_env
     print_header(f"Importing from {source.label}", gap=True)
-    before = _snapshot(nastech_home)
     # A home that is not <root>/profiles/<name> is the root: without a selector the child's
     # _apply_profile_override would follow the sticky active_profile into another profile.
     selector = [] if nastech_home.resolve().parent.name == "profiles" else ["--profile", "default"]
     # --from-setup: the plugin's import speaks as a step of this setup (no "run nastech setup" pointers,
     # OpenClaw's skipped items folded into one line).
-    argv = [sys.executable, "-P", "-m", "nastech_cli.main", *selector, "import-agent", source.name, *source.extra_args,
-            "--from-setup"]
+    # source.extra_args are setup's own choices (OpenClaw's --migrate-secrets, what core's old setup
+    # step did); `nastech migrate` passes only what the user typed.
+    argv = [sys.executable, "-P", "-m", "nastech_cli.main", *selector, "import-agent", source.name,
+            *(source.extra_args if from_setup else ()), *extra_args, *(["--from-setup"] if from_setup else [])]
     env = served_profile_child_env(target_home=nastech_home)
     if os.environ.get("PYTHONPATH"):  # this same interpreter running Nastech: keep the source tree
         env["PYTHONPATH"] = os.environ["PYTHONPATH"]  # a checkout launched by path, which it strips
     # health: allow HX006 -- interactive child: the user reads its preview and answers its prompts
-    if subprocess.run(argv, env=env, check=False).returncode:
-        # An install from before the plugin gained this importer, or --from-setup, refuses it (argparse, exit 2).
+    returncode = subprocess.run(argv, env=env, check=False).returncode
+    # An install from before the plugin gained this importer (or --from-setup) refuses it in argparse
+    # (exit 2) before asking anything: update the plugin once and try again.
+    if returncode == 2 and _update_plugin(source):
+        returncode = subprocess.run(argv, env=env, check=False).returncode  # health: allow HX006 -- same child
+    if returncode == 2:
         print_warning(f"The {source.label} import did not run. If the error names an invalid choice or "
                       f"unrecognized arguments, update the plugin first: nastech plugins update {PLUGIN}")
-    return _snapshot(nastech_home) != before
+    elif returncode:
+        print_warning(f"The {source.label} import stopped with errors; see the report above.")
+    return returncode
+
+
+def _update_plugin(source: ImportSource) -> bool:
+    """Bring the installed plugin to the catalog's current pin; False when that update failed."""
+    from nastech_cli.plugins_cmd_update import cmd_update
+    from nastech_cli.setup import _info
+    _info(None, f"Your '{PLUGIN}' plugin predates the {source.label} importer. Updating it...")
+    try:
+        cmd_update(PLUGIN, interactive=False)
+    except SystemExit:  # it printed why
+        return False
+    return True
+
+
+def migrate_from_agents(nastech_home: Path, source_name: str = "", extra_args: tuple[str, ...] = ()) -> int:
+    """``nastech migrate [<agent>]``: the same import as setup's step, on demand. Named: install the
+    plugin when missing and run that agent's import with ``extra_args``. Bare: offer the agents found
+    on this computer, as setup does."""
+    from nastech_cli.setup import is_noninteractive, print_info
+    if not source_name:
+        found = detect_import_sources()
+        if found and not is_noninteractive():
+            offer_agent_import(nastech_home, from_setup=False)
+            return 0
+        print_info(("Found: " + ", ".join(s.label for s, _ in found) + ". " if found else
+                    "No other agent setup found on this computer. ")
+                   + "Import one with: " + ", ".join(f"nastech migrate {s.name}" for s in IMPORT_SOURCES))
+        return 0
+    source = next(s for s in IMPORT_SOURCES if s.name == source_name)
+    if not _ensure_plugin(nastech_home):
+        return 1
+    return 1 if _import_child(source, nastech_home, extra_args, from_setup=False) else 0

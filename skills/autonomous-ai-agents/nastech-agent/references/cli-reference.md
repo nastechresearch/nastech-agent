@@ -121,7 +121,7 @@ nastech dashboard            Web admin panel + embedded chat (--stop / --status)
 nastech proxy                OpenAI-compatible local proxy backed by an OAuth provider
 nastech portal               Quick setup / sign in via Nastech Portal
 nastech kanban <verb>        Multi-agent work-queue board
-nastech project              Named multi-folder workspaces
+nastech project              Named multi-folder workspaces (see references/projects-and-folders.md)
 nastech skin list|use|set    Switch/tweak skins (see references/themes.md)
 nastech pets <verb>          Pet mascots (see references/petdex.md)
 nastech memory setup|status|off|reset   Memory provider

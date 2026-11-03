@@ -469,14 +469,6 @@ def reconcile(env: dict, *, run=output, read_head=None, advance_head=None,
                 with tempfile.TemporaryDirectory() as directory:
                     channel_releases.advance_stable(env, record, Path(directory))
                 log(f"Desktop channel head is now {record['version']}")
-            elif "termux" in record["lanes"]:
-                # The desktop pass above owns these indexes whenever it runs; this branch is the
-                # only writer when it did not, so a release's indexes move exactly once.
-                log(f"Advancing the Termux APT channel to {record['version']} from "
-                    f"releases/tag/{record['claim_tag']}/ "
-                    f"(receipt manifest {record['candidate_manifest_sha256']})")
-                with tempfile.TemporaryDirectory() as directory:
-                    channel_releases.advance_termux_apt(record, Path(directory))
             else:
                 log(f"{record['version']} did not build every desktop package the channel serves "
                     "(windows, macos-arm64): the desktop channel stays on the previous release")
