@@ -107,12 +107,12 @@ function Invoke-Probes([string]$LockPath) {
     for ($i = 0; $i -lt 10; $i++) { $answers += (Test-CheckoutLockHeld) }
     $seen = ($answers | Where-Object { $_ }).Count
     "  marker.ps1 Test-CheckoutLockHeld : $seen/10 held"
-    "  dotnet FileStream.Lock  read    : $(R6Probe::DotNetLock($LockPath, $false))"
-    "  dotnet FileStream.Lock  readwri : $(R6Probe::DotNetLock($LockPath, $true))"
-    "  LockFileEx exclusive    read    : $(R6Probe::Win32($LockPath, $false, $true))"
-    "  LockFileEx exclusive    readwri : $(R6Probe::Win32($LockPath, $true, $true))"
-    "  LockFileEx shared       read    : $(R6Probe::Win32($LockPath, $false, $false))"
-    "  LockFileEx shared       readwri : $(R6Probe::Win32($LockPath, $true, $false))"
+    "  dotnet FileStream.Lock  read    : $([R6Probe]::DotNetLock($LockPath, $false))"
+    "  dotnet FileStream.Lock  readwri : $([R6Probe]::DotNetLock($LockPath, $true))"
+    "  LockFileEx exclusive    read    : $([R6Probe]::Win32($LockPath, $false, $true))"
+    "  LockFileEx exclusive    readwri : $([R6Probe]::Win32($LockPath, $true, $true))"
+    "  LockFileEx shared       read    : $([R6Probe]::Win32($LockPath, $false, $false))"
+    "  LockFileEx shared       readwri : $([R6Probe]::Win32($LockPath, $true, $false))"
     "  python checkout_lock_held       : $(python (Join-Path $env:GITHUB_WORKSPACE 'scripts/desktop-update/r6_py_probe.py') $script:InstallRoot)"
 }
 

@@ -58,10 +58,12 @@ jobs:
         run: .\scripts\desktop-update\r6-matrix-probe.ps1
 
       - name: Probe matrix on pwsh 7 (.NET Core)
+        if: ${{ !cancelled() }}
         shell: pwsh
         run: .\scripts\desktop-update\r6-matrix-probe.ps1
 
       - name: Six real runs of the flaky R6 test, with every probe answer logged
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           set -uo pipefail
