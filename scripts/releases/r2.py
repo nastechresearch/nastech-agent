@@ -519,6 +519,11 @@ DEFAULT_PUBLIC_URL = "https://nastech-assets.nastechresearch.workers.dev"
 
 
 def public_base_url(explicit: str | None = None) -> str:
+    if (explicit is None
+            and not os.environ.get("CLOUDFLARE_R2_PUBLIC_URL")
+            and os.environ.get("RELEASE_CHANNEL_STORE", "r2") == "github"):
+        from scripts.releases.ghpages import pages_public_base
+        return R2Scope.configured().public_base(pages_public_base())
     return R2Scope.configured().public_base(
         explicit or os.environ.get("CLOUDFLARE_R2_PUBLIC_URL") or DEFAULT_PUBLIC_URL
     )

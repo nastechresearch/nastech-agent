@@ -53,10 +53,13 @@ def releases(tmp_path, monkeypatch, request):
     monkeypatch.setenv("NASTECH_INSTALL_ROOT", str(checkout))
     monkeypatch.delenv("NASTECH_MANAGED", raising=False)
 
+    # The legacy pointer host is GitHub Pages now: the site prefix is part of
+    # every public path the reader builds from _PUBLIC_BASE.
+    pages = "/nastech-agent"
     responses = {}
     requests = []
     for channel, tag in tags.items():
-        responses[f"/releases/{channel}/index.html"] = (
+        responses[f"{pages}/releases/{channel}/index.html"] = (
             f'<meta name="nastech-build" content="{tag}">'
         )
         responses[f"/repos/NastechResearch/nastech-agent/releases/tags/{tag}"] = {
@@ -68,7 +71,7 @@ def releases(tmp_path, monkeypatch, request):
     responses["/repos/NastechResearch/nastech-agent/releases/latest"] = {
         "tag_name": tags["stable"], "draft": False, "prerelease": False,
     }
-    responses["/releases/stable/release-candidates.json"] = {
+    responses[f"{pages}/releases/stable/release-candidates.json"] = {
         "tag": tags["stable"], "commit": commits[1],
     }
 
@@ -238,8 +241,8 @@ def test_origin_tag_cannot_substitute_a_fork_commit(releases, channel):
 
 @pytest.mark.parametrize("channel", ["stable", "canary"])
 def test_missing_pointers_fall_back_only_to_published_releases(releases, channel):
-    releases.responses.pop("/releases/stable/release-candidates.json")
-    releases.responses.pop(f"/releases/{channel}/index.html")
+    releases.responses.pop("/nastech-agent/releases/stable/release-candidates.json")
+    releases.responses.pop(f"/nastech-agent/releases/{channel}/index.html")
     published = releases.responses[f"/repos/NastechResearch/nastech-agent/releases/tags/{releases.tags[channel]}"]
     releases.responses["/repos/NastechResearch/nastech-agent/releases/latest"] = published
     releases.responses["/repos/NastechResearch/nastech-agent/releases?per_page=100&page=1"] = [

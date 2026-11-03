@@ -61,6 +61,10 @@ on:
 permissions:
   contents: read
 
+env:
+  RELEASE_CHANNEL_STORE: github
+
+
 jobs:
   validate:
     name: Require a supported native smoke target

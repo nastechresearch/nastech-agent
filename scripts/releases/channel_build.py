@@ -138,8 +138,12 @@ def configured_publisher(repository: str) -> ChannelPublisher:
         ])
         if actual_id != os.environ.get("GITHUB_REPOSITORY_ID"):
             raise ChannelError("Disposable namespace belongs to another repository")
-    base = channel_public_base()
-    store = R2ChannelStore(*r2.credentials(), scope=scope)
+    from scripts.releases.ghpages import configured_store
+    if os.environ.get("RELEASE_CHANNEL_STORE", "r2") == "github":
+        base = os.environ.get("RELEASE_PAGES_PUBLIC_BASE", "https://nastechresearch.github.io/nastech-agent")
+    else:
+        base = channel_public_base()
+    store = configured_store(repository, scope=scope)
 
     def verify_build(request: dict, manifest: dict) -> bool:
         from scripts.releases.channel_releases import verify_bootstrap

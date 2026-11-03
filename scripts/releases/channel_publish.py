@@ -205,7 +205,9 @@ def main(argv: list[str] | None = None) -> None:
     request = read_request(args.build_id, args.request_sha256, args.public_base, args.repository)
     if args.command == "admit":
         values = admit(request, dict(os.environ))
-        values["public-root"] = os.environ["CLOUDFLARE_R2_PUBLIC_URL"]
+        values["public-root"] = (os.environ.get("CLOUDFLARE_R2_PUBLIC_URL")
+                                     or os.environ.get("RELEASE_PAGES_PUBLIC_BASE",
+                                                       "https://nastechresearch.github.io/nastech-agent"))
         values["public-base"] = args.public_base
         with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as stream:
             stream.write("".join(f"{key}={value}\n" for key, value in values.items()))
@@ -225,7 +227,8 @@ def main(argv: list[str] | None = None) -> None:
             expected, _feeds = assemble(pinned, root, needs=needs)
             return pinned == request and manifest == expected
 
-        publisher = ChannelPublisher(R2ChannelStore(*r2.credentials()), args.repository, args.public_base,
+        from scripts.releases.ghpages import configured_store
+        publisher = ChannelPublisher(configured_store(args.repository), args.repository, args.public_base,
                                      authorize=authorize, verify_build=qualified)
         if args.command.startswith("receiver-"):
             if args.root is None:
