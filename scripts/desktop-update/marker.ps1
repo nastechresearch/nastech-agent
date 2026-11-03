@@ -383,6 +383,28 @@ function Get-CheckoutLockPath {
     return (Join-Path $gitDir 'nastech-update.lock')
 }
 
+function Write-R6ProbeLog([string]$Text) {
+    # PROBE BRANCH ONLY (wine2e/r6-lock-probe): one line per R6 answer, so a real
+    # Windows run can say which decision each probe call actually took.
+    $file = Join-Path $env:RUNNER_TEMP 'r6-probe.log'
+    try { Add-Content -LiteralPath $file -Value ('{0:o} pid={1} {2}' -f (Get-Date), $PID, $Text) -Encoding utf8 } catch {}
+}
+
+function Test-CheckoutLockHeldWriteHandle([string]$Path) {
+    # PROBE BRANCH ONLY: the same probe, but with a handle opened ReadWrite. True =
+    # this shape reports the lock held while the read-only shape above said free.
+    $fs = $null
+    try {
+        $fs = [System.IO.File]::Open($Path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite,
+            ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
+    } catch { return "open:$($_.Exception.GetType().Name)" }
+    try {
+        try { $fs.Lock(1048576, 17) } catch { return 'held' }
+        try { $fs.Unlock(1048576, 17) } catch {}
+        return 'free'
+    } finally { $fs.Dispose() }
+}
+
 function Test-CheckoutLockHeld {
     # R6: does some process hold the checkout lock right now? Python takes it with
     # msvcrt.locking on one byte at offset 1 MiB (LockFile), and every joiner the job
@@ -393,14 +415,15 @@ function Test-CheckoutLockHeld {
     # sharing) counts as held, like marker.sh and the Desktop's own probe: reclaim
     # needs a provably free checkout.
     $path = Get-CheckoutLockPath
-    if (-not $path -or -not [System.IO.File]::Exists($path)) { return $false }
+    if (-not $path -or -not [System.IO.File]::Exists($path)) { Write-R6ProbeLog "free no-path path=$path"; return $false }
     $fs = $null
     try {
         $fs = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read,
             ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
-    } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] { return $false } catch { return $true }
+    } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] { Write-R6ProbeLog "free open-notfound path=$path"; return $false } catch { Write-R6ProbeLog "held open-error path=$path err=$($_.Exception.GetType().Name)"; return $true }
     try {
-        try { $fs.Lock(1048576, 17) } catch { return $true }
+        try { $fs.Lock(1048576, 17) } catch { Write-R6ProbeLog "held lock-conflict path=$path size=$([System.IO.File]::ReadAllBytes($path).Length)"; return $true }
+        Write-R6ProbeLog "free lock-acquired path=$path writeHandle=$(Test-CheckoutLockHeldWriteHandle $path)"
         try { $fs.Unlock(1048576, 17) } catch {}
         return $false
     } finally {
