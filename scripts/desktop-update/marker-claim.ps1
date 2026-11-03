@@ -218,6 +218,7 @@ function Invoke-MarkerRelease {
     # Corpus 'release' under the lock: owner deletes, or hands the claim over
     # to a live delegate; anything that is not ours is kept.
     if ($NoMarkerCleanup -or $script:MarkerClaim -notin @('claimed', 'adopted')) { Stop-MarkerCustodian; return }
+    Write-R6ProbeLog "release enter claim=$($script:MarkerClaim) pid=$PID"
     # R6: never while a survivor of the update still holds the checkout lock --
     # the marker would read free while that process still mutates the checkout.
     # Line 2 keeps its heartbeat through that wait: an old packaged Desktop would

@@ -67,7 +67,7 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          rm -f "$RUNNER_TEMP/r6-probe.log"
+          rm -f "$RUNNER_TEMP/r6-probe.log" scripts/desktop-update/r6-probe.log
           for i in 1 2 3 4 5 6; do
             echo "=== run $i ==="
             if bash scripts/run_tests.sh \
@@ -79,5 +79,6 @@ jobs:
             fi
           done
           echo '=== every Test-CheckoutLockHeld decision the hand-offs made ==='
-          cat "$RUNNER_TEMP/r6-probe.log" 2>/dev/null || echo '(no diagnostics captured)'
+          cat scripts/desktop-update/r6-probe.log 2>/dev/null || echo '(no workspace diagnostics)'
+          cat "$RUNNER_TEMP/r6-probe.log" 2>/dev/null || echo '(no RUNNER_TEMP diagnostics)'
 

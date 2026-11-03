@@ -360,6 +360,12 @@ function Get-CheckoutLockPath {
     # nastech_cli/update_lock.py::checkout_lock_path: <git common dir>/nastech-update.lock,
     # else <root>/.nastech-update.lock.
     $root = Get-Variable -Name InstallRoot -ValueOnly -ErrorAction SilentlyContinue
+    if ($root) {
+        $dot = Join-Path $root '.git'
+        Write-R6ProbeLog "resolve root=$root dotDir=$([System.IO.Directory]::Exists($dot)) dotFile=$([System.IO.File]::Exists($dot))"
+    } else {
+        Write-R6ProbeLog 'resolve root=<none>'
+    }
     if (-not $root) { return $null }
     $dot = Join-Path $root '.git'
     $gitDir = $null
@@ -372,7 +378,7 @@ function Get-CheckoutLockPath {
             if (-not [System.IO.Path]::IsPathRooted($gitDir)) { $gitDir = Join-Path $root $gitDir }
         }
     }
-    if (-not $gitDir) { return (Join-Path $root '.nastech-update.lock') }
+    if (-not $gitDir) { $p = (Join-Path $root '.nastech-update.lock'); Write-R6ProbeLog "resolved=$p exists=$([System.IO.File]::Exists($p))"; return $p }
     $commonFile = Join-Path $gitDir 'commondir'
     if ([System.IO.File]::Exists($commonFile)) {
         $common = (([System.IO.File]::ReadAllText($commonFile)).TrimStart([char]0xFEFF) -split "`n")[0].Trim()
@@ -380,14 +386,21 @@ function Get-CheckoutLockPath {
             $gitDir = if ([System.IO.Path]::IsPathRooted($common)) { $common } else { Join-Path $gitDir $common }
         }
     }
-    return (Join-Path $gitDir 'nastech-update.lock')
+    $p = (Join-Path $gitDir 'nastech-update.lock')
+    Write-R6ProbeLog "resolved=$p exists=$([System.IO.File]::Exists($p))"
+    return $p
 }
 
 function Write-R6ProbeLog([string]$Text) {
     # PROBE BRANCH ONLY (wine2e/r6-lock-probe): one line per R6 answer, so a real
-    # Windows run can say which decision each probe call actually took.
-    $file = Join-Path $env:RUNNER_TEMP 'r6-probe.log'
-    try { Add-Content -LiteralPath $file -Value ('{0:o} pid={1} {2}' -f (Get-Date), $PID, $Text) -Encoding utf8 } catch {}
+    # Windows run can say which decision each probe call actually took. Three sinks
+    # because the hand-off's env is not the runner's: $PSScriptRoot is the only one
+    # that is always an absolute path inside the workspace.
+    $line = '{0:o} pid={1} {2}' -f (Get-Date), $PID, $Text
+    foreach ($dir in @($PSScriptRoot, $env:RUNNER_TEMP, $env:TEMP)) {
+        if (-not $dir) { continue }
+        try { Add-Content -LiteralPath (Join-Path $dir 'r6-probe.log') -Value $line -Encoding utf8 } catch {}
+    }
 }
 
 function Test-CheckoutLockHeldWriteHandle([string]$Path) {
@@ -422,7 +435,7 @@ function Test-CheckoutLockHeld {
             ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
     } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] { Write-R6ProbeLog "free open-notfound path=$path"; return $false } catch { Write-R6ProbeLog "held open-error path=$path err=$($_.Exception.GetType().Name)"; return $true }
     try {
-        try { $fs.Lock(1048576, 17) } catch { Write-R6ProbeLog "held lock-conflict path=$path size=$([System.IO.File]::ReadAllBytes($path).Length)"; return $true }
+        try { $fs.Lock(1048576, 17) } catch { Write-R6ProbeLog "held lock-conflict path=$path err=$($_.Exception.GetType().Name) msg=$($_.Exception.Message)"; return $true }
         Write-R6ProbeLog "free lock-acquired path=$path writeHandle=$(Test-CheckoutLockHeldWriteHandle $path)"
         try { $fs.Unlock(1048576, 17) } catch {}
         return $false
