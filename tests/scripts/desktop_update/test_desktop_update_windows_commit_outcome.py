@@ -178,12 +178,14 @@ def test_result_finished_at_is_stamped_after_the_r6_release_wait(tmp_path: Path)
         holders.append((proc, time.time() + 25))
     try:
         code, out, _, result, home = _handoff(tmp_path, '-NoGateway', prepare=hold_checkout)
+        # PROBE BRANCH ONLY: was the holder still alive when the release ran its R6 check?
+        observed = [(proc.poll(), round(time.time() - (deadline - 25), 1)) for proc, deadline in holders]
     finally:
         for proc, _ in holders:
             proc.kill(); proc.wait()
     assert code == 0, out
     log = (home / 'logs/desktop-update-handoff.log').read_text(encoding='utf-8-sig')
-    assert 'keeping the update marker' in log, log
+    assert 'keeping the update marker' in log, f'holder poll(None=alive)/age={observed}\n{log}'
     assert result['ok'] is True and result['finished_at'] >= int(holders[0][1]) - 1, result
 
 
