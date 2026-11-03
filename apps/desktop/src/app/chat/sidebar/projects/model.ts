@@ -3,11 +3,12 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { NastechGitWorktree } from '@/global'
 import type { SessionInfo } from '@/nastech'
-import { desktopGit } from '@/lib/desktop-git'
+import { desktopGit, desktopGitFor } from '@/lib/desktop-git'
 import { mapPool } from '@/lib/pool'
 import { $sidebarWorkspaceNodeOpen, toggleWorkspaceNodeCollapsed } from '@/store/layout'
 import { $worktreeRefreshToken } from '@/store/projects'
 
+import { projectOwnerRoute } from './gateway-project-rows'
 import { sessionRecency, type SidebarProjectTree } from './workspace-groups'
 
 // Page size when revealing more already-loaded rows within a workspace group.
@@ -151,16 +152,24 @@ export function orderProjectsByIds(projects: SidebarProjectTree[], orderIds: str
 // payload currently loaded in memory.
 export function useRepoWorktreeMap(
   repoPaths: string[],
-  enabled: boolean
+  enabled: boolean,
+  /** The project the repos belong to: another gateway's are listed on that gateway. */
+  project?: Pick<SidebarProjectTree, 'connectionId' | 'profile'>
 ): [Record<string, NastechGitWorktree[]>, boolean] {
   const [map, setMap] = useState<Record<string, NastechGitWorktree[]>>({})
   const [loading, setLoading] = useState(false)
   const key = useMemo(() => pathListKey(repoPaths), [repoPaths])
   // Refetch when a worktree is added/removed so a new lane shows immediately.
   const refreshToken = useStore($worktreeRefreshToken)
+  const owner = project && projectOwnerRoute(project)
+  const ownerConnection = owner?.connectionId
+  const ownerProfile = owner?.profile
 
   useEffect(() => {
-    const git = desktopGit()
+    const git =
+      ownerConnection && ownerProfile
+        ? desktopGitFor({ connectionId: ownerConnection, profile: ownerProfile })
+        : desktopGit()
 
     if (!enabled || !repoPaths.length || !git?.worktreeList) {
       setMap({})
@@ -186,7 +195,7 @@ export function useRepoWorktreeMap(
     return () => {
       cancelled = true
     }
-  }, [enabled, key, repoPaths, refreshToken])
+  }, [enabled, key, ownerConnection, ownerProfile, repoPaths, refreshToken])
 
   return [map, loading]
 }

@@ -443,10 +443,8 @@ class TestBuildCallKwargsMaxTokens:
 
 
 class TestNastechTagsScoping:
-    def test_tags_injected_when_provider_is_nastech(self, monkeypatch):
+    def test_tags_injected_when_provider_is_nastech(self):
         import agent.auxiliary_client as aux
-
-        monkeypatch.setattr(aux, "auxiliary_is_nastech", False)
 
         kwargs = aux._build_call_kwargs(
             provider="nastech",
@@ -456,16 +454,18 @@ class TestNastechTagsScoping:
 
         assert kwargs["extra_body"]["tags"] == aux._nastech_portal_tags()
 
-    def test_tags_not_injected_for_gemini_when_main_is_nastech(self, monkeypatch):
+    def test_tags_not_injected_for_non_nastech_provider_when_main_is_nastech(self):
         import agent.auxiliary_client as aux
 
-        monkeypatch.setattr(aux, "auxiliary_is_nastech", True)
-
-        kwargs = aux._build_call_kwargs(
-            provider="gemini",
-            model="gemini-2.5-flash",
-            messages=[{"role": "user", "content": "hi"}],
-        )
+        with aux.scoped_runtime_main({
+            "provider": "nastech", "model": "Nastech-4",
+            "base_url": "https://inference-api.nastechresearch.github.io/v1", "api_key": "nastech-key",
+        }):
+            kwargs = aux._build_call_kwargs(
+                provider="gemini",
+                model="gemini-2.5-flash",
+                messages=[{"role": "user", "content": "hi"}],
+            )
 
         assert "extra_body" not in kwargs
 
@@ -4830,8 +4830,8 @@ class TestCustomEndpointApiKeyInheritance:
 
 
     def test_runtime_override_key_is_used(self, monkeypatch):
-        """When _RUNTIME_MAIN_API_KEY is set (by set_runtime_main), it takes
-        precedence over config.yaml for the custom endpoint key."""
+        """A key bound by set_runtime_main takes precedence over config.yaml
+        for the custom endpoint key."""
         import agent.auxiliary_client as ac
 
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -4842,8 +4842,7 @@ class TestCustomEndpointApiKeyInheritance:
             captured.update(kwargs)
             return MagicMock()
 
-        with patch.object(ac, "_RUNTIME_MAIN_API_KEY", "sk-runtime-key"), \
-             patch.object(ac, "_RUNTIME_MAIN_BASE_URL", "https://gw.example.com/v1"), \
+        with ac.scoped_runtime_main({"base_url": "https://gw.example.com/v1", "api_key": "sk-runtime-key"}), \
              patch("nastech_cli.config.load_config", return_value={"model": {}}), patch("nastech_cli.config.load_config_readonly", return_value={"model": {}}), \
              patch.object(ac, "_create_openai_client", side_effect=_capture_create):
             _client, _model = resolve_provider_client(

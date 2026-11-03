@@ -1,6 +1,7 @@
 """CLI handlers for ``nastech migrate ...``.
 
-Currently exposes only ``nastech migrate xai`` — diagnoses and (with --apply) rewrites references to
+``nastech migrate`` (bare) and ``nastech migrate <agent>`` move a user over from another agent through
+the agent-importers plugin; ``nastech migrate xai`` diagnoses and (with --apply) rewrites references to
 xAI models retired on May 15, 2026.
 """
 from __future__ import annotations
@@ -17,9 +18,31 @@ def cmd_migrate(args: Any) -> int:
     """Dispatcher for ``nastech migrate <subtype>``."""
     if getattr(args, "migrate_type", None) == "xai":
         return cmd_migrate_xai(args)
+    if getattr(args, "migrate_type", None) is None:
+        from nastech_cli.config import get_nastech_home
+        from nastech_cli.setup_agent_import import migrate_from_agents
+        return migrate_from_agents(get_nastech_home())
 
-    print("usage: nastech migrate xai [--apply] [--no-backup]", file=sys.stderr)
+    print("usage: nastech migrate [<agent> | xai [--apply] [--no-backup]]", file=sys.stderr)
     return 2
+
+
+# ``nastech migrate <agent>`` flags forwarded to ``nastech import-agent <agent>``, as (dest, flag).
+_AGENT_IMPORT_FLAGS = (("dry_run", "--dry-run"), ("overwrite", "--overwrite"), ("yes", "--yes"),
+                       ("activate_routines", "--activate-routines"), ("migrate_secrets", "--migrate-secrets"))
+
+
+def cmd_migrate_agent(args: Any) -> int:
+    """``nastech migrate <agent>``: install the agent-importers plugin when missing, then run its
+    import for that agent with the flags given here."""
+    from nastech_cli.config import get_nastech_home
+    from nastech_cli.setup_agent_import import migrate_from_agents
+    extra = [flag for dest, flag in _AGENT_IMPORT_FLAGS if getattr(args, dest, False)]
+    if getattr(args, "source", None):
+        extra += ["--source", str(Path(args.source).expanduser())]
+    for name in getattr(args, "bot", None) or ():
+        extra += ["--bot", name]
+    return migrate_from_agents(get_nastech_home(), args.migrate_agent, tuple(extra))
 
 
 def _fail(message: str) -> int:

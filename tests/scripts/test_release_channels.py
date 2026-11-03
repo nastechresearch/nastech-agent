@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import base64
-import copy
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -15,9 +14,6 @@ import xml.sax.saxutils
 import pytest
 
 from scripts.releases import lanes as lane_set
-from tests.scripts.test_release_artifacts import staged_candidate as staged_candidate  # noqa: PLC0414 -- the self-alias is load-bearing: it suppresses F811 for the pytest fixture parameter shadowing this import
-from tests.scripts.test_release_r2 import r2_server as r2_server  # noqa: PLC0414
-from tests.scripts.test_stable_release import https_origin as https_origin  # noqa: PLC0414
 
 # A claim that built and smoked every desktop package (see test_stable_release.py).
 SIGNED = frozenset(lane_set.NAMES)
@@ -744,63 +740,3 @@ def test_stable_receipts_bind_the_attempt_ref_while_metadata_binds_the_payload_t
     stage(attempt)
     with pytest.raises(ChannelError, match="identity mismatch"):
         channel_releases.read_native_receipts(tmp_path, attempt, commit, legs, payload_tag=payload)
-
-
-def termux_only(candidate: dict) -> dict:
-    """The candidate a docker+termux claim stages: Termux rows, its APT tree and no smoke."""
-    release = copy.deepcopy(candidate)
-    release["packages"] = [row for row in release["packages"] if row["platform"] == "termux"]
-    release["files"] = [item for item in release["files"]
-                        if item["path"].startswith(("apt/", "deb/"))]
-    release["smoke_results"] = {job: {"result": "skipped"} for job in release["smoke_results"]}
-    return release
-
-
-def apt_release(monkeypatch, r2_server, https_origin, staged_candidate, candidate):
-    """Stage `candidate` as the release's archived manifest and hand back its claim record."""
-    import urllib.request
-    from scripts.releases import r2
-
-    manifest, _, base = staged_candidate
-    # urlopen caches one global opener; use the fixture's per-test context so this
-    # test is order-independent against the per-test self-signed CA.
-    monkeypatch.setattr(urllib.request, "urlopen", https_origin.opener)
-    monkeypatch.setattr(r2, "public_base_url", lambda: base)
-    body = json.dumps(candidate).encode()
-    r2_server.store[f"releases/tag/{manifest['archive']}/release-candidates.json"] = (body, '"fixture"')
-    return {"claim_tag": manifest["archive"],
-            "candidate_manifest_sha256": hashlib.sha256(body).hexdigest()}
-
-
-def test_termux_only_release_publishes_apt_indexes_without_a_desktop_build(tmp_path, r2_server, https_origin, staged_candidate, monkeypatch):
-    """A claim that built no desktop package still moves the APT channel, and nothing else."""
-    from scripts.releases import channel_releases
-
-    manifest, _, _ = staged_candidate
-    release = apt_release(monkeypatch, r2_server, https_origin, staged_candidate, termux_only(manifest))
-    before = dict(r2_server.store)
-    published = channel_releases.advance_termux_apt(release, tmp_path / "apt")
-    assert published == ["releases/termux/stable/dists/nastech-stable/Release",
-                         "releases/termux/stable/dists/nastech-stable/InRelease"]
-    changed = ({key for key, value in r2_server.store.items() if before.get(key) != value}
-               | (set(before) - set(r2_server.store)))
-    assert changed == set(published)
-    # Every published index is read back over the public origin before the call returns.
-    assert [path for path in https_origin.requests
-            if path.startswith("/releases/termux/stable/")] == ["/" + key for key in published]
-
-
-def test_termux_only_release_refuses_an_absent_signed_index(tmp_path, r2_server, https_origin, staged_candidate, monkeypatch):
-    """The Termux lane cannot publish indexes without the signed InRelease it staged."""
-    from scripts.releases import channel_releases
-
-    manifest, _, _ = staged_candidate
-    unsigned = termux_only(manifest)
-    unsigned["files"] = [item for item in unsigned["files"]
-                         if item["path"] != "apt/dists/nastech-stable/InRelease"]
-    release = apt_release(monkeypatch, r2_server, https_origin, staged_candidate, unsigned)
-    before = dict(r2_server.store)
-    with pytest.raises(ValueError, match="Missing signed APT index"):
-        channel_releases.advance_termux_apt(release, tmp_path / "unsigned")
-    assert not any(key.startswith("releases/termux/stable/") and before.get(key) != r2_server.store.get(key)
-                   for key in r2_server.store)

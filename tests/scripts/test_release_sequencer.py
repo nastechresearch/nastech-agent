@@ -782,8 +782,6 @@ def test_a_release_that_skipped_bundles_ships_only_its_tag_release_and_docker_al
     (["windows"], False, True),
     # --only macos-arm64,docker: no Store, no channel.
     (["macos-arm64", "docker"], True, False),
-    # --only docker,termux: the APT indexes are this release's channel; the desktop head is not.
-    (["docker", "termux"], True, False),
 ])
 def test_a_partial_desktop_release_moves_only_what_it_built(monkeypatch, lanes, docker, store_checked):
     from scripts.releases import channel_releases, docker as docker_module, sequencer, store
@@ -802,8 +800,6 @@ def test_a_partial_desktop_release_moves_only_what_it_built(monkeypatch, lanes, 
 
     monkeypatch.setattr(channel_releases, "advance_stable",
                         lambda *_args: pytest.fail("a partial desktop set moved the protected head"))
-    monkeypatch.setattr(channel_releases, "advance_termux_apt",
-                        lambda release, _root: events.append(("apt", release["claim_tag"])))
     monkeypatch.setattr(store, "release_from_env", lambda *_a: events.append(("store",)))
     monkeypatch.setattr(channel_releases, "stable_head_version", lambda _env: "0.21.4")
     monkeypatch.setattr(docker_module, "promote_stable", promote)
@@ -813,10 +809,8 @@ def test_a_partial_desktop_release_moves_only_what_it_built(monkeypatch, lanes, 
     steps = sequencer.reconcile(env, run=run, read_archive=lambda _key: archived)
 
     assert steps == [{"flip": "0.21.5"}, {"advance": "0.21.5"}]
-    assert events == (
-        ([("apt", "rc.1-v0.21.5")] if "termux" in lanes else [])
-        + ([("aliases", "rc.1-v0.21.5", "v0.21.5")] if docker else [])
-        + ([("store",)] if store_checked else []))
+    assert events == ([("aliases", "rc.1-v0.21.5", "v0.21.5")] if docker else []) + \
+        ([("store",)] if store_checked else [])
     assert releases[0]["tag_name"] == "v0.21.5" and releases[0]["draft"] is False
     # Finished: the alias carries the receipt's digest, or the release moves no channel at all.
     assert sequencer.reconcile(env, run=run, read_archive=lambda _key: archived) == []

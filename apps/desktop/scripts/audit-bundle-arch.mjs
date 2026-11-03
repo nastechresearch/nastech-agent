@@ -230,10 +230,6 @@ function* walkFiles(dir) {
  * MSYS2/.NET layout.
  */
 const EXEMPT_PATTERNS = [
-  // sounddevice ships 32- and 64-bit WINDOWS portaudio DLLs in every
-  // wheel's _sounddevice_data; a mac or linux payload can never load a
-  // PE, so they are inert bytes, not a wrong-arch payload.
-  /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]_sounddevice_data[/\\]/i,
   // pip / setuptools launcher STUB TEMPLATES. x86 PE templates pip copies
   // when it writes a console-script shim. Present on every platform.
   // Live under the payload python store entry AND the relocatable venv.
@@ -242,6 +238,9 @@ const EXEMPT_PATTERNS = [
   /agent-payload[/\\]tools[/\\]git(-[^/\\]+)?[/\\](mingw64|clangarm64|usr|cmd)[/\\]/i,
   // discord.py ships x64 and x86 opus; opus.py loads by bitness.
   /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]discord[/\\]bin[/\\]libopus-0\.(x64|x86)\.dll$/i,
+  // sounddevice 0.5.6's per-arch Windows wheels carry all three PortAudio
+  // builds; _sounddevice.py loads the one matching the interpreter's machine.
+  /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]_sounddevice_data[/\\]portaudio-binaries[/\\]libportaudio(32bit|64bit|arm64)(-asio)?\.dll$/i,
   // pvporcupine ships one native lib per OS/arch in the same wheel.
   // Only the matching sibling is loaded.
   /agent-payload[/\\]venv[/\\](Lib|lib[/\\]python[\d.]+)[/\\]site-packages[/\\]pvporcupine[/\\]lib[/\\]/i,

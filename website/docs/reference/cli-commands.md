@@ -63,14 +63,14 @@ The install also ships `nastech-agent`, a minimal runner that sends one query an
 | `nastech send` | Send a one-shot message to a configured messaging platform (Telegram, Discord, Slack, Signal, SMS, …). Useful from shell scripts, cron jobs, CI hooks, and monitoring daemons — no agent loop, no LLM. |
 | `nastech peer` | Register peer Nastech gateways on other machines and DM their agents' canonical Bot Chats (`nastech peer dm <peer>[/<agent>] "…"`). The transport behind cross-machine bot-to-bot messaging. |
 | `nastech secrets` | Manage external secret sources (currently Bitwarden Secrets Manager) for pulling API keys at process startup instead of from `~/.nastech/.env`. |
-| `nastech migrate` | Diagnose and (optionally) rewrite `config.yaml` to replace references to retired models or deprecated settings (e.g. `migrate xai`). |
+| `nastech migrate` | Move over from another agent (`migrate grok-bot`, `migrate claude-code`, ... or bare to detect), or rewrite `config.yaml` for retired models and deprecated settings (`migrate xai`). |
 | `nastech codex-runtime` | Noninteractive counterpart of `/codex-runtime`: `migrate [--dry-run] [--json]` regenerates the Nastech-managed block in `~/.codex/config.toml` for the selected profile. See [Codex app-server runtime](../user-guide/features/codex-app-server-runtime.md#running-the-migration-from-a-script). |
 | `nastech status` | Show agent, auth, and platform status. |
 | `nastech usage` | Show the configured account's rate-limit windows (the `/usage` block) without a session; `--json` for scripts. |
 | `nastech cron` | Inspect and tick the cron scheduler. |
 | `nastech pause` / `nastech resume` | Global emergency stop: no new cron fires (built-in ticker, managed-cron webhook, misfire catch-up), kanban dispatch or gateway turns start until resumed. Interactive CLI, TUI and Desktop turns are gateway turns, so they are held too, and each surface shows "Nastech is paused" with the reason and "run `nastech resume`". Turns already running finish; in-flight work is never killed. |
 | `nastech kanban` | Multi-profile collaboration board (tasks, links, dispatcher). |
-| `nastech project` | Manage named, multi-folder workspaces (projects). Anchors desktop session grouping and, when bound to a kanban board, gives tasks a deterministic worktree + branch convention. State is per-profile. |
+| `nastech project` | Manage named, multi-folder workspaces (projects). Anchors desktop session grouping; kanban tasks linked to a project with a primary folder default to a deterministic worktree + branch. State is per-profile. |
 | `nastech webhook` | Manage dynamic webhook subscriptions for event-driven activation. |
 | `nastech hooks` | Inspect, approve, or remove shell-script hooks declared in `config.yaml`. |
 | `nastech doctor` | Diagnose config and dependency issues. |
@@ -599,13 +599,18 @@ Pull API keys from an external secret manager at process startup instead of stor
 ## `nastech migrate`
 
 ```bash
-nastech migrate <type>
+nastech migrate                 # find another agent's setup here and offer to import it
+nastech migrate <agent>         # openclaw, claude-code, codex, cursor, grok-bot or openbot
+nastech migrate <type>          # xai, relay
 ```
 
-Diagnose and (optionally) rewrite the active `config.yaml` to replace references to retired models or deprecated settings. A timestamped backup of the original `config.yaml` is taken before any rewrite (skip with `--no-backup`).
+Bare `nastech migrate` looks for OpenClaw, Claude Code, Codex CLI, Cursor, Grok Bot and OpenBot on this computer and offers to import what it finds, the same step a first `nastech setup` runs (without setup's own choices: OpenClaw keys come over only with `nastech migrate openclaw --migrate-secrets`). `nastech migrate <agent>` imports from that agent even when nothing is detected: it installs the [`agent-importers`](../user-guide/import-from-other-agents.md) plugin from the catalog when it is missing, then runs `nastech import-agent <agent>` (preview, then confirmation). It takes `--source`, `--dry-run`, `--overwrite` and `-y`; `grok-bot` and `openbot` also take `--activate-routines` and `--bot <name>`; `openclaw` takes `--migrate-secrets` (API keys and bot tokens come over only with it, unlike first-run setup, which passes it).
+
+The `xai` and `relay` types diagnose and (optionally) rewrite the active `config.yaml` to replace references to retired models or deprecated settings. A timestamped backup of the original `config.yaml` is taken before any rewrite (skip with `--no-backup`).
 
 | Subcommand | Description |
 |------------|-------------|
+| `openclaw`, `claude-code`, `codex`, `cursor`, `grok-bot`, `openbot` | Import that agent's setup (see above). |
 | `xai` | Scan `config.yaml` for references to xAI models scheduled for retirement on May 15, 2026 and (with `--apply`) rewrite them in-place to the official replacements per the xAI migration guide. Defaults to dry-run. |
 
 Common flags for migration subcommands:
@@ -615,7 +620,6 @@ Common flags for migration subcommands:
 | `--apply` | Rewrite `config.yaml` in-place (default: dry-run, no writes). |
 | `--no-backup` | Skip the timestamped backup of `config.yaml` when applying. |
 
-> Not to be confused with `nastech import-agent openclaw` (one-shot import of OpenClaw configuration into Nastech) — `nastech migrate` is the top-level config-rewrite command.
 
 
 ## `nastech codex-runtime`
@@ -811,7 +815,7 @@ Multi-profile, multi-project collaboration board. Each install can host many boa
 | `boards show` / `boards current` | Print the currently-active board's name, DB path, and task counts. |
 | `boards rename <slug> "<name>"` | Change a board's display name. Slug is immutable. |
 | `boards rm <slug>` | Archive (default) or hard-delete a board. `--delete` skips the archive step. Archived boards move to `boards/_archived/<slug>-<ts>/`. Refused for `default`. |
-| `create "<title>"` | Create a new task on the active board. Flags: `--body`, `--assignee`, `--parent` (repeatable), `--workspace scratch\|worktree\|dir:<path>`, `--tenant`, `--priority`, `--triage`, `--idempotency-key`, `--max-runtime`, `--max-retries`, `--skill` (repeatable). |
+| `create "<title>"` | Create a new task on the active board. Flags: `--body`, `--assignee`, `--parent` (repeatable), `--workspace scratch\|worktree\|dir:<path>`, `--project <id-or-slug>` (link to a project; defaults to a worktree + branch under its primary folder, when it has one), `--tenant`, `--priority`, `--triage`, `--idempotency-key`, `--max-runtime`, `--max-retries`, `--skill` (repeatable). |
 | `list` / `ls` | List tasks on the active board. Filter with `--mine`, `--assignee`, `--status`, `--tenant`, `--archived`, `--json`. |
 | `show <id>` | Show a task with comments and events. `--json` for machine output. |
 | `assign <id> <profile>` | Assign or reassign. Use `none` to unassign. Refused while task is running. |
@@ -923,7 +927,7 @@ Common failure modes + recovery are covered in [Egress proxy → Troubleshooting
 nastech project <create|list|show|add-folder|remove-folder|rename|set-primary|use|archive|restore|bind-board>
 ```
 
-Projects are human-named workspaces that can span multiple folders / repos. They anchor desktop session grouping and, when bound to a kanban board, give tasks a deterministic worktree + branch convention. State is per-profile.
+Projects are human-named workspaces that can span multiple folders / repos. They anchor desktop session grouping, and a kanban task linked to a project (`nastech kanban create --project <slug>`, or a board bound to the project in the kanban dashboard) gets a deterministic worktree + branch under the project's primary folder by default (when the project has one). State is per-profile.
 
 | Subcommand | Description |
 |------------|-------------|
@@ -937,7 +941,7 @@ Projects are human-named workspaces that can span multiple folders / repos. They
 | `use` | Set the active project. |
 | `archive` | Archive a project (recoverable). |
 | `restore` | Restore an archived project. |
-| `bind-board` | Bind a kanban board to this project. |
+| `bind-board` | Record a kanban board on the project and, when the board exists and the project has a primary folder, point the board's default workdir at it. Does not link the board's tasks to the project. |
 
 ## `nastech webhook`
 
@@ -2089,7 +2093,7 @@ Additional behavior:
 - **Gateway restart.** After a successful update, Nastech attempts to restart all running gateway profiles of the home being updated (its root and every `profiles/<name>` under it) automatically so they pick up the new code. Gateways and `nastech-gateway*` services that belong to a different `NASTECH_HOME` on the same machine — another install, or a scratch home running `nastech update` — are named in the output and left alone. Use `nastech gateway restart` when you want to restart a gateway without applying an update.
 - **Restart-phase recovery.** If the in-process restart phase aborts while importing the freshly pulled tree, supervised gateway profiles are retried through a clean Python process. Only restarts independently confirmed by systemd (`systemctl --user is-active`) are reported as verified; a relaunch that merely exited 0 is recorded as `relaunch_attempted` and the restart stays owed (a `gateway_restart` follow-up; the update itself still exits 0 because the code is in place). Manual gateways and serve/dashboard runtimes are never killed without a relaunch authority; they are recorded as skipped with a reason and remain in the incomplete-update report with the exact restart command.
 - **Update receipts + fleet version check.** Every run writes a machine-readable receipt to `~/.nastech/logs/update_receipts/` in the root Nastech home, even from a sticky profile (pre-update fleet plan, steps, skips with reasons, restart outcome, follow-ups; `latest.json` points at the newest and reads `running` while an update is in progress). After the restart phase the updater verifies each live gateway's running code against the updated checkout and prints a per-profile version matrix. A gateway still on pre-update code does not fail the update once the new code is in place: the update prints a `⚠` line with the exact restart command, exits 0, records a `gateway_restart` follow-up, and keeps the restart owed — every CLI start warns about it and the next `nastech update` retries it.
-- **Local source changes.** For git installs, dirty tracked files and untracked files are auto-stashed before branch checkout or pull (`git stash push --include-untracked`). Interactive terminal updates ask before restoring the stash. Non-interactive updates restore it by default; set `updates.non_interactive_local_changes: discard` only on managed installs where local source edits should be thrown away after a successful pull. If stash restore conflicts or the pull fails, the stash is left in place for manual recovery.
+- **Local source changes.** For git installs, dirty tracked files are auto-stashed before branch checkout or pull, together with any untracked file at a path the update adds. Other untracked files and folders stay where they are, untouched, because they cannot block the update. Interactive terminal updates ask "Keep these changes after updating?" before anything is stashed: yes stashes them and puts them back after the pull, no deletes them right away, so no stash entry is left behind. A run with nothing to pull does not ask. Non-interactive updates restore it by default; set `updates.non_interactive_local_changes: discard` only on managed installs where local source edits should be thrown away after a successful pull. If stash restore conflicts or the pull fails, the stash is left in place for manual recovery.
 - **npm lockfile churn.** Before stashing or switching branches, Nastech makes a best-effort cleanup of tracked `package-lock.json` diffs produced by npm install/build steps. Commit or manually stash intentional lockfile edits before running `nastech update`.
 - **Pairing data snapshot.** Even when `--backup` is off, `nastech update` takes a lightweight snapshot of `~/.nastech/pairing/` and the Feishu comment rules before `git pull`. You can roll it back with `nastech backup restore --state pre-update` if a pull rewrites a file you were editing.
 - **Legacy `nastech.service` warning.** If Nastech detects a pre-rename `nastech.service` systemd unit (instead of the current `nastech-gateway.service`), it prints a one-time migration hint so you can avoid flap-loop issues.

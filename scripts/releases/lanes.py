@@ -70,10 +70,9 @@ DEFAULT = frozenset(
 DESKTOP = ("windows", "macos-arm64", "macos-intel")
 WINDOWS = ("windows", "windows-store")
 BUNDLES = (*DESKTOP, "windows-store", "termux")
-# The protected desktop channel and its update feeds move only for a release that built every
-# desktop package the channel serves. A partial set still stages, verifies and (for Windows)
-# submits its packages, but leaves those feeds on the previous release. The Termux indexes are not
-# one of those feeds: they belong to the release that built Termux, desktop or not.
+# The protected desktop channel, the update feeds and the Termux index move only for a release that
+# built every desktop package the channel serves. A partial set still stages, verifies and (for
+# Windows) submits its packages, but leaves the channels on the previous release.
 CHANNEL_DESKTOP = ("windows", "macos-arm64")
 DERIVED = ("bundles", "desktop-channel", "windows-build")
 
@@ -205,7 +204,7 @@ def advances_desktop(lanes: Iterable[str]) -> bool:
 def moves_channels(lanes: Iterable[str]) -> bool:
     """Whether publication moves a channel head. A release that moves none is finished once public."""
     on = frozenset(lanes)
-    return "docker" in on or advances_desktop(on) or "termux" in on
+    return "docker" in on or advances_desktop(on)
 
 
 # Claims record `lanesRevision` next to `lanes`. A claim without it was cut when "windows" also meant

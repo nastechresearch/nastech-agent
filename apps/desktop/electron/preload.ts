@@ -346,6 +346,10 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     },
     get: () => ipcRenderer.invoke('nastech:profile:get'),
     remember: name => ipcRenderer.invoke('nastech:profile:remember', name),
+    importConnections: (record: Record<string, string>) =>
+      ipcRenderer.invoke('nastech:profile:connections:import', record),
+    rememberConnection: (connectionId: string, profile: string) =>
+      ipcRenderer.invoke('nastech:profile:connections:remember', connectionId, profile),
     set: name => ipcRenderer.invoke('nastech:profile:set', name)
   },
   // The handler resolves an expected 404 with a sentinel instead of rejecting

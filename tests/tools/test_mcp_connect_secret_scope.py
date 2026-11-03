@@ -11,7 +11,11 @@ import pytest
 
 from agent.secret_scope import current_secret_scope, set_multiplex_active
 from nastech_cli import env_loader
-from nastech_constants import reset_nastech_home_override, set_nastech_home_override
+from nastech_constants import (
+    get_nastech_home,
+    reset_nastech_home_override,
+    set_nastech_home_override,
+)
 from tools import mcp_tool_discovery as discovery
 from tools.mcp_tool_config import _build_safe_env
 
@@ -247,3 +251,24 @@ def test_reconnect_rerenders_remote_headers_under_the_owners_fresh_scope(tmp_pat
     finally:
         set_multiplex_active(False)
     assert seen == [f"Bearer ${{{TOKEN_NAME}}}", "Bearer value-b"]
+
+
+def test_stdio_child_env_pins_active_profile_home(tmp_path, monkeypatch):
+    """The stdio child env must carry the ACTIVE profile's ``NASTECH_HOME``, never fall back.
+
+    Regression (#18594): ``_SAFE_ENV_KEYS`` omitted ``NASTECH_HOME``, so a child spawned by a
+    multiplexed host / dashboard backend serving ``--open-profile`` inherited no home and
+    resolved to the platform default — tripping ``_warn_profile_fallback_once`` and writing
+    state to the wrong profile. The child env must name the served home.
+    """
+    monkeypatch.delenv("NASTECH_HOME", raising=False)  # the failing condition: launch env has none
+    home = tmp_path / "served"
+    home.mkdir()
+    token = set_nastech_home_override(str(home))
+    try:
+        assert _build_safe_env(None)["NASTECH_HOME"] == str(get_nastech_home())
+    finally:
+        reset_nastech_home_override(token)
+
+    # An explicit server ``env.NASTECH_HOME`` still wins (merged after the pin).
+    assert _build_safe_env({"NASTECH_HOME": "/tmp/explicit"})["NASTECH_HOME"] == "/tmp/explicit"

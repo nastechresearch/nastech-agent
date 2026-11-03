@@ -1,7 +1,7 @@
 ---
 name: nastech-agent
 description: "Configure, theme, extend, and orchestrate Nastech Agent."
-version: 3.2.0
+version: 3.3.0
 author: Nastech Agent + Teknium
 license: MIT
 platforms: [linux, macos, windows]
@@ -97,6 +97,7 @@ Profiles use `~/.nastech/profiles/<name>/` with the same layout. When a profile 
 | AGENTS.md / .nastech.md / CLAUDE.md project rules | `references/project-context-files.md` |
 | Secret redaction, PII, approval modes, "reset permissions" | `references/security-privacy.md` |
 | Delegation, cron, curator, kanban | `references/background-systems.md` |
+| `nastech project` workspaces, multi-folder projects, desktop sidebar groups | `references/projects-and-folders.md` |
 | MCP servers (add, catalog, `nastech mcp`) | `references/native-mcp.md` |
 | Webhook routes and event-driven runs | `references/webhooks.md` |
 | A custom theme/skin ("synthwave theme", "change the gold ●") | `references/themes.md` + `templates/skin.yaml` |
