@@ -63,6 +63,11 @@ permissions:
 
 env:
   RELEASE_CHANNEL_STORE: github
+  # The staged bytes this lane reads come from the same handoff plane the release
+  # legs wrote, so it must resolve to the same store. Draft release assets are not
+  # public, so a smoke fetch reads them with the job's own token -- which is why
+  # the fetch below carries no `--public-base`.
+  RELEASE_HANDOFF_STORE: github
 
 
 jobs:
@@ -91,6 +96,7 @@ jobs:
     # Also constrains the recording action's nested cache to read-only.
     cache-mode: read
     env: &smoke-env
+      GH_TOKEN: ${{ github.token }}
       RELEASE_COMMIT: ${{ inputs.sha }}
       RELEASE_TAG: ${{ inputs.tag }}
       ARCHIVE_TAG: ${{ inputs.archive-tag }}
@@ -159,7 +165,7 @@ jobs:
             args=(--commit-build "$RELEASE_COMMIT")
           fi
           if [ -n "${CHANNEL_BUILD:-}" ]; then args=(--channel-request "$SMOKE_ROOT/request.json"); fi
-          python -m scripts.releases.handoff fetch --public-base "$PUBLIC_BASE" "${args[@]}" \
+          python -m scripts.releases.handoff fetch "${args[@]}" \
             --name "$name" --root "$SMOKE_ROOT/download" --include "$pattern" 2>&1 | tee "$SMOKE_ROOT/out/fetch.log"
           python - "$name" "$pattern" <<'PY'
           import fnmatch, json, os, sys

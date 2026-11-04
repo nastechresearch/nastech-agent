@@ -1,4 +1,10 @@
-"""Replay artifact handoffs and publication against a fake R2."""
+"""Replay the artifact handoffs and publication a desktop release run performs.
+
+The legs that move packages between jobs are replayed against the release store (a fake
+`gh`, see `tests/ci/gh_release_store.py`); the legs that publish to the download origins
+still run against the fake object store, which is what a run with the bucket configured
+does today.
+"""
 import hashlib
 import json
 import shutil
@@ -10,6 +16,7 @@ from pathlib import Path
 import nastech_yaml
 import pytest
 
+from tests.ci import gh_release_store
 from tests.ci.desktop_release_roles import (
     CANARY_TAG as TAG, NATIVE_TARGETS, SHA, native_builds, needs_of, phase_result, selection_gates,
     smoke_callers, stage_step, termux_builder, universal_assembler, updater_publishers,
@@ -55,11 +62,33 @@ def transport_env(tmp_path, server, *, commit=False):
                 RELEASE_PHASE='', SMOKE_ROOT=str(tmp_path / 'smoke'), GITHUB_OUTPUT=str(tmp_path / 'output'))
 
 
+def handoff_env(tmp_path, store, *, commit=False):
+    """A smoke job's own environment against the release store: run token, no storage credential.
+
+    A staged package is a draft release asset, invisible to the world, so the fetch that
+    reads it is authenticated -- with the identity the runner already has. Everything the
+    bucket needed is emptied here, which is what makes that the tested property rather
+    than an unused credential sitting in the job.
+    """
+    return dict(store.env(), NASTECH_PAYLOAD_TAG='' if commit else TAG,
+                NASTECH_BUILD_COMMIT=SHA if commit else '',
+                RELEASE_TAG='' if commit else TAG, RELEASE_COMMIT=SHA, COMMIT_BUILD=str(commit).lower(),
+                PUBLIC_BASE='', CLOUDFLARE_R2_PUBLIC_URL='', CLOUDFLARE_R2_ACCOUNT_ID='',
+                CLOUDFLARE_R2_ACCESS_KEY_ID='', CLOUDFLARE_R2_SECRET_ACCESS_KEY='',
+                CLOUDFLARE_R2_BUCKET='', RELEASE_PHASE='',
+                SMOKE_ROOT=str(tmp_path / 'smoke'), GITHUB_OUTPUT=str(tmp_path / 'output'))
+
+
+@pytest.fixture
+def release_store(tmp_path):
+    return gh_release_store.ReleaseStore(tmp_path / 'gh')
+
+
 @pytest.mark.parametrize('commit', [False, True])
 @pytest.mark.parametrize('platform,fmt', [('darwin', 'dmg'), ('darwin', 'zip'), ('win32', 'msix'), ('win32', 'msixbundle')])
 @pytest.mark.parametrize('arch', ['arm64', 'x64'])
-def test_public_smoke_fetches_the_receipt_bound_native_format(tmp_path, r2_server, commit, platform, fmt, arch):
-    env = transport_env(tmp_path, r2_server, commit=commit)
+def test_smoke_fetches_the_receipt_bound_native_format(tmp_path, release_store, commit, platform, fmt, arch):
+    env = handoff_env(tmp_path, release_store, commit=commit)
     release = tmp_path / 'apps/desktop/release'
     release.mkdir(parents=True)
     suffix = f'mac-{arch}.{fmt}' if platform == 'darwin' else ('win.msixbundle' if fmt == 'msixbundle' else f'win-{arch}.msix')
@@ -75,47 +104,74 @@ def test_public_smoke_fetches_the_receipt_bound_native_format(tmp_path, r2_serve
         for ext in ('dmg', 'zip', 'zip.blockmap'):
             (release / f'NastechBundled-0.28.0-mac-{arch}.{ext}').write_bytes(payload)
         (release / f'{arch}-canary-mac.yml').write_bytes(payload)
-    staged = shell_step(tmp_path, r2_server, '', '', {**env, 'TARGET': f'{platform}-{arch}'},
-                        script=stage_step(jobs[producer])['run'])
+    staged = shell_step(tmp_path, None, '', '', {**env, 'TARGET': f'{platform}-{arch}'},
+                        script=stage_step(jobs[producer])['run'], store=release_store)
     assert staged.returncode == 0, staged.stdout + staged.stderr
-    assert all('/canary/' not in key for key in r2_server.store)
+    assert all('/canary/' not in key for key in release_store.keys())
     script = smoke_fetch_script()
-    # Deliberately remove every storage credential before executing public fetch.
-    public_env = {key: '' if key.startswith('CLOUDFLARE_') else value for key, value in env.items()}
-    public_env.update(PLATFORM=platform, ARCH=arch, FORMAT=fmt)
-    r2_server.requests.clear()
-    result = shell_step(tmp_path, r2_server, '', '', public_env, script=script)
+    fetch_env = {**env, 'PLATFORM': platform, 'ARCH': arch, 'FORMAT': fmt}
+    before = len(release_store.calls())
+    result = shell_step(tmp_path, None, '', '', fetch_env, script=script, store=release_store)
     assert result.returncode == 0, result.stdout + result.stderr
     selected = Path((tmp_path / 'output').read_text(encoding='utf-8-sig').strip().removeprefix('path='))
     assert selected.name == filename and selected.read_bytes() == payload
     witness = json.loads((tmp_path / 'smoke/out/download.json').read_text(encoding='utf-8-sig'))
     assert witness['commit'] == SHA and witness['artifact']['sha256'] == hashlib.sha256(payload).hexdigest()
     assert not any(file.name.startswith('Store-') for file in selected.parent.iterdir())
-    assert all(method == 'GET' and 'Authorization' not in headers for method, _, headers in r2_server.requests)
+    # The fetch consulted the store, and consulted it as a reader: nothing was
+    # staged, replaced or deleted by a leg that only came for its package.
+    reads = release_store.calls()[before:]
+    assert reads, 'the smoke fetch never reached the release store'
+    assert all('-X' not in call for call in reads), reads
 
 
 @pytest.mark.parametrize('fault', ['missing', 'ambiguous', 'wrong-commit', 'corrupt'])
-def test_download_faults_never_export_an_accepted_artifact(tmp_path, r2_server, fault):
-    env = transport_env(tmp_path, r2_server, commit=True)
+def test_download_faults_never_export_an_accepted_artifact(tmp_path, release_store, fault):
+    env = handoff_env(tmp_path, release_store, commit=True)
     filename = 'NastechBundled-0.28.0-win-x64.msix'
     payload = b'inert integrity fixture'
     row = {'path': filename, 'size': len(payload), 'sha256': hashlib.sha256(payload).hexdigest()}
     receipt = {'schema': 2, 'commit': 'b' * 40 if fault == 'wrong-commit' else SHA,
                'name': 'win32-x64', 'files': [row]}
     prefix = f'releases/commit/{SHA}/'
-    r2_server.store[prefix + filename] = (b'corrupted' if fault == 'corrupt' else payload, '"e"')
+    release_store.seed(prefix + filename, b'corrupted' if fault == 'corrupt' else payload)
     if fault == 'missing':
         receipt['files'] = [{**row, 'path': 'Store-' + filename}]
     elif fault == 'ambiguous':
         second = 'NastechBundled-0.29.0-win-x64.msix'
         receipt['files'].append({**row, 'path': second})
-        r2_server.store[prefix + second] = (payload, '"e"')
-    r2_server.store[prefix + 'handoff-win32-x64.json'] = (json.dumps(receipt).encode(), '"e"')
+        release_store.seed(prefix + second, payload)
+    release_store.seed(prefix + 'handoff-win32-x64.json', json.dumps(receipt).encode())
     script = smoke_fetch_script()
-    result = shell_step(tmp_path, r2_server, '', '', {**env, 'PLATFORM': 'win32', 'ARCH': 'x64', 'FORMAT': 'msix'}, script=script)
+    result = shell_step(tmp_path, None, '', '',
+                        {**env, 'PLATFORM': 'win32', 'ARCH': 'x64', 'FORMAT': 'msix'},
+                        script=script, store=release_store)
     assert result.returncode != 0
     assert not (tmp_path / 'output').exists()
     assert not (tmp_path / 'smoke/out/download.json').exists()
+
+
+def runs_handoff(step):
+    return 'scripts.releases.handoff' in (step.get('run') or '')
+
+
+def test_one_store_serves_the_whole_desktop_run():
+    jobs = _workflow()['jobs']
+    # Both halves of the plane that moves packages between jobs resolve the same store,
+    # from the workflow rather than per job: a leg that staged to one archive and a leg
+    # that fetched from another is a broken release, not a mismatched test.
+    assert _workflow()['env']['RELEASE_HANDOFF_STORE'] == 'github'
+    assert smoke_workflow()['env']['RELEASE_HANDOFF_STORE'] == 'github'
+    # A release-asset read is an authenticated call, and the runner's own token is the
+    # only credential it needs, so every leg that touches the handoff carries it.
+    for job in [name for name, job in jobs.items() if any(runs_handoff(s) for s in job.get('steps', []))]:
+        assert jobs[job].get('env', {}).get('GH_TOKEN'), job
+    # The staged bytes are draft assets, so the fetch that reads them names no public
+    # origin. (The channel request is a different plane and still arrives by URL.)
+    lines = smoke_fetch_script().splitlines()
+    start = next(index for index, text in enumerate(lines) if 'scripts.releases.handoff fetch' in text)
+    command = lines[start:start + 2]
+    assert not any('--public-base' in text for text in command), command
 
 
 def test_stable_phase_result_requires_smoke_but_preserves_other_phases(tmp_path, r2_server):
