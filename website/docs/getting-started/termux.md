@@ -13,17 +13,17 @@ does not run.
 :::
 
 The Termux package runs Nastech on **aarch64 (arm64-v8a)** Android devices.
-Two APT channels are published under
-`https://nastech-assets.nastechresearch.workers.dev/releases/termux/<channel>`:
+Both APT channels are signed flat repositories published as assets of the
+repository's own release tags:
 
-| Channel | APT suite | Contents |
-| --- | --- | --- |
-| `stable` | `nastech-stable` | Tagged `vMAJOR.MINOR.PATCH` releases that passed the stable release gate |
-| `canary` | `nastech-canary` | Prerelease builds from canary tags; versions carry `~canary.<timestamp>` |
+| Channel | Feed base | APT suite | Contents |
+| --- | --- | --- | --- |
+| `stable` | `https://github.com/nastechresearch/nastech-agent/releases/download/termux-repo` | `nastech-stable` | Tagged `vMAJOR.MINOR.PATCH` releases that passed the stable release gate |
+| `canary` | `https://github.com/nastechresearch/nastech-agent/releases/download/termux-repo-canary` | `nastech-canary` | Prerelease builds from canary tags; versions carry `~canary.<timestamp>` |
 
-The steps below use `stable`. To follow prereleases, replace `stable` with
-`canary` and `nastech-stable` with `nastech-canary` in steps 2 and 4. Both
-channels are signed with the same key.
+The steps below use `stable`. To follow prereleases, replace `termux-repo` with
+`termux-repo-canary` in steps 2 and 4. Both channels are signed with the same
+key, and each feed advertises only its own channel's packages.
 
 The package includes Python, Node.js, npm, uv, ripgrep, ffmpeg, and their runtime libraries.
 CI builds the native Python wheels and the TUI before it creates the package.
@@ -51,7 +51,7 @@ Do not use the desktop/server `install.sh` or a glibc Linux archive on this targ
    ```bash
    mkdir -p "$PREFIX/etc/apt/keyrings"
    curl -fsSL \
-     https://nastech-assets.nastechresearch.workers.dev/releases/termux/stable/key.asc \
+     https://github.com/nastechresearch/nastech-agent/releases/download/termux-repo/key.asc \
      -o "$PREFIX/etc/apt/keyrings/nastech-agent.asc"
    ```
 
@@ -73,7 +73,7 @@ Do not use the desktop/server `install.sh` or a glibc Linux archive on this targ
 
    ```bash
    printf '%s\n' \
-     "deb [signed-by=$PREFIX/etc/apt/keyrings/nastech-agent.asc] https://nastech-assets.nastechresearch.workers.dev/releases/termux/stable nastech-stable main" \
+     "deb [signed-by=$PREFIX/etc/apt/keyrings/nastech-agent.asc] https://github.com/nastechresearch/nastech-agent/releases/download/termux-repo ./" \
      > "$PREFIX/etc/apt/sources.list.d/nastech-agent.list"
    ```
 
@@ -112,8 +112,8 @@ pkg upgrade nastech-agent
 `nastech update` refuses to modify an APT-owned installation.
 It prints the package-manager command instead.
 Canary versions contain `~canary.<timestamp>` and sort before the corresponding
-stable version. Each suite only lists its own channel's packages; to move
-between channels, edit the channel path and suite in `nastech-agent.list`, then
+stable version. Each feed only lists its own channel's packages; to move
+between channels, edit the feed tag in `nastech-agent.list`, then
 `pkg update && pkg upgrade nastech-agent`.
 
 ## Gateway

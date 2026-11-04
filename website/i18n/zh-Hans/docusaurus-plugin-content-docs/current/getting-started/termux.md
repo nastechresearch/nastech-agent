@@ -27,7 +27,7 @@ Nastech 的 Termux 软件包适用于 aarch64（arm64-v8a）设备，目前处�
    ```bash
    mkdir -p "$PREFIX/etc/apt/keyrings"
    curl -fsSL \
-     https://nastech-assets.nastechresearch.workers.dev/releases/termux/canary/key.asc \
+     https://github.com/nastechresearch/nastech-agent/releases/download/termux-repo-canary/key.asc \
      -o "$PREFIX/etc/apt/keyrings/nastech-agent.asc"
    ```
 
@@ -45,11 +45,11 @@ Nastech 的 Termux 软件包适用于 aarch64（arm64-v8a）设备，目前处�
 
    如果不一致，请停止。不要禁用签名验证。
 
-4. 添加 canary 仓库：
+4. 添加 canary 仓库（扁平仓库，发行版字段写 `./`）：
 
    ```bash
    printf '%s\n' \
-     "deb [signed-by=$PREFIX/etc/apt/keyrings/nastech-agent.asc] https://nastech-assets.nastechresearch.workers.dev/releases/termux/canary nastech-canary main" \
+     "deb [signed-by=$PREFIX/etc/apt/keyrings/nastech-agent.asc] https://github.com/nastechresearch/nastech-agent/releases/download/termux-repo-canary ./" \
      > "$PREFIX/etc/apt/sources.list.d/nastech-agent.list"
    ```
 
