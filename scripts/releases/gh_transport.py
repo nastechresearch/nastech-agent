@@ -142,35 +142,41 @@ def _fail(method: str, target: str, result: subprocess.CompletedProcess) -> None
     raise R2RequestError(method, target, status, (result.stderr or "").strip()[:400])
 
 
-def _open_draft_for_tag(repository: str, tag: str) -> int | None:
-    """The id of a draft release carrying this tag, or None.
+def _found_release_id(repository: str, tag: str) -> int | None:
+    """The release carrying this tag, published or draft, or None.
 
-    `releases/tags/{tag}` answers for published releases only, so the paginated
-    list is the only route that can see a draft -- and a POST never refuses a tag a
-    draft already carries. Without this lookup every leg of a canary mints its own
-    release, and the six legs' assets land six apart so no publish can find them.
-    Newest first, because that is what the API returns and what a re-run converges on.
+    `releases/tags/{tag}` answers for published releases only, so the paginated list
+    is the only route that can see a draft -- and a draft is exactly what this plane
+    stages into. Missing that is how one canary became a release per leg: each leg's
+    assets landed on its own draft, and the publish job found only one of them.
     """
+    found = _api(repository, f"releases/tags/{tag}")
+    if found.returncode == 0:
+        return int(json.loads(found.stdout)["id"])
     page = 1
     while True:
-        found = _api(repository, "releases", "-f", "per_page=100", "-f", f"page={page}")
-        if found.returncode != 0:
-            _fail("GET", "releases", found)
-        rows = json.loads(found.stdout)
+        listed = _api(repository, "releases", "-f", "per_page=100", "-f", f"page={page}")
+        if listed.returncode != 0:
+            _fail("GET", "releases", listed)
+        rows = json.loads(listed.stdout)
         for row in rows:
-            if row.get("tag_name") == tag and row.get("draft"):
+            if row.get("tag_name") == tag:
                 return int(row["id"])
         if len(rows) < 100:
             return None
         page += 1
 
 
-def _release_id(repository: str, tag: str) -> int:
-    found = _api(repository, f"releases/tags/{tag}")
-    if found.returncode == 0:
-        return int(json.loads(found.stdout)["id"])
-    if draft := _open_draft_for_tag(repository, tag):
-        return draft
+def _staging_release_id(repository: str, tag: str) -> tuple[int, bool]:
+    """(release to stage this tag's keys on, whether this call had to open it).
+
+    A release just opened has no assets by definition, and reading its asset route
+    in that moment is a call that can only fail -- GitHub answers 404 for an id the
+    POST handed back seconds earlier.
+    """
+    existing = _found_release_id(repository, tag)
+    if existing is not None:
+        return existing, False
     created = _api(repository, "releases", "-X", "POST",
                    "-f", f"tag_name={tag}",
                    "-f", f"target_commitish={os.environ.get('GITHUB_SHA', 'main')}",
@@ -179,7 +185,7 @@ def _release_id(repository: str, tag: str) -> int:
                    "-F", "draft=true")
     if created.returncode != 0:
         _fail("POST", f"releases(tags/{tag})", created)
-    return int(json.loads(created.stdout)["id"])
+    return int(json.loads(created.stdout)["id"]), True
 
 
 def _assets(repository: str, release_id: int) -> list[dict]:
@@ -232,8 +238,8 @@ def put(tag: str = "", key: str = "", file: str = "", key_is_full: bool = False,
     full = key if key_is_full else staging_key_for(tag, key)
     logical, scoped = _scoped(full)
     name = asset_name(scoped)
-    release_id = _release_id(repository, release_tag_for(logical))
-    existing = _find(repository, release_id, name)
+    release_id, opened = _staging_release_id(repository, release_tag_for(logical))
+    existing = None if opened else _find(repository, release_id, name)
     if existing is not None:
         if immutable:
             if _read_asset(repository, existing) == (os.path.getsize(file), file_sha256(file)):
@@ -259,10 +265,16 @@ def put(tag: str = "", key: str = "", file: str = "", key_is_full: bool = False,
 
 
 def _locate(key: str) -> tuple[str, dict]:
-    """(repository, asset) for an object key, or a 404 request error."""
+    """(repository, asset) for an object key, or a 404 request error.
+
+    A read never opens a release: the key it asks for is staged on a release the
+    plane already opened, and if none carries the tag then nothing is staged.
+    """
     _token, repository, _staging = credentials()
     logical, scoped = _scoped(key)
-    release_id = _release_id(repository, release_tag_for(logical))
+    release_id = _found_release_id(repository, release_tag_for(logical))
+    if release_id is None:
+        raise R2RequestError("GET", key, 404)
     asset = _find(repository, release_id, asset_name(scoped))
     if asset is None:
         raise R2RequestError("GET", key, 404)
@@ -361,7 +373,9 @@ def prune(key_prefix: str) -> list[str]:
     if key_prefix.endswith("/"):
         scoped += "/"
     name = asset_name(scoped)
-    release_id = _release_id(repository, release_tag_for(logical))
+    release_id = _found_release_id(repository, release_tag_for(logical))
+    if release_id is None:
+        return []
     doomed = [row for row in _assets(repository, release_id) if str(row.get("name", "")).startswith(name)]
     for row in doomed:
         deleted = _api(repository, f"releases/assets/{row['id']}", "-X", "DELETE")

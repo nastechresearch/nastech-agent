@@ -21,10 +21,12 @@ from scripts.releases import gh_transport, handoff, r2
 class FakeReleaseApi:
     """The release-asset endpoints the transport uses, kept in memory.
 
-    Faithful in the two ways that let duplicate drafts reach production:
-    `releases/tags/{tag}` answers 404 for a draft, and a POST happily mints a
-    second release for a tag a draft already carries -- so a store that finds its
-    release only by the tag route splits one canary across six of them.
+    Faithful in the three ways that let broken handoff staging reach production:
+    `releases/tags/{tag}` answers 404 for a draft, a POST mints a second release for
+    a tag a draft already carries, and the release a POST hands back has no readable
+    asset route until its first upload.  So a store that finds its release only by
+    the tag route splits one canary across a draft per leg, and the leg that opens
+    one can lose the read it does next.
     """
 
     def __init__(self):
@@ -36,6 +38,9 @@ class FakeReleaseApi:
         self.minted: dict[str, int] = {}
         self.assets: dict[int, list[dict]] = {}
         self.payloads: dict[int, bytes] = {}
+        # The release the last POST opened: its asset route answers 404 until the
+        # first upload, which is how run 41852094357 lost the win32-x64 leg.
+        self.freshly_minted: int | None = None
         self.next_id = 1
 
     def create(self, tag: str, *, draft: bool = True) -> int:
@@ -70,15 +75,20 @@ class FakeReleaseApi:
                 return self._done(json.dumps(rows[(page - 1) * 100:page * 100]))
             tag = next(field.split("=", 1)[1] for field in self._fields(argv)
                        if field.startswith("tag_name="))
-            return self._done(json.dumps({"id": self.create(tag), "draft": True}))
+            rid = self.create(tag)
+            self.freshly_minted = rid
+            return self._done(json.dumps({"id": rid, "draft": True}))
         if m := re.fullmatch(r"releases/(\d+)/assets\?name=(.*)", route):
             payload = open(argv[argv.index("--input") + 1], "rb").read()
             asset = {"id": self.next_id, "name": unquote(m.group(2)), "size": len(payload)}
             self.next_id += 1
             self.assets[int(m.group(1))].append(asset)
             self.payloads[asset["id"]] = payload
+            self.freshly_minted = None
             return self._done(json.dumps(asset))
         if m := re.fullmatch(r"releases/(\d+)/assets", route):
+            if int(m.group(1)) == self.freshly_minted:
+                return self._done(returncode=1, stderr="HTTP 404: Not Found")
             rows = self.assets[int(m.group(1))]
             page = int(next(field.split("=")[1] for field in self._fields(argv)
                             if field.startswith("page=")))
@@ -130,6 +140,19 @@ def test_a_tag_stages_on_its_own_release_and_a_commit_build_needs_no_new_ref(sto
                      file=written(tmp_path, "app.msix", b"b"), key_is_full=True, immutable=True)
     assert sorted(store.releases) == sorted(["v0.22.0", gh_transport.STAGING_RELEASE])
     assert sum(len(rows) for rows in store.assets.values()) == 2
+
+
+def test_the_leg_that_opens_its_release_uploads_to_it_instead_of_reading_it(store, tmp_path):
+    """Run 41852094357, win32-x64: the leg POSTed its release at 15:24:39 and the asset
+    route of the id it was handed back answered 404 in the same second, so the leg died
+    having staged nothing.  A release opened a moment ago has no assets by definition --
+    reading for one is a call that can only fail."""
+    tag = "v0.21.5+canary.20261104T045649Z"
+    key = f"releases/tag/{tag}/win32-x64/app.zip"
+    gh_transport.put(key=key, file=written(tmp_path, "app.zip", b"z"),
+                     key_is_full=True, immutable=True)
+    assert [row["name"] for row in store.assets[store.releases[tag]]] == \
+        [gh_transport.asset_name(key)]
 
 
 def test_every_leg_of_one_unpublished_tag_shares_the_draft_the_first_leg_opened(store, tmp_path):
@@ -228,7 +251,9 @@ def test_a_missing_receipt_is_reported_as_missing_work(store):
     store.create("v0.22.0")
     with pytest.raises(handoff.MissingReceipt):
         handoff.read_commit_receipt("b" * 40, "termux")
-    assert store.releases["nastech-handoff-staging"]
+    # Looking for nothing used to open the staging release to look inside it, which
+    # is how a failed read added to the very draft sprawl the publish job drowns in.
+    assert gh_transport.STAGING_RELEASE not in store.releases
 
 
 def test_the_store_needs_a_token_and_a_repository(store, monkeypatch):
