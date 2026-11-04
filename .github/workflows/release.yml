@@ -70,6 +70,15 @@ concurrency:
   group: stable-release-cut
   cancel-in-progress: false
 
+env:
+  # Pin the store seams to the GitHub-native plane, exactly as
+  # desktop-bundled-release.yml (the publication plane this fork runs on) does.
+  # Without them a stale non-secret bucket variable would silently keep this
+  # controller on R2; an explicitly selected r2 store still wins here, so an
+  # in-flight R2 release is never repointed mid-run.
+  RELEASE_CHANNEL_STORE: github
+  RELEASE_HANDOFF_STORE: github
+
 jobs:
   cut:
     name: Claim the attempt and start the gate

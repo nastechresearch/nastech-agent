@@ -128,17 +128,17 @@ class GithubChannelStore:
 
     def keys(self, prefix: str) -> list[str]:
         prefix = prefix.removesuffix("/")
-        scope_len = len(prefix) + 1 if prefix else 0
         status, tree = self._api(f"/repos/{self.repository}/git/trees/{self.branch}?recursive=1")
         if status != 200:
             raise ChannelError(f"Control-plane listing failed: HTTP {status}")
         if tree.get("truncated"):
             raise ChannelError("Control-plane tree listing was truncated")
-        keys = sorted(
-            blob["path"][scope_len:] for blob in tree.get("tree", [])
+        # Same surface as R2ChannelStore.keys: FULL logical keys, prefix
+        # included -- ChannelPublisher.list validates them as channel keys.
+        return sorted(
+            blob["path"] for blob in tree.get("tree", [])
             if blob.get("type") == "blob" and blob["path"].startswith(prefix + "/" if prefix else "")
         )
-        return keys
 
     # -- public visibility convergence --------------------------------------
 

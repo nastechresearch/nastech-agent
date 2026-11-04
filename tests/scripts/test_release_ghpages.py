@@ -145,7 +145,9 @@ class TestGithubChannelStore:
             s.put("releases/channels/main.json", b"a")
             s.put("releases/channels/stable.json", b"b")
             s.put("releases/termux/key.asc", b"c")
-            assert s.keys("releases/channels/") == ["main.json", "stable.json"]
+            # The documented surface is R2ChannelStore's: full logical keys.
+            assert s.keys("releases/channels/") == ["releases/channels/main.json",
+                                                    "releases/channels/stable.json"]
             assert s.keys("releases/missing/") == []
 
     def test_oversized_and_non_release_keys_are_refused_up_front(self):

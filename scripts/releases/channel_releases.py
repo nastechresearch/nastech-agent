@@ -1,4 +1,9 @@
-"""Advance protected R2 heads from the release transaction's accepted native bytes."""
+"""Advance the protected channel heads from the release transaction's accepted native bytes.
+
+The store is SELECTED, never assumed: every construction and write here goes
+through ``scripts.releases.ghpages.configured_store`` (R2 while an operator
+explicitly names it, the GitHub-native control plane otherwise), so a release
+with zero R2 env publishes through the seam like every other writer."""
 from __future__ import annotations
 
 import argparse
@@ -11,12 +16,13 @@ import tempfile
 from datetime import datetime, timezone, UTC
 
 from nastech_cli.release_channels import (
-    ChannelError, build_prefix, canonical_json, validate_identity,
+    ChannelError, build_prefix, canonical_json, validate_identity, validate_repository,
 )
 from scripts.bundles.channel_artifacts import assemble
 from scripts.releases import handoff, lanes as lane_set, r2, stable
-from scripts.releases.channels import ChannelPublisher, R2ChannelStore
+from scripts.releases.channels import ChannelPublisher, write_immutable_feeds
 from scripts.releases.progress import log
+from scripts.releases.r2_scope import channel_public_base
 from scripts.releases.versioning import parse_attempt_ref
 
 NATIVE_LEGS = ("darwin-arm64", "darwin-x64", "win32-arm64", "win32-x64", "windows-universal")
@@ -29,10 +35,10 @@ CANARY_NEEDS = ("validate", "build-win32-x64", "build-win32-arm64",
 
 
 def select_channel(publisher: ChannelPublisher, policy: str) -> str:
-    """R2 records select the name; historical labels are first-rollout defaults only."""
+    """Channel records select the name; historical labels are first-rollout defaults only."""
     matches = [record for record in publisher.list() if record["policy"] == policy]
     if len(matches) > 1:
-        raise ChannelError("Ambiguous protected policy in R2; select one authority before publishing")
+        raise ChannelError("Ambiguous protected policy in the channel store; select one authority before publishing")
     if matches:
         if matches[0]["state"] != "active":
             raise ChannelError("Protected channel is retired")
@@ -236,10 +242,25 @@ def accepted_stable(publisher: ChannelPublisher, env: dict, tag: str, commit: st
     return candidate
 
 
+def configured_channel_publisher(repository: str, authorize, verify_build=None) -> ChannelPublisher:
+    """Publisher seam: the store and its public origin move together.
+
+    ``configured_store`` honors RELEASE_CHANNEL_STORE explicitly (R2 keeps
+    working while an operator selects it); the matching origin is
+    ``channel_public_base()``, so a reader never asks for keys the selected
+    writer did not write.
+    """
+    from scripts.releases.ghpages import configured_store
+
+    repository = validate_repository(repository)
+    return ChannelPublisher(configured_store(repository), repository,
+                            channel_public_base(), authorize=authorize, verify_build=verify_build)
+
+
 def stable_head_version(env: dict) -> str | None:
     """Return the protected stable head's source version, if one exists."""
-    publisher = ChannelPublisher(R2ChannelStore(*r2.credentials()), env["GITHUB_REPOSITORY"],
-                                 r2.public_base_url(), authorize=lambda _action, _record: None)
+    publisher = configured_channel_publisher(env["GITHUB_REPOSITORY"],
+                                             authorize=lambda _action, _record: None)
     current = publisher._read(select_channel(publisher, "stable-release"))
     if current is None or current[0]["head"] is None:
         return None
@@ -252,8 +273,10 @@ def stable_head_version(env: dict) -> str | None:
 
 
 def read_archive_bytes(key: str) -> bytes:
-    """Read one immutable object from the release archive."""
-    store = R2ChannelStore(*r2.credentials())
+    """Read one immutable object from the release archive through the selected store."""
+    from scripts.releases.ghpages import configured_store
+
+    store = configured_store(validate_repository(os.environ.get("GITHUB_REPOSITORY")))
     found = store.get(key)
     if found is None:
         raise ChannelError(f"Release archive object is unavailable: {key}")
@@ -262,9 +285,6 @@ def read_archive_bytes(key: str) -> bytes:
 
 def advance_stable(env: dict, release: dict, root: Path) -> dict:
     """Advance one published release from its immutable tag-scoped receipts."""
-    creds, base, bucket = r2.credentials()
-    R2ChannelStore(creds, base, bucket)
-    public_base = r2.public_base_url()
     key = f"releases/tag/{release['claim_tag']}/release-candidates.json"
     digest = hashlib.sha256(read_archive_bytes(key)).hexdigest()
     log(f"Candidate manifest {key}: sha256 {digest} "
@@ -277,7 +297,7 @@ def advance_stable(env: dict, release: dict, root: Path) -> dict:
         "RELEASE_COMMIT": release["commit"],
         "RELEASE_CLAIM_TAG": release["claim_tag"],
         "RELEASE_CLAIM_OBJECT": release["claim_object"],
-        "CANDIDATE_MANIFEST_URL": f"{public_base}/{key}",
+        "CANDIDATE_MANIFEST_URL": f"{channel_public_base()}/{key}",
         "CANDIDATE_MANIFEST_SHA256": digest,
     }
     return publish_release("stable-release", scoped_env, root)
@@ -480,9 +500,9 @@ def publish_release(policy: str, env: dict, root: Path) -> dict:
     payload_tag = f"v{parsed[0]}" if parsed else tag
     if env.get("R2_DISPOSABLE_RUN"):
         raise ChannelError("Disposable receiver builds cannot enter production release publication")
-    publisher = ChannelPublisher(R2ChannelStore(*r2.credentials()), env["GITHUB_REPOSITORY"],
-                                 r2.public_base_url(), authorize=lambda action, record:
-                                 admit_transaction(policy, env, require_published=True))
+    publisher = configured_channel_publisher(
+        env["GITHUB_REPOSITORY"],
+        authorize=lambda action, record: admit_transaction(policy, env, require_published=True))
     name = select_channel(publisher, policy)
     log(f"Channel advance: policy={policy} channel={name} archive={tag} payload={payload_tag} "
         f"commit={commit[:10]}")
@@ -492,7 +512,7 @@ def publish_release(policy: str, env: dict, root: Path) -> dict:
         # Explicit bootstrap may have reserved another opaque token for the same app.
         identity["token"] = current[0]["identity"]["token"]
         if identity != current[0]["identity"]:
-            raise ChannelError("Protected R2 identity differs from the existing product")
+            raise ChannelError("Protected channel identity differs from the existing product")
     final_claim = stable.final_context({**env, "RELEASE_TAG": payload_tag})[2] \
         if policy == "stable-release" else None
     if final_claim is not None and not lane_set.advances_desktop(final_claim["lanes"]):
@@ -554,11 +574,7 @@ def publish_release(policy: str, env: dict, root: Path) -> dict:
         match_accepted_packages(manifest, accepted)
     prefix = build_prefix(request["buildId"])
     log(f"Build {request['buildId']}: writing {len(feeds)} immutable feeds under {prefix}")
-    for file in feeds:
-        key = prefix + file.relative_to(root).as_posix()
-        r2.put(tag=tag, key=key, file=str(file), key_is_full=True, immutable=True)
-        if publisher.reader.read_bytes(key) != file.read_bytes():
-            raise ChannelError("Immutable protected feed public read-back differs")
+    write_immutable_feeds(publisher.store, publisher.reader, prefix, root, feeds)
     publisher._write(prefix + "build.json", manifest)
 
     def qualified(pinned: dict, actual: dict) -> bool:
