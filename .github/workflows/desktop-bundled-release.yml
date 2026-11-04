@@ -503,8 +503,6 @@ jobs:
       NASTECH_PAYLOAD_VERSION: ${{ needs.validate.outputs.payload-version }}
       # Signature outputs are separate from the prepared dependency snapshot.
       ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
-      CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
-      CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
     steps: &win32-steps
       - name: Exclude build write paths from Defender scanning
         shell: powershell
@@ -553,6 +551,11 @@ jobs:
         env:
           CHANNEL_BUILD: ${{ needs.validate.outputs.channel-build }}
           CHANNEL_REQUEST_SHA256: ${{ needs.validate.outputs.channel-request-sha256 }}
+          # A disposable channel run scopes its request under the configured
+          # bucket root (scripts/releases/r2_scope.py's channel_public_base raises
+          # without it). Only the public origin: reading the pinned control plane
+          # needs no object-store credential.
+          CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
         run: python -m scripts.releases.channel_publish request --out "$RUNNER_TEMP/channel-request.json"
 
       - name: Restore desktop dependency inputs
@@ -661,6 +664,22 @@ jobs:
           ( while sleep 240; do mint || true; done ) &
           echo "AZURE_FEDERATED_TOKEN_FILE=$file" >> "$GITHUB_ENV"
 
+      # The shipped app bakes its updater feed origin into app-update.yml:
+      # apps/desktop/electron-builder.config.cjs reads CLOUDFLARE_R2_PUBLIC_URL and
+      # emits a generic provider for it. The pin moved the handoff plane, not the
+      # feed plane -- the darwin feed is still written by the r2 finalizer and the
+      # Windows appinstaller feed by release_artifacts publish-appinstaller, both
+      # under the bucket origin -- so a bundled build that lost the var would ship
+      # an updater pointed at a feed that does not exist. Only the public origin
+      # crosses here, through the same GITHUB_ENV hand this workflow already uses
+      # for APPLE_API_KEY and DEVELOPER_DIR: no account id, key or bucket name
+      # reaches any step of this job.
+      - name: Export the feed origin the builder bakes
+        shell: bash
+        env:
+          FEED_ORIGIN: ${{ needs.validate.outputs.public-root }}
+        run: echo "CLOUDFLARE_R2_PUBLIC_URL=$FEED_ORIGIN" >> "$GITHUB_ENV"
+
       - name: Build and package
         shell: powershell
         timeout-minutes: 900
@@ -749,9 +768,6 @@ jobs:
         env:
           TARGET: ${{ matrix.target.label }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.sha }}
-          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
           SKIP_SIGNED: ${{ inputs.skip-signed }}
         run: |
           root="$GITHUB_WORKSPACE/apps/desktop/release"
@@ -776,9 +792,6 @@ jobs:
         if: needs.validate.outputs.channel-build == '' && (inputs.upload_release == true || inputs.release-phase == 'candidate' || inputs.build_commit != '')
         shell: bash
         env:
-          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
           TARGET: ${{ matrix.target.label }}
           RELEASE_PHASE: ${{ inputs.release-phase }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.sha }}
@@ -942,8 +955,6 @@ jobs:
       NASTECH_BUILD_COMMIT: ${{ inputs.build_commit != '' && needs.validate.outputs.channel-build == '' && needs.validate.outputs.sha || '' }}
       NASTECH_RELEASE_COMMIT: ${{ inputs.release-phase != '' && needs.validate.outputs.sha || '' }}
       NASTECH_PAYLOAD_VERSION: ${{ needs.validate.outputs.payload-version }}
-      CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
-      CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
     steps: &darwin-steps
       - name: Disable Spotlight indexing for DMG staging
         # Spotlight indexes the freshly-mounted dmg staging image past
@@ -979,6 +990,11 @@ jobs:
         env:
           CHANNEL_BUILD: ${{ needs.validate.outputs.channel-build }}
           CHANNEL_REQUEST_SHA256: ${{ needs.validate.outputs.channel-request-sha256 }}
+          # A disposable channel run scopes its request under the configured
+          # bucket root (scripts/releases/r2_scope.py's channel_public_base raises
+          # without it). Only the public origin: reading the pinned control plane
+          # needs no object-store credential.
+          CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
         run: python -m scripts.releases.channel_publish request --out "$RUNNER_TEMP/channel-request.json"
 
       - name: Restore desktop dependency inputs
@@ -1027,6 +1043,12 @@ jobs:
           APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          # The gate still refuses when a publishing leg has no feed plane. Both
+          # vars are declared here rather than inherited from the job: the job
+          # stages through the pinned handoff seam and must hold no bucket env,
+          # and a gate whose var disappeared would pass on the empty string.
+          CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
+          CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
         run: |
           missing=()
           [ -z "$CSC_LINK" ] && missing+=(CSC_LINK)
@@ -1086,6 +1108,17 @@ jobs:
           path: ${{ github.workspace }}/.cache/mac-payload-signatures
           key: mac-signatures-v1-${{ matrix.target.label }}
           restore-keys: mac-signatures-v1-${{ matrix.target.label }}-
+
+      # Same contract as the Windows leg: apps/desktop/electron-builder.config.cjs
+      # bakes CLOUDFLARE_R2_PUBLIC_URL into the app's updater feed origin, and the
+      # darwin feed that origin names is still written to the bucket by
+      # publish-darwin-updater. The bucket credential itself stays out of this job:
+      # the leg stages through the pinned handoff seam.
+      - name: Export the feed origin the builder bakes
+        shell: bash
+        env:
+          FEED_ORIGIN: ${{ needs.validate.outputs.public-root }}
+        run: echo "CLOUDFLARE_R2_PUBLIC_URL=$FEED_ORIGIN" >> "$GITHUB_ENV"
 
       - name: Build and package
         shell: bash
@@ -1206,9 +1239,6 @@ jobs:
         env:
           TARGET: ${{ matrix.target.label }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.sha }}
-          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
           SKIP_SIGNED: ${{ inputs.skip-signed }}
         run: |
           root="$GITHUB_WORKSPACE/apps/desktop/release"
@@ -1231,9 +1261,6 @@ jobs:
         if: needs.validate.outputs.channel-build == '' && (inputs.upload_release == true || inputs.release-phase == 'candidate' || inputs.build_commit != '')
         shell: bash
         env:
-          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
           TARGET: ${{ matrix.target.label }}
           RELEASE_PHASE: ${{ inputs.release-phase }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.sha }}
@@ -1624,11 +1651,6 @@ jobs:
       # The paths build-win32-x64 saves its bundle-assembly caches from.
       ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/desktop-inputs/packager/builder
       npm_config_cache: ${{ github.workspace }}/.cache/desktop-inputs/npm
-      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-      CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
-      CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
       AZURE_SIGN_ENDPOINT: ${{ vars.AZURE_SIGN_ENDPOINT }}
       AZURE_SIGN_ACCOUNT: ${{ vars.AZURE_SIGN_ACCOUNT }}
       AZURE_SIGN_PROFILE: ${{ vars.AZURE_SIGN_PROFILE }}
@@ -1654,10 +1676,22 @@ jobs:
         env:
           CHANNEL_BUILD: ${{ needs.validate.outputs.channel-build }}
           CHANNEL_REQUEST_SHA256: ${{ needs.validate.outputs.channel-request-sha256 }}
+          # Same disposable-scope requirement as the native legs: reading the
+          # pinned request needs the configured public root, never the bucket key.
+          CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
         run: python -m scripts.releases.channel_publish request --out "$RUNNER_TEMP/channel-request.json"
 
       - name: Set up the locked build toolchain
         uses: ./.github/actions/setup-pm
+        # archive-inputs mirrors this job's pinned toolchain inputs through
+        # scripts/ci/setup_toolchain.py, which builds an R2 archive reader: the
+        # four credentials belong on the step that runs it, not on the job whose
+        # handoff steps fetch and stage the bundle through the pinned seam.
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
         with:
           toolchain: all
           archive-inputs: ${{ inputs.disposable_run == '' && inputs.disposable_channel == '' }}
@@ -1775,9 +1809,16 @@ jobs:
         # acceptance still blocks publication. A Store-only candidate has no signed bundle to receipt.
         if: inputs.release-phase == 'candidate' && inputs.skip-signed != true
         id: receipt
+        # scripts/releases/stable.py stage-receipt still r2.put()s the signed
+        # receipt into the immutable attempt archive, so this step carries the
+        # bucket's four credentials and the origin its rows name.
         env:
           RELEASE_TAG: ${{ inputs.tag }}
           CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
         run: python -m scripts.releases.stable stage-receipt --receipt win32-bundle
 
   publish-channel:
@@ -1866,11 +1907,6 @@ jobs:
       NASTECH_PAYLOAD_TAG: ${{ inputs.tag }}
       NASTECH_DESKTOP_VARIANT: bundled
       RELEASE_COMMIT: ${{ needs.validate.outputs.sha }}
-      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-      CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
-      CLOUDFLARE_R2_PUBLIC_URL: ${{ vars.CLOUDFLARE_R2_PUBLIC_URL }}
     steps:
       - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
@@ -1887,6 +1923,16 @@ jobs:
             --name windows-universal --root staged --include 'NastechBundled-*-win.msixbundle'
       - name: Publish identical tested bytes without rebuilding
         shell: bash
+        # `release_artifacts publish-appinstaller` still writes the Windows feed
+        # and its appinstaller to the bucket, so this node carries the bucket's
+        # five variables; the handoff fetch above carries none, because the
+        # pinned seam resolves the store from RELEASE_HANDOFF_STORE.
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_PUBLIC_URL: ${{ vars.CLOUDFLARE_R2_PUBLIC_URL }}
         run: |
           node --input-type=module -e '
             import identity from "./apps/desktop/product-identity.cjs";
@@ -1950,11 +1996,6 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       NASTECH_PAYLOAD_TAG: ${{ inputs.tag }}
-      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-      CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
-      CLOUDFLARE_R2_PUBLIC_URL: ${{ vars.CLOUDFLARE_R2_PUBLIC_URL }}
     steps:
       - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
@@ -1997,6 +2038,15 @@ jobs:
         # referenced by the feed are verified before the pointer uploads
         # (feed-side); the pointer upload is the last write of the run.
         shell: bash
+        # This is the legacy darwin feed transport: r2.py's finalize builds its
+        # own signed requests, so this node -- and only this node -- carries the
+        # bucket's five variables until a store seam exists for that transport.
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
+          CLOUDFLARE_R2_PUBLIC_URL: ${{ vars.CLOUDFLARE_R2_PUBLIC_URL }}
         run: |
           python -m scripts.ci.python_packages ruamel.yaml==0.18.17 -- -m scripts.releases.r2 finalize --tag "$NASTECH_PAYLOAD_TAG" --dir staged
 
@@ -2017,11 +2067,6 @@ jobs:
       # before the release exists); gh needs GH_TOKEN or it errors out and
       # the gate misreads that as "release not found".
       GH_TOKEN: ${{ github.token }}
-      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-      CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
-      CLOUDFLARE_R2_PUBLIC_URL: ${{ vars.CLOUDFLARE_R2_PUBLIC_URL }}
     steps:
       # Use the admitted commit, not a tag that can move after validation.
       - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
@@ -2035,6 +2080,16 @@ jobs:
       - name: Set up the locked build toolchain
         id: pm
         uses: ./.github/actions/setup-pm
+        # archive-inputs mirrors the locked toolchain inputs from the pinned
+        # object archive (scripts/ci/setup_toolchain.py -> r2.credentials()), so
+        # the four credentials sit on this step instead of the job: every other
+        # step here stages the deb through the pinned handoff seam, which reads
+        # the draft release with the job token and must be handed no bucket env.
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
         with:
           # scripts/termux/build.py builds the TUI with a bare `node`, and every
           # workspace pins engines >=26 while this image ships 22: install the
@@ -2087,6 +2142,14 @@ jobs:
 
       - name: Preserve and retrieve pinned inputs
         shell: bash
+        # The dependency mirror: scripts/ci/archive_inputs.py re-downloads every
+        # pinned input from the bucket, so it carries the four credentials that
+        # r2.credentials() requires.
+        env:
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
         run: python -m scripts.ci.archive_inputs --target linux-arm64-bionic --payload termux-build/payload --store "$NASTECH_RUNTIME_DIR"
 
       - name: Build CPython into the payload
