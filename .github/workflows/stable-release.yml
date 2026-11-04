@@ -31,17 +31,18 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Pin both store seams to the plane the desktop legs already write to.
+  # Pin the handoff seam to the plane the desktop legs already write to.
   # Unset, `handoff.store()` falls back to the bucket variable, so with
   # CLOUDFLARE_R2_BUCKET configured here the candidate merge would look for leg
   # packages in the object store while the legs staged them as draft release
-  # assets -- a missing handoff for work that succeeded. The channel pin keeps
-  # the sequencer's head advance on the same store as the workflow that advances
-  # it (desktop-bundled-release.yml pins this pair). An operator-selected r2
+  # assets -- a missing handoff for work that succeeded. An operator-selected r2
   # still wins at the seam, so an in-flight R2 release is never repointed
-  # mid-run.
+  # mid-run. The channel seam stays unpinned here: this workflow's head advance
+  # still builds an R2 store directly while `r2.public_base_url()` answers the
+  # channel pin with a Pages origin, so pinning it would name one store's bytes
+  # with another store's URL. It belongs with the change that moves a store and
+  # its public origin together.
   RELEASE_HANDOFF_STORE: github
-  RELEASE_CHANNEL_STORE: github
 
 jobs:
   admit:
