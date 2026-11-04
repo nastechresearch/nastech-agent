@@ -88,6 +88,10 @@ def channel_public_base(explicit: str | None = None) -> str:
         if explicit is not None and explicit.rstrip("/") != expected:
             raise ValueError("Disposable channel archive authority mismatch")
         return expected
+    if explicit is None and os.environ.get("RELEASE_CHANNEL_STORE", "r2") == "github":
+        # The fork's control plane lives on GitHub Pages, not the worker.
+        from scripts.releases.ghpages import pages_public_base
+        return pages_public_base()
     from nastech_cli.release_channels import public_base
     if explicit is not None:
         return public_base(explicit)

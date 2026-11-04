@@ -218,6 +218,10 @@ env:
   # One dispatch: a disposable-mode run leases its namespace by run id alone
   # (no attempt suffix) so "re-run failed jobs" re-enters the same namespace.
   R2_DISPOSABLE_RUN: ${{ inputs.disposable_run || (inputs.disposable_channel != '' && github.run_id) || '' }}
+  # The control plane (channels, feeds, pages, APT indexes) is GitHub-native:
+  # scripts/releases/ghpages.py commits records to this repository tree and
+  # Deploy Site publishes them; the workers.dev origin is retired.
+  RELEASE_CHANNEL_STORE: github
   RELEASE_CLAIM_TAG: ${{ inputs.claim-tag }}
   RELEASE_CLAIM_OBJECT: ${{ inputs.claim-object }}
 

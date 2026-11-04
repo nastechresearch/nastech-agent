@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - 'website/**'
+      - 'releases/**'  # control-plane commits from the release plane must republish Pages
       - 'skills/**'
       - 'optional-skills/**'
       # Catalog entry/removal merges must republish /docs/api/plugin-catalog.json —
@@ -192,6 +193,13 @@ jobs:
           <title>Nastech Agent</title>
           <p><a href="./docs/">Open Nastech Agent documentation</a></p>
           HTML
+          # The fork's release control plane lives in the repository tree
+          # (scripts/releases/ghpages.py commits it via the Contents API) and
+          # is published by this very build, so ChannelReader speaks the same
+          # /releases/… protocol Pages now serves.
+          if [ -d releases ]; then
+            cp -r releases _site/releases
+          fi
           # llms.txt / llms-full.txt are also published at the site root
           # (https://nastechresearch.github.io/nastech-agent/llms.txt) because some
           # agents and IDE plugins probe the classic root-level path rather
