@@ -294,3 +294,30 @@ def test_finalize_refuses_the_github_pointer_when_a_staged_asset_is_corrupt(rele
     with pytest.raises(ValueError, match="checksum mismatch"):
         darwin.finalize(tag="v0.28.0", dir=str(staged))
     assert gh_transport.read_key("releases/darwin/stable/stable-mac.yml") is None
+
+
+def test_finalize_sizes_promoted_artifacts_instead_of_downloading_them(release_store, tmp_path):
+    """The promotion path (verify_bytes=False) keeps its cheap read on GitHub:
+    the feed's size claim is checked against the asset listing, and no
+    multi-GB artifact is streamed back down to learn how big it is."""
+    legs, bytes_by_key = _inputs()
+    staged = stage_github_handoff(tmp_path, "v0.28.0", legs, bytes_by_key)
+    darwin.finalize(tag="v0.28.0", dir=str(staged), verify_bytes=False)
+    assert gh_transport.read_key("releases/darwin/stable/stable-mac.yml") == \
+        merge_mac_feeds(legs, "v0.28.0")["text"]
+    artifact_ids = {row["id"] for row in release_store.assets[release_store.releases["v0.28.0"]]}
+    assert not artifact_ids & set(release_store.byte_reads)
+
+
+def test_promotion_fails_hard_when_a_staged_asset_moved(release_store, tmp_path):
+    """A size-only check is not a soft one: an asset whose reported size no
+    longer matches the feed's claim aborts before the pointer is written."""
+    legs, bytes_by_key = _inputs()
+    staged = stage_github_handoff(tmp_path, "v0.28.0", legs, bytes_by_key)
+    key = next(iter(bytes_by_key))
+    asset = next(row for rows in release_store.assets.values() for row in rows
+                 if row["name"] == gh_transport.asset_name(key))
+    asset["size"] += 1
+    with pytest.raises(ValueError, match="size mismatch"):
+        darwin.finalize(tag="v0.28.0", dir=str(staged), verify_bytes=False)
+    assert gh_transport.read_key("releases/darwin/stable/stable-mac.yml") is None

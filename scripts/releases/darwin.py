@@ -190,8 +190,9 @@ def _feed_etag(text: str) -> str:
 def _handoff_digests(directory: str) -> dict[str, dict[str, Any]]:
     """The size and sha256 the fetched handoff receipts bind, keyed by object.
 
-    A release asset has no size-only read, so the GitHub transport can only
-    check an artifact against the receipt that names its bytes."""
+    The GitHub transport verifies an artifact against the receipt that names
+    its bytes; where no receipt binds one, publication refuses rather than
+    point a feed at unverified bytes."""
     from scripts.releases import handoff as handoff_module
 
     digests: dict[str, dict[str, Any]] = {}
@@ -221,9 +222,9 @@ def finalize(tag: str, dir: str, variant: str | None = None, archive: str | None
 
     ``verify_bytes=False`` (stable promotion of an accepted candidate, whose
     artifacts are already bound by receipt sha256) checks each artifact's
-    remote size instead of streaming multi-GB packages back down; a release
-    asset cannot be sized without reading it, so the GitHub arm streams the
-    full bytes against their receipt either way."""
+    remote size instead of streaming multi-GB packages back down; the GitHub
+    arm takes that size off the release API's asset listing, the same size-
+    only read the R2 arm gets from a HEAD."""
     if variant and variant != "light":
         raise ValueError("Unknown macOS variant")
     from scripts.releases.handoff import store
@@ -290,6 +291,14 @@ def finalize(tag: str, dir: str, variant: str | None = None, archive: str | None
                 raise ValueError(f"No handoff receipt binds {key}")
             if row["size"] != file_entry["size"]:
                 raise ValueError(f"Feed artifact size differs from its receipt: {key}")
+            if not verify_bytes:
+                # The receipt already binds these bytes' sha256, so the remote
+                # size is the whole promotion check -- the same one the R2 arm
+                # makes with a HEAD, taken off the asset listing without
+                # streaming the package back down.
+                if transport.object_size(key) != file_entry["size"]:
+                    raise ValueError(f"Artifact size mismatch: {key}")
+                return
             with tempfile.TemporaryDirectory() as staging:
                 file = Path(staging) / os.path.basename(key)
                 transport.download_object(creds, base, bucket, key, file, now,

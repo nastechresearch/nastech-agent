@@ -52,6 +52,7 @@ __all__ = [
     "get_object",
     "is_full_sha",
     "key_for_asset",
+    "object_size",
     "owns_origin",
     "prune",
     "public_artifact_path",
@@ -332,6 +333,19 @@ def read_key(key: str) -> str | None:
         path = Path(directory) / "object"
         _write_asset(repository, asset["id"], path)
         return path.read_text(encoding="utf-8-sig")
+
+
+def object_size(key: str) -> int:
+    """The size the release API reports for an object, without reading its bytes.
+
+    The asset listing carries a per-asset size, so a promoted artifact can be
+    sized the way the R2 arm sizes it with a HEAD instead of streaming a
+    multi-GB package back down. A missing asset raises the same 404 request
+    error every other read here raises: a caller never proceeds on a size it
+    could not read.
+    """
+    _repository, asset = _locate(key)
+    return int(asset["size"])
 
 
 def get_object(creds: str, base: str, bucket: str, key: str, now: str = "") -> str | None:
