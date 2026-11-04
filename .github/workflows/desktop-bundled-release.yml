@@ -673,10 +673,13 @@ jobs:
           SKIP_SIGNED: ${{ inputs.skip-signed }}
           SKIP_STORE: ${{ inputs.skip-store }}
         run: |
-          if ($env:SKIP_SIGNED -ne 'true') {
-              python scripts/bundles/desktop.py --prepared "$env:RUNNER_TEMP/desktop-job/prepared.json" --variant bundled
-              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
+          # The bundled package is built whether or not it can be signed: the lane ships
+          # these bytes, the architecture audit scans them and the handoff stages them.
+          # Signing is masked off above, so electron-builder's windowsSigning() gets no
+          # certificate and emits unsigned bytes -- the same way the macOS legs have always
+          # built without a Developer ID. What skip-signed gates is publication.
+          python scripts/bundles/desktop.py --prepared "$env:RUNNER_TEMP/desktop-job/prepared.json" --variant bundled
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if ($env:SKIP_STORE -ne 'true' -and -not $env:CHANNEL_BUILD -and -not $env:NASTECH_BUILD_COMMIT -and $env:NASTECH_PAYLOAD_TAG -notlike "*+canary.*") {
               python scripts/bundles/desktop.py --prepared "$env:RUNNER_TEMP/desktop-job/prepared.json" --variant store
               if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -697,15 +700,6 @@ jobs:
           key: ${{ steps.payload-signatures.outputs.cache-primary-key }}
 
       - name: Audit bundle architecture
-        # Audit exactly the bytes this leg built, and never fewer: the leg builds no
-        # bundle at all when 'Build and package' skips both variants, which is where a
-        # skip-signed Windows leg stops -- there is no release directory to scan, so an
-        # unconditional audit only crashes on a missing root. The Store variant is built
-        # independently of signing, so a skip-signed leg that built it is still audited.
-        if: >-
-          inputs.skip-signed != true
-          || (inputs.skip-store != true && env.CHANNEL_BUILD == '' && env.NASTECH_BUILD_COMMIT == ''
-              && !contains(env.NASTECH_PAYLOAD_TAG, '+canary.'))
         # A wedged runner must fail this step, not hold the release for the
         # job's whole budget: measured 2026-10-29, the step sat 'running' for
         # 113 minutes on a tree that audits in 14 seconds locally.
@@ -1739,9 +1733,11 @@ jobs:
           fi
           args=()
           if [ "$RELEASE_PHASE" = candidate ]; then args+=(--candidate); fi
-          if [ "$SKIP_SIGNED" != true ]; then
-            node scripts/stage-msixbundle.mjs --tag "$NASTECH_PAYLOAD_TAG" --variant bundled "${args[@]}"
-          fi
+          # Assembled whether or not it can be signed: stage-msixbundle.mjs signs only when
+          # AZURE_SIGN_* are set and otherwise warns and leaves the bundle unsigned, and the
+          # next step stages whatever bytes exist. Skipping it here would hand that step an
+          # empty release directory and a 'No files match *.msixbundle' refusal.
+          node scripts/stage-msixbundle.mjs --tag "$NASTECH_PAYLOAD_TAG" --variant bundled "${args[@]}"
           if [ "$RELEASE_PHASE" = candidate ] && [ "$SKIP_STORE" != true ]; then
             node scripts/bundle-store-msixbundle.mjs --tag "$NASTECH_PAYLOAD_TAG"
           fi
