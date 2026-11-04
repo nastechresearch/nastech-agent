@@ -20,6 +20,7 @@ import psutil
 import pytest
 
 from nastech_cli import desktop_release_holders, main_desktop
+from tests.waiting import wait_until
 
 pytestmark = pytest.mark.platforms("windows")
 
@@ -108,6 +109,10 @@ def test_consented_retry_closes_exactly_the_holder_and_promotes(swap_fixture, ca
     assert promoted == live_root / "Nastech.exe"
     assert promoted.read_text(encoding="utf-8") == "new"
     assert helper.wait(10) is not None
+    # TerminateProcess only schedules the exit: a tree member's object can outlive the close that
+    # already freed the folder, so join the tree before asking whether any of it still runs.
+    wait_until(lambda: not [p.pid for p in tree if p.is_running()],
+               what="the consented holders to leave the process table")
     assert not [p.pid for p in tree if p.is_running()]
     assert not consent.exists(), "a consent covers one retry only"
     assert "Closed with your consent: " in capsys.readouterr().out

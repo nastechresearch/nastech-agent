@@ -157,7 +157,21 @@ import msvcrt, os, sys, time
 fd = os.open(sys.argv[1], os.O_RDWR | os.O_CREAT | os.O_BINARY, 0o644)
 os.lseek(fd, 1 << 20, os.SEEK_SET)
 msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)   # nastech_cli/update_lock.py::_try_lock's byte
-time.sleep(float(sys.argv[2]))
+print('locked', flush=True)
+# Leave when the hand-off has entered its own wait, not when a clock says so: that wait
+# only begins after the marker's owner finishes its work, and a cold runner's PowerShell
+# can need longer to reach it than any fixed hold survives -- the lock then reads free
+# and the wait is skipped entirely. The cap only bounds a release that never waits.
+log, cap = sys.argv[2], time.time() + float(sys.argv[3])
+while time.time() < cap:
+    try:
+        with open(log, encoding='utf-8-sig') as handle:
+            if 'still holds the checkout' in handle.read():
+                break
+    except OSError:
+        pass
+    time.sleep(0.25)
+print('released %.3f' % time.time(), flush=True)
 """
 
 
@@ -167,18 +181,27 @@ def test_result_finished_at_is_stamped_after_the_r6_release_wait(tmp_path: Path)
     # R6 wait lasts up to 2 h. The result must carry the time the hand-off actually finished.
     holders = []
 
-    def hold_checkout(_home: Path, install: Path) -> None:
-        holders.append((subprocess.Popen([sys.executable, '-c', _TIMED_CHECKOUT_HOLDER,
-                                          str(install / '.nastech-update.lock'), '25']), time.time() + 25))
+    def hold_checkout(home: Path, install: Path) -> None:
+        # The lock is only held once the child has taken it; a hand-off that starts first sees an
+        # unlocked file and skips the R6 wait, so read the handshake before releasing it.
+        proc = subprocess.Popen([sys.executable, '-c', _TIMED_CHECKOUT_HOLDER,
+                                 str(install / '.nastech-update.lock'),
+                                 str(home / 'logs' / 'desktop-update-handoff.log'), '90'],
+                                stdout=subprocess.PIPE, text=True, encoding='utf-8')
+        assert proc.stdout.readline().strip() == 'locked'
+        holders.append(proc)
     try:
         code, out, _, result, home = _handoff(tmp_path, '-NoGateway', prepare=hold_checkout)
+        # The hand-off returns only once its wait ended, which is this holder leaving the lock.
+        held_for = [proc.stdout.readline().strip() for proc in holders]
     finally:
-        for proc, _ in holders:
+        for proc in holders:
             proc.kill(); proc.wait()
     assert code == 0, out
+    assert held_for[0].startswith('released '), held_for
     log = (home / 'logs/desktop-update-handoff.log').read_text(encoding='utf-8-sig')
     assert 'keeping the update marker' in log, log
-    assert result['ok'] is True and result['finished_at'] >= int(holders[0][1]) - 1, result
+    assert result['ok'] is True and result['finished_at'] >= int(float(held_for[0].split()[1])) - 1, result
 
 
 @pytest.mark.platforms('windows')
