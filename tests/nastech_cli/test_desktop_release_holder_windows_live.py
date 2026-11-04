@@ -45,9 +45,21 @@ def swap_fixture(tmp_path, monkeypatch):
     )
     # The child opens its cwd handle during its own startup: wait for it before asserting the lock.
     assert helper.stdout.readline().strip() == "ready"
+    # sys.executable is the venv shim: the interpreter that sleeps is its child, and killing the
+    # shim alone leaves that child sitting in this folder for the whole sleep -- a holder the next
+    # test finds in its scan, under a pid the OS may already have handed to someone else. Take the
+    # tree's identity here, while the parent is still alive to be asked.
+    children = [(proc.pid, proc.create_time())
+                for proc in psutil.Process(helper.pid).children(recursive=True)]
     try:
         yield desktop_dir, staging, live_root, helper
     finally:
+        for pid, start in children:
+            with contextlib.suppress(psutil.NoSuchProcess):
+                proc = psutil.Process(pid)
+                # The same no-recycled-pid check close_holders refuses to exceed.
+                if abs(proc.create_time() - start) <= desktop_release_holders._START_TIME_TOLERANCE_S:
+                    proc.kill()
         if helper.poll() is None:
             helper.kill()
             helper.wait(10)
@@ -84,6 +96,21 @@ def _consent_for_run(desktop_dir: Path, helper, run_id: str) -> tuple[Path, list
     return consent, tree
 
 
+def _assert_nothing_holds(live_root: Path) -> None:
+    """No process may still report the renamed folder as its working directory.
+
+    This is the scope the close itself has: ``close_holders`` re-checks cwd before terminating
+    anything, so a holder that survives is a holder the consent failed to close. Scope it by
+    folder rather than by the helper's process tree because psutil's Windows walk matches on the
+    parent pid a process was *born* with -- a pid the OS has since recycled adopts its dead
+    predecessor's children, and those strangers are exactly what a consent must refuse to close.
+    ``TerminateProcess`` only schedules the exit, so poll before claiming.
+    """
+    wait_until(lambda: not desktop_release_holders.find_release_cwd_holders(live_root),
+               what="the consented holders to stop reporting the renamed folder as their cwd")
+    assert not desktop_release_holders.find_release_cwd_holders(live_root)
+
+
 def test_a_consent_given_for_another_run_closes_nothing_and_is_used_up(swap_fixture, monkeypatch):
     """Review N1: a gateway /update (or any swap not started by the consented retry) never closes."""
     desktop_dir, staging, live_root, helper = swap_fixture
@@ -100,7 +127,7 @@ def test_a_consent_given_for_another_run_closes_nothing_and_is_used_up(swap_fixt
 
 def test_consented_retry_closes_exactly_the_holder_and_promotes(swap_fixture, capsys, monkeypatch):
     desktop_dir, staging, live_root, helper = swap_fixture
-    consent, tree = _consent_for_run(desktop_dir, helper, "desktop-retry-1")
+    consent, _tree = _consent_for_run(desktop_dir, helper, "desktop-retry-1")
     monkeypatch.setenv("NASTECH_UPDATE_CORRELATION_ID", "desktop-retry-1")  # windows.ps1 exports its run id
 
     promoted, error = _promote(desktop_dir, staging)
@@ -109,11 +136,7 @@ def test_consented_retry_closes_exactly_the_holder_and_promotes(swap_fixture, ca
     assert promoted == live_root / "Nastech.exe"
     assert promoted.read_text(encoding="utf-8") == "new"
     assert helper.wait(10) is not None
-    # TerminateProcess only schedules the exit: a tree member's object can outlive the close that
-    # already freed the folder, so join the tree before asking whether any of it still runs.
-    wait_until(lambda: not [p.pid for p in tree if p.is_running()],
-               what="the consented holders to leave the process table")
-    assert not [p.pid for p in tree if p.is_running()]
+    _assert_nothing_holds(live_root)
     assert not consent.exists(), "a consent covers one retry only"
     assert "Closed with your consent: " in capsys.readouterr().out
 
@@ -167,7 +190,7 @@ def test_a_program_in_a_sibling_unpacked_folder_is_neither_named_nor_closed(swap
     try:
         assert sibling.stdout.readline().strip() == "ready"
         sibling_tree.extend([psutil.Process(sibling.pid), *psutil.Process(sibling.pid).children(recursive=True)])
-        consent, tree = _consent_for_run(desktop_dir, helper, "desktop-retry-1")
+        consent, _tree = _consent_for_run(desktop_dir, helper, "desktop-retry-1")
         seen = json.loads(consent.read_text(encoding="utf-8"))
         seen["holders"] += [{"pid": p.pid, "start_time": p.create_time(), "exe": p.exe()} for p in sibling_tree]
         consent.write_text(json.dumps(seen), encoding="utf-8")
@@ -177,7 +200,7 @@ def test_a_program_in_a_sibling_unpacked_folder_is_neither_named_nor_closed(swap
 
         assert error == "" and promoted == live_root / "Nastech.exe"
         assert helper.wait(10) is not None
-        assert not [p.pid for p in tree if p.is_running()]
+        _assert_nothing_holds(live_root)
         assert all(p.is_running() for p in sibling_tree), "closed a program that never held the renamed folder"
         assert f"pid {sibling.pid}" not in capsys.readouterr().out
     finally:
