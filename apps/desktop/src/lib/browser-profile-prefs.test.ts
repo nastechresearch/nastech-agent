@@ -62,7 +62,9 @@ afterEach(() => {
 
 describe('browser profile folder for a new chat', () => {
   it('starts a chat or tile in profile B in B folder, and stays detached when B never chose one', () => {
-    expect(browserDefaultProjectDirKey('/nastech', 'beta')).toBe('nastech:browser:default-project-dir:["/nastech","beta"]')
+    expect(browserDefaultProjectDirKey('/nastech', 'beta')).toBe(
+      'nastech:browser:default-project-dir:["/nastech","beta"]'
+    )
     host()
     putFolder('alpha', '/srv/alpha')
     putFolder('beta', '/srv/beta')
@@ -212,7 +214,11 @@ describe('browser profile prefs follow rename and delete', () => {
 
   it('leaves a stored startup route the profile bridge does not read as one', async () => {
     host()
-    const bridge = createBrowserProfileBridge({ basePath: '/nastech', currentProfile: () => null, openWindow: async () => ({ ok: true }) })
+    const bridge = createBrowserProfileBridge({
+      basePath: '/nastech',
+      currentProfile: () => null,
+      openWindow: async () => ({ ok: true })
+    })
 
     for (const stored of [
       { connectionId: 'remote-1', profile: 'work' },

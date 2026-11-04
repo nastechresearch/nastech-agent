@@ -56,7 +56,9 @@ describe('the @nastech handle', () => {
     const byName = Object.fromEntries(rows.map(row => [row.name, botHandle(row.name, row)]))
 
     expect(byName).toEqual({ default: 'default', nastech: 'nastech', researcher: 'researcher' })
-    expect(resolveRosterMentions('@default ping', rows, { name: 'researcher' }).map(row => row.name)).toEqual(['default'])
+    expect(resolveRosterMentions('@default ping', rows, { name: 'researcher' }).map(row => row.name)).toEqual([
+      'default'
+    ])
   })
 
   it('keeps each source separate: a remote nastech profile does not rename the local default', () => {
@@ -77,7 +79,9 @@ describe('the @nastech handle', () => {
       { connectionId: 'local', name: 'researcher' }
     ])
 
-    expect(resolveRosterMentions('@nastech ping', rows, { name: 'researcher' }).map(row => row.name)).toEqual(['nastech'])
+    expect(resolveRosterMentions('@nastech ping', rows, { name: 'researcher' }).map(row => row.name)).toEqual([
+      'nastech'
+    ])
   })
 
   it('names a DM sender in a row preview by its roster handle', () => {

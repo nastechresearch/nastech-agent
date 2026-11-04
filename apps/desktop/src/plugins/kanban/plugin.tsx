@@ -14,10 +14,10 @@ import './kanban.css'
 import {
   cn,
   Codicon,
-  type NastechPlugin,
   host,
   type KeybindContribution,
   KEYBINDS_AREA,
+  type NastechPlugin,
   PALETTE_AREA,
   type PaletteContribution,
   type RouteContribution,

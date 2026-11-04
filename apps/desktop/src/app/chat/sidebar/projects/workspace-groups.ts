@@ -1,6 +1,6 @@
 import type { NastechGitBranch, NastechGitWorktree } from '@/global'
-import type { ProjectInfo, SessionInfo } from '@/nastech'
 import { normalize } from '@/lib/text'
+import type { ProjectInfo, SessionInfo } from '@/nastech'
 
 import { rankSessions } from '../order'
 

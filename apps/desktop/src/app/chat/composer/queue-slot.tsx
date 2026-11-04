@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 
-import type { NastechGateway } from '@/nastech'
 import type { Translations } from '@/i18n'
 import { useStoresSelector } from '@/lib/use-session-slice'
+import type { NastechGateway } from '@/nastech'
 import { type QueuedPromptEntry, removeQueuedPrompt, unparkQueuedPrompts } from '@/store/composer-queue'
 import { notifyError } from '@/store/notifications'
 import { $activeSessionId, $selectedStoredSessionId } from '@/store/session'

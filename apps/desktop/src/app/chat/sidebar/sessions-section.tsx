@@ -8,7 +8,6 @@ import { SidebarPanelLabel } from '@/app/shell/sidebar-label'
 import { DisclosureCaret } from '@/components/ui/disclosure-caret'
 import { SidebarGroup, SidebarGroupContent } from '@/components/ui/sidebar'
 import type { NastechGitWorktree } from '@/global'
-import type { SessionInfo } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { flattenSessionsWithBranches } from '@/lib/session-branch-tree'
 import {
@@ -20,6 +19,7 @@ import {
 } from '@/lib/session-date-groups'
 import { sessionBucketLabel } from '@/lib/time'
 import { cn } from '@/lib/utils'
+import type { SessionInfo } from '@/nastech'
 import {
   $sidebarListGroupIds,
   $sidebarShowAllSessions,

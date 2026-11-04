@@ -67,7 +67,9 @@ describe('favorites persist', () => {
   it('writes the favorites list to storage', () => {
     toggleFavoriteModel('nastech', 'opus-5')
 
-    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toEqual([favoriteModelKey('nastech', 'opus-5')])
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '[]')).toEqual([
+      favoriteModelKey('nastech', 'opus-5')
+    ])
   })
 
   it('clears the key once the last favorite is removed', () => {

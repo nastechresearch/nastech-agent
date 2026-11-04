@@ -9,9 +9,9 @@ import type {
   McpServerSummary
 } from '@nastech/shared'
 
-import type { McpCatalogEntry } from '@/nastech'
 import { connectorTitle } from '@/lib/connector-tools'
 import { type McpServers, serverEnabled } from '@/lib/mcp-servers'
+import type { McpCatalogEntry } from '@/nastech'
 
 import { canAuthenticate } from '../../mcp/mcp-status'
 import { toolRows } from '../derive-tools'

@@ -2,9 +2,9 @@ import { resolveGatewayWsUrl } from '@nastech/shared'
 
 import { openGatewaySocket } from '@/api/canonical-protocol'
 import type { OwnerScope } from '@/api/client'
-import { getApiRequestConnection, getApiRequestProfile, speakText } from '@/nastech'
 import { directTtsConfig, type DirectTtsConfig, synthesizeSpeechClientDirect } from '@/lib/voice-client-direct'
 import { RECONNECT_ATTEMPT_TIMEOUT_MS, withTimeout } from '@/lib/with-timeout'
+import { getApiRequestConnection, getApiRequestProfile, speakText } from '@/nastech'
 import {
   $voicePlayback,
   setVoicePlaybackState,

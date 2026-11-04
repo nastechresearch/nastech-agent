@@ -3,8 +3,8 @@ import { cleanup, render, waitFor } from '@testing-library/react'
 import type { MutableRefObject } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getLatestSessionMessages, getSession } from '@/nastech'
 import { textPart } from '@/lib/chat-messages'
+import { getLatestSessionMessages, getSession } from '@/nastech'
 import { $busy, $messages, $turnStartedAt, setMessages, setSessions } from '@/store/session'
 
 import { actRender, Harness, type HarnessHandle, RUNTIME_SESSION_ID, sessionInfo } from './index-test-utils'

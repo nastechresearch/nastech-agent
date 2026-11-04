@@ -1,5 +1,5 @@
-import { forceRedraw, useInput } from '@nastech/ink'
 import { useStore } from '@nanostores/react'
+import { forceRedraw, useInput } from '@nastech/ink'
 import { useEffect, useRef } from 'react'
 
 import { sharedControlParams } from '../canonicalGateway.js'
@@ -273,7 +273,10 @@ export function useInputHandlers(ctx: InputHandlerContext): InputHandlerResult {
       // legacy server→client request resolves its response frame locally.
       if (overlay.approval.sharedControl) {
         return gateway
-          .rpc<SharedControlRespondResponse>('approval.respond', { choice: 'deny', ...sharedControlParams(overlay.approval) })
+          .rpc<SharedControlRespondResponse>('approval.respond', {
+            choice: 'deny',
+            ...sharedControlParams(overlay.approval)
+          })
           .then(r => r && fresh() && settle())
       }
 

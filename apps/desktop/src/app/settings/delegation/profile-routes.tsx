@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import type { DelegationProfileRoutes, ProfileScope } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { Users } from '@/lib/icons'
 import { isSubmitEnter } from '@/lib/ime'
+import type { DelegationProfileRoutes, ProfileScope } from '@/nastech'
 
 import { Pill, SectionHeading } from '../primitives'
 
