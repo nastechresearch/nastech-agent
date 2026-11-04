@@ -1,9 +1,10 @@
 """Advance the protected channel heads from the release transaction's accepted native bytes.
 
 The store is SELECTED, never assumed: every construction and write here goes
-through ``scripts.releases.ghpages.configured_store`` (R2 while an operator
-explicitly names it, the GitHub-native control plane otherwise), so a release
-with zero R2 env publishes through the seam like every other writer."""
+through ``scripts.releases.ghpages.configured_store``, so a release with zero
+R2 env publishes through the seam like every other writer.  The seam's default
+is still the object store, which is why every controller workflow that advances
+a head names it -- see ``tests/scripts/test_release_channel_store.py``."""
 from __future__ import annotations
 
 import argparse
