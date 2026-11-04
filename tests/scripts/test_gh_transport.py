@@ -19,20 +19,33 @@ from scripts.releases import gh_transport, handoff, r2
 
 
 class FakeReleaseApi:
-    """The release-asset endpoints the transport uses, kept in memory."""
+    """The release-asset endpoints the transport uses, kept in memory.
+
+    Faithful in the two ways that let duplicate drafts reach production:
+    `releases/tags/{tag}` answers 404 for a draft, and a POST happily mints a
+    second release for a tag a draft already carries -- so a store that finds its
+    release only by the tag route splits one canary across six of them.
+    """
 
     def __init__(self):
+        self.rows: dict[int, dict] = {}
+        # tag -> the release a test asserts on: the newest the API accepted for it.
         self.releases: dict[str, int] = {}
+        # tag -> how many releases the API accepted for it, the thing GitHub does
+        # not enforce and the plane has to.
+        self.minted: dict[str, int] = {}
         self.assets: dict[int, list[dict]] = {}
         self.payloads: dict[int, bytes] = {}
         self.next_id = 1
 
-    def create(self, tag: str) -> int:
-        if tag not in self.releases:
-            self.releases[tag] = self.next_id
-            self.next_id += 1
-            self.assets[self.releases[tag]] = []
-        return self.releases[tag]
+    def create(self, tag: str, *, draft: bool = True) -> int:
+        rid = self.next_id
+        self.next_id += 1
+        self.rows[rid] = {"id": rid, "tag_name": tag, "draft": draft}
+        self.assets[rid] = []
+        self.releases[tag] = rid
+        self.minted[tag] = self.minted.get(tag, 0) + 1
+        return rid
 
     @staticmethod
     def _done(stdout="", returncode=0, stderr=""):
@@ -45,10 +58,16 @@ class FakeReleaseApi:
     def __call__(self, argv, **kwargs):
         route = re.sub(r"^repos/o/r/", "", argv[2])
         if m := re.fullmatch(r"releases/tags/(.+)", route):
-            if m.group(1) not in self.releases:
-                return self._done(returncode=1, stderr="HTTP 404: Not Found")
-            return self._done(json.dumps({"id": self.releases[m.group(1)]}))
+            for row in self.rows.values():
+                if row["tag_name"] == m.group(1) and not row["draft"]:
+                    return self._done(json.dumps({"id": row["id"]}))
+            return self._done(returncode=1, stderr="HTTP 404: Not Found")
         if route == "releases":
+            if "POST" not in argv:
+                page = int(next(field.split("=")[1] for field in self._fields(argv)
+                                if field.startswith("page=")))
+                rows = sorted(self.rows.values(), key=lambda row: -row["id"])
+                return self._done(json.dumps(rows[(page - 1) * 100:page * 100]))
             tag = next(field.split("=", 1)[1] for field in self._fields(argv)
                        if field.startswith("tag_name="))
             return self._done(json.dumps({"id": self.create(tag), "draft": True}))
@@ -111,6 +130,25 @@ def test_a_tag_stages_on_its_own_release_and_a_commit_build_needs_no_new_ref(sto
                      file=written(tmp_path, "app.msix", b"b"), key_is_full=True, immutable=True)
     assert sorted(store.releases) == sorted(["v0.22.0", gh_transport.STAGING_RELEASE])
     assert sum(len(rows) for rows in store.assets.values()) == 2
+
+
+def test_every_leg_of_one_unpublished_tag_shares_the_draft_the_first_leg_opened(store, tmp_path):
+    """Six legs of one canary are six writers of one release, not six releases.
+
+    GitHub answers `releases/tags/{tag}` for a published release only, and a POST
+    never refuses a tag a draft already carries, so a transport that finds its
+    release by the tag route mints one draft per leg -- the six identical
+    `v0.22.0+canary.*` drafts. The list route is the only one that can see a draft,
+    so the lookup has to go there before opening another.
+    """
+    tag = "v0.22.0+canary.20261104T122145Z"
+    for leg in ("darwin-arm64", "darwin-x64", "win32-arm64", "win32-x64",
+                "linux-x64", "termux"):
+        gh_transport.put(key=f"releases/tag/{tag}/{leg}/app.zip",
+                         file=written(tmp_path, f"{leg}.zip", leg.encode()),
+                         key_is_full=True, immutable=True)
+    assert store.minted == {tag: 1}
+    assert len(store.assets[store.releases[tag]]) == 6
 
 
 def test_a_restage_of_the_same_bytes_is_idempotent_and_different_bytes_are_refused(store, tmp_path):

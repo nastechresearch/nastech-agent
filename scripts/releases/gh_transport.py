@@ -142,10 +142,35 @@ def _fail(method: str, target: str, result: subprocess.CompletedProcess) -> None
     raise R2RequestError(method, target, status, (result.stderr or "").strip()[:400])
 
 
+def _open_draft_for_tag(repository: str, tag: str) -> int | None:
+    """The id of a draft release carrying this tag, or None.
+
+    `releases/tags/{tag}` answers for published releases only, so the paginated
+    list is the only route that can see a draft -- and a POST never refuses a tag a
+    draft already carries. Without this lookup every leg of a canary mints its own
+    release, and the six legs' assets land six apart so no publish can find them.
+    Newest first, because that is what the API returns and what a re-run converges on.
+    """
+    page = 1
+    while True:
+        found = _api(repository, "releases", "-f", "per_page=100", "-f", f"page={page}")
+        if found.returncode != 0:
+            _fail("GET", "releases", found)
+        rows = json.loads(found.stdout)
+        for row in rows:
+            if row.get("tag_name") == tag and row.get("draft"):
+                return int(row["id"])
+        if len(rows) < 100:
+            return None
+        page += 1
+
+
 def _release_id(repository: str, tag: str) -> int:
     found = _api(repository, f"releases/tags/{tag}")
     if found.returncode == 0:
         return int(json.loads(found.stdout)["id"])
+    if draft := _open_draft_for_tag(repository, tag):
+        return draft
     created = _api(repository, "releases", "-X", "POST",
                    "-f", f"tag_name={tag}",
                    "-f", f"target_commitish={os.environ.get('GITHUB_SHA', 'main')}",
