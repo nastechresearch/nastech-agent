@@ -133,6 +133,16 @@ class ReleaseStore:
             release_id = state["releases"].get(tag) or self._new_id(state)
             state["releases"][tag] = release_id
             return self._json({"id": release_id, "draft": True})
+        if _match(path, r"repos/[^/]+/[^/]+/releases"):
+            # The paginated list is the route that can see a draft, so it is how the
+            # product finds the release a key belongs to when the tag lookup misses.
+            rows = [{"id": release_id, "tag_name": tag}
+                    for tag, release_id in state["releases"].items()]
+            size = int(next((field.split("=")[1] for field in fields
+                             if field.startswith("per_page=")), 30))
+            page = int(next((field.split("=")[1] for field in fields
+                             if field.startswith("page=")), 1))
+            return self._json(rows[(page - 1) * size:page * size])
         if m := _match(path, r"repos/[^/]+/[^/]+/releases/(\d+)/assets"):
             if "-X" in argv:
                 body = Path(argv[argv.index("--input") + 1]).read_bytes()
