@@ -5,12 +5,24 @@ export PREFIX=/data/data/com.termux/files/usr
 export PATH="$PREFIX/bin:$PATH"
 suite="${1:?APT suite required}"
 expected="${2:?expected package version required}"
+# The feed is published FLAT as the assets of one fixed-tag release (a release
+# asset name cannot hold '/'), which is why the source line below names no
+# suite or component directory and no `by-hash`: apt reads <repository>/Release
+# and <repository>/Packages, then each stanza's Filename relative to the same
+# base.  Measured with apt 2.8.3: on a flat repository `by-hash=force` is inert
+# (apt issues no by-hash request either way), so index integrity here is carried
+# by the Release SHA256/SHA512 rows, which apt still enforces -- flipping one
+# byte of Packages makes `apt-get update` exit 100.
 repository="${3:-file:/apt}"
 ctmp=/tmp  # no-tmp: ok — where the caller mounts validate_installed.py inside this container
 work="$(mktemp -d "$PREFIX/tmp/nastech-apt-proof.XXXXXX")"
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/lists/partial" "$work/archives/partial"
-printf 'deb [signed-by=/apt/key.asc by-hash=force] %s %s main\n' "$repository" "$suite" > "$work/sources.list"
+# The feed directory is mounted read-only at /apt by every caller, so the suite
+# that was staged is checked against the suite that is published: a channel wired
+# to the wrong feed would otherwise install over another channel's packages.
+grep -qx "Suite: $suite" /apt/Release
+printf 'deb [signed-by=/apt/key.asc] %s ./\n' "$repository" > "$work/sources.list"
 apt_options=(
     -o "Dir::Etc::sourcelist=$work/sources.list"
     -o "Dir::Etc::sourceparts=-"
