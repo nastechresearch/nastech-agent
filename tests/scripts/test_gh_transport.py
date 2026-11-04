@@ -1,54 +1,255 @@
-"""The handoff transport moves to releases; the keys and receipts do not change."""
+"""The handoff store is GitHub Release assets: same keys, same receipts, write-once bytes.
 
-from pathlib import Path
+These drive the transport `handoff` now stages through, against a fake `gh` that
+answers like the release-asset API. The properties are the ones R2 gave the
+release plane and a draft release does not give for free: one key maps to one
+asset, staged bytes cannot be silently replaced, and a download is only trusted
+after its size and sha256 match the receipt that named it.
+"""
+
+import hashlib
+import json
+import re
+import subprocess
+from urllib.parse import unquote
 
 import pytest
 
-from scripts.releases import gh_transport
+from scripts.releases import gh_transport, handoff, r2
 
 
-class Result:
-    def __init__(self, returncode=0, stdout="", stderr=""):
-        self.returncode = returncode
-        self.stdout = stdout
-        self.stderr = stderr
+class FakeReleaseApi:
+    """The release-asset endpoints the transport uses, kept in memory."""
+
+    def __init__(self):
+        self.releases: dict[str, int] = {}
+        self.assets: dict[int, list[dict]] = {}
+        self.payloads: dict[int, bytes] = {}
+        self.next_id = 1
+
+    def create(self, tag: str) -> int:
+        if tag not in self.releases:
+            self.releases[tag] = self.next_id
+            self.next_id += 1
+            self.assets[self.releases[tag]] = []
+        return self.releases[tag]
+
+    @staticmethod
+    def _done(stdout="", returncode=0, stderr=""):
+        return subprocess.CompletedProcess(["gh"], returncode, stdout=stdout, stderr=stderr)
+
+    @staticmethod
+    def _fields(argv):
+        return [argv[index + 1] for index, arg in enumerate(argv) if arg in ("-f", "-F")]
+
+    def __call__(self, argv, **kwargs):
+        route = re.sub(r"^repos/o/r/", "", argv[2])
+        if m := re.fullmatch(r"releases/tags/(.+)", route):
+            if m.group(1) not in self.releases:
+                return self._done(returncode=1, stderr="HTTP 404: Not Found")
+            return self._done(json.dumps({"id": self.releases[m.group(1)]}))
+        if route == "releases":
+            tag = next(field.split("=", 1)[1] for field in self._fields(argv)
+                       if field.startswith("tag_name="))
+            return self._done(json.dumps({"id": self.create(tag), "draft": True}))
+        if m := re.fullmatch(r"releases/(\d+)/assets\?name=(.*)", route):
+            payload = open(argv[argv.index("--input") + 1], "rb").read()
+            asset = {"id": self.next_id, "name": unquote(m.group(2)), "size": len(payload)}
+            self.next_id += 1
+            self.assets[int(m.group(1))].append(asset)
+            self.payloads[asset["id"]] = payload
+            return self._done(json.dumps(asset))
+        if m := re.fullmatch(r"releases/(\d+)/assets", route):
+            rows = self.assets[int(m.group(1))]
+            page = int(next(field.split("=")[1] for field in self._fields(argv)
+                            if field.startswith("page=")))
+            return self._done(json.dumps(rows[(page - 1) * 100:page * 100]))
+        if m := re.fullmatch(r"releases/assets/(\d+)", route):
+            asset_id = int(m.group(1))
+            if "DELETE" in argv:
+                for rows in self.assets.values():
+                    rows[:] = [row for row in rows if row["id"] != asset_id]
+                return self._done("{}")
+            kwargs["stdout"].write(self.payloads[asset_id])
+            return self._done()
+        raise AssertionError(f"unhandled gh api route: {route}")
 
 
-def test_a_staging_key_keeps_its_shape_and_becomes_a_flat_asset_name():
-    key = gh_transport.staging_key("v0.22.0", "darwin-arm64", "bundle.zip")
-    assert key == "releases/tag/v0.22.0/darwin-arm64/bundle.zip"
-    flat = gh_transport.asset_name(key)
-    assert "/" not in flat
-    assert flat == "releases__tag__v0.22.0__darwin-arm64__bundle.zip"
+@pytest.fixture
+def store(monkeypatch):
+    fake = FakeReleaseApi()
+    monkeypatch.setattr(gh_transport, "_run", fake)
+    monkeypatch.setenv("GH_TOKEN", "token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    monkeypatch.delenv("R2_DISPOSABLE_RUN", raising=False)
+    # The same lever the release workflows set: stage through the release store
+    # whatever the surrounding CI environment happens to name as feed origin.
+    monkeypatch.setenv("RELEASE_HANDOFF_STORE", "github")
+    return fake
 
 
-def test_stage_uploads_the_leg_files_to_a_draft_release(tmp_path):
-    (tmp_path / "bundle.zip").write_bytes(b"z")
-    (tmp_path / "metadata-darwin-arm64.json").write_text("{}", encoding="utf-8")
-    calls = []
-
-    def run(argv, **kwargs):
-        calls.append(argv)
-        if argv[:3] == ["gh", "release", "view"]:
-            return Result(returncode=1, stderr="not found")
-        return Result()
-
-    report = gh_transport.stage("v0.22.0", "o/r", "darwin-arm64", tmp_path,
-                                ["*.zip", "metadata-*.json"], run=run)
-    assert report["files"] == ["bundle.zip", "metadata-darwin-arm64.json"]
-    assert calls[1][:3] == ["gh", "release", "create"]
-    assert "--draft" in calls[1]
-    upload = next(c for c in calls if c[:3] == ["gh", "release", "upload"])
-    assert {Path(a).name for a in upload[7:]} == {"bundle.zip", "metadata-darwin-arm64.json"}
+def written(root, name, body):
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / name
+    path.write_bytes(body)
+    return str(path)
 
 
-def test_stage_refuses_an_empty_leg(tmp_path):
-    with pytest.raises(gh_transport.TransportError, match="no files matched"):
-        gh_transport.stage("v0.22.0", "o/r", "darwin-arm64", tmp_path, ["*.zip"],
-                           run=lambda *a, **k: Result())
+def test_two_keys_that_a_naive_flattening_would_merge_stay_distinct(store):
+    """`a/b.zip` and `a__b.zip` must not become one asset, so `/` cannot map to `_`."""
+    one = gh_transport.asset_name("releases/tag/v1/a/b.zip")
+    two = gh_transport.asset_name("releases/tag/v1/a__b.zip")
+    assert one != two
+    assert gh_transport.key_for_asset(one) == "releases/tag/v1/a/b.zip"
 
 
-def test_fetch_refuses_a_tag_with_nothing_staged(tmp_path):
-    with pytest.raises(gh_transport.TransportError, match="nothing was staged"):
-        gh_transport.fetch("v0.22.0", "o/r", ["darwin-arm64"], tmp_path, ["*.zip"],
-                           run=lambda *a, **k: Result())
+def test_a_tag_stages_on_its_own_release_and_a_commit_build_needs_no_new_ref(store, tmp_path):
+    store.create("v0.22.0")
+    gh_transport.put(key="releases/tag/v0.22.0/darwin-arm64/app.zip",
+                     file=written(tmp_path, "app.zip", b"a"), key_is_full=True, immutable=True)
+    gh_transport.put(key=f"releases/commit/{'c' * 40}/win32-x64/app.msix",
+                     file=written(tmp_path, "app.msix", b"b"), key_is_full=True, immutable=True)
+    assert sorted(store.releases) == sorted(["v0.22.0", gh_transport.STAGING_RELEASE])
+    assert sum(len(rows) for rows in store.assets.values()) == 2
+
+
+def test_a_restage_of_the_same_bytes_is_idempotent_and_different_bytes_are_refused(store, tmp_path):
+    key = "releases/tag/v0.22.0/darwin-arm64/app.zip"
+    store.create("v0.22.0")
+    gh_transport.put(key=key, file=written(tmp_path, "one.zip", b"first"),
+                     key_is_full=True, immutable=True)
+    gh_transport.put(key=key, file=written(tmp_path, "two.zip", b"first"),
+                     key_is_full=True, immutable=True)
+    assert len(store.assets[store.releases["v0.22.0"]]) == 1
+    with pytest.raises(gh_transport.R2RequestError, match="differ"):
+        gh_transport.put(key=key, file=written(tmp_path, "three.zip", b"second"),
+                         key_is_full=True, immutable=True)
+    assert len(store.assets[store.releases["v0.22.0"]]) == 1
+
+
+def test_an_unconditional_write_replaces_the_asset(store, tmp_path):
+    key = "feeds/stable.json"
+    gh_transport.put(key=key, file=written(tmp_path, "one.json", b"one"), key_is_full=True)
+    gh_transport.put(key=key, file=written(tmp_path, "two.json", b"two"), key_is_full=True)
+    rows = store.assets[store.releases[gh_transport.STAGING_RELEASE]]
+    assert len(rows) == 1 and store.payloads[rows[0]["id"]] == b"two"
+
+
+def test_a_download_is_kept_only_after_it_matches_its_receipt(store, tmp_path):
+    key = "releases/tag/v0.22.0/darwin-arm64/app.zip"
+    store.create("v0.22.0")
+    gh_transport.put(key=key, file=written(tmp_path, "app.zip", b"z" * 32),
+                     key_is_full=True, immutable=True)
+    target = tmp_path / "out" / "app.zip"
+    gh_transport.fetch_key(key, target, expected_size=32,
+                           expected_sha256=hashlib.sha256(b"z" * 32).hexdigest())
+    assert target.read_bytes() == b"z" * 32
+    with pytest.raises(ValueError, match="checksum"):
+        gh_transport.fetch_key(key, target, expected_size=32, expected_sha256="0" * 64)
+    with pytest.raises(ValueError, match="size"):
+        gh_transport.fetch_key(key, target, expected_size=7,
+                               expected_sha256=hashlib.sha256(b"z" * 32).hexdigest())
+    assert not (tmp_path / "out" / "app.zip.part").exists()
+
+
+def test_a_stale_archive_origin_fails_instead_of_reading_github_anyway(store, tmp_path):
+    """A workflow still naming the old worker must stop, not silently change store."""
+    key = "releases/tag/v0.22.0/darwin-arm64/app.zip"
+    store.create("v0.22.0")
+    gh_transport.put(key=key, file=written(tmp_path, "app.zip", b"a"),
+                     key_is_full=True, immutable=True)
+    worker = "https://nastech-assets.example.workers.dev"
+    with pytest.raises(ValueError, match="release archive"):
+        gh_transport.read_public_receipt(worker, key)
+    with pytest.raises(ValueError, match="release archive"):
+        gh_transport.download_public_object(worker, key, tmp_path / "x", expected_size=1,
+                                            expected_sha256=hashlib.sha256(b"a").hexdigest())
+    gh_transport.download_public_object(gh_transport.public_base_url(), key, tmp_path / "x",
+                                        expected_size=1,
+                                        expected_sha256=hashlib.sha256(b"a").hexdigest())
+    assert (tmp_path / "x").read_bytes() == b"a"
+
+
+def test_handoff_stages_a_leg_and_fetches_the_same_bytes_back(store, tmp_path):
+    """The wiring, not just the store: a receipt written on GitHub still round-trips."""
+    root = tmp_path / "build"
+    (root / "darwin-arm64").mkdir(parents=True)
+    (root / "darwin-arm64" / "app.zip").write_bytes(b"payload")
+    store.create("v0.22.0")
+    staged = handoff.stage("v0.22.0", "a" * 40, "darwin-arm64", root, ["darwin-arm64/*.zip"])
+    assert [row["path"] for row in staged["files"]] == ["darwin-arm64/app.zip"]
+
+    back = tmp_path / "publish"
+    receipts = handoff.fetch("v0.22.0", "a" * 40, ["darwin-arm64"], back)
+    assert receipts[0]["name"] == "darwin-arm64"
+    assert (back / "darwin-arm64" / "app.zip").read_bytes() == b"payload"
+    assert json.loads((back / "handoff-darwin-arm64.json").read_text())["tag"] == "v0.22.0"
+
+
+def test_a_missing_receipt_is_reported_as_missing_work(store):
+    store.create("v0.22.0")
+    with pytest.raises(handoff.MissingReceipt):
+        handoff.read_commit_receipt("b" * 40, "termux")
+    assert store.releases["nastech-handoff-staging"]
+
+
+def test_the_store_needs_a_token_and_a_repository(store, monkeypatch):
+    monkeypatch.delenv("GH_TOKEN")
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    with pytest.raises(ValueError, match="GH_TOKEN"):
+        gh_transport.credentials()
+    monkeypatch.setenv("GITHUB_TOKEN", "token")
+    monkeypatch.delenv("GITHUB_REPOSITORY")
+    with pytest.raises(ValueError, match="GITHUB_REPOSITORY"):
+        gh_transport.credentials()
+
+
+def test_one_store_serves_a_whole_run(tmp_path, monkeypatch):
+    """Legs stage to one store and the publish job fetches from it, in every calling shape.
+
+    R2 is being deleted job by job, not atomically, so a run whose leg still names a
+    bucket while its fetch job does not must not split across two stores: the pin, or
+    the archive origin a public read already carries, decides.
+    """
+    for name in ("RELEASE_HANDOFF_STORE", "CLOUDFLARE_R2_BUCKET", "CLOUDFLARE_R2_ACCOUNT_ID"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+
+    # Nothing configured means the release store.
+    assert handoff.store() is gh_transport
+    # R2 is selected while it can still be addressed, so an in-flight release cannot
+    # be repointed mid-publish, and a stale R2 origin on a read resolves to R2 too.
+    monkeypatch.setenv("CLOUDFLARE_R2_BUCKET", "nastech-releases")
+    assert handoff.store() is r2
+    r2_origin = "https://assets.nastech.example/nastech-releases"
+    assert handoff.store(r2_origin) is r2
+    # The workflow lever wins over both, in either direction.
+    monkeypatch.setenv("RELEASE_HANDOFF_STORE", "github")
+    assert handoff.store() is gh_transport
+    assert handoff.store(r2_origin) is gh_transport
+    monkeypatch.setenv("RELEASE_HANDOFF_STORE", "s3")
+    with pytest.raises(ValueError, match="s3"):
+        handoff.store()
+
+
+def test_a_public_read_names_the_store_it_reads_from(monkeypatch):
+    """A credential-free fetch decides by origin, because it has no credentials left to ask."""
+    for name in ("RELEASE_HANDOFF_STORE", "CLOUDFLARE_R2_BUCKET", "GITHUB_REPOSITORY"):
+        monkeypatch.delenv(name, raising=False)
+    assert handoff.store("https://github.com/o/r/releases/download") is r2
+
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    assert handoff.store("https://github.com/o/r/releases/download") is gh_transport
+    # Only the exact archive origin counts; a path under it is a stale handoff's base.
+    assert handoff.store("https://github.com/other/releases/download") is r2
+
+
+def test_prune_clears_one_namespace_and_leaves_the_others(store, tmp_path):
+    for key in (f"releases/commit/{'1' * 40}/a/app.zip",
+                f"releases/commit/{'1' * 40}/b/app.zip",
+                f"releases/commit/{'2' * 40}/a/app.zip"):
+        gh_transport.put(key=key, file=written(tmp_path, "app.zip", b"x"),
+                         key_is_full=True, immutable=True)
+    doomed = gh_transport.prune(f"releases/commit/{'1' * 40}/")
+    assert len(doomed) == 2
+    assert len(store.assets[store.releases[gh_transport.STAGING_RELEASE]]) == 1

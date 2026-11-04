@@ -9,8 +9,31 @@ import re
 import tempfile
 from pathlib import Path, PurePosixPath
 
-from scripts.releases import r2
+from scripts.releases import gh_transport, r2
 from scripts.releases.semver import is_release_version
+
+
+def store(public_base: str | None = None):
+    """Which store a handoff read or write goes through: R2 while it is configured, GitHub releases after.
+
+    A handoff key is identical in both, so nothing above this function changes.
+
+    Three signals, in order of authority. `RELEASE_HANDOFF_STORE` is the plane-wide
+    lever and pins a run so its staging and its fetching cannot disagree; every
+    workflow that both stages and fetches sets it. Then an explicit archive origin
+    names the store itself, because a public read needs no credential to survive and
+    can only come from the archive it points at. Finally the bucket decides: R2 stays
+    selected while it can be addressed at all, so an in-flight release is never
+    repointed mid-publish, and deleting it moves the plane.
+    """
+    chosen = os.environ.get("RELEASE_HANDOFF_STORE", "")
+    if chosen not in ("", "github", "r2"):
+        raise ValueError(f"Unknown release handoff store: {chosen}")
+    if chosen:
+        return gh_transport if chosen == "github" else r2
+    if public_base:
+        return gh_transport if gh_transport.owns_origin(public_base) else r2
+    return r2 if os.environ.get("CLOUDFLARE_R2_BUCKET") else gh_transport
 
 
 class MissingReceipt(ValueError):
@@ -135,10 +158,10 @@ def read_channel_receipt(request: dict, name: str, *, public_base: str | None = 
     key = channel_prefix(request) + receipt_name(name)
     try:
         if public_base is not None:
-            receipt = r2.read_public_receipt(public_base, key)
+            receipt = store(public_base).read_public_receipt(public_base, key)
         else:
-            creds, base, bucket = r2.credentials()
-            text = r2.get_object(creds, base, bucket, key, r2.amz_timestamp())
+            creds, base, bucket = store().credentials()
+            text = store().get_object(creds, base, bucket, key, r2.amz_timestamp())
             if text is None:
                 raise MissingReceipt(f"Missing channel handoff: {name}")
             receipt = json.loads(text)
@@ -160,12 +183,12 @@ def _stage(receipt: dict, selected: dict[str, Path]) -> dict:
     """Publish completion only after every immutable artifact upload succeeds."""
     prefix = _prefix(receipt)
     for row in receipt["files"]:
-        r2.put(tag=receipt.get("tag", ""), key=prefix + row["path"],
+        store().put(tag=receipt.get("tag", ""), key=prefix + row["path"],
                file=str(selected[row["path"]]), key_is_full=True, immutable=True)
     with tempfile.TemporaryDirectory() as directory:
         file = Path(directory) / receipt_name(receipt["name"])
         file.write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n", encoding="utf-8")
-        r2.put(tag=receipt.get("tag", ""), key=prefix + file.name,
+        store().put(tag=receipt.get("tag", ""), key=prefix + file.name,
                file=str(file), key_is_full=True, immutable=True)
     return receipt
 
@@ -193,10 +216,10 @@ def read_receipt(tag: str, commit: str, name: str, *, public_base: str | None = 
     validate_identity(tag, commit, name)
     key = r2.staging_key_for(tag, receipt_name(name))
     if public_base is not None:
-        receipt = r2.read_public_receipt(public_base, key)
+        receipt = store(public_base).read_public_receipt(public_base, key)
     else:
-        creds, base, bucket = r2.credentials()
-        text = r2.get_object(creds, base, bucket, key, r2.amz_timestamp())
+        creds, base, bucket = store().credentials()
+        text = store().get_object(creds, base, bucket, key, r2.amz_timestamp())
         if text is None:
             raise ValueError(f"Missing release handoff: {name}")
         receipt = json.loads(text)
@@ -209,10 +232,10 @@ def read_commit_receipt(commit: str, name: str, *, public_base: str | None = Non
     key = r2.commit_key_for(commit, receipt_name(name))
     try:
         if public_base is not None:
-            receipt = r2.read_public_receipt(public_base, key)
+            receipt = store(public_base).read_public_receipt(public_base, key)
         else:
-            creds, base, bucket = r2.credentials()
-            text = r2.get_object(creds, base, bucket, key, r2.amz_timestamp())
+            creds, base, bucket = store().credentials()
+            text = store().get_object(creds, base, bucket, key, r2.amz_timestamp())
             if text is None:
                 raise MissingReceipt(f"Missing commit handoff: {name}")
             receipt = json.loads(text)
@@ -261,7 +284,10 @@ def _fetch_receipts(receipts: list[dict], root: Path,
     if not selected and require_files:
         raise ValueError("No files selected from release handoff")
     root.mkdir(parents=True, exist_ok=True)
-    credentials = r2.credentials() if public_base is None else None
+    # One store decision for the whole fetch: the receipt that names the bytes and
+    # the bytes themselves must come from the same archive.
+    chosen = store(public_base)
+    credentials = chosen.credentials() if public_base is None else None
     from scripts.releases.progress import log
 
     total = sum(row["size"] for row, _key in selected.values())
@@ -270,12 +296,12 @@ def _fetch_receipts(receipts: list[dict], root: Path,
         log(f"  [{number}/{len(selected)}] {key} ({row['size'] / 1e6:.0f} MB)")
         if credentials is not None:
             creds, base, bucket = credentials
-            r2.download_object(creds, base, bucket, key,
+            chosen.download_object(creds, base, bucket, key,
                                root / row["path"], r2.amz_timestamp(),
                                expected_size=row["size"], expected_sha256=row["sha256"])
         else:
             assert public_base is not None
-            r2.download_public_object(public_base, key, root / row["path"],
+            chosen.download_public_object(public_base, key, root / row["path"],
                                       expected_size=row["size"], expected_sha256=row["sha256"])
     for receipt in receipts:
         (root / receipt_name(receipt["name"])).write_text(json.dumps(receipt, sort_keys=True, indent=2) + "\n", encoding="utf-8")
