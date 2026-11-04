@@ -25,7 +25,11 @@ jobs:
       - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           ref: ${{ inputs.commit }}
+          # The commit graph, not the blobs: this job reads only author emails out of git log.
+          # Fetching every historical blob is what overran the budget below on a standard
+          # runner; blobless leaves merge-base and git log exactly as they read.
           fetch-depth: 0  # Full history needed for git log
+          filter: blob:none
 
       - name: Check for unmapped contributor emails
         id: check-emails
