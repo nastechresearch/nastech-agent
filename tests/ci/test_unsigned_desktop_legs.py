@@ -1,19 +1,24 @@
-"""An unsigned desktop leg may only check what it could physically produce.
+"""An unsigned desktop leg builds, audits and stages its own packages.
 
 ``skip-signed: true`` is the fork's only desktop lane until the org holds Azure
-Trusted Signing and Apple Developer ID credentials. Two steps demanded inputs
-such a leg cannot have, and each crashed the leg instead of reporting that it
-had nothing to verify (canary run 41203876229): the Windows architecture audit
-scanned a release directory the ``SKIP_SIGNED``-gated bundle build never
-created, and the macOS recorder codesign-verified an ad-hoc app and then refused
-it for lacking a Developer ID team.
+Trusted Signing and Apple Developer ID credentials.  Upstream reads that switch
+as "build nothing Windows-related", which is right for a project whose channel
+only ever carries signed bytes and wrong here: the leg then has no release
+directory, so its architecture audit crashes on a missing root and its handoff
+refuses with ``No files match release handoff pattern: *.msix`` (canary run
+41776230035).  The macOS legs never had that problem -- they build the bundle
+and simply have no certificate to sign it with.  This file pins that shape:
+every desktop leg builds and verifies the bytes its lane names, and signing
+gates only what leaves the leg for a feed.
 
-Neither check is deleted here. Each must run on exactly the dispatches whose
-bytes exist and are signed, so these tests pin both directions — no check
-without signed bytes, and no silently retired check when signed bytes are there
-to check. They also pin the two consequences of that rule: an unsigned handoff
-carries no signed-release row and its bytes reach no publication step, while a
-leg that produced nothing at all still fails loudly instead of exiting clean.
+Two checks stay signed-only, because they read a signature rather than a
+package: the release row ``release_artifacts record`` writes (Developer ID team
+for macOS, Authenticode identity for the MSIX) and the publication of the
+updater feed.  Both directions are pinned per leg, per skip-signed and
+skip-store -- no signed row without signed bytes, no retired check when signed
+bytes are there to record, and no unsigned byte reaching a publisher.  A leg
+that produced nothing at all still fails loudly (``test_a_handoff_that_produced_
+nothing_is_a_loud_failure``); this repair removes the empty leg, not the error.
 """
 from __future__ import annotations
 
@@ -37,6 +42,7 @@ from tests.ci.desktop_release_roles import (
     needs_of,
     smoke_callers,
     stage_step,
+    universal_assembler,
     updater_publishers,
 )
 from tests.ci.test_desktop_release_tag_admission import _BASH, _child_env
@@ -104,9 +110,6 @@ def _step_runs(step: dict, inputs: dict, needs: dict, env: dict[str, str] | None
     return "if" not in step or bool(gate(step["if"], inputs, needs, job_if=False, env=env))
 
 
-_VARIANTS = ("bundled", "store")
-
-
 def _guard_holds(guard: str, env_map: dict[str, str]) -> bool:
     """Evaluate one PowerShell build guard against the environment the step is given."""
     text = re.sub(r"\$env:(\w+)", lambda m: repr(env_map.get(m.group(1), "")), guard)
@@ -119,22 +122,45 @@ def _guard_holds(guard: str, env_map: dict[str, str]) -> bool:
     return bool(eval(text, {"__builtins__": {}}, scope))
 
 
+def _guard_spans(run: str) -> list[tuple[int, int, str]]:
+    """``(block start, block end, condition)`` for every ``if (cond) { ... }`` in a step body.
+
+    The block is found by matching braces from its opening ``{``, so a guard's span covers
+    its whole body and a nested guard's span sits inside the outer one's.
+    """
+    spans = []
+    for match in re.finditer(r"if \((.+?)\)\s*\{", run):
+        depth, index = 0, run.index("{", match.end() - 1)
+        start = index
+        while index < len(run):
+            if run[index] == "{":
+                depth += 1
+            elif run[index] == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            index += 1
+        spans.append((start, index + 1, match.group(1)))
+    return spans
+
+
 def _variants_built(step: dict, env_map: dict[str, str]) -> set[str]:
     """Which package variants this leg's build step produces for this dispatch.
 
-    A ``--variant`` call behind a PowerShell ``if`` builds only while that guard holds;
-    an unguarded call (the macOS legs) always builds.
+    A ``--variant`` call behind a PowerShell ``if`` builds only while that guard holds; a
+    call outside every guard (both legs' bundled variant) always builds.
     """
     run = step["run"]
-    guards = [(match.start(), match.end(), match.group(1)) for match in re.finditer(r"if \((.+?)\)\s*\{", run)]
+    spans = _guard_spans(run)
     built: set[str] = set()
-    for index, (_start, end, condition) in enumerate(guards):
-        stop = guards[index + 1][0] if index + 1 < len(guards) else len(run)
-        for variant in _VARIANTS:
-            if f"--variant {variant}" in run[end:stop] and _guard_holds(condition, env_map):
-                built.add(variant)
-    if not guards:
-        built = {variant for variant in _VARIANTS if f"--variant {variant}" in run}
+    for call in re.finditer(r"--variant (\S+)", run):
+        holders = [span for span in spans if span[0] <= call.start() < span[1]]
+        if not holders:
+            built.add(call.group(1))
+            continue
+        condition = min(holders, key=lambda span: span[1] - span[0])[2]
+        if _guard_holds(condition, env_map):
+            built.add(call.group(1))
     return built
 
 
@@ -143,10 +169,10 @@ def test_audit_runs_exactly_on_the_bytes_the_leg_built(dispatch):
     """Every bundle gets its architecture audit; no audit runs on bytes that are not there.
 
     The audit answers an unsigned question (which architecture is each Mach-O/PE in the
-    bundle), so it owes nothing to signing -- but a leg that built no bundle has no release
-    directory, and an audit of it only crashes on a missing root. Skipping it whenever a leg
-    is unsigned instead would retire the check on the Store bytes, which a skip-signed leg
-    still builds. Both directions are pinned per leg, per skip-signed and skip-store.
+    bundle), so it owes nothing to signing, and every leg that builds a bundle must answer it.
+    The two are pinned as one invariant across skip-signed and skip-store: an audit of a
+    directory nothing was written to crashes on a missing root, and an audit retired while its
+    bytes are there to scan is an architecture check deleted.
     """
     jobs = load()["jobs"]
     failures = []
@@ -168,15 +194,46 @@ def test_audit_runs_exactly_on_the_bytes_the_leg_built(dispatch):
     assert not failures, "\n".join(failures)
 
 
-def _staged_commands(tmp_path: Path, job: dict, step: dict, inputs: dict, *, packages: bool,
-                     channel: bool = False) -> list[str]:
-    """Run one native leg's tag staging step for real, logging every python call it makes."""
+@pytest.mark.parametrize("dispatch", sorted(DOWNLOADABLE_DISPATCHES))
+def test_every_desktop_leg_builds_the_bundled_package(dispatch):
+    """A leg builds the package its lane names, whatever it signs.
+
+    Upstream gates the Windows bundled variant behind ``SKIP_SIGNED``, which turns an unsigned
+    leg into a leg that builds nothing: no release directory for the audit, no package for the
+    handoff (canary run 41776230035).  The macOS legs never gate the call -- they build, and
+    the absent certificate decides whether the bytes end up signed -- so this pins every native
+    leg to that shape, across skip-signed and skip-store.
+    """
+    jobs = load()["jobs"]
+    failures = []
+    for (target, mode), name in sorted(native_builds(jobs).items()):
+        job = jobs[name]
+        build = _step(job, BUNDLE_BUILDER)
+        for skip_signed, skip_store in [(x, y) for x in (True, False) for y in (True, False)]:
+            inputs = {**DOWNLOADABLE_DISPATCHES[dispatch], "skip-signed": skip_signed,
+                      "skip-store": skip_store}
+            needs = admitted(needs_of(job), channel=dispatch == "channel")
+            env_map = {**_env_of(job, inputs=inputs, needs=needs, matrix=_matrix_of(job)),
+                       **_env_of(build, inputs=inputs, needs=needs, matrix=_matrix_of(job))}
+            if "bundled" not in _variants_built(build, env_map):
+                failures.append(f"{name} built no bundled package with skip-signed={skip_signed} "
+                                f"skip-store={skip_store}")
+    assert not failures, "\n".join(failures)
+
+
+def _run_release_step(tmp_path: Path, job: dict, step: dict, inputs: dict, *, channel: bool = False,
+                      packages: bool = True, shims: tuple[str, ...] = ("python", "python3")) -> list[str]:
+    """Run one release-leg step for real, logging every command it makes to a shimmed interpreter.
+
+    The step's own guards decide what it calls, so this is the only honest way to ask what a
+    dispatch builds or stages: the workflow text is never parsed for a shape, it is executed.
+    """
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir(exist_ok=True)
     suffix = f"{job['name']}-{packages}-{'channel' if channel else 'tag'}"
     log = tmp_path / f"python-calls-{suffix}.log"
     log.unlink(missing_ok=True)
-    for name in ("python", "python3"):
+    for name in shims:
         launcher = bin_dir / name
         launcher.write_text(f'#!/bin/sh\nprintf \'%s\\n\' "$*" >> {shlex.quote(str(log))}\nexit 0\n',
                             encoding="utf-8", newline="\n")
@@ -203,9 +260,15 @@ def _staged_commands(tmp_path: Path, job: dict, step: dict, inputs: dict, *, pac
     script.write_text(step["run"], encoding="utf-8", newline="\n")
     result = subprocess.run([_BASH, "-e", "-o", "pipefail", str(script)], cwd=tmp_path, env=environment,
                             capture_output=True, text=True, encoding="utf-8", timeout=60, check=False)
-    assert result.returncode == 0, f"the leg failed before staging: {result.stdout}\n{result.stderr}"
-    commands = log.read_text(encoding="utf-8").splitlines() if log.exists() else []
-    assert any("scripts.releases.handoff stage" in line for line in commands), result.stderr
+    assert result.returncode == 0, f"the leg step failed: {result.stdout}\n{result.stderr}"
+    return log.read_text(encoding="utf-8").splitlines() if log.exists() else []
+
+
+def _staged_commands(tmp_path: Path, job: dict, step: dict, inputs: dict, *, packages: bool,
+                     channel: bool = False) -> list[str]:
+    """Run one native leg's staging step for real, logging every python call it makes."""
+    commands = _run_release_step(tmp_path, job, step, inputs, channel=channel, packages=packages)
+    assert any("scripts.releases.handoff stage" in line for line in commands), commands
     return commands
 
 
@@ -262,6 +325,30 @@ def test_a_channel_leg_writes_a_signed_row_only_if_it_signed(tmp_path, target, s
     else:
         assert len(recorded) == 1, f"a signed {target} channel leg must still record its row: {commands}"
         assert "metadata-*.json" in staged
+
+
+@pytest.mark.parametrize("dispatch", sorted(DOWNLOADABLE_DISPATCHES))
+def test_the_universal_leg_stages_the_bundle_it_assembles(tmp_path, dispatch):
+    """A leg may not stage a package kind its own build step refused to assemble.
+
+    ``Stage universal bundles to R2`` is unconditional and globs ``*.msixbundle``, while the
+    step before it called ``stage-msixbundle.mjs`` only under ``SKIP_SIGNED != true``.  That
+    guard is the same empty-handoff crash the per-arch legs had, one job deeper: assembling
+    needs no account (``makeappx``), signing does, and the script assembles and warns when
+    ``AZURE_SIGN_*`` are absent.  So every mode that reaches this job assembles.
+    """
+    jobs = load()["jobs"]
+    job = jobs[universal_assembler(jobs)]
+    assemble, stage = _step(job, "stage-msixbundle.mjs"), _step(job, "--name windows-universal")
+    needs = admitted(needs_of(job), channel=dispatch == "channel")
+    for skip_signed in (True, False):
+        inputs = {**DOWNLOADABLE_DISPATCHES[dispatch], "skip-signed": skip_signed}
+        commands = _run_release_step(tmp_path, job, assemble, inputs, channel=dispatch == "channel",
+                                     shims=("node", "python"))
+        assembled = any("stage-msixbundle.mjs" in line for line in commands)
+        assert assembled == _step_runs(stage, inputs, needs), (
+            f"{dispatch} skip-signed={skip_signed}: assembled={assembled} staged="
+            f"{_step_runs(stage, inputs, needs)} commands={commands}")
 
 
 STABLE_RECEIPTS = ("darwin-arm64", "darwin-x64", "win32-bundle")
