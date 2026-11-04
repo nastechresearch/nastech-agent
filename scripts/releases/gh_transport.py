@@ -255,7 +255,7 @@ def read_key(key: str) -> str | None:
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "object"
         _write_asset(repository, asset["id"], path)
-        return path.read_text(encoding="utf-8")
+        return path.read_text(encoding="utf-8-sig")
 
 
 def get_object(creds: str, base: str, bucket: str, key: str, now: str = "") -> str | None:
