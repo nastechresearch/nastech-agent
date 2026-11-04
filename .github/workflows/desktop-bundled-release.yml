@@ -222,6 +222,11 @@ env:
   # scripts/releases/ghpages.py commits records to this repository tree and
   # Deploy Site publishes them; the workers.dev origin is retired.
   RELEASE_CHANNEL_STORE: github
+  # The handoff plane (each leg's packages, blockmaps and receipts) is pinned the
+  # same way, so staging and fetching cannot disagree inside one run. Keys,
+  # receipts and write-once rules are identical in either store; without this pin
+  # the bucket still wins while it is configured.
+  RELEASE_HANDOFF_STORE: github
   RELEASE_CLAIM_TAG: ${{ inputs.claim-tag }}
   RELEASE_CLAIM_OBJECT: ${{ inputs.claim-object }}
 
@@ -486,6 +491,7 @@ jobs:
           - label: win32-x64
             runner: windows-latest
     env: &win32-env
+      GH_TOKEN: ${{ github.token }}
       CHANNEL_BUILD: ${{ needs.validate.outputs.channel-build }}
       NASTECH_DESKTOP_VARIANT: bundled
       NASTECH_PAYLOAD_TAG: ${{ inputs.tag }}
@@ -926,6 +932,7 @@ jobs:
           - label: darwin-arm64
             runner: macos-15
     env: &darwin-env
+      GH_TOKEN: ${{ github.token }}
       CHANNEL_BUILD: ${{ needs.validate.outputs.channel-build }}
       NASTECH_DESKTOP_VARIANT: bundled
       NASTECH_PAYLOAD_TAG: ${{ inputs.tag }}
@@ -1604,6 +1611,9 @@ jobs:
       receipt-url: ${{ steps.receipt.outputs.receipt-url }}
       receipt-sha256: ${{ steps.receipt.outputs.receipt-sha256 }}
     env:
+      # Staged handoff bytes live in release assets, so reading and writing them
+      # is an authenticated API call -- the run's own token, never a secret.
+      GH_TOKEN: ${{ github.token }}
       CHANNEL_BUILD: ${{ needs.validate.outputs.channel-build }}
       CHANNEL_REQUEST_SHA256: ${{ needs.validate.outputs.channel-request-sha256 }}
       NASTECH_PAYLOAD_TAG: ${{ inputs.tag }}
@@ -1852,6 +1862,7 @@ jobs:
       group: win32-updater-feed-canary
       cancel-in-progress: false
     env:
+      GH_TOKEN: ${{ github.token }}
       NASTECH_PAYLOAD_TAG: ${{ inputs.tag }}
       NASTECH_DESKTOP_VARIANT: bundled
       RELEASE_COMMIT: ${{ needs.validate.outputs.sha }}
@@ -1937,6 +1948,7 @@ jobs:
       group: darwin-updater-feed-${{ needs.validate.outputs.channel }}
       cancel-in-progress: false
     env:
+      GH_TOKEN: ${{ github.token }}
       NASTECH_PAYLOAD_TAG: ${{ inputs.tag }}
       CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
       CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}

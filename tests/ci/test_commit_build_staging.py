@@ -12,6 +12,7 @@ from urllib.parse import quote, unquote
 
 import pytest
 
+from tests.ci import gh_release_store
 from tests.ci.desktop_release_roles import (
     commit_summary, native_builds, needs_of, selection_gates, stage_step, termux_builder, universal_assembler,
 )
@@ -26,15 +27,23 @@ def step_script(job, name):
     return next(step['run'] for step in _workflow()['jobs'][job]['steps'] if step.get('name') == name)
 
 
-def shell_step(tmp_path, r2_server, job, name, env, *, script=None):
+def shell_step(tmp_path, r2_server, job, name, env, *, script=None, store=None):
     helper = tmp_path / 'bin'
     helper.mkdir(exist_ok=True)
+    if store is not None:
+        # The release store is reached the way production reaches it: as a `gh` on
+        # PATH, so the step script itself is unchanged by which store it lands on.
+        gh_release_store.install_shim(helper)
+        env = {**env, **store.env()}
     driver = helper / 'python-driver.py'
+    # A step that talks to the release store has no object endpoint to redirect.
+    redirect = ('' if r2_server is None else
+                f'r2.s3_endpoint=lambda _: "http://127.0.0.1:{r2_server.server_port}"\n')
     driver.write_text(
         'import runpy,sys\n'
         f'sys.path.insert(0, {str(ROOT)!r})\n'
         'from scripts.releases import r2\n'
-        f'r2.s3_endpoint=lambda _: "http://127.0.0.1:{r2_server.server_port}"\n'
+        f'{redirect}'
         'args=sys.argv[1:]\n'
         'assert args[:2] == ["-m", "scripts.releases.handoff"] or args[:2] == ["-m", "scripts.releases.upload_summary"] or '
         'args[:1] in (["scripts/render-builds-table.py"], ["-"]), args\n'
