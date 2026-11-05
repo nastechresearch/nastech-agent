@@ -1,3 +1,4 @@
+# health: allow FILE_LINES -- the file is over its cap and this fix is a process-wide isolation fixture plus its invariant test: `subprocess.Popen` is patched per process, so the owner-death supervisor can start inside a probe. Both belong with the probes they protect; a sibling file would put the pin where the tests it guards cannot reach it.
 """Tests for tools/process_registry.py — ProcessRegistry query methods, pruning, checkpoint."""
 
 import json
@@ -12,6 +13,7 @@ import time
 import pytest
 from unittest.mock import MagicMock, patch
 
+from nastech_cli.process_identity import own_process_groups
 from tools.environments.local_env_policy import _NASTECH_PROVIDER_ENV_FORCE_PREFIX
 from tools.process_registry import (
     ProcessRegistry,
@@ -40,6 +42,23 @@ def _reset_systemd_scope_cache():
     _pr._SYSTEMD_SCOPE_AVAILABLE = False
     yield
     _pr._SYSTEMD_SCOPE_AVAILABLE = original
+
+
+@pytest.fixture(autouse=True)
+def _keep_the_owner_death_supervisor_out_of_popen_probes():
+    """Pin the process-wide owner-death supervisor out of this file's ``subprocess.Popen`` probes.
+
+    ``spawn_local`` hands a long-lived child's process group to the one supervisor this process owns
+    (``nastech_cli/process_identity.py``), which starts lazily on the first registration and is
+    respawned by its own waiter thread. A test that patches ``subprocess.Popen`` process-wide can
+    therefore capture ``sh process_supervisor.sh <pgid>`` alongside the command it is probing, and the
+    count -- not the product -- decides the verdict (run 41855770423, job 126667988901: ``assert 2 ==
+    1``). Returning None is the degraded path ``_spawn_supervisor`` already takes when no shell can
+    start: bookkeeping continues and graceful shutdown still reaps. The supervisor's own lifecycle is
+    tested where it lives.
+    """
+    with patch("nastech_cli.process_identity._start_supervisor_locked", return_value=None):
+        yield
 
 
 def _make_session(
@@ -1214,6 +1233,42 @@ class TestSpawnRewriteCompoundBackground:
         assert "&& { node server.js & }" in pty_args[2], \
             f"PTY path should use rewritten command, got: {pty_args[2]}"
         assert session.command == "cd /app && node server.js &"
+
+
+class TestPopenProbesSeeOnlyTheirOwnCommand:
+    """A ``subprocess.Popen`` probe of ``spawn_local`` sees the command the registry ran, and nothing
+    the process-wide owner-death supervisor starts on the side (see the file's
+    ``_keep_the_owner_death_supervisor_out_of_popen_probes`` fixture)."""
+
+    def test_a_live_group_registration_stays_out_of_the_probe(self, registry):
+        captured_cmd = []
+
+        def fake_popen(args, **kwargs):
+            captured_cmd.append(args)
+            proc = MagicMock()
+            proc.pid = 1111
+            proc.stdout = MagicMock()
+            return proc
+
+        fake_thread = MagicMock()
+        fake_thread.daemon = False
+
+        with patch("tools.process_registry._find_shell", return_value="/bin/bash"), \
+             patch("subprocess.Popen", side_effect=fake_popen), \
+             patch("threading.Thread", return_value=fake_thread), \
+             patch("nastech_cli.process_identity._supervisor", None), \
+             patch("nastech_cli.process_identity._supervised_pgids", set()), \
+             patch.object(registry, "_write_checkpoint"):
+            # The two ``process_identity`` patches describe the state a registration genuinely acts
+            # on -- no supervisor, nothing covered -- rather than whatever this process happens to
+            # already own. The group is this process's own, so the dead-group prune cannot empty the
+            # set again and the lazily-started supervisor is really asked for. ``Popen`` itself is
+            # mocked, so that request is only ever a capture: no shell is spawned.
+            own_process_groups([os.getpgid(0)])
+            registry.spawn_local("cd /app && node server.js &>/tmp/srv.log &", cwd="/tmp")
+
+        assert len(captured_cmd) == 1, captured_cmd
+        assert "&& { node server.js &>/tmp/srv.log & }" in captured_cmd[0][2]
 
 
 # =========================================================================
