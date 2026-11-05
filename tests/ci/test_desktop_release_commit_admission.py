@@ -28,6 +28,12 @@ def environment(clone, commit):
         GITHUB_ACTOR='maintainer', GITHUB_TRIGGERING_ACTOR='maintainer',
         GITHUB_OUTPUT=str(clone / 'outputs'), GH_TOKEN='fixture-token',
         GIT_ALLOW_PROTOCOL='file', PYTHONUTF8='1',
+        # The step resolves its archive origin through the store seam, and that module
+        # graph reaches scripts.releases.semver -> nastech_cli.update_channel. CI runs
+        # the step in a checkout carrying those top-level packages; the fake clone
+        # carries only scripts/, so the repo root joins the child path as it does in
+        # tests/ci/test_desktop_release_tag_admission.py.
+        PYTHONPATH=str(Path(__file__).resolve().parents[2]),
     )
 
 
