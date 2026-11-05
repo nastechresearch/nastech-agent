@@ -159,6 +159,10 @@ class R2RequestError(Exception):
         super().__init__(f"R2 {method} {path} -> {status}" + (f": {body[:300]}" if body else ""))
 
 
+class OutsideArchive(ValueError):
+    """A URL that does not live in the archive it claims to, so it binds nothing."""
+
+
 class Response:
     def __init__(self, status: int, headers: list[tuple[str, str]], body: bytes):
         self.status = status
@@ -343,6 +347,38 @@ def public_artifact_url(base: str, key: str) -> str:
                     and parsed.hostname in ('127.0.0.1', 'localhost', '::1')))):
         raise ValueError('Invalid public artifact base URL')
     return public_url_for(base, relative_artifact_path(key))
+
+
+def public_artifact_path(base: str, archive: str, url: str) -> str:
+    """The artifact path one download URL names inside one staged archive.
+
+    A candidate manifest binds every package to bytes by URL, so that binding is only
+    a provenance claim while the archive it names can be re-derived from it -- and
+    re-derived by the store that staged the bytes, because a bucket serves the key
+    path itself while a release serves an encoded asset name. A URL from another
+    archive, another origin or another encoding layer is refused here, before anything
+    is downloaded from it.
+    """
+    from urllib.parse import unquote
+
+    leaf = "placeholder"
+    head = public_artifact_url(base, staging_key_for(archive, leaf))[:-len(leaf)]
+    if not url.startswith(head) or url == head:
+        raise OutsideArchive("Artifact URL is outside its immutable tag archive")
+    return _peeled_artifact_path(unquote(url[len(head):]))
+
+
+def _peeled_artifact_path(value: str) -> str:
+    """One encoding layer peeled off a staged key's tail, then validated as a path.
+
+    Kept separate from `relative_artifact_path` so a URL that arrives with the wrong
+    number of encoding layers stays the distinct diagnosis release validators have
+    always reported, rather than a generic path rejection.
+    """
+    try:
+        return relative_artifact_path(value)
+    except ValueError:
+        raise ValueError("Invalid artifact path encoding") from None
 
 
 def read_public_receipt(base: str, key: str) -> dict:

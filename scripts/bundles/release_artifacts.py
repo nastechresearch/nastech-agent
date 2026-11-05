@@ -186,10 +186,13 @@ def assemble(root: Path, tag: str, commit: str, public_base: str, out: Path,
     a handoff group a lane did not build must have no target in the manifest.
     The Windows groups build together, so the universal bundle (`windows`) and
     the Store bundle (`windows-store`) are each present exactly when their lane is."""
-    from scripts.releases.handoff import receipt_name, validate_receipt
-    from scripts.releases.r2 import put, staging_key_for
+    from scripts.releases.handoff import receipt_name, store, validate_receipt
+    from scripts.releases.r2 import staging_key_for
 
     lanes = frozenset(lanes)
+    # The archive belongs to one store: it writes the manifest there, names every
+    # file URL the way that store serves it, and `materialize` reads them back there.
+    chosen = store(public_base)
     expected = lane_set.handoffs(lanes, ALL_HANDOFFS)
     if not expected:
         raise ValueError("Invalid candidate handoff set: the lanes built no package")
@@ -225,7 +228,7 @@ def assemble(root: Path, tag: str, commit: str, public_base: str, out: Path,
     stores = [name for name in by_name if name.endswith(".msixbundle") and name.startswith("Store-")]
     if len(stores) != ("windows-store" in lanes):
         raise ValueError("Candidate Store bundle differs from the claim's windows-store lane")
-    files = [{**row, "url": f"{public_base.rstrip('/')}/{staging_key_for(archive, name)}"}
+    files = [{**row, "url": chosen.public_artifact_url(public_base, staging_key_for(archive, name))}
              for name, row in sorted(by_name.items()) if not name.startswith("metadata-")]
     by_name = {item["path"]: item for item in files}
     packages = []
@@ -244,7 +247,7 @@ def assemble(root: Path, tag: str, commit: str, public_base: str, out: Path,
     if present != set(lane_set.TARGET_LANE) - absent:
         raise ValueError("Candidate package rows differ from the built handoffs")
     out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    put(tag=archive, key="release-candidates.json", file=out, immutable=True)
+    chosen.put(tag=archive, key="release-candidates.json", file=out, immutable=True)
     return result
 
 
@@ -268,7 +271,12 @@ def materialize(manifest: dict, root: Path, *, public_base: str, store_only: boo
     if store_only and len(selected) != 1:
         raise ValueError("Expected one Store candidate")
     from scripts.releases.progress import log
+    from scripts.releases.handoff import store
+    from scripts.releases.r2 import staging_key_for
 
+    # Bytes come from the store the manifest's URLs were written by; a release asset
+    # is not fetchable from its public URL while its release is a draft.
+    chosen = store(public_base)
     total = sum(item.get("size", 0) for item in selected)
     log(f"Materializing {len(selected)} candidate files ({total / 1e9:.1f} GB) into {root}")
     for number, item in enumerate(selected, start=1):
@@ -276,20 +284,11 @@ def materialize(manifest: dict, root: Path, *, public_base: str, store_only: boo
         relative = Path(item["path"])
         if relative.is_absolute() or ".." in relative.parts or any(c in item["path"] for c in "\\:%?#") or item["path"].startswith("/") or "//" in item["path"]:
             raise ValueError("Invalid artifact path")
-        expected = f"{public_base.rstrip('/')}/releases/tag/{manifest['archive']}/{relative.as_posix()}"
-        if item["url"] != expected or not re.fullmatch(r"[a-f0-9]{64}", item["sha256"]):
+        key = staging_key_for(manifest["archive"], relative.as_posix())
+        if item["url"] != chosen.public_artifact_url(public_base, key) or not re.fullmatch(r"[a-f0-9]{64}", item["sha256"]):
             raise ValueError("Invalid artifact URL or digest")
-        target = root / relative
-        target.parent.mkdir(parents=True, exist_ok=True)
-        digest = hashlib.sha256()
-        with urllib.request.urlopen(item["url"], timeout=600) as response, target.open("wb") as file:
-            if not response.geturl().startswith("https://"):
-                raise ValueError("Artifact redirected outside HTTPS")
-            while chunk := response.read(1024 * 1024):
-                digest.update(chunk)
-                file.write(chunk)
-        if digest.hexdigest() != item["sha256"]:
-            raise ValueError(f"Artifact digest mismatch: {relative}")
+        chosen.download_public_object(public_base, key, root / relative,
+                                      expected_size=item["size"], expected_sha256=item["sha256"])
 
 
 def publish(manifest: dict, root: Path, public_base: str) -> None:

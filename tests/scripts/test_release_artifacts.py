@@ -10,11 +10,13 @@ import sys
 import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from urllib.parse import quote
 
 import nastech_yaml
 import pytest
 
 from scripts.bundles.release_artifacts import materialize, record, stamp_matches
+from tests.scripts.test_gh_transport import store as store  # noqa: PLC0414 -- self-alias, as above: the GitHub-store fixture parameter shadows this import
 from tests.scripts.test_release_r2 import r2_server as r2_server  # noqa: PLC0414 -- the self-alias is load-bearing: it suppresses F811 for the pytest fixture parameter shadowing this import
 from tests.scripts.test_stable_release import https_origin as https_origin  # noqa: PLC0414 -- same self-alias, for the https_origin fixture
 from tests.scripts.test_release_darwin import _inputs
@@ -24,6 +26,12 @@ from scripts.releases import lanes as lane_set
 ROOT = Path(__file__).resolve().parents[2]
 SMOKE_RESULTS = {name: {'result': 'success'} for name in (
     'smoke-darwin-arm64', 'smoke-darwin-x64', 'smoke-win32-arm64', 'smoke-win32-x64')}
+# A release that builds one leg runs one smoke: the others are recorded as skipped,
+# and `accepted_smoke_results` refuses a group that names a target it never built.
+MAC_SMOKE = {'smoke-darwin-arm64': {'result': 'success'},
+             'smoke-darwin-x64': {'result': 'skipped'},
+             'smoke-win32-arm64': {'result': 'skipped'},
+             'smoke-win32-x64': {'result': 'skipped'}}
 RELEASE_EPOCH = 1_787_965_323
 WINDOWS_VERSION = '2026.5761.123.0'
 
@@ -266,10 +274,11 @@ def test_candidate_publication_and_store_selection(tmp_path, monkeypatch, r2_ser
     r2_server.store[pointer] = original
     before = dict(r2_server.store)
     # Packages are receipt-bound and never re-downloaded here; a corrupt file that
-    # promotion does materialize (a feed leg) is still refused before any write.
+    # promotion does materialize (a feed leg) is still refused before any write --
+    # by the store that holds the bytes, whose refusal names the archive path.
     r2_server.store[f"releases/tag/{manifest['archive']}/arm64-stable-mac.yml"] = (b'corrupt', '"e"')
     r2_server.requests.clear()
-    with pytest.raises(ValueError, match='digest mismatch'):
+    with pytest.raises(ValueError, match='checksum mismatch'):
         artifacts.promote(manifest, tmp_path / 'broken', base)
     assert not any(method == 'PUT' for method, _, _ in r2_server.requests)
     assert all(value == r2_server.store[key] for key, value in before.items() if not key.startswith('releases/tag/'))
@@ -471,3 +480,72 @@ def test_candidate_smoke_admission_fails_before_publication(tmp_path, r2_server,
             assert not any(method == 'PUT' for method, _, _ in r2_server.requests)
             assert (dict(r2_server.store), body_file.read_bytes()) == before
     r2_server.store[key] = (raw, '"original"')
+
+
+def test_the_candidate_archive_is_written_named_and_read_by_one_store(tmp_path, store, monkeypatch):
+    """The tag-scoped archive answers to one store: its bytes, its URLs, and its read-back.
+
+    Asserted against the release store's own documented URL shape rather than a product
+    helper, because the defect this pins is a plane that stages into one store while
+    naming and fetching from another. A draft release's assets have no public URL, so a
+    URL-fetching read is proven dead here rather than merely unused.
+    """
+    from scripts.bundles.release_artifacts import assemble, materialize
+    from scripts.releases import handoff, stable
+
+    tag, commit, attempt = 'v1.2.3', 'a' * 40, 'rc.2-v1.2.3'
+    base = 'https://github.com/o/r/releases/download'
+    package, feed = 'NastechBundled-1.2.3-mac-arm64.zip', 'arm64-stable-mac.yml'
+    built = tmp_path / 'built'
+    built.mkdir()
+    legs, _mac_bytes = _inputs('1.2.3')
+    (built / package).write_bytes(b'candidate archive bytes')
+    (built / feed).write_text(legs[feed], encoding='utf-8')
+    (built / 'metadata-macos-arm64.json').write_text(json.dumps({
+        'platform': 'macos', 'arch': 'arm64', 'tag': tag, 'commit': commit,
+        'identity': 'Product', 'version': '1.2.3', 'teamId': 'ABCDEFGHIJ', 'filename': package,
+    }), encoding='utf-8')
+    handoff.stage(attempt, commit, 'darwin-arm64', built, [package, feed, 'metadata-macos-arm64.json'])
+    fetched = tmp_path / 'fetched'
+    handoff.fetch(attempt, commit, ['darwin-arm64'], fetched, ['metadata-*.json', '*.yml', package])
+
+    manifest = assemble(fetched, tag, commit, base, tmp_path / 'release-candidates.json',
+                        smoke_results=MAC_SMOKE, release_epoch=RELEASE_EPOCH, archive=attempt,
+                        lanes=('macos-arm64',))
+
+    key = f'releases/tag/{attempt}/{package}'
+    (file,) = [item for item in manifest['files'] if item['path'] == package]
+    # An asset is addressed by name inside a release: the key's separators are flattened
+    # into that name, and the name is encoded again to survive being a URL path segment.
+    name = quote(key, safe='')
+    assert file['url'] == f'{base}/{attempt}/{quote(name, safe="")}'
+    assert manifest['packages'][0]['artifact']['url'] == file['url']
+    staged = {row['name'] for rows in store.assets.values() for row in rows}
+    assert f'releases%2Ftag%2F{attempt}%2Frelease-candidates.json' in staged
+
+    def no_public_fetch(*_args, **_kwargs):
+        raise AssertionError('the archive plane reached a public URL for staged bytes')
+
+    monkeypatch.setattr('urllib.request.urlopen', no_public_fetch)
+    verified = tmp_path / 'verified'
+    materialize(manifest, verified, public_base=base)
+    assert (verified / package).read_bytes() == b'candidate archive bytes'
+
+    # The URL is store-derived, but it is still a provenance claim: a package pointing
+    # at another archive is refused rather than downloaded.
+    forged = copy.deepcopy(manifest)
+    forged['packages'][0]['artifact']['url'] = f'https://bucket.example.com/{key}'
+    with pytest.raises(ValueError, match='outside its immutable tag archive'):
+        stable.validate_candidates(forged, tag, commit, base, RELEASE_EPOCH, archive=attempt)
+
+
+def test_the_r2_archive_urls_are_unchanged_by_the_store_seam(staged_candidate):
+    """The seam is a routing change, not a re-spelling: the bucket keeps the URLs it shipped.
+
+    Without this, a rule that "selects a store" while quietly changing every existing
+    artifact URL would look green here and brick a release that has already staged.
+    """
+    manifest, _, base = staged_candidate
+    attempt = manifest['archive']
+    for file in manifest['files']:
+        assert file['url'] == f"{base}/releases/tag/{attempt}/{file['path']}"
