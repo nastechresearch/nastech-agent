@@ -23,7 +23,7 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from scripts.releases import r2 as _r2
 from scripts.releases.r2 import (  # the pure half of the surface: key layout + validation
@@ -54,6 +54,8 @@ __all__ = [
     "key_for_asset",
     "owns_origin",
     "prune",
+    "public_artifact_path",
+    "public_artifact_url",
     "public_base_url",
     "put",
     "read_key",
@@ -271,6 +273,33 @@ def put(tag: str = "", key: str = "", file: str = "", key_is_full: bool = False,
 
     note(name)
     print(f"OK github: {name} ({size} bytes)")
+
+
+def public_artifact_url(base: str, key: str) -> str:
+    """The URL this store serves a staged key from once its release is public.
+
+    Two parts, because an asset is addressed by name inside a release: the release
+    the key routes to, then the flattened name. Flattening is percent-encoding, so
+    the name is encoded a second time to survive being a path segment -- which is
+    what makes this the inverse of `public_artifact_path` rather than a join.
+    """
+    public_base_url(base)
+    logical, scoped = _scoped(key)
+    return f"{base.rstrip('/')}/{release_tag_for(logical)}/{quote(asset_name(scoped), safe='')}"
+
+
+def public_artifact_path(base: str, archive: str, url: str) -> str:
+    """The artifact path one download URL names inside this repository's archive.
+
+    A release URL carries two encoding layers where a bucket URL carries one, so the
+    archive is re-derived through this store's own `public_artifact_url` and peeled
+    back the same way: one unquote for the path segment, one for the asset name.
+    """
+    leaf = "placeholder"
+    head = public_artifact_url(base, staging_key_for(archive, leaf))[:-len(leaf)]
+    if not url.startswith(head) or url == head:
+        raise _r2.OutsideArchive("Artifact URL is outside its immutable tag archive")
+    return relative_artifact_path(key_for_asset(unquote(unquote(url[len(head):]))))
 
 
 def _locate(key: str) -> tuple[str, dict]:

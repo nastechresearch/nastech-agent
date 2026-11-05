@@ -14,7 +14,7 @@ import urllib.request
 from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Iterable
-from urllib.parse import unquote, urlsplit
+from urllib.parse import urlsplit
 
 from nastech_cli.update_channel import STABLE_TAG_RE
 from scripts.releases import lanes as lane_set
@@ -205,21 +205,26 @@ def _validated_rows(manifest: dict, tag: str, commit: str, public_base: str,
     expected_windows_version = stable_windows_version(admitted_epoch)
     if release_epoch is not None and admitted_epoch != release_epoch:
         raise ValueError("Candidate release epoch differs from the admitted claim")
-    prefix = urlsplit(f"{public_base.rstrip('/')}/releases/tag/{archive}/")
+    prefix = urlsplit(f"{public_base.rstrip('/')}/")
     if prefix.scheme != "https" or prefix.username or prefix.password or not prefix.netloc:
         raise ValueError("Public release origin must use HTTPS")
+    # Which archive a package URL names is the staging store's own answer: a bucket
+    # serves the key path, a release serves an asset name flattened by percent-encoding.
+    from scripts.releases import handoff, r2
+
+    chosen = handoff.store(public_base)
     rows = {}
     for item in manifest["packages"]:
         target = f"{item.get('platform')}/{item.get('arch')}"
         if target not in ALL_TARGETS or target in rows or item.get("tag") != tag or item.get("commit") != commit:
             raise ValueError(f"Invalid or duplicate candidate target: {target}")
         artifact = item.get("artifact", {})
-        url = urlsplit(artifact.get("url", ""))
-        decoded = unquote(url.path)
-        if any(part in (".", "..") for part in decoded.split("/")) or "\\" in decoded or "%" in decoded:
-            raise ValueError("Invalid artifact path encoding")
-        if (url.scheme, url.netloc) != (prefix.scheme, prefix.netloc) or not url.path.startswith(prefix.path) or url.query or url.fragment or url.username or url.password:
-            raise ValueError(f"Candidate package is outside its immutable tag archive: {target}")
+        try:
+            path = chosen.public_artifact_path(public_base, archive, artifact.get("url", ""))
+        except r2.OutsideArchive:
+            raise ValueError(f"Candidate package is outside its immutable tag archive: {target}") from None
+        # A URL that is in the archive but not a path the archive can name -- traversal,
+        # or an encoding layer a bucket does not have -- is its own diagnosis.
         if not DIGEST.fullmatch(artifact.get("sha256", "")) or not item.get("identity"):
             raise ValueError(f"Invalid candidate digest or identity: {target}")
         if item["platform"] == "windows":
@@ -227,10 +232,10 @@ def _validated_rows(manifest: dict, tag: str, commit: str, public_base: str,
                     or item.get("executableVersion") != expected_windows_version):
                 raise ValueError("Windows candidate version differs from the admitted release epoch")
             windows_version(item["version"])
-            if not item.get("publisher") or not item.get("applicationId") or not url.path.endswith(".msixbundle"):
+            if not item.get("publisher") or not item.get("applicationId") or not path.endswith(".msixbundle"):
                 raise ValueError("Windows candidate needs publisher, applicationId and MSIX bundle")
         elif item["platform"] == "macos":
-            if item.get("version") != tag[1:] or not re.fullmatch(r"[A-Z0-9]{10}", item.get("teamId", "")) or not url.path.endswith(".zip"):
+            if item.get("version") != tag[1:] or not re.fullmatch(r"[A-Z0-9]{10}", item.get("teamId", "")) or not path.endswith(".zip"):
                 raise ValueError("macOS candidate needs matching version, signing team and app ZIP")
         elif item.get("version") != f"{tag[1:]}-1":
             raise ValueError("Termux candidate version differs from the admitted release")

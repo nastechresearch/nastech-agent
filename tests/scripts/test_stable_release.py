@@ -294,9 +294,15 @@ def test_transitions_bind_all_arches_identity_version_and_archive():
         plan_transitions(old, mutable, BASE)
     for suffix in ("../other.zip", "%2e%2e/other.zip", "%252e%252e/other.zip"):
         traversal = copy.deepcopy(new)
-        traversal["packages"][0]["artifact"]["url"] = f"{BASE}/releases/tag/{new['tag']}/{suffix}"
+        traversal["packages"][0]["artifact"]["url"] = f"{BASE}/releases/tag/{new['archive']}/{suffix}"
         with pytest.raises(ValueError, match="path encoding"):
             plan_transitions(old, traversal, BASE)
+    # Bytes staged under a different archive are not this release's, however clean
+    # the path inside that other archive reads.
+    foreign = copy.deepcopy(new)
+    foreign["packages"][0]["artifact"]["url"] = f"{BASE}/releases/tag/{new['tag']}/x64.msixbundle"
+    with pytest.raises(ValueError, match="outside its immutable tag archive"):
+        plan_transitions(old, foreign, BASE)
     with pytest.raises(ValueError, match="increase"):
         plan_transitions(new, candidates("v1.2.3", "a" * 40, "1" * 64), BASE)
 
