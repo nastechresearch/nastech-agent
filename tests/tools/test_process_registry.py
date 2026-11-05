@@ -1,3 +1,4 @@
+# health: allow FILE_LINES -- the file is over its cap and this fix is a process-wide isolation fixture plus its invariant test: `subprocess.Popen` is patched per process, so the owner-death supervisor can start inside a probe. Both belong with the probes they protect; a sibling file would put the pin where the tests it guards cannot reach it.
 """Tests for tools/process_registry.py — ProcessRegistry query methods, pruning, checkpoint."""
 
 import json
@@ -47,18 +48,14 @@ def _reset_systemd_scope_cache():
 def _keep_the_owner_death_supervisor_out_of_popen_probes():
     """Pin the process-wide owner-death supervisor out of this file's ``subprocess.Popen`` probes.
 
-    ``spawn_local`` hands each long-lived child's process group to the ONE supervisor this process
-    owns (``nastech_cli/process_identity.py``), which starts lazily on the first registration and is
-    restarted by its own waiter thread whenever it dies while groups are still covered. So a test
-    that patches ``subprocess.Popen`` can capture ``sh process_supervisor.sh <pgid>`` -- started by a
-    thread that test never created, on a schedule it cannot see -- in the same list as the command it
-    is probing. The count then decides the verdict instead of the product (run 41855770423, job
-    126667988901: ``assert 2 == 1`` for the rewrite test below, green on every other shard).
-
-    These tests ask which command the registry runs. The supervisor's lifecycle is tested where it
-    lives. ``_start_supervisor_locked`` returning None is the degraded path ``_spawn_supervisor``
-    already takes when no shell can be started: registration bookkeeping continues, graceful
-    shutdown still reaps, and only the ungraceful-exit net is off -- for the seconds one test runs.
+    ``spawn_local`` hands a long-lived child's process group to the one supervisor this process owns
+    (``nastech_cli/process_identity.py``), which starts lazily on the first registration and is
+    respawned by its own waiter thread. A test that patches ``subprocess.Popen`` process-wide can
+    therefore capture ``sh process_supervisor.sh <pgid>`` alongside the command it is probing, and the
+    count -- not the product -- decides the verdict (run 41855770423, job 126667988901: ``assert 2 ==
+    1``). Returning None is the degraded path ``_spawn_supervisor`` already takes when no shell can
+    start: bookkeeping continues and graceful shutdown still reaps. The supervisor's own lifecycle is
+    tested where it lives.
     """
     with patch("nastech_cli.process_identity._start_supervisor_locked", return_value=None):
         yield
