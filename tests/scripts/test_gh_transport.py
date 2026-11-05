@@ -21,13 +21,17 @@ from scripts.releases import gh_transport, handoff, r2
 class FakeReleaseApi:
     """The release-asset endpoints the transport uses, kept in memory.
 
-    Faithful in the three ways that let broken handoff staging reach production:
+    Faithful in the four ways that let broken handoff staging reach production:
     `releases/tags/{tag}` answers 404 for a draft, a POST mints a second release for
-    a tag a draft already carries, and the release a POST hands back has no readable
-    asset route until its first upload.  So a store that finds its release only by
-    the tag route splits one canary across a draft per leg, and the leg that opens
-    one can lose the read it does next.
+    a tag a draft already carries, the release a POST hands back has no readable
+    asset route until its first upload, and -- the one that made every leg of run
+    41852094357 die before uploading anything -- `gh api` infers POST from the mere
+    presence of a `-f`/`-F` field.  So a store that finds its release only by the tag
+    route splits one canary across a draft per leg, and a paginated read that does not
+    name its method is a write GitHub answers with 404.
     """
+
+    NOT_FOUND = "HTTP 404: Not Found"
 
     def __init__(self):
         self.rows: dict[int, dict] = {}
@@ -60,25 +64,40 @@ class FakeReleaseApi:
     def _fields(argv):
         return [argv[index + 1] for index, arg in enumerate(argv) if arg in ("-f", "-F")]
 
+    @classmethod
+    def _method(cls, argv):
+        """The verb `gh api` will actually send, which is not always the one asked for."""
+        for flag in ("-X", "--method"):
+            if flag in argv:
+                return argv[argv.index(flag) + 1].upper()
+        return "POST" if cls._fields(argv) else "GET"
+
     def __call__(self, argv, **kwargs):
         route = re.sub(r"^repos/o/r/", "", argv[2])
+        method = self._method(argv)
         if m := re.fullmatch(r"releases/tags/(.+)", route):
+            if method != "GET":
+                return self._done(returncode=1, stderr=self.NOT_FOUND)
             for row in self.rows.values():
                 if row["tag_name"] == m.group(1) and not row["draft"]:
                     return self._done(json.dumps({"id": row["id"]}))
-            return self._done(returncode=1, stderr="HTTP 404: Not Found")
+            return self._done(returncode=1, stderr=self.NOT_FOUND)
         if route == "releases":
-            if "POST" not in argv:
-                page = int(next(field.split("=")[1] for field in self._fields(argv)
-                                if field.startswith("page=")))
+            if method == "GET":
+                page = int(next((field.split("=")[1] for field in self._fields(argv)
+                                 if field.startswith("page=")), 1))
                 rows = sorted(self.rows.values(), key=lambda row: -row["id"])
                 return self._done(json.dumps(rows[(page - 1) * 100:page * 100]))
-            tag = next(field.split("=", 1)[1] for field in self._fields(argv)
-                       if field.startswith("tag_name="))
+            tag = next((field.split("=", 1)[1] for field in self._fields(argv)
+                        if field.startswith("tag_name=")), None)
+            if tag is None:
+                return self._done(returncode=1, stderr="HTTP 422: Validation Failed")
             rid = self.create(tag)
             self.freshly_minted = rid
             return self._done(json.dumps({"id": rid, "draft": True}))
         if m := re.fullmatch(r"releases/(\d+)/assets\?name=(.*)", route):
+            if method != "POST":
+                return self._done(returncode=1, stderr=self.NOT_FOUND)
             payload = open(argv[argv.index("--input") + 1], "rb").read()
             asset = {"id": self.next_id, "name": unquote(m.group(2)), "size": len(payload)}
             self.next_id += 1
@@ -87,11 +106,13 @@ class FakeReleaseApi:
             self.freshly_minted = None
             return self._done(json.dumps(asset))
         if m := re.fullmatch(r"releases/(\d+)/assets", route):
+            if method != "GET":
+                return self._done(returncode=1, stderr=self.NOT_FOUND)
             if int(m.group(1)) == self.freshly_minted:
-                return self._done(returncode=1, stderr="HTTP 404: Not Found")
+                return self._done(returncode=1, stderr=self.NOT_FOUND)
             rows = self.assets[int(m.group(1))]
-            page = int(next(field.split("=")[1] for field in self._fields(argv)
-                            if field.startswith("page=")))
+            page = int(next((field.split("=")[1] for field in self._fields(argv)
+                             if field.startswith("page=")), 1))
             return self._done(json.dumps(rows[(page - 1) * 100:page * 100]))
         if m := re.fullmatch(r"releases/assets/(\d+)", route):
             asset_id = int(m.group(1))
@@ -153,6 +174,18 @@ def test_the_leg_that_opens_its_release_uploads_to_it_instead_of_reading_it(stor
                      key_is_full=True, immutable=True)
     assert [row["name"] for row in store.assets[store.releases[tag]]] == \
         [gh_transport.asset_name(key)]
+
+
+def test_a_paginated_read_is_a_read_and_not_the_write_gh_infers_from_a_field(store):
+    """`gh api` sends POST whenever a `-f`/`-F` field is present, whatever the caller meant.
+
+    Every asset listing asks for `per_page` and `page`, so the plane's most-called read
+    was a write in GitHub's eyes: a 404 from a route that creates nothing, which the
+    transport reported as a missing release and answered by opening another draft.
+    """
+    rid = store.create("v0.22.0", draft=False)
+    store.assets[rid] = [{"id": 1000 + i, "name": f"asset-{i}.zip"} for i in range(150)]
+    assert len(gh_transport._assets("o/r", rid)) == 150
 
 
 def test_every_leg_of_one_unpublished_tag_shares_the_draft_the_first_leg_opened(store, tmp_path):

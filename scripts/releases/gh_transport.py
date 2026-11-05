@@ -137,6 +137,16 @@ def _api(repository: str, route: str, *args: str) -> subprocess.CompletedProcess
                 capture_output=True, text=True, check=False)
 
 
+def _read(repository: str, route: str, **params: object) -> subprocess.CompletedProcess:
+    """A GET that says GET: `gh api` turns any call carrying a `-f`/`-F` field into a
+    POST, so a paginated read otherwise asks a list-only route to create and comes back
+    404 -- which this store reads as "no such release" and answers by opening one."""
+    args = ["--method", "GET"]
+    for name, value in params.items():
+        args += ["-f", f"{name}={value}"]
+    return _api(repository, route, *args)
+
+
 def _fail(method: str, target: str, result: subprocess.CompletedProcess) -> None:
     status = 404 if "Not Found" in (result.stderr or "") else 500
     raise R2RequestError(method, target, status, (result.stderr or "").strip()[:400])
@@ -150,12 +160,12 @@ def _found_release_id(repository: str, tag: str) -> int | None:
     stages into. Missing that is how one canary became a release per leg: each leg's
     assets landed on its own draft, and the publish job found only one of them.
     """
-    found = _api(repository, f"releases/tags/{tag}")
+    found = _read(repository, f"releases/tags/{tag}")
     if found.returncode == 0:
         return int(json.loads(found.stdout)["id"])
     page = 1
     while True:
-        listed = _api(repository, "releases", "-f", "per_page=100", "-f", f"page={page}")
+        listed = _read(repository, "releases", per_page=100, page=page)
         if listed.returncode != 0:
             _fail("GET", "releases", listed)
         rows = json.loads(listed.stdout)
@@ -192,8 +202,7 @@ def _assets(repository: str, release_id: int) -> list[dict]:
     rows: list[dict] = []
     page = 1
     while True:
-        found = _api(repository, f"releases/{release_id}/assets",
-                     "-f", "per_page=100", "-f", f"page={page}")
+        found = _read(repository, f"releases/{release_id}/assets", per_page=100, page=page)
         if found.returncode != 0:
             _fail("GET", f"releases/{release_id}/assets", found)
         batch = json.loads(found.stdout)
@@ -211,7 +220,7 @@ def _write_asset(repository: str, asset_id: int, file: Path) -> None:
     with open(file, "wb") as handle:
         result = _run(
             ["gh", "api", f"repos/{repository}/releases/assets/{asset_id}",
-             "-H", "Accept: application/octet-stream"],
+             "--method", "GET", "-H", "Accept: application/octet-stream"],
             stdout=handle, stderr=subprocess.PIPE, check=False)
     if result.returncode != 0:
         _fail("GET", str(asset_id), result)
