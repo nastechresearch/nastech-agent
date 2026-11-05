@@ -4,6 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 import hashlib
 import http.client
+from pathlib import Path
 import secrets
 import uuid
 
@@ -90,6 +91,22 @@ class R2ChannelStore:
             if not token or token in seen:
                 raise ChannelError("Incomplete or repeated channel pagination token")
             seen.add(token)
+
+
+def write_immutable_feeds(store, reader, prefix: str, root: Path, files: list[Path]) -> None:
+    """Write each generated build feed through the SELECTED store, then verify
+    the public read-back against the exact local bytes.
+
+    The create-only CAS guard that the direct R2 transport expressed as
+    If-None-Match: * lives in every store's `put(key, body)`; routing feeds any
+    other way would silently repoint a release mid-run.
+    """
+    for file in files:
+        key = prefix + Path(file).relative_to(root).as_posix()
+        body = Path(file).read_bytes()
+        store.put(key, body)
+        if reader.read_bytes(key, hashlib.sha256(body).hexdigest()) != body:
+            raise ChannelError("Immutable feed public read-back differs")
 
 
 def preview_identity(name: str, token: str) -> dict:

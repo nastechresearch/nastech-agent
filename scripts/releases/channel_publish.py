@@ -10,6 +10,7 @@ import tempfile
 
 from nastech_cli.release_channels import ChannelReader, build_prefix, canonical_json, decode_json, require_sha256, validate_request
 from scripts.releases import commit_build, handoff, r2
+from scripts.releases.channels import write_immutable_feeds
 
 NATIVE_LEGS = ("darwin-arm64", "darwin-x64", "win32-arm64", "win32-x64", "windows-universal")
 REQUIRED_JOBS = ("validate", "build-darwin-arm64", "build-darwin-x64",
@@ -150,11 +151,7 @@ def publish_receiver(request: dict, root: Path, *, needs: dict, publisher) -> di
     validate_manifest(manifest, {**current[0], "head": None}, publisher.public_base)
     if manifest.get("receiverProtocol") != 1:
         raise ValueError("Candidate packages have no retirement receiver")
-    for file in feeds:
-        key = prefix + file.relative_to(root).as_posix()
-        r2.put(tag="", key=key, file=str(file), key_is_full=True, immutable=True)
-        if publisher.reader.read_bytes(key) != file.read_bytes():
-            raise ValueError("Receiver feed readback mismatch")
+    write_immutable_feeds(publisher.store, publisher.reader, prefix, root, feeds)
     publisher._write(prefix + "build.json", manifest)
     head = {"buildId": request["buildId"], "sequence": request["sequence"], "manifestKey": prefix + "build.json",
             "sha256": hashlib.sha256(canonical_json(manifest)).hexdigest()}
@@ -178,11 +175,7 @@ def publish(request: dict, root: Path, *, needs: dict, publisher) -> dict:
     handoff.fetch_channel_build(request, list(NATIVE_LEGS), root, public_base=request["publicBase"])
     manifest, feeds = assemble(request, root, needs=needs)
     prefix = build_prefix(request["buildId"])
-    for file in feeds:
-        key = prefix + file.relative_to(root).as_posix()
-        r2.put(tag="", key=key, file=str(file), key_is_full=True, immutable=True)
-        r2.download_public_object(request["publicBase"], key, root / "verified" / file.name,
-                                  expected_size=file.stat().st_size, expected_sha256=r2.file_sha256(file))
+    write_immutable_feeds(publisher.store, publisher.reader, prefix, root, feeds)
     publisher.store.put(prefix + "build.json", canonical_json(manifest))
     return publisher.promote(request["buildId"])
 
@@ -212,7 +205,7 @@ def main(argv: list[str] | None = None) -> None:
         with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as stream:
             stream.write("".join(f"{key}={value}\n" for key, value in values.items()))
     elif args.command in {"publish", "receiver-publish"}:
-        from scripts.releases.channels import ChannelPublisher, R2ChannelStore
+        from scripts.releases.channels import ChannelPublisher
         needs = json.loads(os.environ.get("RELEASE_NEEDS", "{}"))
         require_success(needs)
         # Repeat maintainer/default-controller admission on promotion, including reruns.
