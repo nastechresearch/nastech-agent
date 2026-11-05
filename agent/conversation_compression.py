@@ -1176,7 +1176,7 @@ def run_compress_context_with_progress_timeout(
     on_timeout: Optional[Callable[[float, float, float], None]] = None,
     on_timeout_cause: Optional[Callable[[bool, bool], None]] = None,
     on_commit_overrun: Optional[Callable[[float, float], None]] = None,
-    fence: Optional[CompressionCommitFence] = None, telemetry_agent: Any = None, stall_fallback: bool = True, bypass_admission: bool = False,
+    fence: Optional[CompressionCommitFence] = None, telemetry_agent: Any = None, stall_fallback: bool = True,
     new_fence: Optional[Callable[[], CompressionCommitFence]] = None,
     fallback_worker: Optional[Callable[[CompressionCommitFence], tuple[list, str]]] = None,
     request_exceeds_window: bool = False,
@@ -1237,7 +1237,7 @@ def run_compress_context_with_progress_timeout(
     # A queued job would silently wait out its whole budget without starting and stay eligible to run as a
     # stale cancelled job when a worker recovers. Fail fast: continue without compression this cycle. See
     # #76354.
-    if not bypass_admission and not _try_admit_compression_job():
+    if not _try_admit_compression_job():
         logger.warning(
             "Context compression pool saturated (%d workers busy) — refusing new compression this cycle and continuing without "
             "compression. Wedged workers are fence-cancelled and free their "
@@ -1268,11 +1268,9 @@ def run_compress_context_with_progress_timeout(
     try:
         future = executor.submit(propagate_context_to_thread(_fence_gated_worker), fence)
     except BaseException:
-        if not bypass_admission:
-            _release_compression_admission()
+        _release_compression_admission()
         raise
-    if not bypass_admission:
-        future.add_done_callback(_release_compression_admission)
+    future.add_done_callback(_release_compression_admission)
     # EVERY host unwind must revoke commit admission or a detached worker could
     # later mutate durable state; handled_exit marks paths that settle it themselves
     handled_exit = False
