@@ -15,8 +15,13 @@ from typing import Any
 from nastech_cli.update_channel import STABLE_TAG_RE
 from scripts.releases.semver import compare
 
-# The legacy CalVer line published up to 0.21.5 (v2026.9.24); the pipeline continues it.
-SEED = "0.21.5"
+# The head of the line before any release is published from here. Upstream's own
+# seed named its last CalVer-era release because a published head has overridden
+# it on every read since; a fork with zero published releases keeps reading the
+# seed, so it must name the newest upstream stable the tree carries -- otherwise
+# the canary stamps 0.22.7 code as 0.21.5+canary. Rewritten by the sync whenever
+# the tree moves onto a newer upstream stable.
+SEED = "0.22.7"
 BUMPS = ("major", "minor", "patch")
 
 

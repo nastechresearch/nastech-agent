@@ -1,15 +1,13 @@
 """A ref names a version, and the next version is derived, never read from the tree.
 
-Derivation reads the published stable head, or the seed ``0.21.5`` before one
-exists. Attempt refs number attempts within a version and never move the line.
+Derivation reads the published stable head, or the seeded line before one exists.
+Attempt refs number attempts within a version and never move the line.
 """
 import json
 
 import pytest
 
 from scripts.releases.versioning import derive_next_version, next_attempt, tag_record, version_from_tag
-
-SEED = "0.21.5"
 
 
 def test_final_tag_is_its_version():
@@ -83,9 +81,17 @@ def test_canary_compares_equal_to_its_stable():
 
 
 def test_empty_head_seeds_the_line():
-    assert derive_next_version(published=None, bump="patch") == "0.21.6"
-    assert derive_next_version(published=None, bump="minor") == "0.22.0"
-    assert derive_next_version(published=None, bump="major") == "1.0.0"
+    """Before the first published release, the line continues from the seed.
+
+    Asserted against the seed instead of its number: the seed names the newest
+    upstream stable the tree carries, so it moves with every sync and a literal
+    here would go red on each one.
+    """
+    from scripts.releases.versioning import BUMPS, SEED
+
+    for bump in BUMPS:
+        assert derive_next_version(published=None, bump=bump) == derive_next_version(
+            published=SEED, bump=bump)
 
 
 def test_published_head_spends_its_version():
