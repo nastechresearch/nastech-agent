@@ -19,20 +19,42 @@ from scripts.releases import gh_transport, handoff, r2
 
 
 class FakeReleaseApi:
-    """The release-asset endpoints the transport uses, kept in memory."""
+    """The release-asset endpoints the transport uses, kept in memory.
+
+    Faithful in the four ways that let broken handoff staging reach production:
+    `releases/tags/{tag}` answers 404 for a draft, a POST mints a second release for
+    a tag a draft already carries, the release a POST hands back has no readable
+    asset route until its first upload, and -- the one that made every leg of run
+    41852094357 die before uploading anything -- `gh api` infers POST from the mere
+    presence of a `-f`/`-F` field.  So a store that finds its release only by the tag
+    route splits one canary across a draft per leg, and a paginated read that does not
+    name its method is a write GitHub answers with 404.
+    """
+
+    NOT_FOUND = "HTTP 404: Not Found"
 
     def __init__(self):
+        self.rows: dict[int, dict] = {}
+        # tag -> the release a test asserts on: the newest the API accepted for it.
         self.releases: dict[str, int] = {}
+        # tag -> how many releases the API accepted for it, the thing GitHub does
+        # not enforce and the plane has to.
+        self.minted: dict[str, int] = {}
         self.assets: dict[int, list[dict]] = {}
         self.payloads: dict[int, bytes] = {}
+        # The release the last POST opened: its asset route answers 404 until the
+        # first upload, which is how run 41852094357 lost the win32-x64 leg.
+        self.freshly_minted: int | None = None
         self.next_id = 1
 
-    def create(self, tag: str) -> int:
-        if tag not in self.releases:
-            self.releases[tag] = self.next_id
-            self.next_id += 1
-            self.assets[self.releases[tag]] = []
-        return self.releases[tag]
+    def create(self, tag: str, *, draft: bool = True) -> int:
+        rid = self.next_id
+        self.next_id += 1
+        self.rows[rid] = {"id": rid, "tag_name": tag, "draft": draft}
+        self.assets[rid] = []
+        self.releases[tag] = rid
+        self.minted[tag] = self.minted.get(tag, 0) + 1
+        return rid
 
     @staticmethod
     def _done(stdout="", returncode=0, stderr=""):
@@ -42,27 +64,55 @@ class FakeReleaseApi:
     def _fields(argv):
         return [argv[index + 1] for index, arg in enumerate(argv) if arg in ("-f", "-F")]
 
+    @classmethod
+    def _method(cls, argv):
+        """The verb `gh api` will actually send, which is not always the one asked for."""
+        for flag in ("-X", "--method"):
+            if flag in argv:
+                return argv[argv.index(flag) + 1].upper()
+        return "POST" if cls._fields(argv) else "GET"
+
     def __call__(self, argv, **kwargs):
         route = re.sub(r"^repos/o/r/", "", argv[2])
+        method = self._method(argv)
         if m := re.fullmatch(r"releases/tags/(.+)", route):
-            if m.group(1) not in self.releases:
-                return self._done(returncode=1, stderr="HTTP 404: Not Found")
-            return self._done(json.dumps({"id": self.releases[m.group(1)]}))
+            if method != "GET":
+                return self._done(returncode=1, stderr=self.NOT_FOUND)
+            for row in self.rows.values():
+                if row["tag_name"] == m.group(1) and not row["draft"]:
+                    return self._done(json.dumps({"id": row["id"]}))
+            return self._done(returncode=1, stderr=self.NOT_FOUND)
         if route == "releases":
-            tag = next(field.split("=", 1)[1] for field in self._fields(argv)
-                       if field.startswith("tag_name="))
-            return self._done(json.dumps({"id": self.create(tag), "draft": True}))
+            if method == "GET":
+                page = int(next((field.split("=")[1] for field in self._fields(argv)
+                                 if field.startswith("page=")), 1))
+                rows = sorted(self.rows.values(), key=lambda row: -row["id"])
+                return self._done(json.dumps(rows[(page - 1) * 100:page * 100]))
+            tag = next((field.split("=", 1)[1] for field in self._fields(argv)
+                        if field.startswith("tag_name=")), None)
+            if tag is None:
+                return self._done(returncode=1, stderr="HTTP 422: Validation Failed")
+            rid = self.create(tag)
+            self.freshly_minted = rid
+            return self._done(json.dumps({"id": rid, "draft": True}))
         if m := re.fullmatch(r"releases/(\d+)/assets\?name=(.*)", route):
+            if method != "POST":
+                return self._done(returncode=1, stderr=self.NOT_FOUND)
             payload = open(argv[argv.index("--input") + 1], "rb").read()
             asset = {"id": self.next_id, "name": unquote(m.group(2)), "size": len(payload)}
             self.next_id += 1
             self.assets[int(m.group(1))].append(asset)
             self.payloads[asset["id"]] = payload
+            self.freshly_minted = None
             return self._done(json.dumps(asset))
         if m := re.fullmatch(r"releases/(\d+)/assets", route):
+            if method != "GET":
+                return self._done(returncode=1, stderr=self.NOT_FOUND)
+            if int(m.group(1)) == self.freshly_minted:
+                return self._done(returncode=1, stderr=self.NOT_FOUND)
             rows = self.assets[int(m.group(1))]
-            page = int(next(field.split("=")[1] for field in self._fields(argv)
-                            if field.startswith("page=")))
+            page = int(next((field.split("=")[1] for field in self._fields(argv)
+                             if field.startswith("page=")), 1))
             return self._done(json.dumps(rows[(page - 1) * 100:page * 100]))
         if m := re.fullmatch(r"releases/assets/(\d+)", route):
             asset_id = int(m.group(1))
@@ -111,6 +161,50 @@ def test_a_tag_stages_on_its_own_release_and_a_commit_build_needs_no_new_ref(sto
                      file=written(tmp_path, "app.msix", b"b"), key_is_full=True, immutable=True)
     assert sorted(store.releases) == sorted(["v0.22.0", gh_transport.STAGING_RELEASE])
     assert sum(len(rows) for rows in store.assets.values()) == 2
+
+
+def test_the_leg_that_opens_its_release_uploads_to_it_instead_of_reading_it(store, tmp_path):
+    """Run 41852094357, win32-x64: the leg POSTed its release at 15:24:39 and the asset
+    route of the id it was handed back answered 404 in the same second, so the leg died
+    having staged nothing.  A release opened a moment ago has no assets by definition --
+    reading for one is a call that can only fail."""
+    tag = "v0.21.5+canary.20261104T045649Z"
+    key = f"releases/tag/{tag}/win32-x64/app.zip"
+    gh_transport.put(key=key, file=written(tmp_path, "app.zip", b"z"),
+                     key_is_full=True, immutable=True)
+    assert [row["name"] for row in store.assets[store.releases[tag]]] == \
+        [gh_transport.asset_name(key)]
+
+
+def test_a_paginated_read_is_a_read_and_not_the_write_gh_infers_from_a_field(store):
+    """`gh api` sends POST whenever a `-f`/`-F` field is present, whatever the caller meant.
+
+    Every asset listing asks for `per_page` and `page`, so the plane's most-called read
+    was a write in GitHub's eyes: a 404 from a route that creates nothing, which the
+    transport reported as a missing release and answered by opening another draft.
+    """
+    rid = store.create("v0.22.0", draft=False)
+    store.assets[rid] = [{"id": 1000 + i, "name": f"asset-{i}.zip"} for i in range(150)]
+    assert len(gh_transport._assets("o/r", rid)) == 150
+
+
+def test_every_leg_of_one_unpublished_tag_shares_the_draft_the_first_leg_opened(store, tmp_path):
+    """Six legs of one canary are six writers of one release, not six releases.
+
+    GitHub answers `releases/tags/{tag}` for a published release only, and a POST
+    never refuses a tag a draft already carries, so a transport that finds its
+    release by the tag route mints one draft per leg -- the six identical
+    `v0.22.0+canary.*` drafts. The list route is the only one that can see a draft,
+    so the lookup has to go there before opening another.
+    """
+    tag = "v0.22.0+canary.20261104T122145Z"
+    for leg in ("darwin-arm64", "darwin-x64", "win32-arm64", "win32-x64",
+                "linux-x64", "termux"):
+        gh_transport.put(key=f"releases/tag/{tag}/{leg}/app.zip",
+                         file=written(tmp_path, f"{leg}.zip", leg.encode()),
+                         key_is_full=True, immutable=True)
+    assert store.minted == {tag: 1}
+    assert len(store.assets[store.releases[tag]]) == 6
 
 
 def test_a_restage_of_the_same_bytes_is_idempotent_and_different_bytes_are_refused(store, tmp_path):
@@ -190,7 +284,9 @@ def test_a_missing_receipt_is_reported_as_missing_work(store):
     store.create("v0.22.0")
     with pytest.raises(handoff.MissingReceipt):
         handoff.read_commit_receipt("b" * 40, "termux")
-    assert store.releases["nastech-handoff-staging"]
+    # Looking for nothing used to open the staging release to look inside it, which
+    # is how a failed read added to the very draft sprawl the publish job drowns in.
+    assert gh_transport.STAGING_RELEASE not in store.releases
 
 
 def test_the_store_needs_a_token_and_a_repository(store, monkeypatch):

@@ -80,14 +80,16 @@ class ReleaseStore:
 
         The key is placed the way the product places it -- which release carries it
         and what the asset is called both come from `gh_transport`, so a test that
-        seeds a key and a leg that fetches it cannot drift apart.
+        seeds a key and a leg that fetches it cannot drift apart.  The release a key
+        is seeded on is a draft, because that is the only state this plane stages
+        into, and it is why finding one's release needs the list route.
         """
         state = self._load()
         tag = release_tag_for(key)
-        release = state["releases"].setdefault(tag, self._new_id(state))
+        release = state["releases"].setdefault(tag, {"id": self._new_id(state), "draft": True})
         asset_id = self._new_id(state)
         state["assets"][str(asset_id)] = {
-            "name": asset_name(key), "release": release, "size": len(body),
+            "name": asset_name(key), "release": release["id"], "size": len(body),
             "payload": self._put_payload(asset_id, body),
         }
         self._save(state)
@@ -117,42 +119,79 @@ class ReleaseStore:
         state["calls"].append(list(argv))
         route = argv[1] if argv and argv[0] == "api" else argv[0]
         fields = [argv[index + 1] for index, arg in enumerate(argv) if arg in ("-f", "-F")]
-        code = self._dispatch(state, route, fields, argv)
+        code = self._dispatch(state, route, fields, argv, self._method(argv))
         self._save(state)
         return code
 
-    def _dispatch(self, state: dict, route: str, fields: list[str], argv: list[str]) -> int:
+    @staticmethod
+    def _method(argv: list[str]) -> str:
+        """The verb `gh api` will send, which is not always the one the caller meant.
+
+        A field or an input body turns the call into a POST even when nothing asked
+        for one, and GitHub answers a write to a read-only route with a 404 -- so a
+        transport that paginates with `-f per_page=100` and no explicit verb loses
+        the release it was looking for and opens another.
+        """
+        for flag in ("-X", "--method"):
+            if flag in argv:
+                return argv[argv.index(flag) + 1].upper()
+        return "POST" if any(arg in ("-f", "-F", "--input") for arg in argv) else "GET"
+
+    def _dispatch(self, state: dict, route: str, fields: list[str], argv: list[str],
+                  method: str) -> int:
         path, _, query = route.partition("?")
         if m := _match(path, r"repos/[^/]+/[^/]+/releases/tags/(.+)"):
+            if method != "GET":
+                return self._not_found(path)
             tag = unquote(m.group(1))
-            if tag not in state["releases"]:
+            release = state["releases"].get(tag)
+            if release is None or release["draft"]:
                 return self._not_found(tag)
-            return self._json({"id": state["releases"][tag]})
-        if _match(path, r"repos/[^/]+/[^/]+/releases") and "-X" in argv:
-            tag = next(field.split("=", 1)[1] for field in fields if field.startswith("tag_name="))
-            release_id = state["releases"].get(tag) or self._new_id(state)
-            state["releases"][tag] = release_id
-            return self._json({"id": release_id, "draft": True})
+            return self._json({"id": release["id"]})
+        if _match(path, r"repos/[^/]+/[^/]+/releases"):
+            if method == "POST":
+                tag = next(field.split("=", 1)[1] for field in fields
+                           if field.startswith("tag_name="))
+                release = state["releases"].get(tag) or {"id": self._new_id(state), "draft": True}
+                state["releases"][tag] = release
+                return self._json({"id": release["id"], "draft": release["draft"]})
+            if method != "GET":
+                return self._not_found(path)
+            # The paginated list is the route that can see a draft, so it is how the
+            # product finds the release a key belongs to when the tag lookup misses.
+            rows = [{"id": release["id"], "tag_name": tag}
+                    for tag, release in state["releases"].items()]
+            size = int(next((field.split("=")[1] for field in fields
+                             if field.startswith("per_page=")), 30))
+            page = int(next((field.split("=")[1] for field in fields
+                             if field.startswith("page=")), 1))
+            return self._json(rows[(page - 1) * size:page * size])
         if m := _match(path, r"repos/[^/]+/[^/]+/releases/(\d+)/assets"):
-            if "-X" in argv:
+            release_id = int(m.group(1))
+            if method == "POST":
                 body = Path(argv[argv.index("--input") + 1]).read_bytes()
                 asset_id = self._new_id(state)
                 state["assets"][str(asset_id)] = {
-                    "name": unquote(query.partition("name=")[2]), "release": int(m.group(1)),
+                    "name": unquote(query.partition("name=")[2]), "release": release_id,
                     "size": len(body), "payload": self._put_payload(asset_id, body),
                 }
                 return self._json({"id": asset_id, "name": state["assets"][str(asset_id)]["name"],
                                    "size": len(body)})
+            if method != "GET":
+                return self._not_found(path)
             rows = [self._row(asset_id, asset)
                     for asset_id, asset in state["assets"].items()
-                    if asset["release"] == int(m.group(1))]
-            page = int(next(field.split("=")[1] for field in fields if field.startswith("page=")))
+                    if asset["release"] == release_id]
+            page = int(next((field.split("=")[1] for field in fields
+                             if field.startswith("page=")), 1))
             return self._json(rows[(page - 1) * 100:page * 100])
         if m := _match(path, r"repos/[^/]+/[^/]+/releases/assets/(\d+)"):
             asset_id = m.group(1)
-            if "-X" in argv:
+            if method == "DELETE":
                 state["assets"].pop(asset_id, None)
                 return self._json({})
+            if method != "GET":
+                return self._not_found(path)
             if asset_id not in state["assets"]:
                 return self._not_found(f"asset {asset_id}")
             sys.stdout.buffer.write(self._read_payload(state["assets"][asset_id]))
