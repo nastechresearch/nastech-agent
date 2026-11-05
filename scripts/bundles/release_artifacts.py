@@ -420,9 +420,11 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "publish-appinstaller":
         if not args.bundle:
             parser.error("publish-appinstaller requires --bundle")
+        from scripts.releases import handoff
+
         publish_canary_appinstaller(args.root, tag=args.tag, variant=args.variant, bundle=args.bundle,
                                    identity=args.identity, publisher=args.publisher, version=args.version,
-                                   public_base=args.public_base)
+                                   public_base=args.public_base or handoff.archive_origin())
         return
     if args.command == "appinstaller":
         if not args.out:

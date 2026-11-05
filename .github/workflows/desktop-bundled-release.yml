@@ -247,6 +247,10 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    env:
+      # Admission resolves which store this run's handoff goes through, so this leg
+      # touches the plane every other handoff leg does and carries the same token.
+      GH_TOKEN: ${{ github.token }}
     outputs:
       # Resolve the build source once. Every privileged job uses this SHA,
       # not a mutable tag or the dispatch branch.
