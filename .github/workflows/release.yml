@@ -15,8 +15,8 @@ name: Release
 # can agree.
 #
 # The version is derived, never typed: `published_stable_identity()` reads the
-# published head (the seed, 0.21.5, until the first stable ships) and `--bump`
-# moves it. So `bump=minor` on the seed is v0.22.0.
+# published head (the seeded line, until the first stable ships) and `--bump`
+# moves it, so the level chosen is the only version decision made by hand.
 #
 # The desktop lanes are unsigned by construction: every caller of
 # desktop-bundled-release passes `skip-signed: true`, so there is nothing to
@@ -26,7 +26,7 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: 'SemVer level the next version takes from the published head (seed 0.21.5: minor = 0.22.0)'
+        description: 'SemVer level the next version takes from the published head, or from the seeded line before the first stable ships'
         required: true
         type: choice
         options: [patch, minor, major]
