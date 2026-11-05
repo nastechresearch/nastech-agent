@@ -4,6 +4,7 @@ Derivation reads the published stable head, or the seeded line before one exists
 Attempt refs number attempts within a version and never move the line.
 """
 import json
+import subprocess
 
 import pytest
 
@@ -155,6 +156,40 @@ def test_a_newer_published_release_outranks_the_protected_head():
     assert published_stable_identity(
         "example/nastech-agent", base_url="https://assets.example", reader_type=Reader, run=run,
     ) == ("0.21.7", "a" * 40)
+
+
+def test_the_version_read_retries_only_the_shared_rate_limit():
+    """Canary run 42049972593 died on one 403 from the installation budget every
+    concurrent check shares: a queue position, not an answer about versions."""
+    from scripts.releases.versioning import _gh
+
+    attempts = []
+
+    def run(argv, **kwargs):
+        attempts.append(argv)
+        if len(attempts) < 3:
+            return subprocess.CompletedProcess(
+                argv, 1, "", "gh: API rate limit exceeded for installation (HTTP 403)")
+        return subprocess.CompletedProcess(argv, 0, "[]", "")
+
+    assert _gh(["gh", "api", "repos/example/nastech-agent/releases"],
+               run=run, sleep=lambda _s: None) == "[]"
+    assert len(attempts) == 3
+
+
+def test_a_real_answer_fails_once_and_keeps_ghs_message(capsys):
+    from scripts.releases.versioning import _gh
+
+    attempts = []
+
+    def run(argv, **kwargs):
+        attempts.append(argv)
+        return subprocess.CompletedProcess(argv, 1, "", "gh: Not Found (HTTP 404)")
+
+    with pytest.raises(subprocess.CalledProcessError):
+        _gh(["gh", "api", "repos/example/nastech-agent/releases"], run=run, sleep=lambda _s: None)
+    assert len(attempts) == 1
+    assert "Not Found" in capsys.readouterr().err
 
 
 def test_outstanding_attempts_is_the_one_shared_predicate():
