@@ -12,6 +12,7 @@ import time
 import pytest
 from unittest.mock import MagicMock, patch
 
+from nastech_cli.process_identity import own_process_groups
 from tools.environments.local_env_policy import _NASTECH_PROVIDER_ENV_FORCE_PREFIX
 from tools.process_registry import (
     ProcessRegistry,
@@ -40,6 +41,27 @@ def _reset_systemd_scope_cache():
     _pr._SYSTEMD_SCOPE_AVAILABLE = False
     yield
     _pr._SYSTEMD_SCOPE_AVAILABLE = original
+
+
+@pytest.fixture(autouse=True)
+def _keep_the_owner_death_supervisor_out_of_popen_probes():
+    """Pin the process-wide owner-death supervisor out of this file's ``subprocess.Popen`` probes.
+
+    ``spawn_local`` hands each long-lived child's process group to the ONE supervisor this process
+    owns (``nastech_cli/process_identity.py``), which starts lazily on the first registration and is
+    restarted by its own waiter thread whenever it dies while groups are still covered. So a test
+    that patches ``subprocess.Popen`` can capture ``sh process_supervisor.sh <pgid>`` -- started by a
+    thread that test never created, on a schedule it cannot see -- in the same list as the command it
+    is probing. The count then decides the verdict instead of the product (run 41855770423, job
+    126667988901: ``assert 2 == 1`` for the rewrite test below, green on every other shard).
+
+    These tests ask which command the registry runs. The supervisor's lifecycle is tested where it
+    lives. ``_start_supervisor_locked`` returning None is the degraded path ``_spawn_supervisor``
+    already takes when no shell can be started: registration bookkeeping continues, graceful
+    shutdown still reaps, and only the ungraceful-exit net is off -- for the seconds one test runs.
+    """
+    with patch("nastech_cli.process_identity._start_supervisor_locked", return_value=None):
+        yield
 
 
 def _make_session(
@@ -1214,6 +1236,42 @@ class TestSpawnRewriteCompoundBackground:
         assert "&& { node server.js & }" in pty_args[2], \
             f"PTY path should use rewritten command, got: {pty_args[2]}"
         assert session.command == "cd /app && node server.js &"
+
+
+class TestPopenProbesSeeOnlyTheirOwnCommand:
+    """A ``subprocess.Popen`` probe of ``spawn_local`` sees the command the registry ran, and nothing
+    the process-wide owner-death supervisor starts on the side (see the file's
+    ``_keep_the_owner_death_supervisor_out_of_popen_probes`` fixture)."""
+
+    def test_a_live_group_registration_stays_out_of_the_probe(self, registry):
+        captured_cmd = []
+
+        def fake_popen(args, **kwargs):
+            captured_cmd.append(args)
+            proc = MagicMock()
+            proc.pid = 1111
+            proc.stdout = MagicMock()
+            return proc
+
+        fake_thread = MagicMock()
+        fake_thread.daemon = False
+
+        with patch("tools.process_registry._find_shell", return_value="/bin/bash"), \
+             patch("subprocess.Popen", side_effect=fake_popen), \
+             patch("threading.Thread", return_value=fake_thread), \
+             patch("nastech_cli.process_identity._supervisor", None), \
+             patch("nastech_cli.process_identity._supervised_pgids", set()), \
+             patch.object(registry, "_write_checkpoint"):
+            # The two ``process_identity`` patches describe the state a registration genuinely acts
+            # on -- no supervisor, nothing covered -- rather than whatever this process happens to
+            # already own. The group is this process's own, so the dead-group prune cannot empty the
+            # set again and the lazily-started supervisor is really asked for. ``Popen`` itself is
+            # mocked, so that request is only ever a capture: no shell is spawned.
+            own_process_groups([os.getpgid(0)])
+            registry.spawn_local("cd /app && node server.js &>/tmp/srv.log &", cwd="/tmp")
+
+        assert len(captured_cmd) == 1, captured_cmd
+        assert "&& { node server.js &>/tmp/srv.log & }" in captured_cmd[0][2]
 
 
 # =========================================================================
