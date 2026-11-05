@@ -378,7 +378,10 @@ jobs:
           fi
           # The one parser for the `jobs` input; every job gates on these outputs.
           python -m scripts.releases.job_groups >> "$GITHUB_OUTPUT"
-          printf 'public-root=%s\npublic-base=%s\n' "$CLOUDFLARE_R2_PUBLIC_URL" "$CLOUDFLARE_R2_PUBLIC_URL" >> "$GITHUB_OUTPUT"
+          # The archive origin is whichever store this run pins serves from -- not a
+          # bucket variable the GitHub-pinned plane never sets.
+          origin=$(python -c 'import os; from scripts.releases.handoff import archive_origin; print(archive_origin(os.environ.get("CLOUDFLARE_R2_PUBLIC_URL")))')
+          printf 'public-root=%s\npublic-base=%s\n' "$origin" "$origin" >> "$GITHUB_OUTPUT"
           printf 'archive-tag=%s\n' "${RELEASE_CLAIM_TAG:-$RELEASE_TAG}" >> "$GITHUB_OUTPUT"
           if [ -n "${CHANNEL_BUILD:-}" ]; then
             if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] || [ -z "$DEFAULT_BRANCH" ] || [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ] || [ "$GITHUB_WORKFLOW_REF" != "$GITHUB_REPOSITORY/.github/workflows/desktop-bundled-release.yml@refs/heads/$DEFAULT_BRANCH" ]; then

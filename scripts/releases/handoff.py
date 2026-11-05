@@ -36,6 +36,20 @@ def store(public_base: str | None = None):
     return r2 if os.environ.get("CLOUDFLARE_R2_BUCKET") else gh_transport
 
 
+def archive_origin(explicit: str | None = None) -> str:
+    """Where the store that holds the bytes serves them from -- never a separate setting.
+
+    A run needs one origin for every URL it publishes and reads back, and only the
+    store can name it: a bucket answers with its public domain and a release archive
+    with this repository's download route. Reading it from the bucket's variable
+    instead leaves a GitHub-pinned run naming URLs at an origin that does not exist --
+    and, with that variable unset, at no origin at all.
+    """
+    origin = explicit or None
+    chosen = store(origin)
+    return chosen.public_base_url(origin)
+
+
 class MissingReceipt(ValueError):
     """A missing receipt is incomplete work, not a corrupt receipt."""
 

@@ -410,7 +410,7 @@ def main(argv: list[str] | None = None) -> None:
                         help="Attempt ref the release archive is keyed under when the payload tag is plain vX.Y.Z")
     # A stable run dispatches from the default branch, so GITHUB_SHA is not the admitted claim commit.
     parser.add_argument("--commit", default=os.environ.get("RELEASE_COMMIT") or os.environ.get("GITHUB_SHA"))
-    parser.add_argument("--public-base", default=os.environ.get("CLOUDFLARE_R2_PUBLIC_URL"))
+    parser.add_argument("--public-base")
     parser.add_argument("--store-only", action="store_true")
     for name in ("identity", "publisher", "version", "self-uri", "artifact-uri"):
         parser.add_argument(f"--{name}")
@@ -435,15 +435,18 @@ def main(argv: list[str] | None = None) -> None:
         request = json.loads(args.channel_request.read_text(encoding="utf-8-sig")) if args.channel_request else None
         record(args.platform, args.arch, args.root, args.tag, args.commit, args.out, channel_request=request)
     else:
+        from scripts.releases import handoff
+
         if not args.archive:
             parser.error(f"{args.command} requires the admitted --archive ref")
-        manifest = read_admitted_candidate(args.tag, args.commit, args.public_base,
+        base = args.public_base or handoff.archive_origin()
+        manifest = read_admitted_candidate(args.tag, args.commit, base,
                                           os.environ.get("CANDIDATE_MANIFEST_SHA256", ""),
                                           archive=args.archive)
         if args.command == "materialize":
-            materialize(manifest, args.root, public_base=args.public_base, store_only=args.store_only)
+            materialize(manifest, args.root, public_base=base, store_only=args.store_only)
         else:
-            {"publish": publish, "promote": promote}[args.command](manifest, args.root, args.public_base)
+            {"publish": publish, "promote": promote}[args.command](manifest, args.root, base)
 
 
 if __name__ == "__main__":

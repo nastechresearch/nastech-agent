@@ -789,7 +789,7 @@ def test_complete_writes_no_final_tag_and_leaves_the_draft_on_the_attempt_ref(tm
         return subprocess.check_output(argv, text=True, encoding="utf-8").strip()
 
     monkeypatch.setattr(stable, "output", record)
-    monkeypatch.setattr(stable, "read_candidate", lambda env: candidate)
+    monkeypatch.setattr(stable, "read_candidate", lambda env, **_: candidate)
     monkeypatch.chdir(tmp_path / "repo")
     stable.complete({
         "RELEASE_CLAIM_TAG": "rc.1-v1.2.3", "RELEASE_CLAIM_OBJECT": tag_object,
