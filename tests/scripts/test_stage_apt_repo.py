@@ -7,6 +7,7 @@ output (no secret logging).
 
 import gzip
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -44,12 +45,14 @@ def _stage(pool: Path, out: Path, suite: str, pool_subdir: str = "") -> int:
     return stage_apt_repo.main(args)
 
 
-def _pool_keys(out: Path, suite: str) -> set:
+def _records(out: Path, suite: str) -> list:
     text = (out / "dists" / suite / "main" / "binary-aarch64" / "Packages").read_text(encoding="utf-8")
-    return {
-        dict(line.split(": ", 1) for line in stanza.splitlines())["Filename"]
-        for stanza in text.strip().split("\n\n")
-    }
+    return [dict(line.split(": ", 1) for line in stanza.splitlines())
+            for stanza in text.strip().split("\n\n")]
+
+
+def _pool_keys(out: Path, suite: str) -> set:
+    return {row["Filename"] for row in _records(out, suite)}
 
 
 def test_pool_subdir_is_in_the_path_and_the_index(tmp_path):
@@ -71,6 +74,50 @@ def test_no_pool_subdir_keeps_the_plain_layout(tmp_path):
     assert _stage(pool, out, "nastech-canary") == 3
     assert (out / "pool" / "n" / "nastech-agent_1.2.3_aarch64.deb").is_file()
     assert _pool_keys(out, "nastech-canary") == {"pool/n/nastech-agent_1.2.3_aarch64.deb"}
+
+
+def test_pool_key_holds_no_character_apt_would_escape(tmp_path):
+    """A pool object must be reachable through an origin that serves the request
+    path verbatim. apt percent-escapes '~' when it builds the URI out of
+    Filename:, and the R2 bucket domain does not decode it, so the key may only
+    use characters apt leaves alone -- while Version keeps the '~' that ranks a
+    pre-release below its release."""
+    pool = tmp_path / "pool-in"
+    pool.mkdir()
+    name = "nastech-agent_0.21.5~canary.20261031T130355Z-1_aarch64.deb"
+    make_deb(pool / name, "nastech-agent", "0.21.5~canary.20261031T130355Z-1")
+    out = tmp_path / "repo"
+    assert _stage(pool, out, "nastech-canary") == 3
+
+    binary = out / "dists/nastech-canary/main/binary-aarch64"
+    row, = _records(out, "nastech-canary")
+    key = row["Filename"]
+    assert row["Version"] == "0.21.5~canary.20261031T130355Z-1"
+    assert re.fullmatch(r"pool/n/[A-Za-z0-9._-]+\.deb", key), key
+    assert (out / key).read_bytes() == (pool / name).read_bytes()
+    # Packages.gz is what apt actually reads first; it must name the same key.
+    assert key in gzip.decompress((binary / "Packages.gz").read_bytes()).decode()
+
+
+@pytest.mark.parametrize("deb_names,versions,marker", [
+    # '+' is escaped ('%2b') by apt too, and no substitution can reach it.
+    (["nastech-agent_1.0+bf-1_aarch64.deb"], ["1.0+bf-1"], "percent-escap"),
+    # '~' and '-' rank differently but spell the same key: never overwrite one
+    # immutable published object with another package's bytes.
+    (["nastech-agent_0.21.5~x-1_aarch64.deb", "nastech-agent_0.21.5-x-1_aarch64.deb"],
+     ["0.21.5~x-1", "0.21.5-x-1"], "pool key"),
+])
+def test_unmappable_pool_keys_stage_nothing(tmp_path, capsys, deb_names, versions, marker):
+    pool = tmp_path / "pool-in"
+    pool.mkdir()
+    for name, version in zip(deb_names, versions):
+        make_deb(pool / name, "nastech-agent", version)
+    out = tmp_path / "repo"
+    with pytest.raises(SystemExit) as stopped:
+        _stage(pool, out, "nastech-canary")
+    assert stopped.value.code == 2
+    assert marker in capsys.readouterr().err
+    assert not (out / "dists/nastech-canary/main/binary-aarch64/Packages").exists()
 
 
 def test_two_attempts_of_one_version_use_different_pool_keys(tmp_path):
