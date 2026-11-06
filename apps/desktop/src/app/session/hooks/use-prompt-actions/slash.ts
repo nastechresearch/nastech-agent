@@ -5,7 +5,6 @@ import { type MutableRefObject, useCallback, useRef } from 'react'
 import { mergeOlderTranscriptPage } from '@/app/chat/transcript-backfill'
 import { prepareDefaultNewSession } from '@/app/session/new-session-route'
 import { invalidateContextBreakdown } from '@/app/shell/hooks/use-context-breakdown'
-import { getProfiles } from '@/nastech'
 import type { Translations } from '@/i18n'
 import { translateNow } from '@/i18n/runtime'
 import { type ChatMessage, toChatMessages } from '@/lib/chat-messages'
@@ -24,6 +23,7 @@ import { isMissingRpcMethod } from '@/lib/gateway-rpc'
 import { type GuardedModelSwitchResult, surfaceModelSwitchConfirm } from '@/lib/guarded-model-switch'
 import { applyReasoningSlashResult, reasoningSlashParams } from '@/lib/reasoning-slash'
 import { setSessionYolo } from '@/lib/yolo-session'
+import { getProfiles } from '@/nastech'
 import { openCommandPalettePage } from '@/store/command-palette'
 import { markCompressDeferred } from '@/store/compaction'
 import { $composerAttachments, setComposerDraft } from '@/store/composer'
@@ -1029,9 +1029,7 @@ export function useSlashCommand(deps: SlashCommandDeps) {
             applyReasoningSlashResult(result.value)
             // Typed while a reply streams: the owner applies the level from the next turn.
             renderSlashOutput(
-              result.status === 'deferred'
-                ? translateNow('shell.modelMenu.pickDeferred', value)
-                : `reasoning: ${value}`
+              result.status === 'deferred' ? translateNow('shell.modelMenu.pickDeferred', value) : `reasoning: ${value}`
             )
           } catch (err) {
             if (isMissingRpcMethod(err)) {

@@ -1,3 +1,4 @@
+import { useStore } from '@nanostores/react'
 import { Box, Text, useInput, useStdout } from '@nastech/ink'
 import type {
   ConnectionOperationStatus,
@@ -8,7 +9,6 @@ import type {
   ConnectorsListResult
 } from '@nastech/shared/gateway-events'
 import { JsonRpcGatewayError } from '@nastech/shared/json-rpc-channel'
-import { useStore } from '@nanostores/react'
 import { type ReactNode, useEffect, useState } from 'react'
 
 import { $overlayState, hasPromptOpen, patchOverlayState } from '../app/overlayStore.js'

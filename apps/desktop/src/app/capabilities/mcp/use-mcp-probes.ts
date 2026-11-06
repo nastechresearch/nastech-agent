@@ -1,9 +1,9 @@
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react'
 
-import { type ProfileScope, testMcpServer } from '@/nastech'
 import { PROBE_TTL_MS, probeCache, probeKey, serverFingerprint } from '@/lib/mcp-probe-cache'
 import { type McpServerEntry, type McpServers, serverEnabled } from '@/lib/mcp-servers'
 import { countEnabledTools } from '@/lib/mcp-tool-filter'
+import { type ProfileScope, testMcpServer } from '@/nastech'
 
 import { loadMcpUsage, okProbe, type Probe, serverCost, type ServerCost } from './mcp-status'
 

@@ -2,7 +2,6 @@ import { LOCAL_CONNECTION_ID, registryBackendScopeKey } from '@nastech/shared'
 import { atom, batch, computed } from 'nanostores'
 
 import type { NastechConnection } from '@/global'
-import { getProfiles, nastechApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { hostHas } from '@/lib/host-capabilities'
 import { persistStore } from '@/lib/persist-store'
 import { initialGatewayProfile } from '@/lib/platform'
@@ -18,6 +17,7 @@ import {
   storedStringRecord
 } from '@/lib/storage'
 import { withTimeout } from '@/lib/with-timeout'
+import { getProfiles, nastechApi, setApiRequestProfile, STARTUP_REQUEST_TIMEOUT_MS } from '@/nastech'
 import { registryConnectionKind } from '@/store/connection-registry-state'
 import {
   $gateway,

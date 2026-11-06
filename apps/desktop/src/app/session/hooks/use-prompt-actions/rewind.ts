@@ -13,7 +13,6 @@ import type { AppendMessage, ThreadMessage } from '@assistant-ui/react'
 import { JsonRpcGatewayError } from '@nastech/shared'
 
 import type { ClientSessionState } from '@/app/types'
-import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
 import {
   branchGroupForUser,
   type ChatMessage,
@@ -23,6 +22,7 @@ import {
   hasUnresolvedToolCall,
   textPart
 } from '@/lib/chat-messages'
+import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/nastech'
 import type { ConfirmRequest } from '@/store/confirm'
 
 import {

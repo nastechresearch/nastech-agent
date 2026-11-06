@@ -1118,7 +1118,8 @@ const OpenBillingAction: FC<{ className: string; label: string; surface?: ErrorS
       ? wall.block
       : null
 
-  const nastechBilling = surface?.code === 'usage_window' || (surface?.provider || 'nastech').toLowerCase() === 'nastech'
+  const nastechBilling =
+    surface?.code === 'usage_window' || (surface?.provider || 'nastech').toLowerCase() === 'nastech'
 
   if (!block && !nastechBilling) {
     return null

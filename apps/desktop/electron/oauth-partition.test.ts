@@ -232,9 +232,9 @@ describe('resolveOauthPartition with connectionId (pre-save sign-in identity)', 
     expect(resolveOauthPartition('https://gw-t.example.com', { registry: reg, connectionId: 'tok-1' })).toBe(
       LEGACY_OAUTH_PARTITION
     )
-    expect(resolveOauthPartition('https://agent.nastechresearch.github.io', { registry: reg, connectionId: 'cloud-1' })).toBe(
-      LEGACY_OAUTH_PARTITION
-    )
+    expect(
+      resolveOauthPartition('https://agent.nastechresearch.github.io', { registry: reg, connectionId: 'cloud-1' })
+    ).toBe(LEGACY_OAUTH_PARTITION)
   })
 
   it('keeps a v1-migrated entry on the legacy jar even when named by id', () => {

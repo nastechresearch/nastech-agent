@@ -8,9 +8,9 @@ import { AssistantRuntimeProvider } from '@assistant-ui/react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { NastechGateway } from '@/nastech'
 import { useIncrementalExternalStoreRuntime } from '@/lib/incremental-external-store-runtime'
 import { queryClient } from '@/lib/query-client'
+import type { NastechGateway } from '@/nastech'
 import type * as GatewayStore from '@/store/gateway'
 import { $sessions, _resetSessionOwnerHintsForTests, setSessionOwnerHint } from '@/store/session'
 

@@ -3,8 +3,8 @@ import { atom } from 'nanostores'
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { setApiRequestConnection, setApiRequestProfile } from '@/nastech'
 import { clearVoiceClientConfigCache } from '@/lib/voice-client-direct'
+import { setApiRequestConnection, setApiRequestProfile } from '@/nastech'
 import { $autoSpeakReplies } from '@/store/voice-prefs'
 
 import { ComposerScopeProvider, MAIN_COMPOSER_SCOPE } from '../scope'

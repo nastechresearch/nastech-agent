@@ -1,5 +1,5 @@
-import type { ConnectionState } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import type { ConnectionState } from '@nastech/shared'
 import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'

@@ -19,7 +19,8 @@ export const ruDelegationRouting: DelegationRoutingTranslations = {
   plugin: 'Плагин',
   pluginMissing: 'Маршруты моделей и маршруты профилей предоставляет плагин Advanced Delegation.',
   pluginDisabled: 'Advanced Delegation установлен, но отключён для этого профиля.',
-  pluginNotLoaded: 'Advanced Delegation включён, но Nastech ещё не загрузил его. Перезапустите Nastech, чтобы завершить.',
+  pluginNotLoaded:
+    'Advanced Delegation включён, но Nastech ещё не загрузил его. Перезапустите Nastech, чтобы завершить.',
   installPlugin: 'Установить плагин',
   installUnavailable:
     'Advanced Delegation пока нет в каталоге плагинов. Установите его в разделе Возможности › Плагины.',

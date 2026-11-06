@@ -151,7 +151,9 @@ test.skipIf(process.platform === 'win32' || process.getuid?.() === 0)(
   async () => {
     const home = scratchHome()
     const file = uiPreferencesPath(home)
-    await writeUiPreferences(file, { values: { 'nastech-desktop-theme-v2': 'nastech', 'nastech.desktop.keybinds': '{}' } })
+    await writeUiPreferences(file, {
+      values: { 'nastech-desktop-theme-v2': 'nastech', 'nastech.desktop.keybinds': '{}' }
+    })
     const before = fs.readFileSync(file, 'utf8')
     fs.chmodSync(file, 0)
 

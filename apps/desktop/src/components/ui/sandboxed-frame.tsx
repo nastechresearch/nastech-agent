@@ -168,7 +168,8 @@ function listenForGuestShells() {
     true
   )
   window.addEventListener('message', event => {
-    const frame = event.source && event.data?.type === 'nastech-guest-loaded' ? shellFrames.get(event.source) : undefined
+    const frame =
+      event.source && event.data?.type === 'nastech-guest-loaded' ? shellFrames.get(event.source) : undefined
 
     if (frame?.isConnected && frame.contentWindow === event.source) {
       const load = new Event('load')

@@ -1,5 +1,5 @@
-import { LOCAL_CONNECTION_ID } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { LOCAL_CONNECTION_ID } from '@nastech/shared'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 
