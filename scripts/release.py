@@ -306,6 +306,58 @@ def get_pr_number(subject: str) -> str | None:
     return None
 
 
+# GitHub refuses a release body over 125,000 characters (entrypoint's
+# GITHUB_BODY_LIMIT guard), and this fork's first SemVer range seeds from
+# v0.21.5 with ~19,952 commits behind it. The changelog is therefore bounded
+# by construction: every variable-length part of the render is capped, so no
+# range — and no pathological commit subject — can grow the body past the
+# limit. The omitted history stays reachable through the comparison link.
+MAX_CHANGELOG_ENTRIES = 250
+MAX_CHANGELOG_SUBJECT_CHARS = 140
+MAX_CHANGELOG_LINE_CHARS = 300
+MAX_CHANGELOG_AUTHOR_CHARS = 60
+MAX_CHANGELOG_CONTRIBUTORS = 100
+_TEKNIUM_ALIASES = {"@teknium1"}
+
+
+def _ellipsis(text: str, limit: int) -> str:
+    """Shorten text to at most limit characters, marking it with an ellipsis.
+
+    Truncation is always visible: a bounded render must never drop an entry
+    or silently cut a subject mid-word without the marker.
+    """
+    if len(text) <= limit:
+        return text
+    return text[: max(1, limit - 1)].rstrip() + "…"
+
+
+def _changelog_entry_line(commit, repo_url: str) -> str:
+    """One enumerated entry: cleaned subject, PR (or commit) link, author."""
+    subject = _ellipsis(clean_subject(commit["subject"]), MAX_CHANGELOG_SUBJECT_CHARS)
+    parts = [f"- {subject}"]
+    pr_num = get_pr_number(commit["subject"])
+    if pr_num:
+        parts.append(f"([#{pr_num}]({repo_url}/pull/{pr_num}))")
+    else:
+        parts.append(f"([`{commit['short_sha']}`]({repo_url}/commit/{commit['sha']}))")
+    if commit["github_author"] not in _TEKNIUM_ALIASES:
+        parts.append(f"— {commit['github_author']}")
+    return _ellipsis(" ".join(parts), MAX_CHANGELOG_LINE_CHARS)
+
+
+def _changelog_author_counts(commits):
+    """Commits per author over the whole range, bots and aliases excluded."""
+    counts = defaultdict(int)
+    for commit in commits:
+        author = commit["github_author"]
+        if author not in _TEKNIUM_ALIASES:
+            counts[author] += 1
+        for coauthor in commit.get("coauthors", []):
+            if coauthor not in _TEKNIUM_ALIASES:
+                counts[coauthor] += 1
+    return counts
+
+
 def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/NastechResearch/nastech-agent",
                        prev_tag=None, first_release=False, no_changelog=False):
     """Generate markdown changelog from categorized commits."""
@@ -334,20 +386,20 @@ def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/N
         lines.append("> for Nastech Agent. See below for everything included in this initial release.")
         lines.append("")
 
-    all_authors = set()
-    teknium_aliases = {"@teknium1"}
+    author_counts = {}
     if not no_changelog:
+        # Enumerate only the newest MAX_CHANGELOG_ENTRIES commits; get_commits
+        # returns git-log order (newest first). The rest are declared, with the
+        # full comparison linked, so nothing outside this window is claimed and
+        # nothing is dropped silently.
+        shown = commits[:MAX_CHANGELOG_ENTRIES]
+        omitted = len(commits) - len(shown)
+        author_counts = _changelog_author_counts(commits)
+
         # Group commits by category
         categories = defaultdict(list)
-
-        for commit in commits:
+        for commit in shown:
             categories[commit["category"]].append(commit)
-            author = commit["github_author"]
-            if author not in teknium_aliases:
-                all_authors.add(author)
-            for coauthor in commit.get("coauthors", []):
-                if coauthor not in teknium_aliases:
-                    all_authors.add(coauthor)
 
         # Category display order and emoji
         category_order = [
@@ -370,45 +422,32 @@ def generate_changelog(commits, tag_name, semver, repo_url="https://github.com/N
             lines.append("")
 
             for commit in cat_commits:
-                subject = clean_subject(commit["subject"])
-                pr_num = get_pr_number(commit["subject"])
-                author = commit["github_author"]
-
-                # Build the line
-                parts = [f"- {subject}"]
-                if pr_num:
-                    parts.append(f"([#{pr_num}]({repo_url}/pull/{pr_num}))")
-                else:
-                    parts.append(f"([`{commit['short_sha']}`]({repo_url}/commit/{commit['sha']}))")
-
-                if author not in teknium_aliases:
-                    parts.append(f"— {author}")
-
-                lines.append(" ".join(parts))
+                lines.append(_changelog_entry_line(commit, repo_url))
 
             lines.append("")
 
-    # Contributors section
-    if all_authors:
-        # Sort contributors by commit count
-        author_counts = defaultdict(int)
-        for commit in commits:
-            author = commit["github_author"]
-            if author not in teknium_aliases:
-                author_counts[author] += 1
-            for coauthor in commit.get("coauthors", []):
-                if coauthor not in teknium_aliases:
-                    author_counts[coauthor] += 1
+        if omitted:
+            lines.append(f"> **Note:** the {len(shown)} most recent commits in this range are listed; "
+                         f"{omitted:,} older commits are omitted. Full comparison: "
+                         + (f"[{prev_tag}...{tag_name}]({repo_url}/compare/{prev_tag}...{tag_name})"
+                            if prev_tag else f"[{tag_name}]({repo_url}/commits/{tag_name})"))
+            lines.append("")
 
+    # Contributors section
+    if author_counts:
+        # Sort contributors by commit count
         sorted_authors = sorted(author_counts.items(), key=lambda x: -x[1])
 
         lines.append("## 👥 Contributors")
         lines.append("")
         lines.append("Thank you to everyone who contributed to this release!")
         lines.append("")
-        for author, count in sorted_authors:
+        for author, count in sorted_authors[:MAX_CHANGELOG_CONTRIBUTORS]:
             commit_word = "commit" if count == 1 else "commits"
-            lines.append(f"- {author} ({count} {commit_word})")
+            lines.append(f"- {_ellipsis(author, MAX_CHANGELOG_AUTHOR_CHARS)} ({count} {commit_word})")
+        hidden = len(sorted_authors) - MAX_CHANGELOG_CONTRIBUTORS
+        if hidden > 0:
+            lines.append(f"- …and {hidden:,} more contributor{'s' if hidden != 1 else ''}")
         lines.append("")
 
     # Full changelog link
