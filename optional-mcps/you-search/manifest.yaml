@@ -1,0 +1,37 @@
+# Nastech-approved MCP catalog entry.
+# Presence in this directory = approval. Merged via PR review.
+manifest_version: 1
+
+name: you-search
+description: Web search and agent/skill discovery tools from You.com (keyless free profile).
+source: https://github.com/youdotcom-oss/agent-skills
+
+# Official vendor-hosted remote MCP (URL-only — Nastech never spawns a local
+# process for this entry). No authentication required (verified live:
+# initialize succeeds anonymously); the free profile serves the core
+# `you-search` and `you-discover` tools.
+
+transport:
+  type: http
+  url: https://api.you.com/mcp?profile=free
+
+auth:
+  type: none
+
+# Composer-suggestion triggers (desktop brand pills).
+suggest:
+  keywords:
+    - you.com
+    - you search
+    - youcom
+  hosts:
+    - you.com
+
+post_install: |
+  No account or credentials needed — the keyless free profile serves the
+  `you-search` and `you-discover` tools as soon as the session restarts.
+
+  For the full authenticated toolset, create an API key at
+  https://you.com/platform/api-keys, switch `mcp_servers.you-search.url`
+  to https://api.you.com/mcp and add it as a Bearer header (YDC_API_KEY)
+  via `mcp_servers.you-search.headers` in config.yaml.
