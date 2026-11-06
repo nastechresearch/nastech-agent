@@ -402,6 +402,13 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   watchDirectory: dir => ipcRenderer.invoke('nastech:watchDirectory', dir),
   stopPreviewFileWatch: id => ipcRenderer.invoke('nastech:stopPreviewFileWatch', id),
   setActiveWork: payload => ipcRenderer.send('nastech:active-work', payload),
+  scheduleStreamWorkWake: (token, delayMs) => ipcRenderer.send('nastech:stream-work-wake', { token, delayMs }),
+  onStreamWorkWake: callback => {
+    const listener = (_event, token) => callback(token)
+    ipcRenderer.on('nastech:stream-work-ready', listener)
+
+    return () => ipcRenderer.removeListener('nastech:stream-work-ready', listener)
+  },
   setTitleBarTheme: payload => ipcRenderer.send('nastech:titlebar-theme', payload),
   setNativeTheme: mode => ipcRenderer.send('nastech:native-theme', mode),
   setTranslucency: payload => ipcRenderer.send('nastech:translucency', payload),
@@ -434,6 +441,9 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   setPreviewShortcutActive: active => ipcRenderer.send('nastech:previewShortcutActive', Boolean(active)),
   setPreviewGuestHidden: (webContentsId, hidden) =>
     ipcRenderer.send('nastech:preview-guest-hidden', { webContentsId, hidden: Boolean(hidden) }),
+  beginPreviewGuestActivity: webContentsId => ipcRenderer.invoke('nastech:preview-guest-activity:begin', webContentsId),
+  endPreviewGuestActivity: token => ipcRenderer.invoke('nastech:preview-guest-activity:end', token),
+  executePreviewGuestScript: (token, code) => ipcRenderer.invoke('nastech:preview-guest-activity:script', token, code),
   openExternal: url => ipcRenderer.invoke('nastech:openExternal', url),
   freeTierChallenge: {
     // Load the account service's challenge page in a hidden window (revealed

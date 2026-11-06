@@ -1120,7 +1120,7 @@ the host gateway with `gateway.standalone: true` (see
 ### Docker / Nastech Cloud (s6-supervised container)
 
 Inside the official image every profile has an s6 slot
-(`/run/service/gateway-<profile>`). The container's boot registers every *named*
+(`/run/nastech-service/gateway-<profile>`). The container's boot registers every *named*
 slot down and folds its autostart intent into the root slot, so a fresh boot
 already multiplexes. An **in-place** update no longer needs a container restart
 to converge either: `nastech gateway migrate --multiplex` (and the hook `nastech

@@ -9,8 +9,6 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-import sys
-import time
 from functools import cmp_to_key
 from typing import Any
 
@@ -20,10 +18,9 @@ from scripts.releases.semver import compare
 # The head of the line before any release is published from here. Upstream's own
 # seed named its last CalVer-era release because a published head has overridden
 # it on every read since; a fork with zero published releases keeps reading the
-# seed, so it must name the newest upstream stable the tree carries -- otherwise
-# the canary stamps 0.22.7 code as 0.21.5+canary. Rewritten by the sync whenever
-# the tree moves onto a newer upstream stable.
-SEED = "0.22.7"
+# seed, so it must name the newest upstream stable the tree carries. Rewritten by
+# the sync whenever the tree moves onto a newer upstream stable.
+SEED = "0.23.0"
 BUMPS = ("major", "minor", "patch")
 
 
@@ -100,29 +97,8 @@ def published_stable_version(repository: str, *, base_url: str | None = None, re
                                      run=run)[0]
 
 
-_RATE_LIMITED = re.compile(r"rate limit", re.IGNORECASE)
-
-
-def _gh(argv: list[str], *, run=subprocess.run, sleep=time.sleep, tries: int = 5) -> str:
-    """One ``gh api`` call, retried only while the response is a rate limit.
-
-    Every check on this repository spends one Actions installation's request
-    budget, so a 403 during the canary is a queue position rather than an answer,
-    and the reads here are the ones that name the version the tag gets. Any other
-    non-zero exit is a real result: it fails on the first attempt, with gh's own
-    message kept on the job log.
-    """
-    done = None
-    for attempt in range(1, tries + 1):
-        done = run(argv, text=True, encoding="utf-8", capture_output=True)
-        if done.returncode == 0:
-            return done.stdout
-        if not _RATE_LIMITED.search(done.stderr or ""):
-            break
-        if attempt < tries:
-            sleep(float(attempt))
-    sys.stderr.write(done.stderr or "")
-    raise subprocess.CalledProcessError(done.returncode, argv, done.stdout, done.stderr)
+def _gh(argv: list[str]) -> str:
+    return subprocess.check_output(argv, text=True, encoding="utf-8")
 
 
 def version_from_tag(ref: str) -> str | None:
