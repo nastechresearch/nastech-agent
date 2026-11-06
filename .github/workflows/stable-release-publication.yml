@@ -25,6 +25,20 @@ permissions:
   contents: write
   actions: write
 
+env:
+  # Pin the handoff seam to the plane the build legs already stage to. Unset,
+  # `handoff.store()` falls back to the bucket variable this job still carries, so
+  # the sequencer's head advance -- which fetches each attempt's native receipts,
+  # metadata and feed legs -- would ask the object store for keys the legs wrote as
+  # draft release assets: a missing handoff for work that succeeded. An
+  # operator-selected r2 still wins at the seam, so an in-flight R2 release is never
+  # repointed mid-run. The channel seam stays unpinned here for the same reason
+  # stable-release.yml leaves it: `channel_releases` still builds an R2 channel store
+  # while `r2.public_base_url()` answers the channel pin with a Pages origin, so
+  # pinning it would name one store's bytes with another store's URL. It belongs with
+  # the change that moves a store and its public origin together.
+  RELEASE_HANDOFF_STORE: github
+
 jobs:
   reconcile:
     if: >-
