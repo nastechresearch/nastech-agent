@@ -6,13 +6,15 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import tempfile
 
 import pytest
 import nastech_yaml as yaml
 
-from scripts.releases import darwin, r2
+from scripts.releases import darwin, gh_transport, r2
+from tests.scripts.test_gh_transport import FakeReleaseApi
 from tests.scripts.test_release_r2 import r2_server
 from scripts.releases.darwin import (
     _darwin_feed,
@@ -228,3 +230,94 @@ def test_finalize_live_feed_faults(tmp_path, r2_server, fault):
             assert parse_mac_feed(r2_server.store[key][0].decode())['version'] == '0.28.0'
         elif fault == 'readback':
             assert [method for method, path, _ in r2_server.requests if path.endswith(key)] == ['GET', 'PUT', 'HEAD', 'GET']
+
+
+@pytest.fixture
+def release_store(monkeypatch):
+    """The handoff plane the darwin feed job runs on: release assets, no bucket."""
+    fake = FakeReleaseApi()
+    monkeypatch.setattr(gh_transport, "_run", fake)
+    monkeypatch.setenv("GH_TOKEN", "token")
+    monkeypatch.setenv("GITHUB_REPOSITORY", "o/r")
+    monkeypatch.delenv("R2_DISPOSABLE_RUN", raising=False)
+    monkeypatch.setenv("RELEASE_HANDOFF_STORE", "github")
+    for name in [key for key in os.environ if key.startswith("CLOUDFLARE_R2_")]:
+        monkeypatch.delenv(name, raising=False)
+    return fake
+
+
+def stage_github_handoff(root, tag, legs, bytes_by_key):
+    """What the build legs leave behind: immutable artifacts plus the receipts
+    naming their bytes, and the feed legs the publication reads."""
+    prefix = f"releases/tag/{tag}/"
+    files = []
+    for key, data in sorted(bytes_by_key.items()):
+        name = key.removeprefix(prefix)
+        assert name != key, key
+        path = root / "build" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        gh_transport.put(tag=tag, key=name, file=str(path), immutable=True)
+        files.append({"path": name, "size": len(data),
+                      "sha256": hashlib.sha256(data).hexdigest()})
+    staged = root / "staged"
+    staged.mkdir(parents=True, exist_ok=True)
+    receipt = {"schema": 1, "tag": tag, "commit": "c" * 40, "name": "darwin", "files": files}
+    (staged / "handoff-darwin.json").write_text(json.dumps(receipt), encoding="utf-8")
+    for name, text in legs.items():
+        (staged / name).write_text(text, encoding="utf-8")
+    return staged
+
+
+def test_finalize_publishes_the_feed_pointer_without_any_r2_configuration(release_store, tmp_path):
+    legs, bytes_by_key = _inputs()
+    staged = stage_github_handoff(tmp_path, "v0.28.0", legs, bytes_by_key)
+    darwin.finalize(tag="v0.28.0", dir=str(staged))
+    pointer = "releases/darwin/stable/stable-mac.yml"
+    published = gh_transport.read_key(pointer)
+    # Same key, same bytes: the GitHub arm writes the pointer merge_mac_feeds
+    # planned, so a reader sees the feed it would have read out of the bucket.
+    assert published == merge_mac_feeds(legs, "v0.28.0")["text"]
+    feed = parse_mac_feed(published)
+    assert len(feed["files"]) == 2
+    assert all(entry["url"].startswith("/releases/tag/v0.28.0/") for entry in feed["files"])
+
+
+def test_finalize_refuses_the_github_pointer_when_a_staged_asset_is_corrupt(release_store, tmp_path):
+    legs, bytes_by_key = _inputs()
+    staged = stage_github_handoff(tmp_path, "v0.28.0", legs, bytes_by_key)
+    key = next(iter(bytes_by_key))
+    asset = next(row for rows in release_store.assets.values() for row in rows
+                 if row["name"] == gh_transport.asset_name(key))
+    # Same length, different bytes: only a digest check can tell them apart.
+    release_store.payloads[asset["id"]] = b"x" * len(bytes_by_key[key])
+    with pytest.raises(ValueError, match="checksum mismatch"):
+        darwin.finalize(tag="v0.28.0", dir=str(staged))
+    assert gh_transport.read_key("releases/darwin/stable/stable-mac.yml") is None
+
+
+def test_finalize_sizes_promoted_artifacts_instead_of_downloading_them(release_store, tmp_path):
+    """The promotion path (verify_bytes=False) keeps its cheap read on GitHub:
+    the feed's size claim is checked against the asset listing, and no
+    multi-GB artifact is streamed back down to learn how big it is."""
+    legs, bytes_by_key = _inputs()
+    staged = stage_github_handoff(tmp_path, "v0.28.0", legs, bytes_by_key)
+    darwin.finalize(tag="v0.28.0", dir=str(staged), verify_bytes=False)
+    assert gh_transport.read_key("releases/darwin/stable/stable-mac.yml") == \
+        merge_mac_feeds(legs, "v0.28.0")["text"]
+    artifact_ids = {row["id"] for row in release_store.assets[release_store.releases["v0.28.0"]]}
+    assert not artifact_ids & set(release_store.byte_reads)
+
+
+def test_promotion_fails_hard_when_a_staged_asset_moved(release_store, tmp_path):
+    """A size-only check is not a soft one: an asset whose reported size no
+    longer matches the feed's claim aborts before the pointer is written."""
+    legs, bytes_by_key = _inputs()
+    staged = stage_github_handoff(tmp_path, "v0.28.0", legs, bytes_by_key)
+    key = next(iter(bytes_by_key))
+    asset = next(row for rows in release_store.assets.values() for row in rows
+                 if row["name"] == gh_transport.asset_name(key))
+    asset["size"] += 1
+    with pytest.raises(ValueError, match="size mismatch"):
+        darwin.finalize(tag="v0.28.0", dir=str(staged), verify_bytes=False)
+    assert gh_transport.read_key("releases/darwin/stable/stable-mac.yml") is None

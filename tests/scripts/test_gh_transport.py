@@ -45,6 +45,7 @@ class FakeReleaseApi:
         # The release the last POST opened: its asset route answers 404 until the
         # first upload, which is how run 41852094357 lost the win32-x64 leg.
         self.freshly_minted: int | None = None
+        self.byte_reads: list[int] = []
         self.next_id = 1
 
     def create(self, tag: str, *, draft: bool = True) -> int:
@@ -121,6 +122,7 @@ class FakeReleaseApi:
                     rows[:] = [row for row in rows if row["id"] != asset_id]
                 return self._done("{}")
             kwargs["stdout"].write(self.payloads[asset_id])
+            self.byte_reads.append(asset_id)
             return self._done()
         raise AssertionError(f"unhandled gh api route: {route}")
 
@@ -244,6 +246,26 @@ def test_a_download_is_kept_only_after_it_matches_its_receipt(store, tmp_path):
         gh_transport.fetch_key(key, target, expected_size=7,
                                expected_sha256=hashlib.sha256(b"z" * 32).hexdigest())
     assert not (tmp_path / "out" / "app.zip.part").exists()
+
+
+def test_object_size_reports_the_staged_bytes_without_reading_them(store, tmp_path):
+    """A size-only read exists: the asset listing carries the size, so
+    learning how big an artifact is must not stream it back down."""
+    key = "releases/tag/v0.22.0/darwin-arm64/app.zip"
+    store.create("v0.22.0")
+    gh_transport.put(key=key, file=written(tmp_path, "app.zip", b"p" * 123),
+                     key_is_full=True, immutable=True)
+    assert gh_transport.object_size(key) == 123
+    assert store.byte_reads == []
+
+
+def test_sizing_a_missing_asset_raises_the_same_404_as_reading_it(store):
+    """No silent zero: an absent object fails like every other store read, so
+    a caller can never verify against a size it did not actually read."""
+    store.create("v0.22.0")
+    with pytest.raises(gh_transport.R2RequestError) as raised:
+        gh_transport.object_size("releases/tag/v0.22.0/darwin-arm64/absent.zip")
+    assert raised.value.status == 404
 
 
 def test_a_stale_archive_origin_fails_instead_of_reading_github_anyway(store, tmp_path):

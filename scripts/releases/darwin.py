@@ -1,7 +1,13 @@
 """Validate and conditionally publish macOS update feeds."""
 from __future__ import annotations
 
+import base64
+import hashlib
+import json
+import os
 import re
+import tempfile
+from pathlib import Path
 from typing import Any, Callable
 
 from . import r2 as r2_module
@@ -173,22 +179,59 @@ def publish_mac_feed(
 
 
 # ---------------------------------------------------------------------------
-# finalize (real signed transport)
+# finalize (the handoff store's transport)
 # ---------------------------------------------------------------------------
+
+def _feed_etag(text: str) -> str:
+    """The GitHub arm's conditional-write token: a release asset has no ETag."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _handoff_digests(directory: str) -> dict[str, dict[str, Any]]:
+    """The size and sha256 the fetched handoff receipts bind, keyed by object.
+
+    The GitHub transport verifies an artifact against the receipt that names
+    its bytes; where no receipt binds one, publication refuses rather than
+    point a feed at unverified bytes."""
+    from scripts.releases import handoff as handoff_module
+
+    digests: dict[str, dict[str, Any]] = {}
+    for name in sorted(os.listdir(directory)):
+        if not (name.startswith("handoff-") and name.endswith(".json")):
+            continue
+        receipt = json.loads(Path(directory, name).read_text(encoding="utf-8-sig"))
+        rows = handoff_module.validate_receipt(receipt, receipt.get("tag"),
+                                               receipt.get("commit"), receipt.get("name"))
+        prefix = r2_module.staging_key_for(str(receipt["tag"]), "")
+        for row in rows:
+            key = prefix + row["path"]
+            prior = digests.get(key)
+            if prior is not None and prior != row:
+                raise ValueError(f"Handoff receipts disagree on {key}")
+            digests[key] = row
+    return digests
+
 
 def finalize(tag: str, dir: str, variant: str | None = None, archive: str | None = None,
              arches: tuple[str, ...] | None = None, verify_bytes: bool = True) -> None:
     """Validate both native legs, verify their streamed bytes, then replace
     the feed pointer (conditional write, then readback).
 
+    The store is `handoff`'s, so a run without R2 credentials publishes the
+    same pointer, under the same key, through the release-asset transport.
+
     ``verify_bytes=False`` (stable promotion of an accepted candidate, whose
     artifacts are already bound by receipt sha256) checks each artifact's
-    remote size instead of streaming multi-GB packages back down."""
+    remote size instead of streaming multi-GB packages back down; the GitHub
+    arm takes that size off the release API's asset listing, the same size-
+    only read the R2 arm gets from a HEAD."""
     if variant and variant != "light":
         raise ValueError("Unknown macOS variant")
-    creds, base, bucket = r2_module.credentials()
+    from scripts.releases.handoff import store
+
+    transport = store()
+    creds, base, bucket = transport.credentials()
     now = r2_module.amz_timestamp()
-    import os
 
     legs = {
         name: open(os.path.join(dir, name), encoding="utf-8-sig").read()
@@ -197,40 +240,84 @@ def finalize(tag: str, dir: str, variant: str | None = None, archive: str | None
     }
     plan = merge_mac_feeds(legs, tag, variant == "light", archive=archive, arches=arches)
 
-    def read(key: str) -> dict[str, str] | None:
-        try:
-            response = r2_module.signed_request(
-                "GET", f"{base}/{bucket}/{r2_module.encode_key_path(key)}", creds=creds, now=now
+    if transport is r2_module:
+
+        def read(key: str) -> dict[str, str] | None:
+            try:
+                response = r2_module.signed_request(
+                    "GET", f"{base}/{bucket}/{r2_module.encode_key_path(key)}", creds=creds, now=now
+                )
+            except r2_module.R2RequestError as err:
+                if err.status == 404:
+                    return None  # first publish: no live feed yet
+                raise
+            if response.status >= 400:
+                raise r2_module.R2RequestError("GET", key, response.status)
+            etag = response.header("etag")
+            if not etag:
+                raise ValueError(f"No ETag for {key}")
+            return {"text": response.text(), "etag": etag}
+
+        def verify(key: str, file_entry: dict[str, Any]) -> None:
+            if not verify_bytes:
+                head = r2_module.signed_request(
+                    "HEAD", f"{base}/{bucket}/{r2_module.encode_key_path(key)}", creds=creds, now=now)
+                if str(head.header("content-length")) != str(file_entry["size"]):
+                    raise ValueError(f"Artifact size mismatch: {key}")
+                return
+            r2_module.verify_remote_artifact(
+                f"{base}/{bucket}/{r2_module.encode_key_path(key)}",
+                creds, now, file_entry["size"], file_entry["sha512"],
             )
-        except r2_module.R2RequestError as err:
-            if err.status == 404:
+
+        def write(key: str, text: str, etag: str | None) -> None:
+            r2_module.put_object(
+                creds, base, bucket, key, text.encode("utf-8"), now,
+                "application/yaml",
+                {"If-Match": etag} if etag else {"If-None-Match": "*"},
+            )
+    else:
+        digests = _handoff_digests(dir)
+
+        def read(key: str) -> dict[str, str] | None:
+            text = transport.read_key(key)
+            if text is None:
                 return None  # first publish: no live feed yet
-            raise
-        if response.status >= 400:
-            raise r2_module.R2RequestError("GET", key, response.status)
-        etag = response.header("etag")
-        if not etag:
-            raise ValueError(f"No ETag for {key}")
-        return {"text": response.text(), "etag": etag}
+            return {"text": text, "etag": _feed_etag(text)}
 
-    def verify(key: str, file_entry: dict[str, Any]) -> None:
-        if not verify_bytes:
-            head = r2_module.signed_request(
-                "HEAD", f"{base}/{bucket}/{r2_module.encode_key_path(key)}", creds=creds, now=now)
-            if str(head.header("content-length")) != str(file_entry["size"]):
-                raise ValueError(f"Artifact size mismatch: {key}")
-            return
-        r2_module.verify_remote_artifact(
-            f"{base}/{bucket}/{r2_module.encode_key_path(key)}",
-            creds, now, file_entry["size"], file_entry["sha512"],
-        )
+        def verify(key: str, file_entry: dict[str, Any]) -> None:
+            row = digests.get(key)
+            if row is None:
+                raise ValueError(f"No handoff receipt binds {key}")
+            if row["size"] != file_entry["size"]:
+                raise ValueError(f"Feed artifact size differs from its receipt: {key}")
+            if not verify_bytes:
+                # The receipt already binds these bytes' sha256, so the remote
+                # size is the whole promotion check -- the same one the R2 arm
+                # makes with a HEAD, taken off the asset listing without
+                # streaming the package back down.
+                if transport.object_size(key) != file_entry["size"]:
+                    raise ValueError(f"Artifact size mismatch: {key}")
+                return
+            with tempfile.TemporaryDirectory() as staging:
+                file = Path(staging) / os.path.basename(key)
+                transport.download_object(creds, base, bucket, key, file, now,
+                                          expected_size=row["size"],
+                                          expected_sha256=row["sha256"])
+                digest = hashlib.sha512()
+                for chunk in r2_module.stream_file(str(file)):
+                    digest.update(chunk)
+                if base64.b64encode(digest.digest()).decode("ascii") != file_entry["sha512"]:
+                    raise ValueError(f"Artifact checksum mismatch: {key}")
 
-    def write(key: str, text: str, etag: str | None) -> None:
-        r2_module.put_object(
-            creds, base, bucket, key, text.encode("utf-8"), now,
-            "application/yaml",
-            {"If-Match": etag} if etag else {"If-None-Match": "*"},
-        )
+        def write(key: str, text: str, etag: str | None) -> None:
+            current = transport.read_key(key)
+            if etag != (None if current is None else _feed_etag(current)):
+                raise r2_module.R2RequestError("PUT", key, 412)
+            with tempfile.TemporaryDirectory() as staging:
+                file = Path(staging) / os.path.basename(key)
+                file.write_text(text, encoding="utf-8")
+                transport.put(key=key, file=str(file), key_is_full=True)
 
     publish_mac_feed(plan, {"read": read, "verify": verify, "write": write})
-    print(f"OK r2: finalized {tag} -> {plan['key']}")
+    print(f"OK {'r2' if transport is r2_module else 'github'}: finalized {tag} -> {plan['key']}")
