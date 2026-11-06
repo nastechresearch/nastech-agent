@@ -381,7 +381,13 @@ def _peeled_artifact_path(value: str) -> str:
         raise ValueError("Invalid artifact path encoding") from None
 
 
-def read_public_receipt(base: str, key: str) -> dict:
+def read_public_text(base: str, key: str) -> str:
+    """One metadata object, read from the archive that holds it and nowhere else.
+
+    The connection is pinned to this store's own origin and a redirect is a failure
+    rather than a hop, so a caller that verifies the bytes it gets back can trust the
+    address it asked for.
+    """
     url = public_artifact_url(base, key)
     parsed = urlparse(url)
     conn = _connection(url, timeout=60.0)
@@ -394,9 +400,13 @@ def read_public_receipt(base: str, key: str) -> dict:
         body = response.read(4 * 1024 * 1024 + 1)
         if len(body) > 4 * 1024 * 1024:
             raise ValueError('Public handoff receipt exceeds metadata limit')
-        return json.loads(body)
+        return body.decode("utf-8-sig")
     finally:
         conn.close()
+
+
+def read_public_receipt(base: str, key: str) -> dict:
+    return json.loads(read_public_text(base, key))
 
 
 class _TransferMismatch(ValueError):

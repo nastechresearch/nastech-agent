@@ -28,6 +28,12 @@ def environment(clone, commit):
         GITHUB_ACTOR='maintainer', GITHUB_TRIGGERING_ACTOR='maintainer',
         GITHUB_OUTPUT=str(clone / 'outputs'), GH_TOKEN='fixture-token',
         GIT_ALLOW_PROTOCOL='file', PYTHONUTF8='1',
+        # The step resolves its archive origin through the store seam, and that module
+        # graph reaches scripts.releases.semver -> nastech_cli.update_channel. CI runs
+        # the step in a checkout carrying those top-level packages; the fake clone
+        # carries only scripts/, so the repo root joins the child path as it does in
+        # tests/ci/test_desktop_release_tag_admission.py.
+        PYTHONPATH=str(Path(__file__).resolve().parents[2]),
     )
 
 
@@ -73,8 +79,12 @@ def test_trusted_dispatch_admits_a_pushed_feature_without_switching_checkout(tmp
     _git('commit', '-qm', 'feature', cwd=origin)
     commit = _git('rev-parse', 'HEAD', cwd=origin)
     _git('fetch', 'origin', cwd=clone)
-    source = Path(__file__).resolve().parents[2] / 'scripts/releases'
-    shutil.copytree(source, clone / 'scripts/releases', ignore=shutil.ignore_patterns('__pycache__'))
+    scripts = Path(__file__).resolve().parents[2] / 'scripts'
+    shutil.copytree(scripts / 'releases', clone / 'scripts/releases', ignore=shutil.ignore_patterns('__pycache__'))
+    # The step names its archive origin through the store seam, which resolves r2 at
+    # import, and r2 reads its content-type map from scripts/ -- the CI checkout the
+    # step runs against has always carried that file, so the fake clone must too.
+    shutil.copy(scripts / 'release-content-types.json', clone / 'scripts/release-content-types.json')
     helper = clone / 'test-bin'
     helper.mkdir()
     permission_log = clone / 'permission.jsonl'

@@ -60,6 +60,7 @@ __all__ = [
     "put",
     "read_key",
     "read_public_receipt",
+    "read_public_text",
     "relative_artifact_path",
     "release_tag_for",
     "repository_id",
@@ -360,9 +361,22 @@ def owns_origin(base: str) -> bool:
     return base.rstrip("/") == origin
 
 
-def read_public_receipt(base: str, key: str) -> dict:
+def read_public_text(base: str, key: str) -> str:
+    """One metadata object from this repository's release archive.
+
+    There is no public URL to follow: the asset is read through the API, so the read
+    cannot be handed off to another origin, and a draft's bytes stay unreachable until
+    the release that holds them is published.
+    """
     public_base_url(base)
-    return json.loads(read_key(key) or "")
+    body = read_key(key)
+    if body is None:
+        raise R2RequestError("GET", key, 404)
+    return body
+
+
+def read_public_receipt(base: str, key: str) -> dict:
+    return json.loads(read_public_text(base, key))
 
 
 def fetch_key(key: str, file: Path, *, expected_size: int, expected_sha256: str) -> None:

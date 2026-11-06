@@ -340,6 +340,23 @@ def test_a_public_read_names_the_store_it_reads_from(monkeypatch):
     assert handoff.store("https://github.com/other/releases/download") is r2
 
 
+def test_the_archive_origin_is_named_by_the_store(store, monkeypatch):
+    """Where a run's archive is served from is the store's answer, never its own setting.
+
+    The desktop plane pins GitHub releases and configures no bucket, so a workflow that
+    reads its origin out of the bucket's variable published `releases/tag/...` URLs with
+    no host in front of them: every candidate then failed the HTTPS-origin check and
+    nothing downstream of the manifest could be read, named or published.
+    """
+    monkeypatch.delenv("CLOUDFLARE_R2_PUBLIC_URL", raising=False)
+    assert handoff.archive_origin() == "https://github.com/o/r/releases/download"
+    # An unset workflow variable arrives as the empty string, not as no value.
+    assert handoff.archive_origin("") == "https://github.com/o/r/releases/download"
+    # A bucket origin on a run pinned to releases is refused, not quietly honoured.
+    with pytest.raises(ValueError, match="not this repository"):
+        handoff.archive_origin("https://assets.nastech.example/nastech-releases")
+
+
 def test_prune_clears_one_namespace_and_leaves_the_others(store, tmp_path):
     for key in (f"releases/commit/{'1' * 40}/a/app.zip",
                 f"releases/commit/{'1' * 40}/b/app.zip",

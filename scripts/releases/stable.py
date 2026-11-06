@@ -343,6 +343,7 @@ def plan_receipt_transitions(previous: dict, receipt_manifest: dict, receipt: st
 def _receipt_manifest(root: Path, receipt: str, tag: str, commit: str, archive: str,
                       public_base: str, release_epoch: int) -> dict:
     """Rebuild one group's manifest rows from its staged, digest-verified handoffs."""
+    from scripts.releases import handoff
     from scripts.releases.handoff import fetch, receipt_name
     from scripts.releases.r2 import staging_key_for
 
@@ -364,6 +365,7 @@ def _receipt_manifest(root: Path, receipt: str, tag: str, commit: str, archive: 
             raise ValueError(f"Expected one universal bundle, found {len(bundles)}")
         universal = bundles[0]
     packages = []
+    chosen = handoff.store(public_base)
     for row in rows:
         filename = universal if row["platform"] == "windows" else row.get("filename")
         if not filename or filename not in digests:
@@ -372,7 +374,8 @@ def _receipt_manifest(root: Path, receipt: str, tag: str, commit: str, archive: 
         packages.append({
             key: value for key, value in {
                 **row,
-                "artifact": {"url": f"{public_base.rstrip('/')}/{staging_key_for(archive, filename)}",
+                "artifact": {"url": chosen.public_artifact_url(
+                    public_base, staging_key_for(archive, filename)),
                              "sha256": digests[filename]},
             }.items() if key != "filename"
         })
@@ -652,21 +655,39 @@ def emit(values: dict, env: dict) -> None:
         file.writelines(f"{key}={value if isinstance(value, str) else json.dumps(value, separators=(',', ':'))}\n" for key, value in values.items())
 
 
-def read_candidate(env: dict) -> dict:
-    digest = env.get("CANDIDATE_MANIFEST_SHA256", "")
-    if not DIGEST.fullmatch(digest):
-        raise ValueError("Pinned candidate manifest digest is required")
-    return read_manifest(env["CANDIDATE_MANIFEST_URL"], digest)
+def read_candidate(env: dict, *, tag: str, commit: str, base: str, archive: str) -> dict:
+    """The pinned candidate, read through the store its admission named -- never fetched.
+
+    The URL the admission emitted is re-derived from the claim and compared rather than
+    followed: the digest is what pins the bytes, and a reader that follows a URL can be
+    pointed at an origin this run's store does not serve.
+    """
+    from scripts.releases import handoff
+    from scripts.releases.r2 import staging_key_for
+
+    expected = handoff.store(base).public_artifact_url(
+        base, staging_key_for(archive, "release-candidates.json"))
+    if env.get("CANDIDATE_MANIFEST_URL") != expected:
+        raise ValueError("Candidate manifest URL differs from the admitted archive")
+    return read_admitted_candidate(tag, commit, base, env.get("CANDIDATE_MANIFEST_SHA256", ""),
+                                   archive=archive)
 
 
 def read_admitted_candidate(tag: str, commit: str, public_base: str, digest: str, *,
                             archive: str) -> dict:
     """The page and package promoter consume the same pinned admission."""
+    from scripts.releases import handoff
+    from scripts.releases.r2 import staging_key_for
+
     if not DIGEST.fullmatch(digest or ""):
         raise ValueError("Pinned candidate manifest digest is required")
     require_stable_identity(tag, commit)
-    manifest = read_manifest(f"{public_base.rstrip('/')}/releases/tag/{archive}/release-candidates.json",
-                             digest, expected_origin=public_base)
+    chosen = handoff.store(public_base)
+    body = chosen.read_public_text(public_base,
+                                   staging_key_for(archive, "release-candidates.json")).encode()
+    if hashlib.sha256(body).hexdigest() != digest:
+        raise ValueError("Candidate manifest digest mismatch")
+    manifest = json.loads(body)
     validate_candidates(manifest, tag, commit, public_base, archive=archive)
     return manifest
 
@@ -803,7 +824,9 @@ CANDIDATE_INCLUDES = ("metadata-*.json",)
 def candidate_manifest(env: dict) -> None:
     """Merge the staged handoffs into the accepted candidate manifest."""
     from scripts.bundles.release_artifacts import assemble
+    from scripts.releases import handoff
     from scripts.releases.handoff import fetch
+    from scripts.releases.r2 import staging_key_for
 
     needs = json.loads(env.get("RELEASE_NEEDS", "{}"))
     if not isinstance(needs, dict):
@@ -827,7 +850,7 @@ def candidate_manifest(env: dict) -> None:
     # for a smoke, but a failed or missing one leaves no manifest. A claim that builds a bundle
     # runs at least one call, so this list is never empty.
     require_success(needs, [call for call in lane_set.CANDIDATE_CALLS if runs[call]])
-    base = env["CLOUDFLARE_R2_PUBLIC_URL"].rstrip("/")
+    base = handoff.archive_origin(env.get("CLOUDFLARE_R2_PUBLIC_URL"))
     archive = claim["claim_tag"]
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
@@ -838,7 +861,8 @@ def candidate_manifest(env: dict) -> None:
         assemble(root, tag, commit, base, out, smoke_results=smoke,
                  release_epoch=claim["claim_epoch"], archive=archive, lanes=lanes)
         digest = hashlib.sha256(out.read_bytes()).hexdigest()
-    emit({"manifest-url": f"{base}/releases/tag/{archive}/release-candidates.json",
+    manifest_key = staging_key_for(archive, "release-candidates.json")
+    emit({"manifest-url": handoff.store(base).public_artifact_url(base, manifest_key),
           "manifest-sha256": digest}, env)
 
 
@@ -1007,11 +1031,14 @@ def publish_attempt(record: dict, *, repository: str, run=output, read_archive) 
 
 def complete(env: dict) -> None:
     """Validate the accepted candidate archive. The final tag moves to publish."""
+    from scripts.releases import handoff
+
     tag, commit, claim = stable_context(env)
     if not lane_set.has_bundles(claim["lanes"]):
         raise ValueError("A claim that builds no bundle has no candidate archive to validate")
-    base = env["CLOUDFLARE_R2_PUBLIC_URL"].rstrip("/")
-    candidate = read_candidate(env)
+    base = handoff.archive_origin(env.get("CLOUDFLARE_R2_PUBLIC_URL"))
+    candidate = read_candidate(env, tag=tag, commit=commit, base=base,
+                               archive=claim["claim_tag"])
     validate_candidates(candidate, tag, commit, base, claim["claim_epoch"], archive=claim["claim_tag"])
     require_smokes_match_claim(candidate, claim["lanes"])
     require_targets_match_claim(candidate, claim["lanes"])
