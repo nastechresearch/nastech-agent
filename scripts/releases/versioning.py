@@ -103,18 +103,20 @@ def published_stable_version(repository: str, *, base_url: str | None = None, re
 _RATE_LIMITED = re.compile(r"rate limit", re.IGNORECASE)
 
 
-def _gh(argv: list[str], *, run=subprocess.run, sleep=time.sleep, tries: int = 5) -> str:
+def _gh(argv: list[str], *, run=subprocess.run, sleep=time.sleep, tries: int = 5,
+        timeout: float = 60) -> str:
     """One ``gh api`` call, retried only while the response is a rate limit.
 
     Every check on this repository spends one Actions installation's request
     budget, so a 403 during the canary is a queue position rather than an answer,
     and the reads here are the ones that name the version the tag gets. Any other
     non-zero exit is a real result: it fails on the first attempt, with gh's own
-    message kept on the job log.
+    message kept on the job log. A child that never answers is not a queue
+    position either: its ``TimeoutExpired`` propagates on the first attempt.
     """
     done = None
     for attempt in range(1, tries + 1):
-        done = run(argv, text=True, encoding="utf-8", capture_output=True)
+        done = run(argv, text=True, encoding="utf-8", capture_output=True, timeout=timeout)
         if done.returncode == 0:
             return done.stdout
         if not _RATE_LIMITED.search(done.stderr or ""):
