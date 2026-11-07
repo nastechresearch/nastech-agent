@@ -117,7 +117,7 @@ Nastech reads environment variables from the process environment and, for user-m
 | `NASTECH_MODEL` | Override model name at process level (used by cron scheduler; prefer `config.yaml` for normal use) |
 | `VOICE_TOOLS_OPENAI_KEY` | Preferred OpenAI key for OpenAI speech-to-text and text-to-speech providers |
 | `NASTECH_LOCAL_STT_COMMAND` | Optional local speech-to-text command template. Supports `{input_path}`, `{output_dir}`, `{language}`, and `{model}` placeholders |
-| `NASTECH_LOCAL_STT_LANGUAGE` | Default language hint for STT. Used by the `local` (faster-whisper) provider, `NASTECH_LOCAL_STT_COMMAND`, the local `whisper` CLI fallback (default: `en`), Groq, and xAI when no per-provider `language` is set in `config.yaml` |
+| `NASTECH_LOCAL_STT_LANGUAGE` | Fallback STT language hint, used only when both the provider's own `language` and the global `stt.language` are empty. Command backends (`NASTECH_LOCAL_STT_COMMAND`, the local `whisper` CLI) may apply their own default (`en`) when no hint resolves. |
 | `NASTECH_HOME` | Select the configuration and user-data home. A literal `~` or `$VAR` in the value is expanded (fish does not expand `~` inside `VAR=~/…`), so it never resolves relative to the current directory. Defaults to `~/.nastech` on POSIX and `%LOCALAPPDATA%\nastech` on Windows; the official Docker image uses `/opt/data`. Profile/runtime context can select a more specific home. |
 | `NASTECH_CONFIG_BACKEND` | Select where the profile's `config.yaml` user layer is read and written. `file` (the default) is the local `config.yaml`; `remote` is [Remote Config](../user-guide/remote-config.md). Any other value, or a remote backend that cannot serve config, stops Nastech at startup with an error instead of falling back to defaults. An explicitly empty value in a `.env` resets a stale shell value to `file`. Read from the launch environment, the launch home's `.env` and the managed `.env`, never from `config.yaml`. See [Config backend](../developer-guide/config-backend.md). |
 | `NASTECH_CONFIG_REMOTE_URL` | Base URL of the [Remote Config](../user-guide/remote-config.md) plane (default `https://config-config.nastechresearch.github.io`; `https://` only, plain `http://` only to loopback, no user info). An env var because it is needed before any config can be read: it says where config comes from. |
@@ -192,6 +192,7 @@ For native Anthropic auth, Nastech prefers Claude Code's own credential files wh
 | `BRV_API_KEY` | ByteRover API key (optional, for cloud sync — local-first by default) ([app.byterover.dev](https://app.byterover.dev)) |
 | `SUPERMEMORY_API_KEY` | Semantic long-term memory with profile recall and session ingest ([supermemory.ai](https://supermemory.ai)) |
 | `DAYTONA_API_KEY` | Daytona cloud sandboxes ([daytona.io](https://daytona.io/)) |
+| `SPRITES_TOKEN` | Sprites cloud sandboxes, read by the [`sprites` plugin](https://github.com/NastechResearch/nastech-plugin-sprites) ([fly.io/sprites](https://fly.io/sprites)) |
 | `VERCEL_TOKEN` | Vercel Sandbox access token ([vercel.com](https://vercel.com/)) |
 | `VERCEL_PROJECT_ID` | Vercel project ID (required with `VERCEL_TOKEN`) |
 | `VERCEL_TEAM_ID` | Vercel team ID (required with `VERCEL_TOKEN`) |
@@ -203,9 +204,8 @@ Secrets consumed by specific bundled / optional skills. Each is only needed if y
 
 | Variable | Used by skill | Description |
 |----------|---------------|-------------|
-| `NOTION_API_KEY` | `notion` | Notion integration token. |
+| `NOTION_API_KEY` | Teams meeting pipeline | Notion integration token for the Notion sink. |
 | `LINEAR_API_KEY` | `linear` | Linear personal API key. |
-| `AIRTABLE_API_KEY` | `airtable` | Airtable personal access token. |
 | `TENOR_API_KEY` | `gif-search` | Tenor API key for GIF search. |
 
 ### Langfuse Observability
@@ -241,7 +241,7 @@ These variables configure the [Tool Gateway](../user-guide/features/tool-gateway
 
 | Variable | Description |
 |----------|-------------|
-| `TERMINAL_ENV` | Backend: `local`, `docker`, `ssh`, `modal`, `daytona`, `vercel_sandbox`, or a plugin backend (`singularity`) |
+| `TERMINAL_ENV` | Backend: `local`, `docker`, `ssh`, `modal`, `daytona`, `vercel_sandbox`, or a plugin backend (`singularity`, `sprites`) |
 | `NASTECH_DOCKER_BINARY` | Override the container binary Nastech shells out to (e.g. `podman`, `/usr/local/bin/docker`). When unset, Nastech auto-discovers `docker` or `podman` on `PATH`. Needed when both are installed and you want the non-default, or when the binary lives outside `PATH`. |
 | `TERMINAL_DOCKER_IMAGE` | Docker image (default: `nastechresearch/nastech-sandbox:desktop`) |
 | `TERMINAL_DOCKER_FORWARD_ENV` | JSON array of env var names to explicitly forward into Docker terminal sessions. Note: skill-declared `required_environment_variables` are forwarded automatically — you only need this for vars not declared by any skill. |
@@ -580,8 +580,8 @@ Three dashboard-auth providers ship in the box. For a remote Nastech Desktop con
 | `NASTECH_DESKTOP_IGNORE_EXISTING` | Set to `1` to make Desktop skip the installed runtime (`~/.nastech/nastech-agent`, or `%LOCALAPPDATA%\nastech\nastech-agent` on Windows) during backend resolution, so no local backend starts and Desktop shows the connect-or-install choice. The bundled runtime, `NASTECH_DESKTOP_NASTECH_ROOT`, an unpackaged source checkout, and `NASTECH_DESKTOP_NASTECH` still win. A runtime installed during this launch is used. Equivalent to `nastech desktop --ignore-existing`. |
 | `NASTECH_DESKTOP_CWD` | Initial project directory for Desktop chat sessions. Set by `nastech desktop --cwd`. |
 | `NASTECH_DESKTOP_PYTHON` | Absolute path to a Python interpreter for the backend, checked before Electron auto-resolves one for the source checkout. Used by worktree dev helpers (see [TUI & Desktop from Worktrees](../developer-guide/worktree-ui-dev.md)) to reuse a shared venv. |
-| `NASTECH_DESKTOP_DEV_SERVER` | Vite dev-server URL the Electron shell loads instead of the packaged bundle (e.g. `http://127.0.0.1:5174`). Set automatically by `npm run dev`; only relevant when hacking on the app. A backend that inherits it also trusts that renderer's origin for CORS and WebSocket upgrades. |
-| `NASTECH_DESKTOP_CDP_PORT` | Overrides the Chrome DevTools Protocol port the renderer exposes on `127.0.0.1` for DOM/CSS inspection tooling (default `9222`). Dev-server runs (`npm run dev`, `hgui`) open it automatically; a packaged app never does, and no value here changes that. Set to `off` to disable it on a dev run. Anything that can reach the port can execute code in the renderer. |
+| `NASTECH_DESKTOP_DEV_SERVER` | Vite dev-server URL the Electron shell loads instead of the packaged bundle (e.g. `http://127.0.0.1:5174`). Set automatically by `pnpm run dev`; only relevant when hacking on the app. A backend that inherits it also trusts that renderer's origin for CORS and WebSocket upgrades. |
+| `NASTECH_DESKTOP_CDP_PORT` | Overrides the Chrome DevTools Protocol port the renderer exposes on `127.0.0.1` for DOM/CSS inspection tooling (default `9222`). Dev-server runs (`pnpm run dev`, `hgui`) open it automatically; a packaged app never does, and no value here changes that. Set to `off` to disable it on a dev run. Anything that can reach the port can execute code in the renderer. |
 | `NASTECH_DESKTOP_NVIDIA_SWIFTSHADER` | (Desktop on Linux, NVIDIA only) Override for the EGL fallback that routes rendering through SwiftShader on driver series with a broken EGL probe (`580.x`, #40077): `1` forces the fallback on — the recovery hatch if a future series reintroduces the crash but is not yet in the closed list; `0` opts out and uses the native GPU path at your own risk. Force-on does not apply where another gate already disabled the GPU (remote display, WSLg, `NASTECH_DESKTOP_DISABLE_GPU=0`). |
 | `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY` | (Desktop side) The in-app update check (`Help → Check for Updates…` and the passive update banner) reaches `api.github.com` through the proxy these standard variables name, with `NO_PROXY` exemptions honoured — the same convention `curl`, `npm` and `git` follow. Unset, the check connects directly. |
 
@@ -894,7 +894,7 @@ Nastech sets these itself to carry state across a boundary where no `config.yaml
 | Variable | Description |
 |----------|-------------|
 | `NASTECH_TUI` | Launch the [TUI](../user-guide/tui.md) instead of the classic CLI when set to `1`. Equivalent to passing `--tui`. |
-| `NASTECH_TUI_DIR` | Path to a prebuilt `ui-tui/` directory (must contain `dist/entry.js` and populated `node_modules`). Used by distros and Nix to skip the first-launch `npm install`. |
+| `NASTECH_TUI_DIR` | Path to a prebuilt `ui-tui/` directory (must contain `dist/entry.js` and populated `node_modules`). Used by distros and Nix to skip the first-launch `pnpm install`. |
 | `NASTECH_TUI_RESUME` | Resume a specific TUI session by ID on launch. When set, `nastech --tui` skips forging a fresh session and picks up the named session instead — useful for re-attaching after a disconnect or terminal crash. |
 | `NASTECH_TUI_THEME` | Force the TUI color theme: `light`, `dark`, or a raw 6-character background hex (e.g. `ffffff` or `1a1a2e`). When unset, Nastech auto-detects using `COLORFGBG` and terminal background queries; this variable overrides detection on terminals (Ghostty, Warp, iTerm2, etc.) that don't set `COLORFGBG`. |
 | `NASTECH_INFERENCE_MODEL` | Force the model for `nastech -z` / `nastech chat` without mutating `config.yaml`. Pairs with the `--provider` flag. Useful for scripted callers (sweeper, CI, batch runners) that need to override the default model per run. |

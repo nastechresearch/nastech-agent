@@ -173,7 +173,7 @@ def validate_windows_bundle(bundle: Path, windows: list[dict]) -> None:
         raise ValueError("Universal bundle must cover both architectures")
 
 
-ALL_HANDOFFS = ("win32-x64", "win32-arm64", "darwin-x64", "darwin-arm64", "termux", "windows-universal")
+ALL_HANDOFFS = ("win32-x64", "win32-arm64", "darwin-arm64", "termux", "windows-universal")
 
 
 def assemble(root: Path, tag: str, commit: str, public_base: str, out: Path,
@@ -186,13 +186,10 @@ def assemble(root: Path, tag: str, commit: str, public_base: str, out: Path,
     a handoff group a lane did not build must have no target in the manifest.
     The Windows groups build together, so the universal bundle (`windows`) and
     the Store bundle (`windows-store`) are each present exactly when their lane is."""
-    from scripts.releases.handoff import receipt_name, store, validate_receipt
-    from scripts.releases.r2 import staging_key_for
+    from scripts.releases.handoff import receipt_name, validate_receipt
+    from scripts.releases.r2 import put, staging_key_for
 
     lanes = frozenset(lanes)
-    # The archive belongs to one store: it writes the manifest there, names every
-    # file URL the way that store serves it, and `materialize` reads them back there.
-    chosen = store(public_base)
     expected = lane_set.handoffs(lanes, ALL_HANDOFFS)
     if not expected:
         raise ValueError("Invalid candidate handoff set: the lanes built no package")
@@ -228,7 +225,7 @@ def assemble(root: Path, tag: str, commit: str, public_base: str, out: Path,
     stores = [name for name in by_name if name.endswith(".msixbundle") and name.startswith("Store-")]
     if len(stores) != ("windows-store" in lanes):
         raise ValueError("Candidate Store bundle differs from the claim's windows-store lane")
-    files = [{**row, "url": chosen.public_artifact_url(public_base, staging_key_for(archive, name))}
+    files = [{**row, "url": f"{public_base.rstrip('/')}/{staging_key_for(archive, name)}"}
              for name, row in sorted(by_name.items()) if not name.startswith("metadata-")]
     by_name = {item["path"]: item for item in files}
     packages = []
@@ -247,7 +244,7 @@ def assemble(root: Path, tag: str, commit: str, public_base: str, out: Path,
     if present != set(lane_set.TARGET_LANE) - absent:
         raise ValueError("Candidate package rows differ from the built handoffs")
     out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    chosen.put(tag=archive, key="release-candidates.json", file=out, immutable=True)
+    put(tag=archive, key="release-candidates.json", file=out, immutable=True)
     return result
 
 
@@ -271,12 +268,7 @@ def materialize(manifest: dict, root: Path, *, public_base: str, store_only: boo
     if store_only and len(selected) != 1:
         raise ValueError("Expected one Store candidate")
     from scripts.releases.progress import log
-    from scripts.releases.handoff import store
-    from scripts.releases.r2 import staging_key_for
 
-    # Bytes come from the store the manifest's URLs were written by; a release asset
-    # is not fetchable from its public URL while its release is a draft.
-    chosen = store(public_base)
     total = sum(item.get("size", 0) for item in selected)
     log(f"Materializing {len(selected)} candidate files ({total / 1e9:.1f} GB) into {root}")
     for number, item in enumerate(selected, start=1):
@@ -284,11 +276,20 @@ def materialize(manifest: dict, root: Path, *, public_base: str, store_only: boo
         relative = Path(item["path"])
         if relative.is_absolute() or ".." in relative.parts or any(c in item["path"] for c in "\\:%?#") or item["path"].startswith("/") or "//" in item["path"]:
             raise ValueError("Invalid artifact path")
-        key = staging_key_for(manifest["archive"], relative.as_posix())
-        if item["url"] != chosen.public_artifact_url(public_base, key) or not re.fullmatch(r"[a-f0-9]{64}", item["sha256"]):
+        expected = f"{public_base.rstrip('/')}/releases/tag/{manifest['archive']}/{relative.as_posix()}"
+        if item["url"] != expected or not re.fullmatch(r"[a-f0-9]{64}", item["sha256"]):
             raise ValueError("Invalid artifact URL or digest")
-        chosen.download_public_object(public_base, key, root / relative,
-                                      expected_size=item["size"], expected_sha256=item["sha256"])
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        digest = hashlib.sha256()
+        with urllib.request.urlopen(item["url"], timeout=600) as response, target.open("wb") as file:
+            if not response.geturl().startswith("https://"):
+                raise ValueError("Artifact redirected outside HTTPS")
+            while chunk := response.read(1024 * 1024):
+                digest.update(chunk)
+                file.write(chunk)
+        if digest.hexdigest() != item["sha256"]:
+            raise ValueError(f"Artifact digest mismatch: {relative}")
 
 
 def publish(manifest: dict, root: Path, public_base: str) -> None:
@@ -355,21 +356,17 @@ def publish_canary_appinstaller(root: Path, *, tag: str, variant: str, bundle: P
     put(tag=tag, key=f"{directory}/{descriptor.name}", file=descriptor, key_is_full=True)
 
 
-def publish_pointer(manifest: dict, public_base: str, key: str, file: Path) -> None:
-    """Move one channel pointer and read back the public bytes before trusting it."""
-    from scripts.releases.r2 import put
+def promote(manifest: dict, root: Path, public_base: str) -> None:
+    from scripts.releases.r2 import put, finalize
 
-    put(tag=manifest["tag"], key=key, file=file, key_is_full=True)
-    digest = hashlib.sha256()
-    with urllib.request.urlopen(f"{public_base.rstrip('/')}/{key}", timeout=60) as response:
-        while chunk := response.read(1024 * 1024):
-            digest.update(chunk)
-    if digest.hexdigest() != sha256_file(file):
-        raise ValueError(f"Channel read-back differs: {key}")
-
-
-def select_apt_indexes(manifest: dict, root: Path) -> list[Path]:
-    """The signed metadata this release may move; content-addressed package bytes are immutable."""
+    # Feeds need the per-arch feed legs and APT indexes, not the packages: those are
+    # bound by the accepted candidate's sha256 receipts.
+    materialize(manifest, root, public_base=public_base, metadata_only=True)
+    windows = next(r for r in manifest["packages"] if r["platform"] == "windows")
+    uri = f"{public_base.rstrip('/')}/releases/win32/stable/stable.appinstaller"
+    appinstaller = root / "stable.appinstaller"
+    write_appinstaller(appinstaller, identity=windows["identity"], publisher=windows["publisher"],
+                       version=windows["version"], self_uri=uri, artifact_uri=windows["artifact"]["url"])
     apt = root / "apt"
     indexes = sorted(p for p in apt.rglob("*") if p.is_file() and not p.relative_to(apt).as_posix().startswith("pool/") and "/by-hash/" not in p.relative_to(apt).as_posix())
     indexes.sort(key=lambda p: p.name == "InRelease")
@@ -380,50 +377,21 @@ def select_apt_indexes(manifest: dict, root: Path) -> list[Path]:
         raise ValueError("Missing signed APT index")
     if not termux and indexes:
         raise ValueError("APT indexes staged for a release without a Termux candidate")
-    return indexes
-
-
-def publish_apt_indexes(manifest: dict, root: Path, indexes: list[Path], public_base: str) -> list[str]:
-    apt = root / "apt"
-    published = []
-    for file in indexes:
-        key = f"releases/termux/stable/{file.relative_to(apt).as_posix()}"
-        publish_pointer(manifest, public_base, key, file)
-        published.append(key)
-    return published
-
-
-def promote_termux_apt(manifest: dict, root: Path, public_base: str) -> list[str]:
-    """Publish a staged Termux repository's indexes, and nothing else."""
-    return publish_apt_indexes(manifest, root, select_apt_indexes(manifest, root), public_base)
-
-
-def promote_desktop_feeds(manifest: dict, root: Path, public_base: str) -> None:
-    """Move the Windows and macOS stable feeds onto a candidate that built both."""
-    from scripts.releases.r2 import finalize
-
-    windows = next(r for r in manifest["packages"] if r["platform"] == "windows")
-    uri = f"{public_base.rstrip('/')}/releases/win32/stable/stable.appinstaller"
-    appinstaller = root / "stable.appinstaller"
-    write_appinstaller(appinstaller, identity=windows["identity"], publisher=windows["publisher"],
-                       version=windows["version"], self_uri=uri, artifact_uri=windows["artifact"]["url"])
+    # Every package and index must exist before the first channel write.
     # The merged feed points at the attempt archive; the version stays plain.
-    # macOS Intel is opt-in: without it the feed carries the arm64 leg alone.
-    arches = tuple(arch for arch in ("arm64", "x64")
-                   if any(row["platform"] == "macos" and row["arch"] == arch for row in manifest["packages"]))
-    finalize(tag=manifest["tag"], dir=root, archive=manifest["archive"], arches=arches, verify_bytes=False)
-    publish_pointer(manifest, public_base, "releases/win32/stable/stable.appinstaller", appinstaller)
+    finalize(tag=manifest["tag"], dir=root, archive=manifest["archive"], verify_bytes=False)
+    def publish_pointer(key, file):
+        put(tag=manifest["tag"], key=key, file=file, key_is_full=True)
+        digest = hashlib.sha256()
+        with urllib.request.urlopen(f"{public_base.rstrip('/')}/{key}", timeout=60) as response:
+            while chunk := response.read(1024 * 1024):
+                digest.update(chunk)
+        if digest.hexdigest() != sha256_file(file):
+            raise ValueError(f"Channel read-back differs: {key}")
 
-
-def promote(manifest: dict, root: Path, public_base: str) -> None:
-    # Feeds need the per-arch feed legs and APT indexes, not the packages: those are
-    # bound by the accepted candidate's sha256 receipts.
-    materialize(manifest, root, public_base=public_base, metadata_only=True)
-    # Every package and index must be complete before the first channel write, so a
-    # Termux release that staged no signed index cannot move the desktop feeds on its way out.
-    indexes = select_apt_indexes(manifest, root)
-    promote_desktop_feeds(manifest, root, public_base)
-    publish_apt_indexes(manifest, root, indexes, public_base)
+    publish_pointer("releases/win32/stable/stable.appinstaller", appinstaller)
+    for file in indexes:
+        publish_pointer(f"releases/termux/stable/{file.relative_to(apt).as_posix()}", file)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -440,7 +408,7 @@ def main(argv: list[str] | None = None) -> None:
                         help="Attempt ref the release archive is keyed under when the payload tag is plain vX.Y.Z")
     # A stable run dispatches from the default branch, so GITHUB_SHA is not the admitted claim commit.
     parser.add_argument("--commit", default=os.environ.get("RELEASE_COMMIT") or os.environ.get("GITHUB_SHA"))
-    parser.add_argument("--public-base")
+    parser.add_argument("--public-base", default=os.environ.get("CLOUDFLARE_R2_PUBLIC_URL"))
     parser.add_argument("--store-only", action="store_true")
     for name in ("identity", "publisher", "version", "self-uri", "artifact-uri"):
         parser.add_argument(f"--{name}")
@@ -450,11 +418,9 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "publish-appinstaller":
         if not args.bundle:
             parser.error("publish-appinstaller requires --bundle")
-        from scripts.releases import handoff
-
         publish_canary_appinstaller(args.root, tag=args.tag, variant=args.variant, bundle=args.bundle,
                                    identity=args.identity, publisher=args.publisher, version=args.version,
-                                   public_base=args.public_base or handoff.archive_origin())
+                                   public_base=args.public_base)
         return
     if args.command == "appinstaller":
         if not args.out:
@@ -467,18 +433,15 @@ def main(argv: list[str] | None = None) -> None:
         request = json.loads(args.channel_request.read_text(encoding="utf-8-sig")) if args.channel_request else None
         record(args.platform, args.arch, args.root, args.tag, args.commit, args.out, channel_request=request)
     else:
-        from scripts.releases import handoff
-
         if not args.archive:
             parser.error(f"{args.command} requires the admitted --archive ref")
-        base = args.public_base or handoff.archive_origin()
-        manifest = read_admitted_candidate(args.tag, args.commit, base,
+        manifest = read_admitted_candidate(args.tag, args.commit, args.public_base,
                                           os.environ.get("CANDIDATE_MANIFEST_SHA256", ""),
                                           archive=args.archive)
         if args.command == "materialize":
-            materialize(manifest, args.root, public_base=base, store_only=args.store_only)
+            materialize(manifest, args.root, public_base=args.public_base, store_only=args.store_only)
         else:
-            {"publish": publish, "promote": promote}[args.command](manifest, args.root, base)
+            {"publish": publish, "promote": promote}[args.command](manifest, args.root, args.public_base)
 
 
 if __name__ == "__main__":

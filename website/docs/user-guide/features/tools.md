@@ -74,6 +74,7 @@ The terminal tool can execute commands in different environments:
 | `docker` | Isolated containers | Security, reproducibility |
 | `ssh` | Remote server | Sandboxing, keep agent away from its own code |
 | `singularity` (plugin) | HPC containers | Cluster computing, rootless |
+| `sprites` (plugin) | Stateful Fly.io cloud sandbox | Persistent cloud environments with checkpoint & restore |
 | `modal` | Cloud execution | Serverless, scale |
 | `daytona` | Cloud sandbox workspace | Persistent remote dev environments |
 | `vercel_sandbox` | Vercel Sandbox cloud microVM | Cloud execution with snapshot-backed filesystem persistence |
@@ -83,7 +84,7 @@ The terminal tool can execute commands in different environments:
 ```yaml
 # In ~/.nastech/config.yaml
 terminal:
-  backend: local    # or: docker, ssh, modal, daytona, vercel_sandbox, or a plugin backend (singularity)
+  backend: local    # or: docker, ssh, modal, daytona, vercel_sandbox, or a plugin backend (singularity, sprites)
   cwd: "."          # Working directory
   timeout: 180      # Command timeout in seconds
 ```
@@ -154,6 +155,16 @@ apptainer build ~/python.sif docker://python:3.11-slim
 # Configure
 nastech config set terminal.backend singularity
 nastech config set terminal.singularity_image ~/python.sif
+```
+
+### Sprites
+
+A plugin ([`sprites`](https://github.com/NastechResearch/nastech-plugin-sprites)) that runs commands in a stateful [Sprite](https://fly.io/sprites) on Fly.io. See [Sprites Backend](../configuration.md#sprites-backend).
+
+```bash
+nastech plugins install NastechResearch/nastech-plugin-sprites --enable
+nastech config set terminal.backend sprites
+# Add SPRITES_TOKEN to ~/.nastech/.env
 ```
 
 ### Modal (Serverless Cloud)

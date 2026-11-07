@@ -181,9 +181,9 @@ def test_release_output_names_the_ci_run_and_the_publish_step():
     assert "Draft release: " + result["url"] in text
     # The publish command sits on its own line so it can be copied whole.
     assert "\n    python scripts/release.py publish --version 0.21.5 --remote origin" in text
-    # The default set names what it leaves out: this fork builds no Store bundle and no Intel
-    # macOS package, and it tests no desktop package it cannot sign.
-    assert "Not built: windows-store, macos-intel." in text
+    # The default set names what it leaves out: this fork submits no Store bundle, and it
+    # tests no desktop package it builds unsigned.
+    assert "Not built: windows-store." in text
     assert "Not tested: smoke, upgrade" in text
 
     automatic = next_steps({**result, "autopublish": True})
@@ -192,7 +192,7 @@ def test_release_output_names_the_ci_run_and_the_publish_step():
 
     # --only windows,docker: no tests, no macOS, and a partial desktop set never moves the channel.
     windows = next_steps({**result, "lanes": lane_set.select(only=["windows", "docker"])})
-    assert "Not built: windows-store, macos-arm64, macos-intel, termux." in windows
+    assert "Not built: windows-store, macos-arm64, termux." in windows
     assert "Not tested: ci, nix, docker-tests, pm-bundle, windows-live, install-e2e, bootstrap-version, smoke, upgrade" in windows
     assert "partial desktop release" in windows
     assert "\033[" not in windows
@@ -535,38 +535,27 @@ def _oversized_commit(repo, tmp_path):
     return git(repo, "rev-parse", "HEAD")
 
 
-def test_a_subject_bigger_than_the_body_limit_still_releases_a_fitting_body(source, tmp_path):
-    """The changelog is bounded by construction, so no commit can brick the release.
-
-    A commit whose subject alone exceeds GitHub's body limit used to refuse the
-    whole cut (the operator had to pass --no-changelog). The generated notes are
-    now capped on the rendered text, so the release proceeds, the oversized
-    entry is truncated with a visible ellipsis, and the entrypoint's
-    GITHUB_BODY_LIMIT guard stays as the unfired backstop it is.
-    """
-    from scripts.releases.entrypoint import GITHUB_BODY_LIMIT
+@pytest.mark.parametrize("bump", ["patch", "minor", "major"])
+def test_an_oversized_body_is_refused_before_the_claim(source, tmp_path, bump):
+    from scripts.releases.entrypoint import ReleaseRefused
 
     commit = _oversized_commit(source, tmp_path)
-    seen = {}
 
-    def execute(command):
-        if command[:3] == ["gh", "release", "create"]:
-            with open(command[command.index("--notes-file") + 1], encoding="utf-8") as file:
-                seen["body"] = file.read()
-        return ""
+    with pytest.raises(ReleaseRefused, match="--no-changelog") as refused:
+        _release(source, commit, bump=bump, execute=lambda command: pytest.fail(f"must not run {command}"))
+    hint = str(refused.value)
+    export = f"python scripts/release.py changelog --commit {commit} --bump {bump} --remote origin"
+    # The export comes first: after the retry claims this attempt, changelog numbers the next one.
+    assert export in hint
+    assert hint.index(export) < hint.index("Re-run the same release command with --no-changelog")
+    assert "paste it into the draft release body" in hint
 
-    result = _release(source, commit, execute=execute)
-
-    assert result["tag"] == "rc.1-v0.21.5"
-    assert len(seen["body"]) <= GITHUB_BODY_LIMIT
-    assert "…" in seen["body"], "the oversized entry must be truncated with a marker, not dropped"
-    assert "x" * 40 in seen["body"], "the entry itself must still be listed"
+    # Nothing was claimed, so the attempt is not burned.
+    assert git(source, "ls-remote", "origin", "refs/tags/*") == ""
+    assert git(source, "tag", "-l", "rc.*") == ""
 
 
-def test_no_changelog_still_drops_the_commit_sections_for_the_operator_who_asks(source, tmp_path):
-    """--no-changelog remains the operator's explicit opt-out: the bounded
-    renderer means it is no longer needed to fit GitHub's limit, but asking
-    for it must still produce the bare frame."""
+def test_no_changelog_releases_what_the_full_changelog_could_not(source, tmp_path):
     from scripts.releases.entrypoint import GITHUB_BODY_LIMIT
 
     commit = _oversized_commit(source, tmp_path)
@@ -1083,14 +1072,14 @@ def test_a_concurrent_cut_of_another_version_is_stopped_before_dispatch(
 
 def test_release_refuses_an_unknown_lane_before_touching_git(tmp_path):
     ran = subprocess.run(
-        [sys.executable, "scripts/release.py", "release", "--commit", "HEAD", "--with", "macos-intell"],
+        [sys.executable, "scripts/release.py", "release", "--commit", "HEAD", "--with", "macos-arm"],
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=False)
     assert ran.returncode != 0
-    assert "unknown lane macos-intell" in ran.stderr and "macos-intel" in ran.stderr
+    assert "unknown lane macos-arm" in ran.stderr and "macos-arm64" in ran.stderr
     both = subprocess.run(
         [sys.executable, "scripts/release.py", "release", "--commit", "HEAD", "--with", "ci", "--without", "ci"],
         cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=False)
     assert "--with and --without both name ci" in both.stderr
     helped = subprocess.run([sys.executable, "scripts/release.py", "release", "--help"], cwd=ROOT,
                             capture_output=True, text=True, encoding="utf-8", check=False)
-    assert "macos-intel (off)" in helped.stdout and "docker-tests" in helped.stdout
+    assert "termux (off)" in helped.stdout and "docker-tests" in helped.stdout

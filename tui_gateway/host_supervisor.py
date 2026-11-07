@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from nastech_constants import get_nastech_home
+from nastech_cli._startup_fast import project_root_str
 from tools.environments.local import nastech_subprocess_env
 
 logger = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ def append_log_record(path: str | Path, record: str) -> None:
 
 
 def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return Path(project_root_str())
 
 
 def _check_output(argv: list[str], **kwargs: Any) -> str:

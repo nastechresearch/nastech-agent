@@ -166,9 +166,45 @@ export function coreAppEnv(sandbox: CoreSandbox, extra: Record<string, string> =
   }
 }
 
+/** A loopback port the OS just handed out and released, for a sandboxed listener to bind. */
+export function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer()
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address()
+      server.close(() => resolve(typeof address === 'object' && address ? address.port : 0))
+    })
+  })
+}
+
+/** `nastech <args>` in the sandbox, as an operator runs it. */
+export function nastechCli(sandbox: CoreSandbox, args: string[]): { code: number | null; output: string } {
+  const result = spawnSync(process.env.NASTECH_E2E_PYTHON || 'python3', ['-m', 'nastech_cli.main', ...args], {
+    cwd: REPO_ROOT,
+    env: coreAppEnv(sandbox),
+    encoding: 'utf8',
+    timeout: 180_000
+  })
+
+  return { code: result.status, output: `${result.stdout ?? ''}${result.stderr ?? ''}` }
+}
+
+/** Starts the gateway if needed and returns a one-use launch link for its Webapp (`nastech -p <profile> webapp`
+ * when a profile is named). */
+export function webappLaunchLink(sandbox: CoreSandbox, profile?: string): string {
+  const profileArgs = profile ? ['-p', profile] : []
+  const { code, output } = nastechCli(sandbox, [...profileArgs, 'webapp', '--no-open', '--skip-build'])
+  const link = /^\s+(http:\/\/127\.0\.0\.1:\d+\/webapp\/launch#\S+)$/m.exec(output)?.[1]
+  expect(code, `nastech webapp --no-open\n${output.replace(/ticket=\S+/g, 'ticket=<redacted>')}`).toBe(0)
+  expect(link, 'nastech webapp printed a one-use launch link').toBeTruthy()
+
+  return link!
+}
+
 export async function launchCoreApp(env: Record<string, string>): Promise<{ app: ElectronApplication; page: Page }> {
   if (!fs.existsSync(path.join(DESKTOP_ROOT, 'dist', 'electron-main.mjs'))) {
-    throw new Error("Desktop dist not built: run 'npm run build' in apps/desktop first")
+    throw new Error("Desktop dist not built: run 'pnpm run build' in apps/desktop first")
   }
 
   const app = await _electron.launch({
