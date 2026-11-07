@@ -4,7 +4,7 @@
 try:
     import nastech_bootstrap
 except ModuleNotFoundError as exc:
-    if exc.name != "nastech_bootstrap":
+    if exc.name != "nastech_bootstrap" and not "nastech_bootstrap".startswith(f"{exc.name}."):
         raise
 
 import asyncio

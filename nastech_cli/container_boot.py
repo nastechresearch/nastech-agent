@@ -94,7 +94,7 @@ def reconcile_profile_gateways(
     so it is what ``nastech gateway start`` (no ``-p``) targets.
 
     Without it, bare ``nastech gateway start`` inside the container would land on ``s6-svc -u
-    /run/service/gateway-default`` → uncaught ``CalledProcessError`` → traceback to the user (PR #30136
+    /run/nastech-service/gateway-default`` → uncaught ``CalledProcessError`` → traceback to the user (PR #30136
     review).
     """
     actions: list[ReconcileAction] = []
@@ -361,8 +361,10 @@ def main() -> int:
         print("reconcile: skipping (dashboard container — does not need per-profile gateways)")
         return 0
 
+    from nastech_cli.service_manager import S6_DYNAMIC_SCANDIR
+
     nastech_home = Path(os.environ.get("NASTECH_HOME", "/opt/data"))
-    scandir = Path(os.environ.get("S6_PROFILE_GATEWAY_SCANDIR", "/run/service"))
+    scandir = Path(os.environ.get("S6_PROFILE_GATEWAY_SCANDIR", str(S6_DYNAMIC_SCANDIR)))
     actions = reconcile_profile_gateways(nastech_home=nastech_home, scandir=scandir)
     folded = [a.profile for a in actions if a.profile != "default" and a.folded_into_root]
     if folded:

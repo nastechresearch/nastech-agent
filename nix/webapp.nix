@@ -1,8 +1,9 @@
-# The Webapp: the Desktop renderer built for a browser. The npm hook has
-# already installed the locked workspace, so it compiles there, with no
-# private workspace and no Electron.
+# The Webapp: the Desktop renderer built for a browser. pnpmConfigHook has
+# already installed the locked workspace (without lifecycle scripts, so no
+# native module and no Electron binary), so it compiles there, with no
+# private workspace.
 { nastechNpmLib, ... }:
-nastechNpmLib.buildNpmPackage {
+nastechNpmLib.buildPnpmPackage {
   dirs = [
     "apps/desktop"
     "apps/shared"
@@ -12,10 +13,6 @@ nastechNpmLib.buildNpmPackage {
     "scripts/build/frontend-common.mjs"
   ];
   pname = "nastech-webapp";
-
-  # The browser bundle loads no native module (node-pty belongs to Desktop),
-  # so none is compiled.
-  npmRebuildFlags = [ "--ignore-scripts" ];
 
   doCheck = false;
 

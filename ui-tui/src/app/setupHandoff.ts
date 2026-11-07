@@ -1,6 +1,6 @@
 import type { RunExternalProcess } from '@nastech/ink'
+import type { SetupStatusResponse } from '@nastech/shared/gateway-types'
 
-import type { SetupStatusResponse } from '../gatewayTypes.js'
 import { t } from '../i18n/runtime.js'
 import type { LaunchResult } from '../lib/externalCli.js'
 

@@ -40,7 +40,7 @@ def _native_machine() -> str:
     try:
         from nastech_platform.host.facts import native_arch
     except ModuleNotFoundError as exc:
-        if exc.name != "nastech_platform":
+        if exc.name != "nastech_platform" and not "nastech_platform".startswith(f"{exc.name}."):
             raise
     else:
         return native_arch()

@@ -70,7 +70,8 @@ pulling to refresh the hook). `# noqa` does not waive a ratchet finding:
 
 ## Project Structure
 
-Counts shift constantly; the filesystem is canonical. Load-bearing entry points:
+Counts shift constantly; the filesystem is canonical. Load-bearing entry points (area folders:
+the Routing Table below):
 
 ```
 nastech-agent/
@@ -80,19 +81,8 @@ nastech-agent/
 ├── cli.py                # NastechCLI (REPL, slash dispatch) + nastech_cli/cli_*_mixin.py
 ├── nastech_state.py       # SessionDB facade; nastech_state_*.py siblings
 ├── nastech_constants.py   # get_nastech_home(), display_nastech_home() — profile-aware paths
-├── agent/                # turn loop phases, providers, memory, compression, prompt builder
-├── nastech_cli/           # CLI subcommands, setup, config, plugins loader, updater, web_routers/
-├── tools/                # Tool implementations (tools/registry.py) + environments/ backends
-├── gateway/              # run.py facade + run_*.py phases + session*.py + platforms/
-├── plugins/              # memory/, context_engine/, model-providers/, kanban/, image_gen/, ...
-├── skills/               # Built-in skills (by category)   optional-skills/: shipped, not active
-├── ui-tui/, tui_gateway/ # Ink terminal UI + its Python JSON-RPC backend (also serves Desktop)
-├── apps/desktop/         # Electron desktop app (+ apps/shared)   web/: dashboard SPA
-├── cron/                 # jobs.py + scheduler.py (+ scheduler_*.py)
-├── pm/, nastech_platform/ # dependency/environment manager; machine facts + executable lookup
 ├── scripts/              # check, run_tests.sh, code_health/, ci/
-├── website/              # Docusaurus docs (developer-guide/ holds the long-form area docs)
-└── tests/                # Pytest suite, mirrors the source tree
+└── website/              # Docusaurus docs (developer-guide/ holds the long-form area docs)
 ```
 
 **User state:** `~/.nastech/config.yaml` (settings), `.env` (secrets only), `logs/` (`nastech logs`);
@@ -138,6 +128,10 @@ Every former god file is a **facade** (public entry points + the names other pac
   roots, narrow hooks and colocated action modules, `interface` for props and shared shapes,
   table-driven dispatch over condition ladders; `src/app` routes, `src/store` atoms, `src/lib` pure
   helpers.
+- **Don't add core/plugin crossings:** core never imports a specific bundled plugin, and plugins
+  use only the published plugin API (`nastech_cli/data/plugin_api.json`, `ctx`). Existing crossings
+  are baselined; `scripts/boundary_lint.py` fails CI on new ones. Details: `plugins/AGENTS.md`
+  § Boundary lint.
 - **Commits and PRs:** rebase onto `main` before merging (a squash from a stale branch silently
   reverts newer fixes); 1–2 invariant tests per fix, proven red on the base.
 - **Tests:** always `scripts/run_tests.sh`, never bare `pytest`; behaviour contracts, never
@@ -154,7 +148,7 @@ Every former god file is a **facade** (public entry points + the names other pac
 | `gateway/` | `gateway/AGENTS.md` | adapters, message guards, streaming, notifications, token locks, § Profile scope |
 | `gateway/platforms/` new adapter | `gateway/platforms/ADDING_A_PLATFORM.md` | step-by-step adapter guide |
 | `tools/`, `toolsets.py`, `model_tools.py` | `tools/AGENTS.md` | adding tools, registry, toolsets, delegation, session-scoped surface tools |
-| `plugins/`, `nastech_cli/plugins*.py` | `plugins/AGENTS.md` | plugin kinds, native compat contract, in-tree policy |
+| `plugins/`, `nastech_cli/plugins*.py` | `plugins/AGENTS.md` | plugin kinds, native compat contract, in-tree policy, boundary lint |
 | `plugin-catalog/` | `plugin-catalog/README.md` | catalog admission rules (mirrored in the developer guide; keep identical) |
 | `tui_gateway/`, `ui-tui/` | `tui_gateway/AGENTS.md` | process model, JSON-RPC transport, slash flow |
 | `web/`, `nastech_cli/web_routers/` | `web/AGENTS.md` | dashboard embeds the real TUI |

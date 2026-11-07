@@ -1,13 +1,13 @@
 name: nastech-telegram-business
 repo: https://github.com/NastechResearch/nastech-labs-plugins
-sha: 0480b2e2947276b55b302d3288b30597d238ba51
+sha: 4987918a068fcf4b3efbb584db5dd05e5f57c669
 subdir: telegram-business
 description: "Observe-with-approval Telegram Business Mode (secretary bot): Nastech drafts replies to your customers' messages and DMs each draft to you with Send, Edit and Discard buttons; nothing reaches a customer until you tap Send. A Nastech Labs plugin: built by Nastech Research, not supported. Disclosure — each customer message is sent to your active Nastech model to draft the reply, and drafts and connection records are stored locally in <NASTECH_HOME>/telegram-business/state.db."
 maintainer: NastechResearch
 tier: community
 category: platform
 docs_url: https://github.com/NastechResearch/nastech-labs-plugins/tree/main/telegram-business
-image: https://raw.githubusercontent.com/NastechResearch/nastech-labs-plugins/0480b2e2947276b55b302d3288b30597d238ba51/assets/telegram-business.jpg
+image: https://raw.githubusercontent.com/NastechResearch/nastech-labs-plugins/4987918a068fcf4b3efbb584db5dd05e5f57c669/assets/telegram-business.jpg
 platforms: []
 capabilities:
   provides_tools: []

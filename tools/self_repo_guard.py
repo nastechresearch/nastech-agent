@@ -554,8 +554,9 @@ def detect_self_repo_git_mutation(
 
 
 def _block_message(operation: str, root: Path) -> str:
-    nastech_home = os.environ.get("NASTECH_HOME", "").strip()
-    scratch = (Path(nastech_home).expanduser() if nastech_home else Path.home() / ".nastech") / "scratch"
+    from nastech_constants import get_scratch_dir
+
+    scratch = get_scratch_dir()
     return (
         f"Blocked: `{operation}` would rewrite Nastech's live source checkout "
         f"({root}) and can mix module versions in this running process. "
