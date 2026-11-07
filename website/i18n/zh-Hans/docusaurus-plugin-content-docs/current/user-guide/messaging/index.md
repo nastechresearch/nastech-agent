@@ -32,7 +32,7 @@ description: "通过 Telegram、Discord、Slack、WhatsApp、Signal、SMS、Emai
 | Weixin | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |
 | BlueBubbles | — | ✅ | ✅ | — | ✅ | ✅ | — |
 | QQ | ✅ | ✅ | ✅ | — | — | ✅ | — |
-| Yuanbao | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |
+| Yuanbao（Labs 插件） | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |
 | Microsoft Teams | — | ✅ | — | ✅ | — | ✅ | — |
 | LINE | — | ✅ | ✅ | — | — | ✅ | — |
 | ntfy | — | — | — | — | — | — | — |
@@ -63,7 +63,7 @@ flowchart TB
     wx[Weixin]
     bb[BlueBubbles]
     qq[QQ]
-    yb[Yuanbao]
+    yb["Yuanbao (plugin)"]
     ms[Microsoft Teams]
     api["API Server<br/>(OpenAI-compatible)"]
     wh[Webhooks]
@@ -444,7 +444,7 @@ launchd plist 是静态的——如果你在配置网关后安装了新工具（
 | Weixin | `nastech-weixin` | 完整工具，包括终端 |
 | BlueBubbles | `nastech-bluebubbles` | 完整工具，包括终端 |
 | QQBot | `nastech-qqbot` | 完整工具，包括终端 |
-| Yuanbao | `nastech-yuanbao` | 完整工具，包括终端 |
+| Yuanbao（Labs 插件） | `nastech-yuanbao` | 完整工具，外加 `yuanbao` Nastech Labs 插件提供的 `yb_*` 群组/私聊/贴纸工具 |
 | Microsoft Teams | `nastech-teams` | 完整工具，包括终端 |
 | API Server | `nastech-api-server` | 完整工具（去除 `clarify`、`send_message`、`text_to_speech`——程序化访问没有交互用户） |
 | Webhooks | `nastech-webhook` | 完整工具，包括终端 |
@@ -562,7 +562,7 @@ display:
 - [Weixin 配置（微信）](weixin.md)
 - [BlueBubbles 配置（iMessage）](bluebubbles.md)
 - [QQBot 配置](qqbot.md)
-- [Yuanbao 配置](yuanbao.md)
+- [Yuanbao](yuanbao.md)（Nastech Labs 插件）
 - [Microsoft Teams 配置](teams.md)
 - [Teams 会议流水线](teams-meetings.md)
 - [Open WebUI + API Server](open-webui.md)

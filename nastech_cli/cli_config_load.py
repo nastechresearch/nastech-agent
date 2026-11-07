@@ -176,8 +176,6 @@ def _mirror_config_to_env(defaults, _file_has_terminal_config):
     # Session-search index knobs (nastech_state reads the env carriers).
     sessions_config = defaults.get("sessions", {})
     if isinstance(sessions_config, dict):
-        if "cjk_fts" in sessions_config:
-            os.environ["NASTECH_CJK_FTS"] = str(sessions_config["cjk_fts"])
         if "search_slow_ms" in sessions_config:
             os.environ["NASTECH_SEARCH_SLOW_MS"] = str(sessions_config["search_slow_ms"])
 
@@ -256,23 +254,20 @@ def _merge_file_config(defaults: dict[str, Any], file_config: dict[str, Any]) ->
 
 
 def load_cli_config() -> dict[str, Any]:
-    """~/.nastech/config.yaml (else ./cli-config.yaml) over built-in defaults; env vars win.
+    """~/.nastech/config.yaml over built-in defaults; env vars win.
 
     ``NASTECH_IGNORE_USER_CONFIG=1`` skips the user config entirely (``.env`` still loads).
     """
     from cli import _cli_config_defaults, _nastech_home, _merge_file_config, _mirror_config_to_env
     from nastech_cli.config_backend import config_exists, read_config_doc
     config_path = _nastech_home / 'config.yaml'
-    # A backend whose user layer always exists never takes the repo-file fallback.
-    if not config_exists(config_path) or os.environ.get("NASTECH_IGNORE_USER_CONFIG") == "1":
-        config_path = Path(__file__).parent / 'cli-config.yaml'
 
     defaults = _cli_config_defaults()
 
     # Only a file's terminal section may overwrite terminal env vars already set by .env.
     _file_has_terminal_config = False
 
-    if config_exists(config_path):
+    if os.environ.get("NASTECH_IGNORE_USER_CONFIG") != "1" and config_exists(config_path):
         try:
             from nastech_cli.config import _normalize_root_model_keys
 
@@ -281,7 +276,7 @@ def load_cli_config() -> dict[str, Any]:
             _file_has_terminal_config = "terminal" in file_config
             _merge_file_config(defaults, file_config)
         except Exception as e:
-            logger.warning("Failed to load cli-config.yaml: %s", e)
+            logger.warning("Failed to load %s: %s", config_path, e)
 
     # Expand ${ENV_VAR} references before bridging to env vars.
     from nastech_cli.config import _expand_env_vars

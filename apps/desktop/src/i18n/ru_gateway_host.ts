@@ -6,7 +6,14 @@ export const ruGatewayHost: GatewayHostTranslations = {
   unavailableDesc: 'IPC-мост приложения не предоставляет настройки шлюза.',
   webappHostTitle: 'Хост Nastech',
   webappHostDesc:
-    'Webapp всегда использует хост Nastech, который его обслуживает. Чтобы сменить шлюз, войти в Nastech Cloud или управлять сохранёнными подключениями, используйте приложение Nastech Desktop.',
+    'Webapp всегда работает на хосте Nastech, который её обслуживает. Сохранённые подключения ниже — список этого компьютера, общий с приложением Nastech Desktop; другие шлюзы доступны через этот хост.',
+  webappOauthPaste: {
+    title: 'Завершить вход',
+    description: 'Если вкладка входа остановилась на адресе, который не открывается (этот браузер не на компьютере шлюза), вставьте этот адрес сюда.',
+    placeholder: 'http://127.0.0.1:…/webapp/gateway-connections/oauth/callback?…',
+    finish: 'Завершить',
+    failed: 'Не удалось завершить вход'
+  },
   webAccess: {
     title: 'Веб-доступ',
     intro: 'Откройте Nastech этого компьютера с телефона или другого компьютера, войдя через аккаунт Nastech. Вошедший может запускать команды на этом компьютере.',
@@ -30,6 +37,13 @@ export const ruGatewayHost: GatewayHostTranslations = {
     restartFailedBecause: reason => `Не удалось перезапустить шлюз: ${reason}`,
     startTimedOut: 'Шлюз не открыл веб-приложение за 90 секунд.',
     stopTimedOut: 'Шлюз не перестал открывать веб-приложение за 90 секунд.',
+    startStages: {
+      preparing: 'Готовим веб-приложение. Сборка может занять несколько минут.',
+      building: 'Собираем веб-приложение. Это может занять несколько минут.',
+      registering: 'Настраиваем вход через Nastech для этого адреса.',
+      restarting: 'Перезапускаем шлюз, чтобы открыть веб-приложение.'
+    },
+    startElapsed: time => `Прошло: ${time}`,
     start: 'Запустить',
     stop: 'Остановить',
     restartGateway: 'Перезапустить шлюз',

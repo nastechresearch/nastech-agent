@@ -137,6 +137,24 @@ describe('update child proxy env from the system proxy (#123387)', () => {
     }
   })
 
+  it("keeps the npm mirror of the profile's $NASTECH_HOME/npmrc direct, as the update's pnpm reads it", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nastech-update-hosts-'))
+
+    try {
+      fs.mkdirSync(path.join(root, '.git'))
+      fs.writeFileSync(path.join(root, '.git', 'config'), '[remote "origin"]\n\turl = https://github.com/x/y.git\n')
+      const nastechHome = path.join(root, 'home')
+      fs.mkdirSync(nastechHome)
+      fs.writeFileSync(path.join(nastechHome, 'npmrc'), 'registry=http://npm.lan.example:4873/\n')
+
+      const env = await updateProxyEnv({}, undefined, root, nastechHome)
+
+      expect(env.NO_PROXY?.split(',')).toContain('npm.lan.example')
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   it('injects nothing over a user NO_PROXY of *, which curl and urllib read as bypass-all only alone (S4)', async () => {
     const github = pac({ 'github.com': 'PROXY 10.0.0.7:7890' })
 

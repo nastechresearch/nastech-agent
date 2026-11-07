@@ -363,25 +363,25 @@ class TestDisabledToolsetsPlatformBundle:
     must not remove core tools from other enabled toolsets."""
 
     def test_disabling_platform_bundle_preserves_core_tools(self):
-        """Disabling nastech-yuanbao should not strip core tools from nastech-telegram."""
+        """Disabling nastech-feishu should not strip core tools from nastech-telegram."""
         from model_tools import get_tool_definitions
 
         tools_telegram = get_tool_definitions(
             enabled_toolsets=["nastech-telegram"],
             quiet_mode=True,
         )
-        tools_telegram_no_yuanbao = get_tool_definitions(
+        tools_telegram_no_feishu = get_tool_definitions(
             enabled_toolsets=["nastech-telegram"],
-            disabled_toolsets=["nastech-yuanbao"],
+            disabled_toolsets=["nastech-feishu"],
             quiet_mode=True,
         )
         names_telegram = {t["function"]["name"] for t in tools_telegram}
-        names_no_yuanbao = {t["function"]["name"] for t in tools_telegram_no_yuanbao}
+        names_no_feishu = {t["function"]["name"] for t in tools_telegram_no_feishu}
 
         # Disabling a *different* platform bundle must not remove any tools
-        assert names_telegram == names_no_yuanbao, (
-            f"Tools lost after disabling nastech-yuanbao: "
-            f"{names_telegram - names_no_yuanbao}"
+        assert names_telegram == names_no_feishu, (
+            f"Tools lost after disabling nastech-feishu: "
+            f"{names_telegram - names_no_feishu}"
         )
 
     def test_disabling_platform_bundle_removes_own_tools(self):

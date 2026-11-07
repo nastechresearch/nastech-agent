@@ -4,12 +4,12 @@
     "create-or-update-pull-request"
   ],
   "evidence": {
-    "candidate_artifact_sha256": "983f8aa510d37c999e1b86e729bf688ba28e9197192941cb16d59d65fe4a37be",
-    "gate_receipt_sha256": "e495e0efea59995ec39db11bdf6e1a2ae5c50906cb661a292831e26846d307c6"
+    "candidate_artifact_sha256": "fbafe7022d5e8953d410aa3e0aaac00b213ea671399a2b1d8c36135e96f2e8fa",
+    "gate_receipt_sha256": "f74d7fea7ea0b67c2f29276b187660f1dc1399d2e02ec54ade603ceb37418383"
   },
-  "generated_at": "2026-11-03T19:24:07.076862+00:00",
+  "generated_at": "2026-11-07T22:30:15.808640+00:00",
   "integrity": {
-    "payload_sha256": "fe6434866aae43429d71aac4200f1395fa6b7603c5dc700b25dfb9c25adcad09"
+    "payload_sha256": "49527699bc2ec0992ae8994799adc386425e8a6eb42fc5e41079c756faac43c0"
   },
   "prohibited_actions": [
     "merge",
@@ -23,5 +23,5 @@
     "candidate_branch": "100WAYS",
     "repository": "nastechresearch/nastech-agent"
   },
-  "upstream_sha": "b7736eca98cc6919b7b7f1d52dc1c45946793648"
+  "upstream_sha": "63f6852249f6ce79a6e84f7d64fd4486facce5d1"
 }

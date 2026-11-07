@@ -1,6 +1,6 @@
-# Self-contained Nastech TUI, compiled by the same recipe as npm.
+# Self-contained Nastech TUI, compiled by the same recipe as pnpm.
 { nastechNpmLib, ... }:
-nastechNpmLib.buildNpmPackage {
+nastechNpmLib.buildPnpmPackage {
   dirs = [
     "ui-tui"
     "apps/shared"

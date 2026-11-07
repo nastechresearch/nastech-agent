@@ -23,7 +23,7 @@ from scripts.releases.semver import compare
 # seed, so it must name the newest upstream stable the tree carries -- otherwise
 # the canary stamps 0.22.7 code as 0.21.5+canary. Rewritten by the sync whenever
 # the tree moves onto a newer upstream stable.
-SEED = "0.22.7"
+SEED = "0.23.0"
 BUMPS = ("major", "minor", "patch")
 
 

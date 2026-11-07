@@ -8,7 +8,9 @@ import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 
-PROJECT_ROOT = Path(__file__).parent.parent.resolve()
+from nastech_cli._startup_fast import project_root_str
+
+PROJECT_ROOT = Path(project_root_str())
 
 from nastech_cli.auth import AuthError, resolve_provider
 from nastech_cli.colors import Colors, color
