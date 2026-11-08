@@ -171,7 +171,7 @@ test('batchSignAppTree is a no-op (skipped=true) without the Azure env, and sign
     env: {
       AZURE_SIGN_ENDPOINT: 'https://cus.codesigning.azure.net',
       AZURE_SIGN_ACCOUNT: 'codesign2',
-      AZURE_SIGN_PROFILE: 'hermesagent'
+      AZURE_SIGN_PROFILE: 'nastechagent'
     },
     exec: fakeExec,
     mkdtemp: () => root,
@@ -219,7 +219,7 @@ test('batchSignAppTree chunks large trees into ~100-file signtool invocations, s
     env: {
       AZURE_SIGN_ENDPOINT: 'https://cus.codesigning.azure.net',
       AZURE_SIGN_ACCOUNT: 'codesign2',
-      AZURE_SIGN_PROFILE: 'hermesagent'
+      AZURE_SIGN_PROFILE: 'nastechagent'
     },
     exec: (tool, args) => {
       invocations.push(args)
@@ -271,7 +271,7 @@ test('sign chunks run concurrently, capped at the configured concurrency', async
     env: {
       AZURE_SIGN_ENDPOINT: 'https://cus.codesigning.azure.net',
       AZURE_SIGN_ACCOUNT: 'codesign2',
-      AZURE_SIGN_PROFILE: 'hermesagent'
+      AZURE_SIGN_PROFILE: 'nastechagent'
     },
     exec: fakeExec,
     mkdtemp: () => root,
@@ -300,7 +300,7 @@ test.each([false, true])('timestamp retry is bounded; permanent failure=%s', asy
     env: {
       AZURE_SIGN_ENDPOINT: 'https://cus.codesigning.azure.net',
       AZURE_SIGN_ACCOUNT: 'codesign2',
-      AZURE_SIGN_PROFILE: 'hermesagent'
+      AZURE_SIGN_PROFILE: 'nastechagent'
     },
     exec: fakeExec,
     mkdtemp: () => root,
