@@ -14,7 +14,7 @@ engineStrict: true
 # lockfile scanners (osv-scanner) do not read past.
 pmOnFail: ignore
 
-# `pnpm run` never installs: installs belong to scripts/build/node-deps.mjs (and CI's explicit steps).
+# `pnpm run` never installs: installs belong to scripts/build/node-deps.mjs (and CI\u0027s explicit steps).
 verifyDepsBeforeRun: false
 
 # @electron/rebuild and the node-pty spawn-helper chmod modify installed packages in place; keep
@@ -29,16 +29,122 @@ strictDepBuilds: true
 minimumReleaseAge: 20160
 # Exemptions are exact `name@version` entries, one per line with the reason it cannot wait as an
 # inline comment (`- name@1.2.3  # why`). `nastech pm update --pnpm` drops an entry once the lockfile
-# no longer holds that version, so none needs a removal date. pnpm's own
+# no longer holds that version, so none needs a removal date. pnpm\u0027s own
 # minimumReleaseAgeExcludePrune stays off: it would run on every install and rewrite this tracked
-# file on users' machines.
+# file on users\u0027 machines.
 minimumReleaseAgeExclude:
+  # Exact equivalents of the prior reviewed npm release-age exceptions.
+  - \u0027@assistant-ui/core@0.2.23\u0027
+  - \u0027@assistant-ui/react-streamdown@0.3.7\u0027
+  - \u0027@assistant-ui/react@0.14.29\u0027
+  - \u0027@assistant-ui/store@0.2.22\u0027
+  - \u0027@assistant-ui/tap@0.9.8\u0027
+  - assistant-cloud@0.1.37
+  - assistant-stream@0.3.31
+  - \u0027@radix-ui/number@1.1.3\u0027
+  - \u0027@radix-ui/primitive@1.1.7\u0027
+  - \u0027@radix-ui/react-accessible-icon@1.1.16\u0027
+  - \u0027@radix-ui/react-accordion@1.2.21\u0027
+  - \u0027@radix-ui/react-alert-dialog@1.1.24\u0027
+  - \u0027@radix-ui/react-arrow@1.1.16\u0027
+  - \u0027@radix-ui/react-aspect-ratio@1.1.16\u0027
+  - \u0027@radix-ui/react-avatar@1.2.7\u0027
+  - \u0027@radix-ui/react-checkbox@1.3.12\u0027
+  - \u0027@radix-ui/react-collapsible@1.1.21\u0027
+  - \u0027@radix-ui/react-collection@1.1.16\u0027
+  - \u0027@radix-ui/react-compose-refs@1.1.5\u0027
+  - \u0027@radix-ui/react-context-menu@2.3.8\u0027
+  - \u0027@radix-ui/react-context@1.2.2\u0027
+  - \u0027@radix-ui/react-dialog@1.2.0\u0027
+  - \u0027@radix-ui/react-direction@1.1.5\u0027
+  - \u0027@radix-ui/react-dismissable-layer@1.1.20\u0027
+  - \u0027@radix-ui/react-dropdown-menu@2.1.25\u0027
+  - \u0027@radix-ui/react-focus-guards@1.1.6\u0027
+  - \u0027@radix-ui/react-focus-scope@1.2.0\u0027
+  - \u0027@radix-ui/react-form@0.2.0\u0027
+  - \u0027@radix-ui/react-hover-card@1.1.24\u0027
+  - \u0027@radix-ui/react-id@1.1.4\u0027
+  - \u0027@radix-ui/react-label@2.1.16\u0027
+  - \u0027@radix-ui/react-menu@2.1.25\u0027
+  - \u0027@radix-ui/react-menubar@1.1.25\u0027
+  - \u0027@radix-ui/react-navigation-menu@1.3.0\u0027
+  - \u0027@radix-ui/react-one-time-password-field@0.1.17\u0027
+  - \u0027@radix-ui/react-password-toggle-field@0.1.12\u0027
+  - \u0027@radix-ui/react-popover@1.2.0\u0027
+  - \u0027@radix-ui/react-popper@1.3.8\u0027
+  - \u0027@radix-ui/react-portal@1.1.18\u0027
+  - \u0027@radix-ui/react-presence@1.1.11\u0027
+  - \u0027@radix-ui/react-primitive@2.1.11\u0027
+  - \u0027@radix-ui/react-progress@1.1.17\u0027
+  - \u0027@radix-ui/react-radio-group@1.4.8\u0027
+  - \u0027@radix-ui/react-roving-focus@1.1.20\u0027
+  - \u0027@radix-ui/react-scroll-area@1.3.0\u0027
+  - \u0027@radix-ui/react-select@2.3.8\u0027
+  - \u0027@radix-ui/react-separator@1.1.16\u0027
+  - \u0027@radix-ui/react-slider@1.5.0\u0027
+  - \u0027@radix-ui/react-slot@1.4.0\u0027
+  - \u0027@radix-ui/react-switch@1.3.8\u0027
+  - \u0027@radix-ui/react-tabs@1.1.22\u0027
+  - \u0027@radix-ui/react-toast@1.2.24\u0027
+  - \u0027@radix-ui/react-toggle-group@1.1.20\u0027
+  - \u0027@radix-ui/react-toggle@1.1.19\u0027
+  - \u0027@radix-ui/react-toolbar@1.1.20\u0027
+  - \u0027@radix-ui/react-tooltip@1.3.0\u0027
+  - \u0027@radix-ui/react-use-callback-ref@1.1.4\u0027
+  - \u0027@radix-ui/react-use-controllable-state@1.2.6\u0027
+  - \u0027@radix-ui/react-use-effect-event@0.0.5\u0027
+  - \u0027@radix-ui/react-use-escape-keydown@1.1.5\u0027
+  - \u0027@radix-ui/react-use-is-hydrated@0.1.3\u0027
+  - \u0027@radix-ui/react-use-layout-effect@1.1.4\u0027
+  - \u0027@radix-ui/react-use-previous@1.1.4\u0027
+  - \u0027@radix-ui/react-use-rect@1.1.4\u0027
+  - \u0027@radix-ui/react-use-size@1.1.5\u0027
+  - \u0027@radix-ui/react-visually-hidden@1.2.12\u0027
+  - \u0027@radix-ui/rect@1.1.3\u0027
+  - radix-ui@1.7.0
+  - safe-content-frame@0.0.25
+  - react-router@8.4.0
+  - eslint@10.12.0
+  - \u0027@eslint/config-array@0.23.5\u0027
+  - \u0027@eslint/config-helpers@0.7.0\u0027
+  - \u0027@eslint/core@1.2.1\u0027
+  - \u0027@eslint/js@9.39.5\u0027
+  - \u0027@eslint/object-schema@3.0.5\u0027
+  - \u0027@eslint/plugin-kit@0.7.3\u0027
+  - tar@7.5.22
+  - concurrently@10.0.6
+  - fast-uri@3.1.9
+  - minimatch@10.2.6
+  - minimatch@3.1.5
+  - minimatch@5.1.9
+  - minimatch@9.0.9
+  - brace-expansion@5.0.12
+  - js-yaml@4.3.2
+  - nanoid@3.3.20
+  - nanoid@6.0.2
+  - dompurify@3.4.17
+  - lightningcss@1.32.0
+  - lightningcss@1.33.0
+  - postcss@8.5.29
+  - source-map-js@1.2.2
+  - http-cache-semantics@4.3.0
+  - ip-address@10.7.4
+  - sanitize-html@2.18.1
+  - vitest@4.1.12
+  - \u0027@vitest/expect@4.1.12\u0027
+  - \u0027@vitest/mocker@4.1.12\u0027
+  - \u0027@vitest/pretty-format@4.1.12\u0027
+  - \u0027@vitest/runner@4.1.12\u0027
+  - \u0027@vitest/snapshot@4.1.12\u0027
+  - \u0027@vitest/spy@4.1.12\u0027
+  - \u0027@vitest/utils@4.1.12\u0027
+  - electron@44.9.3
   - pele@1.13.0  # the desktop diagram swap was parity-checked on it (math labels need 1.8.0+)
 
 overrides:
-  '@electron/osx-sign>isbinaryfile': 5.0.7
+  \u0027@electron/osx-sign>isbinaryfile\u0027: 5.0.7
   lodash: 4.18.1
-  protobufjs: '^8.7.1'
+  protobufjs: \u0027^8.7.1\u0027
   brace-expansion: 5.0.12
   dompurify: 3.4.17
   katex: 0.19.0
@@ -54,7 +160,7 @@ overrides:
   source-map-js: 1.2.2
   yaml: 2.9.1
   vitest: 4.1.12
-  '@vitest/mocker': 4.1.12
+  \u0027@vitest/mocker\u0027: 4.1.12
 
 allowBuilds:
   unicode-animations: false
