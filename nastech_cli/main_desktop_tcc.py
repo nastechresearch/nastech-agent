@@ -55,7 +55,7 @@ def _macos_create_signing_identity(
                 [
                     openssl, "pkcs12", "-export", *extra_args,
                     "-inkey", str(key), "-in", str(crt),
-                    "-out", str(p12), "-passout", "pass:hermeslocal",
+                    "-out", str(p12), "-passout", "pass:nastechlocal",
                 ],
                 capture_output=True, check=True)
 
@@ -63,7 +63,7 @@ def _macos_create_signing_identity(
             return subprocess.run(
                 [
                     security, "import", str(p12), "-k", keychain,
-                    "-P", "hermeslocal",
+                    "-P", "nastechlocal",
                     "-T", codesign, "-T", "/usr/bin/codesign_allocate",
                 ],
                 capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
