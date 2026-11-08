@@ -44,7 +44,7 @@ Requires `OPENROUTER_API_KEY` in `~/.nastech/.env` (or env). The seeded DB is
 rebuilt fresh in a temp dir per invocation; nothing touches your real
 `state.db`.
 
-Rules of engagement (hermesbench discipline):
+Rules of engagement (Nastech evaluation discipline):
 
 - 3 reps minimum; n=1 cell differences are noise — pull the transcript
   (`calls` + `final` in the JSONL) before diagnosing any miss.
