@@ -118,7 +118,11 @@ def test_a_claim_without_a_lanes_revision_keeps_the_store_bundle_it_was_cut_with
 def test_a_pre_lanes_claim_reads_only_while_it_left_macos_intel_out():
     """Published pre-lanes claims carry includeMacosIntel:false; no build can honour true any more."""
     legacy = {"skipBundles": False, "skipTests": False}
-    assert lane_set.claim_lanes({**legacy, "includeMacosIntel": False}) == lane_set.DEFAULT
+    # Pre-lanes claims predate the fork's unsigned-default policy. Preserve
+    # their historical full desktop/test lane set (minus retired Intel) rather
+    # than reinterpreting them as a newly cut default claim.
+    assert lane_set.claim_lanes({**legacy, "includeMacosIntel": False}) == \
+        frozenset(set(lane_set.NAMES) - {"termux"})
     with pytest.raises(ValueError, match="invalid: it opts into macOS Intel.*no longer built"):
         lane_set.claim_lanes({**legacy, "includeMacosIntel": True})
 
