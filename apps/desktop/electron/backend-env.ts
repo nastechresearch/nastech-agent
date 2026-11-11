@@ -158,7 +158,9 @@ function profileBackendParentEnv({
   }
 
   const fold = platform === 'win32' ? (value: string) => value.toUpperCase() : (value: string) => value
-  const inheritedHome = currentEnv?.NASTECH_HOME ? resolveNastechHomePath(currentEnv.NASTECH_HOME, { pathModule }) : null
+  const inheritedHome = currentEnv?.NASTECH_HOME
+    ? resolveNastechHomePath(currentEnv.NASTECH_HOME, { pathModule })
+    : null
   const launchHome = inheritedHome && isProfileHome(inheritedHome, pathModule) ? inheritedHome : nastechHome
   const name = profile || readTextOrEmpty(fsModule, pathModule.join(nastechHome, 'active_profile')).trim()
   const targetHome = !name || name === 'default' ? nastechHome : pathModule.join(nastechHome, 'profiles', name)

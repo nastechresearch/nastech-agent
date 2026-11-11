@@ -1,3 +1,4 @@
+import { useStore } from '@nanostores/react'
 import type { ModelOptionProvider, ModelPricing, PlanUsage, PlanUsageGauge } from '@nastech/shared'
 import {
   gaugeTitle,
@@ -9,7 +10,6 @@ import {
   usageTag
 } from '@nastech/shared'
 import { fuzzyRank, modelSearchText } from '@nastech/shared'
-import { useStore } from '@nanostores/react'
 import { useQuery } from '@tanstack/react-query'
 import { type ReactElement, useMemo, useRef, useState } from 'react'
 

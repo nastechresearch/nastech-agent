@@ -1,8 +1,8 @@
 import { cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getLatestSessionMessages } from '@/nastech'
 import { textPart } from '@/lib/chat-messages'
+import { getLatestSessionMessages } from '@/nastech'
 import { $backgroundStatusBySession, reconcileBackgroundProcesses } from '@/store/composer-status'
 import { $gateway } from '@/store/gateway'
 import { clearNotifications } from '@/store/notifications'

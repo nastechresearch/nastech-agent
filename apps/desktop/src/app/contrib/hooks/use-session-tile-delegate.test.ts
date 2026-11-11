@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { reasoningEffortPending } from '@/app/chat/session-view'
 import type { ClientSessionState } from '@/app/types'
-import type * as NastechModule from '@/nastech'
 import { textPart } from '@/lib/chat-messages'
 import { createClientSessionState } from '@/lib/chat-runtime'
+import type * as NastechModule from '@/nastech'
 import { clearSessionDraft, stashSessionDraft, takeSessionDraft } from '@/store/composer'
 import { $notifications } from '@/store/notifications'
 import { $cronRunReadOnlyVerdicts, recordCronRunVerdict } from '@/store/read-only-transcript'
@@ -13,9 +13,7 @@ import { $activeSessionId, setSessionOwnerHint, setSessions } from '@/store/sess
 import { $sessionTiles, sessionTileDelegate } from '@/store/session-states'
 import type { SessionInfo } from '@/types/nastech'
 
-import {
-  clearSingleFlightSessionResumeState
-} from '../../session/hooks/use-prompt-actions/single-flight-resume'
+import { clearSingleFlightSessionResumeState } from '../../session/hooks/use-prompt-actions/single-flight-resume'
 
 import { useSessionTileDelegate } from './use-session-tile-delegate'
 

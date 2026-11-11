@@ -5,8 +5,8 @@ vi.mock('@/nastech', () => ({
   saveNastechConfig: vi.fn(async () => undefined)
 }))
 
-import { saveNastechConfig } from '@/nastech'
 import { isVoiceStopCommand } from '@/lib/voice-stop-word'
+import { saveNastechConfig } from '@/nastech'
 
 import {
   $bargeInEnabled,

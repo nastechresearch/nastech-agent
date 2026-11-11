@@ -6,8 +6,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 
 import { startSessionDrag } from '@/app/chat/session-drag'
 import type * as SessionDrag from '@/app/chat/session-drag'
-import type { SessionInfo } from '@/nastech'
 import type * as ChatRuntime from '@/lib/chat-runtime'
+import type { SessionInfo } from '@/nastech'
 import type * as GatewayStore from '@/store/gateway'
 import type * as ProjectsStore from '@/store/projects'
 import type * as SessionStore from '@/store/session'

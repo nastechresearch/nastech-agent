@@ -116,7 +116,10 @@ describe('registerSaveDialogIpc', () => {
 
     expect([...handlers.keys()].sort()).toEqual(['nastech:saveTextFileAs', 'nastech:selectSavePath'])
     expect(await handlers.get('nastech:selectSavePath')!(null, { title: 'Export' })).toBe(target)
-    expect(await handlers.get('nastech:saveTextFileAs')!(null, { content: '{}' })).toEqual({ saved: true, path: target })
+    expect(await handlers.get('nastech:saveTextFileAs')!(null, { content: '{}' })).toEqual({
+      saved: true,
+      path: target
+    })
     expect(fs.readFileSync(target, 'utf8')).toBe('{}')
   })
 })

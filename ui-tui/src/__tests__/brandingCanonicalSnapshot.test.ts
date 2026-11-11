@@ -101,12 +101,17 @@ describe('banner from a canonical session snapshot', () => {
     expect(frame).not.toMatch(/not exposed by this runtime/)
   })
 
-  it('renders main\'s banner, not a placeholder, before the inventory arrives', async () => {
+  it("renders main's banner, not a placeholder, before the inventory arrives", async () => {
     // A non-local route's snapshot info is `{ desktop_protocol }` only; main's banner still
     // draws its card (headings, version line slot, loading rows) rather than a one-line notice.
     const { info } = canonicalResult('session.resume', {
       ...snapshot,
-      info: { desktop_protocol: 'nastech-gateway-v1', lazy: true, model: 'anthropic/claude-opus-5.5', version: '0.18.0' }
+      info: {
+        desktop_protocol: 'nastech-gateway-v1',
+        lazy: true,
+        model: 'anthropic/claude-opus-5.5',
+        version: '0.18.0'
+      }
     })
 
     const frame = await render(info)

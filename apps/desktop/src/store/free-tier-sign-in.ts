@@ -2,6 +2,7 @@ import type { FreeTierClaimNudgeResult } from '@nastech/shared'
 import { atom } from 'nanostores'
 
 import { invalidateAllConnectors } from '@/app/capabilities/connectors/data/keys'
+import { LONG_POLL_MIN_GAP_MS, pause, restOfLongPollGap } from '@/lib/long-poll'
 import {
   cancelOAuthSession,
   getNastechHandoffStatus,
@@ -11,7 +12,6 @@ import {
   type ProfileScope,
   startOAuthLogin
 } from '@/nastech'
-import { LONG_POLL_MIN_GAP_MS, pause, restOfLongPollGap } from '@/lib/long-poll'
 import { gatewayActivationEpoch } from '@/store/gateway'
 import type { AppHandoffStatus, FreeTierStatus, OAuthPollResponse } from '@/types/nastech'
 

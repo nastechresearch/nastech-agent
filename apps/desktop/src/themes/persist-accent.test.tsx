@@ -61,7 +61,13 @@ describe('persistAccent', () => {
       name: 'my-campfire',
       label: 'My campfire',
       description: 'A custom skin',
-      colors: { ...nastechTheme.colors, background: '#fff4e8', foreground: '#2b1a0e', card: '#fffaf3', border: '#e8cfb5' },
+      colors: {
+        ...nastechTheme.colors,
+        background: '#fff4e8',
+        foreground: '#2b1a0e',
+        card: '#fffaf3',
+        border: '#e8cfb5'
+      },
       darkColors: { ...nastechTheme.darkColors!, background: '#1c120b', foreground: '#f5e6d6', card: '#24170e' },
       customCSS: '.campfire-only { letter-spacing: 0.02em; }'
     }

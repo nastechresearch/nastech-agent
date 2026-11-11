@@ -40,7 +40,10 @@ vi.mock('@/store/profile', () => ({
 }))
 
 it('reports single profile changes to main and never pushes its whole map', async () => {
-  localStorage.setItem('nastech.desktop.lastProfileByConnection', JSON.stringify({ homelab: 'work', 'work-vps': 'ops' }))
+  localStorage.setItem(
+    'nastech.desktop.lastProfileByConnection',
+    JSON.stringify({ homelab: 'work', 'work-vps': 'ops' })
+  )
 
   const profile = {
     importConnections: vi.fn(async () => undefined),
