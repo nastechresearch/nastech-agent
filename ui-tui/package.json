@@ -21,13 +21,13 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@nanostores/react": "1.1.0",
     "@nastech/ink": "file:./packages/nastech-ink",
     "@nastech/shared": "file:../apps/shared",
-    "@nanostores/react": "1.1.0",
     "ink-text-input": "6.0.0",
     "nanostores": "1.4.2",
     "react": "19.3.0",
-    "undici": "6.29.0",
+    "undici": "^6.29.0",
     "unicode-animations": "1.0.3"
   },
   "overrides": {
