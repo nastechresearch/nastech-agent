@@ -491,7 +491,8 @@ def _nastech_cli() -> str:
     # Do not select batch shims: cmd.exe reinterprets otherwise literal argv
     # (for example an ampersand in a query-file path), even with shell=False.
     name = "nastech.exe" if sys.platform == "win32" else "nastech"
-    published = Path(__file__).resolve().parents[1] / ".nastech" / "bin" / name
+    from nastech_cli._startup_fast import project_root_str
+    published = Path(project_root_str()) / ".nastech" / "bin" / name
     if published.is_file():
         return str(published)
     sibling = Path(sys.executable or "").parent / name

@@ -94,7 +94,7 @@ The `default` package adds ~700 MB to the closure. If you only need messaging pl
 git clone https://github.com/NastechResearch/nastech-agent.git
 cd nastech-agent
 nix develop
-nastech setup
+nastech-checkout setup
 ```
 
 </details>
@@ -938,14 +938,19 @@ The flake provides an editable Python venv with the `dev` dependency group, runn
 on the interpreter `pm/lock.json` pins. `NASTECH_PYTHON` and `VIRTUAL_ENV` point at it,
 and it needs no `PYTHONPATH`. It does not install
 Python dependencies into a repository-local `.venv`. The shell also provides
-Node.js and runtime tools. Its npm hook refreshes JS workspaces when their inputs change.
+Node.js and runtime tools. Its pnpm hook refreshes JS workspaces when their inputs change.
+
+The shell does not change which `nastech` runs. `nastech` stays your installed Nastech, so you
+can keep using it while you work on the checkout. `nastech-checkout` runs this checkout's code
+and takes the same arguments. Give it a separate `NASTECH_HOME` when a change touches stored
+state, because both commands read the same one by default.
 
 ```bash
 cd nastech-agent
 nix develop
 "$NASTECH_PYTHON" -c "import sys; print(sys.executable); print(sys.version)"
-nastech setup
-nastech chat
+nastech-checkout --version
+NASTECH_HOME="$PWD/.scratch/home" nastech-checkout chat
 ```
 
 ### direnv (Recommended)
@@ -955,8 +960,26 @@ The included `.envrc` activates the dev shell automatically:
 ```bash
 cd nastech-agent
 direnv allow    # one-time
-# Nix reuses its built Python environment; the npm hook checks JS inputs.
+# Nix reuses its built Python environment; the pnpm hook checks JS inputs.
 ```
+
+### Updating the pnpm Lockfile
+
+The flake builds every JavaScript surface from one fixed-output pnpm store whose
+hash is in `nix/pnpm-deps-hash`. A `pnpm-lock.yaml` change that adds, removes or
+re-resolves a package changes that hash, and every frontend build fails with a
+hash mismatch until it is updated. `nastech pm update --pnpm`, a plain
+`pnpm install` and the `nix develop` shell hook rewrite the lockfile but not the
+hash. From the checkout, run:
+
+```bash
+nix run .#update-pnpm-lockfile
+```
+
+It brings `pnpm-lock.yaml` up to date with the manifests, rebuilds `.#pnpm-deps`
+to take the new hash, writes `nix/pnpm-deps-hash`, and builds `.#tui`, `.#web`,
+`.#webapp` and `.#desktop`. Without Nix, copy the hash the `nix` CI workflow's
+`pnpm-deps-hash` job prints.
 
 ### Flake Checks
 

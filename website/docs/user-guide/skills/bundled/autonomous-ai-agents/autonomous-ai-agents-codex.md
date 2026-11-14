@@ -10,6 +10,8 @@ description: "Delegate coding to OpenAI Codex CLI (features, PRs)"
 
 Delegate coding to OpenAI Codex CLI (features, PRs).
 
+Want the full side-by-side? Read [Nastech Agent vs Codex](https://nastechresearch.github.io/nastech-agent/compare/codex).
+
 ## Skill metadata
 
 | | |

@@ -103,7 +103,7 @@ it. New commands land often; `/help` in-session is always authoritative.
 /image <path>            Attach a local image file (CLI)
 /update                  Update Nastech to latest
 /version (/v)            Show version
-/debug [nastech|local]      Upload debug report, get shareable links
+/debug [upload|nastech upload|local]  Privacy notice; `upload` uploads debug report
 ```
 
 ### Exit

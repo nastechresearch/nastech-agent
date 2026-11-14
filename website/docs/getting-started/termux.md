@@ -26,6 +26,7 @@ The steps below use `stable`. To follow prereleases, replace `termux-repo` with
 key, and each feed advertises only its own channel's packages.
 
 The package includes Python, Node.js, npm, uv, ripgrep, ffmpeg, and their runtime libraries.
+The first `nastech dashboard` downloads pnpm and installs the web UI's JavaScript dependencies.
 CI builds the native Python wheels and the TUI before it creates the package.
 The device does not compile core dependencies or assemble its base Python
 environment during installation. The package uses Python 3.14 with the bionic

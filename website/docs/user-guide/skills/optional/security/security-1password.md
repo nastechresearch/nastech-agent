@@ -16,7 +16,7 @@ Set up op CLI, sign in, and read or inject secrets.
 |---|---|
 | Source | Optional — install with `nastech skills install official/security/1password` |
 | Path | `optional-skills/security/1password` |
-| Version | `1.0.0` |
+| Version | `1.1.0` |
 | Author | arceus77-7, enhanced by Nastech Agent |
 | License | MIT |
 | Platforms | linux, macos, windows |
@@ -36,8 +36,12 @@ Use this skill when the user wants secrets managed through 1Password instead of 
 
 - 1Password account
 - 1Password CLI (`op`) installed
-- One of: desktop app integration, service account token (`OP_SERVICE_ACCOUNT_TOKEN`), or Connect server
+- One of: desktop app integration or a Connect server for `op` in the Nastech terminal
 - `tmux` available for stable authenticated sessions during Nastech terminal calls (desktop app flow only)
+
+Nastech never passes `OP_SERVICE_ACCOUNT_TOKEN` to the terminal or `execute_code`, even when it is in
+`.env` or `terminal.env_passthrough`: it unlocks every secret the service account can read. A service
+account is still the right way to feed provider keys to Nastech itself (`nastech secrets onepassword setup`).
 
 ## When to Use
 
@@ -49,10 +53,12 @@ Use this skill when the user wants secrets managed through 1Password instead of 
 
 ## Authentication Methods
 
-### Service Account (recommended for Nastech)
+### Service Account (Nastech's own secret resolution, or your own shell)
 
-Set `OP_SERVICE_ACCOUNT_TOKEN` in `${NASTECH_HOME:-~/.nastech}/.env` (the skill will prompt for this on first load).
-No desktop app needed. Supports `op read`, `op inject`, `op run`.
+A service-account token in `${NASTECH_HOME:-~/.nastech}/.env` lets Nastech resolve `op://` references for
+its own provider keys at startup (`nastech secrets onepassword setup`). It is stripped from the processes the
+agent spawns, so `op` run through the Nastech terminal does not see it. To use the token with `op`
+directly, run those commands in your own shell, outside Nastech:
 
 ```bash
 export OP_SERVICE_ACCOUNT_TOKEN="your-token-here"
@@ -100,7 +106,8 @@ op --version
 Nastech terminal commands are non-interactive by default and can lose auth context between calls.
 For reliable `op` use with desktop app integration, run sign-in and secret operations inside a dedicated tmux session.
 
-Note: This is NOT needed when using `OP_SERVICE_ACCOUNT_TOKEN` — the token persists across terminal calls automatically.
+Note: a service-account token is never available here (see Requirements), so headless `op` use from the
+Nastech terminal needs a Connect server instead.
 
 ```bash
 SOCKET_DIR="${TMPDIR:-${NASTECH_HOME:-$HOME/.nastech}/cache/scratch}/nastech-tmux-sockets"
@@ -158,12 +165,12 @@ op run -- sh -c '[ -n "$DB_PASSWORD" ] && echo "DB_PASSWORD is set" || echo "DB_
 - Never print raw secrets back to user unless they explicitly request the value.
 - Prefer `op run` / `op inject` instead of writing secrets into files.
 - If command fails with "account is not signed in", run `op signin` again in the same tmux session.
-- If desktop app integration is unavailable (headless/CI), use service account token flow.
+- If desktop app integration is unavailable (headless/CI), use a Connect server from the Nastech terminal; a service-account token only works in the user's own shell or for Nastech's own `op://` resolution.
 
 ## CI / Headless note
 
-For non-interactive use, authenticate with `OP_SERVICE_ACCOUNT_TOKEN` and avoid interactive `op signin`.
-Service accounts require CLI v2.18.0+.
+For non-interactive use outside Nastech, authenticate with `OP_SERVICE_ACCOUNT_TOKEN` and avoid interactive
+`op signin`. Service accounts require CLI v2.18.0+. Inside the Nastech terminal, use a Connect server.
 
 ## References
 

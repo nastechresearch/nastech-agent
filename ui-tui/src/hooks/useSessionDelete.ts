@@ -1,9 +1,9 @@
 import type { SessionListRow } from '@nastech/shared/gateway-events'
+import type { SessionDeleteResponse } from '@nastech/shared/gateway-types'
 import { useCallback, useRef, useState } from 'react'
 
 import { mutateCanonical } from '../app/slash/canonicalSessionControls.js'
 import type { GatewayClient } from '../gatewayClient.js'
-import type { SessionDeleteResponse } from '../gatewayTypes.js'
 import { messages } from '../i18n/runtime.js'
 import { asRpcResult, rpcErrorMessage } from '../lib/rpc.js'
 

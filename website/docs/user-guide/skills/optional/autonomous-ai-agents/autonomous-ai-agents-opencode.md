@@ -10,6 +10,8 @@ description: "Delegate coding to OpenCode CLI (features, PR review)"
 
 Delegate coding to OpenCode CLI (features, PR review).
 
+Want the full side-by-side? Read [Nastech Agent vs OpenCode](https://nastechresearch.github.io/nastech-agent/compare/opencode).
+
 ## Skill metadata
 
 | | |

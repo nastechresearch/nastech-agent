@@ -19,7 +19,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from nastech_cli.dashboard_auth.request_utils import _http_origin
 from nastech_cli.web_server_surface import policy, private_launch
 from nastech_cli.web_session_sockets import (
-    GATEWAY_SOCKET, HOST_TERMINAL_SOCKET, SPEAK_STREAM_SOCKET, TRANSCRIBE_STREAM_SOCKET)
+    GATEWAY_SOCKET, HOST_TERMINAL_SOCKET, RELAY_SOCKET, SPEAK_STREAM_SOCKET, TRANSCRIBE_STREAM_SOCKET)
 
 _log = logging.getLogger("nastech_cli.web_server")
 router = APIRouter()
@@ -221,6 +221,7 @@ SOCKET_TICKETS: dict[str, tuple[str, bool]] = {
     HOST_TERMINAL_SOCKET: ("host_terminal", False),
     SPEAK_STREAM_SOCKET: ("gateway_ticket", False),
     TRANSCRIBE_STREAM_SOCKET: ("gateway_ticket", False),
+    RELAY_SOCKET: ("gateway_connections", False),
 }
 
 

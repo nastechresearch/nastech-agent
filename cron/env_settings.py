@@ -12,7 +12,11 @@ from __future__ import annotations
 
 import os
 
-from agent.secret_scope import current_secret_scope, is_multiplex_active, load_env_file
+from agent.secret_scope import (
+    build_profile_secret_scope,
+    current_secret_scope,
+    is_multiplex_active,
+)
 from nastech_constants import get_nastech_home
 
 
@@ -21,6 +25,6 @@ def cron_env_setting(name: str, default: str = "") -> str:
         return os.getenv(name) or default
     scope = current_secret_scope()
     if scope is None:
-        scope = load_env_file(get_nastech_home() / ".env")
+        scope = build_profile_secret_scope(get_nastech_home())
     value = scope.get(name)
     return default if value is None else str(value)

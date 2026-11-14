@@ -130,10 +130,13 @@ export type {
   ToolsetConfig,
   ToolsetInfo,
   ToolsetModel,
-  ToolsetModelsResponse,
+  ToolsetModelsResponse
+} from '@/types/nastech'
+export type {
   WebhookCreatePayload,
   WebhookCreateResponse,
   WebhookEnableResponse,
   WebhookRoute,
+  WebhookSignature,
   WebhooksResponse
-} from '@/types/nastech'
+} from '@/types/webhooks'

@@ -14,6 +14,7 @@ from __future__ import annotations
 import fcntl
 import os
 import re
+import shutil
 import signal
 import sqlite3
 import struct
@@ -139,6 +140,16 @@ class PtyNastech:
             TMPDIR=str(root / "tmp"), TERM="xterm-256color", COLORTERM="truecolor",
             PYTHONUNBUFFERED="1", NASTECH_STATE_DB_GUARD_BYPASS="1",
         )
+        if "--tui" in argv_tail:
+            # The prebuilt-bundle launch, as tui_pty does. A checkout launch first asks whether
+            # ui-tui/dist is current, which only PM's node may answer; the sandbox home has no PM
+            # store, so it rebuilds from source and lazily downloads python/node/pnpm before the UI
+            # can take the terminal (on CI that download stalled past wait_ready's 120s).
+            from tests.e2e.core.tui_pty._helpers import private_tui_dir
+            env["NASTECH_TUI_DIR"] = str(private_tui_dir(root))
+            node = shutil.which("node")
+            if node:  # the runner's node, so the launcher never lazily installs one into the sandbox
+                env["NASTECH_NODE"] = node
         master, slave = os.openpty()
         self._set_winsize(master, rows, cols)
         self.master = master

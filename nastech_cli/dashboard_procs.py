@@ -790,8 +790,8 @@ def _detect_concurrent_nastech_instances(
     PM stages a fresh generation instead of replacing a mapped nastech.exe.
     Returning an empty list would let old callers continue into that mutation.
     """
-    from nastech_cli._old_updater import stop_for_relaunch
-    stop_for_relaunch()
+    from nastech_cli._old_updater import stop_historical_updater
+    stop_historical_updater("nastech_cli.dashboard_procs._detect_concurrent_nastech_instances")
 
 
 def _is_desktop_local_serve_cmdline(command: str) -> bool:

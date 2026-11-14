@@ -14,7 +14,7 @@ try:
     import nastech_bootstrap
 except ModuleNotFoundError as exc:
     # Partial ``nastech update`` (git-reset landed, ``uv pip install -e .`` did not).
-    if exc.name != "nastech_bootstrap":
+    if exc.name != "nastech_bootstrap" and not "nastech_bootstrap".startswith(f"{exc.name}."):
         raise  # the bootstrap exists but cannot load: skipping it would skip PM activation
 else:
     # Stop a ``utils/``/``proxy/``/``ui/`` package in the launch cwd from shadowing Nastech modules.
@@ -32,8 +32,8 @@ import asyncio
 import logging
 import os
 import sys
-from pathlib import Path
 from nastech_constants import get_nastech_home
+from nastech_cli._startup_fast import project_root_str
 
 
 # Liveness-probe methods outside the ACP schema. The router correctly answers JSON-RPC -32601
@@ -162,6 +162,11 @@ def _warm_memory_provider_import(logger: logging.Logger) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     """Entry point: load env, configure logging, run the ACP agent."""
+    if argv is None and "nastech_cli.main" not in sys.modules:
+        sys.argv = [sys.argv[0] if sys.argv else "nastech-acp", "acp", *sys.argv[1:]]
+        from nastech_cli.main import main as nastech_main
+
+        return nastech_main()
     args = _parse_args(argv)
     for flag, action in (("version", _print_version), ("check", _run_check), ("setup", _run_setup)):
         if getattr(args, flag):
@@ -178,7 +183,7 @@ def main(argv: list[str] | None = None) -> None:
     logger.info("Starting nastech-agent ACP adapter")
 
     # Ensure the project root is on sys.path so ``from run_agent import AIAgent`` works
-    project_root = str(Path(__file__).resolve().parent.parent)
+    project_root = project_root_str()
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
 

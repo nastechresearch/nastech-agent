@@ -7,7 +7,7 @@ sidebar_label: Codex App-Server Runtime
 
 Nastech can optionally hand `openai/*`, `openai-codex/*` and [named custom provider](#named-custom-providers) turns to the [Codex CLI app-server](https://github.com/openai/codex) instead of running its own tool loop. When enabled, terminal commands, file edits, sandboxing, and MCP tool calls all execute inside Codex's runtime — Nastech becomes the shell around it (sessions DB, slash commands, gateway, memory and skill review).
 
-This is **opt-in only**. Default Nastech behavior is unchanged unless you flip the flag. Nastech never auto-routes you onto this runtime.
+This is **opt-in only**. Default Nastech behavior is unchanged unless you flip the flag. Nastech never auto-routes you onto this runtime. Weighing the two? [Nastech Agent vs Codex](https://nastechresearch.github.io/nastech-agent/compare/codex) compares model choice, platforms and pricing with sources.
 
 :::tip
 Not using OpenAI Codex? `nastech setup --portal` configures a non-Codex backend with Claude/Gemini/etc. in one step. See [Nastech Portal](../../integrations/nastech-portal.md).
