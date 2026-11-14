@@ -1,6 +1,6 @@
 # Dashboard compilation consumes prepared icons; no npm lifecycle preparation.
 { nastechNpmLib, generatedIcons, ... }:
-nastechNpmLib.buildNpmPackage {
+nastechNpmLib.buildPnpmPackage {
   dirs = [
     "web"
     "apps/shared"

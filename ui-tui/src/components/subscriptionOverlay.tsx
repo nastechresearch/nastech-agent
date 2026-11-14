@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 
 import { Box, Text, useInput } from '@nastech/ink'
+import type { SubscriptionStateResponse, SubscriptionTierOption, SubscriptionUpgradeResponse } from '@nastech/shared/gateway-types'
 import { useEffect, useRef, useState } from 'react'
 
 import type {
@@ -9,7 +10,6 @@ import type {
   SubscriptionResult,
   SubscriptionStepUpRetry
 } from '../app/interfaces.js'
-import type { SubscriptionStateResponse, SubscriptionTierOption, SubscriptionUpgradeResponse } from '../gatewayTypes.js'
 import { messages } from '../i18n/runtime.js'
 import { useT } from '../i18n/useT.js'
 import type { Theme } from '../theme.js'

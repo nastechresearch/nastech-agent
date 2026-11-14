@@ -1,0 +1,23 @@
+name: nastech-arcade-tui
+title: "Nastech Arcade"
+repo: https://github.com/Takumixbt/Hermes-Arcade
+sha: beb9806d903bf87a642355530e014c40a43f4e0a
+description: "Three terminal games inside the terminal Nastech already runs in: chess against the model Nastech is using, a side-view kart racer, and Chrome's dino wearing the Nastech cap. Disclosure — `/race` runs Python written by the model on your machine (in a child process with a time cap and no API keys in its environment, not a sandbox); chess and `/race` make extra model calls on your configured provider; when the game opens in its own window it reaches your model through a loopback-only local server protected by a random token."
+maintainer: Takumixbt
+tier: community
+category: general
+requires_nastech: ">=0.23.0"
+version: "3.0.4"
+screenshots:
+  - https://raw.githubusercontent.com/Takumixbt/Hermes-Arcade/beb9806d903bf87a642355530e014c40a43f4e0a/docs/arcade.gif
+capabilities:
+  provides_tools: []
+  provides_hooks:
+    - pre_llm_call
+    - pre_tool_call
+    - subagent_start
+    - post_llm_call
+    - on_session_end
+    - on_session_reset
+  provides_middleware: []
+  requires_env: []

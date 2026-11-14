@@ -83,7 +83,8 @@ def _locales_dir() -> Path:
             "NASTECH_BUNDLED_LOCALES points to a non-directory path (%s); "
             "falling back to bundled/source locale resolution", override,
         )
-    return Path(__file__).resolve().parent.parent / "locales"
+    from nastech_cli._startup_fast import project_root_str
+    return Path(project_root_str()) / "locales"
 
 
 def _current_home() -> str:

@@ -23,7 +23,8 @@ def main() -> None:
     root = Path(os.environ["NASTECH_HOME"]) / "nastech-agent"
     root.mkdir(parents=True)
     for name in (
-        "nastech_cli", "nastech_platform", "pm", "agent", "tools", "gateway", "tui_gateway", "cron", "plugins",
+        "nastech_agent", "nastech_cli", "nastech_platform", "pm", "agent", "tools", "gateway", "tui_gateway", "cron",
+        "plugins",
     ):
         shutil.copytree(repository / name, root / name,
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))

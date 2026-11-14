@@ -12,7 +12,9 @@ from pathlib import Path
 
 import pytest
 
-NASTECH_CLI = Path(__file__).resolve().parents[2] / "nastech_cli"
+from nastech_agent.compat.paths import current_path
+
+NASTECH_CLI = Path(__file__).resolve().parents[2] / current_path("nastech_cli")
 
 
 def _iter_call_text_nodes(tree: ast.AST) -> list[ast.Call]:

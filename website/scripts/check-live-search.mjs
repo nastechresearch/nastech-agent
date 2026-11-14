@@ -156,16 +156,21 @@ async function checkBrowser() {
       if (r.url().includes('algolia')) algoliaErrors.push(`${r.failure()?.errorText} ${r.url().split('?')[0]}`);
     });
     await page.goto(`${DOCS_URL}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-    // The server render carries this button, but on a cold Pages CDN
-    // DocSearch mounts its handler seconds later, and a click before
-    // that is dropped: .DocSearch-Input is then never created and the
-    // fill below times out.  The <kbd> hints inside
-    // .DocSearch-Button-Keys exist only in the mounted render, so
-    // waiting for one is the readiness a visitor already has.  A site
-    // that never hydrates still fails here, red.
-    await page.locator('.DocSearch-Button-Keys kbd').first().waitFor({ timeout: REQUEST_TIMEOUT_MS });
-    await page.locator('.DocSearch-Button').first().click({ timeout: 20_000 });
-    await page.locator('.DocSearch-Input').fill(QUERIES[0], { timeout: 10_000 });
+    // The Search button is in the server-rendered HTML, so it is clickable before
+    // the site's JS has hydrated it; a click that early does nothing and the
+    // modal never opens (slow CDN edge right after a deploy). Click until the
+    // input appears, like a visitor clicking again.
+    const input = page.locator('.DocSearch-Input');
+    const deadline = Date.now() + 30_000;
+    while (!(await input.isVisible())) {
+      if (Date.now() > deadline) {
+        fail('search button never opened the search modal within 30s');
+        return;
+      }
+      await page.locator('.DocSearch-Button').first().click({ timeout: 20_000 });
+      await input.waitFor({ state: 'visible', timeout: 2_000 }).catch(() => {});
+    }
+    await input.fill(QUERIES[0], { timeout: 10_000 });
     try {
       await page.locator('.DocSearch-Hit').first().waitFor({ timeout: 15_000 });
     } catch {

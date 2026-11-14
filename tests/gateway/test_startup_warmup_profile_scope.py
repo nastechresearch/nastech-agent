@@ -38,7 +38,7 @@ def multiplex_home(tmp_path, monkeypatch):
 def _probe(seen: dict):
     def probe() -> int:
         from nastech_cli.auth_nastech import _nastech_portal_env_override
-        seen["scope_installed"] = secret_scope._SECRET_SCOPE.get() is not None
+        seen["scope_installed"] = secret_scope.current_secret_scope() is not None
         seen["portal_override"] = _nastech_portal_env_override()
         return 1
     return probe
@@ -59,7 +59,7 @@ def _run_warmup(monkeypatch, *, multiplex: bool) -> dict:
         await _Runner(multiplex=multiplex)._warm_turn_prerequisites()
         # Same task as the warm-up (asyncio.run copies the context, so the caller's view proves nothing).
         from nastech_constants import get_nastech_home_override
-        seen["scope_after"] = secret_scope._SECRET_SCOPE.get()
+        seen["scope_after"] = secret_scope.current_secret_scope()
         seen["home_override_after"] = get_nastech_home_override()
 
     asyncio.run(drive())

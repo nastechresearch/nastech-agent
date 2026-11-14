@@ -359,4 +359,63 @@ def test_the_scope_is_entered_for_the_precondition_and_the_persist_but_never_aro
 
     assert states[-1].kind == "completed"
     kinds = [kind for kind, _ in events]
-    assert kinds == ["enter", "exit", "yield", "yield", "poll", "enter", "exit", "yield"]
+    assert kinds == [
+        "enter", "exit", "yield", "yield", "poll", "enter", "exit", "enter", "exit", "yield"]
+
+
+@pytest.mark.parametrize("portal_url", [
+    "https://attacker.example.com/v1",
+    "http://inference-api.nastechresearch.github.io/v1",
+])
+def test_a_refused_portal_inference_url_is_not_stored(portal, free_account, monkeypatch, portal_url):
+    # The URL receives the account bearer: off-allowlist / non-https falls back to the registry default.
+    monkeypatch.delenv("NASTECH_INFERENCE_BASE_URL", raising=False)
+    from nastech_cli.auth import PROVIDER_REGISTRY
+    from nastech_cli.config import load_config
+    _seed_free_tier()
+    _write_model_config({"provider": "nastech", "default": anon_auth.GUEST_MODEL, "base_url": WELCOME})
+    portal.token_inference_url = portal_url
+
+    assert _drain()[-1].kind == "completed"
+
+    default = PROVIDER_REGISTRY["nastech"].inference_base_url.rstrip("/")
+    assert _load_auth_store()["providers"]["nastech"]["inference_base_url"] == default
+    assert portal_url not in _auth_bytes().decode()
+    assert load_config()["model"]["base_url"] == default
+
+
+def test_an_allowlisted_portal_inference_url_is_stored(portal, free_account, monkeypatch):
+    monkeypatch.delenv("NASTECH_INFERENCE_BASE_URL", raising=False)
+    _seed_free_tier()
+    portal.token_inference_url = "https://inference-api.nastechresearch.github.io:8443/v2"
+
+    assert _drain()[-1].kind == "completed"
+
+    assert _load_auth_store()["providers"]["nastech"]["inference_base_url"] == (
+        "https://inference-api.nastechresearch.github.io:8443/v2")
+
+
+def test_the_inference_url_override_is_read_inside_the_profile_scope(portal, free_account, monkeypatch):
+    # The NASTECH_INFERENCE_BASE_URL exception is a profile secret: a multiplexed host (desktop serve)
+    # resolves it only inside the sign-in's scope, so the allowlist check has to run there too.
+    from agent.secret_scope import (
+        reset_multiplex_context, reset_secret_scope, set_multiplex_context, set_secret_scope)
+    staging = "https://inference-api.staging.example/v1"
+    monkeypatch.delenv("NASTECH_INFERENCE_BASE_URL", raising=False)
+    _seed_free_tier()
+    portal.token_inference_url = staging
+
+    @contextlib.contextmanager
+    def _scope():
+        token = set_secret_scope({"NASTECH_INFERENCE_BASE_URL": staging})
+        try:
+            yield None
+        finally:
+            reset_secret_scope(token)
+
+    multiplexed = set_multiplex_context(True)
+    try:
+        assert _drain(scope=_scope)[-1].kind == "completed"
+    finally:
+        reset_multiplex_context(multiplexed)
+    assert _load_auth_store()["providers"]["nastech"]["inference_base_url"] == staging

@@ -1,8 +1,8 @@
+import type { SubagentListResponse } from '@nastech/shared/gateway-types'
 import { useStore } from '@nanostores/react'
 import { atom } from 'nanostores'
 import { useMemo } from 'react'
 
-import type { SubagentListResponse } from '../gatewayTypes.js'
 import type { SubagentProgress } from '../types.js'
 
 import { useTurnSelector } from './turnStore.js'

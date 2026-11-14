@@ -33,9 +33,10 @@ from nastech_constants import OPENROUTER_BASE_URL, get_nastech_home
 from agent.compression_marker import elide_middle
 from agent.retry_utils import jittered_backoff
 from nastech_cli.env_loader import load_nastech_dotenv
+from nastech_cli._startup_fast import project_root_str
 
 # Load .env from NASTECH_HOME first, then project root as a dev fallback.
-load_nastech_dotenv(nastech_home=get_nastech_home(), project_env=Path(__file__).parent / ".env")
+load_nastech_dotenv(nastech_home=get_nastech_home(), project_env=Path(project_root_str()) / ".env")
 
 
 def _response_finish_reason(response: Any) -> str:
@@ -58,7 +59,6 @@ def _effective_temperature_for_model(model: str, requested_temperature: Optional
 
     Returns ``None`` when the model manages temperature server-side (Kimi);
     callers must omit the ``temperature`` kwarg entirely in that case.
-    Shared with ``mini_swe_runner`` (which passes ``requested_temperature=None``).
     """
     try:
         from agent.auxiliary_client import _fixed_temperature_for_model, OMIT_TEMPERATURE

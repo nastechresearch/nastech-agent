@@ -9,12 +9,14 @@ import type {
   RelayLinksResponse,
   TelegramOnboardingApplyResponse,
   TelegramOnboardingStartResponse,
-  TelegramOnboardingStatusResponse,
+  TelegramOnboardingStatusResponse
+} from '@/types/nastech'
+import type {
   WebhookCreatePayload,
   WebhookCreateResponse,
   WebhookEnableResponse,
   WebhooksResponse
-} from '@/types/nastech'
+} from '@/types/webhooks'
 
 import { nastechApi, profileScoped } from './client'
 

@@ -12,9 +12,10 @@ vi.mock('@nastech/ink', async importOriginal => {
   return { ...mod, useInput: () => {} }
 })
 
+import type { BillingStateResponse } from '@nastech/shared/gateway-types'
+
 import type { BillingOverlayState } from '../app/interfaces.js'
 import { BillingOverlay } from '../components/billingOverlay.js'
-import type { BillingStateResponse } from '../gatewayTypes.js'
 import { messages } from '../i18n/runtime.js'
 import { DEFAULT_THEME } from '../theme.js'
 

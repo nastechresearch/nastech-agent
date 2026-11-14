@@ -120,7 +120,9 @@ and it works on headless servers with no desktop browser at all.
 
 1. `browser.executable_path`, when set.
 2. The Chromium (Chrome for Testing) installed by Nastech's package manager — the
-   installers and `nastech update` install it by default.
+   installers and `nastech update` install it by default. The macOS desktop app
+   does not ship it: the first browser use downloads it (about 195 MB) into
+   `~/.nastech/tools`.
 3. `/etc/nastech/chromium-executable-path` in the official Docker image.
 4. A system `chromium` / `chromium-browser` on `PATH` (Android/Termux, and
    platforms the package manager has no Chromium build for).

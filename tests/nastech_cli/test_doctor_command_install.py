@@ -46,6 +46,8 @@ def _pm_source(project, home):
     root = Path(__file__).resolve().parents[2]
     for relative in (
         "nastech", "nastech_bootstrap.py", "nastech_constants.py", "nastech_cli/__init__.py",
+        "nastech_agent/__init__.py", "nastech_agent/compat/__init__.py", "nastech_agent/compat/finder.py",
+        "nastech_agent/compat/moves.py",
         "pm/environments.py", "pm/filesystem.py", "nastech_cli/runtime_state.py",
         "nastech_cli/_early_recovery.py", "nastech_cli/_parser.py",
         "nastech_cli/venv_sync.py", "nastech_cli/steward.py", "nastech_cli/stderr_timestamp.py",
