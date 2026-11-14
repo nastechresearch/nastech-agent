@@ -138,12 +138,16 @@ fi
 # and tempfile needs TEMP/TMP. Dropping them breaks collection on native
 # Windows (issues #67385, #70813). PATHEXT is also required: without .EXE,
 # PowerShell opens a native child as a document without waiting for its exit.
+# PSModuleAnalysisCachePath: the hosted Windows images point PowerShell at a
+# shared module analysis cache, which CI warms before the tests (tests-os.yml).
+# Without it a test's powershell.exe child falls back to a cold per-user cache
+# and re-analyses every installed module (~22s per launch on arm64 runners).
 # These are location variables, not
 # credentials, so forwarding them keeps the isolation intent intact. Each is
 # only forwarded when actually set, so POSIX runs are byte-for-byte unchanged.
 WIN_ENV=()
 for _win_var in USERPROFILE HOMEDRIVE HOMEPATH LOCALAPPDATA APPDATA SYSTEMROOT TEMP TMP \
-    ComSpec PATHEXT PROGRAMFILES ProgramFiles PROGRAMDATA ProgramData; do
+    ComSpec PATHEXT PROGRAMFILES ProgramFiles PROGRAMDATA ProgramData PSModuleAnalysisCachePath; do
   if [ -n "${!_win_var:-}" ]; then
     WIN_ENV+=("$_win_var=${!_win_var}")
   fi
@@ -192,6 +196,12 @@ _pf86="$(env | sed -n 's/^ProgramFiles(x86)=//p' | head -n1)"
 #     their user profiles and the transcripts CI uploads.
 #   * NASTECH_E2E_STRICT_ACCEPTANCE makes tests/e2e/core/_pending_fixes.py's
 #     known gaps hard failures in an acceptance run (workflow dispatch input).
+#   * NASTECH_E2E_UPGRADE_BASE (older name NASTECH_E2E_N1_REF) picks the release
+#     tests/e2e/core/upgrade starts from: a tag, a commit, or an updater
+#     generation (by-path, handoff, pre-handoff); unset, the newest release.
+#     NASTECH_E2E_INSTALL_REF installs a patched commit in its place (proving a
+#     leg red), NASTECH_E2E_GIT_OBJECTS names an extra object store for its
+#     smart-HTTP origin, NASTECH_E2E_KEEP_ROOT keeps its sandbox roots.
 #   * NASTECH_TEST_SSH_HOST / _USER / _PORT / _KEY and NASTECH_TEST_DOCKER_IMAGE
 #     arm the real-backend tests (tests/tools/test_ssh_environment.py,
 #     tests/tools/test_docker_backend_real.py); remote-backends.yml points them at
@@ -208,10 +218,12 @@ _pf86="$(env | sed -n 's/^ProgramFiles(x86)=//p' | head -n1)"
 # credential can leak" property stays auditable at a glance.
 TEST_ENV=()
 for _test_var in NASTECH_TEST_IMAGE NASTECH_TEST_WORKERS NASTECH_TEST_PATHS \
-  NASTECH_TEST_FILE_TIMEOUT NASTECH_TEST_FILE_RETRIES NASTECH_TEST_SLICE \
+  NASTECH_TEST_FILE_TIMEOUT NASTECH_TEST_FILE_RETRIES NASTECH_TEST_SLICE NASTECH_TEST_FORKSERVER \
   SSL_CERT_FILE SSL_CERT_DIR NASTECH_GATEWAY_LOCK_DIR NASTECH_E2E_REQUIRE_TUI CI GITHUB_ACTIONS \
   NASTECH_E2E_WINDOWS_INSTALL NASTECH_E2E_MACHINE_ROOT NASTECH_E2E_PROFILES_ROOT NASTECH_E2E_ARTIFACTS \
-  NASTECH_E2E_STRICT_ACCEPTANCE NASTECH_TEST_SSH_HOST NASTECH_TEST_SSH_USER NASTECH_TEST_SSH_PORT \
+  NASTECH_E2E_STRICT_ACCEPTANCE NASTECH_E2E_UPGRADE_BASE NASTECH_E2E_N1_REF \
+  NASTECH_E2E_INSTALL_REF NASTECH_E2E_GIT_OBJECTS NASTECH_E2E_KEEP_ROOT \
+  NASTECH_TEST_SSH_HOST NASTECH_TEST_SSH_USER NASTECH_TEST_SSH_PORT \
   NASTECH_TEST_SSH_KEY NASTECH_TEST_DOCKER_IMAGE; do
   if [ -n "${!_test_var:-}" ]; then
     TEST_ENV+=("$_test_var=${!_test_var}")

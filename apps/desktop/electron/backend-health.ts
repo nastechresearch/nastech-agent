@@ -1,3 +1,6 @@
+// Relative, not `@nastech/shared`: esbuild bundles electron/ without tsconfig paths.
+import { isNastechCloudUrl } from '../../shared/src/nastech-cloud'
+
 // A cold backend boot (plugin discovery + route mounting at web_server import
 // time) can take 45-60s on slower hardware. A 45s deadline makes first-boot
 // readiness a coin flip: every lost race tears down a healthy-but-slow backend
@@ -165,18 +168,12 @@ export function makeNastechCloudBackendDownError(baseUrl: string, error: unknown
 
 /**
  * True when the backend URL points at a Nastech-managed Nastech Cloud instance
- * (e.g. ares-3009.agents.nastechresearch.github.io). These are Fly.io-hosted machines
- * the user cannot restart themselves — a 503 from one means the server is down
- * and the recovery path is Portal/Discord/wait.
+ * (e.g. ares-3009.agents.nastechresearch.github.io, or its staging twin). These are
+ * hosted machines the user cannot restart themselves — a 503 from one means
+ * the server is down and the recovery path is Portal/Discord/wait.
  */
 export function isNastechCloudAgentUrl(baseUrl: string): boolean {
-  try {
-    const host = new URL(baseUrl).hostname
-
-    return host.endsWith('.agents.nastechresearch.github.io')
-  } catch {
-    return false
-  }
+  return isNastechCloudUrl(baseUrl)
 }
 
 export function isMissingHealthEndpointError(error: unknown): boolean {

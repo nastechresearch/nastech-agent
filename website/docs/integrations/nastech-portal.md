@@ -6,7 +6,7 @@ description: "One subscription, 300+ frontier models, and the Tool Gateway — t
 
 # Nastech Portal
 
-[Nastech Portal](https://portal.nastechresearch.github.io) is Nastech Research's unified subscription gateway and **the recommended way to run Nastech Agent**. One OAuth login replaces the juggling act of separate accounts, API keys, and billing relationships across every model lab, search API, image generator, and browser provider you'd otherwise need to wire up by hand.
+[Nastech Portal](https://portal.nastechresearch.github.io) is Nastech Research's unified subscription gateway and **the recommended way to run Nastech Agent**. One OAuth login replaces the juggling act of separate accounts, API keys, and billing relationships across every model lab, search API, image generator, and browser provider you'd otherwise need to wire up by hand. Comparing it with OpenRouter? [Nastech Portal vs OpenRouter](https://portal.nastechresearch.github.io/compare/openrouter) covers pricing, free models and plans with sources.
 
 If you only have time to set up one thing, set up this. The fastest path:
 

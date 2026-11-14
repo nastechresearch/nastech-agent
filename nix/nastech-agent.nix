@@ -33,7 +33,6 @@
   uv2nix,
   pyproject-nix,
   pyproject-build-systems,
-  npm-lockfile-fix,
   # nix/pm-packages.nix output: every pm/lock.json pin as a derivation.
   pmPackages,
   # Locked git revision of the flake source — embedded so banner.py can
@@ -117,7 +116,7 @@ let
   };
 
   nastechNpmLib = callPackage ./lib.nix {
-    inherit npm-lockfile-fix pmPackages;
+    inherit pmPackages;
   };
 
   nastechTui = callPackage ./tui.nix {
@@ -352,8 +351,11 @@ stdenv.mkDerivation (finalAttrs: {
       # site-packages are devPython's, so `.pth` files (the editable checkout)
       # load and nothing depends on the caller's PYTHONPATH. Console scripts
       # are re-shebanged onto it so `pytest` and `python -m pytest` agree.
+      # The project's own commands (`nastech`, ...) go to libexec, off PATH, so
+      # the dev shell never hides the installed Nastech; `nastech-checkout` runs them.
+      projectCommands = builtins.attrNames (lib.importTOML ../pyproject.toml).project.scripts;
       devVenv = runCommand "nastech-agent-dev-venv" { } ''
-        mkdir -p $out/bin $out/lib/python${python.pythonVersion}
+        mkdir -p $out/bin $out/libexec/nastech-checkout $out/lib/python${python.pythonVersion}
         ln -s ${devPython}/${sitePackagesPath} $out/${sitePackagesPath}
         cat > $out/pyvenv.cfg <<EOF
         home = ${pmPython}/bin
@@ -372,13 +374,20 @@ stdenv.mkDerivation (finalAttrs: {
           [ -e "$out/bin/$name" ] && continue
           case "$name" in activate*|Activate*) continue ;; esac
           [ "$(readlink -f "$script")" = "$devInterpreter" ] && continue
+          case " ${lib.concatStringsSep " " projectCommands} " in
+            *" $name "*) dir=$out/libexec/nastech-checkout ;;
+            *) dir=$out/bin ;;
+          esac
           if head -n1 "$script" | grep -q '^#!.*python'; then
-            { echo "#!$out/bin/python3"; tail -n +2 "$script"; } > "$out/bin/$name"
-            chmod +x "$out/bin/$name"
+            { echo "#!$out/bin/python3"; tail -n +2 "$script"; } > "$dir/$name"
+            chmod +x "$dir/$name"
           else
-            ln -s "$script" "$out/bin/$name"
+            ln -s "$script" "$dir/$name"
           fi
         done
+        # The libexec name stays `nastech`: process identity and relaunch read argv[0].
+        printf '#!/bin/sh\nexec %s "$@"\n' "$out/libexec/nastech-checkout/nastech" > $out/bin/nastech-checkout
+        chmod +x $out/bin/nastech-checkout
       '';
 
       pm = writeShellApplication {
@@ -433,6 +442,8 @@ stdenv.mkDerivation (finalAttrs: {
       devDeps =
         runtimeDeps
         ++ [
+          # The pnpm the builds install with: the pm/lock.json pin.
+          nastechNpmLib.pnpm
           pmPackages.uv
           devVenv
           pm

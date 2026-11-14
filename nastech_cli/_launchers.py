@@ -21,7 +21,7 @@ from pathlib import Path
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from pm.environments import owning_home_root, store_root
+from pm.environments import owning_home_root, payload_command_dir, store_root
 
 # ``sys`` attribute a launcher sets before ``import nastech_bootstrap``: pin NASTECH_HOME to the
 # install's default root once the launch-time repair ran (``nastech_bootstrap._pin_launcher_home``).
@@ -93,10 +93,35 @@ def installation_command(repo_root: Path, args=(), *, module: str = "nastech_cli
     the managed Python pin changes.
     """
     root = Path(repo_root)
+    prefix = [] if module == "nastech_cli.main" else ["--run-module", module]
+    if (sealed := sealed_service_launcher(root)) is not None:
+        return [str(sealed), *prefix, *args]
     if resolve_store_python(root) is None:
         return runtime_command(root, args, module=module, python=python, home=home)
-    prefix = [] if module == "nastech_cli.main" else ["--run-module", module]
     return [str(root / ".nastech" / "bin" / "nastech"), *prefix, *args]
+
+
+def sealed_service_launcher(repo_root: Path) -> Path | None:
+    """A macOS bundle's own signed ``bin/nastech``, which its services run; None for other installs.
+
+    Publishing a launcher into the app breaks its code signature, and the next app update deletes
+    it. The app's own launcher keeps its path across updates and caches bytecode outside the app.
+    The canonical name, never a channel's qualified alias: gateway identity checks match ``nastech``.
+    Only macOS: a Linux bundle is an AppImage that mounts at a new path on every launch.
+    """
+    root = Path(repo_root).resolve()
+    if sys.platform != "darwin" or not _is_bundled_payload(root):
+        return None
+    commands = payload_command_dir(root)
+    launcher = commands / "nastech" if commands is not None else None
+    return launcher if launcher is not None and launcher.is_file() else None
+
+
+def publishes_service_launcher(repo_root: Path) -> bool:
+    """Whether service definitions run a store launcher this install must publish first."""
+    return (sealed_service_launcher(repo_root) is None
+            and resolve_store_python(repo_root, publication=True) is not None)
+
 
 #: Launcher command names — keep in lockstep with scripts/install.ps1
 #: Publish-UserCommand and nastech_cli/_install_repair.py.

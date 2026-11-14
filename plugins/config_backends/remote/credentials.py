@@ -67,7 +67,9 @@ def _nastech_token(home: Path) -> str:
     except Exception as exc:
         raise PlaneCredentialError(f"cannot load the Nastech auth module: {exc}", retryable=False) from exc
     token = set_nastech_home_override(home)  # auth.json is per profile home
+    scope_token = None
     try:
+        scope_token = _bind_owner_secret_scope(home)  # inside the try: a failed build still resets the home
         return resolve_nastech_access_token()
     except Exception as exc:
         # A missing login or a revoked session needs a human; a refresh that hit the network can retry.
@@ -75,7 +77,28 @@ def _nastech_token(home: Path) -> str:
         raise PlaneCredentialError(
             f"no Nastech access token for {home} (auth.json): {exc}", retryable=not fatal) from exc
     finally:
+        if scope_token is not None:
+            from agent.secret_scope import reset_secret_scope
+            reset_secret_scope(scope_token)
         reset_nastech_home_override(token)
+
+
+def _bind_owner_secret_scope(home: Path):
+    """Under multiplexing, bind ``home``'s own secret scope for the token resolution; None otherwise.
+
+    The resolver reads the Portal override (``NASTECH_PORTAL_BASE_URL``) through the profile secret
+    scope. The poller thread, and any caller resolving another profile's token, has no scope (or
+    the wrong profile's), so the read fails closed, the override counts as absent and the refresh
+    token is sent to the default Portal. Bound always, not only when nothing is bound: a turn for
+    profile A resolving B's token must route on B's override. Only the secret scope is bound, and
+    secret sources are not hydrated here: both read the profile's config, which this token is used
+    to fetch.
+    """
+    from agent.secret_scope import is_multiplex_active, set_secret_scope
+    if not is_multiplex_active():
+        return None  # single-profile: get_secret reads the process env, which is this profile's
+    from tui_gateway.launch_profile_policy import owner_secret_scope
+    return set_secret_scope(owner_secret_scope(home), profile_home=str(home))
 
 
 def _idp_token() -> str:

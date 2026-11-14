@@ -33,7 +33,7 @@ def _repo(tmp_path: Path) -> Path:
 
 def _completion_dependencies(monkeypatch, maintenance):
     monkeypatch.setattr("nastech_cli.venv_sync.publish_launchers", lambda root: None)
-    monkeypatch.setattr("nastech_cli.source_build.build_update_products", lambda root, *, desktop: None)
+    monkeypatch.setattr("nastech_cli.source_build.build_update_products", lambda root, *, desktop, after_dependencies=None: None)
     monkeypatch.setattr("nastech_cli.update_cmd_maint._run_post_update_maintenance", maintenance)
 
 
@@ -54,7 +54,7 @@ def test_failed_source_completion_does_not_publish_identity(tmp_path, monkeypatc
     root = _repo(tmp_path)
     _completion_dependencies(monkeypatch, lambda **_kwargs: True)
 
-    def broken_build(root, *, desktop):
+    def broken_build(root, *, desktop, after_dependencies=None):
         raise RuntimeError("web UI build: npm exited 1")
 
     monkeypatch.setattr("nastech_cli.source_build.build_update_products", broken_build)
@@ -104,7 +104,7 @@ def test_completion_holds_the_update_lock_during_the_tail(tmp_path, monkeypatch)
     marker = _sandboxed_marker(tmp_path, monkeypatch)
     seen = {}
 
-    def build(_root, *, desktop):
+    def build(_root, *, desktop, after_dependencies=None):
         from nastech_cli.update_lock import read_live_update
 
         seen["holder"] = read_live_update()
@@ -146,7 +146,7 @@ def test_completion_runs_under_a_parents_claim_without_releasing_it(tmp_path):
         "import nastech_cli.source_build, nastech_cli.update_cmd_maint, nastech_cli.update_lock, nastech_cli.venv_sync\n"
         "from nastech_cli.source_completion import complete_source_checkout\n"
         "nastech_cli.venv_sync.publish_launchers = lambda root: None\n"
-        "nastech_cli.source_build.build_update_products = lambda root, *, desktop: None\n"
+        "nastech_cli.source_build.build_update_products = lambda root, *, desktop, after_dependencies=None: None\n"
         "nastech_cli.update_cmd_maint._run_post_update_maintenance = lambda **_kwargs: True\n"
         f"nastech_cli.update_lock.update_marker_path = lambda: Path({str(marker)!r})\n"
         f"print(json.dumps(complete_source_checkout(Path({str(root)!r}), desktop=False, assume_yes=True)))\n"

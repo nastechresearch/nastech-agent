@@ -1,0 +1,22 @@
+name: nastech-presenter
+repo: https://github.com/violetSoftware/hermes-presenter-plugin
+sha: 5cd40f7bc02dac990a38df0f0bbee4db7d403c92
+subdir: plugin
+version: "0.1.2"
+title: Nastech Presenter
+description: "Present a selected JSON slide deck with the calling local Nastech conversation as co-presenter. Disclosure — Requires a separately installed companion engine (Node, `npm ci` of `engine/` from this same repo commit) whose code runs outside the catalog-installed `plugin/` folder; uses undocumented Nastech gateway client modules (`nastech_cli.gateway_client`, `nastech_cli.gateway_runtime`) to submit presentation prompts (deck text, speaker notes and, when `microphone: true`, transcribed speech from anyone near the mic) into your live conversation, which keeps its tools; serves the deck on 127.0.0.1 with no auth beyond same-origin cookies; sends reply text (and optional microphone audio) to ElevenLabs, billed to your key."
+maintainer: violetSoftware
+tier: community
+category: voice
+platforms: [linux]
+readme: true
+known_issues:
+  - Requires separately installing companion engine 0.1.0 and its locked npm dependencies from this same pinned repository commit.
+  - Uses undocumented Nastech gateway transport imports; compatibility may break after Nastech updates.
+  - No minimum released Nastech version has been established.
+capabilities:
+  provides_tools: [presenter_start, presenter_status, presenter_stop]
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: [ELEVENLABS_API_KEY]
+requires_nastech: ">=0.23.0"

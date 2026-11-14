@@ -11,9 +11,9 @@
 #   scripts/dev-sandbox.sh python -m nastech_cli.main
 #   scripts/dev-sandbox.sh nastech desktop
 #   scripts/dev-sandbox.sh electron .
-#   scripts/dev-sandbox.sh -- npm run dev   # from apps/desktop/
+#   scripts/dev-sandbox.sh -- pnpm run dev   # from apps/desktop/
 #   scripts/dev-sandbox.sh --persistent nastech desktop
-#   scripts/dev-sandbox.sh --persistent -- npm run dev
+#   scripts/dev-sandbox.sh --persistent -- pnpm run dev
 #
 # Seed the sandbox NASTECH_HOME from an existing directory (e.g. your main
 # ~/.nastech) so config, sessions, skills, etc. are pre-populated:
@@ -65,7 +65,7 @@ Examples:
   $ENTRYPOINT nastech desktop
   $ENTRYPOINT --persistent nastech desktop
   $ENTRYPOINT --from ~/.nastech nastech desktop
-  $ENTRYPOINT -- npm run dev
+  $ENTRYPOINT -- pnpm run dev
 EOF
 }
 

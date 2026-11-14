@@ -10,6 +10,8 @@ description: "Delegate coding to Claude Code CLI (features, PRs)"
 
 Delegate coding to Claude Code CLI (features, PRs).
 
+Want the full side-by-side? Read [Nastech Agent vs Claude Code](https://nastechresearch.github.io/nastech-agent/compare/claude-code).
+
 ## Skill metadata
 
 | | |

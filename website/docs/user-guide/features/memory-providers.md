@@ -175,7 +175,7 @@ The mapping:
 nastech profile create coder --clone
 ```
 
-`--clone` creates a `nastech.coder` host block in `honcho.json` with `aiPeer: "coder"`, shared `workspace`, inherited `peerName`, `recallMode`, `writeFrequency`, `observation`, etc. The AI peer is eagerly created in Honcho so it exists before the first message.
+`--clone` (which carries `memory.provider: honcho`) lets the Honcho plugin create a `nastech_coder` host block in `honcho.json` with `aiPeer: "coder"`, shared `workspace`, inherited `peerName`, `recallMode`, `writeFrequency`, `observation`, etc. The AI peer is eagerly created in Honcho so it exists before the first message. `nastech profile rename` lets the plugin re-key that host block, keeping its peers. Both need a Honcho plugin version with the profile hooks.
 
 ### Existing profiles, backfill Honcho peers
 
@@ -183,7 +183,7 @@ nastech profile create coder --clone
 nastech honcho sync
 ```
 
-Scans every Nastech profile, creates host blocks for any profile without one, inherits settings from the default `nastech` block, and creates the new AI peers eagerly. Idempotent — skips profiles that already have a host block.
+Scans every Nastech profile, creates host blocks for any profile without one, inherits settings from the default `nastech` block, and creates the new AI peers eagerly. Idempotent — skips profiles that already have a host block. `nastech update` no longer does this for you: run it once for profiles created before Honcho was set up.
 
 ### Per-profile observation
 

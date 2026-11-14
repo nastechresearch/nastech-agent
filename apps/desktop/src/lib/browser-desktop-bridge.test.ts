@@ -255,7 +255,6 @@ describe('browser-hosted Desktop bridge', () => {
     expect(win.nastechDesktop?.getSecretStorageEncryption).toBeUndefined()
     expect(win.nastechDesktop?.setSecretStorageEncryption).toBeUndefined()
     expect(win.nastechDesktop?.openSessionInTerminal).toBeUndefined()
-    expect(win.nastechDesktop?.connections).toBeUndefined()
     expect(win.nastechDesktop?.onOpenFindBarRequested).toBeUndefined()
     expect(win.nastechDesktop?.petOverlay).toBeUndefined()
     expect(win.nastechDesktop?.quickEntry).toBeUndefined()

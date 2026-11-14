@@ -67,7 +67,7 @@ export async function sourceUpdateEnvironment(
 ): Promise<NodeJS.ProcessEnv> {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    ...(await updateProxyEnv(process.env, note, updateRoot)),
+    ...(await updateProxyEnv(process.env, note, updateRoot, nastechHome)),
     ...buildDesktopBackendEnv(),
     NASTECH_HOME: nastechHome,
     NASTECH_INSTALL_ROOT: updateRoot

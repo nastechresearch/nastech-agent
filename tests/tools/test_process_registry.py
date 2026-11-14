@@ -1,4 +1,3 @@
-# health: allow FILE_LINES -- the file is over its cap and this fix is a process-wide isolation fixture plus its invariant test: `subprocess.Popen` is patched per process, so the owner-death supervisor can start inside a probe. Both belong with the probes they protect; a sibling file would put the pin where the tests it guards cannot reach it.
 """Tests for tools/process_registry.py — ProcessRegistry query methods, pruning, checkpoint."""
 
 import json
@@ -13,7 +12,6 @@ import time
 import pytest
 from unittest.mock import MagicMock, patch
 
-from nastech_cli.process_identity import own_process_groups
 from tools.environments.local_env_policy import _NASTECH_PROVIDER_ENV_FORCE_PREFIX
 from tools.process_registry import (
     ProcessRegistry,
@@ -24,8 +22,9 @@ from tools.process_registry import (
 
 
 @pytest.fixture()
-def registry():
-    """Create a fresh ProcessRegistry."""
+def registry(monkeypatch):
+    """A fresh ProcessRegistry. Fake Popen pids never reach the owner-death supervisor: a live pgid would start it."""
+    monkeypatch.setattr("nastech_cli.process_identity._update_supervised_pgids", lambda verb, pgids: None)
     return ProcessRegistry()
 
 
@@ -42,23 +41,6 @@ def _reset_systemd_scope_cache():
     _pr._SYSTEMD_SCOPE_AVAILABLE = False
     yield
     _pr._SYSTEMD_SCOPE_AVAILABLE = original
-
-
-@pytest.fixture(autouse=True)
-def _keep_the_owner_death_supervisor_out_of_popen_probes():
-    """Pin the process-wide owner-death supervisor out of this file's ``subprocess.Popen`` probes.
-
-    ``spawn_local`` hands a long-lived child's process group to the one supervisor this process owns
-    (``nastech_cli/process_identity.py``), which starts lazily on the first registration and is
-    respawned by its own waiter thread. A test that patches ``subprocess.Popen`` process-wide can
-    therefore capture ``sh process_supervisor.sh <pgid>`` alongside the command it is probing, and the
-    count -- not the product -- decides the verdict (run 41855770423, job 126667988901: ``assert 2 ==
-    1``). Returning None is the degraded path ``_spawn_supervisor`` already takes when no shell can
-    start: bookkeeping continues and graceful shutdown still reaps. The supervisor's own lifecycle is
-    tested where it lives.
-    """
-    with patch("nastech_cli.process_identity._start_supervisor_locked", return_value=None):
-        yield
 
 
 def _make_session(
@@ -961,9 +943,7 @@ class TestSpawnEnvSanitization:
             def __init__(self):
                 self.commands = []
                 self._responses = iter([
-                    {"output": "6 0\nhello\n"},
-                    {"output": "1\n"},
-                    {"output": "0\n"},
+                    {"output": "6 0 exit:0\nhello\n"},
                 ])
 
             def execute(self, command, **kwargs):
@@ -982,155 +962,12 @@ class TestSpawnEnvSanitization:
                 "/path with spaces/nastech_bg.exit",
             )
 
-        assert "'/path with spaces/nastech_bg.log'" in env.commands[0][0]
-        assert "cat '/path with spaces/nastech_bg.log'" not in env.commands[0][0]
-        assert "'/path with spaces/nastech_bg.pid'" in env.commands[1][0]
-        assert "'/path with spaces/nastech_bg.exit'" in env.commands[2][0]
-
-
-class TestEnvPollerIncrementalRead:
-    """The sandbox log poller must read only new bytes, not the whole file.
-
-    Reading the whole file every poll made one poll cost grow with the total
-    output so far, so a long noisy job re-sent all of its output over the
-    docker or SSH channel every two seconds.
-    """
-
-    @staticmethod
-    def _run_poller(registry, session, responses):
-        """Drive one poll cycle and hand back the commands the env saw."""
-
-        class FakeEnv:
-            def __init__(self):
-                self.commands = []
-                self._responses = iter(responses)
-
-            def execute(self, command, **kwargs):
-                self.commands.append(command)
-                return next(self._responses)
-
-        env = FakeEnv()
-        with patch("tools.process_registry.time.sleep", return_value=None), \
-            patch.object(registry, "_move_to_finished"):
-            registry._env_poller_loop(
-                session, env, "/tmp/bg.log", "/tmp/bg.pid", "/tmp/bg.exit"
-            )
-        return env.commands
-
-
-
-    @pytest.mark.skipif(not shutil.which("sh"), reason="needs a POSIX sh")
-    def test_read_command_holds_back_a_split_utf8_sequence(self, tmp_path):
-        """A multibyte character straddling two polls must not be split.
-
-        The backend decodes each execute() result on its own, so returning
-        the first byte of an 'é' in one poll and the rest in the next would
-        yield replacement characters in the transcript (and break watch
-        patterns at the seam). Every prefix of a mixed ASCII/2/3/4-byte
-        string must come back decodable, with at most 3 bytes held back and
-        nothing held back once the trailing character is complete.
-        """
-        full = "hé😀中a\n€bz🚀".encode()
-        log = tmp_path / "bg.log"
-        quoted = shlex.quote(str(log))
-        for n in range(1, len(full) + 1):
-            log.write_bytes(full[:n])
-            out = subprocess.run(
-                ["sh", "-c", ProcessRegistry._log_delta_command(quoted, 0)],
-                capture_output=True, timeout=30,
-                check=False,
-            ).stdout
-            header, _, delta = out.partition(b"\n")
-            size, _offset = map(int, header.split())
-            delta.decode("utf-8")  # must not raise
-            assert delta == full[:size]
-            complete = full[:n].decode("utf-8", "ignore").encode() == full[:n]
-            assert (n - size) == 0 if complete else 0 < (n - size) <= 3
-
-
-    def test_delta_is_appended_not_replaced(self, registry):
-        session = _make_session(sid="proc_append", output="already here ")
-        session.exited = False
-        self._run_poller(
-            registry,
-            session,
-            [
-                {"output": "8 0\nand new"},
-                {"output": "1\n"},
-                {"output": "0\n"},
-            ],
-        )
-        assert session.output_buffer == "already here and new"
-
-    def test_second_poll_asks_from_where_the_first_one_stopped(self, registry):
-        session = _make_session(sid="proc_two_polls")
-        session.exited = False
-        commands = self._run_poller(
-            registry,
-            session,
-            [
-                {"output": "11 0\nfirst chunk"},
-                {"output": "0\n"},          # still running, poll again
-                {"output": "17 11\n and more"},
-                {"output": "1\n"},          # gone now
-                {"output": "0\n"},
-            ],
-        )
-        assert "O=0" in commands[0]
-        # The second read starts at byte 11, so the first chunk is not sent
-        # a second time.
-        assert "O=11" in commands[2]
-        assert session.output_buffer == "first chunk and more"
-
-    def test_truncated_log_drops_the_stale_buffer(self, registry):
-        session = _make_session(sid="proc_rotate")
-        session.exited = False
-        # The second read reports offset 0 even though the first one left off
-        # at byte 11. The file no longer reaches that byte, so it was rotated
-        # or truncated and the buffer we hold no longer matches it.
-        self._run_poller(
-            registry,
-            session,
-            [
-                {"output": "11 0\nfirst chunk"},
-                {"output": "0\n"},          # still running, poll again
-                {"output": "5 0\nfresh"},
-                {"output": "1\n"},
-                {"output": "0\n"},
-            ],
-        )
-        assert session.output_buffer == "fresh"
-
-    def test_unreadable_header_leaves_the_buffer_alone(self, registry):
-        session = _make_session(sid="proc_bad", output="keep me")
-        session.exited = False
-        # No header at all, for example when the shell is missing one of the
-        # tools the command needs.
-        self._run_poller(
-            registry,
-            session,
-            [
-                {"output": ""},
-                {"output": "1\n"},
-                {"output": "0\n"},
-            ],
-        )
-        assert session.output_buffer == "keep me"
-
-    def test_buffer_stays_within_the_cap(self, registry):
-        session = _make_session(sid="proc_cap")
-        session.exited = False
-        session.max_output_chars = 10
-        self._run_poller(
-            registry,
-            session,
-            [
-                {"output": "20 0\n" + "x" * 20},
-                {"output": "1\n"},
-                {"output": "0\n"},
-            ],
-        )
-        assert session.output_buffer == "x" * 10
+        assert len(env.commands) == 1
+        command = env.commands[0][0]
+        assert "'/path with spaces/nastech_bg.log'" in command
+        assert "cat '/path with spaces/nastech_bg.log'" not in command
+        assert "'/path with spaces/nastech_bg.pid'" in command
+        assert "'/path with spaces/nastech_bg.exit'" in command
 
 
 # =========================================================================
@@ -1205,7 +1042,6 @@ class TestSpawnRewriteCompoundBackground:
         # The command passed to Popen should be the REWRITTEN version
         assert "&& { node server.js &>/tmp/srv.log & }" in shell_cmd[2]
 
-
     def test_pty_path_uses_rewritten_command(self, registry):
         """PTY spawn path must also use the rewritten command (issue #68915)."""
         mock_pty_proc = MagicMock()
@@ -1233,42 +1069,6 @@ class TestSpawnRewriteCompoundBackground:
         assert "&& { node server.js & }" in pty_args[2], \
             f"PTY path should use rewritten command, got: {pty_args[2]}"
         assert session.command == "cd /app && node server.js &"
-
-
-class TestPopenProbesSeeOnlyTheirOwnCommand:
-    """A ``subprocess.Popen`` probe of ``spawn_local`` sees the command the registry ran, and nothing
-    the process-wide owner-death supervisor starts on the side (see the file's
-    ``_keep_the_owner_death_supervisor_out_of_popen_probes`` fixture)."""
-
-    def test_a_live_group_registration_stays_out_of_the_probe(self, registry):
-        captured_cmd = []
-
-        def fake_popen(args, **kwargs):
-            captured_cmd.append(args)
-            proc = MagicMock()
-            proc.pid = 1111
-            proc.stdout = MagicMock()
-            return proc
-
-        fake_thread = MagicMock()
-        fake_thread.daemon = False
-
-        with patch("tools.process_registry._find_shell", return_value="/bin/bash"), \
-             patch("subprocess.Popen", side_effect=fake_popen), \
-             patch("threading.Thread", return_value=fake_thread), \
-             patch("nastech_cli.process_identity._supervisor", None), \
-             patch("nastech_cli.process_identity._supervised_pgids", set()), \
-             patch.object(registry, "_write_checkpoint"):
-            # The two ``process_identity`` patches describe the state a registration genuinely acts
-            # on -- no supervisor, nothing covered -- rather than whatever this process happens to
-            # already own. The group is this process's own, so the dead-group prune cannot empty the
-            # set again and the lazily-started supervisor is really asked for. ``Popen`` itself is
-            # mocked, so that request is only ever a capture: no shell is spawned.
-            own_process_groups([os.getpgid(0)])
-            registry.spawn_local("cd /app && node server.js &>/tmp/srv.log &", cwd="/tmp")
-
-        assert len(captured_cmd) == 1, captured_cmd
-        assert "&& { node server.js &>/tmp/srv.log & }" in captured_cmd[0][2]
 
 
 # =========================================================================

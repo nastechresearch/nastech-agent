@@ -1,7 +1,7 @@
 import type { SubagentStatus } from '@nastech/shared/gateway-events'
+import type { SpawnTreeLoadResponse } from '@nastech/shared/gateway-types'
 import { atom } from 'nanostores'
 
-import type { SpawnTreeLoadResponse } from '../gatewayTypes.js'
 import type { SubagentProgress } from '../types.js'
 
 export interface SpawnSnapshot {

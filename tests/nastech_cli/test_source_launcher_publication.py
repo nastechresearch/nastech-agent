@@ -17,6 +17,8 @@ from pm.environments import install_state_dir, site_packages
 ROOT = Path(__file__).resolve().parents[2]
 BOOT_FILES = (
     "nastech_bootstrap.py", "nastech_constants.py", "nastech_cli/__init__.py", "nastech_cli/_launchers.py",
+    "nastech_agent/__init__.py", "nastech_agent/compat/__init__.py", "nastech_agent/compat/finder.py",
+    "nastech_agent/compat/moves.py",
     "pm/environments.py", "pm/filesystem.py", "pm/paths.py", "nastech_cli/runtime_state.py",
     "nastech_cli/_early_recovery.py", "nastech_cli/_parser.py",
     "nastech_cli/venv_sync.py", "nastech_cli/steward.py",

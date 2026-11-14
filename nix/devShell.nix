@@ -1,10 +1,10 @@
 # nix/devShell.nix — Dev shell that delegates setup to each package
 #
-# Each npm workspace package exposes passthru.packageJsonPath (e.g.
+# Each pnpm workspace package exposes passthru.packageJsonPath (e.g.
 # "ui-tui/package.json").  This file collects them all and passes the
-# list to mkNpmDevShellHook, which stamps all package.jsons at once,
-# then runs a single `npm i --package-lock-only` if any changed and
-# `npm ci` if the lockfile changed.
+# list to mkPnpmDevShellHook, which stamps all package.jsons at once,
+# then runs a single `pnpm install --lockfile-only` if any changed and
+# `pnpm install --frozen-lockfile` if the lockfile changed.
 { ... }:
 {
   perSystem =
@@ -13,7 +13,7 @@
       packages = builtins.attrValues self'.packages;
       nastechNpmLib = self'.packages.default.passthru.nastechNpmLib;
 
-      # Collect all packageJsonPath values from npm workspace packages.
+      # Collect all packageJsonPath values from pnpm workspace packages.
       npmPackageJsonPaths = builtins.filter (p: p != null) (
         map (p: p.passthru.packageJsonPath or null) packages
       );
@@ -23,10 +23,6 @@
     {
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
-          (pkgs.runCommand "nastech" { } ''
-            mkdir -p $out/bin
-            install -Dm755 ${../nastech} $out/bin/nastech
-          '')
           self'.packages.sandbox
         ]
         # Wayland-only: cage and ghostty pull alsa-lib, which does not
@@ -50,7 +46,7 @@
           export NASTECH_PYTHON_SRC_ROOT=$(git rev-parse --show-toplevel)
 
           ${nastechAgentDevShellHook}
-          ${nastechNpmLib.mkNpmDevShellHook npmPackageJsonPaths}
+          ${nastechNpmLib.mkPnpmDevShellHook npmPackageJsonPaths}
 
           # Force Node to use Nix's playwright-test binary instead of node_modules/.bin
           export PATH="${pkgs.playwright-test}/bin:$PATH"
@@ -62,7 +58,7 @@
           export NIX_SSL_CERT_FILE="$SSL_CERT_FILE"
 
           echo "Nastech Agent dev shell in $NASTECH_PYTHON_SRC_ROOT"
-          echo "Ready. Run 'nastech' or 'sandbox nastech' to start."
+          echo "Ready. 'nastech-checkout' runs this checkout; 'nastech' stays your installed Nastech."
         '';
       };
     };

@@ -20,6 +20,7 @@ import pytest
 from tests.e2e.core.providers import _native_helpers as nh
 from tests.fakes.providers.gemini_native import (
     API_KEY,
+    NASTECH_CONFIG,
     NASTECH_ENV,
     MODEL_ID,
     Call,
@@ -50,7 +51,7 @@ class Run:
 @pytest.fixture(scope="module")
 def run(tmp_path_factory: pytest.TempPathFactory) -> Run:
     root = tmp_path_factory.mktemp("gemini_tools")
-    home = nh.make_home(root, nastech_model(), env_file=NASTECH_ENV)
+    home = nh.make_home(root, nastech_model(), env_file=NASTECH_ENV, extra_config=NASTECH_CONFIG)
     seed = home.project / "seed.txt"
     seed.write_text(f"{SEED}\n", encoding="utf-8")
     script = [
