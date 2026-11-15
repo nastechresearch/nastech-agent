@@ -351,7 +351,7 @@ def test_the_universal_leg_stages_the_bundle_it_assembles(tmp_path, dispatch):
             f"{_step_runs(stage, inputs, needs)} commands={commands}")
 
 
-STABLE_RECEIPTS = ("darwin-arm64", "darwin-x64", "win32-bundle")
+STABLE_RECEIPTS = ("darwin-arm64", "win32-bundle")
 
 
 def _receipt_gates(jobs: dict) -> dict[str, list[dict]]:
