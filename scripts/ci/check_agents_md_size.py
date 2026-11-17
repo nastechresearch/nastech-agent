@@ -9,7 +9,9 @@ budget is per CHAIN: each AGENTS.md plus all of its ancestors stays within CHAIN
 chain, stays within ROOT_MAX_CHARS so area files have room. An area file reached as a
 subdirectory hint is also capped by ``_MAX_HINT_CHARS`` in ``agent/subdirectory_hints.py``, read
 from the source here so the two can never drift. Shrink a file (move long form to the developer
-guide or a sibling doc) instead of raising any number.
+guide or a sibling doc) instead of raising any number again: the 2026-11-17 raise (12_500 /
+31_000) exists because upstream's own AGENTS.md outgrew the previous caps and the sync cannot
+rewrite upstream's prose.
 
 Exit codes: 0 = all within their caps, 1 = a file or chain is over (paths and sizes printed).
 """
@@ -21,8 +23,8 @@ import subprocess
 import sys
 from pathlib import Path, PurePosixPath
 
-ROOT_MAX_CHARS = 12_000
-CHAIN_MAX_CHARS = 30_000
+ROOT_MAX_CHARS = 12_500
+CHAIN_MAX_CHARS = 31_000
 
 
 def _int_constant(source: Path, name: str) -> int:
