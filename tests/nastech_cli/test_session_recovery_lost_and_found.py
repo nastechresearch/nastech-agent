@@ -225,6 +225,10 @@ def test_unreadable_schema_without_cli_names_the_sqlite3_requirement(
     import nastech_cli.session_lost_and_found as laf
 
     monkeypatch.setattr(laf, "find_sqlite3_cli", lambda: None)
+    # The import-time HAVE_SQLITE3_CLI probe caches a WAL-vulnerable CLI's
+    # refusal in the module global; this scenario needs the plain
+    # missing-CLI guidance, so pin the refusal lookup empty as well.
+    monkeypatch.setattr(laf, "find_sqlite3_cli_refusal", lambda: {})
     with pytest.raises(SessionRecoverySourceError) as excinfo:
         recover_session_database(
             source,
