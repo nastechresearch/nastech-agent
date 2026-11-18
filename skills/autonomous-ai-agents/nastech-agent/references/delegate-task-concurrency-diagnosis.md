@@ -43,8 +43,8 @@ When a user says "delegate is capped at N":
 nastech config get delegation.max_concurrent_children
 
 # 2. Did Nastech' truncator or rejector actually fire?
-grep -E "Truncated.*delegate_task|Too many tasks" ~/.nastech/logs/agent.log | tail
-# If neither line appears, neither cap path executed.
+#    search_files(pattern="Truncated.*delegate_task|Too many tasks", path="~/.nastech/logs/agent.log")
+#    Read the newest hits; if neither line appears, neither cap path executed.
 
 # 3. Confirm the resolver returns what config says (in venv with nastech on path)
 python -c "from tools.delegate_tool import _get_max_concurrent_children; \

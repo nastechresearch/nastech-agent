@@ -127,6 +127,38 @@ test('qualified CLI paths expose their filenames, not shared canonical command k
   }
 })
 
+test.runIf(process.platform !== 'win32')(
+  'a live link into an older build beside the payload moves forward; another install keeps its link',
+  (): void => {
+    const root: string = fs.mkdtempSync(path.join(os.tmpdir(), 'nastech-cli-links-'))
+    const binDir: string = path.join(root, 'bin')
+
+    const command = (store: string, build: string): string =>
+      path.join(root, store, build, 'agent-payload', 'bin', 'nastech')
+
+    const current: string = command('bundles', 'build-2')
+
+    try {
+      for (const destination of [current, command('bundles', 'build-1'), command('opt', 'Nastech')]) {
+        fs.mkdirSync(path.dirname(destination), { recursive: true })
+        fs.writeFileSync(destination, destination)
+      }
+
+      fs.mkdirSync(binDir)
+      fs.symlinkSync(command('bundles', 'build-1'), path.join(binDir, 'nastech'))
+      provisionCliLinks({ nastech: current }, binDir, (): void => {})
+      assert.equal(fs.readlinkSync(path.join(binDir, 'nastech')), current)
+
+      fs.unlinkSync(path.join(binDir, 'nastech'))
+      fs.symlinkSync(command('opt', 'Nastech'), path.join(binDir, 'nastech'))
+      provisionCliLinks({ nastech: current }, binDir, (): void => {})
+      assert.equal(fs.readlinkSync(path.join(binDir, 'nastech')), command('opt', 'Nastech'))
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  }
+)
+
 test('a failed link swap preserves its source and target, then provisions later commands', context => {
   const { root, binDir, source } = fixture()
   const target = path.join(binDir, 'nastech')
