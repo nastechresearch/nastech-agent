@@ -320,14 +320,14 @@ def profile_config_scope(home: str | Path, *, launch_home: str | Path | None = N
                 # Unbind an enclosing secondary's home and terminal, or the launch secrets would
                 # pair with that profile's config. Unset resolves to the process home, which is the
                 # launch home for every caller (``launch_home`` defaults to it; the RPC passes it).
-                stack.callback(reset_nastech_home_override, set_nastech_home_override(None))  # health: allow HX016 -- inherited verbatim from upstream
-                stack.callback(reset_secret_scope, set_secret_scope(launch_secret_scope(launch)))  # health: allow HX016 -- inherited verbatim from upstream
-                stack.callback(reset_terminal_scope, set_terminal_scope(None))  # health: allow HX016 -- inherited verbatim from upstream
+                stack.callback(reset_nastech_home_override, set_nastech_home_override(None))
+                stack.callback(reset_secret_scope, set_secret_scope(launch_secret_scope(launch)))
+                stack.callback(reset_terminal_scope, set_terminal_scope(None))
         else:
             secrets = build_profile_secret_scope(home)
-            stack.callback(reset_nastech_home_override, set_nastech_home_override(str(home)))  # health: allow HX016 -- inherited verbatim from upstream
-            stack.callback(reset_secret_scope, set_secret_scope(secrets, profile_home=str(home)))  # health: allow HX016 -- inherited verbatim from upstream
-            stack.callback(reset_terminal_scope, install_profile_terminal_scope(home))  # health: allow HX016 -- inherited verbatim from upstream
+            stack.callback(reset_nastech_home_override, set_nastech_home_override(str(home)))
+            stack.callback(reset_secret_scope, set_secret_scope(secrets, profile_home=str(home)))
+            stack.callback(reset_terminal_scope, install_profile_terminal_scope(home))
         yield
 
 

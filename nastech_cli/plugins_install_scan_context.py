@@ -97,7 +97,7 @@ def prose_cap(finding: Finding) -> Optional[str]:
 _PIPE_TO_SHELL_IDS = {"curl_pipe_shell", "wget_pipe_shell", "curl_pipe_python"}
 _URL_IN_LINE = re.compile(r'https?://([^\s/"\'`)]+)([^\s"\'`)]*)')
 _TRUSTED_INSTALLER_HOSTS = {
-    "nastechresearch.github.io/nastech-agent", "ollama.com", "bun.sh",
+    "nastechresearch.github.io", "ollama.com", "bun.sh",
     "get.docker.com", "sh.rustup.rs", "deno.land", "astral.sh", "app.factory.ai",
 }
 

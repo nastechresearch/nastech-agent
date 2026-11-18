@@ -22,7 +22,7 @@ def _query_ro_sqlite(path: Path, fn):
     try:
         conn = connect_tracked(read_only_db_uri(path), uri=True, timeout=1.0, tracking_path=path)
         return fn(conn), None
-    except Exception as exc:  # health: allow BLE001 -- inherited verbatim from upstream
+    except Exception as exc:
         return None, exc
     finally:
         _close_quietly(conn)

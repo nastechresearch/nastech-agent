@@ -65,7 +65,7 @@ class _Open:
             await asyncio.wait(set(self.unsettled))
         from nastech_cli.lifecycle import hook_known_unused
         from nastech_constants import reset_nastech_home_override, set_nastech_home_override
-        token = set_nastech_home_override(self.ref.profile_id)  # health: allow HX016 -- inherited verbatim from upstream
+        token = set_nastech_home_override(self.ref.profile_id)
         try:  # the owning profile's loaded plugins, read without discovery or config: no consumer, no thread
             unused = hook_known_unused('on_session_open')
         finally:

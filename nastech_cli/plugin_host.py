@@ -451,7 +451,7 @@ class PluginHost:
             logger.warning("Plugin host session event %r refused: sender %r (load %r) is not that loaded plugin",
                            params.get("plugin_id"), params.get("plugin"), params.get("load"))
             return False
-        token = set_nastech_home_override(self._home)  # health: allow HX016 -- inherited verbatim from upstream
+        token = set_nastech_home_override(self._home)
         try:
             return emit_plugin_session_event(str(params.get("plugin_id")), params.get("session_id"),
                                              str(params.get("event")), params.get("payload"))

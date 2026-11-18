@@ -105,7 +105,7 @@ def notify_memory_provider(profile_dir: Path, call: Callable[[MemoryProvider], N
     from nastech_constants import reset_nastech_home_override, set_nastech_home_override
 
     name = None
-    home_token = set_nastech_home_override(str(profile_dir))  # health: allow HX016 -- inherited verbatim from upstream
+    home_token = set_nastech_home_override(str(profile_dir))
     secret_token = None
     try:
         if not _names_external_provider(profile_dir):
@@ -117,7 +117,7 @@ def notify_memory_provider(profile_dir: Path, call: Callable[[MemoryProvider], N
         # Its configured secret sources too (1Password etc.); a brand-new profile was never hydrated.
         from nastech_cli.env_loader import hydrate_profile_secret_sources
         hydrate_profile_secret_sources(profile_dir)
-        secret_token = set_secret_scope(build_profile_secret_scope(profile_dir), profile_home=str(profile_dir))  # health: allow HX016 -- inherited verbatim from upstream
+        secret_token = set_secret_scope(build_profile_secret_scope(profile_dir), profile_home=str(profile_dir))
         from nastech_cli.config import load_config_readonly
         name = active_memory_provider(load_config_readonly())
         if not name:

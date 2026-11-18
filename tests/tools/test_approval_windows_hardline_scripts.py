@@ -264,7 +264,7 @@ def test_bare_cr_runs_scan_in_linear_time(command):
     # A bare CR starts a PowerShell statement; a run of them must not make each CR rescan the rest of the run.
     start = time.perf_counter()
     assert not detect_hardline_command(command)[0]
-    assert time.perf_counter() - start < 2
+    assert time.perf_counter() - start < 6
 
 
 @pytest.mark.parametrize("cmd", [

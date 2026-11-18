@@ -1,4 +1,3 @@
-# health: allow FILE_LINES -- inherited verbatim from upstream
 """Tests for agent.redact -- secret masking in logs and output."""
 
 import ast
