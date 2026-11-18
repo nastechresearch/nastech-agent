@@ -25637,108 +25637,6 @@
         "title": "ModelSaveKeyResult",
         "type": "object"
       },
-      "NoticePayload": {
-        "additionalProperties": false,
-        "description": "``tui_gateway/model_switch.py`` capability-refresh notice.",
-        "properties": {
-          "message": {
-            "title": "Message",
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "title": "NoticePayload",
-        "type": "object"
-      },
-      "NotificationClearPayload": {
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "title": "Key",
-            "type": "string"
-          }
-        },
-        "required": [
-          "key"
-        ],
-        "title": "NotificationClearPayload",
-        "type": "object"
-      },
-      "NotificationShowPayload": {
-        "additionalProperties": false,
-        "description": "``agent/credits_tracker.py::AgentNotice`` via notice_callback, and ``server._await_agent_ready``'s\nslow-build notice. ``level``: info | warn | error | success; ``kind``: sticky | ttl | agent.\n``detail``: the full text behind a short ``text`` (the low-disk auto-prune question): Desktop shows\nit in the toast's expandable body, the Ink TUI prints it into the transcript.",
-        "properties": {
-          "text": {
-            "title": "Text",
-            "type": "string"
-          },
-          "level": {
-            "title": "Level",
-            "type": "string"
-          },
-          "kind": {
-            "title": "Kind",
-            "type": "string"
-          },
-          "ttl_ms": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Ttl Ms"
-          },
-          "key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Key"
-          },
-          "id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Id"
-          },
-          "detail": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "title": "Detail"
-          }
-        },
-        "required": [
-          "text",
-          "level",
-          "kind"
-        ],
-        "title": "NotificationShowPayload",
-        "type": "object"
-      },
       "NastechUsageBar": {
         "additionalProperties": false,
         "description": "``agent.billing_usage.UsageBar``: one dollar bar (``topup`` has no cap, so total == remaining).",
@@ -25885,6 +25783,108 @@
           "available"
         ],
         "title": "NastechUsageDollars",
+        "type": "object"
+      },
+      "NoticePayload": {
+        "additionalProperties": false,
+        "description": "``tui_gateway/model_switch.py`` capability-refresh notice.",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "NoticePayload",
+        "type": "object"
+      },
+      "NotificationClearPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "NotificationClearPayload",
+        "type": "object"
+      },
+      "NotificationShowPayload": {
+        "additionalProperties": false,
+        "description": "``agent/credits_tracker.py::AgentNotice`` via notice_callback, and ``server._await_agent_ready``'s\nslow-build notice. ``level``: info | warn | error | success; ``kind``: sticky | ttl | agent.\n``detail``: the full text behind a short ``text`` (the low-disk auto-prune question): Desktop shows\nit in the toast's expandable body, the Ink TUI prints it into the transcript.",
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "ttl_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ttl Ms"
+          },
+          "key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Key"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Detail"
+          }
+        },
+        "required": [
+          "text",
+          "level",
+          "kind"
+        ],
+        "title": "NotificationShowPayload",
         "type": "object"
       },
       "OkResult": {
