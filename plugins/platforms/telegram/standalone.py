@@ -437,7 +437,7 @@ async def _send_telegram(token, chat_id, message, media_files=None, thread_id=No
             media_files = [(path, False) for path in detail.get("refused", ())]
             last_msg = last_msg or (SimpleNamespace(message_id=None) if result.success else None)
         for media_path, is_voice in media_files:
-            if not os.path.exists(media_path):  # health: allow ASYNC240 -- inherited verbatim from upstream
+            if not os.path.exists(media_path):
                 warnings.append(f"Media file not found, skipping: {media_path}")
                 logger.warning(warnings[-1])
                 # Caption mode suppressed the text send; the file is gone, so deliver the words alone.
@@ -446,7 +446,7 @@ async def _send_telegram(token, chat_id, message, media_files=None, thread_id=No
                         last_msg = await _send_telegram_message_with_retry(
                             bot, chat_id=int_chat_id, text=_tg_caption, parse_mode=send_parse_mode, **text_kwargs)
                         _tg_caption = None  # delivered — don't re-caption a later file
-                    except Exception as _cap_err:  # health: allow BLE001 -- inherited verbatim from upstream
+                    except Exception as _cap_err:
                         logger.warning("Telegram caption-fallback send failed for missing media: %s",
                                        _sanitize_error_text(_cap_err))
                 continue
@@ -454,7 +454,7 @@ async def _send_telegram(token, chat_id, message, media_files=None, thread_id=No
                 last_msg = await _telegram_send_one_media(
                     bot, int_chat_id, media_path, is_voice, caption=_tg_caption, parse_mode=send_parse_mode,
                     has_html=_has_html, thread_kwargs=thread_kwargs, force_document=force_document)
-            except Exception as e:  # health: allow BLE001 -- inherited verbatim from upstream
+            except Exception as e:
                 last_msg = _record_media_failure(e, media_path, warnings, last_msg)
         if last_msg is None:
             return {"error": _NO_DELIVERABLE, **({"warnings": warnings} if warnings else {})}
@@ -464,7 +464,7 @@ async def _send_telegram(token, chat_id, message, media_files=None, thread_id=No
     except ImportError:
         return {"error": "python-telegram-bot not installed. Run: "
                 f"{install_hint('telegram')}", "retryable": True}
-    except Exception as e:  # health: allow BLE001 -- inherited verbatim from upstream
+    except Exception as e:
         from plugins.platforms.telegram import telegram_send_errors as kinds
         # Nothing sent (cron may replay it) only when this request never left or was refused, no
         # receipt came back (``last_msg``: a chunk or the album) and ``outcome`` saw no earlier try

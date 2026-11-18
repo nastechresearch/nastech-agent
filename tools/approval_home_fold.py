@@ -127,7 +127,7 @@ def _rewrite_resolved_nastech_home(command: str) -> str:
         from nastech_constants import get_nastech_home
         home = get_nastech_home().expanduser()
         paths = _home_spellings([str(home), str(home.resolve(strict=False))], command)
-    except Exception:  # health: allow BLE001 -- inherited verbatim from upstream
+    except Exception:
         return command
     command = _fold_home_prefixes(command, paths, "~/.nastech")
     # The prefix fold needs a child tail; fold the bare home word too (`mv /opt/data /tmp/x`) so the

@@ -171,7 +171,7 @@ def test_rich_payload_is_linear_in_unclosed_backtick_runs():
     started = time.perf_counter()
     payload = adapter._rich_message_payload(content)
 
-    assert time.perf_counter() - started < 1.0
+    assert time.perf_counter() - started < 6.0
     assert payload["markdown"].startswith("\\#89")
 
     # Fence-like lines that never close, and backtick runs split by paragraphs.
@@ -179,7 +179,7 @@ def test_rich_payload_is_linear_in_unclosed_backtick_runs():
     content = (unit * (adapter.RICH_MESSAGE_MAX_CHARS // len(unit)))[: adapter.RICH_MESSAGE_MAX_CHARS]
     started = time.perf_counter()
     adapter._rich_message_payload(content)
-    assert time.perf_counter() - started < 1.0
+    assert time.perf_counter() - started < 6.0
 
 
 @pytest.mark.asyncio

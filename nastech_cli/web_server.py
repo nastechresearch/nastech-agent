@@ -1468,7 +1468,7 @@ def _start_server_runtime(
         from nastech_cli.nastech_auth_keepalive import start_nastech_auth_keepalive
 
         start_nastech_auth_keepalive()
-    except Exception as exc:  # health: allow BLE001 -- inherited verbatim from upstream
+    except Exception as exc:
         _log.debug("Nastech auth keepalive did not start: %s", exc)
 
     _configure_auth_gate(host, allow_public, ssh_session_token, ssh_owner_nonce)
@@ -1493,7 +1493,7 @@ def _start_server_runtime(
         from tui_gateway.server import install_exit_flush_signal_handlers
 
         install_exit_flush_signal_handlers()
-    except Exception as exc:  # health: allow BLE001 -- inherited verbatim from upstream
+    except Exception as exc:
         _log.debug("exit-flush signal handlers not installed: %s", exc)
 
     # #93608: uvicorn's bind_socket() would exit 1 with a bare ERROR line,
@@ -1517,7 +1517,7 @@ def _start_server_runtime(
         from tui_gateway.launch_profile_policy import activate_multi_profile_hosting_eagerly
 
         activate_multi_profile_hosting_eagerly()
-    except Exception:  # health: allow BLE001 -- inherited verbatim from upstream
+    except Exception:
         _log.warning("eager multi-profile activation failed", exc_info=True)
 
     async def _serve():

@@ -428,7 +428,7 @@ def _listener_api_server_extra(listener_home: Path) -> dict:
         # Profile-scoped read through the CANONICAL loader (managed-scope overlay, ${ENV_VAR}
         # expansion) — never a raw yaml.safe_load (tests/nastech_cli/test_config_read_guard.py).
         from nastech_constants import reset_nastech_home_override, set_nastech_home_override
-        token = set_nastech_home_override(str(listener_home))  # health: allow HX016 -- inherited verbatim from upstream
+        token = set_nastech_home_override(str(listener_home))
         try:
             profile_cfg = load_config()
         finally:

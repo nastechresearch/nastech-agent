@@ -22,6 +22,9 @@ from tests.scripts.test_stable_release import https_origin as https_origin  # no
 # A claim that built and smoked every desktop package (see test_stable_release.py).
 SIGNED = frozenset(lane_set.NAMES)
 
+# A claim that built and smoked every desktop package (see test_stable_release.py).
+SIGNED = frozenset(lane_set.NAMES)
+
 
 @contextmanager
 def object_server():

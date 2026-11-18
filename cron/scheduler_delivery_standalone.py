@@ -99,14 +99,14 @@ def _standalone_send(
                     timeout=30 + send_timeout - base_timeout), None
             finally:
                 pool.shutdown(wait=False)
-        except Exception as e:  # health: allow BLE001 -- inherited verbatim from upstream
+        except Exception as e:
             if _sched._interpreter_shutting_down(e):
                 return _warned(shutdown_msg)
             # A result timeout leaves the pooled thread's send running: same in-flight ambiguity.
             if isinstance(e, TimeoutError):
                 return _in_flight(30 + send_timeout - base_timeout)
             return _failed(e)
-    except Exception as e:  # health: allow BLE001 -- inherited verbatim from upstream
+    except Exception as e:
         return _failed(e)
 
 

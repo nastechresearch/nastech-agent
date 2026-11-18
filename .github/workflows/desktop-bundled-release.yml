@@ -1922,7 +1922,10 @@ jobs:
         id: pm
         uses: ./.github/actions/setup-pm
         with:
-          toolchain: python
+          # scripts/termux/build.py builds the TUI with a bare `node`, and every
+          # workspace pins engines >=26 while this image ships 22: install the
+          # locked Node beside Python or node-deps.mjs refuses the run.
+          toolchain: all
           # scripts/termux/build.py installs and builds the TUI on this host with pnpm.
           packages: pnpm
           archive-inputs: true
