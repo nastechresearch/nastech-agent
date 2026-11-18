@@ -149,14 +149,16 @@ const config: Config = {
     // The local plugin shipped a ~16 MB client-side lunr index that every
     // visitor downloaded and hydrated before their first result; DocSearch
     // answers from Algolia's servers with no client index at all. These are
-    // public search-only credentials — safe to commit (the admin key is not
-    // in the repo). Index is populated by the Algolia Crawler configured at
-    // crawler.algolia.com; contextualSearch scopes results to the active
-    // locale via the docusaurus_tag/lang facets the crawler records carry.
+    // public search-only credentials — safe to commit (the write key is kept
+    // in GitHub Secrets, never in the repo or the bundle). This is a fork-owned
+    // index built from the deployed docs sitemap rather than the upstream
+    // crawler's index, whose results pointed at hermes-agent.nousresearch.com.
+    // contextualSearch is retained for parity; no locale facets are configured
+    // on the index, so it scopes nothing.
     algolia: {
-      appId: '2JLBVEYZN5',
-      apiKey: '9629ec26628d1a126535fd5ef408990d',
-      indexName: 'hermes docs',
+      appId: 'YDVWVXL0IG',
+      apiKey: '38307406d4b94753ef37eac230e08461',
+      indexName: 'nastech docs',
       contextualSearch: true,
     },
     colorMode: {
