@@ -181,7 +181,7 @@ jobs:
 
       # The stamp and boundary scripts run on the runner's python3, whose
       # version depends on the runner image. Pin it instead of trusting it.
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
 
@@ -365,7 +365,7 @@ jobs:
           fetch-depth: 0
 
       # Same python3 steps as the build job; pin it the same way.
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
 
