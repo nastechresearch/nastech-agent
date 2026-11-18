@@ -95,7 +95,7 @@ it('lets an exact payload copy through afterPack and fails a lossy one, naming e
     'missing file of 0 bytes: tools/pnpm/dist/llhttp/.gitkeep',
     'missing directory: tools/pnpm/dist/llhttp',
     'missing directory: uv-cache/builds-v0',
-    'missing file of 16 bytes: nastech-agent/run_agent.py',
+    'missing file of 17 bytes: nastech-agent/run_agent.py',
     'tools/pnpm/bin/pnpm: file of 10 bytes became file of 2 bytes',
     'unexpected file of 11 bytes: tools/stray.tmp'
   ]) {
