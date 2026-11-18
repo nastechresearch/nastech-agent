@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from agent.account_usage import build_credits_view
+from agent.account_usage_nastech import build_credits_view
 from nastech_cli.nastech_account import NastechPortalAccountInfo, NastechPaidServiceAccessInfo
 
 def _account(**kwargs) -> NastechPortalAccountInfo:

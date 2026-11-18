@@ -4,10 +4,10 @@ import pytest
 from scripts.releases import lanes as lane_set
 
 # NasTech contract: the fork publishes its desktop packages unsigned, so every lane it can
-# build is in the default set.  What stays out: macos-intel (upstream opts out; its runner
-# adds over an hour), windows-store (Partner Center needs the MS_STORE_* credentials this
-# fork has never had), and smoke and upgrade (they gate on a signed desktop channel).
-OUT_OF_DEFAULT = {"macos-intel", "windows-store", "smoke", "upgrade"}
+# build is in the default set.  What stays out: windows-store (Partner Center needs the
+# MS_STORE_* credentials this fork has never had), and smoke and upgrade (they gate on a
+# signed desktop channel).
+OUT_OF_DEFAULT = {"windows-store", "smoke", "upgrade"}
 
 
 def test_the_default_ships_every_lane_this_fork_publishes():
@@ -18,7 +18,7 @@ def test_the_default_ships_every_lane_this_fork_publishes():
 @pytest.mark.parametrize("kwargs,expected", [
     # The request that motivated lanes: only the Windows bundles and the image, no tests.
     ({"only": ["windows", "docker"]}, {"windows", "docker"}),
-    ({"with_": ["macos-intel", "termux"]}, set(lane_set.DEFAULT) | {"macos-intel"}),
+    ({"with_": ["windows-store", "termux"]}, set(lane_set.DEFAULT) | {"windows-store"}),
     ({"without": ["macos-arm64", "upgrade"]}, set(lane_set.DEFAULT) - {"macos-arm64", "upgrade"}),
     ({"only": ["windows"], "with_": ["smoke"], "without": ["windows"]}, {"smoke"}),
     ({"only": []}, set()),
@@ -117,7 +117,10 @@ def test_a_claim_without_a_lanes_revision_keeps_the_store_bundle_it_was_cut_with
 def test_a_pre_lanes_claim_reads_only_while_it_left_macos_intel_out():
     """Published pre-lanes claims carry includeMacosIntel:false; no build can honour true any more."""
     legacy = {"skipBundles": False, "skipTests": False}
-    assert lane_set.claim_lanes({**legacy, "includeMacosIntel": False}) == lane_set.DEFAULT
+    # The legacy translation is the raw everything-but-termux set; this fork's DEFAULT is
+    # narrower (no Store bundle, no unsigned-desktop smokes), so compare against the
+    # translation itself, not the default.
+    assert lane_set.claim_lanes({**legacy, "includeMacosIntel": False}) == set(lane_set.NAMES) - {"termux"}
     with pytest.raises(ValueError, match="invalid: it opts into macOS Intel.*no longer built"):
         lane_set.claim_lanes({**legacy, "includeMacosIntel": True})
 

@@ -741,7 +741,7 @@ def test_stable_receipts_bind_the_attempt_ref_while_metadata_binds_the_payload_t
     # A row stamped with the attempt ref is not the published payload.
     stage(attempt)
     with pytest.raises(ChannelError, match="identity mismatch"):
-        channel_releases.read_native_receipts(tmp_path, attempt, commit, legs, payload_tag=payload)
+        channel_releases.read_native_receipts(tmp_path, attempt, commit, payload_tag=payload)
 
 
 def termux_only(candidate: dict) -> dict:

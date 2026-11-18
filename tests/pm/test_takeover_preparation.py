@@ -21,9 +21,9 @@ def test_fresh_takeover_prepares_generation_and_runs_selected_python(tmp_path):
     source = Path(__file__).resolve().parents[2]
     root = tmp_path / "source with spaces"
     root.mkdir()
-    for name in ("pm", "nastech_cli", "nastech_agent"):
+    for name in ("pm", "nastech_cli", "nastech_agent", "utils"):
         shutil.copytree(source / name, root / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-    for name in ("nastech_constants.py", "nastech_dir_acl.py", "nastech_yaml.py", "utils.py", "nastech_bootstrap.py"):
+    for name in ("nastech_constants.py", "nastech_dir_acl.py", "nastech_yaml.py", "nastech_bootstrap.py"):
         shutil.copy2(source / name, root / name)
     home, store, wheels = (tmp_path / name for name in ("home", "tools", "wheels"))
     for directory in (home, store, wheels):

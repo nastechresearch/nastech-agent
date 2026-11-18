@@ -10,7 +10,8 @@ nastech-agent/
 ├── model_tools.py        # Tool discovery and dispatch
 ├── toolsets.py           # Toolset definitions
 ├── cli.py                # Interactive CLI (NastechCLI)
-├── nastech_state.py       # SQLite session store
+├── persistence/          # Session storage contracts; persistence/sqlite/ is the SQLite store
+├── persistence_assembly.py # open_persistence(): opens a profile's store
 ├── agent/                # Prompt builder, context compression, memory, model routing, credential pooling, skill dispatch
 ├── nastech_cli/           # CLI subcommands, config, setup, commands
 │   ├── commands.py       # Slash command registry (CommandDef)

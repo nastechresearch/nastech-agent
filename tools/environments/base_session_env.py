@@ -41,6 +41,27 @@ def _cwd_marker(session_id: str) -> str:
     return f"__NASTECH_CWD_{session_id}__"
 
 
+def _cwd_fallback_marker(session_id: str) -> str:
+    return f"__NASTECH_CWDFB_{session_id}__"
+
+
+def _cd_with_fallback(quoted_cwd: str, fallback_marker: str) -> str:
+    """The wrapper's ``cd``. A cwd removed inside the sandbox made it ``exit 126`` on every later
+    command (#62169); instead walk up to the nearest existing ancestor, then ``$HOME``, then ``/``
+    (the rule ``LocalEnvironment._usable_cwd`` applies host-side), and print where it landed so
+    ``execute`` reports it as ``cwd_fallback``. ``${d%/*}`` walks without needing ``dirname``.
+    Without *fallback_marker* (an explicit ``workdir``) a missing directory is refused."""
+    if not fallback_marker:
+        return f"builtin cd -- {quoted_cwd} || exit 126"
+    return (
+        f"builtin cd -- {quoted_cwd} 2>/dev/null || {{ __nastech_d={quoted_cwd}\n"
+        'while [ -n "$__nastech_d" ] && ! builtin cd -- "$__nastech_d" 2>/dev/null; do\n'
+        '  case $__nastech_d in /*/*|[!/]*/*) __nastech_d=${__nastech_d%/*};; /?*) __nastech_d=/;; *) __nastech_d=;; esac\n'
+        'done\n'
+        '[ -n "$__nastech_d" ] || builtin cd -- "$HOME" 2>/dev/null || builtin cd / || exit 126\n'
+        f"printf '\\n{fallback_marker}%s{fallback_marker}\\n' \"$(pwd -P)\"; }}")
+
+
 def _pipe_marker(session_id: str) -> str:
     return f"__NASTECH_PIPE_{session_id}__"
 
@@ -163,7 +184,8 @@ def _passthrough_save_restore(names: Iterable[str]) -> tuple[list[str], list[str
 def _wrap_command_script(
     command: str, *, quoted_cwd: str, quoted_snap: str, snap_tmp_template: str,
     passthrough_names: Iterable[str], snapshot_ready: bool, cwd_marker: str,
-    pipe_marker: str = "", persist_env: bool = True, seed_snaps: Iterable[str] = ()) -> str:
+    pipe_marker: str = "", persist_env: bool = True, seed_snaps: Iterable[str] = (),
+    cwd_fallback_marker: str = "") -> str:
     """Per-command bash script: source snapshot, cd, run, re-dump env, emit CWD marker.
     ``persist_env=False`` skips the re-dump, so every command starts from the login-time
     snapshot and exports from one command never reach the next (the CWD marker still runs).
@@ -194,7 +216,7 @@ def _wrap_command_script(
         'export AI_AGENT="${AI_AGENT:-nastech-agent}" NASTECH_AGENT="${NASTECH_AGENT:-true}"',
         'export GIT_PAGER="${GIT_PAGER:-cat}" PAGER="${PAGER:-cat}"',
         # ``--`` keeps hyphen-prefixed directory names from being parsed as options.
-        f"builtin cd -- {quoted_cwd} || exit 126",
+        _cd_with_fallback(quoted_cwd, cwd_fallback_marker),
         _eval_capturing_pipestatus(escaped) if capture else f"eval '{escaped}'",
         "__nastech_ec=$?",
         "umask 077"]

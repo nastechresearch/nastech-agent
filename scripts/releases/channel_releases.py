@@ -21,6 +21,7 @@ from nastech_cli.release_channels import (
 )
 from scripts.bundles.channel_artifacts import assemble
 from scripts.releases import handoff, lanes as lane_set, r2, stable
+from scripts.releases.desktop_targets import MANIFEST_PLATFORM, MANIFEST_TARGETS, NATIVE_LEGS, TARGETS
 from scripts.releases.channels import ChannelPublisher, write_immutable_feeds
 from scripts.releases.progress import log
 from scripts.releases.r2_scope import channel_public_base

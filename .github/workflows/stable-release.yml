@@ -187,30 +187,6 @@ jobs:
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
       skip-signed: true
 
-  candidates-darwin-x64:
-    name: Build signed release candidates (darwin-x64)
-    needs: admit
-    # Starts with the gates; the acceptance join is what requires CI.
-    # macOS Intel is off by default: unsupported on main, and its macos-15-intel
-    # runner adds over an hour to the release.
-    if: >-
-      !cancelled() && needs.admit.result == 'success' && fromJSON(needs.admit.outputs.jobs)['candidates-darwin-x64']
-    permissions:
-      contents: write
-      actions: read
-      packages: write
-      id-token: write
-    uses: ./.github/workflows/desktop-bundled-release.yml
-    secrets: inherit
-    with:
-      tag: ${{ needs.admit.outputs.tag }}
-      claim-tag: ${{ needs.admit.outputs.claim-tag }}
-      claim-object: ${{ needs.admit.outputs.claim-object }}
-      release-phase: candidate
-      jobs: darwin-x64
-      skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
-      skip-signed: true
-
   candidates-win32-arm64:
     name: Build signed release candidates (win32-arm64)
     needs: admit

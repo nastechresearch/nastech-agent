@@ -66,9 +66,9 @@ def test_current_installer_publishes_real_dependencies_and_warm_path(tmp_path, s
     run([uv, "python", "install", "--no-bin", "--no-registry", minor])
     source = tmp_path / "fixture source"
     source.mkdir()
-    for name in ("pm", "nastech_cli", "nastech_platform", "nastech_agent"):
+    for name in ("pm", "nastech_cli", "nastech_platform", "nastech_agent", "utils"):
         shutil.copytree(ROOT / name, source / name, ignore=shutil.ignore_patterns("__pycache__"))
-    for name in ("utils.py", "nastech_constants.py", "nastech_dir_acl.py", "nastech_yaml.py", "nastech_bootstrap.py",
+    for name in ("nastech_constants.py", "nastech_dir_acl.py", "nastech_yaml.py", "nastech_bootstrap.py",
                  "setup-nastech.sh"):
         shutil.copy2(ROOT / name, source / name)
     # The CLI's user-facing text resolves through the i18n kernel (agent.i18n + the English catalog),

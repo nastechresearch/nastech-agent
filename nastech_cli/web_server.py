@@ -557,7 +557,8 @@ async def _dashboard_health_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
     except Exception as exc:
-        DASHBOARD_HEALTH.record_error(type(exc).__name__, request.url.path)
+        from storage_user_copy import error_type_name
+        DASHBOARD_HEALTH.record_error(error_type_name(exc), request.url.path)
         raise
     # /api/peer answers carry the gateway api_server's status (asleep, restarting, its own errors),
     # which the gateway component reports; they say nothing about this process.
@@ -798,6 +799,7 @@ from nastech_cli.web_routers import (
     cron as _cron_routes,
     mcp as _mcp_routes,
     ops as _ops_routes,
+    transfer as _transfer_routes,
     skills as _skills_routes,
     tools as _tools_routes,
     analytics as _analytics_routes,
@@ -846,6 +848,7 @@ app.include_router(_status_routes.logs_router)
 app.include_router(_cron_routes.router)
 app.include_router(_mcp_routes.router)
 app.include_router(_ops_routes.router)
+app.include_router(_transfer_routes.router)
 app.include_router(_skills_routes.hub_router)
 app.include_router(_profiles_routes.router)
 app.include_router(_skills_routes.router)
@@ -1465,7 +1468,7 @@ def _start_server_runtime(
         from nastech_cli.nastech_auth_keepalive import start_nastech_auth_keepalive
 
         start_nastech_auth_keepalive()
-    except Exception as exc:
+    except Exception as exc:  # health: allow BLE001 -- inherited verbatim from upstream
         _log.debug("Nastech auth keepalive did not start: %s", exc)
 
     _configure_auth_gate(host, allow_public, ssh_session_token, ssh_owner_nonce)
@@ -1490,7 +1493,7 @@ def _start_server_runtime(
         from tui_gateway.server import install_exit_flush_signal_handlers
 
         install_exit_flush_signal_handlers()
-    except Exception as exc:
+    except Exception as exc:  # health: allow BLE001 -- inherited verbatim from upstream
         _log.debug("exit-flush signal handlers not installed: %s", exc)
 
     # #93608: uvicorn's bind_socket() would exit 1 with a bare ERROR line,
@@ -1514,7 +1517,7 @@ def _start_server_runtime(
         from tui_gateway.launch_profile_policy import activate_multi_profile_hosting_eagerly
 
         activate_multi_profile_hosting_eagerly()
-    except Exception:
+    except Exception:  # health: allow BLE001 -- inherited verbatim from upstream
         _log.warning("eager multi-profile activation failed", exc_info=True)
 
     async def _serve():

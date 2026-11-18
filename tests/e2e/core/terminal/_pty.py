@@ -127,7 +127,11 @@ class PtyNastech:
         assert operator not in (self.nastech_home.resolve(), *self.nastech_home.resolve().parents), (
             f"sandbox {self.nastech_home} sits inside the operator's Nastech home")
         if llm is not None:
-            write_nastech_home(self.nastech_home, llm.base_url, extra_config=extra_config)
+            # No passive update check (the tui_pty sandbox's rule): on an official checkout the
+            # CLI and its attached gateway both resolve the stable release against real GitHub,
+            # and the gateway, which outlives /exit, is mid `git ls-remote` whenever GitHub is slow.
+            write_nastech_home(self.nastech_home, llm.base_url,
+                              extra_config="updates:\n  check: false\n" + extra_config)
         self.llm = llm
         self.screen = Screen(rows, cols)
         self.raw = bytearray()

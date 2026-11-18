@@ -1253,7 +1253,7 @@ jobs:
           RELEASE_PHASE: ${{ inputs.release-phase }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.sha }}
           SKIP_SIGNED: ${{ inputs.skip-signed }}
-        # Per-arch feed inputs stay in the tag archive until both legs pass.
+        # The feed input stays in the tag archive until the leg and its smoke pass.
         run: |
           args=(--include '*.dmg' --include '*.zip' --include '*.blockmap' --include '*-mac.yml')
           # The recorder reads the Developer ID signature an unsigned build cannot
@@ -1377,42 +1377,6 @@ jobs:
           cache-python: false
       - id: receipt
         run: python -m scripts.releases.stable stage-receipt --receipt darwin-arm64
-
-  stage-receipt-darwin-x64:
-    name: Stage the darwin-x64 stable receipt
-    needs: [validate, build-darwin-x64]
-    if: >-
-      !cancelled() && inputs.release-phase == 'candidate'
-      && inputs.skip-signed != true
-      && needs.validate.result == 'success' && needs.validate.outputs.sha != ''
-      && needs.validate.outputs.darwin-x64 == 'true'
-      && needs.build-darwin-x64.result == 'success'
-    runs-on: ubuntu-latest
-    environment: release-signing
-    timeout-minutes: 15
-    outputs:
-      receipt-url: ${{ steps.receipt.outputs.receipt-url }}
-      receipt-sha256: ${{ steps.receipt.outputs.receipt-sha256 }}
-    env:
-      RELEASE_TAG: ${{ inputs.tag }}
-      CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
-      CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-      CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
-      CLOUDFLARE_R2_PUBLIC_URL: ${{ needs.validate.outputs.public-root }}
-    steps:
-      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
-        with:
-          ref: ${{ needs.validate.outputs.sha }}
-          # Claim custody is re-checked in place: full history and the tags.
-          fetch-depth: 0
-          filter: blob:none
-          fetch-tags: true
-      - uses: ./.github/actions/setup-pm
-        with:
-          cache-python: false
-      - id: receipt
-        run: python -m scripts.releases.stable stage-receipt --receipt darwin-x64
 
   smoke-darwin-arm64:
     name: Smoke macOS arm64 dmg/zip
@@ -1855,7 +1819,7 @@ jobs:
   # publish in parallel by design (distinct feed files).
   publish-darwin-updater:
     name: Publish the macOS updater feed
-    needs: [validate, build-darwin-arm64, build-darwin-x64, smoke-darwin-arm64, smoke-darwin-x64]
+    needs: [validate, build-darwin-arm64, smoke-darwin-arm64]
     # The feed is what every installed app auto-updates from, so it may point at
     # signed bytes only. The Windows publisher gets this from its smoke gates,
     # which an unsigned MSIX cannot install; a dmg runs unsigned, so the guard
@@ -1864,7 +1828,7 @@ jobs:
       !cancelled() && inputs.build_commit == '' && inputs.channel == '' && inputs.upload_release == true
       && inputs.release-phase == ''
       && inputs.skip-signed != true
-      && needs.validate.outputs.darwin-arm64 == 'true' && needs.validate.outputs.darwin-x64 == 'true'
+      && needs.validate.outputs.darwin-arm64 == 'true'
       && needs.validate.result == 'success' && needs.validate.outputs.sha != ''
       && needs.build-darwin-arm64.result == 'success'
       && needs.smoke-darwin-arm64.result == 'success'
@@ -1958,10 +1922,9 @@ jobs:
         id: pm
         uses: ./.github/actions/setup-pm
         with:
-          # scripts/termux/build.py builds the TUI with a bare `node`, and every
-          # workspace pins engines >=26 while this image ships 22: install the
-          # locked Node beside Python or node-deps.mjs refuses the run.
-          toolchain: all
+          toolchain: python
+          # scripts/termux/build.py installs and builds the TUI on this host with pnpm.
+          packages: pnpm
           archive-inputs: true
           cache-python: false
 

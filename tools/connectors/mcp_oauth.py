@@ -326,7 +326,7 @@ def start(
     cfg["auth"] = "oauth"
     nastech_home = str(get_nastech_home().expanduser().resolve(strict=False))
     flow = DashboardOAuthFlow(
-        flow_id=secrets.token_urlsafe(24), server_name=server_name, profile=None,
+        flow_id=secrets.token_urlsafe(24), server_name=server_name,
         nastech_home=nastech_home, redirect_uri="", reconnect_live=False)
     with _COMMIT_GUARD:
         older = _ACTIVE.get((nastech_home, server_name))

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import sys
 
-from pm.environment import BuildFailure, ResolutionConflict  # noqa: TID251
+from pm.environment import BuildFailure, ResolutionConflict
 
 # Verdicts about the build. A fetch or tooling failure is the moment, not the extra.
 BUILD_VERDICTS = (ResolutionConflict, BuildFailure)

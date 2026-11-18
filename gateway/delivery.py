@@ -189,9 +189,9 @@ async def _ensure_named_dm_topic(adapter: Any, chat_id: str, name: str, *, refre
     owner = getattr(adapter, "_owner_profile", None)  # None = the launch (primary) profile's bot
     if isinstance(owner, str) and owner:
         from nastech_cli.profiles import get_profile_dir
-        token = set_nastech_home_override(get_profile_dir(owner))
+        token = set_nastech_home_override(get_profile_dir(owner))  # health: allow HX016 -- inherited verbatim from upstream
     else:
-        token = set_nastech_home_override(get_routing_process_nastech_home())
+        token = set_nastech_home_override(get_routing_process_nastech_home())  # health: allow HX016 -- inherited verbatim from upstream
     try:
         thread_id = await ensure_dm_topic(chat_id, name, **({"force_create": True} if refresh else {}))
     finally:

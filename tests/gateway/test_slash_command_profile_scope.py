@@ -4,7 +4,7 @@ The multiplexed inbound handler wraps the whole message in
 ``_profile_runtime_scope``, which installs the routed profile's ``NASTECH_HOME``
 override and its secret scope as **contextvars**. A bare
 ``loop.run_in_executor(None, ...)`` starts the worker with an EMPTY context, so
-``SessionDB()`` / ``get_nastech_home()`` inside the worker resolve the LAUNCH
+a store opened / ``get_nastech_home()`` called inside the worker resolve the LAUNCH
 home — /insights reported the default profile's conversations from another
 profile's chat. ``/compress`` already routes through
 ``_run_in_executor_with_context``; every other hop in the mixin must too.
@@ -61,21 +61,23 @@ async def test_insights_opens_session_db_under_the_routed_home(
     runner, profile_home, monkeypatch
 ):
     import agent.insights as insights_mod
-    import nastech_state
+    import persistence_assembly
     from gateway.run import _profile_runtime_scope
     from nastech_constants import get_nastech_home
 
     seen: dict = {}
 
-    class _RecordingDB:
-        def __init__(self, *a, **kw):
-            seen["home"] = str(get_nastech_home())
-
+    class _RecordingStore:
         def close(self):
             pass
 
+    def _open(scope, *, eager=False):
+        seen["home"] = str(get_nastech_home())
+        seen["store"] = scope.profile_dir
+        return _RecordingStore()
+
     class _Engine:
-        def __init__(self, db):
+        def __init__(self, db, *, persistence=None):
             pass
 
         def generate(self, **kw):
@@ -84,7 +86,7 @@ async def test_insights_opens_session_db_under_the_routed_home(
         def format_gateway(self, report):
             return "ok"
 
-    monkeypatch.setattr(nastech_state, "SessionDB", _RecordingDB)
+    monkeypatch.setattr(persistence_assembly, "open_persistence", _open)
     monkeypatch.setattr(insights_mod, "InsightsEngine", _Engine)
 
     with _profile_runtime_scope(profile_home):
@@ -92,3 +94,4 @@ async def test_insights_opens_session_db_under_the_routed_home(
 
     assert result == "ok"
     assert seen["home"] == str(profile_home)
+    assert seen["store"] == profile_home.resolve()

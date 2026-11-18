@@ -290,7 +290,7 @@ def test_finalize_publishes_the_feed_pointer_without_any_r2_configuration(releas
     # planned, so a reader sees the feed it would have read out of the bucket.
     assert published == merge_mac_feeds(legs, "v0.28.0")["text"]
     feed = parse_mac_feed(published)
-    assert len(feed["files"]) == 2
+    assert len(feed["files"]) == len(darwin.ARCHES)
     assert all(entry["url"].startswith("/releases/tag/v0.28.0/") for entry in feed["files"])
 
 

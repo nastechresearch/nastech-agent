@@ -7,7 +7,7 @@ import time
 from types import SimpleNamespace
 
 from nastech_constants import reset_nastech_home_override, set_nastech_home_override
-from tools.checkpoint_manager import CheckpointManager
+from agent.checkpoints.manager import CheckpointManager
 from tui_gateway import server
 
 

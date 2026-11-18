@@ -44,19 +44,17 @@ def test_run_backup_prunes_older_default_named_zips_but_not_others(tmp_path, mon
 def test_import_restores_the_session_store_with_its_message_uids(tmp_path, monkeypatch):
     """A backup ships state.db as a SQLite snapshot and an import puts it back byte-for-byte: the durable
     message ids come back with the rows."""
-    from nastech_state import SessionDB
+    from persistence_assembly import open_persistence, profile_scope
+    from tests.fixtures.storage_read import conversation
+    from tests.fixtures.storage_seed import seed_messages, seed_session
 
     nastech_home = tmp_path / ".nastech"
     nastech_home.mkdir()
     _make_nastech_tree(nastech_home)
-    db = SessionDB(db_path=nastech_home / "state.db")
-    try:
-        db.create_session("s", "cli", model="m")
-        db.append_message(session_id="s", role="user", content="q")
-        db.append_message(session_id="s", role="assistant", content="a")
-        uids = [m["message_uid"] for m in db.get_messages_as_conversation("s")]
-    finally:
-        db.close()
+    with open_persistence(profile_scope(home=nastech_home)) as store:
+        seed_session(store, "s", "cli", model="m")
+        seed_messages(store, "s", {"role": "user", "content": "q"}, {"role": "assistant", "content": "a"})
+        uids = [m["message_uid"] for m in conversation(store, "s")]
     assert len(uids) == 2 and all(len(u) == 32 for u in uids)
 
     monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
@@ -69,8 +67,5 @@ def test_import_restores_the_session_store_with_its_message_uids(tmp_path, monke
         (nastech_home / name).unlink(missing_ok=True)
     assert run_import(Namespace(zipfile=str(out_zip), force=True)) is None
 
-    restored = SessionDB(db_path=nastech_home / "state.db")
-    try:
-        assert [m["message_uid"] for m in restored.get_messages_as_conversation("s")] == uids
-    finally:
-        restored.close()
+    with open_persistence(profile_scope(home=nastech_home)) as restored:
+        assert [m["message_uid"] for m in conversation(restored, "s")] == uids

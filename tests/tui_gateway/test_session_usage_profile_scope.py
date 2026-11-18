@@ -62,7 +62,9 @@ def test_session_usage_fetches_credits_in_the_sessions_profile_scope(two_homes, 
         calls.append((_nastech_portal_env_override(), Path(get_nastech_home()).resolve(), token))
         raise RuntimeError("no network in tests")  # fail-open: session.usage still answers
 
+    # Both Portal reads: a session off a Nastech route (this empty config) reads with the stored token only.
     monkeypatch.setattr("nastech_cli.nastech_account.get_nastech_portal_account_info", fake_account_info)
+    monkeypatch.setattr("nastech_cli.nastech_account.stored_token_account_info", fake_account_info)
     monkeypatch.setattr(server, "_sessions", {"sa": _session(None), "sb": _session(str(b))})
 
     for sid in ("sa", "sb"):

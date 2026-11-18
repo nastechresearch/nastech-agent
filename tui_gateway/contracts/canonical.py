@@ -84,7 +84,7 @@ canonical_method("prompt.resolve_unknown", params=PromptResolveUnknownParams, re
 
 
 class SessionMutateParams(Params):
-    """``operation`` + ``payload`` are validated by ``nastech_state_mutations.validate_action``;
+    """``operation`` + ``payload`` are validated by ``persistence.authority.runtime.parse_mutation``;
     ``expected_generation`` is required for delete/rewind/reset/branch/model/compress/reasoning/workspace.
     ``reasoning`` (``{effort}``) and ``workspace`` (``{cwd}``, refused ``session_busy`` mid-turn) rewrite
     the session's frozen policy: session-scope ``/reasoning`` and Desktop's Move to project. ``edit_policy``
@@ -114,7 +114,7 @@ canonical_method("session.mutate", params=SessionMutateParams, result=SessionMut
 
 
 class SessionPruneParams(Params):
-    """Exactly one of ``filters`` (``SessionDB.prune_sessions`` keyword filters, as
+    """Exactly one of ``filters`` (``older_than_days``, ``source`` and ``PruneCriteria`` fields, as
     ``nastech sessions prune`` builds them) or ``never_active_days`` (``--never-active``)."""
 
     filters: dict[str, JsonValue] | None = None
@@ -258,6 +258,51 @@ class SessionStats(Result):
 
 canonical_method("session.stats", params=SessionStatsParams, result=SessionStats,
                  doc="The session.usage dict on demand: what main's classic CLI read off its agent.")
+
+
+class SessionAccountUsageParams(Params):
+    session_id: str
+
+
+class NastechUsageBar(Result):
+    """``agent.billing_usage.UsageBar``: one dollar bar (``topup`` has no cap, so total == remaining)."""
+
+    kind: Literal["plan", "topup"]
+    remaining_usd: float
+    total_usd: float
+    spent_usd: float = 0.0
+
+
+class NastechUsageDollars(Result):
+    """``agent.billing_usage.UsageModel`` in numbers: the classic CLI's two-bar Nastech balance block."""
+
+    available: bool
+    status: str = "free"
+    plan_name: str | None = None
+    renews_at: str | None = None
+    renews_display: str | None = None
+    subscription_remaining_usd: float | None = None
+    topup_remaining_usd: float | None = None
+    total_spendable_usd: float | None = None
+    plan_bar: NastechUsageBar | None = None
+    topup_bar: NastechUsageBar | None = None
+
+
+class SessionAccountUsage(Result):
+    """``gateway/session_usage.py::account_usage``: the account blocks of ``/usage``. ``lines``: the
+    route's provider plan limits. ``nastech_lines``: the Nastech balance whenever Nastech is signed in on the
+    profile, after them (headed as a separate account off a Nastech route). ``nastech_route``: the route is
+    Nastech inference, so the ``/topup`` CTA applies. ``nastech_usage``: on a Nastech route, the same account
+    read's dollar model, so the CLI draws its two bars without reading the account again."""
+
+    lines: list[str]
+    nastech_lines: list[str] = []
+    nastech_route: bool
+    nastech_usage: NastechUsageDollars | None = None
+
+
+canonical_method("session.account_usage", params=SessionAccountUsageParams, result=SessionAccountUsage,
+                 doc="The /usage account blocks for this session's route: provider plan limits, then the Nastech balance.")
 
 
 class RollbackSessionDiffParams(Params):

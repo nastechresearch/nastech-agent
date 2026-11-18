@@ -35,9 +35,6 @@ def make_scenario(provider, tmp_path, monkeypatch):
         # state.db live-system guard treats $HOME/.nastech as production.
         nastech_home = tmp_path / name
         monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
-        import nastech_state
-
-        monkeypatch.setattr(nastech_state, "DEFAULT_DB_PATH", nastech_home / "state.db")
         slow = mode == "slow"
         if slow:
             # The compression request timeout has a 300 s production floor; pin it (and the host idle

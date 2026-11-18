@@ -40,7 +40,7 @@ def refresh_launch_files() -> None:
         return
     for profile, home in homes:
         for kind, refresh in refreshers:
-            token = set_nastech_home_override(home)
+            token = set_nastech_home_override(home)  # health: allow HX016 -- inherited verbatim from upstream
             try:
                 if _owned_by_this_checkout(kind):
                     refresh()

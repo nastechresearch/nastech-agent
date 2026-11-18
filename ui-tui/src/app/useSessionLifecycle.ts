@@ -685,7 +685,7 @@ export function useSessionLifecycle(opts: UseSessionLifecycleOptions) {
 
       // The legacy transport builds the resumed agent from the profile's config. On the shared gateway
       // the stored session's frozen policy carries its own route, so only a failed resume asks.
-      return rpc<SetupStatusResponse>('setup.status', {})
+      return (gw.isCanonical ? Promise.resolve(null) : rpc<SetupStatusResponse>('setup.status', {}))
         .then(setup => {
           if (flight !== attachmentFlight.current) {
             return

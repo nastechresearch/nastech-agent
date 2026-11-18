@@ -649,16 +649,6 @@ If an MCP server crashes mid-request, Nastech will report a timeout. Check the s
 
 ---
 
-### Skills Issues
-
-#### The Skills Hub page won't load in the desktop app (403 / blocked)
-
-**Cause:** The docs site (`nastechresearch.github.io/nastech-agent`) is served through Vercel, whose WAF denies some residential IP ranges it considers flagged. If your network is on such a range, every request to the domain returns a 403 block page.
-
-**Solution:** The Skills Hub picker probes the primary domain and automatically falls back to the equivalent GitHub Pages deployment (`nastechresearch.github.io/nastech-agent`), which serves the same catalog. If the page still fails on both origins, check whether a proxy, DNS filter, or firewall is blocking both hosts — and report the affected range to the maintainers so it can be reviewed on the deployment side.
-
----
-
 ## Profiles
 
 ### How do profiles differ from just setting NASTECH_HOME?

@@ -258,3 +258,82 @@ def test_cli_command_default_when_no_override(monkeypatch, acme_acp):
     from nastech_cli.web_server_oauth import _external_process_cli_command
 
     assert _external_process_cli_command("acme-acp", "acme login") == "acme login"
+
+
+def _fake_external_process_plugin(monkeypatch, provider_id="fake-agy"):
+    """Register a plugin external-process provider (command ``agy``) in the auth registry."""
+    from nastech_cli import auth as auth_mod
+
+    monkeypatch.setitem(
+        auth_mod.PROVIDER_REGISTRY, provider_id,
+        auth_mod.ProviderConfig(provider_id, "Fake AGY", "external_process"))
+    monkeypatch.setattr(
+        auth_mod, "get_external_process_provider_status",
+        lambda pid: {"configured": True, "provider": pid, "command": "agy",
+                     "resolved_command": "/usr/local/bin/agy"})
+    from nastech_cli import auth_plugin_providers as ap
+
+    profile = ProviderProfile(name=provider_id, auth_type="external_process", process_command="agy")
+    monkeypatch.setattr(ap, "plugin_profile", lambda provider: profile if provider == provider_id else None)
+    return provider_id
+
+
+def test_cli_command_never_swaps_cli_into_nastech_template(monkeypatch):
+    """A handler-less external-process plugin never renders ``agy auth add <slug>``: that is a
+    Nastech command template with another CLI's executable pasted on top — neither side can run
+    it. The dialog must point at the provider CLI instead (#136071)."""
+    from nastech_cli.web_server_oauth import _external_process_cli_command
+
+    provider_id = _fake_external_process_plugin(monkeypatch)
+
+    rendered = _external_process_cli_command(provider_id, f"nastech auth add {provider_id}")
+
+    assert rendered != f"agy auth add {provider_id}"
+    assert "auth add" not in rendered
+
+
+def test_cli_command_for_handlerless_plugin_is_runnable(monkeypatch):
+    """The dialog shows the command with a ``$`` and a Copy button, so it must be one a shell runs:
+    with no login command from the plugin, the same re-login every other surface gives, not a comment line."""
+    from agent.turn_failure_copy import oauth_relogin_command
+    from nastech_cli.web_server_oauth import _external_process_cli_command
+
+    provider_id = _fake_external_process_plugin(monkeypatch)
+
+    rendered = _external_process_cli_command(provider_id, f"nastech auth add {provider_id}")
+
+    assert not rendered.startswith("#")
+    assert rendered == oauth_relogin_command(provider_id)
+
+
+@pytest.mark.platforms("posix")
+def test_cli_command_is_the_plugins_own_login_when_it_declares_one(monkeypatch, tmp_path):
+    """A plugin that declares its CLI's login (``login_args``) gets exactly that command: signing in
+    must not run ``nastech model``, which also makes the provider the default."""
+    from nastech_cli.web_server_oauth import _external_process_cli_command
+
+    provider_id = _fake_external_process_plugin(monkeypatch)
+    from nastech_cli import auth_plugin_providers as ap
+
+    exe = tmp_path / "agy tools" / "agy"
+    exe.parent.mkdir()
+    exe.write_text("#!/bin/sh\n", encoding="utf-8")
+    exe.chmod(0o755)
+    profile = ProviderProfile(name=provider_id, auth_type="external_process", process_command=str(exe),
+                              login_args=("auth", "login"))
+    monkeypatch.setattr(ap, "plugin_profile", lambda provider: profile if provider == provider_id else None)
+
+    assert _external_process_cli_command(provider_id, f"nastech auth add {provider_id}") == f"'{exe}' auth login"
+
+
+def test_cli_command_keeps_nastech_template_when_plugin_owns_auth(monkeypatch):
+    """With an ``auth_handler`` the plugin really answers ``nastech auth add``; the executable
+    must NOT be swapped into Nastech' own command."""
+    from nastech_cli import auth_plugin_providers as ap
+    from nastech_cli.web_server_oauth import _external_process_cli_command
+
+    provider_id = _fake_external_process_plugin(monkeypatch)
+    monkeypatch.setattr(ap, "plugin_auth_handler", lambda provider: lambda action, args: True)
+
+    assert _external_process_cli_command(provider_id, f"nastech auth add {provider_id}") == \
+        f"nastech auth add {provider_id}"

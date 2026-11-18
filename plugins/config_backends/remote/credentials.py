@@ -98,7 +98,7 @@ def _bind_owner_secret_scope(home: Path):
     if not is_multiplex_active():
         return None  # single-profile: get_secret reads the process env, which is this profile's
     from tui_gateway.launch_profile_policy import owner_secret_scope
-    return set_secret_scope(owner_secret_scope(home), profile_home=str(home))
+    return set_secret_scope(owner_secret_scope(home), profile_home=str(home))  # health: allow HX016 -- inherited verbatim from upstream
 
 
 def _idp_token() -> str:

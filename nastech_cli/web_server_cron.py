@@ -103,9 +103,9 @@ def _validate_dashboard_cron_security(
     must not vouch for an endpoint that would receive another profile's key.
     """
     from nastech_cli.web_server_profiles import _config_profile_scope
-    from tools.cronjob_job_args import (
+    from cron.job_args import (
         _normalize_deliver_param, _validate_bot_chat_deliver, _validate_cron_base_url)
-    from tools.cronjob_prompt_scan import _scan_cron_prompt
+    from cron.prompt_scan import _scan_cron_prompt
 
     def _touched(key: str) -> bool:
         return updates is None or key in updates
@@ -428,7 +428,7 @@ def _listener_api_server_extra(listener_home: Path) -> dict:
         # Profile-scoped read through the CANONICAL loader (managed-scope overlay, ${ENV_VAR}
         # expansion) — never a raw yaml.safe_load (tests/nastech_cli/test_config_read_guard.py).
         from nastech_constants import reset_nastech_home_override, set_nastech_home_override
-        token = set_nastech_home_override(str(listener_home))
+        token = set_nastech_home_override(str(listener_home))  # health: allow HX016 -- inherited verbatim from upstream
         try:
             profile_cfg = load_config()
         finally:

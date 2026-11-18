@@ -540,10 +540,7 @@ def test_goal_draft_uses_session_profile_without_blocking_rpc_reader(
 ):
     from nastech_cli import goals
     from nastech_constants import get_nastech_home
-    import nastech_state
 
-    # Restore call-time profile resolution; conftest pins this constant to one DB.
-    monkeypatch.setattr(nastech_state, "DEFAULT_DB_PATH", nastech_state._IMPORT_DEFAULT_DB_PATH)
     sid, key, record = session
     secondary = tmp_path / "secondary"
     secondary.mkdir()

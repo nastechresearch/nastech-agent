@@ -347,6 +347,8 @@ export interface SessionUsageResponse {
   credits_usage_window?: boolean
   input?: number
   model?: string
+  // The route is Nastech inference: the /topup CTA applies (the balance shows whenever Nastech is signed in).
+  nastech_route?: boolean
   output?: number
   total?: number
   // Shared dollar usage model (two-bar view) so /usage renders the same bars

@@ -186,13 +186,13 @@ def test_live_cache_write_never_truncates_the_previous_copy(tmp_path, monkeypatc
     cache = _fresh_cache(tmp_path, monkeypatch, {"entries": [_entry("previous")], "removed": []})
     previous = cache.read_text()
 
-    import utils
+    import utils.files
     _serve(monkeypatch, {"entries": [_entry("fresh")], "removed": []})
 
     def _dies(*_a, **_k):
         raise OSError("disk full")
 
-    monkeypatch.setattr(utils, "atomic_replace", _dies)
+    monkeypatch.setattr(utils.files, "atomic_replace", _dies)
     pc.fetch_live_catalog(force=True)  # the failed write is swallowed like any other fetch failure
     assert cache.read_text() == previous
     assert not list(cache.parent.glob("*.tmp*"))  # no leftover temp file either
@@ -360,7 +360,14 @@ def _redirecting_to(target: str, doc: dict):
     import httpx
 
     def handler(request):
-        if request.url.host == "nastechresearch.github.io/nastech-agent":
+        # The branded catalog is served straight off GitHub Pages: the final
+        # hop answers 200 when the request is the redirect target itself, and
+        # the bare Pages host 301s everything else onto it (a compound host
+        # plus path never equals an httpx hostname, so the old spelling
+        # always fell through to the 200 branch).
+        if str(request.url) == target:
+            return httpx.Response(200, json=doc)
+        if request.url.host == "nastechresearch.github.io":
             return httpx.Response(301, headers={"location": target})
         return httpx.Response(200, json=doc)
     return handler
@@ -384,7 +391,9 @@ def test_the_docs_host_redirect_to_github_pages_is_followed(tmp_path, monkeypatc
     """The published doc really lives behind a 301 to GitHub Pages; that hop must keep working."""
     cache = _fresh_cache(tmp_path, monkeypatch, {"entries": [], "removed": []})
     cache.unlink()
-    monkeypatch.setattr(pc, "LIVE_CATALOG_URL", "https://nastechresearch.github.io/nastech-agent/docs/api/plugin-catalog.json")
+    # The redirect source must differ from the target: the hop starts on
+    # the bare Pages host and lands on the full docs URL.
+    monkeypatch.setattr(pc, "LIVE_CATALOG_URL", "https://nastechresearch.github.io/docs/api/plugin-catalog.json")
     pages = "https://nastechresearch.github.io/nastech-agent/docs/api/plugin-catalog.json"
     _serve_with(monkeypatch, _redirecting_to(pages, {"entries": [_entry("published")], "removed": []}))
     assert [e["name"] for e in pc.fetch_live_catalog(force=True)["entries"]] == ["published"]

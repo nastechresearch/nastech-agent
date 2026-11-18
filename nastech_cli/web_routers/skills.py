@@ -29,7 +29,7 @@ load_config = late("load_config", "nastech_cli.config")
 # Labels per hub source id (matches `nastech skills search` provenance); keep in
 # sync with create_source_router()'s source list.
 _SKILL_HUB_SOURCE_LABELS = {
-    "official": "Official (Nastech)",
+    "official": "Official catalog",
     "nastech-index": "Nastech Index",
     "skills-sh": "skills.sh",
     "well-known": "Well-Known",

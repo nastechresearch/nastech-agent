@@ -907,7 +907,7 @@ export default function PluginsPage() {
               {t.pluginsPage.catalogEmpty ?? "No catalog entries match."}{" "}
               <a
                 className="underline"
-                href="https://nastechresearch.github.io/nastech-agent/docs/plugins"
+                href="https://nastechresearch.github.io/nastech-agent/docs/user-guide/features/plugin-catalog"
                 target="_blank"
                 rel="noreferrer"
               >

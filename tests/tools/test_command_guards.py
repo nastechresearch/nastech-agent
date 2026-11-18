@@ -28,7 +28,6 @@ def _mode_manual(monkeypatch):
 def _clean_state():
     """Clear approval state and relevant env vars between tests."""
     approval_module._session_approved.clear()
-    approval_module._pending.clear()
     approval_module._permanent_approved.clear()
     saved = {}
     for k in ("NASTECH_INTERACTIVE", "NASTECH_GATEWAY_SESSION", "NASTECH_EXEC_ASK", "NASTECH_YOLO_MODE"):
@@ -36,7 +35,6 @@ def _clean_state():
             saved[k] = os.environ.pop(k)
     yield
     approval_module._session_approved.clear()
-    approval_module._pending.clear()
     approval_module._permanent_approved.clear()
     for k, v in saved.items():
         os.environ[k] = v

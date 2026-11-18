@@ -52,8 +52,9 @@ from nastech_agent.compat.paths import current_path, original_path
 MARKER = "detached-spawn: ok"
 # The helper itself: the one place a detached spawn is the point.
 HELPER_FILES = {"nastech_cli/process_identity.py"}
-SCAN_TREES = ("agent", "cron", "gateway", "nastech_cli", "plugins", "tools", "tui_gateway", "acp_adapter", "pm")
-SCAN_ROOT_FILES = ("cli.py", "run_agent.py", "nastech_state.py", "utils.py", "nastech_constants.py")
+SCAN_TREES = ("agent", "cron", "gateway", "nastech_cli", "plugins", "tools", "tui_gateway", "acp_adapter", "pm", "utils",
+              "persistence")
+SCAN_ROOT_FILES = ("cli.py", "run_agent.py", "nastech_constants.py")
 SKIP_PARTS = {"tests", "__pycache__", "evals", "node_modules"}
 _DETACH_OS_ATTRS = {"setsid", "setpgid", "setpgrp"}
 # Helpers that return detaching Popen kwargs (``start_new_session=True`` on POSIX).

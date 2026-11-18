@@ -34,7 +34,7 @@ def _standalone_send(
     ``t.standalone_in_flight``: the dispatch shield keeps a timed-out send un-cancelled, so the
     payload may STILL be delivered and the caller must not queue it for redelivery (a replay
     would duplicate it)."""
-    from tools.send_message_tool import _send_to_platform
+    from gateway.outbound.send import _send_to_platform
     job = t.job
     shutdown_msg = f"delivery to {t.where} skipped — interpreter is shutting down"
 
@@ -99,14 +99,14 @@ def _standalone_send(
                     timeout=30 + send_timeout - base_timeout), None
             finally:
                 pool.shutdown(wait=False)
-        except Exception as e:
+        except Exception as e:  # health: allow BLE001 -- inherited verbatim from upstream
             if _sched._interpreter_shutting_down(e):
                 return _warned(shutdown_msg)
             # A result timeout leaves the pooled thread's send running: same in-flight ambiguity.
             if isinstance(e, TimeoutError):
                 return _in_flight(30 + send_timeout - base_timeout)
             return _failed(e)
-    except Exception as e:
+    except Exception as e:  # health: allow BLE001 -- inherited verbatim from upstream
         return _failed(e)
 
 

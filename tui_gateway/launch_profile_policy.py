@@ -20,6 +20,7 @@ from __future__ import annotations
 import contextlib
 import logging
 import os
+import sys
 import threading
 from pathlib import Path
 from typing import Dict, Iterator, Optional
@@ -28,6 +29,12 @@ logger = logging.getLogger(__name__)
 
 _lock = threading.Lock()
 _snapshot: Optional[dict[str, str]] = None
+# Per (profile home key, name): a secret-source write the frozen launch env holds — (source, value the
+# source put in the snapshot, the snapshot's value before the source's first write or None). Kept apart
+# from env_loader's ``os.environ`` write record on purpose: that record is dropped or retargeted whenever
+# ``os.environ`` diverges (another writer's value, a failed fetch, a default source displaced), while the
+# snapshot never sees those changes and must still lose the source's value when the source goes.
+_source_writes: dict[tuple[str, str], tuple[str, str, Optional[str]]] = {}
 
 
 def capture_launch_env() -> dict[str, str]:
@@ -36,11 +43,75 @@ def capture_launch_env() -> dict[str, str]:
     Called at activation, immediately before the first secondary home is registered as
     served — the last moment ambient env is provably the launch profile's.
     """
-    global _snapshot
+    global _snapshot, _source_writes
     with _lock:
         if _snapshot is None:
             _snapshot = dict(os.environ)
+            _source_writes = _source_writes_held_by(_snapshot)
         return dict(_snapshot)
+
+
+def _source_writes_held_by(snapshot: dict[str, str]) -> dict[tuple[str, str], tuple[str, str, Optional[str]]]:
+    """The secret-source writes still in ``os.environ`` at capture, which the snapshot now holds too.
+    Before activation ``os.environ`` IS the launch env, so a write's ``os.environ`` prior is the
+    snapshot's pre-write value."""
+    loader = sys.modules.get("nastech_cli.env_loader")
+    if loader is None:
+        return {}
+    return {(home, name): (source, value, prior)
+            for home, name, source, value, prior in loader._recorded_environ_writes()
+            if snapshot.get(name) == value}
+
+
+def _launch_env_captured() -> bool:
+    """For ``env_loader`` only: whether the launch env is frozen yet."""
+    with _lock:
+        return _snapshot is not None
+
+
+def _launch_env_source_writes(home: str) -> dict[str, str]:
+    """For ``env_loader`` only: name → source of every write the snapshot holds for *home*."""
+    with _lock:
+        if _snapshot is None:
+            return {}
+        return {name: rec[0] for (key, name), rec in _source_writes.items() if key == home}
+
+
+def _track_launch_env_write(home: str, name: str, source: str, published: str, prior: Optional[str],
+                            *, adopt: bool) -> None:
+    """For ``env_loader`` only: *source* published *published* for *name* into ``os.environ``.
+
+    With a record for *name*, the snapshot follows a rotation while it still holds that source's
+    last value; the record keeps the ORIGINAL pre-write value. Without one, *adopt* (activation landed
+    during this pass, after the publish) records the write when the snapshot froze it, with *prior*
+    (the pre-activation ``os.environ`` value). Any other write never reaches the snapshot."""
+    key = (home, name)
+    with _lock:
+        if _snapshot is None:
+            return
+        rec = _source_writes.get(key)
+        if rec is not None:
+            if rec[0] == source and _snapshot.get(name) == rec[1] and published != rec[1]:
+                _snapshot[name] = published
+                _source_writes[key] = (source, published, rec[2])
+        elif adopt and _snapshot.get(name) == published:
+            _source_writes[key] = (source, published, prior)
+
+
+def _revoke_launch_env_write(home: str, name: str) -> None:
+    """For ``env_loader`` only: the source behind *home*'s write of *name* is gone. While the
+    snapshot still holds the value it put there, the snapshot gets back its own pre-write value or
+    loses the name. It never receives any other value: a value another writer put in ``os.environ``
+    after activation never enters it. A value the operator set and a source merely also supplied
+    was never written (``skipped_existing``), so it is never recorded here."""
+    with _lock:
+        rec = _source_writes.pop((home, name), None)
+        if rec is None or _snapshot is None or _snapshot.get(name) != rec[1]:
+            return
+        if rec[2] is None:
+            _snapshot.pop(name, None)
+        else:
+            _snapshot[name] = rec[2]
 
 
 def activate_multi_profile_hosting() -> None:
@@ -249,14 +320,14 @@ def profile_config_scope(home: str | Path, *, launch_home: str | Path | None = N
                 # Unbind an enclosing secondary's home and terminal, or the launch secrets would
                 # pair with that profile's config. Unset resolves to the process home, which is the
                 # launch home for every caller (``launch_home`` defaults to it; the RPC passes it).
-                stack.callback(reset_nastech_home_override, set_nastech_home_override(None))
-                stack.callback(reset_secret_scope, set_secret_scope(launch_secret_scope(launch)))
-                stack.callback(reset_terminal_scope, set_terminal_scope(None))
+                stack.callback(reset_nastech_home_override, set_nastech_home_override(None))  # health: allow HX016 -- inherited verbatim from upstream
+                stack.callback(reset_secret_scope, set_secret_scope(launch_secret_scope(launch)))  # health: allow HX016 -- inherited verbatim from upstream
+                stack.callback(reset_terminal_scope, set_terminal_scope(None))  # health: allow HX016 -- inherited verbatim from upstream
         else:
             secrets = build_profile_secret_scope(home)
-            stack.callback(reset_nastech_home_override, set_nastech_home_override(str(home)))
-            stack.callback(reset_secret_scope, set_secret_scope(secrets, profile_home=str(home)))
-            stack.callback(reset_terminal_scope, install_profile_terminal_scope(home))
+            stack.callback(reset_nastech_home_override, set_nastech_home_override(str(home)))  # health: allow HX016 -- inherited verbatim from upstream
+            stack.callback(reset_secret_scope, set_secret_scope(secrets, profile_home=str(home)))  # health: allow HX016 -- inherited verbatim from upstream
+            stack.callback(reset_terminal_scope, install_profile_terminal_scope(home))  # health: allow HX016 -- inherited verbatim from upstream
         yield
 
 

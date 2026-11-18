@@ -18,12 +18,12 @@ OVERRIDE = {"model": "nastech/nastech-4", "provider": "nastech"}
 
 @pytest.fixture
 def store(tmp_path, monkeypatch):
-    import nastech_state
+    import persistence_assembly
 
-    def _raise():
+    def _raise(*_args, **_kwargs):
         raise RuntimeError("SQLite disabled in test")
 
-    monkeypatch.setattr(nastech_state, "SessionDB", _raise)
+    monkeypatch.setattr(persistence_assembly, "open_persistence", _raise)
     with patch("gateway.session.SessionStore._ensure_loaded"):
         s = SessionStore(sessions_dir=tmp_path / "sessions", config=GatewayConfig())
     s._loaded = True

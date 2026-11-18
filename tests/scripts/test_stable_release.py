@@ -32,7 +32,7 @@ DESKTOP_SIGNED = frozenset({"windows", "windows-store", "macos-arm64",
                             "pm-bundle", "windows-live", "install-e2e", "bootstrap-version"})
 # Claims cut before lanes existed are read as the pre-lanes default: every lane
 # except the two that were then opt-in (scripts/releases/lanes.py legacy path).
-LEGACY_DEFAULT = frozenset(set(lane_set.NAMES) - {"macos-intel", "termux"})
+LEGACY_DEFAULT = frozenset(set(lane_set.NAMES) - {"termux"})
 
 BASE = "https://releases.example"
 ROOT = Path(__file__).resolve().parents[2]
@@ -565,21 +565,16 @@ def test_a_claim_cut_before_lanes_existed_reads_as_the_lane_set_that_gated_the_s
 def test_a_default_claim_ships_unsigned_desktops_and_lanes_restore_them(
         tmp_path, r2_server, https_origin, monkeypatch):
     """NasTech DEFAULT builds every desktop package, unsigned: what still leaves is the
-    Intel Mac candidate and the upgrade arms, which need a signed channel to upgrade."""
+    upgrade arms, which need a signed channel to upgrade, and the inline packaging
+    gates this fork does not run."""
     from scripts.releases import stable
 
-    off = {"candidates-darwin-x64",
-           "transitions-darwin-arm64", "transitions-darwin-x64", "transitions-win32",
-           "macos-packaged-arm64", "macos-packaged-x64", "windows-packaged"}
+    off = {"transitions-darwin-arm64", "transitions-win32",
+           "macos-packaged-arm64", "windows-packaged"}
     required = ["admit", *lane_set.JOB_LANES]
     default = stable.gate_expectations(required, lane_set.DEFAULT)
     assert {name for name, result in default.items() if result == "skipped"} == off
     assert set(stable.gate_expectations(required, lane_set.NAMES).values()) == {"success"}
-    intel = stable.gate_expectations(required, lane_set.select(with_=["macos-intel"]))
-    # Termux is on in this fork's default; restoring macos-intel builds its candidate,
-    # but the upgrade-gated transition arms wait for the `upgrade` lane too.
-    assert {name for name, result in intel.items() if result == "skipped"} == \
-        off - {"candidates-darwin-x64"}
     # A lane that is off removes its jobs even when its test lane is on.
     assert stable.gate_expectations(["candidates-termux", "termux-checks"],
                                     lane_set.select(without=["termux"])) == \

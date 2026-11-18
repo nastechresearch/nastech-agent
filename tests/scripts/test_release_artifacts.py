@@ -25,11 +25,10 @@ from scripts.releases import lanes as lane_set
 
 ROOT = Path(__file__).resolve().parents[2]
 SMOKE_RESULTS = {name: {'result': 'success'} for name in (
-    'smoke-darwin-arm64', 'smoke-darwin-x64', 'smoke-win32-arm64', 'smoke-win32-x64')}
+    'smoke-darwin-arm64', 'smoke-win32-arm64', 'smoke-win32-x64')}
 # A release that builds one leg runs one smoke: the others are recorded as skipped,
 # and `accepted_smoke_results` refuses a group that names a target it never built.
 MAC_SMOKE = {'smoke-darwin-arm64': {'result': 'success'},
-             'smoke-darwin-x64': {'result': 'skipped'},
              'smoke-win32-arm64': {'result': 'skipped'},
              'smoke-win32-x64': {'result': 'skipped'}}
 RELEASE_EPOCH = 1_787_965_323

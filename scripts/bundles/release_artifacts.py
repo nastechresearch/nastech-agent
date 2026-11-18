@@ -423,10 +423,7 @@ def promote_desktop_feeds(manifest: dict, root: Path, public_base: str) -> None:
     write_appinstaller(appinstaller, identity=windows["identity"], publisher=windows["publisher"],
                        version=windows["version"], self_uri=uri, artifact_uri=windows["artifact"]["url"])
     # The merged feed points at the attempt archive; the version stays plain.
-    # macOS Intel is opt-in: without it the feed carries the arm64 leg alone.
-    arches = tuple(arch for arch in ("arm64", "x64")
-                   if any(row["platform"] == "macos" and row["arch"] == arch for row in manifest["packages"]))
-    finalize(tag=manifest["tag"], dir=root, archive=manifest["archive"], arches=arches, verify_bytes=False)
+    finalize(tag=manifest["tag"], dir=root, archive=manifest["archive"], verify_bytes=False)
     publish_pointer(manifest, public_base, "releases/win32/stable/stable.appinstaller", appinstaller)
 
 
