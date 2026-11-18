@@ -451,7 +451,7 @@ Projects built on (or reviewed by) Nastech can keep reviewer checklists inside t
 ```
 .agents/
   checks/
-    security.md        # e.g. "grep the diff for shell interpolation; check subprocess calls quote args"
+    security.md        # e.g. "search the diff for shell interpolation; check subprocess calls quote args"
     migrations.md      # e.g. "every schema change ships a backfill and a rollback note"
     public-api.md      # e.g. "exported signatures changed? flag for semver review"
 ```

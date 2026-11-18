@@ -87,11 +87,8 @@ The agent invokes the script via the terminal tool inside the cron job's agent l
 
 ## State files
 
-Every watcher writes `$NASTECH_HOME/watcher-state/<name>.json`. Inspect:
-
-```bash
-cat $NASTECH_HOME/watcher-state/hn.json
-```
+Every watcher writes `$NASTECH_HOME/watcher-state/<name>.json`. Inspect it with
+`read_file` (e.g. `$NASTECH_HOME/watcher-state/hn.json`).
 
 Force a replay (next run treated as first poll):
 

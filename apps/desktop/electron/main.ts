@@ -423,12 +423,12 @@ import {
 import { wireOauthSessionResponse } from './oauth-session-response'
 import { listWindowsProcesses, reapPackageRootedProcesses } from './package-process-reap'
 import {
-  bundledPayload,
   installIdForRoot,
   type PayloadInfo,
   payloadPythonPath,
   payloadTicketRuntime,
-  requireBundledPayload
+  requireBundledPayload,
+  runnableBundledPayload
 } from './payload-backend'
 import { petOverlayClickThrough, shouldPopInOnOverlayClosed } from './pet-overlay'
 import { placePetOverlay, registerPetOverlayIpc } from './pet-overlay-ipc'
@@ -4821,8 +4821,8 @@ function writeDefaultProjectDir(dir) {
 
 const installedRuntimeGate = createInstalledRuntimeGate(process.env, rememberLog)
 
-async function resolveNastechBackend(backendArgs: string[]): Promise<ResolvedNastechBackend> {
-  const payload = bundledPayload(process.resourcesPath)
+async function resolveNastechBackend(backendArgs: string[], progress?: typeof advanceBootProgress): Promise<ResolvedNastechBackend> {
+  const payload = await runnableBundledPayload(rememberLog, progress)
 
   if (payload) {
     if (!IS_WINDOWS) {
@@ -11516,7 +11516,7 @@ async function startNastech(requestedProfile?: string, inheritsPrimary = false) 
       prepareLocalBackend: async () => {
         await advanceBootProgress('backend.runtime', 'Resolving Nastech runtime', 28)
 
-        return resolveNastechBackend(backendArgs)
+        return resolveNastechBackend(backendArgs, advanceBootProgress)
       },
       resolveRemote: () => {
         // Classify immediately before each throwing resolve. This callback runs
