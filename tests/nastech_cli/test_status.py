@@ -189,8 +189,9 @@ def test_show_status_reports_gateway_session_last_activity(monkeypatch, capsys, 
     from nastech_cli import status as status_mod
     import nastech_cli.auth as auth_mod
     import nastech_cli.gateway as gateway_mod
-    import nastech_state
     import time
+    from persistence_assembly import open_persistence, profile_scope
+    from tests.fixtures.storage_seed import seed_session
 
     monkeypatch.setenv("NASTECH_HOME", str(tmp_path))
     monkeypatch.setattr(status_mod, "get_env_path", lambda: tmp_path / ".env", raising=False)
@@ -209,10 +210,9 @@ def test_show_status_reports_gateway_session_last_activity(monkeypatch, capsys, 
     from contextlib import closing
 
     path = tmp_path / "state.db"
-    db = nastech_state.SessionDB(db_path=path)
-    for sid in ("gw-old", "gw-new"):
-        db.create_session(sid, "telegram")
-    db.close()
+    with open_persistence(profile_scope(home=tmp_path)) as store:
+        for sid in ("gw-old", "gw-new"):
+            seed_session(store, sid, "telegram")
     with closing(sqlite3.connect(path)) as conn:
         for sid, age in (("gw-old", 7200), ("gw-new", 90)):
             conn.execute("UPDATE sessions SET session_key=?, started_at=?, last_activity_at=? WHERE id=?",

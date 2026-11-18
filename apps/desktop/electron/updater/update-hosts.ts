@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
@@ -84,7 +84,8 @@ function pipConfigFiles(env: NodeJS.ProcessEnv, home: string): string[] {
 export function configuredUpdateHosts(
   updateRoot: string,
   env: NodeJS.ProcessEnv,
-  home: string = os.homedir()
+  home: string = os.homedir(),
+  nastechHome?: string
 ): string[] {
   const values: string[] = iniValues(readText(path.join(updateRoot, '.git', 'config')), 'remote "origin"', ['url'])
 
@@ -96,7 +97,15 @@ export function configuredUpdateHosts(
     }
   }
 
-  const npmrc = env.npm_config_userconfig || env.NPM_CONFIG_USERCONFIG || path.join(home, '.npmrc')
+  // The npmrc the update's npm and pnpm children read (pm.index_config.user_npmrc): an explicit
+  // userconfig, else the profile's $NASTECH_HOME/npmrc, which replaces ~/.npmrc when it exists.
+  const nastechNpmrc = nastechHome ? path.join(nastechHome, 'npmrc') : ''
+
+  const npmrc =
+    env.npm_config_userconfig ||
+    env.NPM_CONFIG_USERCONFIG ||
+    (nastechNpmrc && existsSync(nastechNpmrc) ? nastechNpmrc : path.join(home, '.npmrc'))
+
   values.push(...iniValues(readText(npmrc), '', ['registry']))
 
   for (const file of pipConfigFiles(env, home)) {

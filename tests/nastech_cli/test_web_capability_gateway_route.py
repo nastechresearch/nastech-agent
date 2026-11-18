@@ -14,11 +14,8 @@ import pytest
 @pytest.fixture()
 def client(monkeypatch, _isolate_nastech_home):
     starlette = pytest.importorskip("starlette.testclient")
-    import nastech_state
-    from nastech_constants import get_nastech_home
     from nastech_cli.web_server import _SESSION_HEADER_NAME, _SESSION_TOKEN, app
 
-    monkeypatch.setattr(nastech_state, "DEFAULT_DB_PATH", get_nastech_home() / "state.db")
     test_client = starlette.TestClient(app)
     test_client.headers[_SESSION_HEADER_NAME] = _SESSION_TOKEN
     return test_client

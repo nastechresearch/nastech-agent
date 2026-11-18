@@ -20,12 +20,10 @@ def client(monkeypatch, _isolate_nastech_home):
     except ImportError:
         pytest.skip("fastapi/starlette not installed")
 
-    import nastech_state
     from nastech_constants import get_nastech_home
     from nastech_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
     home = get_nastech_home()
-    monkeypatch.setattr(nastech_state, "DEFAULT_DB_PATH", home / "state.db")
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
     (home / ".env").write_text(f"TELEGRAM_BOT_TOKEN={_VALID_BOT_TOKEN}\nTELEGRAM_ALLOWED_USERS=42\n", encoding="utf-8")
     (home / "config.yaml").write_text("platforms:\n  telegram:\n    enabled: true\n", encoding="utf-8")

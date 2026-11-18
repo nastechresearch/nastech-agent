@@ -656,3 +656,14 @@ class TestProjectVenvDirOutOfTree:
         assert nastech_constants.project_venv_dir(other) is None
         (checkout / ".venv").mkdir()
         assert nastech_constants.project_venv_dir(checkout) == checkout / ".venv"
+
+
+@pytest.mark.parametrize("name", ["NASTECH_MANAGED_DIR", "nastech_managed_dir", "Nastech_Home", "NASTECH_HOME"])
+def test_is_launch_only_env_key_folds_case(name):
+    """Windows env names are case-insensitive, so every guard must fold case (#135200)."""
+    assert nastech_constants.is_launch_only_env_key(name)
+
+
+@pytest.mark.parametrize("name", ["NASTECH_MANAGED_DIRX", "NASTECH_HOMEDIR", "PATH", ""])
+def test_is_launch_only_env_key_rejects_other_names(name):
+    assert not nastech_constants.is_launch_only_env_key(name)

@@ -6,16 +6,14 @@ from types import SimpleNamespace
 
 import pytest
 
+from persistence_assembly import close_stores_under, store_location
+
 
 def _reserve_homes(tmp_path, monkeypatch, names=('alpha', 'beta')):
     root = tmp_path / '.nastech'
     root.mkdir(mode=0o700)
     monkeypatch.setattr(Path, 'home', lambda: tmp_path)
     monkeypatch.setenv('NASTECH_HOME', str(root))
-    # The autouse isolation fixture pins nastech_state.DEFAULT_DB_PATH to its own fake home once
-    # nastech_state is imported; per-home stores must follow the scoped NASTECH_HOME here.
-    import nastech_state
-    monkeypatch.setattr(nastech_state, 'DEFAULT_DB_PATH', nastech_state._IMPORT_DEFAULT_DB_PATH)
     homes = [('default', root)]
     for name in names:
         home = root / 'profiles' / name
@@ -52,7 +50,7 @@ async def test_multiplex_builds_one_authority_per_reserved_home(tmp_path, monkey
         for _name, home in homes:
             authority = registry.for_home(home)
             assert authority is not None
-            assert Path(authority.db.db_path).resolve().parent == home.resolve()
+            assert Path(store_location(authority.persistence.scope)).resolve().parent == home.resolve()
             assert (home / 'state.db').exists()
         epochs = {nastech_home_key(h): registry.for_home(h).epoch for _, h in homes}
         assert all(epoch >= 1 for epoch in epochs.values())
@@ -66,7 +64,7 @@ async def test_multiplex_builds_one_authority_per_reserved_home(tmp_path, monkey
         assert grant['profile_id'] == str(homes[1][1].resolve())
     finally:
         for authority in list(getattr(runner, 'session_authorities', []) or []):
-            authority.db.close()
+            close_stores_under(authority.persistence.scope.profile_dir)
         for _, home in homes:
             process_ownership.release(home)
 
@@ -94,7 +92,7 @@ async def test_scoped_lookup_follows_routed_home_and_never_borrows_launch(tmp_pa
         assert authority_for_home(runner, foreign) is None
     finally:
         for authority in list(runner.session_authorities):
-            authority.db.close()
+            close_stores_under(authority.persistence.scope.profile_dir)
         for _, home in homes:
             process_ownership.release(home)
 
@@ -131,13 +129,13 @@ async def test_removed_last_secondary_never_resolves_to_launch(tmp_path, monkeyp
         await initialize_gateway_runtime(runner)
         removed = runner.session_authorities.for_home(alpha)
         assert await unserve_profile_runtime(runner, alpha) is True
-        removed.db.close()
+        close_stores_under(removed.persistence.scope.profile_dir)
         assert len(runner.session_authorities) == 1
         with _profile_runtime_scope(alpha, {}):
             assert active_authority(runner) is None
         assert active_authority(runner) is runner.session_authority  # unscoped = launch profile
     finally:
         for authority in list(runner.session_authorities):
-            authority.db.close()
+            close_stores_under(authority.persistence.scope.profile_dir)
         for _, home in homes:
             process_ownership.release(home)

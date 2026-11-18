@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from agent import account_usage, billing_usage
+from agent import account_usage_nastech, billing_usage
 from nastech_constants import (
     get_nastech_home,
     reset_nastech_home_override,
@@ -12,7 +12,7 @@ from nastech_constants import (
 
 @pytest.mark.parametrize(
     "fetcher",
-    [account_usage._fetch_portal_account, billing_usage.fetch_nastech_account],
+    [account_usage_nastech._fetch_portal_account, billing_usage.fetch_nastech_account],
 )
 def test_nastech_account_fetch_preserves_profile_home_in_timeout_worker(
     monkeypatch, tmp_path: Path, fetcher

@@ -6,7 +6,14 @@ export const deGatewayHost: GatewayHostTranslations = {
   unavailableDesc: 'Die Desktop-IPC-Brücke stellt keine Gateway-Einstellungen bereit.',
   webappHostTitle: 'Nastech-Host',
   webappHostDesc:
-    'Die Webapp nutzt immer den Nastech-Host, der sie ausliefert. Um das Gateway zu wechseln, sich bei Nastech Cloud anzumelden oder gespeicherte Verbindungen zu verwalten, verwenden Sie die Nastech-Desktop-App.',
+    'Die Webapp läuft immer auf dem Nastech-Host, der sie bereitstellt. Die gespeicherten Verbindungen unten sind die Liste dieses Rechners, geteilt mit der Nastech-Desktop-App; andere Gateways werden über diesen Host erreicht.',
+  webappOauthPaste: {
+    title: 'Anmeldung abschließen',
+    description: 'Wenn der Anmelde-Tab auf einer Adresse endete, die nicht lädt (dieser Browser läuft nicht auf dem Rechner des Gateways), füge diese Adresse hier ein.',
+    placeholder: 'http://127.0.0.1:…/webapp/gateway-connections/oauth/callback?…',
+    finish: 'Abschließen',
+    failed: 'Anmeldung konnte nicht abgeschlossen werden'
+  },
   webAccess: {
     title: 'Webzugriff',
     intro: 'Öffne Nastech auf diesem Computer vom Handy oder einem anderen Computer aus, angemeldet mit deinem Nastech-Konto. Wer sich anmeldet, kann Befehle auf diesem Computer ausführen.',
@@ -30,6 +37,13 @@ export const deGatewayHost: GatewayHostTranslations = {
     restartFailedBecause: reason => `Das Gateway konnte nicht neu starten: ${reason}`,
     startTimedOut: 'Das Gateway hat die Web-App nicht innerhalb von 90 Sekunden bereitgestellt.',
     stopTimedOut: 'Das Gateway hat die Bereitstellung der Web-App nicht innerhalb von 90 Sekunden beendet.',
+    startStages: {
+      preparing: 'Die Web-App wird vorbereitet. Das Erstellen kann einige Minuten dauern.',
+      building: 'Die Web-App wird erstellt. Das kann einige Minuten dauern.',
+      registering: 'Die Nastech-Anmeldung wird für diese Adresse eingerichtet.',
+      restarting: 'Das Gateway wird neu gestartet, um die Web-App bereitzustellen.'
+    },
+    startElapsed: time => `Verstrichene Zeit: ${time}`,
     start: 'Starten',
     stop: 'Stoppen',
     restartGateway: 'Gateway neu starten',

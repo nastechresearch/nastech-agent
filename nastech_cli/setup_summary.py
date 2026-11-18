@@ -3,7 +3,6 @@ resolved through the module object so test patches on ``nastech_cli.setup.<name>
 
 import logging
 from tools import tool_backend_helpers
-from nastech_cli import nastech_subscription
 
 logger = logging.getLogger("nastech_cli.setup")
 
@@ -196,6 +195,7 @@ def _print_section_header(title):
 def _print_setup_summary(config: dict, nastech_home):
     """Print the setup completion summary."""
     from nastech_constants import display_nastech_home as _dhh
+    from nastech_cli import nastech_subscription
     # Provider readiness — the one thing setup must produce. A user who cancelled the API-key
     # prompt mid-wizard used to exit "successfully" with NO working model; say so loudly.
     try:

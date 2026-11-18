@@ -73,6 +73,10 @@ nastech = NastechProfile(
     display_name="Nastech Research", description="Nastech Research — Nastech model family",
     signup_url="https://nastechresearch.github.io/nastech-agent/", fallback_models=("nastech-3-405b", "nastech-3-70b"),
     base_url="https://inference-api.nastechresearch.github.io/v1", auth_type="oauth_device_code",
+    # The Portal's upstream currently drops 1h cache entries after ~7 minutes and bills them at the
+    # 5m rate, so asking for 1h only pays the 2x write. Lift with config
+    # ``prompt_caching.route_ttl_ceilings: {nastech: 1h}`` (or delete this line) once that is fixed.
+    prompt_cache_max_ttl="5m",
 )
 
 register_provider(nastech)

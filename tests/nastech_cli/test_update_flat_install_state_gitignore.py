@@ -30,7 +30,7 @@ FLAT_INSTALL_RUNTIME_STATE = (
     "state.db-journal",
     "state.db.retired-wal-20260914T000000Z-1234/manifest.json",
     # Dot-suffixed `<db>.db.*` runtime artifacts (#112974): cross-process lock
-    # files from nastech_state_dbfile / nastech_state_repair / nastech_state_common /
+    # files from the store's dbfile / repair / common modules (persistence/sqlite/_state/) /
     # nastech_cli/kanban_db_*, the repair-attempts ledger and malformed backups.
     "state.db.quarantine.lock",
     "state.db.repair.lock",

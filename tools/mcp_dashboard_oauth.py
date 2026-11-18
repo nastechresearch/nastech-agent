@@ -38,7 +38,6 @@ def exception_message(exc: BaseException) -> str:
 class DashboardOAuthFlow:
     flow_id: str
     server_name: str
-    profile: str | None
     nastech_home: str
     redirect_uri: str
     reconnect_live: bool = False

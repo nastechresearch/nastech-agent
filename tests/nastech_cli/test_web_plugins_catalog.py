@@ -18,11 +18,8 @@ def client(monkeypatch, tmp_path, _isolate_nastech_home):
         from starlette.testclient import TestClient
     except ImportError:
         pytest.skip("fastapi/starlette not installed")
-    import nastech_state
-    from nastech_constants import get_nastech_home
     from nastech_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
-    monkeypatch.setattr(nastech_state, "DEFAULT_DB_PATH", get_nastech_home() / "state.db")
     catalog_dir = tmp_path / "catalog"
     catalog_dir.mkdir()
     (catalog_dir / "alpha-plugin.yaml").write_text(yaml.safe_dump({

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Run Python in this checkout's environment: `scripts/nastech-python ARGS...`.
+#
+# A GitHub Actions job runs the interpreter setup-pm exported as NASTECH_PYTHON,
+# so a recipe never re-runs setup on a runner. Anywhere else NASTECH_PYTHON may
+# be inherited from a wrapped `nastech` (a release venv without the dev tools),
+# so scripts/run-in-nastech-env applies (and if stale, syncs) the environment
+# `source ./activate` gives a shell.
+set -euo pipefail
+
+if [ "${GITHUB_ACTIONS:-}" = true ] && [ -z "${__NASTECH_ACTIVATED:-}" ] && [ -n "${NASTECH_PYTHON:-}" ] \
+    && [ -x "$NASTECH_PYTHON" ]; then
+    exec "$NASTECH_PYTHON" "$@"
+fi
+exec "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/run-in-nastech-env" python "$@"

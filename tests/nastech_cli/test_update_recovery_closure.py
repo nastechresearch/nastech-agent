@@ -27,6 +27,8 @@ from nastech_cli import _launchers
 SOURCE = Path(__file__).resolve().parents[2]
 # What a minted launcher imports before the application entry.
 BOOT = ("nastech_bootstrap.py", "nastech_constants.py", "nastech_cli/__init__.py", "nastech_cli/_launchers.py",
+        "nastech_agent/__init__.py", "nastech_agent/compat/__init__.py", "nastech_agent/compat/finder.py",
+        "nastech_agent/compat/moves.py",
         "nastech_cli/_early_recovery.py", "nastech_cli/_parser.py", "nastech_cli/runtime_state.py",
         "nastech_cli/venv_sync.py", "nastech_cli/steward.py", "nastech_cli/stderr_timestamp.py",
         "nastech_cli/update_lock.py", "nastech_cli/update_custody.py", "pm/environments.py",

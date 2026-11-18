@@ -43,20 +43,21 @@ def _make_session(session_id="sess_1"):
 
 
 def _make_real_session(tmp_path, monkeypatch, *, source, session_id):
-    from nastech_state import SessionDB
+    from persistence_assembly import open_persistence, profile_scope
     from run_agent import AIAgent
+    from tests.fixtures.storage_seed import seed_session
 
     nastech_home = tmp_path / "nastech_home"
     nastech_home.mkdir()
     monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
     db_path = nastech_home / "state.db"
-    db = SessionDB(db_path=db_path)
-    db.create_session(session_id, source=source)
+    db = open_persistence(profile_scope(home=nastech_home))
+    seed_session(db, session_id, source)
 
     # Exercise the production close path without constructing a model provider.
     agent = AIAgent.__new__(AIAgent)
     agent.session_id = session_id
-    agent._session_db = db
+    agent._session_db = agent.persistence = db
     agent._owns_session_db = True
     agent._end_session_on_close = True
     agent._session_messages = []
@@ -72,13 +73,11 @@ def _make_real_session(tmp_path, monkeypatch, *, source, session_id):
 
 
 def _read_real_row(db_path, session_id):
-    from nastech_state import SessionDB
+    from persistence_assembly import open_persistence, profile_scope
+    from tests.fixtures.storage_read import session_row
 
-    db = SessionDB(db_path=db_path)
-    try:
-        return db.get_session(session_id)
-    finally:
-        db.close()
+    with open_persistence(profile_scope(home=db_path.parent)) as db:
+        return session_row(db, session_id)
 
 
 

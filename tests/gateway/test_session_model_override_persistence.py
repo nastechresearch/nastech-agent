@@ -50,16 +50,16 @@ def _make_source() -> SessionSource:
 def store_factory(tmp_path, monkeypatch):
     """Build SessionStores over a shared sessions dir, without SQLite."""
 
-    def _raise():
+    def _raise(*args, **kwargs):
         raise RuntimeError("SQLite disabled in test")
 
-    import nastech_state
+    import persistence_assembly
 
-    monkeypatch.setattr(nastech_state, "SessionDB", _raise)
+    monkeypatch.setattr(persistence_assembly, "open_persistence", _raise)
 
     def _make() -> SessionStore:
         store = SessionStore(sessions_dir=tmp_path, config=GatewayConfig())
-        assert store._db is None
+        assert store.persistence is None
         return store
 
     return _make

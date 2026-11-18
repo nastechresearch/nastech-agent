@@ -805,7 +805,7 @@ export function ModelCatalogMenu({
                 <DropdownMenuItem
                   className={cn(
                     catalogGroupLabel,
-                    'group/label flex w-full cursor-pointer items-center gap-1 !bg-transparent focus:!bg-transparent'
+                    'group/label flex w-full cursor-pointer items-center gap-1 !bg-transparent focus:!bg-transparent focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-ring focus-visible:-outline-offset-2'
                   )}
                   onSelect={event => {
                     event.preventDefault()
@@ -1368,12 +1368,10 @@ function groupModels(
   for (const provider of providers) {
     let allFamilies = collapseModelFamilies(provider.models ?? [])
 
-    // The catalog row is a hint, not the authority: an OpenRouter current
-    // model the returned catalog omits must still render and stay selectable,
-    // or the picker has no active-model row at all (#57534). The backend
-    // injects current_model into the row when it can, but the renderer cannot
-    // rely on that — the row may arrive from a cache that predates the switch.
+    // Keep the OpenRouter/custom fallback (#57534), but don't synthesize
+    // Codex choices the backend omitted. The composer still shows the current model.
     if (
+      (provider.slug !== 'openai-codex' || provider.is_user_defined) &&
       catalogProviderMatches(provider, current.provider) &&
       current.model &&
       !allFamilies.some(family => family.id === current.model || family.fastId === current.model)

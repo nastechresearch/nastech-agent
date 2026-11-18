@@ -27,7 +27,7 @@ def test_standalone_fallback_pool_keeps_profile_scope(tmp_path, monkeypatch):
     )
     from nastech_constants import get_nastech_home, set_nastech_home_override
     import cron.scheduler as sched
-    import tools.send_message_tool as smt
+    import gateway.outbound.send as smt
 
     default_home = tmp_path / "default"
     sec_home = tmp_path / "profiles" / "ops"

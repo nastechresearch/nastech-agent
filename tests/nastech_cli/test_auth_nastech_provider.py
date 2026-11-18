@@ -1113,3 +1113,43 @@ def test_poll_for_token_timeout_raises_actionable_message():
             expires_in=1,
             poll_interval=1,
         )
+
+
+# =============================================================================
+# Device-code login: the portal-provided inference URL passes the same allowlist as refresh
+# =============================================================================
+
+
+def _run_device_login_with_portal_inference_url(monkeypatch, portal_inference_url):
+    from nastech_cli import auth
+
+    monkeypatch.delenv("NASTECH_INFERENCE_BASE_URL", raising=False)
+    monkeypatch.setattr(auth, "_request_device_code", lambda **kw: {
+        "verification_uri_complete": "https://portal.example/device?code=ABCD",
+        "user_code": "ABCD-1234", "device_code": "dev", "expires_in": 600, "interval": 5})
+    monkeypatch.setattr(auth, "_poll_for_token", lambda **kw: {
+        "access_token": "t", "scope": "inference:invoke", "expires_in": 3600,
+        "inference_base_url": portal_inference_url})
+    monkeypatch.setattr(auth, "refresh_nastech_oauth_from_state", lambda state, **kw: state)
+    return auth._nastech_device_code_login(open_browser=False, on_verification=lambda url, code: None)
+
+
+def test_device_login_refuses_portal_inference_url_outside_allowlist(monkeypatch):
+    from nastech_cli.auth import PROVIDER_REGISTRY
+
+    state = _run_device_login_with_portal_inference_url(monkeypatch, "https://attacker.example.com/v1")
+    assert state["inference_base_url"] == PROVIDER_REGISTRY["nastech"].inference_base_url.rstrip("/")
+
+
+def test_device_login_refuses_non_https_portal_inference_url(monkeypatch):
+    from nastech_cli.auth import PROVIDER_REGISTRY
+
+    state = _run_device_login_with_portal_inference_url(
+        monkeypatch, "http://inference-api.nastechresearch.github.io/v1")
+    assert state["inference_base_url"] == PROVIDER_REGISTRY["nastech"].inference_base_url.rstrip("/")
+
+
+def test_device_login_keeps_allowlisted_portal_inference_url(monkeypatch):
+    state = _run_device_login_with_portal_inference_url(
+        monkeypatch, "https://inference-api.nastechresearch.github.io/v2/")
+    assert state["inference_base_url"] == "https://inference-api.nastechresearch.github.io/v2"

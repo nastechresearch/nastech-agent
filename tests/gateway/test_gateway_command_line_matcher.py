@@ -37,6 +37,9 @@ ACCEPT = [
     # a profile literally NAMED "gateway"
     "nastech -p gateway gateway run",
     "python -m nastech_cli.main --profile gateway gateway run",
+    # gateway-level flags before the action (`nastech gateway --accept-hooks run` parses)
+    "nastech gateway --accept-hooks run --no-supervise",
+    "nastech gateway --accept-hooks",
     # quoted Windows paths with spaces (shlex-aware tokenization)
     r'"C:\Program Files\Nastech\nastech-gateway.exe"',
     r'"C:\Program Files\Nastech\gateway\run.py" run',
@@ -48,6 +51,8 @@ REJECT = [
     "python -m nastech_cli.main gateway status",           # other subcommand
     "python -m nastech_cli.main gateway restart",
     "python -m nastech_cli.main gateway stop",
+    "nastech gateway --accept-hooks status",
+    "nastech gateway --help",                               # prints help, runs nothing
     "python -m nastech_cli.main --profile x dashboard",    # non-gateway subcommand
     "some random python -m mygateway thing",
     "",

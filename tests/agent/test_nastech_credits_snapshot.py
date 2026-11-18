@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agent.account_usage import build_nastech_credits_snapshot
+from agent.account_usage_nastech import build_nastech_credits_snapshot
 from nastech_cli.nastech_account import (
     NastechPaidServiceAccessInfo,
     NastechPortalAccountInfo,

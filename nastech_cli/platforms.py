@@ -29,7 +29,6 @@ PLATFORMS: OrderedDict[str, PlatformInfo] = OrderedDict([
     ("wecom_callback", PlatformInfo(label="💬 WeCom Callback",  default_toolset="nastech-wecom-callback")),
     ("weixin",         PlatformInfo(label="💬 Weixin",          default_toolset="nastech-weixin")),
     ("qqbot",          PlatformInfo(label="💬 QQBot",           default_toolset="nastech-qqbot")),
-    ("yuanbao",        PlatformInfo(label="🤖 Yuanbao",         default_toolset="nastech-yuanbao")),
     ("webhook",        PlatformInfo(label="🔗 Webhook",         default_toolset="nastech-webhook")),
     ("api_server",     PlatformInfo(label="🌐 API Server",      default_toolset="nastech-api-server")),
     ("cron",           PlatformInfo(label="⏰ Cron",            default_toolset="nastech-cron")),

@@ -10,7 +10,8 @@ from nastech_cli.nastech_account import (
     NastechPortalSubscriptionInfo,
     _subscription_from_payload,
 )
-from agent.account_usage import build_nastech_credits_snapshot, render_account_usage_lines
+from agent.account_usage import render_account_usage_lines
+from agent.account_usage_nastech import build_nastech_credits_snapshot
 
 
 def _acct(**kwargs):

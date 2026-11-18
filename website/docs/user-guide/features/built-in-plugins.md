@@ -155,7 +155,9 @@ are documented in the [plugin's README](https://github.com/NastechResearch/naste
 
 ### NeMo Relay native integration (migration note)
 
-NeMo Relay is no longer a bundled Nastech plugin. Do not run `nastech plugins enable observability/nemo_relay`; Nastech core now owns the Relay session, turn, LLM, and tool lifecycles.
+NeMo Relay no longer uses a bundled Nastech plugin. Nastech supports it directly, so do not run `nastech plugins enable observability/nemo_relay`.
+
+See the [NeMo Relay guide](../../integrations/nemo-relay.md) for setup, plugin configuration, and trace export.
 
 Configure Relay middleware or exporters through a standard Relay `plugins.toml`. Nastech loads Relay's user configuration (`~/.config/nemo-relay/plugins.toml`) and then its machine-wide system configuration (`/etc/nemo-relay/plugins.toml`, or `%ProgramData%\nemo-relay\plugins.toml` on Windows). Set `NASTECH_NEMO_RELAY_PLUGINS_TOML` before starting Nastech only when you want an explicit file to replace the user configuration; the system configuration still has higher precedence. The policy is process-wide for every profile hosted by that Nastech process. Run `nastech doctor` to see which files apply. See the [NeMo Relay observability configuration](https://docs.nvidia.com/nemo/relay/configure-plugins/observability/about) for ATOF, ATIF, and OpenTelemetry options.
 

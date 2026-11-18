@@ -29,6 +29,11 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Skill service tokens that are read-denied to the agent (agent.file_safety) yet stay mountable:
+# the google-workspace skill's own sandboxed scripts are their intended consumer. Exact names
+# relative to NASTECH_HOME; master stores (.env, auth.json, mcp-tokens/) must never appear here.
+_MOUNTABLE_SERVICE_TOKENS = frozenset({"google_token.json", "google_client_secret.json"})
+
 # Session-scoped registry; ContextVar prevents cross-session bleed in the gateway.
 _registered_files_var: ContextVar[dict[str, str]] = ContextVar("_registered_files")
 
@@ -63,6 +68,13 @@ def _contained_host_path(rel: str, nastech_home: Path, abs_msg: str, traversal_m
     return host_path.resolve()
 
 
+def _is_mountable_service_token(resolved: Path, nastech_home: Path) -> bool:
+    """True when *resolved* (symlinks already followed) is itself a ``_MOUNTABLE_SERVICE_TOKENS`` file at the
+    NASTECH_HOME root. Comparing against ``(nastech_home / name).resolve()`` would follow the same planted link,
+    so a ``google_token.json`` symlinked at ``.env`` would pass as the token."""
+    return resolved.parent == nastech_home.resolve() and resolved.name in _MOUNTABLE_SERVICE_TOKENS
+
+
 def register_credential_file(relative_path: str, container_base: str = "/root/.nastech") -> bool:
     """Register a NASTECH_HOME-relative credential file for mounting; True if it exists and was registered.
 
@@ -94,7 +106,7 @@ def register_credential_file(relative_path: str, container_base: str = "/root/.n
     except Exception:
         logger.exception("credential_files: refusing %r — read guard raised", relative_path)
         return False
-    if denied:
+    if denied and not _is_mountable_service_token(resolved, get_nastech_home()):
         logger.warning("credential_files: refused %r — it is a credential store the agent "
                        "is denied from reading; a skill may mount its own service token, "
                        "not the master key files", relative_path)

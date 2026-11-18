@@ -1,19 +1,15 @@
 """scripts/ci/check_agents_md_size.py: every AGENTS.md chain an agent can load stays under the cap it is truncated at."""
 
-import ast
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "ci" / "check_agents_md_size.py"
-
-
-def _cap(name):
-    """The cap constant as the script itself declares it, so a raise is not a test edit."""
-    for node in ast.walk(ast.parse(SCRIPT.read_text(encoding="utf-8"))):
-        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == name for t in node.targets):
-            return int(ast.literal_eval(node.value))
-    raise AssertionError(f"{SCRIPT}: no {name} assignment")
+_SPEC = importlib.util.spec_from_file_location("_check_agents_md_size", SCRIPT)
+_MODULE = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_MODULE)
+ROOT_CAP, CHAIN_CAP = _MODULE.ROOT_MAX_CHARS, _MODULE.CHAIN_MAX_CHARS
 
 
 def _repo(tmp_path, files):
@@ -35,17 +31,25 @@ def _check(repo):
 
 def test_budget_is_per_chain_from_the_root_down(tmp_path):
     # Each file alone is small; root + app + app/src together is what an agent working in app/src loads.
-    root_cap, chain_cap = _cap("ROOT_MAX_CHARS"), _cap("CHAIN_MAX_CHARS")
-    # app/src sits one char under a chain that exactly fills the budget; the
-    # nested repo adds one char and tips the chain over by exactly one.
-    src = chain_cap - root_cap - 10_000
-    fits = {"AGENTS.md": root_cap, "app/AGENTS.md": 10_000, "app/src/AGENTS.md": src, "lib/AGENTS.md": 18_000}
+    fits = {"AGENTS.md": ROOT_CAP, "app/AGENTS.md": CHAIN_CAP - ROOT_CAP - 8_000, "app/src/AGENTS.md": 8_000,
+            "lib/AGENTS.md": 18_000}
     ok = _check(_repo(tmp_path / "ok", fits))
     assert ok.returncode == 0, ok.stdout
-    nested = _check(_repo(tmp_path / "nested", {**fits, "app/src/AGENTS.md": src + 1}))
+    nested = _check(_repo(tmp_path / "nested", {**fits, "app/src/AGENTS.md": 8_001}))
     assert nested.returncode == 1
-    assert (f"AGENTS.md + app/AGENTS.md + app/src/AGENTS.md: {chain_cap + 1} chars "
-            f"> {chain_cap} chain cap") in nested.stdout
+    assert f"AGENTS.md + app/AGENTS.md + app/src/AGENTS.md: {CHAIN_CAP + 1} chars > {CHAIN_CAP} chain cap" in nested.stdout
     assert "lib/" not in nested.stdout and "untracked" not in nested.stdout
-    root = _check(_repo(tmp_path / "root", {"AGENTS.md": root_cap + 1}))
-    assert root.returncode == 1 and f"AGENTS.md: {root_cap + 1} chars > {root_cap} cap" in root.stdout
+    root = _check(_repo(tmp_path / "root", {"AGENTS.md": ROOT_CAP + 1}))
+    assert root.returncode == 1 and f"AGENTS.md: {ROOT_CAP + 1} chars > {ROOT_CAP} cap" in root.stdout
+
+
+def test_a_chain_at_the_cap_loads_whole_on_a_128k_model(tmp_path):
+    """The cap exists so the loader never truncates: a three-file chain at CHAIN_MAX_CHARS, with the
+    ``## <label>`` header the loader puts on each file, still fits its 128k budget."""
+    from agent.prompt_builder import _load_agents_md
+
+    area = "nastech_agent/gateway/platforms"
+    repo = _repo(tmp_path, {"AGENTS.md": ROOT_CAP, "nastech_agent/gateway/AGENTS.md": CHAIN_CAP - ROOT_CAP - 8_000,
+                            f"{area}/AGENTS.md": 8_000})
+    assert _check(repo).returncode == 0
+    assert "[...truncated" not in _load_agents_md(repo / area, context_length=128_000)

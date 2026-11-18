@@ -163,7 +163,7 @@ it.each([
 it('each selection gate joins exactly one target\'s two trust branches after admission', () => {
   const legs = Object.fromEntries(desktopLegs.map(([id, job]) => [id, job]))
   const gates = Object.values(desktop.jobs).filter(job => job.env?.SELECTED_BUILD_SUCCEEDED)
-  expect(gates).toHaveLength(3)
+  expect(gates).toHaveLength(3)  // darwin-arm64, win32-arm64, win32-x64
   for (const gate of gates) {
     const [admission, ...branches] = gate.needs
     expect(admission).toBe('validate')

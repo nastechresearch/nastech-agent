@@ -85,10 +85,10 @@ def release_store(tmp_path):
 
 
 @pytest.mark.parametrize('commit', [False, True])
-# Intel macOS is no longer built: darwin carries its arm64 leg alone.
-@pytest.mark.parametrize('platform,fmt,arch', [('darwin', 'dmg', 'arm64'), ('darwin', 'zip', 'arm64'),
-                                               ('win32', 'msix', 'arm64'), ('win32', 'msix', 'x64'),
-                                               ('win32', 'msixbundle', 'arm64'), ('win32', 'msixbundle', 'x64')])
+@pytest.mark.parametrize('platform,fmt,arch', [
+    ('darwin', 'dmg', 'arm64'), ('darwin', 'zip', 'arm64'),
+    ('win32', 'msix', 'arm64'), ('win32', 'msix', 'x64'),
+    ('win32', 'msixbundle', 'arm64'), ('win32', 'msixbundle', 'x64')])
 def test_smoke_fetches_the_receipt_bound_native_format(tmp_path, release_store, commit, platform, fmt, arch):
     env = handoff_env(tmp_path, release_store, commit=commit)
     release = tmp_path / 'apps/desktop/release'

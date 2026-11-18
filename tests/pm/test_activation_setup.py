@@ -60,11 +60,11 @@ def test_activation_real_setup_pm_lifecycle(tmp_path, served):
         "LANG": "C.UTF-8", "PYTHONNOUSERSITE": "1", "UV_OFFLINE": "1",
         "UV_CACHE_DIR": str(home / ".cache" / "uv"), "UV_PYTHON_DOWNLOADS": "never",
     }
-    for name in ("activate", "setup-nastech.sh", "nastech_constants.py", "nastech_yaml.py", "utils.py",
+    for name in ("activate", "setup-nastech.sh", "nastech_constants.py", "nastech_yaml.py",
                  "scripts/_activation.sh"):
         (core / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(REPO / name, core / name)
-    for name in ("pm", "nastech_cli"):
+    for name in ("pm", "nastech_cli", "utils"):
         shutil.copytree(REPO / name, core / name, ignore=shutil.ignore_patterns("__pycache__"))
     # Plugin selection imports the real CLI config reader even with no plugins.
     # Supply its installed YAML dependency, not a stub parser or config module.

@@ -864,7 +864,9 @@ class TestLoadGatewayConfig:
 
 
     def test_thread_require_mention_yaml_does_not_overwrite_env(self, tmp_path, monkeypatch):
-        """Explicit env var should win over config.yaml (env > yaml precedence)."""
+        """A ``.env`` value wins over config.yaml (#109032)."""
+        from nastech_cli import env_loader
+        monkeypatch.setattr(env_loader, "_LOADED_DOTENV_KEYS", {"DISCORD_THREAD_REQUIRE_MENTION"})
         nastech_home = tmp_path / ".nastech"
         nastech_home.mkdir()
         config_path = nastech_home / "config.yaml"
@@ -1127,6 +1129,8 @@ class TestLoadGatewayConfig:
         )
 
         monkeypatch.setenv("NASTECH_HOME", str(nastech_home))
+        from nastech_cli import env_loader
+        monkeypatch.setattr(env_loader, "_LOADED_DOTENV_KEYS", {"TELEGRAM_PROXY"})  # set in .env
         monkeypatch.setenv("TELEGRAM_PROXY", "socks5://from-env:1080")
 
         load_gateway_config()
@@ -1657,6 +1661,8 @@ class TestTopLevelBlockVsAuthoredExtra:
             if key.startswith(platform.upper() + "_"):
                 monkeypatch.delenv(key)
         if operator_env is not None:
+            from nastech_cli import env_loader
+            monkeypatch.setattr(env_loader, "_LOADED_DOTENV_KEYS", {"TELEGRAM_REQUIRE_MENTION"})  # .env
             monkeypatch.setenv("TELEGRAM_REQUIRE_MENTION", operator_env)
         with caplog.at_level(logging.WARNING, logger="gateway.config"):
             data = {}

@@ -39,14 +39,12 @@ def _gateway_state(home: Path) -> None:
 def client(monkeypatch, _isolate_nastech_home):
     from starlette.testclient import TestClient
 
-    import nastech_state
     import nastech_constants
     import gateway.status as _gw_status
     from nastech_constants import get_nastech_home
     from nastech_cli.web_server import app, _SESSION_HEADER_NAME, _SESSION_TOKEN
 
     home = get_nastech_home()
-    monkeypatch.setattr(nastech_state, "DEFAULT_DB_PATH", home / "state.db")
     monkeypatch.setattr(nastech_constants, "_default_nastech_root_memo", None)
     # Liveness is a verified identity: this pytest process passes as the gateway
     # only while its probed command line matches the home being asked about
