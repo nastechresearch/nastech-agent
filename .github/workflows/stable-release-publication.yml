@@ -25,9 +25,8 @@ permissions:
   contents: write
   actions: write
 
-env:
-  # Artifact handoff uses the default R2 store, as do the build legs that
-  # stage there.
+# Artifact handoff uses the default R2 store, as do the build legs that
+# stage there.
 
 jobs:
   reconcile:
