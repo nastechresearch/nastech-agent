@@ -30,10 +30,9 @@ concurrency:
   group: stable-release
   cancel-in-progress: false
 
-env:
-  # Artifact handoff uses the default R2 store. A GitHub-Releases handoff
-  # 404s on asset upload, which left every release with zero assets and no
-  # builds table.
+# Artifact handoff uses the default R2 store. A GitHub-Releases handoff
+# 404s on asset upload, which left every release with zero assets and no
+# builds table.
 
 jobs:
   admit:
