@@ -2,9 +2,9 @@ import { useStore } from '@nanostores/react'
 import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { getMemoryStatus } from '@/nastech'
 import { useI18n } from '@/i18n'
 import type { MemoryLayersTranslations } from '@/i18n/types_memory_layers'
+import { getMemoryStatus } from '@/nastech'
 import { $memoryStatusRevision } from '@/store/memory-status'
 import type { MemoryProviderStatus, MemoryStatusResponse } from '@/types/nastech'
 

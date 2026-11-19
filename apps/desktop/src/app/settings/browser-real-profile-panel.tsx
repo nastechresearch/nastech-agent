@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react'
 
 import type { PreviewSigninsResult } from '@/global'
-import { type ProfileScope, saveNastechConfigRecord } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { claimPreviewSigninsSync, syncPreviewSignins } from '@/lib/preview-signins'
+import { type ProfileScope, saveNastechConfigRecord } from '@/nastech'
 import { notify, notifyError } from '@/store/notifications'
 
 import { nastechConfigCacheWriter, useNastechConfigRecord } from '../hooks/use-config-record'
@@ -122,7 +122,11 @@ export function BrowserRealProfilePanel({ profile }: BrowserRealProfilePanelProp
 
   return (
     <ToggleRow
-      below={enabled ? <RowFootnoteAction onClick={() => void reimport()}>{copy.reimportSignins}</RowFootnoteAction> : undefined}
+      below={
+        enabled ? (
+          <RowFootnoteAction onClick={() => void reimport()}>{copy.reimportSignins}</RowFootnoteAction>
+        ) : undefined
+      }
       checked={enabled}
       description={copy.description}
       disabled={busy || !config}

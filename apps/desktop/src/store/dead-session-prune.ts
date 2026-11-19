@@ -20,8 +20,8 @@
  * the id is deferred to a later pass instead of being dropped.
  */
 
-import { getSession } from '@/nastech'
 import { mapPool } from '@/lib/pool'
+import { getSession } from '@/nastech'
 import { clearSessionDraft, isFreshDraftScope, stashedDraftScopes } from '@/store/composer'
 import { dropInterruptedSends, interruptedSendScopes } from '@/store/composer-outbox'
 import { $queuedPromptsBySession, clearQueuedPrompts } from '@/store/composer-queue'

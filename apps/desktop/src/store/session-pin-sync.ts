@@ -24,8 +24,8 @@
 import { atom } from 'nanostores'
 
 import { ambientOwnerConnectionId } from '@/api/client'
-import { setSessionPinnedRemote } from '@/nastech'
 import { onConnectionScopeChange } from '@/lib/connection-scoped'
+import { setSessionPinnedRemote } from '@/nastech'
 import { $primaryGatewayRoute } from '@/store/gateway-primary-route'
 import { $pinnedSessionIds, pinSession, unpinSession } from '@/store/layout'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'

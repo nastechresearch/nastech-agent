@@ -1,5 +1,5 @@
-import type { ProfileScope } from '@/nastech'
 import { useI18n } from '@/i18n'
+import type { ProfileScope } from '@/nastech'
 import type { NastechConfigRecord } from '@/types/nastech'
 
 import { FIELD_DESCRIPTIONS } from './constants'

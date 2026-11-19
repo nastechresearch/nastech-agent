@@ -19,7 +19,6 @@ import { codiconIcon } from '@/components/ui/codicon'
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { KbdCombo } from '@/components/ui/kbd'
-import { getNastechConfigRecord, listAllProfileSessions } from '@/nastech'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
@@ -62,6 +61,7 @@ import {
 import { getServers } from '@/lib/mcp-servers'
 import { normalize } from '@/lib/text'
 import { cn } from '@/lib/utils'
+import { getNastechConfigRecord, listAllProfileSessions } from '@/nastech'
 import { $repoWorktrees } from '@/store/coding-status'
 import {
   $commandPaletteOpen,
@@ -80,9 +80,7 @@ import { $cronSessions, $messagingSessions, $sessions } from '@/store/session'
 import { $unconfirmedPinWrites } from '@/store/session-pin-sync'
 import { $removedSessionIds } from '@/store/session-removal'
 import { runGatewayRestart } from '@/store/system-actions'
-import {
-  requestActiveUpdate
-} from '@/store/updates'
+import { requestActiveUpdate } from '@/store/updates'
 import { canOpenNewWindow, openNewWindow } from '@/store/windows'
 import { luminance } from '@/themes/color'
 import { type ThemeMode, useTheme } from '@/themes/context'

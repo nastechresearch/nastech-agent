@@ -518,7 +518,9 @@ describe('error card layout (Error System Overhaul)', () => {
   it('names an out-of-credits turn on its card too: the banner may be off screen', async () => {
     render(
       <MemoryRouter>
-        <Harness assistant={failedMessage({ code: 'billing', layer: 'billing', provider: 'nastech', retryable: false })} />
+        <Harness
+          assistant={failedMessage({ code: 'billing', layer: 'billing', provider: 'nastech', retryable: false })}
+        />
       </MemoryRouter>
     )
 

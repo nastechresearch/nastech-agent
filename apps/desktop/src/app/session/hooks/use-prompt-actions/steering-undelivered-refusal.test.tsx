@@ -1,5 +1,5 @@
-import { JsonRpcGatewayError } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { JsonRpcGatewayError } from '@nastech/shared'
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 

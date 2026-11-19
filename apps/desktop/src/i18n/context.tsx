@@ -1,5 +1,5 @@
-import { applyDocumentLocale, isRecord } from '@nastech/shared/i18n'
 import { useStore } from '@nanostores/react'
+import { applyDocumentLocale, isRecord } from '@nastech/shared/i18n'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { getNastechConfigRecord, type NastechConfigRecord, retainConfigReadOrigin, saveNastechConfig } from '@/nastech'

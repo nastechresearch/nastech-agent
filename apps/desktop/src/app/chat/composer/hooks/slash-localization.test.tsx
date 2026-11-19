@@ -3,7 +3,6 @@ import { act, cleanup, render, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { renderCommandsCatalog } from '@/app/session/hooks/use-prompt-actions/utils'
-import type { NastechGateway } from '@/nastech'
 import { I18nProvider, useI18n } from '@/i18n'
 import { TRANSLATIONS } from '@/i18n/catalog'
 import { setRuntimeI18nLocale } from '@/i18n/runtime'
@@ -14,6 +13,7 @@ import {
   rememberDesktopCommandsCatalog
 } from '@/lib/desktop-slash-commands'
 import { queryClient } from '@/lib/query-client'
+import type { NastechGateway } from '@/nastech'
 
 import { useSlashCompletions } from './use-slash-completions'
 

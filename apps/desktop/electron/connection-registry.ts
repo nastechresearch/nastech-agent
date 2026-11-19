@@ -28,7 +28,7 @@
  */
 
 // Relative, not `@nastech/shared`: esbuild bundles electron/ without tsconfig paths.
-import { NASTECH_CLOUD_MANAGED, isNastechCloudUrl } from '../../shared/src/nastech-cloud'
+import { isNastechCloudUrl, NASTECH_CLOUD_MANAGED } from '../../shared/src/nastech-cloud'
 
 import {
   hostLabelFromBaseUrl,

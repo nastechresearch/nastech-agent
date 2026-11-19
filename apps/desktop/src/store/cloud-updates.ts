@@ -21,7 +21,10 @@ function connectedToNastechCloud(connection: NastechConnection | null): boolean 
 }
 
 /** Whether Nastech Cloud owns updates for `target` under `connection`. */
-export function cloudOwnsUpdates(target: UpdateTarget, connection: NastechConnection | null = $connection.get()): boolean {
+export function cloudOwnsUpdates(
+  target: UpdateTarget,
+  connection: NastechConnection | null = $connection.get()
+): boolean {
   return servedByNastechCloud() || (target === 'backend' && connectedToNastechCloud(connection))
 }
 
