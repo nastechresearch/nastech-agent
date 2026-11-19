@@ -87,7 +87,7 @@ def _drive(fake: FakeVertex, tmp_path: Path):
         subprocess.run(["tmux", "-L", sock, "-f", os.devnull, "new-session", "-d", "-s", "p", "-x", "160", "-y", "48",
                         "-c", str(nh.project), *argv], env=env, check=True, timeout=30)
         tmux("set", "-g", "remain-on-exit", "on")
-        wait_for("\u2624 ", timeout=120)  # the status bar: the app owns the terminal (raw mode)
+        wait_for("\U00013103 ", timeout=120)  # the status bar: the app owns the terminal (raw mode)
 
         # The CLI resolves its route at the first turn (as main did); /config reads that route.
         submit("hello vertex")

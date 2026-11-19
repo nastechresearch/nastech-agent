@@ -124,7 +124,7 @@ def test_classic_cli_matches_main_baseline_across_fifteen_steps(tmp_path: Path) 
             pane.settle()
             md = s.capture("02_markdown")
             # Rendered through Rich inside main's reply box, not raw markdown.
-            s.expect("02_markdown", ["\u2624 Nastech", "Heading Two", "- alpha item", "def hello():"], md)
+            s.expect("02_markdown", ["\U00013103 Nastech", "Heading Two", "- alpha item", "def hello():"], md)
             assert "# Heading Two" not in md and "```" not in md, f"02_markdown: raw markdown:\n{md}"
 
             pane.submit("STEP3 please run echo hi in the terminal")
@@ -135,7 +135,7 @@ def test_classic_cli_matches_main_baseline_across_fifteen_steps(tmp_path: Path) 
             pane.keys("Enter")  # main's preselected first choice: Allow once
             assert pane.wait([STEP3_DONE], 60), pane.screen()
             pane.settle()
-            s.expect("03b_tool_reply", ["\u2192 allowed once", "\u2624 Nastech", STEP3_DONE], s.capture("03b_tool_reply"))
+            s.expect("03b_tool_reply", ["\u2192 allowed once", "\U00013103 Nastech", STEP3_DONE], s.capture("03b_tool_reply"))
 
             pane.submit("STEP4 please read notes.txt")
             assert pane.wait([STEP4_DONE], 60), pane.screen()
@@ -197,7 +197,7 @@ def test_classic_cli_matches_main_baseline_across_fifteen_steps(tmp_path: Path) 
             pane.launch("chat", "-q", "hello")
             assert pane.wait([HELLO_REPLY], 120), f"11a_q_tty:\n{pane.screen()}"
             pane.settle(quiet=3.0, timeout=30)
-            s.expect("11a_q_tty", ["\u2624 Nastech", HELLO_REPLY, PROMPT], s.capture("11a_q_tty"))
+            s.expect("11a_q_tty", ["\U00013103 Nastech", HELLO_REPLY, PROMPT], s.capture("11a_q_tty"))
             pane.kill()
 
             piped = ch.run("chat", "-q", "hello")
