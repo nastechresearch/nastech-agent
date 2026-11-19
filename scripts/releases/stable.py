@@ -182,7 +182,8 @@ RECEIPT_TARGETS = {
 # handoff. Only the metadata is downloaded: package bytes are bound by their
 # handoff receipt digests here and re-downloaded and digest-checked by
 # release_artifacts.publish before anything goes live. validate_receipt
-# enforces the signing facts (teamId, publisher).
+# enforces each row's declared signing facts (teamId for signed rows, publisher);
+# an unsigned row is marked ``signed: false`` and bound by its install-stamp.
 RECEIPT_HANDOFFS = {
     "darwin-arm64": ("darwin-arm64",),
     "win32-bundle": ("win32-x64", "win32-arm64", "windows-universal"),
@@ -232,7 +233,9 @@ def _validated_rows(manifest: dict, tag: str, commit: str, public_base: str,
             if not item.get("publisher") or not item.get("applicationId") or not path.endswith(".msixbundle"):
                 raise ValueError("Windows candidate needs publisher, applicationId and MSIX bundle")
         elif item["platform"] == "macos":
-            if item.get("version") != tag[1:] or not re.fullmatch(r"[A-Z0-9]{10}", item.get("teamId", "")) or not path.endswith(".zip"):
+            if item.get("version") != tag[1:] or not path.endswith(".zip"):
+                raise ValueError("macOS candidate needs matching version and app ZIP")
+            if item.get("signed", True) and not re.fullmatch(r"[A-Z0-9]{10}", item.get("teamId", "")):
                 raise ValueError("macOS candidate needs matching version, signing team and app ZIP")
         elif item.get("version") != f"{tag[1:]}-1":
             raise ValueError("Termux candidate version differs from the admitted release")
@@ -292,7 +295,7 @@ def _transition_row(target: str, left: dict, right: dict) -> dict:
             raise ValueError("Update must preserve publisher and applicationId")
         newer = windows_version(right["version"]) > windows_version(left["version"])
     else:
-        if left["teamId"] != right["teamId"]:
+        if left.get("teamId") != right.get("teamId"):
             raise ValueError("Update must preserve signing team")
         newer = tuple(map(int, right["version"].split("."))) > tuple(map(int, left["version"].split(".")))
     if not newer:

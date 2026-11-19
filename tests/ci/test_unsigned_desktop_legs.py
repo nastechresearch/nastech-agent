@@ -273,14 +273,15 @@ def _staged_commands(tmp_path: Path, job: dict, step: dict, inputs: dict, *, pac
 
 
 @pytest.mark.parametrize("target", ["darwin-arm64", "win32-x64"])
-def test_release_metadata_is_recorded_only_for_signed_bytes(tmp_path, target):
-    """``release_artifacts record`` reads a signature no unsigned build can carry.
+def test_every_release_leg_records_its_row_with_an_explicit_signing_state(tmp_path, target):
+    """Every desktop leg describes its own bytes; the row states whether they are signed.
 
-    The macOS recorder codesign-verifies the app and then demands a 10-character
-    Developer ID team; the Windows recorder reads the Authenticode-bound MSIX
-    identity. A metadata row is therefore a signed-release record: an unsigned leg
-    writes none and stages none, while its own packages still stage — and a signed
-    leg still records its row.
+    A stable release owes a package row for every desktop target in its claim, so an
+    unsigned leg records too — its row carries ``signed: false`` via ``--unsigned``
+    and stays provenance-bound by its install-stamp. A signed leg records without
+    the marker (and still carries a Developer ID / Authenticode identity). What the
+    gate must never allow is an unsigned leg recording a *signed* row, or a leg
+    silently writing no row and leaving its target missing from the manifest.
     """
     jobs = load()["jobs"]
     job = jobs[native_builds(jobs)[(target, "release")]]
@@ -292,12 +293,12 @@ def test_release_metadata_is_recorded_only_for_signed_bytes(tmp_path, target):
         commands = _staged_commands(tmp_path, job, step, inputs, packages=True)
         recorded = [line for line in commands if f"record --platform {platform}" in line]
         staged = [line for line in commands if "scripts.releases.handoff stage" in line][-1]
+        assert len(recorded) == 1, f"{target} (skip-signed={skip_signed}) must record its row: {commands}"
+        assert "metadata-*.json" in staged, f"{target} must stage its row so the claim's target is present"
         if skip_signed:
-            assert not recorded, f"an unsigned {target} leg recorded a signed release row: {recorded}"
-            assert "metadata-*.json" not in staged, f"an unsigned {target} leg staged a row it cannot sign"
+            assert "--unsigned" in recorded[0], f"unsigned {target} must mark its row unsigned: {recorded}"
         else:
-            assert len(recorded) == 1, f"a signed {target} leg must still record its row: {commands}"
-            assert "metadata-*.json" in staged
+            assert "--unsigned" not in recorded[0], f"signed {target} must not mark its row unsigned: {recorded}"
 
 
 @pytest.mark.parametrize("skip_signed", [True, False])
@@ -368,10 +369,14 @@ def _receipt_gates(jobs: dict) -> dict[str, list[dict]]:
     return gates
 
 
-def test_no_stable_receipt_is_staged_without_its_signed_rows() -> None:
-    """A candidate receipt is assembled from the recorder's rows, and a handoff fetch
-    that matches nothing returns nothing: staging one for an unsigned leg would publish
-    a record of zero packages instead of failing. Every signed candidate still receipts.
+def test_every_candidate_stages_its_receipt() -> None:
+    """Every candidate receipts its rows, signed or not, so the gate is never starved.
+
+    An unsigned leg now writes a provenance-bound ``signed: false`` row (see the
+    recorder test), so its receipt has real rows to assemble. With the old guard an
+    unsigned candidate staged no receipt and the stable gate found no metadata row
+    for its desktop targets — the release could never publish. Both signing states
+    must receipt; the marker, not the absence of a receipt, is what tells them apart.
     """
     jobs = load()["jobs"]
     for skip_signed in (True, False):
@@ -379,10 +384,7 @@ def test_no_stable_receipt_is_staged_without_its_signed_rows() -> None:
         for receipt, nodes in sorted(_receipt_gates(jobs).items()):
             job = nodes[0]
             staged = all(_step_runs(node, inputs, admitted(needs_of(job))) for node in nodes)
-            if skip_signed:
-                assert not staged, f"{receipt}: an unsigned candidate staged a receipt of no rows"
-            else:
-                assert staged, f"{receipt}: a signed candidate lost its receipt — a check was deleted"
+            assert staged, f"{receipt}: candidate (skip-signed={skip_signed}) lost its receipt — a check was deleted"
 
 
 def _needs_results(jobs: dict, job: dict, inputs: dict, smoke_names: set[str]) -> dict:

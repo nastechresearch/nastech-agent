@@ -303,9 +303,14 @@ jobs:
           image = json.loads(Path('/tmp/image-artifacts/image-inspect.json').read_text())[0]
           if image['Architecture'] != os.environ['ARCH']:
               raise SystemExit('Docker image architecture mismatch')
+          # The local image Id is daemon-store dependent: a classic overlay2 store reports the
+          # config digest, a Docker 29 containerd store reports the manifest digest. The layer
+          # diff IDs come from the config blob bytes and are identical across both, so bind the
+          # tested archive to them rather than to an Id that changes on the publish runner.
           Path('/tmp/image-artifacts/identity.json').write_text(json.dumps({
               'tag': os.environ['RELEASE_TAG'], 'commit': os.environ['CANDIDATE_COMMIT'],
-              'arch': os.environ['ARCH'], 'variant': os.environ['VARIANT'], 'imageId': image['Id']}), encoding='utf-8')
+              'arch': os.environ['ARCH'], 'variant': os.environ['VARIANT'],
+              'layers': image['RootFS']['Layers']}), encoding='utf-8')
           PY
           docker save --output "/tmp/image-artifacts/image-${ARCH}.tar" "${IMAGE_NAME}:test"
           (
@@ -589,7 +594,7 @@ jobs:
           expected = (os.environ['RELEASE_TAG'], os.environ['CANDIDATE_COMMIT'], os.environ['ARCH'], os.environ['VARIANT'])
           if (identity['tag'], identity['commit'], identity['arch'], identity['variant']) != expected:
               raise SystemExit('Tested Docker archive identity mismatch')
-          if (loaded['Id'], loaded['Architecture']) != (identity['imageId'], identity['arch']):
+          if (loaded['RootFS']['Layers'], loaded['Architecture']) != (identity['layers'], identity['arch']):
               raise SystemExit('Loaded Docker image differs from tested image')
           PY
 
