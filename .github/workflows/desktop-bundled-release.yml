@@ -214,13 +214,11 @@ env:
   R2_DISPOSABLE_RUN: ${{ inputs.disposable_run || (inputs.disposable_channel != '' && github.run_id) || '' }}
   # The control plane (channels, feeds, pages, APT indexes) is GitHub-native:
   # scripts/releases/ghpages.py commits records to this repository tree and
-  # Deploy Site publishes them; the workers.dev origin is retired.
+  # Deploy Site publishes them.
   RELEASE_CHANNEL_STORE: github
-  # The handoff plane (each leg's packages, blockmaps and receipts) is pinned the
-  # same way, so staging and fetching cannot disagree inside one run. Keys,
-  # receipts and write-once rules are identical in either store; without this pin
-  # the bucket still wins while it is configured.
-  RELEASE_HANDOFF_STORE: github
+  # The handoff plane (each leg's packages, blockmaps and receipts) uses the
+  # default R2 store. A GitHub-Releases handoff 404s on asset upload and leaves
+  # releases with zero assets.
   RELEASE_CLAIM_TAG: ${{ inputs.claim-tag }}
   RELEASE_CLAIM_OBJECT: ${{ inputs.claim-object }}
 
@@ -364,6 +362,7 @@ jobs:
           CHANNEL_BUILD: ${{ steps.allocate.outputs.channel_build || '' }}
           CHANNEL_REQUEST_SHA256: ${{ steps.allocate.outputs.channel_request_sha256 || '' }}
           CLOUDFLARE_R2_PUBLIC_URL: ${{ vars.CLOUDFLARE_R2_PUBLIC_URL }}
+          CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
           JOBS: ${{ inputs.jobs }}
           BUNDLE_ENV_JSON: ${{ inputs.bundle_env }}
           RELEASE_PHASE: ${{ inputs.release-phase }}
@@ -377,8 +376,8 @@ jobs:
           fi
           # The one parser for the `jobs` input; every job gates on these outputs.
           python -m scripts.releases.job_groups >> "$GITHUB_OUTPUT"
-          # The pinned store names its own archive; the bucket variable is not an
-          # archive origin, and a GitHub-pinned run must not hand it to the resolver.
+          # The handoff store names its own archive; with the bucket configured
+          # this is the R2 public origin the build legs stage their bytes to.
           origin=$(python -c 'from scripts.releases.handoff import archive_origin; print(archive_origin())')
           printf 'public-root=%s\npublic-base=%s\n' "$origin" "$origin" >> "$GITHUB_OUTPUT"
           printf 'archive-tag=%s\n' "${RELEASE_CLAIM_TAG:-$RELEASE_TAG}" >> "$GITHUB_OUTPUT"
