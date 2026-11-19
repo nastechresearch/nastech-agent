@@ -25,7 +25,10 @@ from typing import Mapping, Sequence
 # exist on the on-disk copy after this release. Extend when a new root-level
 # symbol would otherwise break the pre-handoff upgrade path.
 _ROOT_MODULE_REQUIRED_ATTRS: dict[str, tuple[str, ...]] = {
-    "utils": ("file_signature", "file_cache_version"),
+    # A pre-hand-off tree's root utils.py lacks these; a freshly imported
+    # nastech_cli.backup / config needs them after the in-place update. Keeping
+    # a stale cached utils makes `from utils import fsync_directory` fail.
+    "utils": ("file_signature", "file_cache_version", "fsync_directory"),
 }
 
 

@@ -788,9 +788,14 @@ jobs:
         # A Store-only candidate has no signed package to describe, so no metadata.
         run: |
           args=(--include '*.msix')
-          if [ "$SKIP_SIGNED" != true ] && { [ "$RELEASE_PHASE" = candidate ] || { [ "$NASTECH_DESKTOP_VARIANT" = bundled ] && [[ "$NASTECH_PAYLOAD_TAG" == *+canary.* ]]; }; }; then
+          # Every desktop leg describes its own bytes, signed or not: the row
+          # carries the package identity and is provenance-bound by its stamp.
+          if [ "$RELEASE_PHASE" = candidate ] || { [ "$NASTECH_DESKTOP_VARIANT" = bundled ] && [[ "$NASTECH_PAYLOAD_TAG" == *+canary.* ]]; }; then
+            signing_args=()
+            if [ "$SKIP_SIGNED" = true ]; then signing_args+=(--unsigned); fi
             python -m scripts.bundles.release_artifacts record --platform windows --arch "${TARGET##*-}" \
               --root apps/desktop/release --tag "$NASTECH_PAYLOAD_TAG" --commit "$RELEASE_COMMIT" \
+              "${signing_args[@]}" \
               --out "apps/desktop/release/metadata-windows-${TARGET##*-}.json"
             args+=(--include 'metadata-*.json')
           fi
@@ -1255,12 +1260,14 @@ jobs:
         # The feed input stays in the tag archive until the leg and its smoke pass.
         run: |
           args=(--include '*.dmg' --include '*.zip' --include '*.blockmap' --include '*-mac.yml')
-          # The recorder reads the Developer ID signature an unsigned build cannot
-          # carry, so an unsigned leg writes no release row, exactly as the Windows
-          # leg refuses to describe bytes it did not Authenticode-sign.
-          if [ "$SKIP_SIGNED" != true ] && { [ "$RELEASE_PHASE" = candidate ] || { [ "$NASTECH_DESKTOP_VARIANT" = bundled ] && [[ "$NASTECH_PAYLOAD_TAG" == *+canary.* ]]; }; }; then
+          # An unsigned leg has no Developer ID to read, so its row records
+          # ``signed: false``; the install-stamp still binds it to this release.
+          if [ "$RELEASE_PHASE" = candidate ] || { [ "$NASTECH_DESKTOP_VARIANT" = bundled ] && [[ "$NASTECH_PAYLOAD_TAG" == *+canary.* ]]; }; then
+            signing_args=()
+            if [ "$SKIP_SIGNED" = true ]; then signing_args+=(--unsigned); fi
             python -m scripts.bundles.release_artifacts record --platform macos --arch "${TARGET##*-}" \
               --root apps/desktop/release --tag "$NASTECH_PAYLOAD_TAG" --commit "$RELEASE_COMMIT" \
+              "${signing_args[@]}" \
               --out "apps/desktop/release/metadata-macos-${TARGET##*-}.json"
             args+=(--include 'metadata-*.json')
           fi
@@ -1340,13 +1347,10 @@ jobs:
     # the install arm may start against bytes whose smoke has not run yet
     # (decision 11); acceptance still blocks publication.
     needs: [validate, build-darwin-arm64]
-    # A receipt is assembled from the recorder's signed-release rows, and a handoff
-    # fetch that matches nothing returns nothing: an unsigned leg writes no row (see
-    # 'Record and stage channel macos packages'), so its receipt would record zero
-    # packages. Same rule the win32-bundle receipt already follows.
+    # The receipt is assembled from the recorder's rows. An unsigned leg writes a
+    # row marked ``signed: false`` that is still provenance-bound by its stamp.
     if: >-
       !cancelled() && inputs.release-phase == 'candidate'
-      && inputs.skip-signed != true
       && needs.validate.result == 'success' && needs.validate.outputs.sha != ''
       && needs.validate.outputs.darwin-arm64 == 'true'
       && needs.build-darwin-arm64.result == 'success'
@@ -1664,8 +1668,9 @@ jobs:
       - name: Stage the stable win32-bundle receipt
         # Same receipt-before-smoke contract as the darwin arches (decision 11):
         # the bundle and its per-arch metadata are staged and digest-verified;
-        # acceptance still blocks publication. A Store-only candidate has no signed bundle to receipt.
-        if: inputs.release-phase == 'candidate' && inputs.skip-signed != true
+        # acceptance still blocks publication. Unsigned per-arch rows are bound
+        # by their install-stamps, so they receipt too.
+        if: inputs.release-phase == 'candidate'
         id: receipt
         env:
           RELEASE_TAG: ${{ inputs.tag }}
