@@ -41,7 +41,10 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 # "vendor CONNECT then silence" kill: healthy rows CONNECT their own vendor host during startup
 # (deepinfra's catalog fetch) and then do seconds of CPU-bound init before the first inference,
 # which a loaded CI runner stretches past any fixed grace (it killed a healthy deepinfra turn).
-TURN_TIMEOUT = 75.0
+# A healthy row's route resolution and model probes took up to 110 s on an unloaded host;
+# 75 s killed turns before they reached the fake. 180 s matches the other provider harnesses
+# (_openai_helpers 150 s, _anthropic_helpers and _native_helpers 180 s).
+TURN_TIMEOUT = 180.0
 SHARDS = 3
 FINAL = "CATALOG-TURN-COMPLETE"
 

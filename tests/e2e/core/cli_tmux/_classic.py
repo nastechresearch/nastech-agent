@@ -60,7 +60,7 @@ def require_tmux() -> None:
 REPO_ROOT = Path(__file__).resolve().parents[4]
 COLS, ROWS = 160, 50
 PROMPT = "\u276f"
-STATUS_BAR = f"\u2624 {MODEL_ID}"
+STATUS_BAR = f"\U00013103 {MODEL_ID}"
 _DIGITS = re.compile(r"\d")
 _TRACEBACK = "Traceback (most recent call last)"
 

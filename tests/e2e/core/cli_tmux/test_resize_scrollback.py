@@ -37,6 +37,7 @@ def _reply(turn: int) -> str:
     return "\n".join(" ".join(words[j:j + 21]) for j in range(0, len(words), 21))
 
 
+@pytest.mark.live_system_guard_bypass  # failure diagnostics SIGABRT the test's own tmux pane, reparented to init
 def test_resizes_keep_each_transcript_line_once_in_tmux_scrollback(tmp_path: Path) -> None:
     require_tmux()
     sock = f"nastech-e2e-{uuid.uuid4().hex[:8]}"
@@ -113,7 +114,7 @@ def test_resizes_keep_each_transcript_line_once_in_tmux_scrollback(tmp_path: Pat
             # text + Enter in one read, which it takes for a pasted newline — the question sits
             # unsent in a two-line draft. The status bar is painted by the running app, in raw mode;
             # its separator after the model differs by layout (glyph `·`, classic `│`), so match the name.
-            wait_for("\u2624 fake-model", timeout=120)
+            wait_for("\U00013103 fake-model", timeout=120)
             time.sleep(2.0)
 
             ask(1)
