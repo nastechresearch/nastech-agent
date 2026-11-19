@@ -1,10 +1,10 @@
-"""Every workflow that moves handoff bytes names the store it moves them through.
+"""Every workflow that moves handoff bytes uses the default R2 store.
 
-Unset, `scripts.releases.handoff.store()` resolves the store by the bucket variable, so a
-controller that consumes another workflow's staged bytes can silently read the object store
-while the legs wrote draft release assets -- work that succeeded, read back as a missing
-handoff. Naming the store in each workflow is what keeps a staging job and a fetching job
-inside one release from disagreeing.
+Unset, `scripts.releases.handoff.store()` resolves the store by the bucket variable, so
+every leg of the plane stages and reads the same R2 objects. The old `github` pin pointed
+`handoff stage` at `gh release upload` on a claim tag with no Release object: a 404 that
+left each attempt with zero assets and no builds table. Leaving the seam unpinned is what
+keeps a staging job and a fetching job on the one store that actually holds the bytes.
 """
 from pathlib import Path
 
@@ -21,11 +21,10 @@ def workflow_env(name):
     return workflow.get("env") or {}
 
 
-def test_the_handoff_plane_selects_one_store_end_to_end():
+def test_the_handoff_plane_uses_the_default_r2_store_end_to_end():
     chosen = {name: workflow_env(name).get(HANDOFF_SEAM) for name in HANDOFF_PLANE}
-    unset = [name for name, pin in chosen.items() if pin is None]
-    assert not unset, f"{unset} leave the handoff store to the bucket variable default"
-    assert set(chosen.values()) == {"github"}, chosen
+    pinned = [name for name, pin in chosen.items() if pin is not None]
+    assert not pinned, f"{pinned} repoint the handoff plane off the R2 bucket default"
 
 
 def test_the_stable_controller_does_not_pin_a_seam_its_reader_ignores():

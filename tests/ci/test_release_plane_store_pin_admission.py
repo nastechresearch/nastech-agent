@@ -1,19 +1,12 @@
-"""Every leg that moves receipt-bound release bytes names the store it reads them from.
+"""Every leg of the publication plane reads handoff bytes from the R2 store.
 
-`scripts.releases.handoff.store()` resolves the store from three signals, and the
-run-wide pin is the first of them; unset, the non-secret bucket variable decides
-(handoff.py's own fallback). That is enough to lose a release: the legs stage their
-packages as draft release assets, while a later leg that *fetches* them sees a
-populated bucket variable and asks the object store for keys nobody wrote -- work
-that succeeded, read back as a missing handoff. PR #212 moved the bundled workflow's
-admission leg onto the seam; this is the same contract for the whole publication
-plane, including the stable publication pass that runs the sequencer.
-
-The scenario each leg is replayed in is the one that broke: the bucket variable and
-the bucket's public origin both populated, as they stay for an r2-selected run. A leg
-that resolves its store from those values instead of from the pin names an origin the
-GitHub-native plane never writes, and a test that only checked the pin's presence
-would never see it.
+`scripts.releases.handoff.store()` resolves the store from three signals, in
+order: the `RELEASE_HANDOFF_STORE` run pin, an explicit public archive origin,
+and finally the bucket variable. A GitHub pin sent `handoff stage` to
+`gh release upload` on a claim tag with no Release object (HTTP 404), while the
+build legs stage signed objects to R2, leaving every attempt with zero assets.
+With the pin gone each leg must reach R2 through the configured bucket or an
+explicit public R2 origin.
 """
 from __future__ import annotations
 
@@ -23,43 +16,50 @@ from pathlib import Path
 import nastech_yaml
 import pytest
 
-from scripts.releases import gh_transport, handoff
+from scripts.releases import handoff, r2
 
-# The entry points whose reads and writes go through `handoff.store()`. A workflow
+# Entry points whose reads and writes go through `handoff.store()`. A workflow
 # that starts running one of these is a leg of this plane whether or not anyone
-# remembered to add it here.
+# remembered to add it here. `commit_build` is deliberately absent: it creates a
+# git tag and never touches the handoff store.
 STORE_ENTRY_POINTS = (
     "scripts.releases.channel_publish",
     "scripts.releases.channel_releases",
-    "scripts.releases.commit_build",
     "scripts.releases.handoff",
     "scripts.releases.sequencer",
 )
-# The stale-but-configured bucket a fork that moved to GitHub releases still carries.
-BUCKET = "nastech-releases"
+# The R2 bucket a configured run stages into, and its public origin.
+BUCKET = "nastech-assets"
 BUCKET_ORIGIN = "https://nastech-assets.nastechresearch.workers.dev"
 REPOSITORY = "nastechresearch/nastech-agent"
-RELEASE_ORIGIN = f"https://github.com/{REPOSITORY}/releases/download"
 # The seam's own inputs: cleared before a leg's declared env is applied, so only
 # what the workflow itself declares decides which store the leg resolves.
 SEAM_KEYS = ("RELEASE_HANDOFF_STORE", "RELEASE_CHANNEL_STORE", "CLOUDFLARE_R2_BUCKET",
-             "CLOUDFLARE_R2_PUBLIC_URL", "R2_DISPOSABLE_RUN")
+             "CLOUDFLARE_R2_PUBLIC_URL", "R2_DISPOSABLE_RUN", "PUBLIC_BASE")
 _EXPRESSION = re.compile(r"\$\{\{([^{}]*)\}\}")
 
 
 def _rendered(value: str) -> str:
     """A workflow env value with each `${{ }}` replaced by a configured stand-in.
 
-    Only the non-secret inputs the seam reads get a real value: the bucket variable
-    and its public origin, because populating them is what selects the wrong store.
+    Only the non-secret inputs the seam reads get real values: the bucket variable
+    and its public origin (including the smoke workflow's dispatched inputs),
+    because populating them is what selects the store an unpinned leg resolves.
     Secrets and computed contexts are non-empty placeholders -- this is about which
     store a leg resolves, not about what it uploads.
     """
     def one(match: re.Match) -> str:
         expression = match.group(1).strip()
-        if expression == "vars.CLOUDFLARE_R2_BUCKET":
+        if expression in ("vars.CLOUDFLARE_R2_BUCKET",):
             return BUCKET
-        if expression == "vars.CLOUDFLARE_R2_PUBLIC_URL":
+        if (expression in ("vars.CLOUDFLARE_R2_PUBLIC_URL", "inputs.public-base",
+                           "inputs.public-root")
+                or expression.endswith(".outputs.public-root")
+                or expression.endswith(".outputs.public-base")):
+            # `validate` publishes the store's own origin as both outputs, and
+            # every build/fetch leg reads it back rather than naming a URL of its
+            # own. A GitHub-pinned run used to publish the Pages origin here; the
+            # R2 store now publishes the bucket's origin.
             return BUCKET_ORIGIN
         if expression.startswith("secrets."):
             return "configured-secret"
@@ -118,27 +118,19 @@ def _enter(leg_env: dict, monkeypatch: pytest.MonkeyPatch) -> dict:
 
 
 @pytest.mark.parametrize("leg", sorted(PLANE))
-def test_a_leg_of_the_publication_plane_selects_the_pinned_store(leg, monkeypatch):
-    """The run's pin, not the bucket variable, decides which store a leg reads."""
-    _enter(PLANE[leg], monkeypatch)
-    resolved = handoff.store()
-    assert resolved is gh_transport, (
-        f"{leg} resolves {resolved.__name__} from the bucket variable: its legs stage draft "
-        "release assets, so this fetch asks an object store for keys nothing wrote")
+def test_every_leg_of_the_publication_plane_uses_r2(leg, monkeypatch):
+    """The bucket or an explicit R2 origin, not a legacy pin, selects the store."""
+    declared = _enter(PLANE[leg], monkeypatch)
+    public_base = declared.get("PUBLIC_BASE") or declared.get("CLOUDFLARE_R2_PUBLIC_URL") or None
+    resolved = handoff.store(public_base)
+    assert resolved is r2, (
+        f"{leg} resolves {resolved.__name__}: a GitHub handoff stages draft assets "
+        "that the R2 publication legs cannot read")
 
 
 @pytest.mark.parametrize("leg", sorted(PLANE))
-def test_no_leg_names_the_bucket_as_its_archive_origin(leg, monkeypatch):
-    """The origin a leg publishes comes from its store, never from a bucket variable.
-
-    A pinned leg either answers this repository's release-download route, or refuses
-    the foreign origin outright; quietly serving bucket URLs is the bug.
-    """
+def test_every_leg_names_the_bucket_as_its_archive_origin(leg, monkeypatch):
+    """The origin a leg publishes is the R2 public URL, never a GitHub release route."""
     declared = _enter(PLANE[leg], monkeypatch)
-    try:
-        origin = handoff.archive_origin(declared.get("CLOUDFLARE_R2_PUBLIC_URL") or None)
-    except ValueError:
-        return
-    assert origin != BUCKET_ORIGIN, (
-        f"{leg} names {BUCKET_ORIGIN} as the origin of bytes staged to the release archive")
-    assert origin == RELEASE_ORIGIN, f"{leg} resolves the archive origin to {origin}"
+    origin = handoff.archive_origin(declared.get("CLOUDFLARE_R2_PUBLIC_URL") or None)
+    assert origin == BUCKET_ORIGIN, f"{leg} resolves the archive origin to {origin}"
