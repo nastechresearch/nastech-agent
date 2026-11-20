@@ -1,4 +1,12 @@
 """Atomic, owner-only publication of backup archives."""
+
+# Stale-module bridge: this module binds ``fsync_directory`` at import time, so a fresh
+# import in a post-pull updater process (pre-handoff purge keeps root modules cached) dies
+# with ImportError unless the stale ``utils`` is dropped first. See nastech_cli.stale_modules.
+from nastech_cli.stale_modules import drop_stale_root_modules
+
+drop_stale_root_modules()
+
 import errno
 import os
 import shutil
