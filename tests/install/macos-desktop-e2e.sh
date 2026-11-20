@@ -301,6 +301,37 @@ run_playwright_update() {
   [ "$rc" -eq 0 ] || fail "app-driven update exited $rc; transcript above"
 }
 
+checkout_lock_held() {
+  local lock="$1"
+  [ -e "$lock" ] || return 1
+  python3 - "$lock" <<'PY'
+import fcntl
+import os
+import sys
+
+path = sys.argv[1]
+try:
+    with open(path, "r+b") as fh:
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise SystemExit(0)
+        except OSError:
+            raise SystemExit(0)
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+        except OSError:
+            pass
+    raise SystemExit(1)
+except FileNotFoundError:
+    raise SystemExit(1)
+except PermissionError:
+    raise SystemExit(0)
+except OSError:
+    raise SystemExit(0)
+PY
+}
+
 wait_for_update_quiescence() {
   local timeout="${1:-600}" marker lock gitdir
   marker="$NASTECH_HOME/.nastech-update-in-progress"
@@ -312,14 +343,18 @@ wait_for_update_quiescence() {
       [ -n "$gitdir" ] && lock="$gitdir/nastech-update.lock"
     fi
     [ -n "$lock" ] || lock="$INSTALL_DIR/.nastech-update.lock"
-    if [ ! -e "$marker" ] && [ ! -e "$lock" ]; then
+    local marker_busy=0 lock_busy=0
+    [ -e "$marker" ] && marker_busy=1
+    checkout_lock_held "$lock" && lock_busy=1
+    if [ "$marker_busy" -eq 0 ] && [ "$lock_busy" -eq 0 ]; then
       return 0
     fi
     sleep 10
   done
-  printf 'update quiescence wait timed out (marker=%s lock=%s)\n' \
+  printf 'update quiescence wait timed out (marker=%s lock=%s path=%s)\n' \
     "$([ -e "$marker" ] && echo present || echo absent)" \
-    "$([ -e "${lock:-}" ] && echo present || echo absent)" >&2
+    "$(checkout_lock_held "${lock:-/nonexistent}" >/dev/null 2>&1 && echo held || echo free)" \
+    "${lock:-}" >&2
   return 1
 }
 
@@ -359,6 +394,7 @@ phase_update() {
       printf '  CLI update invocation:'
       printf ' %q' "${update_cmd[@]}"
       printf '\n'
+      wait_for_update_quiescence 600 || fail "timed out waiting for update/build activity to clear before nastech update"
       local rc=0
       (cd "$INSTALL_DIR" && source_build_env "${update_cmd[@]}" < /dev/null 2>&1 | ts_prefix > "$LOG_DIR/update.log") || rc=$?
       log_group "nastech update transcript" "$LOG_DIR/update.log"
@@ -406,6 +442,7 @@ PYEOF
       nastech="$(source_nastech "$INSTALL_DIR")" || fail "no installed desktop command"
       local spec="$WORK_ROOT/launch-spec.json"
       local rc=0
+      wait_for_update_quiescence 600 || fail "timed out waiting for update/build activity to clear before nastech desktop capture"
       if [ "$nastech" = "$INSTALL_DIR/.nastech/bin/nastech" ]; then
         # PM launchers use -I, which ignores PYTHONPATH/sitecustomize. Inject
         # the capture hook into the installed launcher's isolated command.

@@ -232,7 +232,29 @@ class Machine:
     def stage(self) -> None:
         """serve.git at HEAD (+ NEXT in its object store), the URL redirect, a seeded home."""
         self.root.mkdir(parents=True, exist_ok=True)
-        self.head = harness_git("-C", str(REPO_ROOT), "rev-parse", f"{self.base_ref}^{{commit}}" if self.base_ref else "HEAD")
+        if self.base_ref:
+            try:
+                self.head = harness_git("-C", str(REPO_ROOT), "rev-parse", f"{self.base_ref}^{{commit}}")
+            except RuntimeError:
+                fetch_errors = []
+                for args in (
+                    ("-C", str(REPO_ROOT), "fetch", "--no-tags", "origin", self.base_ref),
+                    ("-C", str(REPO_ROOT), "fetch", "--no-tags", "--depth=1", "origin", self.base_ref),
+                    ("-C", str(REPO_ROOT), "fetch", "origin", self.base_ref),
+                ):
+                    try:
+                        harness_git(*args)
+                        self.head = harness_git("-C", str(REPO_ROOT), "rev-parse", f"{self.base_ref}^{{commit}}")
+                        break
+                    except RuntimeError as exc:
+                        fetch_errors.append(str(exc))
+                else:
+                    raise RuntimeError(
+                        f"base_ref {self.base_ref} is not available in {REPO_ROOT}; "
+                        f"fetch attempts failed: {' | '.join(fetch_errors[-2:])}"
+                    )
+        else:
+            self.head = harness_git("-C", str(REPO_ROOT), "rev-parse", "HEAD")
         harness_git("clone", "--bare", "--quiet", str(REPO_ROOT), str(self.serve))
         harness_git("-C", str(self.serve), "update-ref", "refs/heads/main", self.head)
         harness_git("-C", str(self.serve), "symbolic-ref", "HEAD", "refs/heads/main")

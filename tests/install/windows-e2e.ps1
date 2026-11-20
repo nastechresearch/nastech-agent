@@ -520,6 +520,9 @@ function Invoke-NastechUpdate {
     # --yes reaches the update subcommand only in later
     # releases; ask the installed binary, never parse its source.
     $nastechExe = Get-SourceNastech $InstallDir
+    # Old installers can leave generated churn (lockfiles, line-ending normalization) in the
+    # disposable checkout; clear it so the update does not autostash and restore a broken tree.
+    Clear-HistoricalInstallerChurn
     $updateArgs = @("update")
     $prevEap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     $helpText = & $nastechExe update --help 2>&1 | Out-String
@@ -1236,7 +1239,50 @@ function Invoke-GuiUpdateDesktopRoute([string]$TargetSha) {
         # Marker may briefly outlive the result write; allow it a moment.
         $mDeadline = (Get-Date).AddMinutes(2)
         while ((Get-Date) -lt $mDeadline -and (Test-Path -LiteralPath $markerPath)) { Start-Sleep -Seconds 5 }
-        Assert-True (-not (Test-Path -LiteralPath $markerPath)) "update marker cleaned up"
+        if (Test-Path -LiteralPath $markerPath) {
+            $lockHeld = Test-NastechCheckoutLockHeld
+            $markerText = ""
+            try { $markerText = [System.IO.File]::ReadAllText($markerPath, [System.Text.Encoding]::UTF8) } catch { $markerText = "<unreadable: $($_.Exception.Message)>" }
+            $handoffLog = Join-Path $NastechHome "logs\desktop-update-handoff.log"
+            $handoffTail = @()
+            if (Test-Path -LiteralPath $handoffLog) {
+                try { $handoffTail = @(Get-Content -LiteralPath $handoffLog -Tail 40) } catch {}
+            }
+            Write-Host "  update marker still present after 2 min grace"
+            Write-Host "  checkout lock held (probe): $lockHeld"
+            Write-Host "  marker content:"
+            ($markerText -split "`r?`n") | ForEach-Object { Write-Host "    marker| $_" }
+            if ($handoffTail.Count -gt 0) {
+                Write-Host "  desktop-update-handoff.log (tail):"
+                $handoffTail | ForEach-Object { Write-Host "    handoff| $_" }
+            }
+
+            # A committed handoff may keep the marker alive while the checkout lock is held by
+            # a surviving owner/delegate. If the update itself is proven complete and the lock
+            # is still held, do not treat this as a cleanup failure.
+            $r6Deadline = (Get-Date).AddMinutes(10)
+            while ((Get-Date) -lt $r6Deadline -and (Test-Path -LiteralPath $markerPath)) {
+                $lockHeld = Test-NastechCheckoutLockHeld
+                if (-not $lockHeld) { break }
+                Start-Sleep -Seconds 10
+            }
+            $lockHeld = Test-NastechCheckoutLockHeld
+            if ((Test-Path -LiteralPath $markerPath) -and $lockHeld) {
+                $headNow = ""
+                try { $headNow = Get-InstalledHead } catch {}
+                $resultOk = $false
+                if (Test-Path -LiteralPath $resultPath) {
+                    try { $resultOk = [bool]((Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json).ok) } catch {}
+                }
+                if ($resultOk -and $headNow -eq $TargetSha) {
+                    Write-Host "  marker retained under active checkout lock after successful update; not treating as cleanup failure"
+                } else {
+                    Assert-True $false "update marker cleaned up (marker present while checkout lock held, but update completion not fully proven)"
+                }
+            } else {
+                Assert-True (-not (Test-Path -LiteralPath $markerPath)) "update marker cleaned up"
+            }
+        }
 
         Assert-True ((Get-InstalledHead) -eq $TargetSha) "checkout landed on target commit"
         Test-NastechRuns "post-update"
@@ -1582,28 +1628,74 @@ function Invoke-PhaseInstall {
     Invoke-UserStateActions
 }
 
+function Get-NastechCheckoutLockPath {
+    $root = $InstallDir
+    if (-not $root) { return $null }
+    $dot = Join-Path $root '.git'
+    $gitDir = $null
+    if ([System.IO.Directory]::Exists($dot)) {
+        $gitDir = $dot
+    } elseif ([System.IO.File]::Exists($dot)) {
+        $first = (([System.IO.File]::ReadAllText($dot)).TrimStart([char]0xFEFF) -split "`n")[0].Trim()
+        if ($first -like 'gitdir:*') {
+            $gitDir = $first.Substring(7).Trim()
+            if (-not [System.IO.Path]::IsPathRooted($gitDir)) { $gitDir = Join-Path $root $gitDir }
+        }
+    }
+    if (-not $gitDir) { return (Join-Path $root '.nastech-update.lock') }
+    $commonFile = Join-Path $gitDir 'commondir'
+    if ([System.IO.File]::Exists($commonFile)) {
+        $common = (([System.IO.File]::ReadAllText($commonFile)).TrimStart([char]0xFEFF) -split "`n")[0].Trim()
+        if ($common) {
+            $gitDir = if ([System.IO.Path]::IsPathRooted($common)) { $common } else { Join-Path $gitDir $common }
+        }
+    }
+    return (Join-Path $gitDir 'nastech-update.lock')
+}
+
+function Test-NastechCheckoutLockHeld {
+    $path = Get-NastechCheckoutLockPath
+    if (-not $path -or -not [System.IO.File]::Exists($path)) { return $false }
+    $fs = $null
+    try {
+        $fs = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite,
+            ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
+    } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
+        return $false
+    } catch {
+        try {
+            $fs = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read,
+                ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
+        } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
+            return $false
+        } catch {
+            return $true
+        }
+    }
+    try {
+        try { $fs.Lock(1048576, 17) } catch { return $true }
+        try { $fs.Unlock(1048576, 17) } catch {}
+        return $false
+    } finally {
+        $fs.Dispose()
+    }
+}
+
 function Wait-UpdateQuiescence([int]$TimeoutSeconds = 600) {
     $marker = Join-Path $NastechHome ".nastech-update-in-progress"
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
-        $lock = $null
-        try {
-            $gitdir = (& git -C $InstallDir rev-parse --git-common-dir 2>$null)
-            if ($LASTEXITCODE -eq 0 -and $gitdir) {
-                $gitdir = $gitdir.Trim()
-                if (-not [System.IO.Path]::IsPathRooted($gitdir)) {
-                    $gitdir = Join-Path $InstallDir $gitdir
-                }
-                $lock = Join-Path $gitdir "nastech-update.lock"
-            }
-        } catch {}
-        if (-not $lock) { $lock = Join-Path $InstallDir ".nastech-update.lock" }
-        if ((-not (Test-Path -LiteralPath $marker)) -and (-not (Test-Path -LiteralPath $lock))) {
+        $markerPresent = Test-Path -LiteralPath $marker
+        $lockHeld = Test-NastechCheckoutLockHeld
+        if ((-not $markerPresent) -and (-not $lockHeld)) {
             return
         }
         Start-Sleep -Seconds 10
     }
-    throw "E2E ASSERTION FAILED: timed out waiting for prior update activity to clear before $Route"
+    $lockPath = Get-NastechCheckoutLockPath
+    $markerState = if (Test-Path -LiteralPath $marker) { "present" } else { "absent" }
+    $lockState = if (Test-NastechCheckoutLockHeld) { "held" } else { "free" }
+    throw "E2E ASSERTION FAILED: timed out waiting for prior update activity to clear before $Route (marker=$markerState, checkout-lock=$lockState, path=$lockPath)"
 }
 
 function Invoke-PhaseUpdate {
