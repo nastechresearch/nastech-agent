@@ -301,6 +301,28 @@ run_playwright_update() {
   [ "$rc" -eq 0 ] || fail "app-driven update exited $rc; transcript above"
 }
 
+wait_for_update_quiescence() {
+  local timeout="${1:-600}" marker lock gitdir
+  marker="$NASTECH_HOME/.nastech-update-in-progress"
+  deadline=$((SECONDS + timeout))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    lock=""
+    if [ -d "$INSTALL_DIR/.git" ] || [ -f "$INSTALL_DIR/.git" ]; then
+      gitdir="$(git -C "$INSTALL_DIR" rev-parse --git-common-dir 2>/dev/null || true)"
+      [ -n "$gitdir" ] && lock="$gitdir/nastech-update.lock"
+    fi
+    [ -n "$lock" ] || lock="$INSTALL_DIR/.nastech-update.lock"
+    if [ ! -e "$marker" ] && [ ! -e "$lock" ]; then
+      return 0
+    fi
+    sleep 10
+  done
+  printf 'update quiescence wait timed out (marker=%s lock=%s)\n' \
+    "$([ -e "$marker" ] && echo present || echo absent)" \
+    "$([ -e "${lock:-}" ] && echo present || echo absent)" >&2
+  return 1
+}
+
 phase_update() {
   # shellcheck disable=SC1090
   . "$STATE"
@@ -311,6 +333,8 @@ phase_update() {
   # Snapshot every plugin tree BEFORE the upgrade moves anything: fixtures
   # seeded here must survive through the verify after the update lands.
   preserve_before_upgrade
+  step "waiting for any prior update or desktop install to finish"
+  wait_for_update_quiescence 600 || fail "timed out waiting for prior update/build activity to clear before $UPDATE_METHOD"
   step "advancing served main to $TARGET_LABEL ($TARGET_SHA)"
   git -C "$SERVE_REPO" update-ref refs/heads/main "$TARGET_SHA"
   ok "serve.git main = $TARGET_SHA"

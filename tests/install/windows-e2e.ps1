@@ -654,8 +654,11 @@ function Clear-HistoricalInstallerChurn {
     & $script:RealGitExe -C $RepoRoot merge-base --is-ancestor 679e9cd2943dddf59f50486c265a7ab110ad0f19 (Read-State).old 2>&1 | Out-Null
     $ancestorExit = $LASTEXITCODE
     $ErrorActionPreference = $prevEap
-    Assert-True ($ancestorExit -in 0, 1) "git merge-base --is-ancestor answered for the launcher-layout commit (exit $ancestorExit)"
-    $legacyLaunchers = if ($ancestorExit -eq 1) { @("? bin/nastech.exe", "? bin/nastech-acp.exe") } else { @() }
+    # Exit 128 means git cannot answer (e.g. the marker commit object is not
+    # present in this install's history). Treat as "not ancestor" so the legacy
+    # launcher paths stay excluded for old releases rather than failing the run.
+    Assert-True ($ancestorExit -in 0, 1, 128) "git merge-base --is-ancestor answered for the launcher-layout commit (exit $ancestorExit)"
+    $legacyLaunchers = if ($ancestorExit -ne 0) { @("? bin/nastech.exe", "? bin/nastech-acp.exe") } else { @() }
     $locks = @(); $other = @()
     foreach ($line in $lines) {
         $fields = $line -split " ", 9
@@ -1579,6 +1582,30 @@ function Invoke-PhaseInstall {
     Invoke-UserStateActions
 }
 
+function Wait-UpdateQuiescence([int]$TimeoutSeconds = 600) {
+    $marker = Join-Path $NastechHome ".nastech-update-in-progress"
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        $lock = $null
+        try {
+            $gitdir = (& git -C $InstallDir rev-parse --git-common-dir 2>$null)
+            if ($LASTEXITCODE -eq 0 -and $gitdir) {
+                $gitdir = $gitdir.Trim()
+                if (-not [System.IO.Path]::IsPathRooted($gitdir)) {
+                    $gitdir = Join-Path $InstallDir $gitdir
+                }
+                $lock = Join-Path $gitdir "nastech-update.lock"
+            }
+        } catch {}
+        if (-not $lock) { $lock = Join-Path $InstallDir ".nastech-update.lock" }
+        if ((-not (Test-Path -LiteralPath $marker)) -and (-not (Test-Path -LiteralPath $lock))) {
+            return
+        }
+        Start-Sleep -Seconds 10
+    }
+    throw "E2E ASSERTION FAILED: timed out waiting for prior update activity to clear before $Route"
+}
+
 function Invoke-PhaseUpdate {
     $state = Read-State
     $script:ExpectedDesktop = if ($InstallMethod -ne 'installer-script' -or $Route -in @(
@@ -1604,6 +1631,8 @@ function Invoke-PhaseUpdate {
     # ... and the user's own durable state, produced by the install phase
     # through the ordinary CLI.
     Invoke-UserStateSnapshot
+    Write-Step "waiting for prior update or desktop install activity to clear"
+    Wait-UpdateQuiescence 600
     Invoke-Git @("-C", $ServeRepo, "update-ref", "refs/heads/main", $state.current) | Out-Null
     Write-Host "  serve.git main advanced to $($state.current)"
 

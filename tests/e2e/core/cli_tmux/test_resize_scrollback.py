@@ -139,9 +139,13 @@ def test_resizes_keep_each_transcript_line_once_in_tmux_scrollback(tmp_path: Pat
 
     # A streaming-preview row painted as tmux narrowed may have been re-wrapped or clipped: it is
     # left rather than erased (a stale chrome row is benign, an erased transcript row is lost) —
-    # at most one per mid-stream recovery: the drag's and each step's (#95375).
+    # at most one per mid-stream recovery: the drag's and each step's (#95375). The preview may
+    # render as an ellipsis-prefixed fragment or as a spinner/status chrome row carrying a snippet.
     lines = final.split("\n")
-    stale_preview = [line for line in lines if line.lstrip().startswith("\u2026")]
+    stale_preview = [
+        line for line in lines
+        if line.lstrip().startswith("\u2026") or (line.lstrip().startswith("─") and "…" in line)
+    ]
     assert len(stale_preview) <= 3, final
     words = Counter(re.findall(r"\bt\dw\d{3}\b", "\n".join(ln for ln in lines if ln not in stale_preview)))
     expected = {f"t{t}w{i:03d}" for t, n in WORDS.items() for i in range(n)}
