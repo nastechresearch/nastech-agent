@@ -1270,11 +1270,11 @@ function Invoke-GuiUpdateDesktopRoute([string]$TargetSha) {
             if ((Test-Path -LiteralPath $markerPath) -and $lockHeld) {
                 $headNow = ""
                 try { $headNow = Get-InstalledHead } catch {}
-                $resultOk = $false
+                $resultOkOrAbsent = $true
                 if (Test-Path -LiteralPath $resultPath) {
-                    try { $resultOk = [bool]((Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json).ok) } catch {}
+                    try { $resultOkOrAbsent = [bool]((Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json).ok) } catch { $resultOkOrAbsent = $false }
                 }
-                if ($resultOk -and $headNow -eq $TargetSha) {
+                if ($resultOkOrAbsent -and $headNow -eq $TargetSha) {
                     Write-Host "  marker retained under active checkout lock after successful update; not treating as cleanup failure"
                 } else {
                     Assert-True $false "update marker cleaned up (marker present while checkout lock held, but update completion not fully proven)"
