@@ -88,8 +88,12 @@ def require_squirrel_downloadable(package: Path) -> None:
 
 
 def record(platform: str, arch: str, root: Path, tag: str, commit: str, out: Path,
-           *, channel_request: dict | None = None) -> None:
-    """Read identities from the built packages, never from the workflow matrix."""
+           *, channel_request: dict | None = None, signed: bool = True) -> None:
+    """Read identities from the built packages, never from the workflow matrix.
+
+    An unsigned desktop leg has no signing team to read. Its row is marked
+    ``signed: false`` and stays bound to the release by its own install-stamp.
+    """
     row: dict = {"platform": platform, "arch": arch, "tag": tag, "commit": commit}
     if platform == "windows":
         package = single(p for p in root.glob(f"*-win-{arch}.msix") if not p.name.startswith("Store-"))
@@ -130,11 +134,14 @@ def record(platform: str, arch: str, root: Path, tag: str, commit: str, out: Pat
             raise ValueError("macOS artifact filename differs from requested version")
         require_squirrel_downloadable(package)
         app = single(root.glob("mac*/*.app"))
-        subprocess.run(["codesign", "--verify", "--strict", str(app)], check=True)
-        signature = subprocess.run(["codesign", "-dv", "--verbose=4", str(app)], check=True, capture_output=True, text=True, encoding="utf-8")
-        team = re.search(r"^TeamIdentifier=([A-Z0-9]{10})$", signature.stderr, re.MULTILINE)
-        if not team:
-            raise ValueError("Signed app has no Developer ID team")
+        signing = {}
+        if signed:
+            subprocess.run(["codesign", "--verify", "--strict", str(app)], check=True)
+            signature = subprocess.run(["codesign", "-dv", "--verbose=4", str(app)], check=True, capture_output=True, text=True, encoding="utf-8")
+            team = re.search(r"^TeamIdentifier=([A-Z0-9]{10})$", signature.stderr, re.MULTILINE)
+            if not team:
+                raise ValueError("Signed app has no Developer ID team")
+            signing["teamId"] = team.group(1)
         with zipfile.ZipFile(package) as archive:
             require_owner_write(archive)
             info = plistlib.loads(archive.read(single(n for n in archive.namelist() if re.fullmatch(r"[^/]+\.app/Contents/Info.plist", n))))
@@ -142,7 +149,8 @@ def record(platform: str, arch: str, root: Path, tag: str, commit: str, out: Pat
         stamp_matches(stamp, tag, commit, channel_request=channel_request)
         if stamp.get("receiverProtocol") == 1:
             row["receiverProtocol"] = 1
-        row.update(identity=info["CFBundleIdentifier"], teamId=team.group(1), version=info["CFBundleShortVersionString"], filename=package.name)
+        row.update(identity=info["CFBundleIdentifier"], version=info["CFBundleShortVersionString"],
+                   filename=package.name, **signing)
         if row["version"] != version:
             raise ValueError("App version differs from requested version")
     elif platform == "termux":
@@ -167,6 +175,8 @@ def record(platform: str, arch: str, root: Path, tag: str, commit: str, out: Pat
         if row["identity"] != expected or row["version"] != version:
             raise ValueError("Native package identity/version differs from channel request")
         row["request"] = channel_request
+    if not signed and platform in ("windows", "macos"):
+        row["signed"] = False
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(row, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
@@ -454,6 +464,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--commit", default=os.environ.get("RELEASE_COMMIT") or os.environ.get("GITHUB_SHA"))
     parser.add_argument("--public-base")
     parser.add_argument("--store-only", action="store_true")
+    parser.add_argument("--unsigned", action="store_true",
+                        help="Record an unsigned desktop leg: provenance from the install-stamp, no signing team")
     for name in ("identity", "publisher", "version", "self-uri", "artifact-uri"):
         parser.add_argument(f"--{name}")
     parser.add_argument("--variant", choices=["bundled", "light"])
@@ -477,7 +489,8 @@ def main(argv: list[str] | None = None) -> None:
         return
     if args.command == "record":
         request = json.loads(args.channel_request.read_text(encoding="utf-8-sig")) if args.channel_request else None
-        record(args.platform, args.arch, args.root, args.tag, args.commit, args.out, channel_request=request)
+        record(args.platform, args.arch, args.root, args.tag, args.commit, args.out,
+               channel_request=request, signed=not args.unsigned)
     else:
         from scripts.releases import handoff
 

@@ -73,8 +73,11 @@ UNREDIRECTABLE_AUTH = {
 KEYLESS_PROVIDERS = {
     "custom": "user-defined endpoint keyed by config api_key; covered by test_chat_custom_endpoint.py",
 }
-# Hosts a hermetic run may reach without carrying any vendor credential.
-CREDENTIAL_FREE_HOSTS = frozenset({"models.dev:443"})
+# Hosts a hermetic run may reach without carrying any vendor credential:
+# models.dev (catalog metadata) and openrouter.ai (the model-metadata catalog the
+# CLI fetches at startup). Neither carries a key, so neither is a foreign-key
+# egress; `no_foreign_key_on_wire` independently checks credentials on the wire.
+CREDENTIAL_FREE_HOSTS = frozenset({"models.dev:443", "openrouter.ai:443"})
 
 _SECRET_SUFFIXES = ("_API_KEY", "_TOKEN", "_SECRET", "_ACCESS_KEY", "_KEY")
 _PASSTHROUGH = frozenset({"PATH", "LANG", "LANGUAGE", "USER", "LOGNAME", "SHELL", "TMPDIR", "TZ"})
@@ -317,7 +320,8 @@ def evaluate(t: TurnResult, catalog: list[Row]) -> dict[str, bool]:
     main = [r for r in inference if isinstance(r.body, dict) and r.body.get("tools")]
     answered = [r for r in main if r.dialect != "unknown"]
     foreign = t.secrets - {t.own_key}
-    foreign_hosts = provider_hosts([r for r in catalog if r.name != t.row.name]) - provider_hosts([t.row])
+    foreign_hosts = ((provider_hosts([r for r in catalog if r.name != t.row.name])
+                      - provider_hosts([t.row])) - CREDENTIAL_FREE_HOSTS)
     return {
         "turn_completed": t.rc == 0 and FINAL in t.stdout,
         # The fake answers ONLY the exact configured base path + dialect endpoint (else 404,
