@@ -1,6 +1,6 @@
 import type { Translations } from '@/i18n'
-import { servedByNastechCloud } from '@/lib/nastech-cloud-host'
 import { hostHas } from '@/lib/host-capabilities'
+import { servedByNastechCloud } from '@/lib/nastech-cloud-host'
 import { NATIVE_NOTIFICATION_KINDS } from '@/store/native-notifications'
 import { canUseQuickEntry } from '@/store/quick-entry'
 import { TRANSLUCENCY_SUPPORTED } from '@/store/translucency'

@@ -1,9 +1,9 @@
 import { atom } from 'nanostores'
 
-import { getActionStatus, getStatus, nastechApi, restartGateway } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { sharedGatewayProfiles } from '@/lib/shared-gateway-restart'
 import { isSignedOutStatus } from '@/lib/signed-out-status'
+import { getActionStatus, getStatus, nastechApi, restartGateway } from '@/nastech'
 import { confirm } from '@/store/confirm'
 import { reconnectGateway } from '@/store/gateway-reconnect'
 import { notify, notifyError } from '@/store/notifications'

@@ -104,7 +104,10 @@ describe('a standalone plugin installed from the catalog', () => {
   })
 
   it('a reload reads again what a folder is (a Force reinstall made it a package half)', async () => {
-    const files: Record<string, string> = { 'plugin.js': OFF_BY_DEFAULT, '.nastech-origin.json': JSON.stringify(ORIGIN) }
+    const files: Record<string, string> = {
+      'plugin.js': OFF_BY_DEFAULT,
+      '.nastech-origin.json': JSON.stringify(ORIGIN)
+    }
     stubDisk([folder('accent-picker', files)])
     await discoverRuntimePlugins()
     expect($pluginRecords.get().accent.packageName).toBeUndefined()

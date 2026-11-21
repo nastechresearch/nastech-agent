@@ -3,7 +3,6 @@ import {
   graftRefreshedTailOntoBackfill,
   olderPageReader
 } from '@/app/chat/transcript-backfill'
-import { getLatestSessionMessages, type ProfileScope } from '@/nastech'
 import { type ChatMessage, toChatMessages } from '@/lib/chat-messages'
 import {
   type InFlightRecoveryResult,
@@ -12,6 +11,7 @@ import {
   ownerPendingTurns,
   runningAdmission
 } from '@/lib/inflight-turn-journal'
+import { getLatestSessionMessages, type ProfileScope } from '@/nastech'
 import type { SessionMessage, SessionMessagesResponse, SessionResumeResult } from '@/types/nastech'
 
 import type { ClientSessionState } from '../../../types'

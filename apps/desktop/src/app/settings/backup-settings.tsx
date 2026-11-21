@@ -17,6 +17,8 @@ import {
   undoTransfer
 } from '@/lib/agent-transfer'
 import { openExternalLink } from '@/lib/external-link'
+import { hostHas } from '@/lib/host-capabilities'
+import { Archive, CloudUpload } from '@/lib/icons'
 import {
   backup,
   cloudLogin,
@@ -27,8 +29,6 @@ import {
   transferRequest as request,
   transferAvailable
 } from '@/lib/nastech-cloud-agents'
-import { hostHas } from '@/lib/host-capabilities'
-import { Archive, CloudUpload } from '@/lib/icons'
 import { $activeConnectionId } from '@/store/connections'
 import { notifyError } from '@/store/notifications'
 import { ensureGatewayAgent } from '@/store/profile'

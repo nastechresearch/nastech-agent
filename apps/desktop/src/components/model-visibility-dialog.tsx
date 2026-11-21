@@ -1,5 +1,5 @@
-import type { ModelOptionProvider, ModelOptionsResult } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import type { ModelOptionProvider, ModelOptionsResult } from '@nastech/shared'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -11,12 +11,12 @@ import { GlyphSpinner } from '@/components/ui/glyph-spinner'
 import { HighlightMatches } from '@/components/ui/highlight-matches'
 import { RowButton } from '@/components/ui/row-button'
 import { Switch } from '@/components/ui/switch'
-import type { NastechGateway } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { Plus, Search, X } from '@/lib/icons'
 import { modelOptionsQueryKey, requestModelOptions } from '@/lib/model-options'
 import { displayModelName, modelDisplayParts } from '@/lib/model-status-label'
 import { foldIncludes, normalize } from '@/lib/text'
+import type { NastechGateway } from '@/nastech'
 import { confirm } from '@/store/confirm'
 import {
   $customModels,
