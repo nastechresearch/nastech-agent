@@ -512,7 +512,17 @@ function Test-NastechRuns([string]$Label) {
         Write-Host "  first startup after the update ran (exit $startupExit); the checks below assert the launcher it must have published"
         $nastechExe = Get-SourceNastech $InstallDir
     }
-    & $DriverPython -B (Join-Path $AssetsDir 'source_driver.py') --root $InstallDir --launcher $nastechExe --desktop $script:ExpectedDesktop
+    $sourceDriverArgs = @(
+        '-B', (Join-Path $AssetsDir 'source_driver.py'),
+        '--root', $InstallDir,
+        '--launcher', $nastechExe,
+        '--desktop', $script:ExpectedDesktop
+    )
+    $allowRetained = Get-Variable -Scope Script -Name AllowRetainedIncompleteMarker -ErrorAction SilentlyContinue
+    if ($allowRetained -and $allowRetained.Value) {
+        $sourceDriverArgs += '--allow-retained-incomplete-marker'
+    }
+    & $DriverPython @sourceDriverArgs
     Assert-True ($LASTEXITCODE -eq 0) "$Label -- read-only install verification (no repair)"
     $prevLazy = $env:NASTECH_DISABLE_LAZY_INSTALLS
     $prevBytecode = $env:PYTHONDONTWRITEBYTECODE
@@ -1399,6 +1409,7 @@ function Invoke-GuiUpdateDesktopRoute([string]$TargetSha) {
                 }
                 if ($resultOkOrAbsent -and $headNow -eq $TargetSha) {
                     Write-Host "  marker retained under active checkout lock after successful update; not treating as cleanup failure"
+                    $script:AllowRetainedIncompleteMarker = $true
                 } else {
                     Assert-True $false "update marker cleaned up (marker present while checkout lock held, but update completion not fully proven)"
                 }
