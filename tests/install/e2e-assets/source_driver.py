@@ -61,7 +61,7 @@ def verify_products(root: Path, desktop: str, node: Path | None = None) -> None:
             raise RuntimeError(f"{product} output is missing, stale, or damaged: {out}")
 
 
-def probe_pm(root: Path, desktop: str, command: list[str]) -> None:
+def probe_pm(root: Path, desktop: str, command: list[str], *, allow_retained_incomplete_marker: bool = False) -> None:
     # Use the launcher's Python ABI, but deliberately do NOT execute its
     # bootstrap: that would complete dependencies or recover markers for it.
     sys.path.insert(0, str(root))
@@ -71,7 +71,8 @@ def probe_pm(root: Path, desktop: str, command: list[str]) -> None:
     if command != runtime_command(root):
         raise RuntimeError("published launcher belongs to another installation or Python")
     if any((root / marker).exists() for marker in (".update-incomplete", ".lazy-refresh-incomplete")):
-        raise RuntimeError("source update left an incomplete marker; refusing launch-time recovery")
+        if not allow_retained_incomplete_marker:
+            raise RuntimeError("source update left an incomplete marker; refusing launch-time recovery")
     sys.path.insert(1, str(site_packages(selected_venv(root))))
     from pm.install import installed_package, venv_is_current
 
@@ -88,11 +89,15 @@ def main() -> None:
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--launcher", type=Path, required=True)
     parser.add_argument("--desktop", choices=("absent", "present"), required=True)
+    parser.add_argument("--allow-retained-incomplete-marker", action="store_true",
+                        help="Allow a retained incomplete marker only when the caller has proven update completion and lock ownership.")
     parser.add_argument("--runtime-command", help=argparse.SUPPRESS)
     args = parser.parse_args()
     root = args.root.resolve()
+    allow_retained = bool(args.allow_retained_incomplete_marker)
     if args.runtime_command:
-        probe_pm(root, args.desktop, json.loads(args.runtime_command))
+        probe_pm(root, args.desktop, json.loads(args.runtime_command),
+                 allow_retained_incomplete_marker=allow_retained)
     elif (root / "pm/lock.json").is_file():
         env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", NASTECH_DISABLE_LAZY_INSTALLS="1")
         result = subprocess.run([str(args.launcher), "--print-runtime-command"],
@@ -100,10 +105,12 @@ def main() -> None:
         command = json.loads(result.stdout)
         if not isinstance(command, list) or not command or not all(isinstance(s, str) for s in command):
             raise RuntimeError("invalid published runtime command")
-        subprocess.run([command[0], "-I", "-B", str(Path(__file__).resolve()),
-                        "--root", str(root), "--launcher", str(args.launcher),
-                        "--desktop", args.desktop, "--runtime-command", json.dumps(command)],
-                       env=env, check=True, timeout=300)
+        reexec = [command[0], "-I", "-B", str(Path(__file__).resolve()),
+                  "--root", str(root), "--launcher", str(args.launcher),
+                  "--desktop", args.desktop, "--runtime-command", json.dumps(command)]
+        if allow_retained:
+            reexec.append("--allow-retained-incomplete-marker")
+        subprocess.run(reexec, env=env, check=True, timeout=300)
     else:
         verify_products(root, args.desktop)
         print("Historical install: artifact presence only (no PM/compiler receipt capability)")

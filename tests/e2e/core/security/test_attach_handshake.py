@@ -242,7 +242,7 @@ def _resume(home: Path, sid: str) -> tuple[subprocess.CompletedProcess, dict | N
     """Run ``nastech --tui --resume SID``; return the process result and what the TUI child received."""
     out = home.parent / f"handoff-{uuid.uuid4().hex}.json"
     result = run_nastech(
-        ["--tui", "--resume", sid], home, timeout=90,
+        ["--tui", "--resume", sid], home, timeout=150,
         extra_env={"NASTECH_TUI_DIR": str(home.parent / "tui-probe"), "NASTECH_SKIP_NODE_BOOTSTRAP": "1",
                    "ATTACH_PROBE_OUT": str(out)})
     handoff = json.loads(out.read_text(encoding="utf-8")) if out.exists() else None
