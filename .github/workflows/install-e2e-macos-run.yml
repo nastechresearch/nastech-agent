@@ -154,6 +154,7 @@ jobs:
           NASTECH_E2E_LOG_DIR: ${{ runner.temp }}/e2e-logs
 
       - name: Install ${{ inputs.install-ref }} via Nastech-Setup.dmg
+        id: install
         run: |
           set -euo pipefail
           tests/install/macos-desktop-e2e.sh --phase install \
@@ -165,6 +166,7 @@ jobs:
 
       - name: Update ${{ inputs.install-ref }} -> ${{ inputs.update-ref }} (${{ inputs.update-method }})
         id: update
+        if: steps.install.outputs.bootstrap_skip != 'unavailable'
         run: |
           set -euo pipefail
           tests/install/macos-desktop-e2e.sh --phase update \

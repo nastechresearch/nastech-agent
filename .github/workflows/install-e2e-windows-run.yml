@@ -270,6 +270,7 @@ jobs:
           powershell -NoProfile -ExecutionPolicy Bypass -File tests\install\windows-e2e.ps1 -Phase stage -InstallMethod $env:INSTALL_METHOD -Route $env:UPDATE_METHOD -InstallRef $env:INSTALL_REF -UpdateRef $env:UPDATE_REF -SetupExeUrl $env:SETUP_EXE_URL
 
       - name: Install ${{ inputs.install-ref }} (${{ inputs.install-method }})
+        id: install
         shell: powershell
         env:
           INSTALL_METHOD: ${{ inputs.install-method }}
@@ -281,6 +282,7 @@ jobs:
 
       - name: Update ${{ inputs.install-ref }} -> ${{ inputs.update-ref }} (${{ inputs.update-method }})
         id: update
+        if: steps.install.outputs.bootstrap_skip != 'unavailable'
         shell: powershell
         env:
           INSTALL_METHOD: ${{ inputs.install-method }}
@@ -295,7 +297,7 @@ jobs:
       # install, so stamp truthfulness is asserted here — not in the install
       # phase. Known-failure legs legitimately never reach the new HEAD.
       - name: Verify install stamps describe the updated checkout
-        if: steps.update.outputs.known_failure == ''
+        if: steps.install.outputs.bootstrap_skip != 'unavailable' && steps.update.outputs.known_failure == ''
         shell: powershell
         env:
           INSTALL_METHOD: ${{ inputs.install-method }}
