@@ -838,13 +838,14 @@ function Invoke-NastechDesktopAppUpdate([string]$TargetSha) {
     $prevEap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     Push-Location $WorkRoot
     try {
-        # 30 min, not the 10 min default: from v2026.9.24 the app's update
-        # runs the historical venv->PM takeover plus a full Desktop rebuild
-        # (9m43s measured), like the 35 min open-app-update wait below.
+        # 35 min, matching the open-app-update detached-updater wait: from
+        # v2026.9.24 the app's update runs the historical venv->PM takeover
+        # plus a full Desktop rebuild; large source diffs can push PM sync
+        # past the old 30 min driver ceiling.
         & $node (Join-Path $AssetsDir "launch-from-spec.mjs") --spec $spec `
             --old-sha (Read-State).old --chat-out $chatOut --mock-url $env:NASTECH_E2E_MOCK_URL `
             --result (Join-Path $NastechHome ".nastech-update-result.json") `
-            --expect-sha $TargetSha --repo-dir $InstallDir --timeout-ms 1800000 2>&1 |
+            --expect-sha $TargetSha --repo-dir $InstallDir --timeout-ms 2100000 2>&1 |
             ForEach-Object { Write-Host "  pw| $_" }
         $driveExit = $LASTEXITCODE
     } finally {
@@ -1256,6 +1257,17 @@ function Invoke-GuiUpdateDesktopRoute([string]$TargetSha) {
     New-Item -ItemType Directory -Path $proof -Force | Out-Null
 
     $env:NASTECH_HOME = $NastechHome
+
+    # The desktop route drives the same production updater as the two script
+    # routes, so it must start from the same clean checkout: old installers
+    # leave generated lockfile/CRLF churn in the disposable tree, and the
+    # updater autostashes before pulling. Restoring that stash on top of a
+    # large diff conflicts, the update never completes, and the read-only
+    # post-update verifier rejects the conflicted tree (rc.7 leg
+    # installer-script+desktop -> open-app-update, job 136761049283).
+    # Clear-HistoricalInstallerChurn undoes ONLY installer-generated state
+    # and still fails loudly on any other local change.
+    Clear-HistoricalInstallerChurn
 
     # The update becomes available the way it does for a real user: the
     # remote's main moves forward. (Install ran against main = OLD.)

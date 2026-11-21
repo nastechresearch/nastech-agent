@@ -143,8 +143,8 @@ def test_a_newer_published_release_outranks_the_protected_head():
     ]
 
     def run(argv):
-        if argv[:4] == ["gh", "api", "--paginate", "--slurp"]:
-            return json.dumps([releases])
+        if argv[:3] == ["gh", "api", "--paginate"]:
+            return json.dumps(releases)
         assert argv[:2] == ["gh", "api"] and argv[3:] == ["--jq", ".sha"]
         return {"repos/example/nastech-agent/commits/v0.21.8": "b" * 40,
                 "repos/example/nastech-agent/commits/v0.21.6": "c" * 40}[argv[2]]
