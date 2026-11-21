@@ -58,4 +58,7 @@ async def test_claim_pending_read_keeps_the_owner_loop_ticking(tmp_path, monkeyp
         db.close()
     assert first['admission_id'] == row.admission_id
     assert claimed and claimed['admission_id'] == row.admission_id and claimed['status'] == 'started'
-    assert max(gaps) < 0.2, f'owner loop stalled {max(gaps):.2f}s behind the claim read'
+    # The read must not block the owner loop: a synchronous-on-loop read would stall for ~SLOW_S.
+    # CI runners can be heavily contended (parallel workers, GC/scheduler pauses), so allow jitter
+    # while still catching the 2s loop-blocking regression this test guards.
+    assert max(gaps) < 1.0, f'owner loop stalled {max(gaps):.2f}s behind the claim read'

@@ -22,9 +22,24 @@ from typing import Any, List, Optional, Tuple
 # Stale-module bridge: this module binds ``utils.mkstemp_beside`` at import time, so a fresh
 # import in a post-pull updater process (pre-handoff purge keeps root modules cached) dies
 # unless the stale ``utils`` is dropped first. See nastech_cli.stale_modules.
-from nastech_cli.stale_modules import drop_stale_root_modules
+import sys as _sys
 
-drop_stale_root_modules()
+try:
+    # ``nastech_cli.stale_modules`` itself may be cached from the pre-pull tree; prefer the
+    # on-disk (post-swap) copy so its required-attrs map is current.
+    _sm = _sys.modules.get("nastech_cli.stale_modules")
+    if _sm is not None and "fsync_directory" not in getattr(_sm, "_ROOT_MODULE_REQUIRED_ATTRS", {}).get("utils", ()):
+        _sys.modules.pop("nastech_cli.stale_modules", None)
+    from nastech_cli.stale_modules import drop_stale_root_modules as _drop_stale_root_modules
+    _drop_stale_root_modules()
+except Exception:
+    # Fallback: drop a stale cached ``utils`` missing symbols this module binds below.
+    _utils = _sys.modules.get("utils")
+    if _utils is not None and not all(hasattr(_utils, a) for a in (
+        "atomic_replace", "mkstemp_beside", "preserve_file_mode", "preserve_file_owner",
+        "restore_file_mode", "restore_file_owner",
+    )):
+        _sys.modules.pop("utils", None)
 
 from persistence.core.admin import AdminUnsupported
 from persistence_assembly import open_store_admin

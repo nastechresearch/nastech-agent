@@ -3,9 +3,21 @@
 # Stale-module bridge: this module binds ``fsync_directory`` at import time, so a fresh
 # import in a post-pull updater process (pre-handoff purge keeps root modules cached) dies
 # with ImportError unless the stale ``utils`` is dropped first. See nastech_cli.stale_modules.
-from nastech_cli.stale_modules import drop_stale_root_modules
+import sys as _sys
 
-drop_stale_root_modules()
+try:
+    # ``nastech_cli.stale_modules`` itself may be cached from the pre-pull tree; prefer the
+    # on-disk (post-swap) copy so its required-attrs map is current.
+    _sm = _sys.modules.get("nastech_cli.stale_modules")
+    if _sm is not None and "fsync_directory" not in getattr(_sm, "_ROOT_MODULE_REQUIRED_ATTRS", {}).get("utils", ()):
+        _sys.modules.pop("nastech_cli.stale_modules", None)
+    from nastech_cli.stale_modules import drop_stale_root_modules as _drop_stale_root_modules
+    _drop_stale_root_modules()
+except Exception:
+    # Fallback: drop a stale cached ``utils`` missing symbols this module binds below.
+    _utils = _sys.modules.get("utils")
+    if _utils is not None and not hasattr(_utils, "fsync_directory"):
+        _sys.modules.pop("utils", None)
 
 import errno
 import os

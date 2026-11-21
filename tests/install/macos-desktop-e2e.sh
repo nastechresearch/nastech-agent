@@ -183,10 +183,33 @@ find_installed_app() {
   return 1
 }
 
+skip_marker_path() {
+  printf '%s/bootstrap-skip.txt' "$WORK_ROOT"
+}
+
+record_bootstrap_skip() {
+  local reason="$1"
+  mkdir -p "$WORK_ROOT" "$LOG_DIR"
+  printf '%s\n' "$reason" > "$(skip_marker_path)"
+  printf '%s\n' "$reason"
+  [ -z "${GITHUB_OUTPUT:-}" ] || printf 'bootstrap_skip=unavailable\n' >> "$GITHUB_OUTPUT"
+  [ -z "${GITHUB_STEP_SUMMARY:-}" ] || printf 'Skipped desktop-installer leg: %s\n' "$reason" >> "$GITHUB_STEP_SUMMARY"
+}
+
+exit_if_bootstrap_skipped() {
+  local marker
+  marker="$(skip_marker_path)"
+  [ -f "$marker" ] || return 0
+  cat "$marker"
+  [ -z "${GITHUB_OUTPUT:-}" ] || printf 'bootstrap_skip=unavailable\n' >> "$GITHUB_OUTPUT"
+  exit 0
+}
+
 phase_install() {
   # shellcheck disable=SC1090
   . "$STATE"
   arm_redirect
+  exit_if_bootstrap_skipped
   step "installing OLD ($OLD_REF) via the published Nastech-Setup.dmg"
 
   # Pair both historical inputs. Today's downloaded install.sh can call helpers
@@ -206,7 +229,7 @@ phase_install() {
     local http_code
     http_code="$(curl -sSLo "$dmg" -w '%{http_code}' "$DMG_URL")" || true
     if [ "$http_code" = "404" ]; then
-      echo "SKIP: published bootstrap installer not available at $DMG_URL (HTTP 404); cannot test desktop-installer@latest path in this environment."
+      record_bootstrap_skip "SKIP: published bootstrap installer not available at $DMG_URL (HTTP 404); cannot test desktop-installer@latest path in this environment."
       exit 0
     fi
     [ "$http_code" = "200" ] || fail "failed to download Nastech-Setup.dmg from $DMG_URL (HTTP $http_code)"
@@ -348,7 +371,14 @@ wait_for_update_quiescence() {
     lock=""
     if [ -d "$INSTALL_DIR/.git" ] || [ -f "$INSTALL_DIR/.git" ]; then
       gitdir="$(git -C "$INSTALL_DIR" rev-parse --git-common-dir 2>/dev/null || true)"
-      [ -n "$gitdir" ] && lock="$gitdir/nastech-update.lock"
+      if [ -n "$gitdir" ]; then
+        # --git-common-dir is relative to the -C directory (normally ".git"). Left relative,
+        # the probe reads a lock under the harness CWD, not the installed checkout: a build
+        # or completion holding the real lock then looks quiescent and `nastech desktop`
+        # exits 2 during launch capture. Anchor it exactly as update_lock.checkout_lock_path.
+        case "$gitdir" in /*) ;; *) gitdir="$INSTALL_DIR/$gitdir" ;; esac
+        lock="$gitdir/nastech-update.lock"
+      fi
     fi
     [ -n "$lock" ] || lock="$INSTALL_DIR/.nastech-update.lock"
     local marker_busy=0 lock_busy=0
@@ -370,6 +400,7 @@ phase_update() {
   # shellcheck disable=SC1090
   . "$STATE"
   arm_redirect
+  exit_if_bootstrap_skipped
   local pin_nastech
   pin_nastech="$(source_nastech "$INSTALL_DIR")" || fail "no installed command to record the update channel"
   source_build_env pin_source_main_channel "$pin_nastech" || fail "could not record the main update channel"
@@ -522,6 +553,7 @@ PYEOF
 # known-failures.cjs matches the exact start commit, method pair, assertion
 # and fresh bootstrap-installer.log signatures (tests/install/KNOWN_FAILURES.md).
 phase_checked_update() {
+  exit_if_bootstrap_skipped
   local nastech_logs="$HOME_SANDBOX/.nastech/logs" rc=0 error receipt
   rm -f "$WORK_ROOT/known-failure.json" "$LOG_DIR/known-failure.json" "$WORK_ROOT/update-failure.txt"
   # Only evidence produced by this update attempt can match an exception.
