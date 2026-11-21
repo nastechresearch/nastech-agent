@@ -156,7 +156,7 @@ Download run artifacts (transcripts, `nastech-agent-update`, proof trees) and in
 locally:
 
 ```bash
-gh run download <run> -R nastechresearch/nastech-agent -D /tmp/opencode/win-e2e-artifacts
+gh run download <run> -R nastechresearch/nastech-agent -D /tmp/opencode/win-e2e-artifacts  # no-tmp: ok — example artifact download target
 ```
 
 Mine logs/artifacts for the decisive lines (run from the artifact dir):
