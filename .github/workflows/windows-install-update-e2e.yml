@@ -94,8 +94,12 @@ jobs:
           # npm ci / native build. Match the runner's core count.
           NASTECH_TEST_WORKERS: '4'
           # test_crash_cells.py runs its whole journey (install, gateway phase, six crash cells)
-          # inside one file: ~2,100 s on a normal runner, past 2,400 s on a slow one.
-          NASTECH_TEST_FILE_TIMEOUT: '3600'
+          # inside one module-scoped fixture, so a file timeout leaves zero tests collected and
+          # skips the fixture's teardown. ~2,100 s on a normal runner; on the 4-core free runner
+          # under 4-way load it exceeded 3,600 s (run 44873305395 attempt 1: SIGKILLed at 3,603 s,
+          # which leaked a gateway, the fake profile and serve.git). The job allows 120 min, so
+          # give this file room to finish rather than killing it mid-journey.
+          NASTECH_TEST_FILE_TIMEOUT: '5400'
           NASTECH_TEST_FILE_RETRIES: '0'
           OPENROUTER_API_KEY: ''
           OPENAI_API_KEY: ''
