@@ -170,8 +170,19 @@ def _request(operation, arguments, *, callbacks=None, pause_event=None, project_
             if monitor is not None:
                 monitor.join()
             writer.close()
-            if process.wait(timeout=5):
-                raise InstallError("pm", "worker exited unsuccessfully")
+            try:
+                code = process.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                # Result already received; a slow worker teardown must not fail the operation.
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+            else:
+                if code:
+                    raise InstallError("pm", "worker exited unsuccessfully")
             receipt.accept_worker_receipt(response.get("receipt"), update_id)
             if callback_error is not None:
                 raise callback_error
@@ -184,7 +195,14 @@ def _request(operation, arguments, *, callbacks=None, pause_event=None, project_
                 monitor.join()
             if process.poll() is None:
                 process.terminate()
-                process.wait(timeout=5)
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        pass
 
 
 def ensure(name, *, base_env=None, explicit=False, verify=True, progress=None, pause_event=None,
