@@ -61,6 +61,56 @@ def verify_products(root: Path, desktop: str, node: Path | None = None) -> None:
             raise RuntimeError(f"{product} output is missing, stale, or damaged: {out}")
 
 
+def _venv_not_current_reason(root: Path) -> str:
+    """Best-effort passive diagnostic for a stale venv fact. Never repairs."""
+    try:
+        from pm.environments import runtime_facts_path, selected_venv
+        from pm.paths import facts_path
+        from pm.receipt import Facts
+        from pm.packages import Venv, get_package
+        from pm.install import _carried, _runtime_state_matches, _member_inputs
+    except Exception as exc:  # noqa: BLE001 - diagnostic only
+        return f"diagnostic import failed: {exc!r}"
+    try:
+        package = Venv(root)
+    except Exception as exc:  # noqa: BLE001
+        return f"package probe failed: {exc!r}"
+    fact = Facts(runtime_facts_path(root), strict=True).get("venv")
+    fact_source = str(runtime_facts_path(root))
+    if fact is None:
+        fact = Facts(facts_path(), strict=True).get("venv")
+        fact_source = str(facts_path())
+    if fact is None:
+        return f"no venv fact at {runtime_facts_path(root)} or {facts_path()}"
+    if not isinstance(fact, dict):
+        return f"venv fact is not a dict ({type(fact).__name__}) at {fact_source}"
+    stamp = fact.get("stamp")
+    if not isinstance(stamp, str) or not stamp:
+        return f"venv fact has invalid stamp at {fact_source}"
+    recorded_extras = fact.get("extras")
+    if not isinstance(recorded_extras, list):
+        return f"venv fact has invalid extras at {fact_source}"
+    try:
+        enabled = sorted(set(_carried(package, recorded_extras)) | set())
+        expected = package.expected_stamp(enabled, **_member_inputs(None))
+    except Exception as exc:  # noqa: BLE001
+        return f"expected stamp computation failed: {exc!r}"
+    if stamp != expected:
+        return f"stamp mismatch at {fact_source} (recorded={stamp[:16]}... expected={expected[:16]}... extras={enabled})"
+    try:
+        environment = selected_venv(root)
+    except Exception as exc:  # noqa: BLE001
+        return f"selected_venv failed: {exc!r}"
+    recorded = fact.get("environment")
+    if recorded is not None and (not isinstance(recorded, str) or Path(recorded).resolve() != environment):
+        return f"environment mismatch (recorded={recorded!r} selected={environment})"
+    if not (environment / "pyvenv.cfg").is_file():
+        return f"pyvenv.cfg missing at {environment}"
+    if not _runtime_state_matches(fact, expected, project_root=root):
+        return f"_runtime_state_matches returned False for {fact_source}"
+    return f"unknown (fact looks current at {fact_source})"
+
+
 def probe_pm(root: Path, desktop: str, command: list[str], *, allow_retained_incomplete_marker: bool = False) -> None:
     # Use the launcher's Python ABI, but deliberately do NOT execute its
     # bootstrap: that would complete dependencies or recover markers for it.
@@ -77,7 +127,8 @@ def probe_pm(root: Path, desktop: str, command: list[str], *, allow_retained_inc
     from pm.install import installed_package, venv_is_current
 
     if not venv_is_current(project_root=root):
-        raise RuntimeError("installed dependency generation is not current")
+        reason = _venv_not_current_reason(root)
+        raise RuntimeError(f"installed dependency generation is not current: {reason}")
     node = installed_package("node")
     if node is None or node.binary is None:
         raise RuntimeError("installed Node is missing or does not match the target pin")
