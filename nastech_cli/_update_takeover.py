@@ -211,9 +211,47 @@ def main() -> int:
     # v2 update marker is reclaimable by the next run.
     cancel_watchdog = _start_prepare_watchdog()
     try:
-        from nastech_agent.compat import install
+        # Compat install is defensive: old module names are not needed for takeover's own
+        # imports, and a hang here must not block the update. Build the finder on a daemon
+        # thread so a stuck import does not prevent takeover from continuing; only the main
+        # thread mutates sys.meta_path.
+        print("-> Takeover: installing compat aliases", flush=True)
+        try:
+            import threading
 
-        install()
+            _compat_result: list[object] = []
+            _compat_error: list[BaseException] = []
+
+            def _prepare_compat() -> None:
+                try:
+                    if any(
+                        type(finder).__name__ == "Finder"
+                        and type(finder).__module__.startswith("nastech_agent.compat")
+                        for finder in sys.meta_path
+                    ):
+                        _compat_result.append(None)
+                        return
+                    from nastech_agent.compat.finder import Finder
+                    from nastech_agent.compat.moves import MOVES
+
+                    _compat_result.append(Finder(MOVES))
+                except BaseException as exc:  # health: allow BLE001 -- compat is best-effort in takeover
+                    _compat_error.append(exc)
+
+            _compat_thread = threading.Thread(target=_prepare_compat, daemon=True, name="takeover-compat")
+            _compat_thread.start()
+            _compat_thread.join(timeout=15)
+            if _compat_thread.is_alive():
+                print("  ! Takeover: compat alias install timed out; continuing without it.", flush=True)
+            elif _compat_error:
+                print(f"  ! Takeover: compat alias install failed ({_compat_error[0]}); continuing without it.", flush=True)
+            else:
+                finder = _compat_result[0] if _compat_result else None
+                if finder is not None:
+                    sys.meta_path.insert(0, finder)
+                print("-> Takeover: compat aliases ready", flush=True)
+        except Exception as exc:  # health: allow BLE001 -- compat is best-effort in takeover
+            print(f"  ! Takeover: compat alias install skipped ({exc}); continuing without it.", flush=True)
         if "stopped_serves" in request:
             # Historical atexit cleanup may run after the update's result is fixed.
             # It must reuse that installation, never start a second update/repair.
