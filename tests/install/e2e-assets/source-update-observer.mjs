@@ -16,7 +16,7 @@ export function observeSourceUpdate({ home, resultPath, expectSha }) {
   const files = () => [
     ...(resultPath && existsSync(resultPath) ? [resultPath] : []),
     ...(existsSync(directory) ? readdirSync(directory)
-      .filter(name => name.endsWith('.json'))
+      .filter(name => name.startsWith('update_') && name.endsWith('.json'))
       .map(name => join(directory, name)) : []),
   ]
   const before = new Map(files().map(file => [file, readIfPresent(file)]))
