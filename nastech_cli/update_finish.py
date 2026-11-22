@@ -113,7 +113,7 @@ def _start_finish_watchdog(seconds: int = 2400):
              str(os.getpid()), str(seconds)],
             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
-    except Exception:
+    except Exception:  # health: allow BLE001 -- best-effort watchdog; update must continue
         watchdog = None
 
     def cancel() -> None:
@@ -121,11 +121,11 @@ def _start_finish_watchdog(seconds: int = 2400):
         if watchdog is not None and watchdog.poll() is None:
             try:
                 watchdog.kill()
-            except Exception:
+            except Exception:  # health: allow BLE001 -- best-effort watchdog cleanup
                 pass
             try:
                 watchdog.wait(timeout=5)
-            except Exception:
+            except Exception:  # health: allow BLE001 -- best-effort watchdog cleanup
                 pass
 
     return cancel
