@@ -70,7 +70,13 @@ describe('syncBackendLocalePacks', () => {
       {
         languages: [
           { id: 'ko', endonym: '한국어', rtl: false, source: 'bundled', surfaces: ['core', 'tui'] },
-          { id: 'it', endonym: 'Italiano', rtl: false, source: 'plugin:nastech-lang-it', surfaces: ['core', 'desktop'] },
+          {
+            id: 'it',
+            endonym: 'Italiano',
+            rtl: false,
+            source: 'plugin:nastech-lang-it',
+            surfaces: ['core', 'desktop']
+          },
           { id: 'ja', endonym: '日本語', rtl: false, source: 'bundled', surfaces: ['core', 'tui'] },
           { id: 'uk', endonym: 'Українська' }
         ]

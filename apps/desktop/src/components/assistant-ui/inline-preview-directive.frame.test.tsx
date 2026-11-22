@@ -39,7 +39,9 @@ async function mountFrame() {
 
   const report = (size: { height: number; width?: number }) =>
     act(() => {
-      window.dispatchEvent(new MessageEvent('message', { data: { type: 'nastech-inline-preview-size', token, ...size } }))
+      window.dispatchEvent(
+        new MessageEvent('message', { data: { type: 'nastech-inline-preview-size', token, ...size } })
+      )
     })
 
   return { box: iframe.parentElement, report }

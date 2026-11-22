@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import { getStatus } from '@/nastech'
 import { type I18nContextValue, useI18n } from '@/i18n'
 import { evaluateRuntimeReadiness, type RuntimeReadinessResult } from '@/lib/runtime-readiness'
 import { isSignedOutStatus } from '@/lib/signed-out-status'
+import { getStatus } from '@/nastech'
 import { $freeTierStatus, refreshFreeTierStatus, setFreeTierRoute } from '@/store/free-tier'
 import { $setupReadyTick } from '@/store/live-sync'
 import { dismissNotification, notify } from '@/store/notifications'

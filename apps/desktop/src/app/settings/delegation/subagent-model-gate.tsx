@@ -2,10 +2,10 @@ import type { ReactNode } from 'react'
 
 import type { DelegationRouting } from '@/api/delegation'
 import { Button } from '@/components/ui/button'
-import type { ProfileScope } from '@/nastech'
 import { useI18n } from '@/i18n'
 import type { DelegationRoutingTranslations } from '@/i18n/types_delegation_routing'
 import { Info } from '@/lib/icons'
+import type { ProfileScope } from '@/nastech'
 
 import { chooseDelegationMode, routesOwnSubagentModel, useDelegationRouting } from './routing-data'
 

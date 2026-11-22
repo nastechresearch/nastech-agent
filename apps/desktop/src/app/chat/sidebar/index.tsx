@@ -24,12 +24,12 @@ import {
 } from '@/components/ui/sidebar'
 import { Tip, TipKeybindLabel } from '@/components/ui/tooltip'
 import { useContributions } from '@/contrib/react/use-contributions'
-import { type SessionInfo, type SessionSearchResult } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { comboTokens } from '@/lib/keybinds/combo'
 import { sessionMatchesSearch } from '@/lib/session-search'
 import { normalizeSessionSource, sessionSourceLabel } from '@/lib/session-source'
 import { cn } from '@/lib/utils'
+import { type SessionInfo, type SessionSearchResult } from '@/nastech'
 import { $connectionsRegistry } from '@/store/connection-registry-state'
 import { $activeConnectionId } from '@/store/connections'
 import { $cronJobs } from '@/store/cron'
@@ -85,7 +85,7 @@ import {
   type AgentProfileRoute,
   ALL_PROFILES,
   messagingTotalsKey,
-  normalizeProfileKey,
+  normalizeProfileKey
 } from '@/store/profile'
 import { $profileRailVisible } from '@/store/profile-rail-prefs'
 import { $projectScope, ALL_PROJECTS, exitProjectScope } from '@/store/project-scope'

@@ -22,11 +22,11 @@
 import type { McpServersStatusResult } from '@nastech/shared'
 
 import { $apiRequestScope } from '@/api/client'
-import { getNastechConfigRecord, setMcpServerEnabled } from '@/nastech'
 import { translateNow } from '@/i18n'
 import { isLoopbackPreviewUrl } from '@/lib/local-preview'
 import { getServers, type McpServerEntry, serverEnabled } from '@/lib/mcp-servers'
 import { persistString, storedString } from '@/lib/storage'
+import { getNastechConfigRecord, setMcpServerEnabled } from '@/nastech'
 import { requestGatewayForAgent } from '@/store/gateway'
 import { notify, notifyError } from '@/store/notifications'
 import { $activeGatewayProfile, normalizeProfileKey } from '@/store/profile'

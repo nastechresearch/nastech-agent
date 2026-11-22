@@ -106,7 +106,7 @@ export {
   type WebSocketLike
 } from './json-rpc-gateway'
 export { modelSearchText } from './model-search-text'
-export { NASTECH_CLOUD_MANAGED, isNastechCloudUrl } from './nastech-cloud'
+export { isNastechCloudUrl, NASTECH_CLOUD_MANAGED } from './nastech-cloud'
 export {
   gaugeScope,
   gaugeTitle,
@@ -207,8 +207,8 @@ export {
   GatewayReauthRequiredError,
   type GatewayWsConnection,
   type GatewayWsUrlResult,
-  type NastechWebSocketUrlOptions,
   isGatewayReauthRequired,
+  type NastechWebSocketUrlOptions,
   normalizeBasePath,
   resolveGatewayWsUrl,
   type ResolveGatewayWsUrlDeps,

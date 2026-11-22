@@ -1,5 +1,5 @@
-import type { LoopSnapshot, SessionControlSnapshot } from '@nastech/shared/gateway-events'
 import { useStore } from '@nanostores/react'
+import type { LoopSnapshot, SessionControlSnapshot } from '@nastech/shared/gateway-events'
 import { atom } from 'nanostores'
 import { useEffect, useState } from 'react'
 

@@ -199,7 +199,11 @@ test('installs that are not a mounted AppImage keep running the artifact payload
     { ...host, platform: 'darwin' as NodeJS.Platform },
     { ...host, env: {} },
     // A .deb Nastech started from a terminal AppImage inherits that image's APPIMAGE and APPDIR.
-    { ...host, execPath: '/opt/Nastech/nastech', env: { APPIMAGE: '/home/u/Term.AppImage', APPDIR: '/tmp/.mount_Term' } },
+    {
+      ...host,
+      execPath: '/opt/Nastech/nastech',
+      env: { APPIMAGE: '/home/u/Term.AppImage', APPDIR: '/tmp/.mount_Term' }
+    },
     { ...host, stamp: stamp({ payload: 'light' }) },
     { ...host, stamp: null }
   ]) {

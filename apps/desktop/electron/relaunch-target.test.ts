@@ -157,7 +157,11 @@ describe('spawnRelaunch', () => {
   // and uninstall unable to find the image file.
   it.skipIf(process.platform !== 'linux')('keeps APPDIR for an executable inside it', async () => {
     const appDir = path.join(os.tmpdir(), 'appimage_extracted_0123abcd')
-    const env: NodeJS.ProcessEnv = { APPDIR: appDir, APPIMAGE: '/apps/Nastech.AppImage', PATH: `${appDir}/usr/bin:/bin` }
+    const env: NodeJS.ProcessEnv = {
+      APPDIR: appDir,
+      APPIMAGE: '/apps/Nastech.AppImage',
+      PATH: `${appDir}/usr/bin:/bin`
+    }
     const realSpawn = (await vi.importActual<typeof childProcess>('node:child_process')).spawn
     let childEnv: NodeJS.ProcessEnv | undefined
     vi.mocked(spawn).mockImplementationOnce((_file, _args, options) => {
@@ -281,7 +285,11 @@ describe('mountFreeEnv', () => {
 
   it('keeps the env whole for a command that still runs from the mount', () => {
     expect(
-      mountFreeEnv(env, '/tmp/.mount_NastechAb12/resources/agent-payload/bin/nastech', '/tmp/.mount_NastechAb12/nastech')
+      mountFreeEnv(
+        env,
+        '/tmp/.mount_NastechAb12/resources/agent-payload/bin/nastech',
+        '/tmp/.mount_NastechAb12/nastech'
+      )
     ).toBe(env)
   })
 

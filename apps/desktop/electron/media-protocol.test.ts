@@ -73,7 +73,9 @@ describe('media protocol helpers', () => {
 
     expect(isStreamableMediaPath(url)).toBe(true)
 
-    const response = await createMediaProtocolHandler(deps)(request(`nastech-media://remote/${encodeURIComponent(url)}`))
+    const response = await createMediaProtocolHandler(deps)(
+      request(`nastech-media://remote/${encodeURIComponent(url)}`)
+    )
 
     expect(response.status).toBe(206)
     expect(deps.fetchRemote).toHaveBeenCalledOnce()

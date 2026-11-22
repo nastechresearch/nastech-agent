@@ -1,6 +1,6 @@
 import type { Translations } from '@/i18n'
-import { servedByNastechCloud } from '@/lib/nastech-cloud-host'
 import { Archive, CloudUpload, type IconComponent } from '@/lib/icons'
+import { servedByNastechCloud } from '@/lib/nastech-cloud-host'
 
 export const BACKUP_SETTINGS_HREF = '/settings?tab=backup'
 

@@ -1,6 +1,10 @@
-import { Box, NoSelect, ScrollBox, type ScrollBoxHandle, Text, useInput, useStdout } from '@nastech/ink'
-import type { DelegationPauseResponse, DelegationStatusResponse, SubagentInterruptResponse } from '@nastech/shared/gateway-types'
 import { useStore } from '@nanostores/react'
+import { Box, NoSelect, ScrollBox, type ScrollBoxHandle, Text, useInput, useStdout } from '@nastech/ink'
+import type {
+  DelegationPauseResponse,
+  DelegationStatusResponse,
+  SubagentInterruptResponse
+} from '@nastech/shared/gateway-types'
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useAgentRoster } from '../app/agentRoster.js'

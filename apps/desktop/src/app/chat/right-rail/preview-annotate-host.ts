@@ -62,6 +62,7 @@ export function createPreviewAnnotateGuest(webview: PreviewDriveGuest | null): n
         '({ width: window.innerWidth, height: window.innerHeight })',
         signal
       )) as { height: number; width: number }
+
       signal?.throwIfAborted()
       const dataUrl = await window.nastechDesktop.capturePreview?.({ rect, viewport, webContentsId })
 
@@ -99,7 +100,9 @@ export function overlayInstallScript(source: string, session = ++nextOverlaySess
     `if ((window.__nastechAnnotateSession || 0) >= ${session}) return;` +
     `window.__nastechAnnotateSession = ${session};` +
     'if (window.__nastechAnnotate) window.__nastechAnnotate.teardown();' +
-    'var api=' + source + ';window.__nastechAnnotate=api;api.install();})()'
+    'var api=' +
+    source +
+    ';window.__nastechAnnotate=api;api.install();})()'
   )
 }
 
