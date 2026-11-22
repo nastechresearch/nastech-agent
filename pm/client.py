@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -129,9 +130,26 @@ def _request(operation, arguments, *, callbacks=None, pause_event=None, project_
 
         def send(data):
             with write_lock:
-                cancelled = pause_event is not None and pause_event.is_set()
-                writer.write(json.dumps({"id": request_id, "cancel": cancelled, **data}) + "\n")
-                writer.flush()
+                payload = json.dumps({"id": request_id,
+                                      "cancel": pause_event is not None and pause_event.is_set(),
+                                      **data}) + "\n"
+                fd = writer.fileno()
+                view = memoryview(payload.encode("utf-8"))
+                while view:
+                    try:
+                        written = os.write(fd, view[:16384])
+                    except BlockingIOError:
+                        import select
+                        import time
+
+                        try:
+                            select.select([], [fd], [], 0.05)
+                        except (OSError, ValueError):
+                            time.sleep(0.05)
+                        continue
+                    if not written:
+                        raise RuntimeError("PM client wire write returned 0 bytes")
+                    view = view[written:]
 
         def watch_pause():
             assert pause_event is not None
