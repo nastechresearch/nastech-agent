@@ -121,11 +121,11 @@ def _start_finish_watchdog(seconds: int = 2400):
         if watchdog is not None and watchdog.poll() is None:
             try:
                 watchdog.kill()
-            except Exception:  # health: allow BLE001 -- best-effort watchdog cleanup
+            except Exception:  # health: allow BLE001,S110 -- best-effort watchdog cleanup
                 pass
             try:
                 watchdog.wait(timeout=5)
-            except Exception:  # health: allow BLE001 -- best-effort watchdog cleanup
+            except Exception:  # health: allow BLE001,S110 -- best-effort watchdog cleanup
                 pass
 
     return cancel

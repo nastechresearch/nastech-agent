@@ -155,7 +155,7 @@ def _start_prepare_watchdog(seconds: int = 1500):
         print(f"  ! Update takeover exceeded {seconds}s; dumping stacks.", file=sys.stderr, flush=True)
         try:
             faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
-        except Exception:  # health: allow BLE001 -- best-effort diagnostic dump
+        except Exception:  # health: allow BLE001,S110 -- best-effort diagnostic dump
             pass
         os._exit(2)
 
@@ -191,11 +191,11 @@ def _start_prepare_watchdog(seconds: int = 1500):
         if watchdog is not None and watchdog.poll() is None:
             try:
                 watchdog.kill()
-            except Exception:  # health: allow BLE001 -- best-effort watchdog cleanup
+            except Exception:  # health: allow BLE001,S110 -- best-effort watchdog cleanup
                 pass
             try:
                 watchdog.wait(timeout=5)
-            except Exception:  # health: allow BLE001 -- best-effort watchdog cleanup
+            except Exception:  # health: allow BLE001,S110 -- best-effort watchdog cleanup
                 pass
 
     return cancel
@@ -268,7 +268,7 @@ def main() -> int:
         # lock may not be defined if watchdog/acquire path failed before assignment
         try:
             lock.release()
-        except Exception:  # health: allow BLE001 -- best-effort lock release
+        except Exception:  # health: allow BLE001,S110 -- best-effort lock release
             pass
 
 
