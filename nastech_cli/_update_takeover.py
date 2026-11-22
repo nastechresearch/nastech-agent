@@ -140,19 +140,65 @@ def _record_failure(request: dict, result: Path, code: int, detail: str) -> None
     result.write_text(json.dumps({"receipt_handled": saved is not None, "resume_handled": False}), encoding="utf-8")
 
 
-def _start_prepare_watchdog(seconds: int = 1500) -> None:
-    """Fail loudly if takeover preparation hangs; a silent hang blocks the whole update."""
+def _start_prepare_watchdog(seconds: int = 1500):
+    """Fail loudly if takeover preparation hangs; a silent hang blocks the whole update.
+
+    Returns a cancel callable. Uses both an in-process timer (can dump stacks when GIL is free)
+    and a subprocess backstop (fires even if the GIL is held by a C extension).
+    """
     import faulthandler
+    import subprocess
+    import sys
     import threading
 
     def _fire() -> None:
         print(f"  ! Update takeover preparation exceeded {seconds}s; dumping stacks.", file=sys.stderr, flush=True)
-        faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
+        try:
+            faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
+        except Exception:
+            pass
         os._exit(2)
 
     timer = threading.Timer(seconds, _fire)
     timer.daemon = True
     timer.start()
+
+    watchdog = None
+    try:
+        # Subprocess backstop: cannot dump stacks, but can kill the stuck process
+        # even when a C extension holds the GIL and the timer thread cannot run.
+        watchdog = subprocess.Popen(
+            [sys.executable, "-c",
+             "import os,sys,time,signal\n"
+             "time.sleep(int(sys.argv[2]))\n"
+             "try:\n"
+             " os.kill(int(sys.argv[1]), signal.SIGTERM)\n"
+             "except Exception:\n"
+             " pass\n"
+             "time.sleep(5)\n"
+             "try:\n"
+             " os.kill(int(sys.argv[1]), getattr(signal, 'SIGKILL', signal.SIGTERM))\n"
+             "except Exception:\n"
+             " pass\n",
+             str(os.getpid()), str(seconds)],
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        watchdog = None
+
+    def cancel() -> None:
+        timer.cancel()
+        if watchdog is not None and watchdog.poll() is None:
+            try:
+                watchdog.kill()
+            except Exception:
+                pass
+            try:
+                watchdog.wait(timeout=5)
+            except Exception:
+                pass
+
+    return cancel
 
 
 def main() -> int:
@@ -192,15 +238,18 @@ def main() -> int:
     update_receipt.begin_update_receipt(previous=old_receipt, correlation_id=old_receipt.get("update_id"))
     request["update_id"] = update_receipt.current_correlation_id()
     try:
+        cancel_watchdog = _start_prepare_watchdog()
         try:
-            _start_prepare_watchdog()
-            python, env = prepare(request)
-            request["receipt"] = update_receipt._current.get().data
-            context.write_text(json.dumps(request), encoding="utf-8")
-        except Exception as exc:  # health: allow BLE001 -- pre-commit boundary: any preparation failure is the takeover's recorded failure
-            print(f"Update preparation failed: {exc}", file=sys.stderr, flush=True)
-            _record_failure(request, result, 1, f"historical takeover preparation failed: {exc}")
-            return 1
+            try:
+                python, env = prepare(request)
+                request["receipt"] = update_receipt._current.get().data
+                context.write_text(json.dumps(request), encoding="utf-8")
+            except Exception as exc:  # health: allow BLE001 -- pre-commit boundary: any preparation failure is the takeover's recorded failure
+                print(f"Update preparation failed: {exc}", file=sys.stderr, flush=True)
+                _record_failure(request, result, 1, f"historical takeover preparation failed: {exc}")
+                return 1
+        finally:
+            cancel_watchdog()
         try:
             return _run_finish_child(request, context, result, python, env)
         except Exception as exc:  # health: allow BLE001 -- post-commit boundary: the tree moved and the tail is armed
