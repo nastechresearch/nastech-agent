@@ -206,39 +206,44 @@ def main() -> int:
     request = json.loads(context.read_text(encoding="utf-8-sig"))
     sys.path.insert(0, request["root"])
     print("-> Update takeover started.", flush=True)
-    from nastech_agent.compat import install
-
-    install()
-    if "stopped_serves" in request:
-        # Historical atexit cleanup may run after the update's result is fixed.
-        # It must reuse that installation, never start a second update/repair.
-        from nastech_cli._launchers import resolve_store_python
-        from pm.environments import activation_environment
-
-        root = Path(request["root"])
-        python = resolve_store_python(root)
-        if python is None:
-            print("Cannot resume stopped backends: no selected Nastech interpreter", file=sys.stderr)
-            return 1
-        return subprocess.run(
-            [str(python), "-I", "-B", "-X", "utf8", str(root / "nastech_cli/update_serve_resume.py"),
-             str(context), str(result)], cwd=root, env=activation_environment(root),
-            check=False,
-        ).returncode
-    from nastech_cli import update_receipt
-    from nastech_cli.update_lock import UpdateLock, describe_holder
-
-    # The takeover syncs dependencies and its update_finish child builds the checkout: hold
-    # (or join, inherited from the old updater) the checkout lock, not just the marker (R2).
-    lock = UpdateLock(install_root=Path(request["root"]))
-    if not lock.acquire():
-        print(describe_holder(lock.holder), file=sys.stderr)
-        return 2
-    old_receipt = request.get("receipt") or {}
-    update_receipt.begin_update_receipt(previous=old_receipt, correlation_id=old_receipt.get("update_id"))
-    request["update_id"] = update_receipt.current_correlation_id()
+    # Start watchdog before any step that can hang (compat install, lock, receipt, prepare).
+    # If the watchdog fires, os._exit skips finally; kernel locks release on exit and the
+    # v2 update marker is reclaimable by the next run.
+    cancel_watchdog = _start_prepare_watchdog()
     try:
-        cancel_watchdog = _start_prepare_watchdog()
+        from nastech_agent.compat import install
+
+        install()
+        if "stopped_serves" in request:
+            # Historical atexit cleanup may run after the update's result is fixed.
+            # It must reuse that installation, never start a second update/repair.
+            from nastech_cli._launchers import resolve_store_python
+            from pm.environments import activation_environment
+
+            root = Path(request["root"])
+            python = resolve_store_python(root)
+            if python is None:
+                print("Cannot resume stopped backends: no selected Nastech interpreter", file=sys.stderr)
+                return 1
+            return subprocess.run(
+                [str(python), "-I", "-B", "-X", "utf8", str(root / "nastech_cli/update_serve_resume.py"),
+                 str(context), str(result)], cwd=root, env=activation_environment(root),
+                check=False,
+            ).returncode
+        print("-> Takeover: acquiring update lock", flush=True)
+        from nastech_cli import update_receipt
+        from nastech_cli.update_lock import UpdateLock, describe_holder
+
+        # The takeover syncs dependencies and its update_finish child builds the checkout: hold
+        # (or join, inherited from the old updater) the checkout lock, not just the marker (R2).
+        lock = UpdateLock(install_root=Path(request["root"]))
+        if not lock.acquire():
+            print(describe_holder(lock.holder), file=sys.stderr)
+            return 2
+        print("-> Takeover: beginning update receipt", flush=True)
+        old_receipt = request.get("receipt") or {}
+        update_receipt.begin_update_receipt(previous=old_receipt, correlation_id=old_receipt.get("update_id"))
+        request["update_id"] = update_receipt.current_correlation_id()
         try:
             try:
                 python, env = prepare(request)
@@ -260,7 +265,11 @@ def main() -> int:
         finally:
             cancel_finish_watchdog()
     finally:
-        lock.release()
+        # lock may not be defined if watchdog/acquire path failed before assignment
+        try:
+            lock.release()
+        except Exception:  # health: allow BLE001 -- best-effort lock release
+            pass
 
 
 def _run_finish_child(request: dict, context: Path, result: Path, python: Path, env: dict) -> int:
