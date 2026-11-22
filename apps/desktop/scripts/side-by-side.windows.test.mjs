@@ -106,8 +106,8 @@ foreach ($asset in @(@('Square44x44Logo.png',44,44), @('Square150x150Logo.png',1
   })
   const cases = [
     ['stable', { NASTECH_PAYLOAD_TAG: 'v1.2.3' }],
-    ['canary', { NASTECH_PAYLOAD_TAG: 'v1.2.3+canary.20260902T000000Z' }],
-    ['canary-update', { NASTECH_PAYLOAD_TAG: 'v1.2.3+canary.20260903T000000Z' }],
+    ['canary', { NASTECH_PAYLOAD_TAG: 'canary.20260902T000000Z-v1.2.3' }],
+    ['canary-update', { NASTECH_PAYLOAD_TAG: 'canary.20260903T000000Z-v1.2.3' }],
     ['commit-a', { NASTECH_BUILD_COMMIT: commitA, NASTECH_PAYLOAD_VERSION: '1.2.4' }],
     ['commit-b', { NASTECH_BUILD_COMMIT: commitB, NASTECH_PAYLOAD_VERSION: '1.2.4' }],
     ...[65535, 65536, 0xffffffff].map(sequence => [`channel-${sequence}`, { _NASTECH_CHANNEL_REQUEST_JSON: JSON.stringify(channelRequest(sequence)) }]),

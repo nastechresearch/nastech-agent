@@ -704,13 +704,19 @@ for p in list_providers():
 
 ## Testing your plugin
 
-Point `NASTECH_HOME` at a temp directory so you don't pollute your real config, then
+Point `NASTECH_HOME` at a throwaway directory so you don't pollute your real config, then
 write `$NASTECH_HOME/plugins/model-providers/my-provider/__init__.py` (an agent uses
 `write_file`, which creates the directory):
 
 ```bash
-export NASTECH_HOME=$HOME/.nastech/cache/scratch/nastech-plugin-test
+export NASTECH_HOME=$HOME/nastech-plugin-test
 ```
+
+Keep that directory out of `~/.nastech/cache/scratch` and other temp directories that are
+cleaned by age: a running Nastech imports your plugin from a copy under the Nastech root's
+`runtime/provider-plugins/` (`$NASTECH_HOME` itself, or the root above `profiles/` for a named
+profile), and a cleaner that deletes it makes the plugin's later imports fail until the
+process restarts.
 
 ```python
 from providers import register_provider

@@ -95,7 +95,7 @@ def test_gate_requires_every_success_including_real_cli(tmp_path):
 
 @pytest.mark.parametrize("lanes", [
     lane_set.select(without=lane_set.BUNDLES),
-    lane_set.select(without=lane_set.NAMES[5:]),
+    lane_set.select(without=lane_set.NAMES[6:]),
     lane_set.select(only=["windows", "docker"]),
     lane_set.select(only=[]),
 ])
@@ -269,7 +269,7 @@ def test_transitions_bind_all_arches_identity_version_and_archive():
     old = candidates("v1.2.3", "a" * 40, "1" * 64)
     new = candidates("v1.2.4", "b" * 40, "2" * 64, archive="rc.1-v1.2.4")
     require_stable_identity(new["tag"], new["commit"])
-    for tag in ("v1.2.4+canary.20260907T143420Z", "v1.2.4-rc", "rc.1-v1.2.4"):
+    for tag in ("canary.20260907T143420Z-v1.2.4", "v1.2.4-rc", "rc.1-v1.2.4"):
         with pytest.raises(ValueError):
             require_stable_identity(tag, new["commit"])
     transitions = plan_transitions(old, new, BASE)
@@ -537,7 +537,7 @@ def test_a_claim_cut_before_lanes_existed_reads_as_the_lane_set_that_gated_the_s
     assert parsed == {**old, "lanes": LEGACY_DEFAULT}
     assert old == json.loads(raw)  # the caller's record is not mutated
     both = {**old, "includeMacosIntel": False, "includeTermux": True}
-    assert validate_claim(both, version="0.21.7", attempt=11, commit=commit)["lanes"] == frozenset(lane_set.NAMES)
+    assert validate_claim(both, version="0.21.7", attempt=11, commit=commit)["lanes"] == lane_set.DEFAULT | {"termux"}
     # macOS Intel is no longer built: a claim that opted into it cannot be honoured.
     with pytest.raises(ValueError, match="metadata is invalid: it opts into macOS Intel"):
         validate_claim({**old, "includeMacosIntel": True}, version="0.21.7", attempt=11, commit=commit)
@@ -556,7 +556,7 @@ def test_a_claim_cut_before_lanes_existed_reads_as_the_lane_set_that_gated_the_s
     assert validate_claim({**new, "lanes": ["docker", "windows"], "lanesRevision": lane_set.LANES_REVISION},
                           version="0.21.7", attempt=11, commit=commit)["lanes"] == frozenset({"docker", "windows"})
     for wrong in ({**old, "includeTermux": "yes"}, {**old, "includeLinux": True},
-                  {**new, "lanes": ["windows", "docker"]}, {**new, "lanes": ["linux"]},
+                  {**new, "lanes": ["windows", "docker"]}, {**new, "lanes": ["freebsd"]},
                   {**new, "lanes": "windows"}, {**old, "lanes": ["docker"]}):
         with pytest.raises(ValueError, match="metadata is invalid"):
             validate_claim(wrong, version="0.21.7", attempt=11, commit=commit)
@@ -574,7 +574,8 @@ def test_a_default_claim_ships_unsigned_desktops_and_lanes_restore_them(
     required = ["admit", *lane_set.JOB_LANES]
     default = stable.gate_expectations(required, lane_set.DEFAULT)
     assert {name for name, result in default.items() if result == "skipped"} == off
-    assert set(stable.gate_expectations(required, lane_set.NAMES).values()) == {"success"}
+    everything = stable.gate_expectations(required, lane_set.NAMES)
+    assert {name for name, result in everything.items() if result == "skipped"} == set()
     # A lane that is off removes its jobs even when its test lane is on.
     assert stable.gate_expectations(["candidates-termux", "termux-checks"],
                                     lane_set.select(without=["termux"])) == \
@@ -1072,34 +1073,42 @@ def _fake_stable_context(*, lanes=lane_set.NAMES):
     return context
 
 
-def _stage_darwin_handoff(built, arch):
+def _stage_darwin_handoff(built, arch, *, signed=True):
     from scripts.releases import handoff
 
     package = f"NastechBundled-1.2.3-mac-{arch}.zip"
-    (built / package).write_bytes(f"signed mac zip: {arch}".encode())
-    metadata = built / f"metadata-macos-{arch}.json"
-    metadata.write_text(json.dumps({
+    (built / package).write_bytes(f"mac zip: {arch}".encode())
+    row = {
         "platform": "macos", "arch": arch, "tag": "v1.2.3", "commit": RECEIPT_COMMIT,
         "baseVersion": "1.2.3", "identity": "test.application", "version": "1.2.3",
-        "teamId": "ABCDEFGHIJ", "filename": package,
-    }), encoding="utf-8")
+        "filename": package,
+    }
+    if signed:
+        row["teamId"] = "ABCDEFGHIJ"
+    else:
+        row["signed"] = False
+    metadata = built / f"metadata-macos-{arch}.json"
+    metadata.write_text(json.dumps(row), encoding="utf-8")
     handoff.stage(ATTEMPT, RECEIPT_COMMIT, f"darwin-{arch}", built, [package, metadata.name])
 
 
-def _stage_windows_handoff(built, arch, *, with_metadata=True):
+def _stage_windows_handoff(built, arch, *, with_metadata=True, unsigned=False):
     from scripts.releases import handoff
 
     package = f"NastechBundled-1.2.3-win-{arch}.msix"
-    (built / package).write_bytes(f"signed msix: {arch}".encode())
+    (built / package).write_bytes(f"msix: {arch}".encode())
     includes = [package]
     if with_metadata:
-        metadata = built / f"metadata-windows-{arch}.json"
-        metadata.write_text(json.dumps({
+        row = {
             "platform": "windows", "arch": arch, "tag": "v1.2.3", "commit": RECEIPT_COMMIT,
             "baseVersion": "1.2.3", "identity": "test.application",
             "version": WINDOWS_VERSION, "executableVersion": WINDOWS_VERSION,
             "publisher": "CN=Test", "applicationId": "App",
-        }), encoding="utf-8")
+        }
+        if unsigned:
+            row["signed"] = False
+        metadata = built / f"metadata-windows-{arch}.json"
+        metadata.write_text(json.dumps(row), encoding="utf-8")
         includes.append(metadata.name)
     handoff.stage(ATTEMPT, RECEIPT_COMMIT, f"win32-{arch}", built, includes)
 
@@ -1360,6 +1369,47 @@ def test_candidate_manifest_needs_every_call_and_stages_the_archive_manifest(
     with pytest.raises(ValueError, match="smoke-darwin-arm64"):
         stable.main(["candidate-manifest"], failed)
     assert f"releases/tag/{ATTEMPT}/release-candidates.json" not in r2_server.store
+
+
+def test_candidate_manifest_accepts_unsigned_desktop_rows_without_weakening_the_gate(
+        tmp_path, r2_server, https_origin, monkeypatch):
+    """An unsigned desktop leg still owes the claim its package row.
+
+    The marker lets a row name its signing state; it does not excuse a signed
+    row from carrying a Developer ID team.
+    """
+    from scripts.releases import stable
+
+    https_origin.store = r2_server.store
+    built = tmp_path / "built"
+    built.mkdir()
+    _stage_darwin_handoff(built, "arm64", signed=False)
+    _stage_windows_handoff(built, "x64", unsigned=True)
+    _stage_windows_handoff(built, "arm64", unsigned=True)
+    _stage_universal_bundle(built)
+    _stage_termux_handoff(built)
+    monkeypatch.setattr(stable, "stable_context", _fake_stable_context())
+    env = {**_receipt_env(tmp_path, https_origin.base),
+           "RELEASE_NEEDS": json.dumps(_calls())}
+    stable.main(["candidate-manifest"], env)
+
+    stored, _ = r2_server.store[f"releases/tag/{ATTEMPT}/release-candidates.json"]
+    manifest = json.loads(stored)
+    assert {f"{row['platform']}/{row['arch']}" for row in manifest["packages"]} == {
+        "macos/arm64", "windows/x64", "windows/arm64", "termux/aarch64"}
+    stable.validate_candidates(manifest, "v1.2.3", RECEIPT_COMMIT, https_origin.base,
+                               RELEASE_EPOCH, archive=ATTEMPT)
+    mac = next(row for row in manifest["packages"] if row["platform"] == "macos")
+    assert mac["signed"] is False and "teamId" not in mac
+
+    # Dropping the marker makes it a signed claim again, which still needs a team.
+    forged = copy.deepcopy(mac)
+    del forged["signed"]
+    forged_manifest = {**manifest,
+                       "packages": [forged if row is mac else row for row in manifest["packages"]]}
+    with pytest.raises(ValueError, match="signing team"):
+        stable.validate_candidates(forged_manifest, "v1.2.3", RECEIPT_COMMIT,
+                                   https_origin.base, RELEASE_EPOCH, archive=ATTEMPT)
 
 
 def test_a_claim_without_the_smoke_lane_records_skipped_smokes_never_passed(

@@ -131,10 +131,26 @@ def _record_failure(request: dict, result: Path, code: int, detail: str) -> None
     result.write_text(json.dumps({"receipt_handled": saved is not None, "resume_handled": False}), encoding="utf-8")
 
 
+def _start_prepare_watchdog(seconds: int = 1500) -> None:
+    """Fail loudly if takeover preparation hangs; a silent hang blocks the whole update."""
+    import faulthandler
+    import threading
+
+    def _fire() -> None:
+        print(f"  ! Update takeover preparation exceeded {seconds}s; dumping stacks.", file=sys.stderr, flush=True)
+        faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
+        os._exit(2)
+
+    timer = threading.Timer(seconds, _fire)
+    timer.daemon = True
+    timer.start()
+
+
 def main() -> int:
     context, result = map(Path, sys.argv[1:3])
     request = json.loads(context.read_text(encoding="utf-8-sig"))
     sys.path.insert(0, request["root"])
+    print("-> Update takeover started.", flush=True)
     from nastech_agent.compat import install
 
     install()
@@ -168,6 +184,7 @@ def main() -> int:
     request["update_id"] = update_receipt.current_correlation_id()
     try:
         try:
+            _start_prepare_watchdog()
             python, env = prepare(request)
             request["receipt"] = update_receipt._current.get().data
             context.write_text(json.dumps(request), encoding="utf-8")

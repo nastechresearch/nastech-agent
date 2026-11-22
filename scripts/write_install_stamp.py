@@ -248,7 +248,7 @@ def build_stamp(
     ):
         raise SystemExit(
             f"write_install_stamp: NASTECH_DESKTOP_VARIANT={payload} requires "
-            f"NASTECH_PAYLOAD_TAG=vX.Y.Z or vX.Y.Z+canary.YYYYMMDDTHHMMSSZ (got {tag!r})"
+            f"NASTECH_PAYLOAD_TAG=vX.Y.Z or canary.YYYYMMDDTHHMMSSZ-vX.Y.Z (got {tag!r})"
         )
 
     stamp = {

@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from fastapi import APIRouter
 
-from nastech_constants import get_nastech_home
+from nastech_constants import get_nastech_home, mkdir_under_nastech_home
 
 router = APIRouter()
 
@@ -152,12 +152,10 @@ def _data_dir() -> Path:
     migrate on first read (see ``_data_file``)."""
     try:
         from plugins.plugin_storage import plugin_data_dir
-        return plugin_data_dir("nastech-achievements")
-    except Exception:
+    except ImportError:
         # Standalone dashboard import (no plugins package on sys.path): same layout, computed locally.
-        root = get_nastech_home() / "plugin-data" / "nastech-achievements"
-        root.mkdir(parents=True, exist_ok=True)
-        return root
+        return mkdir_under_nastech_home(get_nastech_home() / "plugin-data" / "nastech-achievements")
+    return plugin_data_dir("nastech-achievements")
 
 
 def _data_file(name: str) -> Path:
@@ -186,7 +184,6 @@ def _read_json(name: str) -> Any:
 
 def _write_json(name: str, data: Any) -> None:
     path = _data_file(name)
-    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_json_safe(data), indent=2, sort_keys=True), encoding="utf-8")
 
 

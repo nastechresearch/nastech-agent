@@ -1,0 +1,18 @@
+name: nastech-island
+repo: https://github.com/hunterbohm/hermes-island
+sha: 2433366e6150ea6be637bd92fe17be7f44e3b97e
+subdir: hermes-plugin
+description: "Nastech Island: a Dynamic Island style voice window on macOS for talking to Nastech. The island_call_back tool rings it when a job is done and says the result when you answer; `nastech island status|build|setup` builds the app at the same pinned commit and points its talks at this Nastech. Disclosure — the island_call_back tool runs the Nastech Island app's command line on this Mac, or on another Mac through the ssh-style transport command you set, and passes the job result to it to be spoken aloud; `nastech island build` (run by you) builds the app from a local checkout or, when there is none, clones the app's GitHub repository at the exact commit Nastech installed this plugin from into ~/Library/Caches/dev.nastech-island.app/source, then runs that repository's own build scripts (which download a pinned FluidAudio release and checksum-pinned speech models from huggingface.co); `--install` replaces /Applications/Nastech Island.app and can turn on its open-at-login item."
+maintainer: hunterbohm
+tier: community
+category: voice
+requires_nastech: ">=0.22"
+version: "0.1.0"
+docs_url: https://github.com/hunterbohm/hermes-island
+platforms: []
+capabilities:
+  provides_tools:
+    - island_call_back
+  provides_hooks: []
+  provides_middleware: []
+  requires_env: []

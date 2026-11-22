@@ -26,11 +26,12 @@ def _validate_name(name: str) -> str:
 
 def plugin_data_dir(name: str) -> Path:
     """Return (and create) ``<nastech home>/plugin-data/<name>/``; resolves ``get_nastech_home()`` on
-    every call so it follows the active profile — don't cache across profile switches."""
-    from nastech_constants import get_nastech_home
-    root = get_nastech_home() / "plugin-data" / _validate_name(name)
-    root.mkdir(parents=True, exist_ok=True)
-    return root
+    every call so it follows the active profile — don't cache across profile switches.
+
+    Raises ``FileNotFoundError`` when the active named profile was deleted or renamed (a session
+    still bound to it) instead of recreating that profile's home."""
+    from nastech_constants import get_nastech_home, mkdir_under_nastech_home
+    return mkdir_under_nastech_home(get_nastech_home() / "plugin-data" / _validate_name(name))
 
 
 def plugin_db(name: str, filename: str = "data.db") -> sqlite3.Connection:

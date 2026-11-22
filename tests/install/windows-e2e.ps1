@@ -732,13 +732,14 @@ function Invoke-NastechDesktopAppUpdate([string]$TargetSha) {
     $prevEap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     Push-Location $WorkRoot
     try {
-        # 30 min, not the 10 min default: from v2026.9.24 the app's update
-        # runs the historical venv->PM takeover plus a full Desktop rebuild
-        # (9m43s measured), like the 35 min open-app-update wait below.
+        # 35 min, matching the open-app-update detached-updater wait: from
+        # v2026.9.24 the app's update runs the historical venv->PM takeover
+        # plus a full Desktop rebuild; large source diffs can push PM sync
+        # past the old 30 min driver ceiling.
         & $node (Join-Path $AssetsDir "launch-from-spec.mjs") --spec $spec `
             --old-sha (Read-State).old --chat-out $chatOut --mock-url $env:NASTECH_E2E_MOCK_URL `
             --result (Join-Path $NastechHome ".nastech-update-result.json") `
-            --expect-sha $TargetSha --repo-dir $InstallDir --timeout-ms 1800000 2>&1 |
+            --expect-sha $TargetSha --repo-dir $InstallDir --timeout-ms 2100000 2>&1 |
             ForEach-Object { Write-Host "  pw| $_" }
         $driveExit = $LASTEXITCODE
     } finally {

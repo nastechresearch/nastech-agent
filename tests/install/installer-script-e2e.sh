@@ -392,6 +392,69 @@ env_verifier_view
 
 # --- update OLD -> HEAD ----------------------------------------------------------
 
+# A deferred source-update completion can be left running (or a Desktop build it
+# spawned can still hold the shared checkout lock) by the CLI/desktop activity
+# above. The product refuses a second updater/build while that lock is held, so
+# wait for quiescence before touching the served ref or launching an update
+# method.
+checkout_lock_held() {
+  local lock="$1"
+  [ -e "$lock" ] || return 1
+  python3 - "$lock" <<'PY'
+import fcntl
+import sys
+
+path = sys.argv[1]
+try:
+    with open(path, "r+b") as fh:
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except (BlockingIOError, OSError):
+            raise SystemExit(0)
+        try:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+        except OSError:
+            pass
+    raise SystemExit(1)
+except (FileNotFoundError,):
+    raise SystemExit(1)
+except (PermissionError, OSError):
+    raise SystemExit(0)
+PY
+}
+
+wait_for_update_quiescence() {
+  local timeout="${1:-600}" marker lock gitdir deadline
+  marker="$NASTECH_HOME/.nastech-update-in-progress"
+  deadline=$((SECONDS + timeout))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    lock=""
+    if [ -d "$INSTALL_DIR/.git" ] || [ -f "$INSTALL_DIR/.git" ]; then
+      gitdir="$(git -C "$INSTALL_DIR" rev-parse --git-common-dir 2>/dev/null || true)"
+      if [ -n "$gitdir" ]; then
+        case "$gitdir" in /*) ;; *) gitdir="$INSTALL_DIR/$gitdir" ;; esac
+        lock="$gitdir/nastech-update.lock"
+      fi
+    fi
+    [ -n "$lock" ] || lock="$INSTALL_DIR/.nastech-update.lock"
+    local marker_busy=0 lock_busy=0
+    [ -e "$marker" ] && marker_busy=1
+    checkout_lock_held "$lock" && lock_busy=1
+    if [ "$marker_busy" -eq 0 ] && [ "$lock_busy" -eq 0 ]; then
+      return 0
+    fi
+    sleep 10
+  done
+  printf 'update quiescence wait timed out (marker=%s lock=%s path=%s)\n' \
+    "$([ -e "$marker" ] && echo present || echo absent)" \
+    "$(checkout_lock_held "${lock:-/nonexistent}" >/dev/null 2>&1 && echo held || echo free)" \
+    "${lock:-}" >&2
+  return 1
+}
+
+step "waiting for any prior update or desktop install to finish"
+wait_for_update_quiescence 600 || fail "timed out waiting for prior update/build activity to clear before $UPDATE_METHOD"
+
 step "advancing served main to $TARGET_LABEL ($TARGET_SHA)"
 git -C "$SERVE_REPO" update-ref refs/heads/main "$TARGET_SHA"
 ok "serve.git main = $TARGET_SHA"
@@ -429,6 +492,7 @@ case "$UPDATE_METHOD" in
     NASTECH="$(source_nastech "$INSTALL_DIR")" || fail "no installed update command"
     help="$(source_build_env "$NASTECH" update --help 2>&1)" || fail "installed update --help failed: $help"
     build_source_update_command "$NASTECH" "$help"
+    wait_for_update_quiescence 600 || fail "timed out waiting for update/build activity to clear before nastech update"
     rc=0
     (cd "$INSTALL_DIR" && source_build_env "${update_cmd[@]}" < /dev/null 2>&1 | ts_prefix > "$LOG_DIR/update.log") || rc=$?
     log_group "nastech update transcript" "$LOG_DIR/update.log"
@@ -457,6 +521,12 @@ case "$UPDATE_METHOD" in
       || fail "installed source has changes other than the generated install marker"
     ASSETS="$REPO_ROOT/tests/install/e2e-assets"
     SPEC="$WORK_ROOT/launch-spec.json"
+
+    # The launch capture runs the real `nastech desktop` build preflight, which
+    # takes the DesktopBuildLock (and the checkout lock beneath it). A deferred
+    # completion still holding either lock exits 2 with "A Nastech update or
+    # another desktop dependency install or build is already running".
+    wait_for_update_quiescence 600 || fail "timed out waiting for update/build activity to clear before nastech desktop capture"
 
     # A REAL configured provider: the mock inference server (the desktop E2E
     # suite's own) is configured into NASTECH_HOME exactly like the dev:mock

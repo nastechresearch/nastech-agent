@@ -184,10 +184,12 @@ class TestSelectedStoreWrites:
 
 class TestControllerPinning:
     @pytest.mark.parametrize("workflow", ["canary-release.yml", "release.yml"])
-    def test_release_controllers_pin_both_store_seams_to_github(self, workflow):
-        # The controller reads handoff/channel defaults; while a non-secret
-        # CLOUDFLARE_R2_BUCKET variable exists, an unpinned job silently chose R2.
+    def test_release_controllers_pin_channel_but_leave_handoff_on_r2(self, workflow):
+        # The channel plane stays GitHub-native, but the handoff plane stages to
+        # R2. Pinning handoff to GitHub made `handoff stage` call `gh release
+        # upload` against a claim tag that has no Release object: a 404 that
+        # left every release with zero assets and no builds table.
         root = Path(__file__).resolve().parents[2]
         controller = yaml.safe_load((root / ".github/workflows" / workflow).read_text(encoding="utf-8"))
         assert controller["env"]["RELEASE_CHANNEL_STORE"] == "github"
-        assert controller["env"]["RELEASE_HANDOFF_STORE"] == "github"
+        assert "RELEASE_HANDOFF_STORE" not in controller["env"]

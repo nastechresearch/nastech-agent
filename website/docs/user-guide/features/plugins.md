@@ -440,6 +440,8 @@ nastech plugins enable my-plugin              # add to allow-list
 nastech plugins disable my-plugin             # remove from allow-list + add to disabled (bundled platforms:
                                              # either spelling works, e.g. photon-platform or platforms/photon)
 nastech plugins capabilities [my-plugin]      # declared vs granted capabilities
+nastech plugins config my-plugin              # view and edit the plugin's settings (interactive editor);
+                                             # a terminal install also lists them and asks "Edit these now?"
 nastech plugins idle-tasks [my-plugin]        # background idle jobs plugins registered: last run, next run
 nastech plugins idle-tasks my-plugin --pause suggest   # stop one until --resume
 nastech plugins check-updates                 # read-only: is any installed plugin outdated?

@@ -23,7 +23,7 @@ from scripts.releases.semver import compare
 # seed, so it must name the newest upstream stable the tree carries -- otherwise
 # the canary stamps 0.22.7 code as 0.21.5+canary. Rewritten by the sync whenever
 # the tree moves onto a newer upstream stable.
-SEED = "0.23.2"
+SEED = "0.23.3"
 BUMPS = ("major", "minor", "patch")
 
 
@@ -60,8 +60,18 @@ def published_release_identity(repository: str, run=None) -> tuple[str, str] | N
     ``vX.Y.Z`` tag without a published release does not count.
     """
     run = run or _gh
-    pages = json.loads(run(["gh", "api", "--paginate", "--slurp",
-                            f"repos/{repository}/releases?per_page=100"]))
+    raw = run(["gh", "api", "--paginate",
+               f"repos/{repository}/releases?per_page=100"])
+    decoder = json.JSONDecoder()
+    idx = 0
+    pages = []
+    while idx < len(raw):
+        while idx < len(raw) and raw[idx].isspace():
+            idx += 1
+        if idx >= len(raw):
+            break
+        page, idx = decoder.raw_decode(raw, idx)
+        pages.append(page)
     versions = [version for page in pages for row in page
                 if isinstance(row, dict) and row.get("draft") is False
                 and row.get("prerelease") is False

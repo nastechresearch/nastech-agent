@@ -68,19 +68,142 @@ _has_pytest() { [ -n "$1" ] && [ -x "$1" ] && "$1" -c 'import pytest' 2>/dev/nul
 # account store's tool dirs, so a test writing through a PATH tool
 # (`pip install`, `npm -g`) would write into the account store. An explicit
 # NASTECH_RUNTIME_DIR, a custom NASTECH_HOME, a home that already holds a store,
-# or an account without a usable store keep today's per-home layout.
+# or an account without a usable store keep today's per-home layout, unless
+# what they name is the account's store (_avoid_account_stores).
+# Prints the OS account's home when HOME is faked (it is not that home).
+_account_home() {
+  local account
+  account="$(getent passwd "$(id -u)" 2>/dev/null | cut -d: -f6)"
+  [ -n "$account" ] || account="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null | sed -n 's/^NFSHomeDirectory: *//p')"
+  [ -n "$account" ] && [ -d "$account" ] && [ ! "$account" -ef "$HOME" ] || return 1
+  printf '%s\n' "$account"
+}
 # Prints the account home, then the pinned Python minor.
 _account_tool_store() {
   local account py_minor
   [ -z "${NASTECH_RUNTIME_DIR:-}" ] || return 1
   case "${NASTECH_HOME:-}" in "" | "$HOME/.nastech" | "$HOME/.nastech/"*) ;; *) return 1 ;; esac
   [ ! -f "$HOME/.nastech/tools/facts.json" ] || return 1
-  account="$(getent passwd "$(id -u)" 2>/dev/null | cut -d: -f6)"
-  [ -n "$account" ] || account="$(dscl . -read "/Users/$(id -un)" NFSHomeDirectory 2>/dev/null | sed -n 's/^NFSHomeDirectory: *//p')"
-  [ -n "$account" ] && [ -d "$account" ] && [ ! "$account" -ef "$HOME" ] || return 1
+  account="$(_account_home)" || return 1
   [ -f "$account/.nastech/tools/facts.json" ] && [ -w "$account/.nastech/tools" ] || return 1
   py_minor="$(_store_has_pins "$account/.nastech/tools")" || return 1
   printf '%s\n%s\n' "$account" "$py_minor"
+}
+# The pin rule covers a faked-HOME run that names the account's store itself.
+# An explicit NASTECH_RUNTIME_DIR (the recipe lanes used before this runner
+# shared by itself) or an inherited NASTECH_HOME (an agent's shell exports one)
+# makes pm resolve that store with no check, and `pm install` then re-stages
+# this checkout's pins over the ones the account's own Nastech runs on: its
+# tools read as not installed and a running browser loses its directory.
+# Such a run provisions the faked home's own store instead, and is refused when
+# that store is a link into the account's, or when no interpreter can tell
+# which store pm would pick: setup fetches its own Python and would provision
+# whatever that turns out to be.
+# Prints the account's stores: its default home's, and the one
+# NASTECH_DATA_DIR_SUFFIX selects (nastech_constants._platform_default_nastech_home).
+_account_stores() {
+  local account suffix
+  account="$(_account_home)" || return 0
+  for suffix in "" ${NASTECH_DATA_DIR_SUFFIX:+"$NASTECH_DATA_DIR_SUFFIX"}; do
+    if [ -f "$account/.nastech$suffix/tools/facts.json" ]; then
+      printf '%s\n' "$account/.nastech$suffix/tools"
+    fi
+  done
+}
+# Prints the store of the newline-separated STORES that PATH is, by identity.
+_which_store() {
+  local store
+  while IFS= read -r store; do
+    if [ "$1" -ef "$store" ]; then printf '%s\n' "$store"; return 0; fi
+  done <<<"$2"
+  return 1
+}
+# Prints PATH as pm's Path.resolve() reads it in the checkout, where setup reads
+# it (setup-nastech.sh cd's there first): every symlink followed, dangling ones
+# too, a `..` taken after the link it follows, a missing part kept as written.
+# `-ef` alone stats the literal path, so `<store>/missing/..` would not match
+# <store>. Status 1 past 40 links (the kernel's limit; Path.resolve() keeps
+# going there, but refusing is the stricter choice) or when readlink fails.
+_resolved_path() {
+  local resolved="" rest="$1" part target hops=0
+  case "$rest" in /*) ;; *) resolved="$(cd -P "$REPO_ROOT" && pwd)"; resolved="${resolved%/}" ;; esac
+  while [ -n "$rest" ]; do
+    part="${rest%%/*}"
+    case "$rest" in */*) rest="${rest#*/}" ;; *) rest="" ;; esac
+    case "$part" in
+      "" | .) ;;
+      ..) resolved="${resolved%/*}" ;;
+      *) if [ -L "$resolved/$part" ]; then
+           hops=$((hops + 1))
+           [ "$hops" -le 40 ] || return 1
+           # $(...) strips every trailing newline, and BSD readlink adds none
+           # to a target already ending in one: read it bare, then strip x.
+           target="$(readlink -n "$resolved/$part" && printf x)" || return 1
+           target="${target%x}"
+           case "$target" in /*) resolved="" ;; esac
+           rest="$target${rest:+/$rest}"
+         else
+           resolved="$resolved/$part"
+         fi ;;
+    esac
+  done
+  printf '%s\n' "${resolved:-/}"
+}
+# Prints the store this run's `pm install` writes: NASTECH_RUNTIME_DIR as pm
+# takes it, else pm's own resolver (stamps, NASTECH_HOME, profiles), run by the
+# bootstrap interpreter found beside STORE; says why on stderr when it cannot.
+_pm_store() (
+  if [ -n "${NASTECH_RUNTIME_DIR:-}" ]; then
+    _resolved_path "$NASTECH_RUNTIME_DIR" && exit
+    echo "error: faked HOME: NASTECH_RUNTIME_DIR cannot be resolved (more than 40 symlinks, or a link readlink cannot read)" >&2
+    exit 1
+  fi
+  # Asked and resolved from the checkout, as setup asks: a relative NASTECH_HOME
+  # names a store there, not in the caller's directory.
+  cd "$REPO_ROOT" || exit 1
+  if ! python="$(NASTECH_RUNTIME_DIR="$1" nastech_bootstrap_python "$REPO_ROOT")"; then
+    echo "error: faked HOME: no bootstrap Python to ask pm which tool store this run provisions" >&2
+    exit 1
+  fi
+  PYTHONHOME= "$python" -I -B -c 'import sys
+sys.path.insert(0, sys.argv[1])
+from pm.environments import store_root
+try:
+    print(store_root(sys.argv[1]).resolve())
+except Exception as error:
+    sys.exit(f"error: faked HOME: pm cannot resolve the tool store this run provisions: {error}")' "$REPO_ROOT"
+)
+# Points NASTECH_RUNTIME_DIR away from an account store that this run's
+# `pm install` would write other pins into; status 1 when it cannot.
+_avoid_account_stores() {
+  local stores target named fallback
+  stores="$(_account_stores)"
+  [ -n "$stores" ] || return 0
+  # Both print one newline after the path; the x keeps a path's own from $(...).
+  if ! target="$(_pm_store "${stores%%$'\n'*}" && printf x)"; then
+    echo "error: faked HOME: cannot check whether that is the account's tool store (${stores//$'\n'/, }); set NASTECH_RUNTIME_DIR to a store of this home's own" >&2
+    return 1
+  fi
+  target="${target%$'\nx'}"
+  # setup-nastech.sh stages its bootstrap uv into $HOME/.nastech/tools before pm
+  # runs; when that is the account's store, point it at the one pm provisions.
+  if [ -z "${NASTECH_RUNTIME_DIR:-}" ] && _which_store "$HOME/.nastech/tools" "$stores" >/dev/null; then
+    export NASTECH_RUNTIME_DIR="$target"
+  fi
+  named="$(_which_store "$target" "$stores")" || return 0
+  ! _store_has_pins "$named" >/dev/null || return 0
+  # The suffix is appended literally (nastech_constants), `..` included.
+  if ! fallback="$(_resolved_path "$HOME/.nastech${NASTECH_DATA_DIR_SUFFIX:-}/tools" && printf x)"; then
+    echo "error: faked HOME: $HOME/.nastech${NASTECH_DATA_DIR_SUFFIX:-}/tools cannot be resolved (more than 40 symlinks, or a link readlink cannot read)" >&2
+    return 1
+  fi
+  fallback="${fallback%$'\nx'}"
+  if _which_store "$fallback" "$stores" >/dev/null; then
+    echo "error: faked HOME: $fallback is the account's tool store $named, which records other pins; set NASTECH_RUNTIME_DIR to a store of this home's own" >&2
+    return 1
+  fi
+  export NASTECH_RUNTIME_DIR="$fallback"
+  echo "▶ faked HOME: the account's tool store records other pins; provisioning $NASTECH_RUNTIME_DIR instead"
 }
 # Read-only check that the store already records this checkout's pins
 # (scripts/tool_store_pins.py says why and what counts); prints the Python minor.
@@ -89,18 +212,22 @@ _store_has_pins() {
   python="$(NASTECH_RUNTIME_DIR="$1" nastech_bootstrap_python "$REPO_ROOT")" || return 1
   PYTHONHOME= "$python" -I -B "$REPO_ROOT/scripts/tool_store_pins.py" "$REPO_ROOT" "$1" 2>/dev/null
 }
-if _shared="$(_account_tool_store)"; then
-  _account="${_shared%%$'\n'*}"
-  export NASTECH_RUNTIME_DIR="$_account/.nastech/tools"
+# Picks the tool store the setup below provisions; status 1 refuses the run.
+# Only a run that reaches setup asks: one that never provisions has no store
+# to keep off the account's.
+_choose_tool_store() {
+  local shared account
+  shared="$(_account_tool_store)" || { _avoid_account_stores; return; }
+  account="${shared%%$'\n'*}"
+  export NASTECH_RUNTIME_DIR="$account/.nastech/tools"
   # setup-nastech.sh's uv-managed bootstrap interpreter is the same kind of
   # cache, but only reused: a missing pinned minor would download into it.
-  if [ -z "${UV_PYTHON_INSTALL_DIR:-}" ] && [ -w "$_account/.local/share/uv/python" ] \
-      && compgen -G "$_account/.local/share/uv/python/cpython-${_shared#*$'\n'}[.-]*" >/dev/null; then
-    export UV_PYTHON_INSTALL_DIR="$_account/.local/share/uv/python"
+  if [ -z "${UV_PYTHON_INSTALL_DIR:-}" ] && [ -w "$account/.local/share/uv/python" ] \
+      && compgen -G "$account/.local/share/uv/python/cpython-${shared#*$'\n'}[.-]*" >/dev/null; then
+    export UV_PYTHON_INSTALL_DIR="$account/.local/share/uv/python"
   fi
   echo "▶ faked HOME: using the account's tool store $NASTECH_RUNTIME_DIR"
-fi
-unset _account _shared
+}
 if [ -z "${__NASTECH_ACTIVATED:-}" ] && _has_pytest "${NASTECH_PYTHON:-}"; then
   PYTHON="$NASTECH_PYTHON"
   echo "▶ not activated — using NASTECH_PYTHON: $PYTHON"
@@ -110,6 +237,7 @@ else
       echo "error: run-in-nastech-env did not produce a current environment for $REPO_ROOT" >&2
       exit 1
     fi
+    _choose_tool_store || exit 1
     echo "▶ environment missing or stale for $REPO_ROOT — re-running under run-in-nastech-env" >&2
     export __NASTECH_TESTS_REEXEC=1
     exec "$SCRIPT_DIR/run-in-nastech-env" "$BASH" "${BASH_SOURCE[0]}" "$@"

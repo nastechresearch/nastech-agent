@@ -296,12 +296,10 @@ def _spawn_detached_gateway() -> bool:
     """
     from nastech_cli._subprocess_compat import windows_detach_popen_kwargs
     from nastech_constants import get_nastech_home
-    from tools.environments.local import served_profile_child_env
+    from tools.environments.local import gateway_child_env
     log_dir = _gw().get_nastech_home() / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    child_env = served_profile_child_env(
-        target_home=get_nastech_home(), inherit_credentials=True,
-    )
+    child_env = gateway_child_env(get_nastech_home())
     child_env.pop("_NASTECH_GATEWAY", None)
     try:
         with open(log_dir / "gateway.log", "ab") as out:

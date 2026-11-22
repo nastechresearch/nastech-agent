@@ -36,7 +36,7 @@ from gateway.platforms.base import (
     cache_audio_from_bytes_async, cache_document_from_bytes_async, cache_image_from_bytes_async,
 )
 from gateway.platforms.event import MessageEvent, MessageType
-from nastech_constants import get_nastech_home
+from nastech_constants import get_nastech_home, mkdir_under_nastech_home
 from utils import atomic_json_write
 from gateway.platforms._shared import env_is_connected, extra_or_secret as _extra_or_env, get_scoped_secret as _wx_secret
 from gateway.platforms.send_targets import StandaloneSendPolicy, regex_groups_parser
@@ -160,9 +160,7 @@ def _headers(token: Optional[str], body: str) -> dict[str, str]:
 
 
 def _account_dir(nastech_home: str) -> Path:
-    path = Path(nastech_home) / "weixin" / "accounts"
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    return mkdir_under_nastech_home(Path(nastech_home) / "weixin" / "accounts")
 
 
 def _read_json(path: Path) -> Any:
