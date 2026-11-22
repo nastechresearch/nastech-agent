@@ -141,7 +141,7 @@ def _record_failure(request: dict, result: Path, code: int, detail: str) -> None
 
 
 def _start_prepare_watchdog(seconds: int = 1500):
-    """Fail loudly if takeover preparation hangs; a silent hang blocks the whole update.
+    """Fail loudly if takeover work hangs; a silent hang blocks the whole update.
 
     Returns a cancel callable. Uses both an in-process timer (can dump stacks when GIL is free)
     and a subprocess backstop (fires even if the GIL is held by a C extension).
@@ -152,7 +152,7 @@ def _start_prepare_watchdog(seconds: int = 1500):
     import threading
 
     def _fire() -> None:
-        print(f"  ! Update takeover preparation exceeded {seconds}s; dumping stacks.", file=sys.stderr, flush=True)
+        print(f"  ! Update takeover exceeded {seconds}s; dumping stacks.", file=sys.stderr, flush=True)
         try:
             faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
         except Exception:
@@ -250,11 +250,15 @@ def main() -> int:
                 return 1
         finally:
             cancel_watchdog()
+        cancel_finish_watchdog = _start_prepare_watchdog(2400)
         try:
-            return _run_finish_child(request, context, result, python, env)
-        except Exception as exc:  # health: allow BLE001 -- post-commit boundary: the tree moved and the tail is armed
-            _record_owed_finish(request, result, f"the update finish child could not run ({exc})")
-            return 0
+            try:
+                return _run_finish_child(request, context, result, python, env)
+            except Exception as exc:  # health: allow BLE001 -- post-commit boundary: the tree moved and the tail is armed
+                _record_owed_finish(request, result, f"the update finish child could not run ({exc})")
+                return 0
+        finally:
+            cancel_finish_watchdog()
     finally:
         lock.release()
 
