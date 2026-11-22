@@ -18,13 +18,16 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
     sys.path.insert(0, str(root))
     # The old shim's UI has been frozen since the pull; from here the new
     # tree can publish stages (and pop the panel the old shim couldn't).
+    print("-> Takeover: importing update_stage", flush=True)
     from nastech_cli.update_stage import ensure_panel, publish_stage
 
     ensure_panel(root)
     # An older updater hands off here instead of update_completion._prepare.
+    print("-> Takeover: converting treeless checkout", flush=True)
     from nastech_cli.gitlock import convert_treeless_checkout_first
     convert_treeless_checkout_first(root)
     publish_stage("Updating Python dependencies (PM)")
+    print("-> Takeover: importing PM modules", flush=True)
     from pm import receipt
     from pm.client import ensure_tools_for_sync, sync_venv, venv_is_current
     from pm.environments import activation_environment, install_state_dir
@@ -35,6 +38,7 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
     # The historical updater already moved the tree: owe the tail and the fleet restart before the
     # first slow step, exactly like a current updater's commit point, so a kill from here on leaves
     # both for the next launch / `nastech update` instead of nothing.
+    print("-> Takeover: arming completion/fleet obligations", flush=True)
     refuse_foreign_owned_venv(root)
     arm_completion(root)
     _arm_fleet_obligation(root)
@@ -42,6 +46,7 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
     with receipt.worker_context(correlation):
         # A pre-PM installation has no required-tool facts. A current Python
         # generation alone does not prove its Node/Git/tool closure is ready.
+        print("-> Takeover: ensuring PM tools", flush=True)
         ensure_tools_for_sync()
         from pm.extras import first_generation_selection
 
@@ -50,11 +55,14 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
         # Repair preserves the old stamp. Changed source inputs instead need
         # an ordinary sync, which builds and validates a fresh generation too.
         repair = repair_marker.is_file() and venv_is_current(project_root=root)
+        print(f"-> Takeover: syncing venv (repair={repair})", flush=True)
         # An update never fails because of a plugin: misfits are disabled and reported.
         sync_venv(None if repair else extras, explicit=True, project_root=root, repair=repair,
                   evict_incompatible_plugins=not repair)
+        print("-> Takeover: collecting superseded generations", flush=True)
         collect_superseded_generations(root)
         request["pm_receipt"] = receipt.last_for_update(correlation)
+    print("-> Takeover: publishing launchers", flush=True)
     publish_launchers(root)
     repair_marker.unlink(missing_ok=True)
     for name in (".update-incomplete", ".lazy-refresh-incomplete"):
@@ -62,6 +70,7 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
     python = resolve_store_python(root)
     if python is None:
         raise RuntimeError("updated installation has no managed interpreter")
+    print("-> Takeover: preparation complete", flush=True)
     return python, activation_environment(root)
 
 
