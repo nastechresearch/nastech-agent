@@ -751,8 +751,8 @@ def test_abandon_force_cancels_in_progress_runs_before_the_draft_and_the_marker(
                        drafts={"rc.1-v0.21.5": _draft("rc.1-v0.21.5")})
 
     assert calls == [
-        ["gh", "run", "cancel", "11", "--repo", "example/hermes-agent", "--force"],
-        ["gh", "run", "cancel", "13", "--repo", "example/hermes-agent", "--force"],
+        ["gh", "run", "cancel", "11", "--repo", "example/hermes-agent"],
+        ["gh", "run", "cancel", "13", "--repo", "example/hermes-agent"],
         ["gh", "release", "delete", "rc.1-v0.21.5", "--repo", "example/hermes-agent", "--yes"],
     ]
     assert results[0]["cancelled"] == ["https://example.test/runs/11", "https://example.test/runs/13"]
@@ -848,7 +848,7 @@ def test_abandon_stops_at_a_failed_attempt_and_a_rerun_clears_only_the_rest(sour
 
     # Attempt one was cleaned up with its own run and draft; attempt two got no marker.
     assert calls == [
-        ["gh", "run", "cancel", "11", "--repo", "example/hermes-agent", "--force"],
+        ["gh", "run", "cancel", "11", "--repo", "example/hermes-agent"],
         ["gh", "release", "delete", "rc.1-v0.21.5", "--repo", "example/hermes-agent", "--yes"],
     ]
     remote = git(source, "ls-remote", "origin", "refs/tags/*")
@@ -863,7 +863,7 @@ def test_abandon_stops_at_a_failed_attempt_and_a_rerun_clears_only_the_rest(sour
     assert [r["marker"] for r in results] == ["abandoned-rc.2-v0.21.5"]
     assert results[0]["cancelled"] == ["https://example.test/runs/21"]
     assert calls == [
-        ["gh", "run", "cancel", "21", "--repo", "example/hermes-agent", "--force"],
+        ["gh", "run", "cancel", "21", "--repo", "example/hermes-agent"],
         ["gh", "release", "delete", "rc.2-v0.21.5", "--repo", "example/hermes-agent", "--yes"],
     ]
     assert "refs/tags/abandoned-rc.2-v0.21.5" in git(source, "ls-remote", "origin", "refs/tags/*")
