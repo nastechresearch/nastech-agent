@@ -461,7 +461,7 @@ def _abandon_attempt(version: str, attempt: int, tag: str, *, repo: Path, remote
         if draft is not None and draft.get("isDraft") is not True:
             raise ReleaseRefused(f"{tag} is published and cannot be abandoned")
         for run in _in_progress_runs(inspect, repository, tag, _claim_commit(repo, tag)):
-            execute(["gh", "run", "cancel", str(run["databaseId"]), "--repo", repository, "--force"])
+            execute(["gh", "run", "cancel", str(run["databaseId"]), "--repo", repository])
             cancelled.append(run["url"])
         if draft is not None:
             execute(["gh", "release", "delete", tag, "--repo", repository, "--yes"])
