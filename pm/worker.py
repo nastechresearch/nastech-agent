@@ -76,7 +76,24 @@ def main():
     callback_lock = threading.Lock()
 
     def send(data):
-        wire.write(json.dumps({"id": request["id"], **data}) + "\n")
+        payload = (json.dumps({"id": request["id"], **data}) + "\n").encode("utf-8")
+        fd = wire.fileno()
+        view = memoryview(payload)
+        while view:
+            try:
+                written = os.write(fd, view[:16384])
+            except BlockingIOError:
+                import select
+                import time
+
+                try:
+                    select.select([], [fd], [], 0.05)
+                except (OSError, ValueError):
+                    time.sleep(0.05)
+                continue
+            if not written:
+                raise RuntimeError("PM worker wire write returned 0 bytes")
+            view = view[written:]
 
     def callback(name, *args):
         with callback_lock:
