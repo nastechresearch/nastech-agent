@@ -19,6 +19,7 @@ import base64
 import hashlib
 import html
 import http.client
+import json
 import os
 import subprocess
 import sys
@@ -518,6 +519,73 @@ def r2_server(monkeypatch):
     server.shutdown()
     server.server_close()
     thread.join(timeout=5)
+
+
+class _RawPathPublicHandler(BaseHTTPRequestHandler):
+    """Public origin that addresses objects by the raw request path.
+
+    The R2 public worker used by release smoke tests serves the key path itself:
+    "%2B" is not decoded back to "+", so a canary-tag key must arrive with a
+    literal plus or the lookup misses.
+    """
+
+    def log_message(self, *args):  # keep test output clean
+        pass
+
+    def do_GET(self):
+        entry = self.server.objects.get(self.path)  # type: ignore[attr-defined]
+        if entry is None:
+            self.send_response(404)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        body, content_type = entry
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+@pytest.fixture
+def raw_path_public_server():
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _RawPathPublicHandler)
+    server.objects = {}  # type: ignore[attr-defined]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    yield server
+    server.shutdown()
+    server.server_close()
+    thread.join(timeout=5)
+
+
+def test_public_reads_of_plus_tagged_keys_use_the_raw_path(raw_path_public_server, tmp_path):
+    """A canary receipt and its '+' artifact must be reachable from the public origin.
+
+    Regression: encoding the plus as %2B made every canary smoke fetch 404 -- the
+    receipt first, and the artifact whose name also carries the tag's plus.
+    """
+    tag = "v0.23.2+canary.20261123T184437Z"
+    prefix = f"releases/tag/{tag}/"
+    receipt_name = "handoff-darwin-arm64.json"
+    artifact_name = "NastechBundled-0.23.2+canary.20261123T184437Z-mac-arm64.dmg"
+    artifact = b"exact-artifact-bytes"
+    digest = hashlib.sha256(artifact).hexdigest()
+    receipt = {
+        "schema": 1, "tag": tag, "commit": "a" * 40, "name": "darwin-arm64",
+        "files": [{"path": artifact_name, "size": len(artifact), "sha256": digest}],
+    }
+    base = f"http://127.0.0.1:{raw_path_public_server.server_port}"
+    raw_path_public_server.objects[f"/{prefix}{receipt_name}"] = (
+        (json.dumps(receipt) + "\n").encode("utf-8"), "application/json")
+    raw_path_public_server.objects[f"/{prefix}{artifact_name}"] = (
+        artifact, "application/octet-stream")
+
+    assert r2.read_public_receipt(base, prefix + receipt_name) == receipt
+    target = tmp_path / "artifact.dmg"
+    r2.download_public_object(base, prefix + artifact_name, target,
+                              expected_size=len(artifact), expected_sha256=digest)
+    assert target.read_bytes() == artifact
 
 
 @pytest.mark.parametrize("failure", [None, "part", "complete", "transient", "disconnect", "lost-response"])
