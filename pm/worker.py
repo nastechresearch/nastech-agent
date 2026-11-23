@@ -35,12 +35,41 @@ def _read_controls(messages, pause, fd):
         messages.put(None)
 
 
+def _write_json_line(fd: int, message: dict) -> None:
+    if sys.platform == "win32":
+        try:
+            import msvcrt
+
+            msvcrt.setmode(fd, os.O_BINARY)
+        except Exception:
+            pass
+    payload = (json.dumps(message) + "\n").encode("utf-8")
+    view = memoryview(payload)
+    while view:
+        try:
+            written = os.write(fd, view[:4096])
+        except BlockingIOError:
+            import select
+            import time
+
+            try:
+                select.select([], [fd], [], 0.05)
+            except (OSError, ValueError):
+                time.sleep(0.05)
+            continue
+        except OSError as exc:
+            raise RuntimeError(f"PM worker wire write failed: {exc}") from exc
+        if not written:
+            raise RuntimeError("PM worker wire write returned 0 bytes")
+        view = view[written:]
+
+
 def main():
     import truststore
 
     truststore.inject_into_ssl()
     # Capture the protocol FD before redirecting even native/subprocess stdout.
-    wire = os.fdopen(os.dup(sys.stdout.fileno()), "w", encoding="utf-8", buffering=1)
+    wire = os.fdopen(os.dup(sys.stdout.fileno()), "wb", closefd=True)
     os.dup2(sys.stderr.fileno(), sys.stdout.fileno())
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     # A pending read on inherited control stdin can block child Python startup
@@ -76,24 +105,7 @@ def main():
     callback_lock = threading.Lock()
 
     def send(data):
-        payload = (json.dumps({"id": request["id"], **data}) + "\n").encode("utf-8")
-        fd = wire.fileno()
-        view = memoryview(payload)
-        while view:
-            try:
-                written = os.write(fd, view[:16384])
-            except BlockingIOError:
-                import select
-                import time
-
-                try:
-                    select.select([], [fd], [], 0.05)
-                except (OSError, ValueError):
-                    time.sleep(0.05)
-                continue
-            if not written:
-                raise RuntimeError("PM worker wire write returned 0 bytes")
-            view = view[written:]
+        _write_json_line(wire.fileno(), {"id": request["id"], **data})
 
     def callback(name, *args):
         with callback_lock:
@@ -135,7 +147,11 @@ def main():
                 error.update(package=exc.package, cause=exc.cause, remedy=exc.remedy)
             response = {"error": error}
         response["receipt"] = receipt.last_completed()
-    send({"type": "result", **response})
+    try:
+        send({"type": "result", **response})
+    except Exception as exc:
+        print(f"pm worker: failed to send final result: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
 
 
 if __name__ == "__main__":
