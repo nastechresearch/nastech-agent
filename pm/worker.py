@@ -36,6 +36,9 @@ def _read_controls(messages, pause, fd):
 
 
 def _write_json_line(fd: int, message: dict) -> None:
+    import errno as _errno
+    import time
+
     if sys.platform == "win32":
         try:
             import msvcrt
@@ -45,12 +48,12 @@ def _write_json_line(fd: int, message: dict) -> None:
             pass
     payload = (json.dumps(message) + "\n").encode("utf-8")
     view = memoryview(payload)
+    retries = 0
     while view:
         try:
             written = os.write(fd, view[:4096])
         except BlockingIOError:
             import select
-            import time
 
             try:
                 select.select([], [fd], [], 0.05)
@@ -58,9 +61,20 @@ def _write_json_line(fd: int, message: dict) -> None:
                 time.sleep(0.05)
             continue
         except OSError as exc:
+            # Windows pipes can surface transient EINVAL/ERROR_NO_DATA during
+            # heavy writes; retry briefly before failing the wire.
+            if exc.errno in {_errno.EINVAL, getattr(_errno, "EWOULDBLOCK", None), getattr(_errno, "EAGAIN", None)} and retries < 20:
+                retries += 1
+                time.sleep(0.05)
+                continue
             raise RuntimeError(f"PM worker wire write failed: {exc}") from exc
         if not written:
+            if retries < 20:
+                retries += 1
+                time.sleep(0.05)
+                continue
             raise RuntimeError("PM worker wire write returned 0 bytes")
+        retries = 0
         view = view[written:]
 
 
