@@ -346,7 +346,10 @@ def public_artifact_url(base: str, key: str) -> str:
             or not (parsed.scheme == 'https' or (parsed.scheme == 'http'
                     and parsed.hostname in ('127.0.0.1', 'localhost', '::1')))):
         raise ValueError('Invalid public artifact base URL')
-    return public_url_for(base, relative_artifact_path(key))
+    # The public archive origin serves the raw request path and does not decode
+    # %2B. A canary tag's plus must stay literal or its receipt and artifacts
+    # cannot be fetched. Links use public_url_for's default encoding instead.
+    return public_url_for(base, relative_artifact_path(key), safe='/+')
 
 
 def public_artifact_path(base: str, archive: str, url: str) -> str:
@@ -575,9 +578,9 @@ def public_base_url(explicit: str | None = None) -> str:
     )
 
 
-def public_url_for(base_url: str, key: str) -> str:
+def public_url_for(base_url: str, key: str, *, safe: str = '/') -> str:
     """Public download URL of an object key (segment-wise encoded)."""
-    return f"{base_url.rstrip('/')}/{quote(key, safe='/')}"
+    return f"{base_url.rstrip('/')}/{quote(key, safe=safe)}"
 
 
 def channel_page_key_for(channel: str) -> str:
