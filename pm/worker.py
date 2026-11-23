@@ -44,7 +44,7 @@ def _write_json_line(fd: int, message: dict) -> None:
             import msvcrt
 
             msvcrt.setmode(fd, os.O_BINARY)
-        except Exception:
+        except OSError:  # health: allow S110 -- best-effort binary fd mode; write path reports real errors
             pass
     payload = (json.dumps(message) + "\n").encode("utf-8")
     view = memoryview(payload)
