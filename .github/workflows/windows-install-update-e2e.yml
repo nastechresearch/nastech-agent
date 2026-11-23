@@ -55,7 +55,7 @@ jobs:
     # dependency build is the long pole (one install already exceeded 25 min
     # at 6-way worker contention). The lane needs both a lower worker count
     # and a larger wall-clock budget than upstream's comment assumes.
-    timeout-minutes: 120
+    timeout-minutes: 150
     steps:
       - name: Checkout code
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
@@ -97,9 +97,10 @@ jobs:
           # inside one module-scoped fixture, so a file timeout leaves zero tests collected and
           # skips the fixture's teardown. ~2,100 s on a normal runner; on the 4-core free runner
           # under 4-way load it exceeded 3,600 s (run 44873305395 attempt 1: SIGKILLed at 3,603 s,
-          # which leaked a gateway, the fake profile and serve.git). The job allows 120 min, so
-          # give this file room to finish rather than killing it mid-journey.
-          NASTECH_TEST_FILE_TIMEOUT: '5400'
+          # which leaked a gateway, the fake profile and serve.git) and 5,401.9 s (rc.13 gate
+          # 45193970121, run 137759858097) with the manifest showing all cells ok. The job allows
+          # 150 min, so give this file room to finish and tear down cleanly.
+          NASTECH_TEST_FILE_TIMEOUT: '7200'
           NASTECH_TEST_FILE_RETRIES: '0'
           OPENROUTER_API_KEY: ''
           OPENAI_API_KEY: ''
