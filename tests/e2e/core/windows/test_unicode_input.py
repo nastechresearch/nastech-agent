@@ -143,7 +143,8 @@ def test_classic_cli_console_non_ascii_reaches_wire(tmp_path: Path) -> None:
             # Coarse startup gate only: three quiet seconds are not proof that prompt_toolkit owns
             # stdin. On a loaded runner the CLI can stall that long *before* the composer is live,
             # and a single blind write would be dropped. Echo confirmation below is the real gate.
-            wait_until(lambda: console.quiet_for(3.0), 120, "the classic CLI to finish painting its prompt")
+            wait_until(lambda: console.quiet_for(3.0), 120, "the classic CLI to finish painting its prompt",
+                       evidence=lambda: _plain(console.screen)[-600:])
             typed = f"{BMP} {tag}"
 
             def echoed_tag() -> bool:
@@ -159,18 +160,19 @@ def test_classic_cli_console_non_ascii_reaches_wire(tmp_path: Path) -> None:
                     break
                 console.proc.write(typed)
                 try:
-                    wait_until(echoed_tag, 10, f"the composer to echo the typed text (attempt {attempt})")
+                    wait_until(echoed_tag, 10, f"the composer to echo the typed text (attempt {attempt})",
+                               evidence=lambda: _plain(console.screen)[-600:])
                     break
                 except AssertionError as exc:
                     if attempt == 3:
                         raise AssertionError(
-                            f"{exc}\n  composer echoed none of {attempt} typed attempts; "
-                            f"console tail: {_plain(console.screen)[-600:]!a}"
+                            f"{exc}\n  composer echoed none of {attempt} typed attempts"
                         ) from exc
             echoed = _plain(console.screen)
             # An Enter within 50 ms of the last composer change is read as a pasted newline, and the
             # echo can paint inside that window: submit only once the typed echo has gone quiet.
-            wait_until(lambda: console.quiet_for(0.2), 30, "the typed composer to settle before Enter")
+            wait_until(lambda: console.quiet_for(0.2), 30, "the typed composer to settle before Enter",
+                       evidence=lambda: _plain(console.screen)[-600:])
             console.proc.write("\r")
             try:
                 wait_until(lambda: srv.main_requests(), 90, "the typed turn to reach the provider")

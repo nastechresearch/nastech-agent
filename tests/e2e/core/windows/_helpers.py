@@ -238,49 +238,12 @@ def _short(value: Any, limit: int = 600) -> str:
     return text if len(text) <= limit * 6 else text[-limit * 6 :]
 
 
-def _predicate_evidence(pred: Callable[[], Any]) -> list[str]:
-    """Best-effort state snapshot from objects a wait predicate closed over.
-
-    Read ONLY on timeout, never on the poll path. A ConPTY wait closes over the console
-    object: its screen tail is what separates "the composer never rendered the typed
-    text" from "the keystroke never reached the pty". Only explicitly named, harmless
-    attributes are read, so every other predicate simply yields no evidence.
-    """
-    try:
-        closure = pred.__closure__ or ()
-    except AttributeError:  # callable object rather than a function
-        return []
-    cells: list[Any] = []
-    for cell in closure:
-        try:
-            cells.append(cell.cell_contents)
-        except ValueError:  # empty cell
-            continue
-    out: list[str] = []
-    for obj in cells:
-        for attr in ("screen", "tail"):
-            try:
-                value = getattr(obj, attr, None)
-            except Exception:
-                continue
-            if callable(value):
-                try:
-                    value = value()
-                except Exception:
-                    continue
-            if isinstance(value, str) and value:
-                out.append(f"{type(obj).__name__}.{attr}: {_short(value)}")
-                break
-    return out
-
-
 def _wait_failure(
     what: str,
     timeout: float,
     started: float,
     polls: int,
     last: Any,
-    pred: Callable[[], Any],
     evidence: Callable[[], str] | None,
 ) -> AssertionError:
     """Build a timeout error with the evidence needed to diagnose a slow/dead child."""
@@ -290,7 +253,6 @@ def _wait_failure(
         f"(elapsed {time.monotonic() - started:.1f}s, {polls} polls)",
         f"  last predicate value: {_short(last)}",
     ]
-    lines.extend(_predicate_evidence(pred))
     if evidence is not None:
         try:
             lines.append(f"  caller evidence: {_short(evidence())}")
@@ -336,7 +298,7 @@ def wait_until(
         if last:
             return last
         if time.monotonic() >= deadline:
-            raise _wait_failure(what, timeout, started, polls, last, pred, evidence)
+            raise _wait_failure(what, timeout, started, polls, last, evidence)
         time.sleep(interval)
 
 
