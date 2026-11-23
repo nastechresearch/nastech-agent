@@ -17,6 +17,47 @@ from pm.runtime import is_runtime, runtime_command, runtime_environment
 from pm.worker_operations import OPERATIONS
 
 
+def _write_json_line(fd: int, message: dict) -> None:
+    import errno as _errno
+    import time
+
+    if sys.platform == "win32":
+        try:
+            import msvcrt
+
+            msvcrt.setmode(fd, os.O_BINARY)
+        except OSError:  # health: allow S110 -- best-effort binary fd mode; write path reports real errors
+            pass
+    payload = (json.dumps(message) + "\n").encode("utf-8")
+    view = memoryview(payload)
+    retries = 0
+    while view:
+        try:
+            written = os.write(fd, view[:4096])
+        except BlockingIOError:
+            import select
+
+            try:
+                select.select([], [fd], [], 0.05)
+            except (OSError, ValueError):
+                time.sleep(0.05)
+            continue
+        except OSError as exc:
+            if exc.errno in {_errno.EINVAL, getattr(_errno, "EWOULDBLOCK", None), getattr(_errno, "EAGAIN", None)} and retries < 20:
+                retries += 1
+                time.sleep(0.05)
+                continue
+            raise RuntimeError(f"PM client wire write failed: {exc}") from exc
+        if not written:
+            if retries < 20:
+                retries += 1
+                time.sleep(0.05)
+                continue
+            raise RuntimeError("PM client wire write returned 0 bytes")
+        retries = 0
+        view = view[written:]
+
+
 def _missing_or_refuse(name):
     from pm.install import _refuse_lazy, current_target, is_installed, lazy_installs_allowed
     from pm.registry import get_package, walk
@@ -130,26 +171,9 @@ def _request(operation, arguments, *, callbacks=None, pause_event=None, project_
 
         def send(data):
             with write_lock:
-                payload = json.dumps({"id": request_id,
-                                      "cancel": pause_event is not None and pause_event.is_set(),
-                                      **data}) + "\n"
-                fd = writer.fileno()
-                view = memoryview(payload.encode("utf-8"))
-                while view:
-                    try:
-                        written = os.write(fd, view[:16384])
-                    except BlockingIOError:
-                        import select
-                        import time
-
-                        try:
-                            select.select([], [fd], [], 0.05)
-                        except (OSError, ValueError):
-                            time.sleep(0.05)
-                        continue
-                    if not written:
-                        raise RuntimeError("PM client wire write returned 0 bytes")
-                    view = view[written:]
+                _write_json_line(writer.fileno(), {"id": request_id,
+                                                   "cancel": pause_event is not None and pause_event.is_set(),
+                                                   **data})
 
         def watch_pause():
             assert pause_event is not None

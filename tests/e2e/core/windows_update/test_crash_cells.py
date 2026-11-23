@@ -120,7 +120,19 @@ def _git_op(proc, ops: tuple[str, ...]) -> tuple[str, int] | None:
 def _git_fetching(proc, machine, target) -> str | None:
     """The update's ``git fetch`` is running: the network half, before anything local moves."""
     seen = _git_op(proc, ("fetch",))
-    return f"git fetch (pid {seen[1]})" if seen else None
+    if seen:
+        return f"git fetch (pid {seen[1]})"
+    # Fast fetches can be missed by process polling; the transcript line is
+    # written when the update starts the fetch phase.
+    transcript = getattr(proc, "transcript", None)
+    if transcript is not None:
+        try:
+            text = Path(transcript).read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            text = ""
+        if "Fetching updates" in text or "git fetch" in text.lower():
+            return "git fetch (seen in transcript)"
+    return None
 
 
 # -- mid_git: the local write, held by git's own filter hook --------------------------------
@@ -683,15 +695,31 @@ def _restore_after(machine, cell: str, result) -> None:
                                           f"and the harness could not restore it ({'; '.join(errors)})"))
 
 
-def _run_cells(machine, j: Journey, cells) -> None:
-    """Run ``cells`` (name, fn) in order on one machine, restoring it after a cell that broke it."""
+def _run_cells(machine, j: Journey, cells, *, budget_s: float = 4800.0) -> None:
+    """Run ``cells`` (name, fn) in order on one machine, restoring it after a cell that broke it.
+
+    Writes the cells-ran manifest after each cell so evidence survives a file
+    timeout/SIGKILL. Stops early when the remaining budget is too small to
+    start another cell cleanly, recording a clear failure for remaining cells.
+    """
+    started = time.monotonic()
     previous = None
     for name, run in cells:
+        elapsed = time.monotonic() - started
+        if elapsed > budget_s:
+            j.results[name] = RuntimeError(
+                f"crash-cells fixture budget exhausted ({elapsed:.0f}s > {budget_s:.0f}s) before {name}; "
+                "see earlier cell transcripts for the stall")
+            _record_cells_ran(j)
+            previous = name
+            continue
+
         def cell(run=run, previous=previous):
             if previous is not None:
                 _restore_after(machine, previous, j.results[previous])
             return run()
         j.step(name, cell)
+        _record_cells_ran(j)
         previous = name
 
 
