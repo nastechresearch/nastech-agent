@@ -22,6 +22,7 @@ import sys
 import time
 import uuid
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -226,14 +227,78 @@ def persisted_messages(home: WinHome) -> list[sqlite3.Row]:
 # Processes -------------------------------------------------------------------
 
 
-def wait_until(pred: Callable[[], Any], timeout: float, what: str, interval: float = 0.1) -> Any:
-    deadline = time.monotonic() + timeout
+def _short(value: Any, limit: int = 600) -> str:
+    """ASCII-safe, bounded rendering for failure messages (Windows consoles are not UTF-8)."""
+    if isinstance(value, str) and len(value) > limit:
+        value = value[-limit:]
+    try:
+        text = ascii(value)
+    except Exception:
+        text = "<unprintable>"
+    return text if len(text) <= limit * 6 else text[-limit * 6 :]
+
+
+def _wait_failure(
+    what: str,
+    timeout: float,
+    started: float,
+    polls: int,
+    last: Any,
+    evidence: Callable[[], str] | None,
+) -> AssertionError:
+    """Build a timeout error with the evidence needed to diagnose a slow/dead child."""
+    lines = [
+        f"timed out after {timeout}s waiting for {what}",
+        f"  at {datetime.now(UTC).isoformat(timespec='seconds')} "
+        f"(elapsed {time.monotonic() - started:.1f}s, {polls} polls)",
+        f"  last predicate value: {_short(last)}",
+    ]
+    if evidence is not None:
+        try:
+            lines.append(f"  caller evidence: {_short(evidence())}")
+        except Exception as exc:
+            lines.append(f"  caller evidence unavailable: {_short(exc)}")
+    for home, since in MADE_HOMES:
+        try:
+            procs = describe(owned_processes(home, since=since))
+        except Exception as exc:
+            procs = [f"process scan failed: {_short(exc)}"]
+        lines.append(f"  owned processes for {home.root}: {procs or 'none'}")
+    return AssertionError("\n".join(lines))
+
+
+def wait_until(
+    pred: Callable[[], Any],
+    timeout: float,
+    what: str,
+    interval: float = 0.1,
+    *,
+    evidence: Callable[[], str] | None = None,
+) -> Any:
+    """Return ``pred()``'s first truthy value; raise a diagnostic AssertionError after timeout.
+
+    ``evidence`` lets a caller add domain-specific state (provider requests, db rows, console
+    tail). It is called only on failure, so a successful wait pays no extra cost.
+    """
+    started = time.monotonic()
+    deadline = started + timeout
+    polls = 0
+    last: Any = None
     while True:
-        value = pred()
-        if value:
-            return value
+        try:
+            last = pred()
+        except Exception as exc:
+            # Keep the original exception's type and traceback; add the missing context only.
+            exc.add_note(
+                f"[wait_until] predicate for {what!r} raised on poll {polls + 1} "
+                f"after {time.monotonic() - started:.1f}s"
+            )
+            raise
+        polls += 1
+        if last:
+            return last
         if time.monotonic() >= deadline:
-            raise AssertionError(f"timed out after {timeout}s waiting for {what}")
+            raise _wait_failure(what, timeout, started, polls, last, evidence)
         time.sleep(interval)
 
 
@@ -244,7 +309,9 @@ def process_tree(pid: int) -> list[Any]:
     try:
         root = psutil.Process(pid)
         return [root, *root.children(recursive=True)]
-    except psutil.NoSuchProcess:
+    except psutil.Error:
+        # NoSuchProcess, AccessDenied and ZombieProcess are all "nothing we can kill here".
+        # Cleanup runs in a finally block: a psutil race must never replace the real failure.
         return []
 
 
