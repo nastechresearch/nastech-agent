@@ -195,6 +195,11 @@ on:
         required: false
         type: boolean
         default: false
+      skip-tests:
+        description: 'Build and stage without native smokes. Set for unsigned canaries: their apps cannot pass signature verification.'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
