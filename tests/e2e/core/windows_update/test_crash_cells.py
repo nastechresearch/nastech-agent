@@ -695,28 +695,14 @@ def _restore_after(machine, cell: str, result) -> None:
                                           f"and the harness could not restore it ({'; '.join(errors)})"))
 
 
-# The 7200 s per-file cap leaves room for a longer fixture budget: on a loaded
-# 4-worker runner the cells already needed 4963 s (Canary E2E 45322097664), so
-# 4800 s killed healthy cells before their assertions ran.
-def _run_cells(machine, j: Journey, cells, *, budget_s: float = 6600.0) -> None:
+def _run_cells(machine, j: Journey, cells) -> None:
     """Run ``cells`` (name, fn) in order on one machine, restoring it after a cell that broke it.
 
     Writes the cells-ran manifest after each cell so evidence survives a file
-    timeout/SIGKILL. Stops early when the remaining budget is too small to
-    start another cell cleanly, recording a clear failure for remaining cells.
+    timeout/SIGKILL; the runner's per-file cap remains the only wall-clock bound.
     """
-    started = time.monotonic()
     previous = None
     for name, run in cells:
-        elapsed = time.monotonic() - started
-        if elapsed > budget_s:
-            j.results[name] = RuntimeError(
-                f"crash-cells fixture budget exhausted ({elapsed:.0f}s > {budget_s:.0f}s) before {name}; "
-                "see earlier cell transcripts for the stall")
-            _record_cells_ran(j)
-            previous = name
-            continue
-
         def cell(run=run, previous=previous):
             if previous is not None:
                 _restore_after(machine, previous, j.results[previous])
