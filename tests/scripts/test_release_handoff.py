@@ -253,7 +253,10 @@ def test_public_handoff_rejects_unsafe_origins_paths_and_redirects(tmp_path, r2_
         thread.join(timeout=5)
 
 
-def test_commit_rebuild_reuses_published_receipt_without_overwriting_bytes(tmp_path, monkeypatch, r2_server):
+def test_commit_rebuild_reuses_published_receipt_without_overwriting_bytes(tmp_path, monkeypatch, request):
+    # `request.getfixturevalue` avoids adding another preview-F811 hit for the
+    # module-level `r2_server` import that the older tests already shadow.
+    server = request.getfixturevalue('r2_server')
     commit = "a" * 40
     monkeypatch.setenv('GITHUB_SHA', 'c' * 40)
     root = tmp_path / "built"
@@ -265,14 +268,14 @@ def test_commit_rebuild_reuses_published_receipt_without_overwriting_bytes(tmp_p
     handoff.main(args)
     prefix = r2.commit_prefix_for(commit)
     artifact_key = prefix + "app.bin"
-    assert r2_server.store[artifact_key][0] == b"original staged bytes"
+    assert server.store[artifact_key][0] == b"original staged bytes"
 
     # A later dispatch rebuilt the artifact with different bytes.
     artifact.write_bytes(b"rebuilt different bytes")
-    r2_server.requests.clear()
+    server.requests.clear()
     handoff.main(args)
-    assert not [row for row in r2_server.requests if row[0] in ("PUT", "POST")]
-    assert r2_server.store[artifact_key][0] == b"original staged bytes"
+    assert not [row for row in server.requests if row[0] in ("PUT", "POST")]
+    assert server.store[artifact_key][0] == b"original staged bytes"
 
     # A different artifact selection is a real change, not a retry.
     (root / "other.bin").write_bytes(b"new selection")
