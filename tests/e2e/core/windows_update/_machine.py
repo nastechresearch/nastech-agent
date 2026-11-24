@@ -475,8 +475,12 @@ class Machine:
                     msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
                     break
                 except OSError:
-                    if time.monotonic() - waited > 1800:
-                        raise RuntimeError("harness: gateway-phase lock not acquired within 30 min") from None
+                    # One update can hold this mutex for up to UPDATE_TIMEOUT (40 min
+                    # on this runner). Wait just longer than that operation; upstream
+                    # uses 1800 s against its 1200 s UPDATE_TIMEOUT. 2700 s is the
+                    # smallest aligned bound for the fork's 2400 s timeout.
+                    if time.monotonic() - waited > 2700:
+                        raise RuntimeError("harness: gateway-phase lock not acquired within 45 min") from None
                     time.sleep(0.5)
             self.timings.append(("(waited for gateway phase)", round(time.monotonic() - waited, 1)))
             self._lock_depth = 1

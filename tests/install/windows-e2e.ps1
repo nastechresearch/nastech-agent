@@ -518,10 +518,6 @@ function Test-NastechRuns([string]$Label) {
         '--launcher', $nastechExe,
         '--desktop', $script:ExpectedDesktop
     )
-    $allowRetained = Get-Variable -Scope Script -Name AllowRetainedIncompleteMarker -ErrorAction SilentlyContinue
-    if ($allowRetained -and $allowRetained.Value) {
-        $sourceDriverArgs += '--allow-retained-incomplete-marker'
-    }
     & $DriverPython @sourceDriverArgs
     Assert-True ($LASTEXITCODE -eq 0) "$Label -- read-only install verification (no repair)"
     $prevLazy = $env:NASTECH_DISABLE_LAZY_INSTALLS
@@ -1399,23 +1395,12 @@ function Invoke-GuiUpdateDesktopRoute([string]$TargetSha) {
                 if (-not $lockHeld) { break }
                 Start-Sleep -Seconds 10
             }
-            $lockHeld = Test-NastechCheckoutLockHeld
-            if ((Test-Path -LiteralPath $markerPath) -and $lockHeld) {
-                $headNow = ""
-                try { $headNow = Get-InstalledHead } catch {}
-                $resultOkOrAbsent = $true
-                if (Test-Path -LiteralPath $resultPath) {
-                    try { $resultOkOrAbsent = [bool]((Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json).ok) } catch { $resultOkOrAbsent = $false }
-                }
-                if ($resultOkOrAbsent -and $headNow -eq $TargetSha) {
-                    Write-Host "  marker retained under active checkout lock after successful update; not treating as cleanup failure"
-                    $script:AllowRetainedIncompleteMarker = $true
-                } else {
-                    Assert-True $false "update marker cleaned up (marker present while checkout lock held, but update completion not fully proven)"
-                }
-            } else {
-                Assert-True (-not (Test-Path -LiteralPath $markerPath)) "update marker cleaned up"
-            }
+            # A retained marker is never proof of completion: the staged-binary
+            # handoff writes no result JSON, and a failed `nastech update` leaves
+            # HEAD at the target after the git pull while its detached retry still
+            # holds the lock (Canary 45280148605). Completion needs the marker to
+            # be cleared, not just a matching SHA.
+            Assert-True (-not (Test-Path -LiteralPath $markerPath)) "update marker cleaned up"
         }
 
         Assert-True ((Get-InstalledHead) -eq $TargetSha) "checkout landed on target commit"
