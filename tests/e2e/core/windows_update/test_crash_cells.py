@@ -695,7 +695,10 @@ def _restore_after(machine, cell: str, result) -> None:
                                           f"and the harness could not restore it ({'; '.join(errors)})"))
 
 
-def _run_cells(machine, j: Journey, cells, *, budget_s: float = 4800.0) -> None:
+# The 7200 s per-file cap leaves room for a longer fixture budget: on a loaded
+# 4-worker runner the cells already needed 4963 s (Canary E2E 45322097664), so
+# 4800 s killed healthy cells before their assertions ran.
+def _run_cells(machine, j: Journey, cells, *, budget_s: float = 6600.0) -> None:
     """Run ``cells`` (name, fn) in order on one machine, restoring it after a cell that broke it.
 
     Writes the cells-ran manifest after each cell so evidence survives a file
