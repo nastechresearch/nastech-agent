@@ -79,8 +79,9 @@ def dispatch_desktop_build(tag: str, gh_repo: str | None) -> bool:
     cmd = ["gh", "workflow", "run", workflow, "--ref", "main", "-f", f"tag={tag}"]
     if canary:
         # NasTech ships unsigned: declare it here too, or the dispatched build stops
-        # at the Apple/Azure credential gates before it builds anything.
-        cmd += ["-f", "upload_release=true", "-f", "skip-signed=true"]
+        # at the Apple/Azure credential gates before it builds anything. Native smokes
+        # verify a real signature, so an unsigned canary must not dispatch them.
+        cmd += ["-f", "upload_release=true", "-f", "skip-signed=true", "-f", "skip-tests=true"]
     if gh_repo:
         cmd += ["--repo", gh_repo]
 

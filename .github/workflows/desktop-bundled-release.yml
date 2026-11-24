@@ -107,7 +107,7 @@ on:
         type: string
         default: 'darwin-arm64,win32-arm64,win32-x64,win32-bundle,linux-x64,linux-arm64,termux'
       skip-tests:
-        description: 'Stable candidates only: build and stage without native smokes or in-build test suites (the claim has no smoke lane).'
+        description: 'Build and stage without native smokes or in-build test suites. Set for unsigned canaries: their apps cannot pass native signature verification.'
         type: boolean
         default: false
       skip-signed:
@@ -2364,12 +2364,21 @@ jobs:
       - name: Preserve release success gate
         env:
           RELEASE_NEEDS: ${{ toJSON(needs) }}
+          SKIP_TESTS: ${{ inputs.skip-tests }}
+          SKIP_SIGNED: ${{ inputs.skip-signed }}
         run: |
           python3 - <<'PY'
           import json, os
           from scripts.releases.stable import require_success
           needs = json.loads(os.environ['RELEASE_NEEDS'])
-          require_success(needs, list(needs))
+          required = list(needs)
+          # A skipped lane is not a failed lane: an unsigned canary dispatches no
+          # native smokes and its updater publishers are gated off on purpose.
+          if os.environ.get('SKIP_TESTS') == 'true':
+              required = [name for name in required if not name.startswith('smoke-')]
+          if os.environ.get('SKIP_SIGNED') == 'true':
+              required = [name for name in required if not name.endswith('-updater')]
+          require_success(needs, required)
           PY
 
   commit-builds-summary:
@@ -2610,10 +2619,11 @@ jobs:
       && needs.build-linux-x64.result == 'success' && needs.build-linux-arm64.result == 'success'
       && needs.builds-table.result == 'success'
       && needs.assemble-win32-bundle.result == 'success'
-      && needs.smoke-darwin-arm64.result == 'success'
-      && needs.smoke-win32-arm64.result == 'success' && needs.smoke-win32-x64.result == 'success'
-      && needs.publish-win32-updater.result == 'success'
-      && needs.publish-darwin-updater.result == 'success'
+      && (inputs.skip-tests == true || needs.smoke-darwin-arm64.result == 'success')
+      && (inputs.skip-tests == true || needs.smoke-win32-arm64.result == 'success')
+      && (inputs.skip-tests == true || needs.smoke-win32-x64.result == 'success')
+      && (inputs.skip-signed == true || needs.publish-win32-updater.result == 'success')
+      && (inputs.skip-signed == true || needs.publish-darwin-updater.result == 'success')
     runs-on: ubuntu-latest
     environment: release-signing
     steps:

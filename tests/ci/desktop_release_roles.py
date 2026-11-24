@@ -147,7 +147,7 @@ def canary_publisher(jobs: dict) -> str:
 def phase_result(jobs: dict) -> str:
     """The stable-phase verdict: the job that judges every phase job's result."""
     return _only([name for name, job in jobs.items()
-                  if any({"RELEASE_NEEDS", "SKIP_TESTS"} <= set(step.get("env") or {})
+                  if any({"RELEASE_NEEDS", "SKIP_TESTS", "RELEASE_PHASE"} <= set(step.get("env") or {})
                          for step in job.get("steps", []))], "stable phase result")
 
 

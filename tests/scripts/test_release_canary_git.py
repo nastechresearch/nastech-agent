@@ -92,7 +92,7 @@ def test_canary_cut_keeps_the_stable_core_and_dispatches_exactly_once(canary_rep
     assert dispatch == [
         "gh", "workflow", "run", "desktop-bundled-release.yml", "--ref", "main",
         "-f", f"tag={tag}", "-f", "upload_release=true", "-f", "skip-signed=true",
-        "--repo", "fixture/release",
+        "-f", "skip-tests=true", "--repo", "fixture/release",
     ]
     assert git("--git-dir", str(remote), "rev-parse", tag + "^{commit}") == git("rev-parse", "HEAD")
 
