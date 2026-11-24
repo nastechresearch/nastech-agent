@@ -317,14 +317,15 @@ class IconArt:
 
 
 def girl_path(art: IconArt, girl: str) -> str:
-    """The girl `<path>` element with editor metadata stripped (resvg rejects
-    undeclared inkscape/sodipodi prefixes)."""
+    """The girl artwork element with editor metadata stripped (resvg rejects
+    undeclared inkscape/sodipodi prefixes). Art can arrive as a vector `<path>`
+    or as an embedded raster `<image>`; both keep the same viewBox contract."""
     if girl not in art.paths:
         src = art.girls[girl].read_text(encoding="utf-8-sig")
-        m = re.search(r"<path\b.*?/>", src, re.DOTALL)
-        assert m, f"no <path> found in {art.girls[girl].name}"
-        path = re.sub(r'\s+(inkscape|sodipodi):[a-zA-Z-]+="[^"]*"', "", m.group(0))
-        art.paths[girl] = path
+        m = re.search(r"<(?:path|image)\b.*?/>", src, re.DOTALL)
+        assert m, f"no <path> or <image> found in {art.girls[girl].name}"
+        element = re.sub(r'\s+(inkscape|sodipodi):[a-zA-Z-]+="[^"]*"', "", m.group(0))
+        art.paths[girl] = element
     return art.paths[girl]
 
 
@@ -465,10 +466,16 @@ def portrait_layer(art: IconArt, girl: str, bg: str, join_bottom: float) -> ET.E
     _, y, portrait_width, portrait_height = box
     _, by, bw, bh = girl_bbox(art, girl)
     scale = min(portrait_width / bw, portrait_height / bh)
-    drag_bottom_nodes(
-        portrait[0], cutoff=by + bh * 0.97, band=bh * 0.02,
-        distance=max(0.0, join_bottom - (y + portrait_height)) / scale,
-    )
+    art_element = portrait[0]
+    if art_element.tag.rsplit("}", 1)[-1] == "image":
+        # Raster mascot: there are no vector nodes to drag. The embedded art
+        # already fills its viewBox, so keep the fitted box as the render target.
+        pass
+    else:
+        drag_bottom_nodes(
+            art_element, cutoff=by + bh * 0.97, band=bh * 0.02,
+            distance=max(0.0, join_bottom - (y + portrait_height)) / scale,
+        )
     # Keep the fitted viewBox fixed, but let edited nodes reach into the border.
     portrait.set("overflow", "visible")
     return portrait
