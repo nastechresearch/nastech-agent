@@ -475,11 +475,12 @@ class Machine:
                     msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
                     break
                 except OSError:
-                    # A single update holds this mutex for up to UPDATE_TIMEOUT (40 min);
-                    # four workers sharing the runner must be able to outwait it. 90 min
-                    # still fits the 7200 s per-file cap in windows-install-update-e2e.yml.
-                    if time.monotonic() - waited > 5400:
-                        raise RuntimeError("harness: gateway-phase lock not acquired within 90 min") from None
+                    # One update can hold this mutex for up to UPDATE_TIMEOUT (40 min
+                    # on this runner). Wait just longer than that operation; upstream
+                    # uses 1800 s against its 1200 s UPDATE_TIMEOUT. 2700 s is the
+                    # smallest aligned bound for the fork's 2400 s timeout.
+                    if time.monotonic() - waited > 2700:
+                        raise RuntimeError("harness: gateway-phase lock not acquired within 45 min") from None
                     time.sleep(0.5)
             self.timings.append(("(waited for gateway phase)", round(time.monotonic() - waited, 1)))
             self._lock_depth = 1
