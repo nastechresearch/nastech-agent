@@ -9,7 +9,7 @@ def _git(cwd, *args, env=None):
     return subprocess.run(["git", *args], cwd=cwd, env=env, check=True, capture_output=True, text=True)
 
 
-def _seed_origin(root):
+def _seed_origin(root, tags=None):
     # Origin carrying three release tags created in CalVer-then-SemVer order:
     # the names sort the other way round, so the assertions below pin
     # chronology, not lexicography. v0.27.0 is annotated to cover both tag
@@ -20,7 +20,7 @@ def _seed_origin(root):
     _git(root, "init", "-b", "main", str(seed))
     _git(seed, "config", "user.name", "fixture")
     _git(seed, "config", "user.email", "fixture@example.invalid")
-    for index, tag in enumerate(["v2026.7.20", "v0.27.0", "v0.28.0"]):
+    for index, tag in enumerate(tags or ["v2026.7.20", "v0.27.0", "v0.28.0"]):
         date = f"2026-08-{index + 1:02d}T00:00:00Z"
         env = {**os.environ, "GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date}
         _git(seed, "commit", "--allow-empty", "-m", tag, env=env)
@@ -41,3 +41,11 @@ def test_sampling_reads_origin_not_local_tags(tmp_path):
     assert pick_tags(tmp_path / "with-tags", 3, "v0.28.0") == expected
     assert pick_tags(tmp_path / "tagless", 3, "v0.28.0") == expected
     assert pick_tags(tmp_path / "tagless", 1, "v0.28.0") == ["v0.27.0"]
+
+
+def test_sampling_excludes_known_unupdatable_baseline(tmp_path):
+    _seed_origin(tmp_path, ["v0.27.0", "v2026.8.11", "v0.28.0"])
+    _git(tmp_path, "clone", "--no-local", str(tmp_path / "origin.git"), str(tmp_path / "clone"))
+    picked = pick_tags(tmp_path / "clone", 3, "v0.28.0")
+    assert "v2026.8.11" not in picked
+    assert picked == ["v0.27.0"]
