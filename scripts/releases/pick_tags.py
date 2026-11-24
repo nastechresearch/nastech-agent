@@ -10,6 +10,16 @@ def _git(repo: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(repo), *args], text=True, encoding="utf-8", timeout=120)
 
 
+# Released baselines whose Windows updater is known broken: the old PM worker
+# cannot send its final result over the update pipe ([Errno 22] Invalid
+# argument), so an app-driven update from them never emits a completion
+# receipt (Canary E2E 45280148605 / 45241791037, Stable rc.13 45193970121).
+# They cannot be repaired in a released binary; keep them out of sampled OLD
+# baselines until a fixed release replaces them. Other baselines still test
+# the update path, so no update coverage is dropped.
+_UNUPDATABLE_BASELINES = frozenset({"v2026.8.11"})
+
+
 def pick_tags(repo: Path, count: int, exclude: str = "") -> list[str]:
     if not 1 <= count <= 10:
         raise ValueError("Tag count must be between one and ten")
@@ -18,7 +28,8 @@ def pick_tags(repo: Path, count: int, exclude: str = "") -> list[str]:
     # version-scheme filter stays here.
     raw = _git(repo, "ls-remote", "--refs", "--tags", "origin", "v*")
     tags = [line.split("\t")[1].removeprefix("refs/tags/") for line in raw.splitlines()]
-    tags = [tag for tag in tags if re.fullmatch(r"v\d+\.\d+\.\d+(?:\.\d+)?", tag) and tag != exclude]
+    tags = [tag for tag in tags if re.fullmatch(r"v\d+\.\d+\.\d+(?:\.\d+)?", tag)
+            and tag != exclude and tag not in _UNUPDATABLE_BASELINES]
     # NasTech: an update leg has to start from an install this fork can drive.
     # A fork inherits the source project's release tags, and those name commits
     # whose trees were never branded: that installer writes a checkout this
