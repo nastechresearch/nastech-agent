@@ -475,8 +475,11 @@ class Machine:
                     msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
                     break
                 except OSError:
-                    if time.monotonic() - waited > 1800:
-                        raise RuntimeError("harness: gateway-phase lock not acquired within 30 min") from None
+                    # A single update holds this mutex for up to UPDATE_TIMEOUT (40 min);
+                    # four workers sharing the runner must be able to outwait it. 90 min
+                    # still fits the 7200 s per-file cap in windows-install-update-e2e.yml.
+                    if time.monotonic() - waited > 5400:
+                        raise RuntimeError("harness: gateway-phase lock not acquired within 90 min") from None
                     time.sleep(0.5)
             self.timings.append(("(waited for gateway phase)", round(time.monotonic() - waited, 1)))
             self._lock_depth = 1
