@@ -1,7 +1,4 @@
-import type {
-  AnyGatewayEvent,
-  SessionInfo
-} from '@nastech/shared/gateway-types'
+import type { AnyGatewayEvent, SessionInfo } from '@nastech/shared/gateway-types'
 
 import { patchOverlayState } from './overlayStore.js'
 import { patchUiState } from './uiStore.js'

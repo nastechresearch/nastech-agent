@@ -1,5 +1,5 @@
-import { stringWidth, Text } from '@nastech/ink'
 import { useStore } from '@nanostores/react'
+import { stringWidth, Text } from '@nastech/ink'
 
 import { type LoopLine, useLoopLine } from '../app/loopStatus.js'
 import { $uiState } from '../app/uiStore.js'

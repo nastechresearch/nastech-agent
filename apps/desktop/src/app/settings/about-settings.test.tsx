@@ -119,7 +119,11 @@ describe('AboutSettings', (): void => {
   })
 
   it('hides the Nastech Cloud backend update card and never checks it', (): void => {
-    $connection.set({ ...connection('remote'), baseUrl: 'https://lab.agents.nastechresearch.github.io', remoteKind: 'cloud' })
+    $connection.set({
+      ...connection('remote'),
+      baseUrl: 'https://lab.agents.nastechresearch.github.io',
+      remoteKind: 'cloud'
+    })
     render(<AboutSettings />)
 
     expect(screen.getByText(en.updates.latestBody)).toBeTruthy()

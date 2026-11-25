@@ -1,8 +1,12 @@
+import { useStore } from '@nanostores/react'
 import { forceRedraw, type Key, useInput } from '@nastech/ink'
 import { sharedControlParams } from '@nastech/shared/gateway-canonical'
-import type { ConfigSetResponse, SharedControlRespondResponse, VoiceRecordResponse } from '@nastech/shared/gateway-types'
+import type {
+  ConfigSetResponse,
+  SharedControlRespondResponse,
+  VoiceRecordResponse
+} from '@nastech/shared/gateway-types'
 import { applyCompletion } from '@nastech/shared/slash-input'
-import { useStore } from '@nanostores/react'
 import { useEffect, useRef } from 'react'
 
 import { DASHBOARD_TUI_MODE, NATIVE_MODE } from '../config/env.js'
@@ -14,7 +18,13 @@ import { computeWheelStep, initWheelAccelForHost } from '../lib/wheelAccel.js'
 import { closeWidget, dispatchWidgetInput } from '../sdk/host.js'
 
 import { $agentDockCollapsed } from './agentRoster.js'
-import { $backtrackPrime, $pendingRewind, cancelBacktrackPrime, cancelPendingRewind, primeBacktrack } from './backtrackStore.js'
+import {
+  $backtrackPrime,
+  $pendingRewind,
+  cancelBacktrackPrime,
+  cancelPendingRewind,
+  primeBacktrack
+} from './backtrackStore.js'
 import { getInputSelection } from './inputSelectionStore.js'
 import {
   type ComposerActions,
@@ -493,7 +503,10 @@ export function useInputHandlers(ctx: InputHandlerContext): InputHandlerResult {
       // legacy server→client request resolves its response frame locally.
       if (overlay.approval.sharedControl) {
         return gateway
-          .rpc<SharedControlRespondResponse>('approval.respond', { choice: 'deny', ...sharedControlParams(overlay.approval) })
+          .rpc<SharedControlRespondResponse>('approval.respond', {
+            choice: 'deny',
+            ...sharedControlParams(overlay.approval)
+          })
           .then(r => r && fresh() && settle())
       }
 

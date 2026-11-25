@@ -3,9 +3,9 @@ import { useMemo } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { CountSkeleton } from '@/components/ui/skeleton'
-import { previewSkillHub, type ProfileScope, profileScopeKey } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { Loader2 } from '@/lib/icons'
+import { previewSkillHub, type ProfileScope, profileScopeKey } from '@/nastech'
 import type { OfficialSkillInfo } from '@/types/nastech'
 
 import { PanelPill } from '../../overlays/panel'

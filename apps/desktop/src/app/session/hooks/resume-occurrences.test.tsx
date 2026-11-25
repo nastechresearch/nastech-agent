@@ -4,9 +4,9 @@ import { act, cleanup, renderHook } from '@testing-library/react'
 import { useRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
-import { getLatestSessionMessages } from '@/nastech'
 import { chatMessageText, toChatMessages } from '@/lib/chat-messages'
 import { resetInFlightTurnJournalStateForTests } from '@/lib/inflight-turn-journal'
+import { getLatestSessionMessages } from '@/nastech'
 import { $activeGatewayProfile } from '@/store/profile'
 import {
   _resetSessionOwnerHintsForTests,

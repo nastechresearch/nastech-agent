@@ -1,8 +1,8 @@
 'use client'
 
 import { type ToolCallMessagePartProps, useAuiState } from '@assistant-ui/react'
-import type { ConnectionTargetLaunchKind } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import type { ConnectionTargetLaunchKind } from '@nastech/shared'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useSessionView } from '@/app/chat/session-view'

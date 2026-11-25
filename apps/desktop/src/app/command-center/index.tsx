@@ -1,5 +1,5 @@
-import { compactNumber } from '@nastech/shared'
 import { useStore } from '@nanostores/react'
+import { compactNumber } from '@nastech/shared'
 import { type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { LogSearchField, useLogSearch } from '@/components/chat/log-search'
@@ -11,8 +11,6 @@ import { SearchField } from '@/components/ui/search-field'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { ResponsiveTabs } from '@/components/ui/tab-dropdown'
 import { Tip } from '@/components/ui/tooltip'
-import { getActionStatus, getLogs, getStatus, getUsageAnalytics, restartGateway, updateNastech } from '@/nastech'
-import type { ActionStatusResponse, AnalyticsResponse, SessionInfo, StatusResponse } from '@/nastech'
 import { useI18n } from '@/i18n'
 import { sessionTitle } from '@/lib/chat-runtime'
 import {
@@ -31,6 +29,8 @@ import { isSignedOutStatus } from '@/lib/signed-out-status'
 import { fmtDateTime } from '@/lib/time'
 import { useStoreSelector } from '@/lib/use-session-slice'
 import { cn } from '@/lib/utils'
+import { getActionStatus, getLogs, getStatus, getUsageAnalytics, restartGateway, updateNastech } from '@/nastech'
+import type { ActionStatusResponse, AnalyticsResponse, SessionInfo, StatusResponse } from '@/nastech'
 import { upsertDesktopActionTask } from '@/store/activity'
 import { $cloudOwnsUpdates } from '@/store/cloud-updates'
 import { $pinnedSessionIds, pinSession, SIDEBAR_SESSIONS_PAGE_SIZE, unpinSession } from '@/store/layout'
@@ -522,7 +522,10 @@ export function CommandCenterView({
                           <Button onClick={() => void runSystemAction('restart')} size="xs" variant="text">
                             {cc.restartGateway}
                           </Button>
-                          <UpdateNastechButton label={cc.updateNastech} onClick={() => void runSystemAction('update')} />
+                          <UpdateNastechButton
+                            label={cc.updateNastech}
+                            onClick={() => void runSystemAction('update')}
+                          />
                         </div>
                       </div>
                       {systemAction && (

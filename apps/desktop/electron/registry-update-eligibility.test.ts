@@ -15,8 +15,16 @@ test('a Cloud agent is platform-managed whether saved as cloud or as a URL remot
     reason: 'cloud-managed'
   })
   assert.deepEqual(
-    updateEligibility({ id: 'u', kind: 'remote', label: 'x', url: 'https://lab.agents.staging-nastechresearch.github.io' }),
+    updateEligibility({
+      id: 'u',
+      kind: 'remote',
+      label: 'x',
+      url: 'https://lab.agents.staging-nastechresearch.github.io'
+    }),
     { eligible: false, reason: 'cloud-managed' }
   )
-  assert.equal(updateEligibility({ id: 'r', kind: 'remote', label: 'x', url: 'https://box.example.com' }).eligible, true)
+  assert.equal(
+    updateEligibility({ id: 'r', kind: 'remote', label: 'x', url: 'https://box.example.com' }).eligible,
+    true
+  )
 })
