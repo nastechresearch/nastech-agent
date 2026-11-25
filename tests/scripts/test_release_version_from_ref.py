@@ -4,6 +4,7 @@ Derivation reads the published stable head, or the seeded line before one exists
 Attempt refs number attempts within a version and never move the line.
 """
 import json
+import math
 import subprocess
 
 import pytest
@@ -190,6 +191,41 @@ def test_a_real_answer_fails_once_and_keeps_ghs_message(capsys):
         _gh(["gh", "api", "repos/example/nastech-agent/releases"], run=run, sleep=lambda _s: None)
     assert len(attempts) == 1
     assert "Not Found" in capsys.readouterr().err
+
+
+def test_the_version_read_gives_every_gh_child_a_deadline():
+    """A child that never answers must not hold the release forever, on any attempt."""
+    from scripts.releases.versioning import _gh
+
+    seen = []
+
+    def run(argv, **kwargs):
+        seen.append(kwargs.get("timeout"))
+        if len(seen) < 2:
+            return subprocess.CompletedProcess(
+                argv, 1, "", "gh: API rate limit exceeded (HTTP 403)")
+        return subprocess.CompletedProcess(argv, 0, "[]", "")
+
+    assert _gh(["gh", "api", "repos/example/nastech-agent/releases"],
+               run=run, sleep=lambda _s: None) == "[]"
+    assert len(seen) == 2
+    assert all(isinstance(t, (int, float)) and math.isfinite(t) and t > 0 for t in seen)
+
+
+def test_a_hung_gh_child_surfaces_its_deadline_on_the_first_attempt():
+    """A hang is not a queue position: it propagates, never retried as a rate limit."""
+    from scripts.releases.versioning import _gh
+
+    attempts = []
+
+    def run(argv, **kwargs):
+        attempts.append(kwargs["timeout"])
+        raise subprocess.TimeoutExpired(argv, kwargs["timeout"])
+
+    with pytest.raises(subprocess.TimeoutExpired) as excinfo:
+        _gh(["gh", "api", "repos/example/nastech-agent/releases"], run=run, sleep=lambda _s: None)
+    assert len(attempts) == 1
+    assert excinfo.value.timeout == attempts[0]
 
 
 def test_outstanding_attempts_is_the_one_shared_predicate():
