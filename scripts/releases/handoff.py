@@ -216,13 +216,38 @@ def stage(tag: str, commit: str, name: str, root: Path, includes: list[str]) -> 
     return _stage(receipt, selected)
 
 
+def _published_commit_receipt(commit: str, name: str, receipt: dict) -> dict | None:
+    """The completion witness for an already-staged commit build.
+
+    A commit receipt is published last, after every artifact it names has been
+    accepted under an immutable key, so its presence is proof that those bytes
+    are staged and bound. A later dispatch of the same commit then has no work
+    to do -- whether its fresh build reproduces the bytes or not. Nothing is
+    overwritten: a build with genuinely new bytes needs a new namespace.
+    """
+    try:
+        published = read_commit_receipt(commit, name)
+    except MissingReceipt:
+        return None
+    # A changed artifact selection is a different build, not a retry.
+    if ({row["path"] for row in published["files"]}
+            != {row["path"] for row in receipt["files"]}):
+        raise ValueError("Commit handoff artifact selection changed")
+    return published
+
+
 def stage_commit_build(commit: str, name: str, root: Path, includes: list[str]) -> dict:
-    """Stage tagless artifacts. Identical retries pass; different bytes fail."""
+    """Stage tagless artifacts. A re-dispatch reuses the published receipt."""
     validate_commit_identity(commit, name)
     selected = _select_files(root, includes)
     receipt = {"schema": 2, "commit": commit, "name": name,
                "files": _receipt_file_rows(selected)}
     validate_commit_receipt(receipt, commit, name)
+    published = _published_commit_receipt(commit, name, receipt)
+    if published is not None:
+        print(f"handoff: commit build {commit[:12]}/{name} already staged "
+              f"({len(published['files'])} artifact(s)); reusing published bytes")
+        return published
     return _stage(receipt, selected)
 
 

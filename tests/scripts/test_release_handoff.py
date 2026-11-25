@@ -251,3 +251,33 @@ def test_public_handoff_rejects_unsafe_origins_paths_and_redirects(tmp_path, r2_
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+def test_commit_rebuild_reuses_published_receipt_without_overwriting_bytes(tmp_path, monkeypatch, request):
+    # `request.getfixturevalue` avoids adding another preview-F811 hit for the
+    # module-level `r2_server` import that the older tests already shadow.
+    server = request.getfixturevalue('r2_server')
+    commit = "a" * 40
+    monkeypatch.setenv('GITHUB_SHA', 'c' * 40)
+    root = tmp_path / "built"
+    root.mkdir()
+    artifact = root / "app.bin"
+    artifact.write_bytes(b"original staged bytes")
+    args = ['stage', '--commit-build', commit, '--name', 'win32-x64',
+            '--root', str(root), '--include', '*.bin']
+    handoff.main(args)
+    prefix = r2.commit_prefix_for(commit)
+    artifact_key = prefix + "app.bin"
+    assert server.store[artifact_key][0] == b"original staged bytes"
+
+    # A later dispatch rebuilt the artifact with different bytes.
+    artifact.write_bytes(b"rebuilt different bytes")
+    server.requests.clear()
+    handoff.main(args)
+    assert not [row for row in server.requests if row[0] in ("PUT", "POST")]
+    assert server.store[artifact_key][0] == b"original staged bytes"
+
+    # A different artifact selection is a real change, not a retry.
+    (root / "other.bin").write_bytes(b"new selection")
+    with pytest.raises(ValueError, match="selection changed"):
+        handoff.main(args)
