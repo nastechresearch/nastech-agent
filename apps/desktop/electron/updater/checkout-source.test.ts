@@ -8,6 +8,7 @@ import { promisify } from 'node:util'
 
 import { expect, it, vi } from 'vitest'
 
+import { releaseTagVersion } from '../feature-flags'
 import { markerPath } from '../update-marker'
 import * as updaterProcess from '../updater-process'
 
@@ -171,10 +172,10 @@ function buildManifest(
       channel,
       repository: 'NastechResearch/nastech-agent',
       commit: sha,
-      sourceVersion: tag.replace(/^v/, '').split('+')[0],
+      sourceVersion: releaseTagVersion(tag)!.split('+')[0],
       releaseTag: tag,
       sequence,
-      version: tag.replace(/^v/, ''),
+      version: releaseTagVersion(tag)!,
       windowsVersion: `0.0.${sequence}.0`,
       identity,
       bundleEnv: {},
@@ -186,7 +187,7 @@ function buildManifest(
         arch: 'arm64',
         variant: 'bundled',
         identity: 'chat.nastech.nastech',
-        version: tag.replace(/^v/, ''),
+        version: releaseTagVersion(tag)!,
         teamId: 'TESTTEAM12',
         artifact: {
           key: `releases/channel-builds/${id}/darwin-arm64.zip`,
@@ -247,7 +248,7 @@ it('carries each install channel from Python publication checks into the source 
       commits.push(git(['rev-parse', 'HEAD']))
     }
 
-    const tags: Record<'stable' | 'canary', string> = { stable: 'v1.2.3', canary: 'v1.2.3+canary.20260911T123456Z' }
+    const tags: Record<'stable' | 'canary', string> = { stable: 'v1.2.3', canary: 'canary.20260911T123456Z-v1.2.3' }
 
     for (const channel of ['stable', 'canary'] as const) {
       const sha: string = commits[channel === 'stable' ? 1 : 2]

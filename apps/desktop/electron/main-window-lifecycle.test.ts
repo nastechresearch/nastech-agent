@@ -2,7 +2,13 @@ import assert from 'node:assert/strict'
 
 import { test } from 'vitest'
 
-import { activateWindow, ensureMainWindow, shouldQuitOnLastChatClosed } from './main-window-lifecycle'
+import { guardMacApplicationsLaunch, type MacApplicationsGuardResult } from './mac-applications-guard'
+import {
+  activateWindow,
+  ensureMainWindow,
+  handleSecondInstance,
+  shouldQuitOnLastChatClosed
+} from './main-window-lifecycle'
 
 test('recreates a destroyed primary window without focusing it', () => {
   const destroyedWindow = {
@@ -134,4 +140,88 @@ test('last-chat fallback quits only for a final non-macOS close outside a quit',
     const input = { platform, isQuittingForHandoff, remainingChatWindows, quitInProgress }
     assert.equal(shouldQuitOnLastChatClosed(input), expected, JSON.stringify(input))
   }
+})
+
+/** The move prompt on a DMG launch, its dialog held open until `answer` is called. */
+function pendingMovePrompt(): {
+  answer: (response: number) => void
+  result: Promise<MacApplicationsGuardResult>
+  shown: Promise<void>
+} {
+  let answer: (response: number) => void = () => undefined
+  let markShown: () => void = () => undefined
+  const exe = '/Volumes/Nastech Agent/Nastech Agent.app/Contents/MacOS/Nastech Agent'
+
+  // The guard reaches showMessageBox synchronously, so this must exist before it starts.
+  const shown = new Promise<void>(resolve => {
+    markShown = resolve
+  })
+
+  const result = guardMacApplicationsLaunch({
+    app: {
+      getPath: ((name: string) => (name === 'exe' ? exe : '/nonexistent/nastech-user-data')) as never,
+      getVersion: () => '0.24.0',
+      isInApplicationsFolder: () => false,
+      moveToApplicationsFolder: () => false
+    },
+    dialog: {
+      showMessageBox: (() => {
+        markShown()
+
+        return new Promise(resolve => {
+          answer = response => resolve({ response, checkboxChecked: false })
+        })
+      }) as never
+    },
+    appName: 'Nastech Agent',
+    isPackaged: true,
+    installStamp: { payload: 'bundled', updateMechanism: 'electron-updater' },
+    platform: 'darwin',
+    env: {},
+    argv: [exe],
+    homeDir: '/Users/alice',
+    access: () => {
+      throw Object.assign(new Error('read-only file system'), { code: 'EROFS' })
+    },
+    log: () => undefined
+  })
+
+  return { answer: response => answer(response), result, shown }
+}
+
+test('a second launch opens no window behind the Applications move prompt, and one once startup continues', async () => {
+  const prompt = pendingMovePrompt()
+  const created: string[] = []
+  const links: string[] = []
+  const logs: string[] = []
+  let launchGuard: MacApplicationsGuardResult | null = null
+
+  const secondLaunch = (argv: string[]): void =>
+    handleSecondInstance(argv, {
+      mainWindow: null,
+      launchGuard,
+      deepLinkSchemes: ['nastech'],
+      handleDeepLink: url => void links.push(url),
+      createWindow: () => void created.push('window'),
+      focusWindow: () => undefined,
+      log: line => void logs.push(line)
+    })
+
+  await prompt.shown
+  secondLaunch(['Nastech Agent'])
+  secondLaunch(['Nastech Agent', 'nastech://session/abc', '--close-preview'])
+  assert.deepEqual(created, [])
+  // Links still go to handleDeepLink, which queues them until the renderer is ready.
+  assert.deepEqual(links, ['nastech://close-preview', 'nastech://session/abc'])
+  assert.equal(logs.length, 2)
+
+  prompt.answer(1)
+  launchGuard = await prompt.result
+  assert.equal(launchGuard.action, 'continue')
+  secondLaunch(['Nastech Agent'])
+  assert.deepEqual(created, ['window'])
+
+  launchGuard = { action: 'relaunching', location: 'read-only-volume' }
+  secondLaunch(['Nastech Agent'])
+  assert.deepEqual(created, ['window'])
 })

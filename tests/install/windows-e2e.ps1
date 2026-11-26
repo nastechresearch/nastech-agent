@@ -348,87 +348,6 @@ exit /b %ERRORLEVEL%
     Write-Host "    'remote get-url origin' now reports $RepoUrlHttps"
 }
 
-function Get-BootstrapSkipMarkerPath {
-    return (Join-Path $WorkRoot "bootstrap-skip.txt")
-}
-
-function Write-BootstrapSkip([string]$Reason) {
-    New-Item -ItemType Directory -Path $WorkRoot -Force | Out-Null
-    Set-Content -LiteralPath (Get-BootstrapSkipMarkerPath) -Value $Reason -Encoding UTF8
-    $logDir = Join-Path $WorkRoot "logs"
-    New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-    Add-Content -LiteralPath (Join-Path $logDir "driver.log") -Value $Reason -Encoding UTF8
-    Write-Host $Reason
-    if ($env:GITHUB_OUTPUT) {
-        Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value "bootstrap_skip=unavailable" -Encoding UTF8
-    }
-    if ($env:GITHUB_STEP_SUMMARY) {
-        Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value "Skipped desktop-installer leg: $Reason" -Encoding UTF8
-    }
-}
-
-function Test-BootstrapSkipped {
-    $marker = Get-BootstrapSkipMarkerPath
-    if (-not (Test-Path -LiteralPath $marker)) { return $false }
-    $reason = Get-Content -LiteralPath $marker -Raw -ErrorAction SilentlyContinue
-    if ($reason) { Write-Host ($reason.TrimEnd()) }
-    if ($env:GITHUB_OUTPUT) {
-        Add-Content -LiteralPath $env:GITHUB_OUTPUT -Value "bootstrap_skip=unavailable" -Encoding UTF8
-    }
-    return $true
-}
-
-# Windows PowerShell 5.1 throws WebCmdletWebResponseException for a non-2xx
-# answer; the status lives on HttpWebResponse.StatusCode, but some failures
-# (proxies, PS7) only put it in the message. Read both so a missing bootstrap
-# (404) is never mistaken for a real download failure and vice versa.
-function Get-WebErrorStatusCode($ErrorRecord) {
-    $status = $null
-    try {
-        if ($null -ne $ErrorRecord.Exception.Response) {
-            $status = [int]$ErrorRecord.Exception.Response.StatusCode
-        }
-    } catch { }
-    if ($null -eq $status) {
-        $message = [string]$ErrorRecord.Exception.Message
-        $match = [regex]::Match($message, '\(([1-5][0-9]{2})\)')
-        if ($match.Success) { $status = [int]$match.Groups[1].Value }
-        elseif ($message -match '(?i)"error"\s*:\s*"NotFound"|404\s+Not\s+Found') { $status = 404 }
-    }
-    return $status
-}
-
-function Test-TransientWebError($ErrorRecord, $StatusCode) {
-    if ($null -ne $StatusCode -and $StatusCode -ge 500) { return $true }
-    $webStatus = [string]$ErrorRecord.Exception.Status
-    if ($webStatus -match 'Timeout|ConnectFailure|ConnectionClosed|KeepAliveFailure|ReceiveFailure|SendFailure') { return $true }
-    $message = [string]$ErrorRecord.Exception.Message
-    if ($message -match '(?i)reset|timed out|timeout|underlying connection|service unavailable|bad gateway|gateway timeout|temporarily unavailable') { return $true }
-    return $false
-}
-
-# A CDN connection reset mid-body is a network blip, not a broken installer.
-# Retry those (and 5xx) a bounded number of times; a 404 is deterministic and
-# is left to the caller to skip, and every other error stays fatal. The
-# destination is removed on every failed attempt so a truncated partial file
-# can never be mistaken for a complete bootstrap on a later phase.
-function Invoke-BootstrapDownload([string]$Url, [string]$Destination, [int]$Tries = 3) {
-    for ($attempt = 1; $attempt -le $Tries; $attempt++) {
-        try {
-            Invoke-WebRequest -Uri $Url -OutFile $Destination -ErrorAction Stop
-            return
-        } catch {
-            $status = Get-WebErrorStatusCode $_
-            Remove-Item -LiteralPath $Destination -Force -ErrorAction SilentlyContinue
-            if ($status -eq 404) { throw }
-            if (-not (Test-TransientWebError $_ $status) -or $attempt -ge $Tries) { throw }
-            $delay = 2 * $attempt
-            Write-Host "  transient bootstrap download error (attempt $attempt/$Tries, HTTP $status): $($_.Exception.Message); retrying in ${delay}s"
-            Start-Sleep -Seconds $delay
-        }
-    }
-}
-
 function Read-State {
     if (-not (Test-Path -LiteralPath $StatePath)) {
         throw "State file not found: $StatePath -- run '-Phase stage' first."
@@ -512,13 +431,7 @@ function Test-NastechRuns([string]$Label) {
         Write-Host "  first startup after the update ran (exit $startupExit); the checks below assert the launcher it must have published"
         $nastechExe = Get-SourceNastech $InstallDir
     }
-    $sourceDriverArgs = @(
-        '-B', (Join-Path $AssetsDir 'source_driver.py'),
-        '--root', $InstallDir,
-        '--launcher', $nastechExe,
-        '--desktop', $script:ExpectedDesktop
-    )
-    & $DriverPython @sourceDriverArgs
+    & $DriverPython -B (Join-Path $AssetsDir 'source_driver.py') --root $InstallDir --launcher $nastechExe --desktop $script:ExpectedDesktop
     Assert-True ($LASTEXITCODE -eq 0) "$Label -- read-only install verification (no repair)"
     $prevLazy = $env:NASTECH_DISABLE_LAZY_INSTALLS
     $prevBytecode = $env:PYTHONDONTWRITEBYTECODE
@@ -607,9 +520,6 @@ function Invoke-NastechUpdate {
     # --yes reaches the update subcommand only in later
     # releases; ask the installed binary, never parse its source.
     $nastechExe = Get-SourceNastech $InstallDir
-    # Old installers can leave generated churn (lockfiles, line-ending normalization) in the
-    # disposable checkout; clear it so the update does not autostash and restore a broken tree.
-    Clear-HistoricalInstallerChurn
     $updateArgs = @("update")
     $prevEap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
     $helpText = & $nastechExe update --help 2>&1 | Out-String
@@ -619,18 +529,6 @@ function Invoke-NastechUpdate {
         throw "Installed update --help failed: $helpText"
     }
     if ($helpText -match '--yes') { $updateArgs += "--yes" }
-    # These fixtures publish commits on `main`, not releases. Without an explicit
-    # branch the updater falls back to the configured channel, which is `stable`
-    # for an official source checkout whose release predates --set-channel (the
-    # old legs here). On Windows the update hands the dependency sync to a venv
-    # child that re-runs `nastech update` with these same args; that child then
-    # fails at "Could not resolve the stable source channel: No published stable
-    # release", skips the node/web product rebuild, and leaves ui-tui/dist stale
-    # so the read-only post-update verifier rejects it. Follow the fixture's git
-    # transport explicitly -- the POSIX driver does the same via
-    # build_source_update_command. Probe the installed CLI (old tags vary) and
-    # never weaken the post-update verification to hide a skipped rebuild.
-    if ($helpText -match '(^|\s|\[)--branch([=\s\]]|$)') { $updateArgs += @("--branch", "main") }
     New-Item -ItemType Directory -Path (Join-Path $WorkRoot "logs") -Force | Out-Null
     $log = Join-Path $WorkRoot "logs\update.log"
     $hangLog = Join-Path $WorkRoot "logs\update-hang-processes.txt"
@@ -745,28 +643,18 @@ function Clear-HistoricalInstallerChurn {
     $content = @{}
     (Invoke-Git @("-C", $InstallDir, "-c", "core.quotepath=false", "diff", "--numstat", "--ignore-cr-at-eol")) -split "\r?\n" |
         Where-Object { $_ } | ForEach-Object { $content[($_ -split "`t", 3)[2]] = $true }
-    # Installers before the launcher-layout commit copied the nastech/nastech-acp
-    # launchers into the checkout's bin\, untracked and unignored. That commit
-    # gitignores /bin/ and deliberately keeps the legacy copies (its update-tail
-    # migration only strips their PATH entry), so after the update they are
-    # ignored; only the OLD Desktop's pre-update check sees them. Exclude exactly
-    # those two paths, and only from such an OLD.
-    #
-    # The marker must be a commit in THIS repo's history. Upstream Hermes landed
-    # the change as 679e9cd2943d ("stage hermes launchers in the managed binary
-    # dir, not the git checkout"); this fork's rebrand appended it as the
-    # branded snapshot dbee5b4665ba4 (the commit that first added /bin/ to
-    # .gitignore). Using the Hermes SHA here is a no-such-object on the fork,
-    # which makes --is-ancestor exit 128 -- git could not answer, not "not an
-    # ancestor". Accepting 128 and treating it as "not an ancestor" would excuse
-    # the legacy launcher paths on EVERY leg, including modern installs where
-    # those paths are genuine churn the update must clean. Fail loudly instead.
-    $launcherLayoutCommit = "dbee5b4665ba4012b8bb3c89423327d66e182e0d"
+    # Installers before 679e9cd2943d ("stage nastech launchers in the managed
+    # binary dir, not the git checkout") copied the nastech/nastech-acp
+    # launchers into the checkout's bin\, untracked and unignored. That
+    # commit gitignores /bin/ and deliberately keeps the legacy copies (its
+    # update-tail migration only strips their PATH entry), so after the
+    # update they are ignored; only the OLD Desktop's pre-update check sees
+    # them. Exclude exactly those two paths, and only from such an OLD.
     $prevEap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-    & $script:RealGitExe -C $RepoRoot merge-base --is-ancestor $launcherLayoutCommit (Read-State).old 2>&1 | Out-Null
+    & $script:RealGitExe -C $RepoRoot merge-base --is-ancestor 679e9cd2943dddf59f50486c265a7ab110ad0f19 (Read-State).old 2>&1 | Out-Null
     $ancestorExit = $LASTEXITCODE
     $ErrorActionPreference = $prevEap
-    Assert-True ($ancestorExit -in 0, 1) "git merge-base --is-ancestor answered for the launcher-layout commit ($launcherLayoutCommit; exit $ancestorExit)"
+    Assert-True ($ancestorExit -in 0, 1) "git merge-base --is-ancestor answered for the launcher-layout commit (exit $ancestorExit)"
     $legacyLaunchers = if ($ancestorExit -eq 1) { @("? bin/nastech.exe", "? bin/nastech-acp.exe") } else { @() }
     $locks = @(); $other = @()
     foreach ($line in $lines) {
@@ -1119,18 +1007,7 @@ function Invoke-PhaseInstallGui {
     $setupExe = Join-Path $WorkRoot "Nastech-Setup.exe"
     if (-not (Test-Path -LiteralPath $setupExe)) {
         Write-Host "  downloading $SetupExeUrl"
-        try {
-            Invoke-BootstrapDownload -Url $SetupExeUrl -Destination $setupExe
-        } catch {
-            if ((Get-WebErrorStatusCode $_) -eq 404) {
-                # Persist the skip for later phases and the workflow's step guards;
-                # a plain Write-Host + exit 0 would leave update/verify-stamp running
-                # against an install that never happened.
-                Write-BootstrapSkip "SKIP: published bootstrap installer not available at $SetupExeUrl (HTTP 404); cannot test desktop-installer@latest path in this environment."
-                exit 0
-            }
-            throw
-        }
+        Invoke-WebRequest -Uri $SetupExeUrl -OutFile $setupExe
     }
     Assert-True ((Get-Item $setupExe).Length -gt 1MB) "Nastech-Setup.exe downloaded ($([math]::Round((Get-Item $setupExe).Length / 1MB, 1)) MB)"
 
@@ -1264,17 +1141,6 @@ function Invoke-GuiUpdateDesktopRoute([string]$TargetSha) {
 
     $env:NASTECH_HOME = $NastechHome
 
-    # The desktop route drives the same production updater as the two script
-    # routes, so it must start from the same clean checkout: old installers
-    # leave generated lockfile/CRLF churn in the disposable tree, and the
-    # updater autostashes before pulling. Restoring that stash on top of a
-    # large diff conflicts, the update never completes, and the read-only
-    # post-update verifier rejects the conflicted tree (rc.7 leg
-    # installer-script+desktop -> open-app-update, job 136761049283).
-    # Clear-HistoricalInstallerChurn undoes ONLY installer-generated state
-    # and still fails loudly on any other local change.
-    Clear-HistoricalInstallerChurn
-
     # The update becomes available the way it does for a real user: the
     # remote's main moves forward. (Install ran against main = OLD.)
     Invoke-Git @("-C", $ServeRepo, "update-ref", "refs/heads/main", $TargetSha) | Out-Null
@@ -1368,40 +1234,7 @@ function Invoke-GuiUpdateDesktopRoute([string]$TargetSha) {
         # Marker may briefly outlive the result write; allow it a moment.
         $mDeadline = (Get-Date).AddMinutes(2)
         while ((Get-Date) -lt $mDeadline -and (Test-Path -LiteralPath $markerPath)) { Start-Sleep -Seconds 5 }
-        if (Test-Path -LiteralPath $markerPath) {
-            $lockHeld = Test-NastechCheckoutLockHeld
-            $markerText = ""
-            try { $markerText = [System.IO.File]::ReadAllText($markerPath, [System.Text.Encoding]::UTF8) } catch { $markerText = "<unreadable: $($_.Exception.Message)>" }
-            $handoffLog = Join-Path $NastechHome "logs\desktop-update-handoff.log"
-            $handoffTail = @()
-            if (Test-Path -LiteralPath $handoffLog) {
-                try { $handoffTail = @(Get-Content -LiteralPath $handoffLog -Tail 40) } catch {}
-            }
-            Write-Host "  update marker still present after 2 min grace"
-            Write-Host "  checkout lock held (probe): $lockHeld"
-            Write-Host "  marker content:"
-            ($markerText -split "`r?`n") | ForEach-Object { Write-Host "    marker| $_" }
-            if ($handoffTail.Count -gt 0) {
-                Write-Host "  desktop-update-handoff.log (tail):"
-                $handoffTail | ForEach-Object { Write-Host "    handoff| $_" }
-            }
-
-            # A committed handoff may keep the marker alive while the checkout lock is held by
-            # a surviving owner/delegate. If the update itself is proven complete and the lock
-            # is still held, do not treat this as a cleanup failure.
-            $r6Deadline = (Get-Date).AddMinutes(10)
-            while ((Get-Date) -lt $r6Deadline -and (Test-Path -LiteralPath $markerPath)) {
-                $lockHeld = Test-NastechCheckoutLockHeld
-                if (-not $lockHeld) { break }
-                Start-Sleep -Seconds 10
-            }
-            # A retained marker is never proof of completion: the staged-binary
-            # handoff writes no result JSON, and a failed `nastech update` leaves
-            # HEAD at the target after the git pull while its detached retry still
-            # holds the lock (Canary 45280148605). Completion needs the marker to
-            # be cleared, not just a matching SHA.
-            Assert-True (-not (Test-Path -LiteralPath $markerPath)) "update marker cleaned up"
-        }
+        Assert-True (-not (Test-Path -LiteralPath $markerPath)) "update marker cleaned up"
 
         Assert-True ((Get-InstalledHead) -eq $TargetSha) "checkout landed on target commit"
         Test-NastechRuns "post-update"
@@ -1714,7 +1547,6 @@ function Invoke-PhaseInstall {
     # Dispatch on the install axis. Each arm ends with the same contract:
     # checkout at OLD, nastech runs, and state carries how OLD landed so any
     # update arm can follow any install arm.
-    if (Test-BootstrapSkipped) { return }
     $state = Read-State
     $script:ExpectedDesktop = if ($InstallMethod -eq 'installer-script') { 'absent' } else { 'present' }
     # Isolated install target for every arm; serve.git's file:// origin
@@ -1748,76 +1580,6 @@ function Invoke-PhaseInstall {
     Invoke-UserStateActions
 }
 
-function Get-NastechCheckoutLockPath {
-    $root = $InstallDir
-    if (-not $root) { return $null }
-    $dot = Join-Path $root '.git'
-    $gitDir = $null
-    if ([System.IO.Directory]::Exists($dot)) {
-        $gitDir = $dot
-    } elseif ([System.IO.File]::Exists($dot)) {
-        $first = (([System.IO.File]::ReadAllText($dot)).TrimStart([char]0xFEFF) -split "`n")[0].Trim()
-        if ($first -like 'gitdir:*') {
-            $gitDir = $first.Substring(7).Trim()
-            if (-not [System.IO.Path]::IsPathRooted($gitDir)) { $gitDir = Join-Path $root $gitDir }
-        }
-    }
-    if (-not $gitDir) { return (Join-Path $root '.nastech-update.lock') }
-    $commonFile = Join-Path $gitDir 'commondir'
-    if ([System.IO.File]::Exists($commonFile)) {
-        $common = (([System.IO.File]::ReadAllText($commonFile)).TrimStart([char]0xFEFF) -split "`n")[0].Trim()
-        if ($common) {
-            $gitDir = if ([System.IO.Path]::IsPathRooted($common)) { $common } else { Join-Path $gitDir $common }
-        }
-    }
-    return (Join-Path $gitDir 'nastech-update.lock')
-}
-
-function Test-NastechCheckoutLockHeld {
-    $path = Get-NastechCheckoutLockPath
-    if (-not $path -or -not [System.IO.File]::Exists($path)) { return $false }
-    $fs = $null
-    try {
-        $fs = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite,
-            ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
-    } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
-        return $false
-    } catch {
-        try {
-            $fs = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read,
-                ([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
-        } catch [System.IO.FileNotFoundException], [System.IO.DirectoryNotFoundException] {
-            return $false
-        } catch {
-            return $true
-        }
-    }
-    try {
-        try { $fs.Lock(1048576, 17) } catch { return $true }
-        try { $fs.Unlock(1048576, 17) } catch {}
-        return $false
-    } finally {
-        $fs.Dispose()
-    }
-}
-
-function Wait-UpdateQuiescence([int]$TimeoutSeconds = 600) {
-    $marker = Join-Path $NastechHome ".nastech-update-in-progress"
-    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-    while ((Get-Date) -lt $deadline) {
-        $markerPresent = Test-Path -LiteralPath $marker
-        $lockHeld = Test-NastechCheckoutLockHeld
-        if ((-not $markerPresent) -and (-not $lockHeld)) {
-            return
-        }
-        Start-Sleep -Seconds 10
-    }
-    $lockPath = Get-NastechCheckoutLockPath
-    $markerState = if (Test-Path -LiteralPath $marker) { "present" } else { "absent" }
-    $lockState = if (Test-NastechCheckoutLockHeld) { "held" } else { "free" }
-    throw "E2E ASSERTION FAILED: timed out waiting for prior update activity to clear before $Route (marker=$markerState, checkout-lock=$lockState, path=$lockPath)"
-}
-
 function Invoke-PhaseUpdate {
     $state = Read-State
     $script:ExpectedDesktop = if ($InstallMethod -ne 'installer-script' -or $Route -in @(
@@ -1843,8 +1605,6 @@ function Invoke-PhaseUpdate {
     # ... and the user's own durable state, produced by the install phase
     # through the ordinary CLI.
     Invoke-UserStateSnapshot
-    Write-Step "waiting for prior update or desktop install activity to clear"
-    Wait-UpdateQuiescence 600
     Invoke-Git @("-C", $ServeRepo, "update-ref", "refs/heads/main", $state.current) | Out-Null
     Write-Host "  serve.git main advanced to $($state.current)"
 
@@ -1899,7 +1659,6 @@ function Invoke-PhaseUpdate {
 }
 
 function Invoke-CheckedPhaseUpdate {
-    if (Test-BootstrapSkipped) { return }
     Remove-Item -LiteralPath (Join-Path $WorkRoot "known-failure.json") -Force -ErrorAction SilentlyContinue
     # Only evidence produced by this update attempt can match an exception.
     foreach ($oldLog in @((Join-Path $WorkRoot "logs\update.log"), (Join-Path $NastechHome "logs\desktop.log"))) {
@@ -1932,7 +1691,6 @@ function Invoke-PhaseVerifyStamp {
     # stamp must both tell the truth about the final HEAD. A separate phase —
     # not an install-phase check — because the bootstrap marker can complete
     # on a LATER run than the install itself.
-    if (Test-BootstrapSkipped) { return }
     $state = Read-State
     $head = Get-InstalledHead
     Assert-True ($head -match '^[0-9a-f]{40}$') "installed HEAD readable: '$head'"

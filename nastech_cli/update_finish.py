@@ -81,56 +81,6 @@ def _restore_plan(data):
     return UpdatePlan(**values)
 
 
-def _start_finish_watchdog(seconds: int = 2400):
-    """Fail loudly if the historical finish child hangs; a silent hang blocks the update."""
-    import os
-    import subprocess
-    import sys
-    import threading
-
-    def _fire() -> None:
-        print(f"  ! Update finish exceeded {seconds}s; aborting stuck finish child.", file=sys.stderr, flush=True)
-        os._exit(2)
-
-    timer = threading.Timer(seconds, _fire)
-    timer.daemon = True
-    timer.start()
-    watchdog = None
-    try:
-        watchdog = subprocess.Popen(
-            [sys.executable, "-c",
-             "import os,sys,time,signal\n"
-             "time.sleep(int(sys.argv[2]))\n"
-             "try:\n"
-             " os.kill(int(sys.argv[1]), signal.SIGTERM)\n"
-             "except Exception:\n"
-             " pass\n"
-             "time.sleep(5)\n"
-             "try:\n"
-             " os.kill(int(sys.argv[1]), getattr(signal, 'SIGKILL', signal.SIGTERM))\n"
-             "except Exception:\n"
-             " pass\n",
-             str(os.getpid()), str(seconds)],
-            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-    except Exception:  # health: allow BLE001 -- best-effort watchdog; update must continue
-        watchdog = None
-
-    def cancel() -> None:
-        timer.cancel()
-        if watchdog is not None and watchdog.poll() is None:
-            try:
-                watchdog.kill()
-            except Exception:  # health: allow BLE001,S110 -- best-effort watchdog cleanup
-                pass
-            try:
-                watchdog.wait(timeout=5)
-            except Exception:  # health: allow BLE001,S110 -- best-effort watchdog cleanup
-                pass
-
-    return cancel
-
-
 def main(context: Path, result: Path) -> int:
     request = json.loads(context.read_text(encoding="utf-8-sig"))
     root = Path(request["root"])
@@ -143,7 +93,6 @@ def main(context: Path, result: Path) -> int:
     cli_started = False
     begun = False
     code = 1
-    cancel_watchdog = _start_finish_watchdog()
     try:
         if not restarting:
             update_receipt.begin_update_receipt(previous=request.get("receipt"), correlation_id=request["update_id"])
@@ -197,14 +146,12 @@ def main(context: Path, result: Path) -> int:
                 except OSError as exc:  # stale dependencies still trigger the next launch's sync
                     print(f"  ⚠ Could not record the owed source-update tail: {exc}")
                 owed: list[tuple[str, str]] = []
-                print("-> Update finish: building products", flush=True)
                 try:
                     build_update_products(root, desktop=desktop)
                 except (Exception, SystemExit) as exc:  # health: allow BLE001 -- committed code: owed, not failed
                     reason = str(exc) or type(exc).__name__
                     update_receipt.record_followup("build", reason)
                     owed.append(("build", reason))
-                print("-> Update finish: finalizing update", flush=True)
                 finish_update(
                     root=root, assume_yes=request["assume_yes"], gateway_mode=request["gateway_mode"],
                     pre_update_snapshot_id=request.get("pre_update_snapshot_id"),
@@ -219,7 +166,6 @@ def main(context: Path, result: Path) -> int:
         update_receipt.record_step("historical_completion", False, str(exc))
         print(f"Update completion failed: {exc}", file=sys.stderr, flush=True)
     finally:
-        cancel_watchdog()
         terminal = update_receipt.finalized_receipt(request["update_id"]) or {}
         if code and request.get("gateway_mode"):
             # Even an application import failure must wake the gateway watcher. A run that already

@@ -31,7 +31,9 @@ the machine restores that value on teardown.
 Machines run in parallel. Updates and gateway lifetimes take a job-wide lock
 (``gateway_phase``) so each journey's gateway hand-off is deterministic; installs, turns and
 everything else stay parallel. One install's update sparing another's gateway (#124659) is
-its own journey (test_update_spares_other_installs.py).
+its own journey (test_update_spares_other_installs.py). CI runs each file in its own job
+(windows-install-update-e2e.yml): with every file on one runner, journeys spent most of the
+job waiting for this lock.
 
 The suite mutates HKCU and downloads a toolchain per machine, so it only runs where
 ``NASTECH_E2E_WINDOWS_INSTALL=1`` (the CI job sets it).
@@ -232,29 +234,7 @@ class Machine:
     def stage(self) -> None:
         """serve.git at HEAD (+ NEXT in its object store), the URL redirect, a seeded home."""
         self.root.mkdir(parents=True, exist_ok=True)
-        if self.base_ref:
-            try:
-                self.head = harness_git("-C", str(REPO_ROOT), "rev-parse", f"{self.base_ref}^{{commit}}")
-            except RuntimeError:
-                fetch_errors = []
-                for args in (
-                    ("-C", str(REPO_ROOT), "fetch", "--no-tags", "origin", self.base_ref),
-                    ("-C", str(REPO_ROOT), "fetch", "--no-tags", "--depth=1", "origin", self.base_ref),
-                    ("-C", str(REPO_ROOT), "fetch", "origin", self.base_ref),
-                ):
-                    try:
-                        harness_git(*args)
-                        self.head = harness_git("-C", str(REPO_ROOT), "rev-parse", f"{self.base_ref}^{{commit}}")
-                        break
-                    except RuntimeError as exc:
-                        fetch_errors.append(str(exc))
-                else:
-                    raise RuntimeError(
-                        f"base_ref {self.base_ref} is not available in {REPO_ROOT}; "
-                        f"fetch attempts failed: {' | '.join(fetch_errors[-2:])}"
-                    )
-        else:
-            self.head = harness_git("-C", str(REPO_ROOT), "rev-parse", "HEAD")
+        self.head = harness_git("-C", str(REPO_ROOT), "rev-parse", f"{self.base_ref}^{{commit}}" if self.base_ref else "HEAD")
         harness_git("clone", "--bare", "--quiet", str(REPO_ROOT), str(self.serve))
         harness_git("-C", str(self.serve), "update-ref", "refs/heads/main", self.head)
         harness_git("-C", str(self.serve), "symbolic-ref", "HEAD", "refs/heads/main")
@@ -475,12 +455,8 @@ class Machine:
                     msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
                     break
                 except OSError:
-                    # One update can hold this mutex for up to UPDATE_TIMEOUT (40 min
-                    # on this runner). Wait just longer than that operation; upstream
-                    # uses 1800 s against its 1200 s UPDATE_TIMEOUT. 2700 s is the
-                    # smallest aligned bound for the fork's 2400 s timeout.
-                    if time.monotonic() - waited > 2700:
-                        raise RuntimeError("harness: gateway-phase lock not acquired within 45 min") from None
+                    if time.monotonic() - waited > 1800:
+                        raise RuntimeError("harness: gateway-phase lock not acquired within 30 min") from None
                     time.sleep(0.5)
             self.timings.append(("(waited for gateway phase)", round(time.monotonic() - waited, 1)))
             self._lock_depth = 1

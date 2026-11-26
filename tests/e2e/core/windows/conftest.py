@@ -20,8 +20,3 @@ def _stop_auto_started_gateways():
         with contextlib.suppress(Exception):
             H.nastech(home, "gateway", "stop", timeout=60)
         H.kill_owned(home, since=since)
-        # psutil's kill() is asynchronous on Windows: without draining the ownership scan
-        # here, a just-killed prompt/gateway can still be alive when the next test starts
-        # and auto-starts another one. Poll until the scan is empty (bounded; a process we
-        # cannot reap is reported by the runner's leftover check, not silently inherited).
-        H.owned_survivors(home, since=since, timeout=10)

@@ -120,19 +120,7 @@ def _git_op(proc, ops: tuple[str, ...]) -> tuple[str, int] | None:
 def _git_fetching(proc, machine, target) -> str | None:
     """The update's ``git fetch`` is running: the network half, before anything local moves."""
     seen = _git_op(proc, ("fetch",))
-    if seen:
-        return f"git fetch (pid {seen[1]})"
-    # Fast fetches can be missed by process polling; the transcript line is
-    # written when the update starts the fetch phase.
-    transcript = getattr(proc, "transcript", None)
-    if transcript is not None:
-        try:
-            text = Path(transcript).read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            text = ""
-        if "Fetching updates" in text or "git fetch" in text.lower():
-            return "git fetch (seen in transcript)"
-    return None
+    return f"git fetch (pid {seen[1]})" if seen else None
 
 
 # -- mid_git: the local write, held by git's own filter hook --------------------------------
@@ -696,11 +684,7 @@ def _restore_after(machine, cell: str, result) -> None:
 
 
 def _run_cells(machine, j: Journey, cells) -> None:
-    """Run ``cells`` (name, fn) in order on one machine, restoring it after a cell that broke it.
-
-    Writes the cells-ran manifest after each cell so evidence survives a file
-    timeout/SIGKILL; the runner's per-file cap remains the only wall-clock bound.
-    """
+    """Run ``cells`` (name, fn) in order on one machine, restoring it after a cell that broke it."""
     previous = None
     for name, run in cells:
         def cell(run=run, previous=previous):
@@ -708,7 +692,6 @@ def _run_cells(machine, j: Journey, cells) -> None:
                 _restore_after(machine, previous, j.results[previous])
             return run()
         j.step(name, cell)
-        _record_cells_ran(j)
         previous = name
 
 

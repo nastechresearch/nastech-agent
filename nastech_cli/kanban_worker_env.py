@@ -34,11 +34,12 @@ _HOST_NAMES = frozenset({
     "USERNAME", "HOMEDRIVE", "HOMEPATH", "COMPUTERNAME", "PROCESSOR_ARCHITEW6432",
     # Nastech' own location, install and host policy, read before any profile config loads: the
     # host-wide gateway lock directory (else a cold-started gateway takes a different "host" lock),
-    # the no-install policy, and the shared board root and its lock's busy timeout.
+    # the no-install policy, the state folder a launcher named, and the shared board root and its
+    # lock's busy timeout.
     "NASTECH_HOME", "NASTECH_REAL_HOME", "NASTECH_SCRATCH_DIR", "NASTECH_RUNTIME_DIR", "NASTECH_INSTALL_ROOT",
     "NASTECH_PYTHON_SRC_ROOT", "NASTECH_DATA_DIR_SUFFIX", "NASTECH_HOME_MODE", "NASTECH_MANAGED",
     "NASTECH_CONTAINER", "NASTECH_SKIP_CHMOD", "NASTECH_GATEWAY_LOCK_DIR", "NASTECH_DISABLE_LAZY_INSTALLS",
-    "NASTECH_KANBAN_HOME", "NASTECH_KANBAN_BUSY_TIMEOUT_MS",
+    "NASTECH_INSTALL_STATE_DIR", "NASTECH_KANBAN_HOME", "NASTECH_KANBAN_BUSY_TIMEOUT_MS",
     # The administrator-managed scope directory (an IT bootstrap override, never in any profile's
     # ``.env``): without it a cold-started gateway loses the managed overlay stored elsewhere.
     "NASTECH_MANAGED_DIR",

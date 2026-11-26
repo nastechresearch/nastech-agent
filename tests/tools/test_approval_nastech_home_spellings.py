@@ -97,3 +97,134 @@ class TestUnrelatedPathsStaySafe:
         monkeypatch.setenv("NASTECH_HOME", "/home/tester/nastech-data")
         assert _is_dangerous("sed -i s/a/b/ ~/nastech-data-old/config.yaml") is False
         assert _is_dangerous("sed -i s/a/b/ $HOME/nastech-data-old/config.yaml") is False
+
+
+class TestShellEscapedSpaceInWindowsHome:
+    r"""Git Bash writes an unquoted path with a space as ``John\ Smith``. The fold has to see through
+    the backslash, or a profile whose name contains a space loses the gate on its config.yaml."""
+
+    def test_the_escaped_profile_space_still_gates_a_config_edit(self, monkeypatch):
+        profile = r"C:\Users\John Smith"
+        monkeypatch.setenv("HOME", profile)
+        monkeypatch.setenv("USERPROFILE", profile)
+        monkeypatch.setenv("LOCALAPPDATA", profile + r"\AppData\Local")
+        monkeypatch.setenv("NASTECH_HOME", profile + r"\AppData\Local\nastech")
+        assert _is_dangerous(r"sed -i s/a/b/ /c/Users/John\ Smith/AppData/Local/nastech/config.yaml") is True
+        assert _is_dangerous(r"sed -i s/a/b/ /c/Users/John\ Smith/AppData/Local/nastech2/config.yaml") is False
+
+
+class TestEscapedSpaceFailsClosed:
+    r"""An unquoted ``\ `` is the same character as a space, so a path spelled through it is the home.
+    Whether a given ``\ `` is unquoted takes a full shell parse: a quote in a comment, a heredoc body
+    or a backtick flips every lexical quote model for the rest of the command. The fold therefore
+    reads every ``\ `` inside a home spelling as a space; a quoted one costs a prompt, a misread one
+    would lose the gate on the approval policy file."""
+
+    @pytest.fixture
+    def spaced_nastech_home(self, monkeypatch):
+        monkeypatch.setenv("HOME", "/home/tester")
+        monkeypatch.setenv("NASTECH_HOME", "/home/tester/nastech data")
+
+    @pytest.fixture
+    def spaced_user_home(self, monkeypatch):
+        monkeypatch.setenv("HOME", "/home/John Smith")
+        monkeypatch.setenv("NASTECH_HOME", "/home/John Smith/nastech")
+
+    def test_the_escaped_home_itself_is_still_gated(self, spaced_nastech_home):
+        assert _is_dangerous(r"mv /home/tester/nastech\ data /home/tester/backup") is True
+        assert _is_dangerous(r"sed -i s/a/b/ /home/tester/nastech\ data/config.yaml") is True
+
+    def test_an_escaped_space_after_the_home_continues_the_name(self, spaced_nastech_home):
+        # `nastech\ data\ backup` is one directory, a sibling of the home, not the home plus a word.
+        # Quoted, the backslash is literal and the name is no closer to the home: no quote state matters.
+        assert _is_dangerous(r"mv /home/tester/nastech\ data\ backup /home/tester/backup") is False
+        assert _is_dangerous(r"mv '/home/tester/nastech\ data\ backup' /home/tester/backup") is False
+
+    def test_an_escaped_space_after_a_spaceless_home_continues_the_name(self, monkeypatch):
+        monkeypatch.setenv("HOME", "/home/tester")
+        monkeypatch.setenv("NASTECH_HOME", "/home/tester/nastech")
+        assert _is_dangerous(r"mv /home/tester/nastech\ backup /home/tester/backup") is False
+
+    def test_an_escaped_backslash_before_a_space_ends_the_word(self, monkeypatch):
+        # `\\\\` is one literal backslash, so the space after it splits words: a match ending on that
+        # backslash is not followed by an escaped space and still folds, as on main.
+        monkeypatch.setenv("HOME", "/home/tester")
+        monkeypatch.setenv("NASTECH_HOME", "/home/tester/.nastech")
+        assert _is_dangerous("sed -i s/a/b/ /home/tester/.nastech/config.yaml\\\\ x") is True
+
+    def test_an_escaped_space_in_a_child_name_folds_the_home(self, monkeypatch):
+        # `My\ Documents` and `nastech\ data-backup` are children of the user home: it still folds,
+        # so an rm there is an ordinary home-relative delete, as on main, not a "delete in root path".
+        monkeypatch.setenv("HOME", "/home/tester")
+        for nastech_home in ("/home/tester/.nastech", "/home/tester/nastech data"):
+            monkeypatch.setenv("NASTECH_HOME", nastech_home)
+            assert _is_dangerous(r"rm /home/tester/My\ Documents/a.txt") is False
+            assert _is_dangerous(r"rm -f /home/tester/old\ notes.txt") is False
+            assert _is_dangerous(r"rm /home/tester/nastech\ data-backup/state.db") is False
+
+    @pytest.mark.parametrize("suffix", [
+        r"${u:+\ }", r"${u#\ }", r"${u%%\ }", r"${u/x/\ }",
+        r"{,\ }", r"{\ ,}", r"{,}{,\ }", r"{,.x\ y}", r"{,/x\ }",
+    ])
+    @pytest.mark.parametrize("home, nastech_home, user_home", [
+        ("/home/John Smith", "/home/John Smith/nastech", r"/home/John\ Smith"),
+        ("/home/tester", "/home/tester/nastech data", "/home/tester"),
+    ])
+    @pytest.mark.parametrize("template", [
+        "sed -i s/a/b/ {nastech}/config.yaml{suffix}",
+        'sed -i s/a/b/ "{nastech}/config.yaml{suffix}"',
+        "cat /tmp/evil | tee {nastech}/config.yaml{suffix}",
+        "cat k | tee -a {home}/.ssh/authorized_keys{suffix}",
+        "cat k >> {home}/.ssh/authorized_keys{suffix}",
+        "echo x >> {home}/.bashrc{suffix}",
+    ])
+    def test_an_expansion_after_the_path_does_not_hide_it(
+            self, monkeypatch, suffix, home, nastech_home, user_home, template):
+        # An unquoted expansion can still name the original file. Bash leaves braces literal
+        # inside double quotes; those rows check that the detector errs on the side of prompting.
+        monkeypatch.setenv("HOME", home)
+        monkeypatch.setenv("NASTECH_HOME", nastech_home)
+        nastech = user_home + nastech_home[len(home):].replace(" ", "\\ ")
+        assert _is_dangerous(template.format(nastech=nastech, home=user_home, suffix=suffix)) is True
+
+    def test_an_unquoted_escaped_space_folds(self, spaced_user_home):
+        assert _is_dangerous(r"sed -i s/a/b/ /home/John\ Smith/nastech/config.yaml") is True
+        assert _is_dangerous(r"sed -i s/a/b/ /home/John\ Smith/nastech2/config.yaml") is False
+
+    @pytest.mark.parametrize("prefix", [
+        "echo hi # don't\n",
+        "# it's\n",
+        "cat <<EOF >/dev/null\nit's\nEOF\n",
+        "cat <<-EOF >/dev/null\n\tit's\n\tEOF\n",
+        ': <<EOF\n"\nEOF\n',
+        "echo `echo '`; ",
+        'echo `echo "`; ',
+        "echo ${x#'}; ",
+        "echo {a,'}; ",
+    ])
+    @pytest.mark.parametrize("home, nastech_home, path", [
+        ("/home/John Smith", "/home/John Smith/nastech", r"/home/John\ Smith/nastech/config.yaml"),
+        ("/home/tester", "/home/tester/nastech data", r"/home/tester/nastech\ data/config.yaml"),
+    ])
+    def test_a_stray_quote_earlier_does_not_hide_an_unquoted_escape(
+            self, monkeypatch, prefix, home, nastech_home, path):
+        # Earlier quote-like text must not prevent the detector from folding the later path,
+        # even when the prefix itself would not parse in Bash.
+        monkeypatch.setenv("HOME", home)
+        monkeypatch.setenv("NASTECH_HOME", nastech_home)
+        assert _is_dangerous(prefix + "sed -i s/a/b/ " + path) is True
+
+    @pytest.mark.parametrize("command", [
+        r"sed -i s/a/b/ '/home/John\ Smith/nastech/config.yaml'",
+        r'sed -i s/a/b/ "/home/John\ Smith/nastech/config.yaml"',
+        r'bash -c "sed -i s/a/b/ /home/John\ Smith/nastech/config.yaml"',
+        r'echo "$(sed -i s/a/b/ /home/John\ Smith/nastech/config.yaml)"',
+    ])
+    def test_an_escape_in_any_quote_context_gates(self, spaced_user_home, command):
+        assert _is_dangerous(command) is True
+
+    def test_deeply_nested_substitutions_fold_without_recursing(self, spaced_user_home):
+        path = r"/home/John\ Smith/nastech/config.yaml"
+        # Every level is a double-quoted `"$(`, a fresh quote context the shell reads the escape in.
+        command = "echo " + '"$(' * 3000 + "sed -i s/a/b/ " + path + ')"' * 3000
+        assert "~/.nastech/config.yaml" in approval_home_fold._rewrite_resolved_nastech_home(command)

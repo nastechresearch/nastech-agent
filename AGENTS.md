@@ -48,12 +48,12 @@ change-detector tests; plugins that touch core files; third-party products in th
 standalone plugin repo).
 
 **Before you call it a bug,** verify the claim AND the intent (`git log -p -S "<symbol>"`): the
-isolation is often the design, an absence can be load-bearing,
+isolation is often the design (profiles are islands on purpose), an absence can be load-bearing,
 and a fix that cannot point to the line where the bug manifests has an unverified premise.
 
 **Security:** `SECURITY.md` is the scope authority. A §3.1 finding goes private (GitHub Security
-Advisories), never into a public issue, PR, commit or comment; §3.2 hardening is ordinary public
-work. Name the §2 boundary crossed, with a repro on `main`.
+Advisories or a GitHub Security Advisory), never into a public issue, PR, commit or comment; §3.2
+hardening is ordinary public work. Name the §2 boundary crossed, with a repro on `main`.
 
 **Footprint ladder** (take the highest rung that solves it): extend existing code → CLI command +
 skill → service-gated tool (`check_fn` answers reachability/opt-in, never per-session surface) →
@@ -62,8 +62,8 @@ otherwise).
 
 ## Development Environment
 
-`source ./activate` provisions and activates the PM environment; pick an isolated
-`NASTECH_HOME`/`NASTECH_RUNTIME_DIR` (`website/docs/reference/package-management.md#developer-workflow`). Tests need the separate test
+`source ./activate` (`activate.fish`, `activate.ps1`) provisions and activates the PM environment; pick an isolated `NASTECH_HOME`/`NASTECH_RUNTIME_DIR` first
+(`website/docs/reference/package-management.md#developer-workflow`). Tests need the separate test
 environment in `CONTRIBUTING.md`. **`python scripts/check`** (`just check`) runs every blocking
 lint check CI runs, with CI's pinned tools; `--install-hook pre-push` runs it on every push (re-run
 after pulling to refresh the hook). `just` lists every developer command (lefthook calls the same
@@ -96,8 +96,9 @@ all profile-aware via `get_nastech_home()`.
 A topic that outgrows its file becomes a folder: `<stem>/__init__.py` is the **facade** (its
 docstring names each module's job, `__all__` is the surface, PEP 562 `__getattr__` only for a
 measured startup cost or import hazard it names; no behaviour; `tools/connectors/` is the model),
-`<stem>/<topic>.py` holds the code. Flat `<stem>_<topic>.py` siblings stay until touched; add none
-unless an area AGENTS.md still prescribes one. A family folder keeps its ABC/Protocol, one module
+`<stem>/<topic>.py` holds the code. Flat `<stem>_<topic>.py` siblings (`gateway/run.py`,
+`tools/mcp_tool.py`) stay until touched; add none unless an area AGENTS.md still prescribes one
+(`tui_gateway` RPC methods, `tools/` backends). A family folder keeps its ABC/Protocol, one module
 per variant and a name → variant table (`tools/environments/`, its table still in
 `terminal_tool_backends.py`). Tool folders register from `tool.py`; tests mirror folders.
 
@@ -142,7 +143,7 @@ per variant and a name → variant table (`tools/environments/`, its table still
 - **A new config key or slash command ships with its docs** (`tests/ci/test_docs_drift.py`).
 - **Commits and PRs:** rebase onto `main` before merging (a squash from a stale branch silently
   reverts newer fixes); 1–2 invariant tests per fix, proven red on the base.
-- **Tests:** `scripts/run_tests.sh`, never bare `pytest`; behaviour contracts, never
+- **Tests:** always `scripts/run_tests.sh`, never bare `pytest`; behaviour contracts, never
   change-detectors or source-reading tests; host-specific behaviour is tested on that host with
   `@pytest.mark.platforms(...)`, never by faking `sys.platform`; tests never write to `~/.nastech/`.
 
@@ -169,8 +170,3 @@ per variant and a name → variant table (`tools/environments/`, its table still
 | `providers/` | `providers/README.md` | `ProviderProfile` registry and ABC |
 
 PR workflow: `CONTRIBUTING.md` (maintainers: the `nastech-agent-dev` skill, not shipped here).
-
-## Release Gate Knowledge
-
-Before rc/gate/release work, load `100ways` + `100wayskills`, then read
-`docs/agent-knowledge/README.md` and its linked files. Review-first: no auto merge/tag/release.

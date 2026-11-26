@@ -11,7 +11,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import Any, Callable
 
-from nastech_constants import get_nastech_home
+from nastech_constants import get_nastech_home, mkdir_under_nastech_home
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +28,7 @@ class DiscordRecoveryStore:
         self._nastech_home = Path(nastech_home or get_nastech_home())
 
     def path(self) -> Path:
-        directory = self._nastech_home / "gateway"
-        directory.mkdir(parents=True, exist_ok=True)
-        return directory / _DB_FILENAME
+        return mkdir_under_nastech_home(self._nastech_home / "gateway") / _DB_FILENAME
 
     def call(self, fn: Callable[[sqlite3.Connection], Any], default: Any = None) -> Any:
         try:

@@ -601,15 +601,18 @@ def publish_release(policy: str, env: dict, root: Path) -> dict:
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("role", choices=("stable", "canary"), help="Protected release policy, not a channel name")
+    parser.add_argument("role", choices=("canary",),
+                        help="Protected release policy, not a channel name. Stable publication runs only "
+                             "through the Stable Release Publication workflow, which holds the "
+                             "stable-release lock and checks the final release receipt")
 
     parser.add_argument("--root", type=Path)
     args = parser.parse_args(argv)
     if args.root:
-        result = publish_release(args.role + "-release", dict(os.environ), args.root)
+        result = publish_release("canary-release", dict(os.environ), args.root)
     else:
         with tempfile.TemporaryDirectory() as directory:
-            result = publish_release(args.role + "-release", dict(os.environ), Path(directory))
+            result = publish_release("canary-release", dict(os.environ), Path(directory))
     print(json.dumps(result, sort_keys=True))
 
 

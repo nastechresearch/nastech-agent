@@ -264,9 +264,7 @@ orphan({{"default": {dead}, "ghost": {dead}}}, services=["{_MISSING_SERVICE}"],
        service_profiles={{"{_MISSING_SERVICE}": "svc"}})
 """)
     out["ready_launch"] = _launch(machine, "readiness")
-    # The gateway may be slow to report running on a loaded 4-core runner
-    # while the service/profile probe retries; give it room to come back.
-    out["ready_running"] = _running(machine, dead, 300)
+    out["ready_running"] = _running(machine, dead, 150)
     out["ready_owed"] = _owed(machine)
     _clear(machine)
 

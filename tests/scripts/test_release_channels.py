@@ -28,6 +28,9 @@ SIGNED = frozenset(lane_set.NAMES)
 # A claim that built and smoked every desktop package (see test_stable_release.py).
 SIGNED = frozenset(lane_set.NAMES)
 
+# A claim that built and smoked every desktop package (see test_stable_release.py).
+SIGNED = frozenset(lane_set.NAMES)
+
 
 @contextmanager
 def object_server():

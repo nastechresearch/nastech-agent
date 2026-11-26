@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 import json
-import os
 from pathlib import Path
 import subprocess
 import sys
@@ -17,62 +16,24 @@ from pm.runtime import is_runtime, runtime_command, runtime_environment
 from pm.worker_operations import OPERATIONS
 
 
-def _write_json_line(fd: int, message: dict) -> None:
-    import errno as _errno
-    import time
-
-    if sys.platform == "win32":
-        try:
-            import msvcrt
-
-            msvcrt.setmode(fd, os.O_BINARY)
-        except OSError:  # health: allow S110 -- best-effort binary fd mode; write path reports real errors
-            pass
-    payload = (json.dumps(message) + "\n").encode("utf-8")
-    view = memoryview(payload)
-    retries = 0
-    while view:
-        try:
-            written = os.write(fd, view[:4096])
-        except BlockingIOError:
-            import select
-
-            try:
-                select.select([], [fd], [], 0.05)
-            except (OSError, ValueError):
-                time.sleep(0.05)
-            continue
-        except OSError as exc:
-            if exc.errno in {_errno.EINVAL, getattr(_errno, "EWOULDBLOCK", None), getattr(_errno, "EAGAIN", None)} and retries < 20:
-                retries += 1
-                time.sleep(0.05)
-                continue
-            raise RuntimeError(f"PM client wire write failed: {exc}") from exc
-        if not written:
-            if retries < 20:
-                retries += 1
-                time.sleep(0.05)
-                continue
-            raise RuntimeError("PM client wire write returned 0 bytes")
-        retries = 0
-        view = view[written:]
-
-
 def _missing_or_refuse(name):
     from pm.install import _refuse_lazy, current_target, is_installed, lazy_installs_allowed
     from pm.registry import get_package, walk
 
     missing = [package.name for package in walk([name]) if not is_installed(package.name)]
-    target = current_target() if missing else None
+    if not missing:
+        return missing
+    target = current_target()
     for gap in missing:
         # A registry gap (git on POSIX: "uses system git by choice") is static: no worker can
         # install it, so answer with the worker's own refusal here. Asking one anyway cost a PM
         # worker round trip (about a second) on every ``selected_git_env()``, which each
         # checkpoint git child calls, so one gateway /rollback or /diff paid it several times.
-        reason = get_package(gap).missing_reason(target)
+        package = get_package(gap)
+        reason = package.missing_reason(target) or package.native_abi_reason(target)
         if reason is not None:
             raise InstallError(gap, f"unavailable on {target}: {reason}", "none")
-    if missing and not lazy_installs_allowed():
+    if not lazy_installs_allowed():
         raise _refuse_lazy(name, ", ".join(missing))
     return missing
 
@@ -171,9 +132,9 @@ def _request(operation, arguments, *, callbacks=None, pause_event=None, project_
 
         def send(data):
             with write_lock:
-                _write_json_line(writer.fileno(), {"id": request_id,
-                                                   "cancel": pause_event is not None and pause_event.is_set(),
-                                                   **data})
+                cancelled = pause_event is not None and pause_event.is_set()
+                writer.write(json.dumps({"id": request_id, "cancel": cancelled, **data}) + "\n")
+                writer.flush()
 
         def watch_pause():
             assert pause_event is not None
@@ -212,19 +173,8 @@ def _request(operation, arguments, *, callbacks=None, pause_event=None, project_
             if monitor is not None:
                 monitor.join()
             writer.close()
-            try:
-                code = process.wait(timeout=30)
-            except subprocess.TimeoutExpired:
-                # Result already received; a slow worker teardown must not fail the operation.
-                process.terminate()
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait(timeout=5)
-            else:
-                if code:
-                    raise InstallError("pm", "worker exited unsuccessfully")
+            if process.wait(timeout=5):
+                raise InstallError("pm", "worker exited unsuccessfully")
             receipt.accept_worker_receipt(response.get("receipt"), update_id)
             if callback_error is not None:
                 raise callback_error
@@ -237,14 +187,7 @@ def _request(operation, arguments, *, callbacks=None, pause_event=None, project_
                 monitor.join()
             if process.poll() is None:
                 process.terminate()
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    try:
-                        process.wait(timeout=5)
-                    except subprocess.TimeoutExpired:
-                        pass
+                process.wait(timeout=5)
 
 
 def ensure(name, *, base_env=None, explicit=False, verify=True, progress=None, pause_event=None,
@@ -277,8 +220,9 @@ def ensure(name, *, base_env=None, explicit=False, verify=True, progress=None, p
 def sync_venv(extras=None, *, explicit=False, plugins: PluginInput | None = None, repair=False,
               project_root: Path | None = None, evict_incompatible_plugins: bool = False,
               automatic: list[str] | None = None, carried: list[str] | None = None) -> None:
-    from pm.environments import running_from_selected_environment
+    from pm.environments import refuse_dependency_change, running_from_selected_environment
 
+    refuse_dependency_change()
     if extras and not explicit and not repair and not running_from_selected_environment(
             paths.repo_root() if project_root is None else Path(project_root)):
         # A lazy extra may only extend the environment this process runs from. From any other

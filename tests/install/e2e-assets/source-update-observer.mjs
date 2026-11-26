@@ -20,10 +20,7 @@ export function observeSourceUpdate({ home, resultPath, expectSha }) {
       .map(name => join(directory, name)) : []),
   ]
   const before = new Map(files().map(file => [file, readIfPresent(file)]))
-  let sawInProgress = existsSync(join(home, '.nastech-update-in-progress'))
   return head => {
-    const inProgress = existsSync(join(home, '.nastech-update-in-progress'))
-    if (inProgress) sawInProgress = true
     let complete = false
     for (const file of files()) {
       const text = readIfPresent(file)
@@ -40,13 +37,7 @@ export function observeSourceUpdate({ home, resultPath, expectSha }) {
         if (!expectSha || data.post_update?.sha === expectSha) complete = true
       }
     }
-    const headMatches = !expectSha || head === expectSha
-    if (complete && headMatches && !inProgress) return true
-    // Fallback: some update paths can complete and clear the in-progress marker
-    // without a receipt file the observer can see (best-effort receipt write).
-    // Only accept this after we have observed the in-progress marker, so a
-    // pre-existing checkout at target SHA is not mistaken for completion.
-    if (!complete && sawInProgress && !inProgress && headMatches) return true
-    return false
+    return complete && (!expectSha || head === expectSha)
+      && !existsSync(join(home, '.nastech-update-in-progress'))
   }
 }

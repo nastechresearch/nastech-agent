@@ -396,17 +396,12 @@ env_verifier_view
 # spawned can still hold the shared checkout lock) by the CLI/desktop activity
 # above. The product refuses a second updater/build while that lock is held, so
 # wait for quiescence before touching the served ref or launching an update
-# method. Mirrors tests/install/macos-desktop-e2e.sh, which the rc.4/rc.6 gate
-# hardening already gave this guard; the script-install harness was missed and
-# is the source of the rc.7 macOS lock-contention flakes. Probing the checkout
-# lock also covers a held DesktopBuildLock: its holder takes the checkout lock
-# first and keeps it for the whole build.
+# method.
 checkout_lock_held() {
   local lock="$1"
   [ -e "$lock" ] || return 1
   python3 - "$lock" <<'PY'
 import fcntl
-import os
 import sys
 
 path = sys.argv[1]
@@ -414,20 +409,16 @@ try:
     with open(path, "r+b") as fh:
         try:
             fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise SystemExit(0)
-        except OSError:
+        except (BlockingIOError, OSError):
             raise SystemExit(0)
         try:
             fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
         except OSError:
             pass
     raise SystemExit(1)
-except FileNotFoundError:
+except (FileNotFoundError,):
     raise SystemExit(1)
-except PermissionError:
-    raise SystemExit(0)
-except OSError:
+except (PermissionError, OSError):
     raise SystemExit(0)
 PY
 }
@@ -441,9 +432,6 @@ wait_for_update_quiescence() {
     if [ -d "$INSTALL_DIR/.git" ] || [ -f "$INSTALL_DIR/.git" ]; then
       gitdir="$(git -C "$INSTALL_DIR" rev-parse --git-common-dir 2>/dev/null || true)"
       if [ -n "$gitdir" ]; then
-        # --git-common-dir is relative to the -C directory (normally ".git").
-        # Anchor it to the installed checkout exactly as
-        # update_lock.checkout_lock_path does, or a held real lock looks free.
         case "$gitdir" in /*) ;; *) gitdir="$INSTALL_DIR/$gitdir" ;; esac
         lock="$gitdir/nastech-update.lock"
       fi

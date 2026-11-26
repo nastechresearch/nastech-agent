@@ -14,14 +14,10 @@ from dataclasses import dataclass
 import pytest
 
 from tests.e2e.core._pending_fixes import known_gate
-from tests.e2e.core.providers._anthropic_helpers import become_subreaper
 from tests.e2e.core.providers._oauth_helpers import kill_tagged, make_home, run_nastech
 from tests.fakes.providers.oauth_token_server import OAuthTokenServer, unsigned_jwt
 
-pytestmark = [
-    pytest.mark.skipif(not sys.platform.startswith("linux"), reason="tagged-tree cleanup uses /proc"),
-    pytest.mark.live_system_guard_bypass,
-]
+pytestmark = pytest.mark.skipif(not sys.platform.startswith("linux"), reason="tagged-tree cleanup uses /proc")
 
 PENDING, SLOW_DOWN, APPROVE = "authorization_pending", "slow_down", "approve"
 # Scheduler/request latency only ever makes a gap LONGER; this absorbs clock granularity.
@@ -74,10 +70,6 @@ def expected_min_gaps(case: Case) -> list[float]:
 
 @pytest.mark.parametrize("name", list(CASES))
 def test_device_code_login_poll_cadence(name: str, tmp_path) -> None:
-    # The daemon spawned by `auth add` detaches and reparents to init; as a
-    # subreaper this test keeps it in-tree so kill_tagged's cleanup passes the
-    # live-system guard (same pattern as start_anthropic_rig).
-    become_subreaper()
     case = CASES[name]
     fh = make_home(tmp_path)
     srv = OAuthTokenServer(access_token_factory=lambda n: unsigned_jwt(

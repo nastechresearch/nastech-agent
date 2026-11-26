@@ -28,6 +28,10 @@ class TestHolderSubcommand:
             # unhinted) subcommand candidates — pin that shape honestly
             (r"python -m nastech_cli.main -c mysession serve", "serve"),
             (r"C:\bin\nastech.exe dashboard", "dashboard"),
+            # `dashboard password` sets the sign-in and exits: not a dashboard server
+            (r"python.exe -m nastech_cli.main dashboard password --password-stdin", "dashboard-password"),
+            (r"C:\bin\nastech.exe -p work dashboard password", "dashboard-password"),
+            (r"C:\bin\nastech.exe dashboard --host password", "dashboard"),
             (r"/usr/local/bin/nastech serve", "serve"),
             # no nastech entry at all
             (r"python -c import time; time.sleep(3)", None),

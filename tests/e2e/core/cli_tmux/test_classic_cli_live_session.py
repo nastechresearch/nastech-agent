@@ -187,7 +187,7 @@ def test_classic_cli_live_session_runs_every_turn_in_the_gateway(tmp_path: Path)
         (ch.work / "notes.txt").write_text("fixture line one\nfixture line two\n", encoding="utf-8")
         (ch.work / "other.md").write_text("# other fixture\n", encoding="utf-8")
         try:
-            s.step("startup", pane.launch, ["\U00013103 fake-model"], timeout=120, quiet=3.0)
+            s.step("startup", pane.launch, ["\u2624 fake-model"], timeout=120, quiet=3.0)
             s.step("markdown", lambda: pane.submit("LIVE01 show markdown"), ["LIVE01 end."])
             s.step("approval_modal", lambda: pane.submit("LIVE02 run a command"), ["Dangerous Command"], quiet=1.5)
             s.step("approve_once", lambda: pane.keys("Enter"), ["LIVE02 done"])

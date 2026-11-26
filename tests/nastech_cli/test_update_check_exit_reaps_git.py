@@ -34,7 +34,6 @@ SHA = "a" * 40
 
 _CHILD = textwrap.dedent('''
     import sys, threading
-    import nastech_cli.process_identity as process_identity
     from nastech_cli import source_releases
 
     fake_git, cwd, marker = sys.argv[1:4]
@@ -45,26 +44,20 @@ _CHILD = textwrap.dedent('''
     }
     source_releases._json = answers.__getitem__  # GitHub's answers; only git is left to wait on
 
-    registered = threading.Event()
-    real_own = process_identity.own_process_groups
-
-    def own_process_groups(pgids):
-        real_own(pgids)
-        registered.set()
-
-    process_identity.own_process_groups = own_process_groups
-
     threading.Thread(target=source_releases.resolve_source_release, daemon=True,
                      args=("stable", [fake_git], cwd), kwargs={"repository": "o/r", "pointer": False}).start()
-    # Exit as /exit does, once the lookup's git and its helper are both running and their process
-    # group is owned by the supervisor: the marker proves the processes exist, registration proves
-    # the owner-death guarantee is actually armed (spawn and registration are not atomic).
-    import pathlib, time
-    deadline = time.monotonic() + 30
-    while time.monotonic() < deadline:
-        if len(pathlib.Path(marker).read_text().split()) >= 2 and registered.is_set():
-            break
-        time.sleep(0.05)
+    # Exit as /exit does, once the lookup's git and its helper are both running and the lookup is
+    # waiting on them (its group handed to the owner-death supervisor): the marker lands from the
+    # fake git before the spawning thread registers, so exiting on the marker alone races that.
+    import pathlib
+    from nastech_cli import process_identity
+    from tests.waiting import wait_until
+    pids = wait_until(lambda: (lambda p: len(p) >= 2 and p)(pathlib.Path(marker).read_text().split()),
+                      timeout=30, what="the fake git and its helper to start")
+    wait_until(lambda: int(pids[0]) in process_identity._supervised_pgids, timeout=30,
+               what="the lookup's git group to be handed to the owner-death supervisor")
+    with process_identity._supervisor_lock:  # the register line is written under this lock
+        pass
 ''').replace("@SHA@", SHA)
 
 

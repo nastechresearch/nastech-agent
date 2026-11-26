@@ -100,11 +100,15 @@ That logs you in, sets Nastech as your provider, and turns on the Tool Gateway i
 :::info Setup modes
 Coming from OpenClaw, Claude Code, Codex CLI or Cursor? When a fresh `nastech setup` finds one of them on your computer it first offers to import your setup (it installs the `agent-importers` plugin for that; see [Import from Other Agents](../user-guide/import-from-other-agents.md)).
 
-On a fresh install, `nastech setup` offers three modes:
+On a fresh install, `nastech setup` asks one question, **How do you want to power Nastech?**, then gives everything else its recommended default and prints where to go next:
 
-- **Quick Setup (Nastech Portal)** — OAuth login, no API keys to manage; sets up a model plus the Tool Gateway tools, billed to your [Nastech Portal subscription](../integrations/nastech-portal.md). The recommended fast path.
-- **Full Setup** — walk through every provider, tool, and option yourself (bring your own keys).
-- **Blank Slate** — everything starts **off** except the bare minimum needed to run an agent: **provider & model, the File Operations toolset, and the Terminal toolset**. No web, browser, code execution, vision, memory, delegation, cron, skills, plugins, or MCP servers — and compression, checkpoints, smart routing, and memory capture are all disabled. After the minimal baseline is applied, you choose one of two paths: **start with everything disabled** (finish now with the minimal agent), or **walk through all configurations** (opt in to tools, skills, plugins, MCP, and messaging). Pick this when you want a minimal, fully-controlled agent and intend to enable only exactly what you need.
+- **Free, start now**: no account and no API key. Runs on the free `nastech/welcome` model, once per OS user, when you answer setup yourself in a terminal (never in a container, CI or a scripted run). Shown only when it is available.
+- **Sign in to Nastech Portal**: OAuth login, 300+ models plus the [Tool Gateway](../user-guide/features/tool-gateway.md) tools, billed to your [Nastech Portal subscription](../integrations/nastech-portal.md).
+- **Use my own API key or a subscription**: the `nastech model` picker, including ChatGPT/Codex and OpenCode Go subscription logins, Claude, OpenRouter, local models and every other provider.
+- **Full Setup**: walk through every provider, tool, and option yourself.
+- **Blank Slate**: everything starts **off** except the bare minimum needed to run an agent: **provider & model, the File Operations toolset, and the Terminal toolset**. No web, browser, code execution, vision, memory, delegation, cron, skills, plugins, or MCP servers — and compression, checkpoints, smart routing, and memory capture are all disabled. After the minimal baseline is applied, you choose one of two paths: **start with everything disabled** (finish now with the minimal agent), or **walk through all configurations** (opt in to tools, skills, plugins, MCP, and messaging). Pick this when you want a minimal, fully-controlled agent and intend to enable only exactly what you need.
+
+After an agent import that brought a working model, the first choice keeps it. The first three choices skip the terminal backend, messaging and service screens; add them later with `nastech setup terminal`, `nastech setup gateway` and `nastech tools`.
 
 Blank Slate writes an explicit `platform_toolsets.cli` list plus `agent.disabled_toolsets`, so nothing you didn't choose ever loads — not even after `nastech update`. Re-enable anything later with `nastech tools`, seed skills with `nastech skills opt-in --sync`, or tune settings with `nastech setup agent`.
 :::

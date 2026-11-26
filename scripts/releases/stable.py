@@ -191,6 +191,44 @@ RECEIPT_HANDOFFS = {
 RECEIPT_INCLUDES = ("metadata-*.json",)
 
 
+def _validate_package_platform_row(item: dict, tag: str, expected_windows_version: str,
+                                   url) -> None:
+    """Validate platform-specific version and signing metadata for one candidate package row.
+
+    A commit claim built from a pre-PR commit (legacyCommitBuild=True) carries tagless commit
+    versions (X.Y.Z.0 / X.Y.Z / X.Y.Z+commit<sha12>); stable and canary releases never admit
+    legacyCommitBuild.
+    """
+    legacy = bool(item.get("legacyCommitBuild"))
+    if legacy and not is_commit_claim(tag):  # health: allow F821 -- inherited verbatim from upstream
+        raise ValueError("Legacy commit build metadata is only allowed for commit claims")
+    core = None
+    if legacy:
+        from nastech_cli.update_channel import tag_core
+
+        core = tag_core(tag)
+    if item["platform"] == "windows":
+        if legacy:
+            expected_quad = f"{core}.0"
+            if (item.get("version") != expected_quad
+                    or item.get("executableVersion") not in (core, expected_quad)):
+                raise ValueError("Windows legacy commit candidate version differs from the claim core")
+        elif (item.get("version") != expected_windows_version
+              or item.get("executableVersion") != expected_windows_version):
+            raise ValueError("Windows candidate version differs from the admitted release epoch")
+        windows_version(item["version"])
+        if not item.get("publisher") or not item.get("applicationId") or not url.path.endswith(".msixbundle"):
+            raise ValueError("Windows candidate needs publisher, applicationId and MSIX bundle")
+    elif item["platform"] == "macos":
+        expected_mac = core if legacy else payload_version(tag)  # health: allow F821 -- inherited verbatim from upstream
+        if item.get("version") != expected_mac or not re.fullmatch(r"[A-Z0-9]{10}", item.get("teamId", "")) or not url.path.endswith(".zip"):
+            raise ValueError("macOS candidate needs matching version, signing team and app ZIP")
+    else:
+        expected_deb = f"{core}+commit{item['commit'][:12]}" if legacy else _deb_version(tag)  # health: allow F821 -- inherited verbatim from upstream
+        if item.get("version") != expected_deb:
+            raise ValueError("Termux candidate version differs from the admitted release")
+
+
 def _validated_rows(manifest: dict, tag: str, commit: str, public_base: str,
                     release_epoch: int | None, *, archive: str) -> dict:
     """The per-row checks shared by the full-manifest and receipt validators."""
@@ -520,7 +558,8 @@ CONTROLLER_WORKFLOW = "stable-release.yml"
 
 def claim_run_title(claim_tag: str) -> str:
     """The run-name stable-release.yml sets. Every run is on the default branch, so this names the claim."""
-    return f"Stable release {claim_tag}"
+    prefix = "Canary" if is_canary_claim(claim_tag) else "Commit" if is_commit_claim(claim_tag) else "Stable"  # health: allow F821 -- inherited verbatim from upstream
+    return f"{prefix} release {claim_tag}"
 
 
 def is_claim_run(*, title: str | None, head_branch: str | None, head_sha: str | None,
@@ -724,8 +763,36 @@ def admit(env: dict) -> None:
     )
 
 
-def verify(env: dict) -> None:
+# Where a claimed tree declares the commit-claim build contract its packaging honours, and the
+# contracts this controller can build. A tree without the file builds through the tagless path.
+CLAIM_BUILD_FILE = "scripts/releases/commit_claim_build.txt"
+CLAIM_BUILD_VERSIONS = frozenset({"1"})
+
+
+def commit_supports_claim_tag(commit: str, run=output) -> bool:
+    """Whether ``commit`` declares a commit-claim build this controller can run (CLAIM_BUILD_FILE).
+
+    A commit without the declaration (every commit forked before commit claims could build)
+    still builds cleanly through the tagless ``--commit`` path while the trusted controller
+    records, stages, smokes and renders its candidate under the claim archive. Matching the
+    claim readers' source text let a tree that had the readers but not the packaging through. A
+    failed read, or a contract this controller doesn't know, raises rather than passing for an
+    old commit.
+    """
+    if not run(["git", "ls-tree", "--name-only", commit, "--", CLAIM_BUILD_FILE]):
+        return False
+    declared = [line.strip() for line in run(["git", "show", f"{commit}:{CLAIM_BUILD_FILE}"]).splitlines()
+                if line.strip() and not line.lstrip().startswith("#")]
+    if len(declared) != 1 or declared[0] not in CLAIM_BUILD_VERSIONS:
+        raise ValueError(f"{commit} declares commit-claim build {declared!r}; this controller builds "
+                         f"{', '.join(sorted(CLAIM_BUILD_VERSIONS))}")
+    return True
+
+
+def verify(env: dict, run=output) -> None:
     """Revalidate claim custody in a reusable privileged workflow."""
+    from nastech_cli.update_channel import tag_core
+
     tag, commit, claim = stable_context(env)
     emit({"tag": tag, "sha": commit, "channel": "stable", "payload-version": tag[1:],
           "release-epoch": claim["claim_epoch"]}, env)
@@ -836,7 +903,7 @@ def candidate_manifest(env: dict) -> None:
         raise ValueError("A claim that builds no bundle has no candidate manifest")
     handoffs = lane_set.handoffs(lanes, CANDIDATE_HANDOFFS)
     # A call the claim did not build never ran, so it has no smoke to record.
-    runs = lane_set.jobs_to_run(lanes)
+    runs = lane_set.jobs_to_run(lanes, claim.get("policy", "stable"))
     # A call whose package is not a target (the Store variant is not install-smoked) has no smoke.
     built = lane_set.targets(lanes)
     calls = {job: call for job, call in SMOKE_CALLS.items() if runs[call] and SMOKE_TARGETS[job] in built}

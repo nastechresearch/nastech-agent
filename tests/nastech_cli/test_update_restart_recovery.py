@@ -467,3 +467,51 @@ def test_recovery_module_end_to_end_in_a_real_fresh_process(tmp_path):
     assert [argv[argv.index("-p") + 1] for argv in restarts] == ["coder", "default"]
     for argv in restarts:
         assert argv[-4:] == ["gateway", "restart", "--interrupt", "--detach"]
+
+
+def test_serve_unit_names_take_their_profile_suffix_from_the_profile_id_owner(monkeypatch):
+    """Discovery and the skip payload share one unit predicate: a structural family plus a
+    profile-id suffix judged by nastech_constants.PROFILE_ID_RE (state-24, #155595)."""
+    import re
+
+    import nastech_constants
+
+    recovery = importlib.import_module("nastech_cli.update_restart_recovery")
+    assert recovery._PROFILE_ID_RE is nastech_constants.PROFILE_ID_RE
+    longest = "a" * 64
+
+    def listed(names):
+        result = SimpleNamespace(stdout="".join(f"{name} loaded active running Nastech\n" for name in names))
+        return recovery._listed_serve_units(["systemctl", "--user"], run=lambda *_a, **_k: result)
+
+    def skipped(entries):
+        payload = {"profiles": [], "serve_units": {"recover": True, "skip": entries}}
+        return recovery._parse_payload(io.StringIO(json.dumps(payload)))[3]
+
+    accepted = [
+        "nastech-serve.service", "nastech-dashboard.service", "nastech-serve-coder.service",
+        "nastech-serve-a_b-c9.service", f"nastech-dashboard-{longest}.service",
+    ]
+    rejected = [
+        "nastech-server.service", "nastech-serve-.service", "nastech-serve--x.service",
+        "nastech-serve-Coder.service", f"nastech-serve-{longest}a.service", "nastech-serve-zz.custom.service",
+        "nastech-serve-coder.service.service", "nastech-gateway-coder.service",
+        "nastech-serve-coder.service.old",
+    ]
+    assert listed(accepted + rejected) == accepted
+    assert skipped([*accepted, *rejected, "nastech-serve-co\nder", "nastech-serve-coder\n"]) == [
+        unit.removesuffix(".service") for unit in accepted
+    ]
+    assert skipped([
+        {"scope": "user", "unit": "nastech-serve-coder.service"},
+        {"scope": "machine", "unit": "nastech-serve-coder.service"},
+        "system/nastech-dashboard",
+    ]) == ["user/nastech-serve-coder", "system/nastech-dashboard"]
+
+    # A different owner grammar moves both callers; the bare family stays structural.
+    monkeypatch.setattr(recovery, "_PROFILE_ID_RE", re.compile(r"^zz\.[a-z]+$"))
+    swapped = ["nastech-serve.service", "nastech-serve-zz.custom.service"]
+    assert listed(["nastech-serve-coder.service", *swapped]) == swapped
+    assert skipped(["nastech-serve-coder", "nastech-serve-zz.custom", "user/nastech-dashboard"]) == [
+        "nastech-serve-zz.custom", "user/nastech-dashboard",
+    ]

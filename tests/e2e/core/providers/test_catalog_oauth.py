@@ -46,7 +46,7 @@ KNOWN: dict[str, Known] = {
         r"^device poll gap \d+\.\d+s < server interval",
         "#121163 Nastech device-code login polls at 1s, ignoring the server's interval"),
     "nastech_401_retry_route": Known(
-        r"^401 recovery retry left NASTECH_INFERENCE_BASE_URL: egress to \[[^\]]*'nastech-inference-url\.invalid:443'",
+        r"^401 recovery retry left NASTECH_INFERENCE_BASE_URL: egress to \[[^\]]*'inference-api\.nastechresearch\.github\.io:443'",
         "#121323 Nastech 401 pool recovery retries on the stored production host, "
         "dropping the NASTECH_INFERENCE_BASE_URL override"),
 }

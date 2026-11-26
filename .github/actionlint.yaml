@@ -13,6 +13,10 @@ self-hosted-runner:
     - macos-latest
     - macos-latest
     - ubuntu-latest
+    - windows-latest
+    - ubuntu-latest
+    - windows-latest
+    - ubuntu-latest
     - ubuntu-24.04-arm
     - windows-latest
     # GitHub larger runners still used by matrices not yet migrated.

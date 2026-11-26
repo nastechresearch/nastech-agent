@@ -44,32 +44,10 @@ pytestmark = [pytest.mark.platforms("windows"), pytest.mark.integration,
               pytest.mark.live_system_guard_bypass, REQUIRES_OPT_IN]
 
 # The first parent of the #106742 merge (eb75627faf5): the last main before the unified runtime.
-_PRE_RUNTIME_DEFAULT = "d04056d609bb53530843a6c630493243b2ebdc24"
-PRE_RUNTIME_RELEASE = os.environ.get("NASTECH_E2E_W4_BASE", _PRE_RUNTIME_DEFAULT)
+PRE_RUNTIME_RELEASE = os.environ.get("NASTECH_E2E_W4_BASE", "d04056d609bb53530843a6c630493243b2ebdc24")
 _STATUS_LINE = re.compile(r"^.*[✓✗].*[Gg]ateway.*$", re.MULTILINE)
 _RESTART_FAILURE = re.compile(
     r"^.*(recovery failed|restart could not be verified|restart incomplete|not verified alive).*$", re.MULTILINE)
-
-
-def _resolve_pre_runtime_base() -> str:
-    """Return a base ref resolvable in this checkout, or skip if unavailable.
-
-    The historical upstream ref is absent in some fork checkouts; treat that as an
-    unsupported baseline rather than a setup error for every journey in this module.
-    """
-    from tests.e2e.core.windows_update._machine import REPO_ROOT, harness_git
-
-    try:
-        harness_git("-C", str(REPO_ROOT), "rev-parse", "--verify", f"{PRE_RUNTIME_RELEASE}^{{commit}}")
-        return PRE_RUNTIME_RELEASE
-    except RuntimeError:
-        pass
-    pytest.skip(
-        "pre-runtime gateway base ref unavailable in this checkout "
-        f"({PRE_RUNTIME_RELEASE}); set NASTECH_E2E_W4_BASE to a fork-resolvable commit/tag "
-        "whose parent is a pre-unified-gateway-runtime install baseline",
-        allow_module_level=True,
-    )
 
 
 def _status_line(text: str) -> str:
@@ -137,7 +115,7 @@ def _machine(tmp_path_factory, srv: FakeLLMServer, label: str) -> Machine:
     from tests.e2e.core.windows_update._tokens import grant_user_profile_acl, hand_to_user
 
     machine = new_machine(tmp_path_factory.mktemp(label), srv.base_url, label=label, system_git=True,
-                          base_ref=_resolve_pre_runtime_base())
+                          base_ref=PRE_RUNTIME_RELEASE)
     # A real profile's DACL (the user owns their home), and the origin + gitconfig the user can
     # read: harness facts, so a standard-user verdict is about Nastech and nothing else.
     grant_user_profile_acl(machine.profile)

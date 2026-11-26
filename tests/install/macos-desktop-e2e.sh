@@ -183,33 +183,10 @@ find_installed_app() {
   return 1
 }
 
-skip_marker_path() {
-  printf '%s/bootstrap-skip.txt' "$WORK_ROOT"
-}
-
-record_bootstrap_skip() {
-  local reason="$1"
-  mkdir -p "$WORK_ROOT" "$LOG_DIR"
-  printf '%s\n' "$reason" > "$(skip_marker_path)"
-  printf '%s\n' "$reason"
-  [ -z "${GITHUB_OUTPUT:-}" ] || printf 'bootstrap_skip=unavailable\n' >> "$GITHUB_OUTPUT"
-  [ -z "${GITHUB_STEP_SUMMARY:-}" ] || printf 'Skipped desktop-installer leg: %s\n' "$reason" >> "$GITHUB_STEP_SUMMARY"
-}
-
-exit_if_bootstrap_skipped() {
-  local marker
-  marker="$(skip_marker_path)"
-  [ -f "$marker" ] || return 0
-  cat "$marker"
-  [ -z "${GITHUB_OUTPUT:-}" ] || printf 'bootstrap_skip=unavailable\n' >> "$GITHUB_OUTPUT"
-  exit 0
-}
-
 phase_install() {
   # shellcheck disable=SC1090
   . "$STATE"
   arm_redirect
-  exit_if_bootstrap_skipped
   step "installing OLD ($OLD_REF) via the published Nastech-Setup.dmg"
 
   # Pair both historical inputs. Today's downloaded install.sh can call helpers
@@ -225,15 +202,7 @@ phase_install() {
   ok "bootstrap script is unmodified scripts/install.sh from $OLD_REF ($OLD_SHA)"
 
   local dmg="$WORK_ROOT/Nastech-Setup.dmg"
-  if [ ! -f "$dmg" ]; then
-    local http_code
-    http_code="$(curl -sSLo "$dmg" -w '%{http_code}' "$DMG_URL")" || true
-    if [ "$http_code" = "404" ]; then
-      record_bootstrap_skip "SKIP: published bootstrap installer not available at $DMG_URL (HTTP 404); cannot test desktop-installer@latest path in this environment."
-      exit 0
-    fi
-    [ "$http_code" = "200" ] || fail "failed to download Nastech-Setup.dmg from $DMG_URL (HTTP $http_code)"
-  fi
+  [ -f "$dmg" ] || curl -fsSL -o "$dmg" "$DMG_URL"
   [ "$(stat -f%z "$dmg")" -gt 1000000 ] || fail "dmg download too small: $(stat -f%z "$dmg") bytes"
   # curl'd files carry no quarantine attr, but belt and braces on a runner.
   xattr -dr com.apple.quarantine "$dmg" 2>/dev/null || true
@@ -332,83 +301,16 @@ run_playwright_update() {
   [ "$rc" -eq 0 ] || fail "app-driven update exited $rc; transcript above"
 }
 
-checkout_lock_held() {
-  local lock="$1"
-  [ -e "$lock" ] || return 1
-  python3 - "$lock" <<'PY'
-import fcntl
-import os
-import sys
-
-path = sys.argv[1]
-try:
-    with open(path, "r+b") as fh:
-        try:
-            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise SystemExit(0)
-        except OSError:
-            raise SystemExit(0)
-        try:
-            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
-        except OSError:
-            pass
-    raise SystemExit(1)
-except FileNotFoundError:
-    raise SystemExit(1)
-except PermissionError:
-    raise SystemExit(0)
-except OSError:
-    raise SystemExit(0)
-PY
-}
-
-wait_for_update_quiescence() {
-  local timeout="${1:-600}" marker lock gitdir
-  marker="$NASTECH_HOME/.nastech-update-in-progress"
-  deadline=$((SECONDS + timeout))
-  while [ "$SECONDS" -lt "$deadline" ]; do
-    lock=""
-    if [ -d "$INSTALL_DIR/.git" ] || [ -f "$INSTALL_DIR/.git" ]; then
-      gitdir="$(git -C "$INSTALL_DIR" rev-parse --git-common-dir 2>/dev/null || true)"
-      if [ -n "$gitdir" ]; then
-        # --git-common-dir is relative to the -C directory (normally ".git"). Left relative,
-        # the probe reads a lock under the harness CWD, not the installed checkout: a build
-        # or completion holding the real lock then looks quiescent and `nastech desktop`
-        # exits 2 during launch capture. Anchor it exactly as update_lock.checkout_lock_path.
-        case "$gitdir" in /*) ;; *) gitdir="$INSTALL_DIR/$gitdir" ;; esac
-        lock="$gitdir/nastech-update.lock"
-      fi
-    fi
-    [ -n "$lock" ] || lock="$INSTALL_DIR/.nastech-update.lock"
-    local marker_busy=0 lock_busy=0
-    [ -e "$marker" ] && marker_busy=1
-    checkout_lock_held "$lock" && lock_busy=1
-    if [ "$marker_busy" -eq 0 ] && [ "$lock_busy" -eq 0 ]; then
-      return 0
-    fi
-    sleep 10
-  done
-  printf 'update quiescence wait timed out (marker=%s lock=%s path=%s)\n' \
-    "$([ -e "$marker" ] && echo present || echo absent)" \
-    "$(checkout_lock_held "${lock:-/nonexistent}" >/dev/null 2>&1 && echo held || echo free)" \
-    "${lock:-}" >&2
-  return 1
-}
-
 phase_update() {
   # shellcheck disable=SC1090
   . "$STATE"
   arm_redirect
-  exit_if_bootstrap_skipped
   local pin_nastech
   pin_nastech="$(source_nastech "$INSTALL_DIR")" || fail "no installed command to record the update channel"
   source_build_env pin_source_main_channel "$pin_nastech" || fail "could not record the main update channel"
   # Snapshot every plugin tree BEFORE the upgrade moves anything: fixtures
   # seeded here must survive through the verify after the update lands.
   preserve_before_upgrade
-  step "waiting for any prior update or desktop install to finish"
-  wait_for_update_quiescence 600 || fail "timed out waiting for prior update/build activity to clear before $UPDATE_METHOD"
   step "advancing served main to $TARGET_LABEL ($TARGET_SHA)"
   git -C "$SERVE_REPO" update-ref refs/heads/main "$TARGET_SHA"
   ok "serve.git main = $TARGET_SHA"
@@ -433,7 +335,6 @@ phase_update() {
       printf '  CLI update invocation:'
       printf ' %q' "${update_cmd[@]}"
       printf '\n'
-      wait_for_update_quiescence 600 || fail "timed out waiting for update/build activity to clear before nastech update"
       local rc=0
       (cd "$INSTALL_DIR" && source_build_env "${update_cmd[@]}" < /dev/null 2>&1 | ts_prefix > "$LOG_DIR/update.log") || rc=$?
       log_group "nastech update transcript" "$LOG_DIR/update.log"
@@ -481,7 +382,6 @@ PYEOF
       nastech="$(source_nastech "$INSTALL_DIR")" || fail "no installed desktop command"
       local spec="$WORK_ROOT/launch-spec.json"
       local rc=0
-      wait_for_update_quiescence 600 || fail "timed out waiting for update/build activity to clear before nastech desktop capture"
       if [ "$nastech" = "$INSTALL_DIR/.nastech/bin/nastech" ]; then
         # PM launchers use -I, which ignores PYTHONPATH/sitecustomize. Inject
         # the capture hook into the installed launcher's isolated command.
@@ -553,7 +453,6 @@ PYEOF
 # known-failures.cjs matches the exact start commit, method pair, assertion
 # and fresh bootstrap-installer.log signatures (tests/install/KNOWN_FAILURES.md).
 phase_checked_update() {
-  exit_if_bootstrap_skipped
   local nastech_logs="$HOME_SANDBOX/.nastech/logs" rc=0 error receipt
   rm -f "$WORK_ROOT/known-failure.json" "$LOG_DIR/known-failure.json" "$WORK_ROOT/update-failure.txt"
   # Only evidence produced by this update attempt can match an exception.

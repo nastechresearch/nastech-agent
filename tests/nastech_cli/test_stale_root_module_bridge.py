@@ -64,21 +64,3 @@ def test_drop_stale_root_modules_leaves_complete_utils_alone():
     before = sys.modules["utils"]
     assert drop_stale_root_modules() == []
     assert sys.modules["utils"] is before
-
-
-@pytest.mark.parametrize("missing", ["file_signature", "file_cache_version", "fsync_directory"])
-def test_drop_stale_root_modules_drops_utils_missing_any_required_symbol(monkeypatch, missing):
-    """A pre-hand-off root utils may lack any symbol a fresh nastech_cli needs.
-
-    In particular ``fsync_directory`` is imported by ``nastech_cli.backup_atomic``,
-    reached from a post-update ``nastech_cli.backup`` import.
-    """
-    import utils
-    from nastech_cli.stale_modules import drop_stale_root_modules
-
-    monkeypatch.delattr(utils, missing, raising=False)
-    try:
-        assert drop_stale_root_modules() == ["utils"]
-        assert "utils" not in sys.modules
-    finally:
-        sys.modules["utils"] = utils

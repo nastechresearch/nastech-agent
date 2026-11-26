@@ -18,16 +18,13 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
     sys.path.insert(0, str(root))
     # The old shim's UI has been frozen since the pull; from here the new
     # tree can publish stages (and pop the panel the old shim couldn't).
-    print("-> Takeover: importing update_stage", flush=True)
     from nastech_cli.update_stage import ensure_panel, publish_stage
 
     ensure_panel(root)
     # An older updater hands off here instead of update_completion._prepare.
-    print("-> Takeover: converting treeless checkout", flush=True)
     from nastech_cli.gitlock import convert_treeless_checkout_first
     convert_treeless_checkout_first(root)
     publish_stage("Updating Python dependencies (PM)")
-    print("-> Takeover: importing PM modules", flush=True)
     from pm import receipt
     from pm.client import ensure_tools_for_sync, sync_venv, venv_is_current
     from pm.environments import activation_environment, install_state_dir
@@ -38,7 +35,6 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
     # The historical updater already moved the tree: owe the tail and the fleet restart before the
     # first slow step, exactly like a current updater's commit point, so a kill from here on leaves
     # both for the next launch / `nastech update` instead of nothing.
-    print("-> Takeover: arming completion/fleet obligations", flush=True)
     refuse_foreign_owned_venv(root)
     arm_completion(root)
     _arm_fleet_obligation(root)
@@ -46,7 +42,6 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
     with receipt.worker_context(correlation):
         # A pre-PM installation has no required-tool facts. A current Python
         # generation alone does not prove its Node/Git/tool closure is ready.
-        print("-> Takeover: ensuring PM tools", flush=True)
         ensure_tools_for_sync()
         from pm.extras import first_generation_selection
 
@@ -55,14 +50,11 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
         # Repair preserves the old stamp. Changed source inputs instead need
         # an ordinary sync, which builds and validates a fresh generation too.
         repair = repair_marker.is_file() and venv_is_current(project_root=root)
-        print(f"-> Takeover: syncing venv (repair={repair})", flush=True)
         # An update never fails because of a plugin: misfits are disabled and reported.
         sync_venv(None if repair else extras, explicit=True, project_root=root, repair=repair,
                   evict_incompatible_plugins=not repair)
-        print("-> Takeover: collecting superseded generations", flush=True)
         collect_superseded_generations(root)
         request["pm_receipt"] = receipt.last_for_update(correlation)
-    print("-> Takeover: publishing launchers", flush=True)
     publish_launchers(root)
     repair_marker.unlink(missing_ok=True)
     for name in (".update-incomplete", ".lazy-refresh-incomplete"):
@@ -70,7 +62,6 @@ def prepare(request: dict) -> tuple[Path, dict[str, str]]:
     python = resolve_store_python(root)
     if python is None:
         raise RuntimeError("updated installation has no managed interpreter")
-    print("-> Takeover: preparation complete", flush=True)
     return python, activation_environment(root)
 
 
@@ -140,65 +131,19 @@ def _record_failure(request: dict, result: Path, code: int, detail: str) -> None
     result.write_text(json.dumps({"receipt_handled": saved is not None, "resume_handled": False}), encoding="utf-8")
 
 
-def _start_prepare_watchdog(seconds: int = 1500):
-    """Fail loudly if takeover work hangs; a silent hang blocks the whole update.
-
-    Returns a cancel callable. Uses both an in-process timer (can dump stacks when GIL is free)
-    and a subprocess backstop (fires even if the GIL is held by a C extension).
-    """
+def _start_prepare_watchdog(seconds: int = 1500) -> None:
+    """Fail loudly if takeover preparation hangs; a silent hang blocks the whole update."""
     import faulthandler
-    import subprocess
-    import sys
     import threading
 
     def _fire() -> None:
-        print(f"  ! Update takeover exceeded {seconds}s; dumping stacks.", file=sys.stderr, flush=True)
-        try:
-            faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
-        except Exception:  # health: allow BLE001,S110 -- best-effort diagnostic dump
-            pass
+        print(f"  ! Update takeover preparation exceeded {seconds}s; dumping stacks.", file=sys.stderr, flush=True)
+        faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
         os._exit(2)
 
     timer = threading.Timer(seconds, _fire)
     timer.daemon = True
     timer.start()
-
-    watchdog = None
-    try:
-        # Subprocess backstop: cannot dump stacks, but can kill the stuck process
-        # even when a C extension holds the GIL and the timer thread cannot run.
-        watchdog = subprocess.Popen(
-            [sys.executable, "-c",
-             "import os,sys,time,signal\n"
-             "time.sleep(int(sys.argv[2]))\n"
-             "try:\n"
-             " os.kill(int(sys.argv[1]), signal.SIGTERM)\n"
-             "except Exception:\n"
-             " pass\n"
-             "time.sleep(5)\n"
-             "try:\n"
-             " os.kill(int(sys.argv[1]), getattr(signal, 'SIGKILL', signal.SIGTERM))\n"
-             "except Exception:\n"
-             " pass\n",
-             str(os.getpid()), str(seconds)],
-            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-    except Exception:  # health: allow BLE001 -- best-effort watchdog; update must continue
-        watchdog = None
-
-    def cancel() -> None:
-        timer.cancel()
-        if watchdog is not None and watchdog.poll() is None:
-            try:
-                watchdog.kill()
-            except Exception:  # health: allow BLE001,S110 -- best-effort watchdog cleanup
-                pass
-            try:
-                watchdog.wait(timeout=5)
-            except Exception:  # health: allow BLE001,S110 -- best-effort watchdog cleanup
-                pass
-
-    return cancel
 
 
 def main() -> int:
@@ -206,108 +151,54 @@ def main() -> int:
     request = json.loads(context.read_text(encoding="utf-8-sig"))
     sys.path.insert(0, request["root"])
     print("-> Update takeover started.", flush=True)
-    # Start watchdog before any step that can hang (compat install, lock, receipt, prepare).
-    # If the watchdog fires, os._exit skips finally; kernel locks release on exit and the
-    # v2 update marker is reclaimable by the next run.
-    cancel_watchdog = _start_prepare_watchdog()
+    from nastech_agent.compat import install
+
+    install()
+    if "stopped_serves" in request:
+        # Historical atexit cleanup may run after the update's result is fixed.
+        # It must reuse that installation, never start a second update/repair.
+        from nastech_cli._launchers import resolve_store_python
+        from pm.environments import activation_environment
+
+        root = Path(request["root"])
+        python = resolve_store_python(root)
+        if python is None:
+            print("Cannot resume stopped backends: no selected Nastech interpreter", file=sys.stderr)
+            return 1
+        return subprocess.run(
+            [str(python), "-I", "-B", "-X", "utf8", str(root / "nastech_cli/update_serve_resume.py"),
+             str(context), str(result)], cwd=root, env=activation_environment(root),
+             check=False,
+        ).returncode
+    from nastech_cli import update_receipt
+    from nastech_cli.update_lock import UpdateLock, describe_holder
+
+    # The takeover syncs dependencies and its update_finish child builds the checkout: hold
+    # (or join, inherited from the old updater) the checkout lock, not just the marker (R2).
+    lock = UpdateLock(install_root=Path(request["root"]))
+    if not lock.acquire():
+        print(describe_holder(lock.holder), file=sys.stderr)
+        return 2
+    old_receipt = request.get("receipt") or {}
+    update_receipt.begin_update_receipt(previous=old_receipt, correlation_id=old_receipt.get("update_id"))
+    request["update_id"] = update_receipt.current_correlation_id()
     try:
-        # Compat install is defensive: old module names are not needed for takeover's own
-        # imports, and a hang here must not block the update. Build the finder on a daemon
-        # thread so a stuck import does not prevent takeover from continuing; only the main
-        # thread mutates sys.meta_path.
-        print("-> Takeover: installing compat aliases", flush=True)
         try:
-            import threading
-
-            _compat_result: list[object] = []
-            _compat_error: list[BaseException] = []
-
-            def _prepare_compat() -> None:
-                try:
-                    if any(
-                        type(finder).__name__ == "Finder"
-                        and type(finder).__module__.startswith("nastech_agent.compat")
-                        for finder in sys.meta_path
-                    ):
-                        _compat_result.append(None)
-                        return
-                    from nastech_agent.compat.finder import Finder
-                    from nastech_agent.compat.moves import MOVES
-
-                    _compat_result.append(Finder(MOVES))
-                except BaseException as exc:  # health: allow BLE001 -- compat is best-effort in takeover
-                    _compat_error.append(exc)
-
-            _compat_thread = threading.Thread(target=_prepare_compat, daemon=True, name="takeover-compat")
-            _compat_thread.start()
-            _compat_thread.join(timeout=15)
-            if _compat_thread.is_alive():
-                print("  ! Takeover: compat alias install timed out; continuing without it.", flush=True)
-            elif _compat_error:
-                print(f"  ! Takeover: compat alias install failed ({_compat_error[0]}); continuing without it.", flush=True)
-            else:
-                finder = _compat_result[0] if _compat_result else None
-                if finder is not None:
-                    sys.meta_path.insert(0, finder)
-                print("-> Takeover: compat aliases ready", flush=True)
-        except Exception as exc:  # health: allow BLE001 -- compat is best-effort in takeover
-            print(f"  ! Takeover: compat alias install skipped ({exc}); continuing without it.", flush=True)
-        if "stopped_serves" in request:
-            # Historical atexit cleanup may run after the update's result is fixed.
-            # It must reuse that installation, never start a second update/repair.
-            from nastech_cli._launchers import resolve_store_python
-            from pm.environments import activation_environment
-
-            root = Path(request["root"])
-            python = resolve_store_python(root)
-            if python is None:
-                print("Cannot resume stopped backends: no selected Nastech interpreter", file=sys.stderr)
-                return 1
-            return subprocess.run(
-                [str(python), "-I", "-B", "-X", "utf8", str(root / "nastech_cli/update_serve_resume.py"),
-                 str(context), str(result)], cwd=root, env=activation_environment(root),
-                check=False,
-            ).returncode
-        print("-> Takeover: acquiring update lock", flush=True)
-        from nastech_cli import update_receipt
-        from nastech_cli.update_lock import UpdateLock, describe_holder
-
-        # The takeover syncs dependencies and its update_finish child builds the checkout: hold
-        # (or join, inherited from the old updater) the checkout lock, not just the marker (R2).
-        lock = UpdateLock(install_root=Path(request["root"]))
-        if not lock.acquire():
-            print(describe_holder(lock.holder), file=sys.stderr)
-            return 2
-        print("-> Takeover: beginning update receipt", flush=True)
-        old_receipt = request.get("receipt") or {}
-        update_receipt.begin_update_receipt(previous=old_receipt, correlation_id=old_receipt.get("update_id"))
-        request["update_id"] = update_receipt.current_correlation_id()
+            _start_prepare_watchdog()
+            python, env = prepare(request)
+            request["receipt"] = update_receipt._current.get().data
+            context.write_text(json.dumps(request), encoding="utf-8")
+        except Exception as exc:  # health: allow BLE001 -- pre-commit boundary: any preparation failure is the takeover's recorded failure
+            print(f"Update preparation failed: {exc}", file=sys.stderr, flush=True)
+            _record_failure(request, result, 1, f"historical takeover preparation failed: {exc}")
+            return 1
         try:
-            try:
-                python, env = prepare(request)
-                request["receipt"] = update_receipt._current.get().data
-                context.write_text(json.dumps(request), encoding="utf-8")
-            except Exception as exc:  # health: allow BLE001 -- pre-commit boundary: any preparation failure is the takeover's recorded failure
-                print(f"Update preparation failed: {exc}", file=sys.stderr, flush=True)
-                _record_failure(request, result, 1, f"historical takeover preparation failed: {exc}")
-                return 1
-        finally:
-            cancel_watchdog()
-        cancel_finish_watchdog = _start_prepare_watchdog(2400)
-        try:
-            try:
-                return _run_finish_child(request, context, result, python, env)
-            except Exception as exc:  # health: allow BLE001 -- post-commit boundary: the tree moved and the tail is armed
-                _record_owed_finish(request, result, f"the update finish child could not run ({exc})")
-                return 0
-        finally:
-            cancel_finish_watchdog()
+            return _run_finish_child(request, context, result, python, env)
+        except Exception as exc:  # health: allow BLE001 -- post-commit boundary: the tree moved and the tail is armed
+            _record_owed_finish(request, result, f"the update finish child could not run ({exc})")
+            return 0
     finally:
-        # lock may not be defined if watchdog/acquire path failed before assignment
-        try:
-            lock.release()
-        except Exception:  # health: allow BLE001,S110 -- best-effort lock release
-            pass
+        lock.release()
 
 
 def _run_finish_child(request: dict, context: Path, result: Path, python: Path, env: dict) -> int:

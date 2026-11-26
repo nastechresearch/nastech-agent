@@ -172,6 +172,7 @@ jobs:
       tag: ${{ needs.admit.outputs.tag }}
       claim-tag: ${{ needs.admit.outputs.claim-tag }}
       claim-object: ${{ needs.admit.outputs.claim-object }}
+      bundle_env: ${{ needs.admit.outputs.bundle-env }}
       release-phase: candidate
       jobs: darwin-arm64
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
@@ -194,6 +195,7 @@ jobs:
       tag: ${{ needs.admit.outputs.tag }}
       claim-tag: ${{ needs.admit.outputs.claim-tag }}
       claim-object: ${{ needs.admit.outputs.claim-object }}
+      bundle_env: ${{ needs.admit.outputs.bundle-env }}
       release-phase: candidate
       jobs: win32-arm64
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
@@ -218,6 +220,7 @@ jobs:
       tag: ${{ needs.admit.outputs.tag }}
       claim-tag: ${{ needs.admit.outputs.claim-tag }}
       claim-object: ${{ needs.admit.outputs.claim-object }}
+      bundle_env: ${{ needs.admit.outputs.bundle-env }}
       release-phase: candidate
       jobs: win32-x64
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
@@ -244,6 +247,7 @@ jobs:
       tag: ${{ needs.admit.outputs.tag }}
       claim-tag: ${{ needs.admit.outputs.claim-tag }}
       claim-object: ${{ needs.admit.outputs.claim-object }}
+      bundle_env: ${{ needs.admit.outputs.bundle-env }}
       release-phase: candidate
       jobs: win32-bundle
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
@@ -269,6 +273,7 @@ jobs:
       tag: ${{ needs.admit.outputs.tag }}
       claim-tag: ${{ needs.admit.outputs.claim-tag }}
       claim-object: ${{ needs.admit.outputs.claim-object }}
+      bundle_env: ${{ needs.admit.outputs.bundle-env }}
       release-phase: candidate
       jobs: termux
       skip-tests: ${{ !fromJSON(needs.admit.outputs.lanes).smoke }}
@@ -382,6 +387,8 @@ jobs:
           cache-python: false
       - id: manifest
         run: python -m scripts.releases.stable candidate-manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   windows-packaged:
     name: Windows signed-package acceptance
@@ -567,6 +574,7 @@ jobs:
         if: fromJSON(needs.admit.outputs.lanes).bundles
         run: python -m scripts.releases.stable complete
         env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.admit.outputs.tag }}
           RELEASE_CLAIM_TAG: ${{ needs.admit.outputs.claim-tag }}
           RELEASE_CLAIM_OBJECT: ${{ needs.admit.outputs.claim-object }}
