@@ -37,7 +37,6 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from scripts.releases.versioning import parse_attempt_ref
-from scripts.termux.deb_version import _TAG_RE as RELEASE_TAG_RE
 
 ARCH = "aarch64"
 COMPONENT = "main"
@@ -247,20 +246,6 @@ def existing_published(out_dir: Path, suite: str) -> set:
     return published
 
 
-def pool_subdir_suite(pool_subdir: str) -> str | None:
-    """The APT suite a pool prefix may stage into, or None if it is not a claim tag.
-
-    A stable attempt ref (rc.<N>-vX.Y.Z) stages nastech-stable; a canary claim
-    (canary.<stamp>-vX.Y.Z, which is its own release tag) stages nastech-canary.
-    """
-    if parse_attempt_ref(pool_subdir) is not None:
-        return "nastech-stable"
-    match = RELEASE_TAG_RE.fullmatch(pool_subdir) if isinstance(pool_subdir, str) else None
-    if match is not None and match.group("ts") and "\n" not in pool_subdir:
-        return "nastech-canary"
-    return None
-
-
 def stage(
     pool_dir: Path,
     out_dir: Path,
@@ -269,16 +254,11 @@ def stage(
     pool_subdir: str = "",
 ) -> int:
     # The pool upload is immutable with a one-year cache header, so a recut
-    # of the same version must not reuse a pool key; only a claim tag (which
-    # names the build, not the version) may prefix the pool, and it doubles as
-    # the guard against path escapes.
-    if pool_subdir:
-        expected = pool_subdir_suite(pool_subdir)
-        if expected is None:
-            die("--pool-subdir must be a claim tag (rc.<N>-vX.Y.Z or "
-                f"canary.<UTC stamp>-vX.Y.Z), got {pool_subdir!r}")
-        if suite != expected:
-            die(f"--pool-subdir {pool_subdir!r} belongs to suite {expected}, not {suite}")
+    # of the same version must not reuse a pool key; only an attempt ref
+    # (which names the build, not the version) may prefix the pool, and it
+    # doubles as the guard against path escapes.
+    if pool_subdir and parse_attempt_ref(pool_subdir) is None:
+        die(f"--pool-subdir must be an attempt ref (rc.<N>-vX.Y.Z), got {pool_subdir!r}")
     debs = sorted(pool_dir.glob("*.deb"))
     if not debs:
         die(f"no .deb files found in pool {pool_dir}")

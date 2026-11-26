@@ -133,7 +133,9 @@ def _servable_profile_homes() -> set:
     from nastech_constants import named_profile_has_servable_identity
     from nastech_cli.profiles import profiles_to_serve
 
-    homes = {Path(home).resolve() for name, home in profiles_to_serve(multiplex=True, include_standalone=True, include_parked=True)
+    # A profile a plugin runs elsewhere counts: the host serves it again as soon as it comes back.
+    homes = {Path(home).resolve() for name, home in profiles_to_serve(
+                 multiplex=True, include_standalone=True, include_parked=True, include_run_elsewhere=True)
              if name == "default" or named_profile_has_servable_identity(home)}
     homes.add(Path(os.environ.get("NASTECH_HOME") or Path.home() / ".nastech").resolve())
     return homes

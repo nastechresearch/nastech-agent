@@ -461,7 +461,7 @@ def _abandon_attempt(version: str, attempt: int, tag: str, *, repo: Path, remote
         if draft is not None and draft.get("isDraft") is not True:
             raise ReleaseRefused(f"{tag} is published and cannot be abandoned")
         for run in _in_progress_runs(inspect, repository, tag, _claim_commit(repo, tag)):
-            execute(["gh", "run", "cancel", str(run["databaseId"]), "--repo", repository, "--force"])
+            execute(["gh", "run", "cancel", str(run["databaseId"]), "--repo", repository])
             cancelled.append(run["url"])
         if draft is not None:
             execute(["gh", "release", "delete", tag, "--repo", repository, "--yes"])
@@ -524,7 +524,6 @@ def next_steps(result: dict, *, bold: bool = False) -> str:
                      "update channel and feeds stay on the previous release (they move only when "
                      "windows and macos-arm64 are both built).")
     untested = [name for name in lane_set.NAMES if name not in lanes and name not in lane_set.LEFT_OUT
-                and name not in lane_set.DIAGNOSTIC_LANES
                 and not (name == "termux-checks" and "termux" not in lanes)]
     if untested:
         warning = f"Not tested: {', '.join(untested)}"

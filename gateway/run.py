@@ -1559,10 +1559,10 @@ from nastech_constants import get_nastech_home, get_nastech_home_override, get_p
 _nastech_home = get_process_nastech_home()
 
 # Load ~/.nastech/.env first: user-managed env files must override stale shell exports on restart.
-from nastech_cli.env_loader import bridge_config_scalars, load_nastech_dotenv
+from nastech_cli.env_loader import bridge_config_scalars, load_nastech_dotenv, load_launch_home_dotenv
 from nastech_cli._startup_fast import project_root_str
 _env_path = _nastech_home / '.env'
-load_nastech_dotenv(nastech_home=_nastech_home, project_env=Path(project_root_str()) / '.env')
+_home_elsewhere = load_launch_home_dotenv(_nastech_home, Path(project_root_str()) / '.env')
 
 
 def _reload_runtime_env_preserving_config_authority() -> None:
@@ -2090,7 +2090,7 @@ def _load_bridge_config(config_path: Path) -> dict:
 
 _config_path = _nastech_home / 'config.yaml'
 _cfg: dict = {}
-if config_exists(_config_path):
+if config_exists(_config_path) and not _home_elsewhere:  # elsewhere: that backend writes this file; nothing of it is exported
     try:
         _cfg = _load_bridge_config(_config_path)
         _bridge_config_to_env(_cfg)

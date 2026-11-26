@@ -412,7 +412,7 @@ class ChannelPublisher:
             if policy is not None and record["head"] is not None:
                 from scripts.releases.semver import compare
                 from scripts.releases.stable import windows_version
-                from nastech_cli.update_channel import published_canary_timestamp as canary_timestamp
+                from nastech_cli.update_channel import canary_timestamp
                 previous_head = record["head"]
                 previous = self.store.get(previous_head["manifestKey"])
                 if previous is None or hashlib.sha256(previous[0]).hexdigest() != previous_head["sha256"]:

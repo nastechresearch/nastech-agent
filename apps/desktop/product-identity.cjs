@@ -46,6 +46,11 @@ const canary = /^canary\.20\d{6}T\d{6}Z-v\d+\.\d+\.\d+$/.test(process.env.NASTEC
 // seven-character commit suffix also names the CLI and fits MSIX's name cap.
 const buildCommitEnv = process.env.NASTECH_BUILD_COMMIT || ''
 const buildCommit = /^[a-f0-9]{40}$/.test(buildCommitEnv) ? buildCommitEnv.slice(0, 7) : null
+// A commit build's claim tag (commit.YYYYMMDDTHHMMSSZ-vX.Y.Z) names a commit build: it must carry the
+// commit identity, never fall through to the stable identity and its `latest` feed.
+if (/^commit\./.test(process.env.NASTECH_PAYLOAD_TAG || '') && !buildCommit) {
+  throw new Error('A commit build tag requires NASTECH_BUILD_COMMIT (the commit identity)')
+}
 const displayName = buildCommit
   ? `${name.display} ${buildCommit}`
   : canary

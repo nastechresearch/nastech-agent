@@ -2149,13 +2149,10 @@ class DiscordAdapter(DiscordLiveGatesMixin, DiscordCommandSyncMixin, DiscordAuth
         logger.info("[%s] Disconnected", self.name)
 
     def _command_sync_state_path(self) -> _Path:
+        # No mkdir here: reads run before every sync, and the write's atomic_json_write creates the dir
+        # through mkdir_under_nastech_home, so a deleted or renamed profile home is never recreated.
         from nastech_constants import get_nastech_home
-        directory = get_nastech_home() / _DISCORD_COMMAND_SYNC_STATE_SUBDIR
-        try:
-            directory.mkdir(parents=True, exist_ok=True)
-        except Exception:
-            pass
-        return directory / _DISCORD_COMMAND_SYNC_STATE_FILENAME
+        return get_nastech_home() / _DISCORD_COMMAND_SYNC_STATE_SUBDIR / _DISCORD_COMMAND_SYNC_STATE_FILENAME
 
     def _read_command_sync_state(self) -> dict:
         try:

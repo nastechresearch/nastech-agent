@@ -56,12 +56,11 @@ class MissingReceipt(ValueError):
 
 def validate_identity(tag: str, commit: str, name: str) -> None:
     # Stable attempts stage and fetch under their attempt ref, so the receipt
-    # identity admits rc.N-vX.Y.Z beside plain vX.Y.Z and canary.<stamp>-vX.Y.Z tags.
-    from nastech_cli.update_channel import release_version
+    # identity admits rc.N-vX.Y.Z beside plain (and canary) vX.Y.Z tags.
     from scripts.releases.versioning import parse_attempt_ref
 
     if (not isinstance(tag, str)
-            or not (is_release_version(release_version(tag) or "") or parse_attempt_ref(tag))
+            or not ((tag.startswith("v") and is_release_version(tag[1:])) or parse_attempt_ref(tag))
             or not re.fullmatch(r"[a-f0-9]{40}", commit or "")
             or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name or "")):
         raise ValueError("Invalid release handoff identity")
@@ -217,13 +216,38 @@ def stage(tag: str, commit: str, name: str, root: Path, includes: list[str]) -> 
     return _stage(receipt, selected)
 
 
+def _published_commit_receipt(commit: str, name: str, receipt: dict) -> dict | None:
+    """The completion witness for an already-staged commit build.
+
+    A commit receipt is published last, after every artifact it names has been
+    accepted under an immutable key, so its presence is proof that those bytes
+    are staged and bound. A later dispatch of the same commit then has no work
+    to do -- whether its fresh build reproduces the bytes or not. Nothing is
+    overwritten: a build with genuinely new bytes needs a new namespace.
+    """
+    try:
+        published = read_commit_receipt(commit, name)
+    except MissingReceipt:
+        return None
+    # A changed artifact selection is a different build, not a retry.
+    if ({row["path"] for row in published["files"]}
+            != {row["path"] for row in receipt["files"]}):
+        raise ValueError("Commit handoff artifact selection changed")
+    return published
+
+
 def stage_commit_build(commit: str, name: str, root: Path, includes: list[str]) -> dict:
-    """Stage tagless artifacts. Identical retries pass; different bytes fail."""
+    """Stage tagless artifacts. A re-dispatch reuses the published receipt."""
     validate_commit_identity(commit, name)
     selected = _select_files(root, includes)
     receipt = {"schema": 2, "commit": commit, "name": name,
                "files": _receipt_file_rows(selected)}
     validate_commit_receipt(receipt, commit, name)
+    published = _published_commit_receipt(commit, name, receipt)
+    if published is not None:
+        print(f"handoff: commit build {commit[:12]}/{name} already staged "
+              f"({len(published['files'])} artifact(s)); reusing published bytes")
+        return published
     return _stage(receipt, selected)
 
 

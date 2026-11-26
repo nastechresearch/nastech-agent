@@ -27,6 +27,8 @@ import { registerPluginFilesIpc } from './plugin-files-ipc'
 
 export interface FsIpcDeps {
   nastechHome: string
+  /** A profile a plugin's launcher runs: its home never feeds the plugin root. */
+  isLaunchedProfile: (profile: string) => boolean
   readActiveDesktopProfile: () => null | string
   expandUserPath: (value: string) => string
   resolveRequestedPathForIpc: (value: string, options: { purpose: string }) => string
@@ -36,6 +38,7 @@ export interface FsIpcDeps {
 
 export function registerFsIpc({
   nastechHome,
+  isLaunchedProfile,
   readActiveDesktopProfile,
   expandUserPath,
   resolveRequestedPathForIpc,
@@ -147,8 +150,8 @@ export function registerFsIpc({
   // moved up once so it does not silently vanish on a profile switch.
   async function desktopPluginsRoot(): Promise<string> {
     const root = await ensureDir(path.join(nastechHome, DESKTOP_PLUGINS_DIR))
-    await migrateProfileScopedDesktopPlugins(nastechHome, root)
-    await reconcileUnifiedDesktopHalves(nastechHome, root)
+    await migrateProfileScopedDesktopPlugins(nastechHome, root, isLaunchedProfile)
+    await reconcileUnifiedDesktopHalves(nastechHome, root, isLaunchedProfile)
 
     return root
   }
@@ -162,7 +165,7 @@ export function registerFsIpc({
   ipcMain.handle('nastech:fs:reconcileDesktopPlugins', async () => {
     const root = await ensureDir(path.join(nastechHome, DESKTOP_PLUGINS_DIR))
 
-    return reconcileDesktopHalvesReport(nastechHome, root)
+    return reconcileDesktopHalvesReport(nastechHome, root, isLaunchedProfile)
   })
 
   // The LOCAL logs root (`<NASTECH_HOME>/logs`, profile-aware) — the error

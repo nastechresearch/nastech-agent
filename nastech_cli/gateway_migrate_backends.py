@@ -334,11 +334,15 @@ def _classify_running(pid: int, command: str, *, launchd_jobs, plists, ssh_pids,
 
 def _finish(item: BackendItem, own_home: str) -> BackendItem:
     from nastech_cli.dashboard_procs import _normalized_home_for_compare
+    from nastech_cli.profiles_run_elsewhere import run_elsewhere_for_home
     from nastech_cli.update_cmd_fleet import _is_serve_or_dashboard_unit
     item.not_applied = _NOT_APPLIED
     item.notes.append(_OWNERSHIP[item.supervisor])
     if item.nastech_home:
         item.this_home = _normalized_home_for_compare(item.nastech_home) == _normalized_home_for_compare(own_home)
+        if (elsewhere := run_elsewhere_for_home(item.nastech_home)) is not None:
+            # The backend a plugin runs for a profile can be a process of this machine, found like any other.
+            item.notes.append(elsewhere.backend_note())
     if item.supervisor in ("systemd", "nix-systemd") and item.unit and not _is_serve_or_dashboard_unit(item.unit):
         item.notes.append("`nastech update`'s systemd unit pass matches only nastech-gateway*/nastech-serve*/"
                           f"nastech-dashboard* names, so it does not list {item.unit}.")
@@ -416,8 +420,11 @@ def format_report(items: list[BackendItem]) -> list[str]:
         lines.extend(f"    note:    {n}" for n in item.notes)
     if any(i.this_home and i.supervisor not in ("desktop-ssh", "desktop-local") for i in items):
         from nastech_cli.gateway_migrate_backends_plan import nastech_command
+        from nastech_cli.profiles_run_elsewhere import run_elsewhere_for_home
         from nastech_constants import get_nastech_home
-        lines += ["", NEXT_STEP.format(nastech=nastech_command(str(get_nastech_home()), powershell=os.name == "nt"))]
+        home = str(get_nastech_home())
+        if run_elsewhere_for_home(home) is None:  # a plugin runs this profile elsewhere: no move to offer
+            lines += ["", NEXT_STEP.format(nastech=nastech_command(home, powershell=os.name == "nt"))]
     return lines
 
 

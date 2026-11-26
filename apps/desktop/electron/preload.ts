@@ -289,6 +289,12 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   saveConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:save', payload),
   applyConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:apply', payload),
   testConnectionConfig: payload => ipcRenderer.invoke('nastech:connection-config:test', payload),
+  // Plugin SDK host.setProfileBackend / clearProfileBackend: main confirms
+  // natively before a plugin's backend serves, or stops serving, a profile.
+  setProfileBackend: payload => ipcRenderer.invoke('nastech:profile-backend:set', payload),
+  confirmSetProfileBackend: payload => ipcRenderer.invoke('nastech:profile-backend:confirm-set', payload),
+  clearProfileBackend: payload => ipcRenderer.invoke('nastech:profile-backend:clear', payload),
+  confirmClearProfileBackend: payload => ipcRenderer.invoke('nastech:profile-backend:confirm-clear', payload),
   // Opt-in OS-keychain encryption for stored gateway secrets (default off —
   // see secret-storage-policy.ts). get never touches the OS keychain.
   getSecretStorageEncryption: () => ipcRenderer.invoke('nastech:secret-storage:get'),
@@ -357,6 +363,7 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
   // rejection the renderer expects — see electron/api-expected-404.ts.
   api: request => ipcRenderer.invoke('nastech:api', request).then(unwrapExpectedNotFound),
   notify: payload => ipcRenderer.invoke('nastech:notify', payload),
+  notifySupported: () => ipcRenderer.invoke('nastech:notify:supported'),
   claimStartupLatency: () => ipcRenderer.invoke('nastech:startup-latency:claim'),
   requestMicrophoneAccess: () => ipcRenderer.invoke('nastech:requestMicrophoneAccess'),
   readWindowBelow: () => ipcRenderer.invoke('nastech:window:readBelow'),
@@ -652,9 +659,10 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     return () => ipcRenderer.removeListener('nastech:backend-exit', listener)
   },
   // Soft gateway-mode apply finished tearing down the primary backend. Renderer
-  // should wipe session lists + re-dial without a window reload.
+  // should wipe session lists + re-dial without a window reload. `detail.profile`
+  // names the one profile whose route moved (a plugin's setProfileBackend).
   onConnectionApplied: callback => {
-    const listener = () => callback()
+    const listener = (_event, detail) => callback(detail && typeof detail === 'object' ? detail : {})
     ipcRenderer.on('nastech:connection:applied', listener)
 
     return () => ipcRenderer.removeListener('nastech:connection:applied', listener)
@@ -672,6 +680,16 @@ contextBridge.exposeInMainWorld('nastechDesktop', {
     ipcRenderer.on('nastech:power-battery', listener)
 
     return () => ipcRenderer.removeListener('nastech:power-battery', listener)
+  },
+  // Whether the user is at this computer, by the OS idle clock where one is trustworthy.
+  presence: {
+    get: () => ipcRenderer.invoke('nastech:presence:get'),
+    onChange: callback => {
+      const listener = (_event, snapshot) => callback(snapshot)
+      ipcRenderer.on('nastech:presence', listener)
+
+      return () => ipcRenderer.removeListener('nastech:presence', listener)
+    }
   },
   onBootProgress: callback => {
     const listener = (_event, payload) => callback(payload)
